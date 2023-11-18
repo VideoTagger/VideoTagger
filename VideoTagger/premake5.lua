@@ -9,20 +9,40 @@ project "VideoTagger"
 
 	includedirs
 	{
-		"include",
-		"src"
+		"src",
+		"vendor/SDL2/include",
+		"vendor/ImGui"
+	}
+
+	libdirs
+	{
+		"vendor/SDL2/lib/%{cfg.architecture}"
 	}
 
 	files
 	{
-		"**.hpp",
-		"**.cpp"
+		"src/**.hpp",
+		"src/**.cpp",
+		"vendor/ImGui/**.h",
+		"vendor/ImGui/**.cpp"
+	}
+
+	links
+	{
+		"SDL2",
+		"SDL2main"
+	}
+
+	postbuildcommands
+	{
+		"{COPYFILE} vendor/SDL2/lib/%{cfg.architecture}/*.dll %{cfg.targetdir}"
 	}
 
 	flags
 	{
 		"MultiProcessorCompile"
 	}
+
 	filter "configurations:Debug"
 		defines { "DEBUG" }
 		symbols "On"
