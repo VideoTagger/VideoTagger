@@ -7,18 +7,6 @@ project "VideoTagger"
 	cppdialect "C++17"
 	conformancemode "true"
 
-	includedirs
-	{
-		"src",
-		"vendor/SDL2/include",
-		"vendor/ImGui"
-	}
-
-	libdirs
-	{
-		"vendor/SDL2/lib/%{cfg.architecture}"
-	}
-
 	files
 	{
 		"src/**.hpp",
@@ -27,21 +15,49 @@ project "VideoTagger"
 		"vendor/ImGui/**.cpp"
 	}
 
+	includedirs
+	{
+		"src",
+		"vendor/ImGui"
+	}
+
 	links
 	{
 		"SDL2",
 		"SDL2main"
 	}
 
-	postbuildcommands
-	{
-		"{COPYFILE} vendor/SDL2/lib/%{cfg.architecture}/*.dll %{cfg.targetdir}"
-	}
-
 	flags
 	{
 		"MultiProcessorCompile"
 	}
+
+	filter "system:windows"
+		externalincludedirs
+		{
+			"vendor/SDL2/include"
+		}
+
+		libdirs
+		{
+			"vendor/SDL2/lib/%{cfg.architecture}"
+		}
+
+		postbuildcommands
+		{
+			"{COPYFILE} vendor/SDL2/lib/%{cfg.architecture}/*.dll %{cfg.targetdir}"
+		}
+
+	filter "system:linux"
+		externalincludedirs
+		{
+			"/usr/include/SDL2"
+		}
+
+		libdirs
+		{
+			"/usr/lib/"
+		}
 
 	filter "configurations:Debug"
 		defines { "DEBUG" }
