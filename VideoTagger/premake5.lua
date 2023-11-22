@@ -12,13 +12,16 @@ project "VideoTagger"
 		"src/**.hpp",
 		"src/**.cpp",
 		"vendor/ImGui/**.h",
-		"vendor/ImGui/**.cpp"
+		"vendor/ImGui/**.cpp",
+		"vendor/ImGuizmo/**.h",
+		"vendor/ImGuizmo/**.cpp"
 	}
 
 	includedirs
 	{
 		"src",
-		"vendor/ImGui"
+		"vendor/ImGui",
+		"vendor/ImGuizmo"
 	}
 
 	links
@@ -71,7 +74,7 @@ project "VideoTagger"
 		flags { "LinkTimeOptimization" }
 
 	filter "platforms:x86"
-    	architecture "x86"
+		architecture "x86"
 
-    filter "platforms:x86_64"
+	filter "platforms:x86_64"
 		architecture "x86_64"
