@@ -1,7 +1,10 @@
 include "tools/premake/solution_items.lua"
 
 workspace "VideoTagger"
-	platforms { "x86", "x86_64" }
+	platforms
+	{
+		"x86_64"
+	}
 
 	configurations
 	{

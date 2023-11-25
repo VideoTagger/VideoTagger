@@ -73,8 +73,5 @@ project "VideoTagger"
 		runtime "Release"
 		flags { "LinkTimeOptimization" }
 
-	filter "platforms:x86"
-		architecture "x86"
-
 	filter "platforms:x86_64"
 		architecture "x86_64"
