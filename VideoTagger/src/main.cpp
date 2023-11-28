@@ -9,6 +9,7 @@ int main(int argc, char* argv[])
 	cfg.window_pos_y = -1;
 	cfg.window_name = "VideoTagger";
 
+
 	if (app.init(cfg))
 	{
 		app.run();

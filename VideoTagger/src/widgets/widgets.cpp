@@ -96,14 +96,34 @@ namespace vt::widgets
 		}
 	};
 
-	void draw_video_widget_sample()
+	void draw_video_widget(video& video)
 	{
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, { 0, 0 });
 		ImGuiWindowFlags flags = ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse;
+		if (video.is_open())
+		{
+			ImGui::SetNextWindowSize({ float(video.width()), float(video.height()) }, ImGuiCond_FirstUseEver);
+		}
+		float button_size = 25;
 		if (ImGui::Begin("Video", nullptr, flags))
 		{
+			bool is_playing = video.is_playing();
 			//window content here
-			ImGui::ProgressBar(1, ImGui::GetContentRegionMax(), "");
+			auto avail_size = ImGui::GetContentRegionAvail();
+			avail_size.y -= button_size + ImGui::GetStyle().ItemSpacing.y * 2;
+
+			SDL_Texture* texture = video.get_frame();
+			if (texture != nullptr)
+			{
+				ImGui::Image((ImTextureID)texture, avail_size);
+			
+				auto button_pos_x = avail_size.x / 2 - button_size / 2;
+				ImGui::SetCursorPosX(button_pos_x);
+				if (ImGui::Button(is_playing ? "||" : ">", { button_size, button_size }))
+				{
+					video.set_playing(!is_playing);
+				}
+			}
 		}
 		ImGui::End();
 		ImGui::PopStyleVar();

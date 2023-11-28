@@ -16,7 +16,6 @@ namespace vt
 {
 	app::app() : main_window_{}, renderer_{}, state_{ app_state::uninitialized }
 	{
-
 	}
 	
 	bool app::init(const app_config& config)
@@ -158,12 +157,13 @@ namespace vt
 		{
 			if (ImGui::BeginMenu("File"))
 			{
-				if (ImGui::MenuItem("Open File"))
+				if (ImGui::MenuItem("Open Video"))
 				{
 					auto result = utils::filesystem::get_file();
 					if (result)
 					{
 						std::cout << result.path << '\n';
+						vid.open_file(result.path, renderer_);
 					}
 				}
 				if (ImGui::MenuItem("Open Dir"))
@@ -199,7 +199,7 @@ namespace vt
 
 		ImGui::ShowDemoWindow();
 		
-		widgets::draw_video_widget_sample();
+		widgets::draw_video_widget(vid);
 		widgets::draw_timeline_widget_sample();
 	}
 }

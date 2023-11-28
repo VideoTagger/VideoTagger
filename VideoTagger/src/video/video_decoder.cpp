@@ -339,6 +339,11 @@ namespace vt
 
 	bool video_decoder::open(const std::filesystem::path& path)
 	{
+		if (is_open())
+		{
+			close();
+		}
+
 		format_context_ = avformat_alloc_context();
 		if (avformat_open_input(&format_context_, path.string().c_str(), NULL, NULL) < 0)
 		{

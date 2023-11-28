@@ -1,5 +1,8 @@
 #pragma once
 #include <string>
+#include <memory>
+
+#include <video/video.hpp>
 
 struct SDL_Window;
 struct SDL_Renderer;
@@ -32,6 +35,8 @@ namespace vt
 		app_state state_;
 		SDL_Window* main_window_;
 		SDL_Renderer* renderer_;
+		//temporary
+		video vid;
 
 	public:
 		bool init(const app_config& config);
