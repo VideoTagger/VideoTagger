@@ -7,6 +7,7 @@
 #include <imgui.h>
 #include <backends/imgui_impl_sdl2.h>
 #include <backends/imgui_impl_sdlrenderer2.h>
+#include <nfd.hpp>
 
 #include <widgets/widgets.hpp>
 #include <utils/filesystem.hpp>
@@ -21,6 +22,7 @@ namespace vt
 	bool app::init(const app_config& config)
 	{
 		if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS) < 0) return false;
+		if (NFD::Init() != NFD_OKAY) return false;
 
 		IMGUI_CHECKVERSION();
 		ImGui::CreateContext();
@@ -94,6 +96,8 @@ namespace vt
 		ImGui_ImplSDL2_Shutdown();
 		ImGui::DestroyContext();
 
+		NFD::Quit();
+		SDL_Quit();
 		state_ = app_state::uninitialized;
 	}
 	
