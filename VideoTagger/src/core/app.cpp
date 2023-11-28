@@ -1,11 +1,15 @@
 #include "app.hpp"
-#include <widgets/widgets.hpp>
 #include <cmath>
+#include <iostream>
+#include <filesystem>
 
 #include <SDL.h>
 #include <imgui.h>
 #include <backends/imgui_impl_sdl2.h>
 #include <backends/imgui_impl_sdlrenderer2.h>
+
+#include <widgets/widgets.hpp>
+#include <utils/filesystem.hpp>
 
 namespace vt
 {
@@ -44,6 +48,14 @@ namespace vt
 		io.IniFilename = nullptr;
 		io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
 		io.ConfigWindowsMoveFromTitleBarOnly = true;
+
+		std::filesystem::path font_path{ "assets/fonts/NotoSans-Regular.ttf" };
+		float font_size = 18.0f;
+
+		if (std::filesystem::exists(font_path))
+		{
+			io.Fonts->AddFontFromFileTTF(font_path.string().c_str(), font_size);
+		}
 
 		state_ = app_state::initialized;
 		return true;
@@ -142,7 +154,30 @@ namespace vt
 		{
 			if (ImGui::BeginMenu("File"))
 			{
-				ImGui::MenuItem("Option");
+				if (ImGui::MenuItem("Open File"))
+				{
+					auto result = utils::filesystem::get_file();
+					if (result)
+					{
+						std::cout << result.path << '\n';
+					}
+				}
+				if (ImGui::MenuItem("Open Dir"))
+				{
+					auto result = utils::filesystem::get_folder();
+					if (result)
+					{
+						std::cout << result.path << '\n';
+					}
+				}
+				if (ImGui::MenuItem("Save As..."))
+				{
+					auto result = utils::filesystem::save_file();
+					if (result)
+					{
+						std::cout << result.path << '\n';
+					}
+				}
 				ImGui::EndMenu();
 			}
 			if (ImGui::BeginMenu("Edit"))

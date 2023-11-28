@@ -14,14 +14,16 @@ project "VideoTagger"
 		"vendor/ImGui/**.h",
 		"vendor/ImGui/**.cpp",
 		"vendor/ImGuizmo/**.h",
-		"vendor/ImGuizmo/**.cpp"
+		"vendor/ImGuizmo/**.cpp",
+		"vendor/NativeFileDialog/nfd_wrapper.cpp"
 	}
 
 	includedirs
 	{
 		"src",
 		"vendor/ImGui",
-		"vendor/ImGuizmo"
+		"vendor/ImGuizmo",
+		"vendor/NativeFileDialog/include"
 	}
 
 	links
@@ -33,6 +35,11 @@ project "VideoTagger"
 	flags
 	{
 		"MultiProcessorCompile"
+	}
+
+	postbuildcommands
+	{
+		"{COPY} assets %{cfg.targetdir}/assets"
 	}
 
 	filter "system:windows"
@@ -61,7 +68,7 @@ project "VideoTagger"
 		{
 			"/usr/lib/"
 		}
-
+	
 	filter "configurations:Debug"
 		defines { "DEBUG" }
 		symbols "On"

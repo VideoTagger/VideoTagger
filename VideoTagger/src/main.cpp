@@ -1,4 +1,5 @@
-#include <app/app.hpp>
+#include <core/app.hpp>
+#include <core/debug.hpp>
 
 int main(int argc, char* argv[])
 {
@@ -7,6 +8,10 @@ int main(int argc, char* argv[])
 	cfg.window_pos_x = -1;
 	cfg.window_pos_y = -1;
 	cfg.window_name = "VideoTagger";
+
+	vt::debug::log("test");
+	vt::debug::error("test");
+	vt::debug::panic("test");
 
 	if (app.init(cfg))
 	{
