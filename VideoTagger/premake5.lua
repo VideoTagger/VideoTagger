@@ -29,7 +29,10 @@ project "VideoTagger"
 	links
 	{
 		"SDL2",
-		"SDL2main"
+		"SDL2main",
+		"avcodec",
+		"avformat",
+		"avutil"
 	}
 
 	flags
@@ -45,23 +48,31 @@ project "VideoTagger"
 	filter "system:windows"
 		externalincludedirs
 		{
-			"vendor/SDL2/include"
+			"vendor/SDL2/include",
+			"vendor/ffmpeg/include/libavcodec",
+			"vendor/ffmpeg/include/libavformat",
+			"vendor/ffmpeg/include"
 		}
 
 		libdirs
 		{
-			"vendor/SDL2/lib/%{cfg.architecture}"
+			"vendor/SDL2/lib/%{cfg.architecture}",
+			"vendor/ffmpeg/lib/%{cfg.architecture}"
 		}
 
 		postbuildcommands
 		{
-			"{COPYFILE} vendor/SDL2/lib/%{cfg.architecture}/*.dll %{cfg.targetdir}"
+			"{COPYFILE} vendor/SDL2/lib/%{cfg.architecture}/*.dll %{cfg.targetdir}",
+			"{COPYFILE} vendor/ffmpeg/lib/%{cfg.architecture}/*.dll %{cfg.targetdir}"
 		}
 
 	filter "system:linux"
 		externalincludedirs
 		{
-			"/usr/include/SDL2"
+			"/usr/include/SDL2",
+			"/usr/include/**/libavcodec",
+			"/usr/include/**/libavformat",
+			"/usr/include/**/"
 		}
 
 		libdirs
