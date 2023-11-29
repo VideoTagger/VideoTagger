@@ -123,6 +123,15 @@ namespace vt::widgets
 				{
 					video.set_playing(!is_playing);
 				}
+
+				float speed = video.speed();
+				static constexpr float min_speed = 0.25f;
+				static constexpr float max_speed = 3.0f;
+				ImGui::SameLine();
+				if (ImGui::DragFloat("video speed", &speed, 0.1f, 0.1f, 3.0f, "%.2f", ImGuiSliderFlags_AlwaysClamp))
+				{
+					video.set_speed(speed);
+				}
 			}
 		}
 		ImGui::End();

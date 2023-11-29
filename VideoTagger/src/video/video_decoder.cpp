@@ -121,6 +121,16 @@ namespace vt
 		return std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::duration<double>(frame_->pts * av_q2d(frame_->time_base)));
 	}
 
+	std::chrono::nanoseconds video_frame::duration() const
+	{
+		return std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::duration<double>(frame_->duration * av_q2d(frame_->time_base)));
+	}
+
+	bool video_frame::is_keyframe() const
+	{
+		return frame_->flags | AV_FRAME_FLAG_KEY;
+	}
+
 	std::optional<typename stream_type_traits<stream_type::video>::decoded_packet_type>
 		stream_type_traits<stream_type::video>::decode(AVCodecContext* codec_context, class packet_wrapper& packet)
 	{
@@ -206,9 +216,19 @@ namespace vt
 		return packet_;
 	}
 
-	timestamp_type packet_wrapper::timestamp() const
+	timestamp_t packet_wrapper::timestamp() const
 	{
 		return std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::duration<double>(packet_->pts * av_q2d(packet_->time_base)));
+	}
+
+	std::chrono::nanoseconds packet_wrapper::duration() const
+	{
+		return std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::duration<double>(packet_->duration * av_q2d(packet_->time_base)));
+	}
+
+	bool packet_wrapper::is_key() const
+	{
+		return packet_->flags | AV_PKT_FLAG_KEY;
 	}
 
 	packet_queue::packet_queue()
@@ -228,7 +248,7 @@ namespace vt
 			return false;
 		}
 
-		packets_.push(std::move(packet));
+		packets_.push_back(std::move(packet));
 		return true;
 	}
 
@@ -242,6 +262,16 @@ namespace vt
 		return packets_.front();
 	}
 
+	packet_wrapper& packet_queue::back()
+	{
+		return packets_.back();
+	}
+
+	const packet_wrapper& packet_queue::back() const
+	{
+		return packets_.back();
+	}
+
 	void packet_queue::pop()
 	{
 		if (empty())
@@ -249,7 +279,7 @@ namespace vt
 			return;
 		}
 
-		return packets_.pop();
+		return packets_.pop_front();
 	}
 
 	void packet_queue::clear()
@@ -504,16 +534,19 @@ namespace vt
 		return last_read_packet_type_;
 	}
 
-	template<stream_type type>
-	size_t video_decoder::packet_queue_size() const
+	size_t video_decoder::packet_queue_size(stream_type type) const
 	{
 		return packet_queues_.at(static_cast<size_t>(type)).size();
 	}
 
-	template<stream_type type>
-	const packet_wrapper& video_decoder::peek_next_packet() const
+	const packet_wrapper& video_decoder::peek_next_packet(stream_type type) const
 	{
 		return packet_queues_.at(static_cast<size_t>(type)).front();
+	}
+
+	const packet_wrapper& video_decoder::peek_last_packet(stream_type type) const
+	{
+		return packet_queues_.at(static_cast<size_t>(type)).back();
 	}
 
 	video_metadata video_decoder::metadata() const
@@ -529,10 +562,10 @@ namespace vt
 		return metadata;
 	}
 
-	//size_t video_decoder::current_frame_number() const
-	//{
-	//	return current_frame_number_;
-	//}
+	void video_decoder::discard_next_packet(stream_type type)
+	{
+		packet_queues_[static_cast<size_t>(type)].pop();
+	}
 
 	void video_decoder::discard_all_packets()
 	{
@@ -542,7 +575,7 @@ namespace vt
 		}
 	}
 
-	void video_decoder::seek_keyframe(timestamp_type timestamp)
+	timestamp_t video_decoder::seek_keyframe(timestamp_t timestamp)
 	{
 		//TODO: handle invalid timestamp
 
@@ -554,19 +587,34 @@ namespace vt
 		if (av_seek_frame(format_context_, video_stream_index, seek_timestamp, AVSEEK_FLAG_BACKWARD) < 0)
 		{
 			// TODO: Handle error
-			return;
+			return timestamp_t(0);
 		}
-
 		discard_all_packets();
 
+		read_packet();
+		if (eof())
+		{
+			return duration();
+		}
+		
+		discard_next_packet(stream_type::video);
+		timestamp_t keyframe_ts = peek_next_packet(stream_type::video).timestamp();
+		if (av_seek_frame(format_context_, video_stream_index, seek_timestamp, AVSEEK_FLAG_BACKWARD) < 0)
+		{
+			// TODO: Handle error
+			return timestamp_t(0);
+		}
+		
 		eof_ = false;
+
+		return keyframe_ts;
 	}
 
-	void video_decoder::seek_keyframe(size_t frame_number)
+	timestamp_t video_decoder::seek_keyframe(size_t frame_number)
 	{
 		auto video_stream = format_context_->streams[stream_indices_[static_cast<size_t>(stream_type::video)]];
 		
-		seek_keyframe(timestamp_type(static_cast<int64_t>(frame_number / fps() * 1'000'000'000)));
+		return seek_keyframe(timestamp_t(static_cast<int64_t>(frame_number / fps() * 1'000'000'000)));
 	}
 
 	int video_decoder::width() const
@@ -631,12 +679,12 @@ namespace vt
 		return std::chrono::nanoseconds(static_cast<int64_t>(format_context_->duration / (double)(AV_TIME_BASE) * 1'000'000'000));
 	}
 
-	timestamp_type video_decoder::frame_number_to_timestamp(size_t frame)
+	timestamp_t video_decoder::frame_number_to_timestamp(size_t frame)
 	{
-		return std::chrono::duration_cast<timestamp_type>(std::chrono::duration<double>(frame / fps()));
+		return std::chrono::duration_cast<timestamp_t>(std::chrono::duration<double>(frame / fps()));
 	}
 	
-	size_t video_decoder::timestamp_to_frame_number(timestamp_type timestamp)
+	size_t video_decoder::timestamp_to_frame_number(timestamp_t timestamp)
 	{
 		//TODO: test
 		return static_cast<size_t>(std::round(std::chrono::duration_cast<std::chrono::duration<double>>(timestamp).count() * fps()));

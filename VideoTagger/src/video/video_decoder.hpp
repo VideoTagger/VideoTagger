@@ -2,7 +2,7 @@
 #include <filesystem>
 #include <array>
 #include <cstdint>
-#include <queue>
+#include <deque>
 #include <optional>
 #include <chrono>
 
@@ -14,7 +14,7 @@ extern "C"
 
 namespace vt
 {
-	using timestamp_type = std::chrono::nanoseconds;
+	using timestamp_t = std::chrono::nanoseconds;
 
 	class video_plane
 	{
@@ -63,7 +63,10 @@ namespace vt
 		[[nodiscard]] int width() const;
 		[[nodiscard]] int height() const;
 
-		[[nodiscard]] timestamp_type timestamp() const;
+		[[nodiscard]] timestamp_t timestamp() const;
+		[[nodiscard]] std::chrono::nanoseconds duration() const;
+
+		[[nodiscard]] bool is_keyframe() const;
 
 		[[nodiscard]] AVFrame* unwrapped();
 		[[nodiscard]] const AVFrame* unwrapped() const;
@@ -116,10 +119,14 @@ namespace vt
 		[[nodiscard]] stream_type type() const;
 		[[nodiscard]] int stream_index() const;
 
+		[[nodiscard]] timestamp_t timestamp() const;
+		[[nodiscard]] std::chrono::nanoseconds duration() const;
+
+		[[nodiscard]] bool is_key() const;
+
 		[[nodiscard]] AVPacket* unwrapped();
 		[[nodiscard]] const AVPacket* unwrapped() const;
 
-		[[nodiscard]] timestamp_type timestamp() const;
 
 	private:
 		AVPacket* packet_;
@@ -136,10 +143,15 @@ namespace vt
 		bool push(packet_wrapper&& packet);
 		void pop();
 
+		//TODO: maybe add push_front, pop_back. Rename push push_back, pop_front
+
 		void clear();
 
 		[[nodiscard]] packet_wrapper& front();
 		[[nodiscard]] const packet_wrapper& front() const;
+
+		[[nodiscard]] packet_wrapper& back();
+		[[nodiscard]] const packet_wrapper& back() const;
 
 		[[nodiscard]] size_t size() const;
 		[[nodiscard]] int stream_index() const;
@@ -150,7 +162,7 @@ namespace vt
 
 	private:
 		int stream_index_;
-		std::queue<packet_wrapper> packets_;
+		std::deque<packet_wrapper> packets_;
 	};
 
 	struct video_metadata
@@ -182,27 +194,28 @@ namespace vt
 
 		template<stream_type type>
 		[[nodiscard]] std::optional<typename stream_type_traits<type>::decoded_packet_type> decode_next_packet();
-		template<stream_type type>
-		void discard_next_packet();
+		void discard_next_packet(stream_type type);
+		//TODO: discard last packet
 		void discard_all_packets();
 
 		//Seek to the nearest keyframe before or on the timestamp
 		//Discards all packets currently in queues
-		void seek_keyframe(timestamp_type timestamp);
+		//Returns the keyframe timestamp
+		timestamp_t seek_keyframe(timestamp_t timestamp);
 		//Seek to the nearest keyframe before or on the timestamp
 		//Discards all packets currently in queues
-		void seek_keyframe(size_t frame_number);
+		//Returns the keyframe timestamp
+		timestamp_t seek_keyframe(size_t frame_number);
 
 		[[nodiscard]] bool is_open() const;
 		[[nodiscard]] bool eof() const;
 		[[nodiscard]] bool has_stream(stream_type type) const;
 		[[nodiscard]] stream_type last_read_packet_type() const;
 
-		template<stream_type type>
-		[[nodiscard]] size_t packet_queue_size() const;
+		[[nodiscard]] size_t packet_queue_size(stream_type type) const;
 
-		template<stream_type type>
-		[[nodiscard]] const packet_wrapper& peek_next_packet() const;
+		[[nodiscard]] const packet_wrapper& peek_next_packet(stream_type type) const;
+		[[nodiscard]] const packet_wrapper& peek_last_packet(stream_type type) const;
 
 		[[nodiscard]] video_metadata metadata() const;
 
@@ -213,8 +226,8 @@ namespace vt
 		[[nodiscard]] size_t frame_count() const;
 		[[nodiscard]] std::chrono::nanoseconds duration() const;
 
-		[[nodiscard]] timestamp_type frame_number_to_timestamp(size_t frame);
-		[[nodiscard]] size_t timestamp_to_frame_number(timestamp_type timestamp);
+		[[nodiscard]] timestamp_t frame_number_to_timestamp(size_t frame);
+		[[nodiscard]] size_t timestamp_to_frame_number(timestamp_t timestamp);
 
 	private:
 		AVFormatContext* format_context_;
@@ -251,9 +264,5 @@ namespace vt
 		return stream_type_traits<type>::decode(codec_context, packet);
 	}
 
-	template<stream_type type>
-	inline void video_decoder::discard_next_packet()
-	{
-		packet_queues_[static_cast<size_t>(type)].pop();
-	}
+	
 }

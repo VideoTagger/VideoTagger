@@ -3,7 +3,7 @@
 namespace vt
 {
 	video::video()
-		: texture_{}, playing_{}, last_tp_{}, last_ts_{}
+		: texture_{}, playing_{}, last_tp_{}, last_ts_{}, speed_{ 1.f }, loop_{ false }
 	{
 	}
 
@@ -46,7 +46,9 @@ namespace vt
 		frame_buffer_.clear();
 
 		last_tp_ = std::chrono::steady_clock::time_point();
-		last_ts_ = timestamp_type(0);
+		last_ts_ = timestamp_t(0);
+
+		speed_ = 1.f;
 
 		SDL_DestroyTexture(texture_);
 		texture_ = nullptr;
@@ -81,6 +83,96 @@ namespace vt
 			last_ts_ = frame_buffer_.front().timestamp();
 		}
 		playing_ = value;
+	}
+
+	void video::set_speed(float value)
+	{
+		if (!is_open())
+		{
+			return;
+		}
+
+		speed_ = value;
+	}
+
+	void video::set_looping(bool value)
+	{
+		if (!is_open())
+		{
+			return;
+		}
+
+		loop_ = value;
+
+	}
+
+	void video::seek(timestamp_t timestamp)
+	{
+		//TODO: handle timestamp > duration
+		//TODO: improve after improving decoder
+
+		//TODO: remove only unneeded frames
+		frame_buffer_.clear();
+
+		timestamp_t keyframe_ts = decoder_.seek_keyframe(timestamp);
+
+		bool skip_last_packet = false;
+		bool start_from_last_frame = false;
+		while (true)
+		{
+			decoder_.read_packet();
+			if (decoder_.last_read_packet_type() != vt::stream_type::video)
+			{
+				decoder_.discard_next_packet(decoder_.last_read_packet_type());
+			}
+
+			auto current_ts = decoder_.peek_last_packet(vt::stream_type::video).timestamp();
+
+			if (current_ts >= last_ts_)
+			{
+				start_from_last_frame = true;
+			}
+
+			if (current_ts >= timestamp)
+			{
+				if (current_ts > timestamp)
+				{
+					skip_last_packet = true;
+				}
+
+				break;
+			}
+		}
+
+		if (start_from_last_frame)
+		{
+			auto current_ts = decoder_.peek_next_packet(vt::stream_type::video).timestamp();
+			while (current_ts != last_ts_)
+			{
+				decoder_.discard_next_packet(stream_type::video);
+			}
+		}
+
+		while (decoder_.packet_queue_size(stream_type::video) != 0)
+		{
+			auto decode_result = decoder_.decode_next_packet<vt::stream_type::video>();
+			if (!decode_result.has_value())
+			{
+				continue;
+			}
+
+			auto& frame = decode_result.value();
+
+			auto [yp, up, vp] = frame.get_planes();
+
+			SDL_UpdateYUVTexture
+			(
+				texture_, nullptr,
+				yp.data(), yp.pitch(),
+				up.data(), up.pitch(),
+				vp.data(), vp.pitch()
+			);
+		}
 	}
 
 	void video::buffer_frames(size_t count)
@@ -125,7 +217,7 @@ namespace vt
 
 		auto& next_frame = frame_buffer_.front();
 
-		if ((next_frame.timestamp() - last_ts_) > (std::chrono::steady_clock::now() - last_tp_))
+		if ((next_frame.timestamp() - last_ts_) > ((std::chrono::steady_clock::now() - last_tp_) * speed_))
 		{
 			return texture_;
 		}
@@ -166,6 +258,11 @@ namespace vt
 	bool video::is_playing() const
 	{
 		return playing_;
+	}
+
+	float video::speed() const
+	{
+		return speed_;
 	}
 
 }
