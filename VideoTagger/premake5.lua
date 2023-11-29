@@ -69,9 +69,7 @@ project "VideoTagger"
 	filter "system:linux"
 		externalincludedirs
 		{
-			"/usr/include/SDL2",
-			"/usr/include/libavcodec",
-			"/usr/include/libavformat"
+			"/usr/include/SDL2"
 		}
 
 		libdirs
@@ -81,12 +79,12 @@ project "VideoTagger"
 
 		buildoptions
 		{
-			"`pkg-config --cflags gtk+-3.0 glib-2.0`"
+			"`pkg-config --cflags gtk+-3.0 glib-2.0 libavcodec libavformat`"
 		}
 
 		linkoptions
 		{
-			"`pkg-config --libs gtk+-3.0 glib-2.0`"
+			"`pkg-config --libs gtk+-3.0 glib-2.0 libavcodec libavformat`"
 		}
 	
 	filter "configurations:Debug"
