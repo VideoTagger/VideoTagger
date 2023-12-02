@@ -10,6 +10,7 @@
 #include <nfd.hpp>
 
 #include <widgets/widgets.hpp>
+#include <widgets/project_selector.hpp>
 #include <utils/filesystem.hpp>
 
 namespace vt
@@ -51,7 +52,7 @@ namespace vt
 		io.ConfigWindowsMoveFromTitleBarOnly = true;
 
 		std::filesystem::path font_path{ "assets/fonts/NotoSans-Regular.ttf" };
-		float font_size = 18.0f;
+		float font_size = 16.0f;
 
 		if (std::filesystem::exists(font_path))
 		{
@@ -74,6 +75,7 @@ namespace vt
 			ImGui::NewFrame();
 
 			handle_events();
+
 			if (renderer_ != nullptr)
 			{
 				SDL_RenderClear(renderer_);
@@ -198,6 +200,27 @@ namespace vt
 		}
 
 		ImGui::ShowDemoWindow();
+
+		project demo_project;
+		{
+			demo_project.name = "Demo project";
+			demo_project.path = std::filesystem::current_path();
+			demo_project.working_dir = std::filesystem::current_path();
+		}
+
+		project temp_project;
+		{
+			temp_project.name = "Temp project";
+			temp_project.path = std::filesystem::temp_directory_path();
+			temp_project.working_dir = std::filesystem::temp_directory_path();
+		}
+
+		static widgets::project_selector selector({ demo_project, temp_project });
+		selector.on_click_project = [](const project& project)
+		{
+			std::cout << "Clicked project: " << project.name << "\nPath: " << project.path << '\n';
+		};
+		selector.render();
 		
 		widgets::draw_video_widget(vid);
 		widgets::draw_timeline_widget_sample();

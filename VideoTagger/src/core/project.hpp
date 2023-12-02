@@ -10,6 +10,7 @@ namespace vt
 	struct project
 	{
 		std::string name;
+		std::filesystem::path path;
 		std::filesystem::path working_dir;
 
 		//Custom tags provided by the user
