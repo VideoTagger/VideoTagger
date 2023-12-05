@@ -33,6 +33,8 @@ namespace vt
 		[[nodiscard]] bool is_playing() const;
 		[[nodiscard]] float speed() const;
 
+		[[nodiscard]] timestamp_t current_timestamp() const;
+
 	private:
 		video_decoder decoder_;
 		SDL_Texture* texture_;

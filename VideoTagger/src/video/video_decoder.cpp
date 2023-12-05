@@ -584,6 +584,7 @@ namespace vt
 		auto timestamp_seconds = std::chrono::duration_cast<std::chrono::duration<double>>(timestamp);
 		int64_t seek_timestamp = static_cast<int64_t>(timestamp_seconds.count() / av_q2d(format_context_->streams[video_stream_index]->time_base));
 
+		eof_ = false;
 		if (av_seek_frame(format_context_, video_stream_index, seek_timestamp, AVSEEK_FLAG_BACKWARD) < 0)
 		{
 			// TODO: Handle error
@@ -597,15 +598,14 @@ namespace vt
 			return duration();
 		}
 		
-		discard_next_packet(stream_type::video);
 		timestamp_t keyframe_ts = peek_next_packet(stream_type::video).timestamp();
+		discard_next_packet(stream_type::video);
 		if (av_seek_frame(format_context_, video_stream_index, seek_timestamp, AVSEEK_FLAG_BACKWARD) < 0)
 		{
 			// TODO: Handle error
 			return timestamp_t(0);
 		}
 		
-		eof_ = false;
 
 		return keyframe_ts;
 	}

@@ -115,11 +115,16 @@ namespace vt
 		frame_buffer_.clear();
 
 		timestamp_t keyframe_ts = decoder_.seek_keyframe(timestamp);
-
+		
 		bool skip_last_packet = false;
 		bool start_from_last_frame = false;
 		while (true)
 		{
+			if (decoder_.eof())
+			{
+				break;
+			}
+
 			decoder_.read_packet();
 			if (decoder_.last_read_packet_type() != vt::stream_type::video)
 			{
@@ -128,7 +133,7 @@ namespace vt
 
 			auto current_ts = decoder_.peek_last_packet(vt::stream_type::video).timestamp();
 
-			if (current_ts >= last_ts_)
+			if (last_ts_ > keyframe_ts and current_ts >= last_ts_)
 			{
 				start_from_last_frame = true;
 			}
@@ -147,21 +152,18 @@ namespace vt
 		if (start_from_last_frame)
 		{
 			auto current_ts = decoder_.peek_next_packet(vt::stream_type::video).timestamp();
-			while (current_ts != last_ts_)
+			while (current_ts < last_ts_)
 			{
 				decoder_.discard_next_packet(stream_type::video);
+				current_ts = decoder_.peek_next_packet(vt::stream_type::video).timestamp();
 			}
 		}
 
 		while (decoder_.packet_queue_size(stream_type::video) != 0)
 		{
 			auto decode_result = decoder_.decode_next_packet<vt::stream_type::video>();
-			if (!decode_result.has_value())
-			{
-				continue;
-			}
-
 			auto& frame = decode_result.value();
+
 
 			auto [yp, up, vp] = frame.get_planes();
 
@@ -172,6 +174,9 @@ namespace vt
 				up.data(), up.pitch(),
 				vp.data(), vp.pitch()
 			);
+
+			last_ts_ = frame.timestamp();
+			last_tp_ = std::chrono::steady_clock::now();
 		}
 	}
 
@@ -200,6 +205,8 @@ namespace vt
 
 	SDL_Texture* video::get_frame()
 	{
+		//TODO: maybe should drop frames
+
 		if (!playing_)
 		{
 			return texture_;
@@ -208,11 +215,18 @@ namespace vt
 		if (frame_buffer_.empty())
 		{
 			buffer_frames(1);
-		}
 
-		if (frame_buffer_.empty() and decoder_.eof())
-		{
-			return texture_;
+			if (frame_buffer_.empty())
+			{
+				if (!loop_)
+				{
+					set_playing(false);
+					return texture_;
+				}
+
+				seek(timestamp_t(0));
+				buffer_frames(1);
+			}
 		}
 
 		auto& next_frame = frame_buffer_.front();
@@ -263,6 +277,11 @@ namespace vt
 	float video::speed() const
 	{
 		return speed_;
+	}
+
+	timestamp_t video::current_timestamp() const
+	{
+		return last_ts_;
 	}
 
 }
