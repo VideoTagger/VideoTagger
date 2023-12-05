@@ -32,6 +32,7 @@ namespace vt
 
 		[[nodiscard]] bool is_playing() const;
 		[[nodiscard]] float speed() const;
+		[[nodiscard]] std::chrono::nanoseconds duration() const;
 
 		[[nodiscard]] timestamp_t current_timestamp() const;
 

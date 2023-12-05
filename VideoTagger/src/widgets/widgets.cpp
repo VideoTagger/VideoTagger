@@ -406,8 +406,12 @@ namespace vt::widgets
 
 					timestamp_t video_ts = video.current_timestamp();
 					clock_time_t current_time{ std::chrono::duration_cast<std::chrono::seconds>(video_ts) };
+					clock_time_t duration{ std::chrono::duration_cast<std::chrono::seconds>(video.duration()) };
 
-					ImGui::Text("%03d:%02d:%02d", current_time.hours(), current_time.minutes(), current_time.seconds());
+					ImGui::Text("%03d:%02d:%02d | %03d:%02d:%02d",
+						current_time.hours(), current_time.minutes(), current_time.seconds(),
+						duration.hours(), duration.minutes(), duration.seconds()
+					);
 
 					//if (input_time(state, time))
 					//{
@@ -418,13 +422,13 @@ namespace vt::widgets
 					//{
 					//	video.seek(timestamp_t(ts));
 					//}
-					ImGui::SameLine();
 					static bool loop = false;
 					if (ImGui::Checkbox("loop", &loop))
 					{
 						video.set_looping(loop);
 					}
 
+					ImGui::SameLine();
 					if (ImGui::Button("seek to start"))
 					{
 						video.seek(timestamp_t(0));

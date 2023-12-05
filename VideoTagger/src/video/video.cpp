@@ -279,6 +279,11 @@ namespace vt
 		return speed_;
 	}
 
+	std::chrono::nanoseconds video::duration() const
+	{
+		return decoder_.duration();
+	}
+
 	timestamp_t video::current_timestamp() const
 	{
 		return last_ts_;
