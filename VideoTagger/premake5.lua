@@ -23,7 +23,8 @@ project "VideoTagger"
 		"src",
 		"vendor/ImGui",
 		"vendor/ImGuizmo",
-		"vendor/NativeFileDialog/include"
+		"vendor/NativeFileDialog/include",
+		"vendor/nlohmann/include"
 	}
 
 	links
@@ -69,7 +70,9 @@ project "VideoTagger"
 	filter "system:linux"
 		externalincludedirs
 		{
-			"/usr/include/SDL2"
+			"/usr/include/SDL2",
+			"/usr/include/libavcodec",
+			"/usr/include/libavformat"
 		}
 
 		libdirs
@@ -79,12 +82,12 @@ project "VideoTagger"
 
 		buildoptions
 		{
-			"`pkg-config --cflags gtk+-3.0 glib-2.0 libavcodec libavformat`"
+			"`pkg-config --cflags gtk+-3.0 glib-2.0`"
 		}
 
 		linkoptions
 		{
-			"`pkg-config --libs gtk+-3.0 glib-2.0 libavcodec libavformat`"
+			"`pkg-config --libs gtk+-3.0 glib-2.0`"
 		}
 	
 	filter "configurations:Debug"
