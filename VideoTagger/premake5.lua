@@ -23,7 +23,8 @@ project "VideoTagger"
 		"src",
 		"vendor/ImGui",
 		"vendor/ImGuizmo",
-		"vendor/NativeFileDialog/include"
+		"vendor/NativeFileDialog/include",
+		"vendor/nlohmann/include"
 	}
 
 	links

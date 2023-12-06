@@ -35,10 +35,10 @@ namespace vt::utils::hash
 			 hash ^= fileB;
 
 		 }
-		 std::cout << "hash: "<<hash;
+		 
 
-		 //15096513557945575548
-		return 0; 
+	
+		return hash; 
 	}
 
 	
