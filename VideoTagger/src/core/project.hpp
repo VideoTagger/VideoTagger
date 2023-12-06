@@ -17,5 +17,12 @@ namespace vt
 		std::map<std::string, tag> tags;
 
 		//TODO: Add keybinds
+
+		bool is_valid() const;
+		void save() const;
+
+		bool operator==(const project& other) const;
+
+		static project load_from_file(const std::filesystem::path& filepath);
 	};
 }

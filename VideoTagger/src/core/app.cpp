@@ -13,6 +13,8 @@
 #include <widgets/project_selector.hpp>
 #include <utils/filesystem.hpp>
 
+#include "project.hpp"
+
 namespace vt
 {
 	app::app() : main_window_{}, renderer_{}, state_{ app_state::uninitialized }
@@ -75,7 +77,6 @@ namespace vt
 			ImGui::NewFrame();
 
 			handle_events();
-
 			if (renderer_ != nullptr)
 			{
 				SDL_RenderClear(renderer_);
@@ -204,9 +205,13 @@ namespace vt
 		project demo_project;
 		{
 			demo_project.name = "Demo project";
-			demo_project.path = std::filesystem::current_path();
+			demo_project.path = std::filesystem::current_path() / "projects/demo.json";
 			demo_project.working_dir = std::filesystem::current_path();
 		}
+		//TODO: Remove this, this is temporary
+		demo_project.save();
+		project demo_project_copy = project::load_from_file(demo_project.path);
+		demo_project_copy.name += " (Copy)";
 
 		project temp_project;
 		{
@@ -215,7 +220,9 @@ namespace vt
 			temp_project.working_dir = std::filesystem::temp_directory_path();
 		}
 
-		static widgets::project_selector selector({ demo_project, temp_project });
+		project invalid_project;
+
+		static widgets::project_selector selector({ demo_project, demo_project_copy, temp_project, invalid_project });
 		selector.on_click_project = [](const project& project)
 		{
 			std::cout << "Clicked project: " << project.name << "\nPath: " << project.path << '\n';

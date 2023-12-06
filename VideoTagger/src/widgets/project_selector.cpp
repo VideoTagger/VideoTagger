@@ -76,10 +76,10 @@ namespace vt::widgets
 
 	}
 
-
 	void project_selector::render_project_widget(size_t id, const project& project)
 	{
 		ImVec2 size = { 0, ImGui::GetTextLineHeightWithSpacing() * 2 };
+		auto imgui_id = static_cast<ImGuiID>(id);
 
 		if (id == 0)
 		{
@@ -91,35 +91,68 @@ namespace vt::widgets
 		ImGui::TableNextRow();
 		ImGui::TableNextColumn();
 
-		ImGui::PushID(static_cast<ImGuiID>(id));
+		ImGui::PushID(imgui_id);
+		bool is_valid = project.is_valid();
+		if (!is_valid)
+		{
+			ImGui::BeginDisabled();
+		}
 		if (ImGui::Selectable("##ProjectListSelectable", false, ImGuiSelectableFlags_AllowItemOverlap | ImGuiSelectableFlags_SpanAllColumns, size) and on_click_project != nullptr)
 		{
 			on_click_project(project);
+		}
+		if (!is_valid)
+		{
+			ImGui::EndDisabled();
 		}
 		ImGui::PopID();
 
 		ImGui::SameLine();
 
 		ImGui::BeginGroup();
-		ImGui::Text(project.name.c_str());
+		std::string name = !project.name.empty() ? project.name : "Invalid Project!";
+		ImGui::Text(name.c_str());
 		auto path = project.path;
-		auto mod_time = std::filesystem::last_write_time(path);
-		path = std::filesystem::canonical(path);
+		std::filesystem::file_time_type mod_time{};
+		if (!path.empty() and std::filesystem::exists(path))
+		{
+			mod_time = std::filesystem::last_write_time(path);
+			path = std::filesystem::absolute(path);
+		}
 		ImGui::TextDisabled(path.string().c_str());
 		ImGui::EndGroup();
 
 		ImGui::TableNextColumn();
-		auto time = to_sys_time(mod_time);
-		auto tt = std::chrono::system_clock::to_time_t(time);
-		std::tm tm = *std::localtime(&tt);
-		std::stringstream ss;
-		ss << std::put_time(&tm, "%d-%m-%Y %H:%M:%S");
-		std::string time_str = ss.str();
+		std::string time_str;
+		if (mod_time != std::filesystem::file_time_type{})
+		{
+			auto time = to_sys_time(mod_time);
+			auto tt = std::chrono::system_clock::to_time_t(time);
+			std::tm tm = *std::localtime(&tt);
+			std::stringstream ss;
+			ss << std::put_time(&tm, "%d-%m-%Y %H:%M:%S");
+			time_str = ss.str();
+		}
+		
 		ImGui::AlignTextToFramePadding();
 		ImGui::Text(time_str.c_str());
 
 		ImGui::TableNextColumn();
-		ImGui::Button("...", size);
+		ImGui::PushID(imgui_id);
+		if (ImGui::Button("...", size))
+		{
+			ImGui::OpenPopup("##ProjectCtxMenu");
+		}
+
+		if (ImGui::BeginPopup("##ProjectCtxMenu"))
+		{
+			if (ImGui::MenuItem("Remove"))
+			{
+				projects_.erase(std::find(projects_.begin(), projects_.end(), project));
+			}
+			ImGui::EndPopup();
+		}
+		ImGui::PopID();
 	}
 
 	void project_selector::render()
@@ -135,7 +168,7 @@ namespace vt::widgets
 
 			ImVec2 new_proj_size = { content_width, ImGui::GetTextLineHeightWithSpacing() * 2 };
 			ImVec2 list_size = ImGui::GetContentRegionAvail();
-			auto style = ImGui::GetStyle();
+			const auto& style = ImGui::GetStyle();
 			list_size.y -= new_proj_size.y + style.ItemSpacing.y + style.WindowPadding.y;
 			if (ImGui::BeginChild("##Project List", list_size))
 			{
