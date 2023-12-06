@@ -512,6 +512,8 @@ namespace vt
 		{
 			eof_ = true;
 		}
+
+		//TODO: handle other errors
 	}
 
 	bool video_decoder::is_open() const

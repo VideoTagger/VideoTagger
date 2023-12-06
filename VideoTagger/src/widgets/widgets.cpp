@@ -5,6 +5,7 @@
 #include <string_view>
 
 #include <imgui.h>
+#include <imgui_internal.h>
 #include <ImSequencer.h>
 
 namespace vt::widgets
@@ -23,15 +24,39 @@ namespace vt::widgets
 	struct Timeline : public ImSequencer::SequenceInterface
 	{
 		std::vector<TimelineTag> tags;
+		int min_frame;
+		int max_frame;
+
+		Timeline()
+			: min_frame{}, max_frame{}
+		{
+
+		}
+
+		Timeline(int min_frame, int max_frame)
+			: min_frame{ min_frame }, max_frame{ max_frame }
+		{
+
+		}
+
+		void SetFrameMin(int min_frame)
+		{
+			this->min_frame = min_frame;
+		}
+
+		void SetFrameMax(int max_frame)
+		{
+			this->max_frame = max_frame;
+		}
 
 		virtual int GetFrameMin() const override
 		{
-			return 0;
+			return min_frame;
 		}
 
 		virtual int GetFrameMax() const override
 		{
-			return 100;
+			return max_frame;
 		}
 
 		virtual int GetItemCount() const override
@@ -418,7 +443,7 @@ namespace vt::widgets
 					//
 					//}
 					//int64_t ts = video.current_timestamp().count();
-					//if (ImGui::InputScalar("time", ImGuiDataType_S64, (void*)&ts, nullptr, nullptr, nullptr, ImGuiInputTextFlags_EnterReturnsTrue | ImGuiInputTextFlags_CallbackAlways))
+					//if (ImGui::InputScalar("time", ImGuiDataType_S64, (void*)&ts, nullptr, nullptr, nullptr, ImGuiInputTextFlags_EnterReturnsTrue))
 					//{
 					//	video.seek(timestamp_t(ts));
 					//}
@@ -465,9 +490,18 @@ namespace vt::widgets
 		ImGui::PopStyleVar();
 	}
 	
-	void draw_timeline_widget_sample()
+	void draw_timeline_widget_sample(video& video)
 	{
 		static Timeline test_timeline;
+		if (video.is_open())
+		{
+			test_timeline.SetFrameMax(std::chrono::duration_cast<std::chrono::seconds>(video.duration()).count());
+		}
+		else
+		{
+			test_timeline.SetFrameMax(0);
+		}
+
 		if (test_timeline.tags.empty())
 		{
 			test_timeline.Add(1);
@@ -478,11 +512,18 @@ namespace vt::widgets
 		static int selected_entry = -1;
 		static int first_frame = 0;
 		static bool expanded = true;
-		static int currentFrame = 50;
+		int currentFrame = std::chrono::duration_cast<std::chrono::seconds>(video.current_timestamp()).count();
 
 		if (ImGui::Begin("Timeline"))
 		{
-			ImSequencer::Sequencer(&test_timeline, &currentFrame, nullptr, &selected_entry, &first_frame, ImSequencer::SEQUENCER_EDIT_STARTEND | ImSequencer::SEQUENCER_ADD | ImSequencer::SEQUENCER_DEL | ImSequencer::SEQUENCER_COPYPASTE | ImSequencer::SEQUENCER_CHANGE_FRAME);
+			int flags = ImSequencer::SEQUENCER_EDIT_STARTEND | ImSequencer::SEQUENCER_ADD | ImSequencer::SEQUENCER_DEL | ImSequencer::SEQUENCER_COPYPASTE | ImSequencer::SEQUENCER_CHANGE_FRAME;
+			ImSequencer::Sequencer(&test_timeline, &currentFrame, nullptr, &selected_entry, &first_frame, flags);
+			
+			if (currentFrame != std::chrono::duration_cast<std::chrono::seconds>(video.current_timestamp()).count())
+			{
+				video.seek(std::chrono::seconds(currentFrame));
+			}
+			
 		}
 		ImGui::End();
 	}

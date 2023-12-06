@@ -108,12 +108,19 @@ namespace vt
 
 	void video::seek(timestamp_t timestamp)
 	{
+		if (!is_open())
+		{
+			return;
+		}
+
 		//TODO: handle timestamp > duration
 		//TODO: improve after improving decoder
+
 
 		//TODO: remove only unneeded frames
 		frame_buffer_.clear();
 
+		//TODO: don't seek if frame with timestamp is buffered or is current
 		timestamp_t keyframe_ts = decoder_.seek_keyframe(timestamp);
 		
 		bool skip_last_packet = false;
@@ -182,6 +189,11 @@ namespace vt
 
 	void video::buffer_frames(size_t count)
 	{
+		if (!is_open())
+		{
+			return;
+		}
+
 		for (size_t i = 0; i < count;)
 		{
 			decoder_.read_packet();
@@ -281,6 +293,11 @@ namespace vt
 
 	std::chrono::nanoseconds video::duration() const
 	{
+		if (!is_open())
+		{
+			return std::chrono::nanoseconds(0);
+		}
+
 		return decoder_.duration();
 	}
 
