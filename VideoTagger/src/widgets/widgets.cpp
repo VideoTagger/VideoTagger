@@ -3,10 +3,13 @@
 #include <vector>
 #include <array>
 #include <string_view>
+#include <charconv>
 
 #include <imgui.h>
 #include <imgui_internal.h>
-#include <ImSequencer.h>
+
+#include "video_timeline.hpp"
+#include <utils/video_time.hpp>
 
 namespace vt::widgets
 {
@@ -21,60 +24,60 @@ namespace vt::widgets
 		std::string name;
 	};
 
-	struct Timeline : public ImSequencer::SequenceInterface
+	struct Timeline : public timeline_interface
 	{
 		std::vector<TimelineTag> tags;
-		int min_frame;
-		int max_frame;
+		video_time_t min_time;
+		video_time_t max_time;
 
 		Timeline()
-			: min_frame{}, max_frame{}
+			: min_time{}, max_time{}
 		{
 
 		}
 
-		Timeline(int min_frame, int max_frame)
-			: min_frame{ min_frame }, max_frame{ max_frame }
+		Timeline(video_time_t min_time, video_time_t max_time)
+			: min_time{ min_time }, max_time{ max_time }
 		{
 
 		}
 
-		void SetFrameMin(int min_frame)
+		void set_time_min(video_time_t value)
 		{
-			this->min_frame = min_frame;
+			this->min_time = value;
 		}
 
-		void SetFrameMax(int max_frame)
+		void set_time_max(video_time_t value)
 		{
-			this->max_frame = max_frame;
+			this->max_time = value;
 		}
 
-		virtual int GetFrameMin() const override
+		virtual video_time_t get_time_min() const override
 		{
-			return min_frame;
+			return min_time;
 		}
 
-		virtual int GetFrameMax() const override
+		virtual video_time_t get_time_max() const override
 		{
-			return max_frame;
+			return max_time;
 		}
 
-		virtual int GetItemCount() const override
+		virtual int get_item_count() const override
 		{
 			return static_cast<int>(tags.size());
 		}
 
-		virtual const char* GetItemTypeName(int typeIndex) const
+		virtual const char* get_item_type_name(int typeIndex) const override
 		{
 			return "Type Name";
 		}
 
-		virtual const char* GetItemLabel(int index) const
+		virtual const char* get_item_label(int index) const override
 		{
 			return tags[index].name.c_str();
 		}
 
-		virtual void Get(int index, int** start, int** end, int* type, unsigned int* color) override
+		virtual void get(int index, int** start, int** end, int* type, unsigned int* color) override
 		{
 			TimelineTag& tag = tags[index];
 			if (color)
@@ -87,22 +90,22 @@ namespace vt::widgets
 				*type = tag.type;
 		}
 
-		virtual void Add(int type)
+		virtual void add(int type) override
 		{
 			tags.push_back(TimelineTag{ type, (type - 1) * 10, type * 10, false, "Tag " + std::to_string(type)});
 		}
 
-		virtual void Del(int index)
+		virtual void del(int index) override
 		{
 			tags.erase(tags.begin() + index);
 		}
 
-		virtual void Duplicate(int index)
+		virtual void duplicate(int index) override
 		{
 			tags.push_back(tags[index]);
 		}
 
-		virtual void DoubleClick(int index)
+		virtual void double_click(int index) override
 		{
 			if (tags[index].expanded)
 			{
@@ -116,186 +119,125 @@ namespace vt::widgets
 			tags[index].expanded = !tags[index].expanded;
 		}
 
-		virtual size_t GetCustomHeight(int index)
+		virtual size_t get_custom_height(int index) override
 		{
 			return tags[index].expanded ? 25 : 0;
 		}
 	};
 
-	//come up with a better name
-	struct clock_time_t
-	{
-		std::chrono::seconds total_seconds;
-
-		clock_time_t()
-			: total_seconds{}
-		{
-		}
-
-		clock_time_t(std::chrono::seconds total_seconds)
-			: total_seconds{ total_seconds }
-		{
-		}
-
-		clock_time_t(uint16_t hours, uint8_t minutes, uint8_t seconds)
-		{
-			set(hours, minutes, seconds);
-		}
-
-		void set(uint16_t hours, uint8_t minutes, uint8_t seconds)
-		{
-			seconds %= 60;
-			minutes %= 60;
-			total_seconds = std::chrono::seconds(seconds) + std::chrono::minutes(minutes) + std::chrono::hours(hours);
-		}
-
-		void set_seconds(uint8_t value)
-		{
-			value %= 60;
-			total_seconds = total_seconds - std::chrono::seconds(seconds()) + std::chrono::seconds(value);
-		}
-
-		void set_minutes(uint8_t value)
-		{
-			value %= 60;
-			total_seconds = total_seconds - std::chrono::minutes(minutes()) + std::chrono::minutes(value);
-		}
-
-		void set_hours(uint16_t value)
-		{
-			total_seconds = total_seconds - std::chrono::hours(hours()) + std::chrono::hours(value);
-		}
-
-		uint64_t hours() const
-		{
-			return std::chrono::duration_cast<std::chrono::hours>(total_seconds).count();
-		}
-
-		uint8_t minutes() const
-		{
-			return std::chrono::duration_cast<std::chrono::minutes>(total_seconds).count() % 60;
-		}
-
-		uint8_t seconds() const
-		{
-			return total_seconds.count() % 60;
-		}
-	};
-
 	struct time_widget_state
 	{
-		int current_digit = 0;
-		clock_time_t current_time;
-		bool active;
+		static constexpr std::string_view time_string_template = "000:00:00";
+		static constexpr std::string_view time_string_format = "%03d:%02d:%02d";
+		static constexpr size_t buffer_size = time_string_template.size() + 1;
+		
+		int current_offset{};
+		char buffer[buffer_size]{};
+		bool active{};
 	};
 
-	bool input_time(time_widget_state& state, clock_time_t& value, ImVec2 padding = { 6, 4 })
+	bool input_time(time_widget_state& state, video_time_t& value, ImVec2 padding = { 6, 4 })
 	{
-		/*static constexpr size_t buffer_size = 12;
-
-		struct callback_data_t
-		{
-			int* current_offset;
-			hours_minutes_seconds* input_value;
-			size_t formated_input_value_length; //excludes null terminator
-
-		} callback_data{};
-
-
-		static auto count_digits = [](uint16_t value)
-		{
-			if (value < 10) return 1;
-			else if (value < 100) return 2;
-			else if (value < 1000) return 3;
-			else if (value < 10000) return 4;
-			else return 5;
-		};
-
-		static auto callback = [](ImGuiInputTextCallbackData* data)
-		{
-			callback_data_t& callback_data = *(callback_data_t*)data->UserData;
-			int& current_offset = *callback_data.current_offset;
-			hours_minutes_seconds& input_value = *callback_data.input_value;
-//			char* formated_input_value = callback_data.formated_input_value;
-			size_t formated_input_value_length = callback_data.formated_input_value_length;
-
-			if (data->EventFlag == ImGuiInputTextFlags_CallbackCharFilter)
-			{
-				if (data->EventChar < '0' or '9' < data->EventChar)
-				{
-					return 1;
-				}
-
-				return 0;
-			}
-			else if (data->EventFlag == ImGuiInputTextFlags_CallbackEdit)
-			{
-				if (data->BufTextLen != formated_input_value_length)
-				{
-				}
-				else
-				{
-					if (current_offset == 1 or current_offset == 4)
-					{
-						current_offset += 2;
-
-					}
-					else if (current_offset < data->BufTextLen)
-					{
-						current_offset++;
-					}
-				}
-
-
-
-				std::cout << data->Buf << "\n";
-			}
-			else if (data->EventFlag == ImGuiInputTextFlags_CallbackAlways)
-			{
-				if (current_offset < data->BufTextLen)
-				{
-					data->SelectionStart = data->BufTextLen - 1 - current_offset;
-					data->SelectionEnd = data->BufTextLen - current_offset;
-					data->CursorPos = data->SelectionStart;
-				}
-				else
-				{
-					data->ClearSelection();
-					data->CursorPos = 0;
-				}
-				//data->CursorPos = data->BufTextLen - 1;
-			}
-			return 0;
-		};
-
-		int hours_digits = count_digits(value.hours);
-		char buffer[buffer_size]{0};
-		sprintf_s(buffer, buffer_size, "%05d:%02d:%02d", value.hours, value.minutes, value.seconds);
-
-		ImGuiInputTextFlags flags =
-			ImGuiInputTextFlags_EnterReturnsTrue |
-			ImGuiInputTextFlags_CallbackAlways |
-			ImGuiInputTextFlags_CallbackCharFilter |
-			ImGuiInputTextFlags_CallbackEdit;
-
-		if (ImGui::IsKeyDown(ImGuiKey_Backspace) or ImGui::IsKeyDown(ImGuiKey_Delete))
-		{
-			flags |= ImGuiInputTextFlags_ReadOnly;
-			return false;
-		}
-
-		callback_data.current_offset = &current_offset;
-		callback_data.input_value = &value;
-		callback_data.formated_input_value_length = buffer_size - 1;
-
-		if (ImGui::InputText(label, buffer, buffer_size, flags, callback, (void*)&callback_data))
-		{
-			current_offset = 0;
-			return true;
-		}
-
-		return false;*/
-
+		//struct callback_data_t
+		//{
+		//	int* current_offset;
+		//
+		//} callback_data{};
+		//
+		//static auto callback = [](ImGuiInputTextCallbackData* data)
+		//{
+		//	callback_data_t& callback_data = *(callback_data_t*)data->UserData;
+		//	int& current_offset = *callback_data.current_offset;
+		//
+		//	if (data->EventFlag == ImGuiInputTextFlags_CallbackCharFilter)
+		//	{
+		//		if (data->EventChar < '0' or '9' < data->EventChar)
+		//		{
+		//			return 1;
+		//		}
+		//
+		//		return 0;
+		//	}
+		//	else if (data->EventFlag == ImGuiInputTextFlags_CallbackEdit)
+		//	{
+		//		current_offset++;
+		//
+		//		if (data->Buf[data->BufTextLen - 1 - current_offset] == ':')
+		//		{
+		//			current_offset++;
+		//		}
+		//		
+		//		current_offset = std::clamp(current_offset, 0, data->BufTextLen - 1);
+		//	}
+		//	else if (data->EventFlag == ImGuiInputTextFlags_CallbackAlways)
+		//	{
+		//		if (current_offset < data->BufTextLen)
+		//		{
+		//			data->SelectionStart = data->BufTextLen - 1 - current_offset;
+		//			data->SelectionEnd = data->BufTextLen - current_offset;
+		//			data->CursorPos = data->SelectionStart;
+		//		}
+		//		else
+		//		{
+		//			data->ClearSelection();
+		//			data->CursorPos = 0;
+		//		}
+		//		//data->CursorPos = data->BufTextLen - 1;
+		//	}
+		//	return 0;
+		//};
+		//
+		//static auto string_to_time = [](std::string_view string)
+		//{
+		//	//TODO: crap
+		//
+		//	clock_time_t result;
+		//
+		//	int value{};
+		//	std::from_chars(string.data(), string.data() + 3, value);
+		//	result.set_hours(value);
+		//	std::from_chars(string.data() + 4, string.data() + 6, value);
+		//	result.set_minutes(value);
+		//	std::from_chars(string.data() + 7, string.data() + 9, value);
+		//	result.set_seconds(value);
+		//
+		//	return result;
+		//};
+		//
+		//if (!state.active)
+		//{
+		//	sprintf_s(state.buffer, state.buffer_size, state.time_string_format.data(), value.hours(), value.minutes(), value.seconds());
+		//}
+		//
+		//ImGuiInputTextFlags flags =
+		//	ImGuiInputTextFlags_EnterReturnsTrue |
+		//	ImGuiInputTextFlags_CallbackAlways |
+		//	ImGuiInputTextFlags_CallbackCharFilter |
+		//	ImGuiInputTextFlags_CallbackEdit;
+		//
+		//if (ImGui::IsKeyDown(ImGuiKey_Backspace) or ImGui::IsKeyDown(ImGuiKey_Delete))
+		//{
+		//	flags |= ImGuiInputTextFlags_ReadOnly;
+		//}
+		//
+		//callback_data.current_offset = &state.current_offset;
+		//
+		//bool return_value = false;
+		//
+		//if (ImGui::InputText("time", state.buffer, state.buffer_size, flags, callback, (void*)&callback_data))
+		//{
+		//	if (ImGui::IsKeyDown(ImGuiKey_Enter))
+		//	{
+		//		state.current_offset = 0;
+		//		value = string_to_time(state.buffer);
+		//		return_value = true;
+		//	}
+		//}
+		//
+		//state.active = ImGui::IsItemActive();
+		//
+		//return return_value;
+		//
 		//static constexpr std::string_view size_calc_string = "00000:00:00";
 		//static constexpr size_t buffer_size = size_calc_string.size() + 1;
 		//
@@ -430,17 +372,19 @@ namespace vt::widgets
 					//static time_widget_state state;
 
 					timestamp_t video_ts = video.current_timestamp();
-					clock_time_t current_time{ std::chrono::duration_cast<std::chrono::seconds>(video_ts) };
-					clock_time_t duration{ std::chrono::duration_cast<std::chrono::seconds>(video.duration()) };
+					video_time_t current_time{ std::chrono::duration_cast<std::chrono::seconds>(video_ts) };
+					video_time_t duration{ std::chrono::duration_cast<std::chrono::seconds>(video.duration()) };
 
 					ImGui::Text("%03d:%02d:%02d | %03d:%02d:%02d",
 						current_time.hours(), current_time.minutes(), current_time.seconds(),
 						duration.hours(), duration.minutes(), duration.seconds()
 					);
 
-					//if (input_time(state, time))
+					static time_widget_state state;
+					
+					//if (input_time(state, current_time))
 					//{
-					//
+					//	video.seek(std::chrono::duration_cast<timestamp_t>(current_time.total_seconds));
 					//}
 					//int64_t ts = video.current_timestamp().count();
 					//if (ImGui::InputScalar("time", ImGuiDataType_S64, (void*)&ts, nullptr, nullptr, nullptr, ImGuiInputTextFlags_EnterReturnsTrue))
@@ -495,33 +439,34 @@ namespace vt::widgets
 		static Timeline test_timeline;
 		if (video.is_open())
 		{
-			test_timeline.SetFrameMax(std::chrono::duration_cast<std::chrono::seconds>(video.duration()).count());
+			video_time_t time_max{ std::chrono::duration_cast<std::chrono::seconds>(video.duration()) };
+			test_timeline.set_time_max(time_max);
 		}
 		else
 		{
-			test_timeline.SetFrameMax(0);
+			test_timeline.set_time_max(video_time_t{});
 		}
 
 		if (test_timeline.tags.empty())
 		{
-			test_timeline.Add(1);
-			test_timeline.Add(2);
-			test_timeline.Add(3);
+			test_timeline.add(1);
+			test_timeline.add(2);
+			test_timeline.add(3);
 		}		
 
 		static int selected_entry = -1;
 		static int first_frame = 0;
 		static bool expanded = true;
-		int currentFrame = std::chrono::duration_cast<std::chrono::seconds>(video.current_timestamp()).count();
+		video_time_t current_time{ std::chrono::duration_cast<std::chrono::seconds>(video.current_timestamp()) };
 
 		if (ImGui::Begin("Timeline"))
 		{
 			int flags = ImSequencer::SEQUENCER_EDIT_STARTEND | ImSequencer::SEQUENCER_ADD | ImSequencer::SEQUENCER_DEL | ImSequencer::SEQUENCER_COPYPASTE | ImSequencer::SEQUENCER_CHANGE_FRAME;
-			ImSequencer::Sequencer(&test_timeline, &currentFrame, nullptr, &selected_entry, &first_frame, flags);
+			video_timeline(&test_timeline, &current_time, nullptr, &selected_entry, &first_frame, flags);
 			
-			if (currentFrame != std::chrono::duration_cast<std::chrono::seconds>(video.current_timestamp()).count())
+			if (current_time.total_seconds != std::chrono::duration_cast<std::chrono::seconds>(video.current_timestamp()))
 			{
-				video.seek(std::chrono::seconds(currentFrame));
+				video.seek(current_time.total_seconds);
 			}
 			
 		}
