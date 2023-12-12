@@ -8,15 +8,19 @@ namespace vt::widgets
 	class project_selector
 	{
 	public:
+		project_selector() = default;
 		project_selector(const std::vector<project>& projects);
 
 		std::function<void(const project&)> on_click_project;
 	private:
 		std::vector<project> projects_;
+		project temp_project;
 
 	private:
+		void render_project_creation_menu();
 		void render_project_widget(size_t id, const project& project);
 	public:
+		void set_opened(bool value);
 		void render();
 	};
 }

@@ -19,6 +19,11 @@ namespace vt
 {
 	app::app() : main_window_{}, renderer_{}, state_{ app_state::uninitialized }
 	{
+		ctx_.project_selector.on_click_project = [&](const project& project)
+		{
+			ctx_.current_project = project;
+			std::cout << "Clicked project: " << project.name << "\nPath: " << project.path << '\n';
+		};
 	}
 	
 	bool app::init(const app_config& config)
@@ -49,7 +54,7 @@ namespace vt
 		ImGui_ImplSDLRenderer2_Init(renderer_);
 
 		ImGuiIO& io = ImGui::GetIO();
-		io.IniFilename = nullptr;
+		io.IniFilename = "layout.ini";
 		io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
 		io.ConfigWindowsMoveFromTitleBarOnly = true;
 
@@ -154,8 +159,20 @@ namespace vt
 		ImGui::End();
 	}
 
+	void app::draw_project_selector()
+	{
+		ctx_.project_selector.render();
+		ctx_.project_selector.set_opened(true);
+	}
+
 	void app::draw_ui()
 	{
+		if (!ctx_.current_project.has_value())
+		{
+			draw_project_selector();
+			return;
+		}
+
 		if (ImGui::BeginMainMenuBar())
 		{
 			if (ImGui::BeginMenu("File"))
@@ -201,33 +218,6 @@ namespace vt
 		}
 
 		ImGui::ShowDemoWindow();
-
-		project demo_project;
-		{
-			demo_project.name = "Demo project";
-			demo_project.path = std::filesystem::current_path() / "projects/demo.json";
-			demo_project.working_dir = std::filesystem::current_path();
-		}
-		//TODO: Remove this, this is temporary
-		demo_project.save();
-		project demo_project_copy = project::load_from_file(demo_project.path);
-		demo_project_copy.name += " (Copy)";
-
-		project temp_project;
-		{
-			temp_project.name = "Temp project";
-			temp_project.path = std::filesystem::temp_directory_path();
-			temp_project.working_dir = std::filesystem::temp_directory_path();
-		}
-
-		project invalid_project;
-
-		static widgets::project_selector selector({ demo_project, demo_project_copy, temp_project, invalid_project });
-		selector.on_click_project = [](const project& project)
-		{
-			std::cout << "Clicked project: " << project.name << "\nPath: " << project.path << '\n';
-		};
-		selector.render();
 		
 		widgets::draw_video_widget(vid);
 		widgets::draw_timeline_widget_sample();
