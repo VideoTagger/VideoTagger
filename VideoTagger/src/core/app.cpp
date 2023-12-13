@@ -220,6 +220,6 @@ namespace vt
 		ImGui::ShowDemoWindow();
 		
 		widgets::draw_video_widget(vid);
-		widgets::draw_timeline_widget_sample();
+		widgets::draw_timeline_widget_sample(vid);
 	}
 }

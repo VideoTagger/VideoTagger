@@ -17,16 +17,24 @@ namespace vt
 		~video();
 
 		void set_playing(bool value);
+		void set_speed(float value);
+		void set_looping(bool value);
+
+		void seek(timestamp_t timestamp);
 
 		void buffer_frames(size_t count);
-		SDL_Texture* get_frame();
+		[[nodiscard]] SDL_Texture* get_frame();
 
-		bool is_open() const;
+		[[nodiscard]] bool is_open() const;
 
-		int width() const;
-		int height() const;
+		[[nodiscard]] int width() const;
+		[[nodiscard]] int height() const;
 
-		bool is_playing() const;
+		[[nodiscard]] bool is_playing() const;
+		[[nodiscard]] float speed() const;
+		[[nodiscard]] std::chrono::nanoseconds duration() const;
+
+		[[nodiscard]] timestamp_t current_timestamp() const;
 
 	private:
 		video_decoder decoder_;
@@ -36,6 +44,9 @@ namespace vt
 
 		std::vector<video_frame> frame_buffer_;
 		std::chrono::steady_clock::time_point last_tp_;
-		timestamp_type last_ts_;
+		timestamp_t last_ts_;
+
+		float speed_;
+		bool loop_;
 	};
 }
