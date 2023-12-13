@@ -338,10 +338,11 @@ namespace vt::widgets
 		float button_size = 25;
 		if (ImGui::Begin("Video", nullptr, flags))
 		{
+			auto& imgui_style = ImGui::GetStyle();
 			bool is_playing = video.is_playing();
 			//window content here
-			auto image_avail_size = ImGui::GetContentRegionAvail();
-			image_avail_size.y -= button_size + ImGui::GetStyle().ItemSpacing.y * 2;
+			auto image_avail_size = ImGui::GetContentRegionMax();
+			image_avail_size.y -= button_size + imgui_style.ItemSpacing.y;
 
 			SDL_Texture* texture = video.get_frame();
 			if (texture != nullptr)
@@ -375,6 +376,11 @@ namespace vt::widgets
 					video_time_t current_time{ std::chrono::duration_cast<std::chrono::seconds>(video_ts) };
 					video_time_t duration{ std::chrono::duration_cast<std::chrono::seconds>(video.duration()) };
 
+					auto avail_size = ImGui::GetContentRegionAvail();
+					auto cursor_pos = ImGui::GetCursorPos();
+					auto time_text_pos_x = avail_size.x / 2 - ImGui::CalcTextSize("000:00:00 | 000:00:00").x / 2;
+
+					ImGui::SetCursorPosX(cursor_pos.x + time_text_pos_x);
 					ImGui::Text("%03d:%02d:%02d | %03d:%02d:%02d",
 						current_time.hours(), current_time.minutes(), current_time.seconds(),
 						duration.hours(), duration.minutes(), duration.seconds()
@@ -391,37 +397,52 @@ namespace vt::widgets
 					//{
 					//	video.seek(timestamp_t(ts));
 					//}
-					static bool loop = false;
-					if (ImGui::Checkbox("loop", &loop))
-					{
-						video.set_looping(loop);
-					}
-
-					ImGui::SameLine();
-					if (ImGui::Button("seek to start"))
-					{
-						video.seek(timestamp_t(0));
-					}
 				}
 
 				ImGui::NextColumn();
 				{
 					auto avail_size = ImGui::GetContentRegionAvail();
 					auto cursor_pos = ImGui::GetCursorPos();
-					auto button_pos_x = avail_size.x / 2 - button_size / 2;
+					auto button_pos_x = avail_size.x / 2 - (button_size + imgui_style.ItemSpacing.x) * 4.f / 2;
+					
 					ImGui::SetCursorPosX(cursor_pos.x + button_pos_x);
+					if (ImGui::Button("|<", { button_size, button_size }))
+					{
+						video.seek(timestamp_t(0));
+					}
+					ImGui::SameLine();
 					if (ImGui::Button(is_playing ? "||" : ">", { button_size, button_size }))
 					{
 						video.set_playing(!is_playing);
+					}
+					ImGui::SameLine();
+					if (ImGui::Button(">|", { button_size, button_size }))
+					{
+						video.seek(timestamp_t(video.duration()));
+					}
+					ImGui::SameLine();
+					static bool loop = false;
+					if (ImGui::Checkbox("##VideoPlayerLoop", &loop))
+					{
+						video.set_looping(loop);
 					}
 				}
 
 				ImGui::NextColumn();
 				{
+
+					auto avail_size = ImGui::GetContentRegionAvail();
+					float speed_control_size_x = avail_size.x * 0.75f;
+					auto cursor_pos_x = ImGui::GetCursorPosX();
+					auto speed_control_pos_x = avail_size.x / 2 - speed_control_size_x / 2;
+
 					float speed = video.speed();
 					static constexpr float min_speed = 0.25f;
 					static constexpr float max_speed = 6.0f;
-					if (ImGui::DragFloat("video speed", &speed, 0.1f, min_speed, max_speed, "%.2f", ImGuiSliderFlags_AlwaysClamp))
+
+					ImGui::SetCursorPosX(cursor_pos_x + speed_control_pos_x);
+					ImGui::SetNextItemWidth(speed_control_size_x);
+					if (ImGui::DragFloat("##VideoPlayerSpeed", &speed, 0.1f, min_speed, max_speed, "%.2f", ImGuiSliderFlags_AlwaysClamp))
 					{
 						video.set_speed(speed);
 					}
