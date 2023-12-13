@@ -58,7 +58,7 @@ namespace vt
 		return clickedBtn;
 	}
 
-	bool video_timeline(timeline_interface* sequence, video_time_t* current_time, bool* expanded, int* selected_entry, int* first_frame, int sequence_options)
+	bool video_timeline(timeline_interface* sequence, video_time_t* current_time, bool* expanded, int* selected_entry, int64_t* first_frame, int sequence_options)
 	{
 		bool ret = false;
 		ImGuiIO& io = ImGui::GetIO();
@@ -75,8 +75,8 @@ namespace vt
 		int dupEntry = -1;
 		int ItemHeight = 20;
 
-		const int time_min = sequence->get_time_min().total_seconds.count();
-		const int time_max = sequence->get_time_max().total_seconds.count();
+		const int64_t time_min = sequence->get_time_min().total_seconds.count();
+		const int64_t time_max = sequence->get_time_max().total_seconds.count();
 
 		bool popupOpened = false;
 		int sequenceCount = sequence->get_item_count();
@@ -87,13 +87,13 @@ namespace vt
 		ImDrawList* draw_list = ImGui::GetWindowDrawList();
 		ImVec2 canvas_pos = ImGui::GetCursorScreenPos();            // ImDrawList API uses screen coordinates!
 		ImVec2 canvas_size = ImGui::GetContentRegionAvail();        // Resize canvas to what's available
-		int firstFrameUsed = first_frame ? *first_frame : 0;
+		int64_t firstFrameUsed = first_frame ? *first_frame : 0;
 
 
 		int controlHeight = sequenceCount * ItemHeight;
 		for (int i = 0; i < sequenceCount; i++)
 			controlHeight += int(sequence->get_custom_height(i));
-		int frameCount = std::max(time_max - time_min, 1);
+		int64_t frameCount = std::max(time_max - time_min, 1ll);
 
 		static bool MovingScrollBar = false;
 		static bool MovingCurrentFrame = false;
@@ -108,7 +108,7 @@ namespace vt
 		ImVector<CustomDraw> customDraws;
 		ImVector<CustomDraw> compactCustomDraws;
 		// zoom in/out
-		const int visibleFrameCount = (int)floorf((canvas_size.x - legendWidth) / framePixelWidth);
+		const int64_t visibleFrameCount = (int64_t)floorf((canvas_size.x - legendWidth) / framePixelWidth);
 		const float barWidthRatio = std::min(visibleFrameCount / (float)frameCount, 1.f);
 		const float barWidthInPixels = barWidthRatio * (canvas_size.x - legendWidth);
 
@@ -116,7 +116,7 @@ namespace vt
 
 		static bool panningView = false;
 		static ImVec2 panningViewSource;
-		static int panningViewFrame;
+		static int64_t panningViewFrame;
 		if (ImGui::IsWindowFocused() && io.KeyAlt && io.MouseDown[2])
 		{
 			if (!panningView)
@@ -125,7 +125,7 @@ namespace vt
 				panningView = true;
 				panningViewFrame = *first_frame;
 			}
-			*first_frame = panningViewFrame - int((io.MousePos.x - panningViewSource.x) / framePixelWidth);
+			*first_frame = panningViewFrame - int64_t((io.MousePos.x - panningViewSource.x) / framePixelWidth);
 			*first_frame = std::clamp(*first_frame, time_min, time_max - visibleFrameCount);
 		}
 		if (panningView && !io.MouseDown[2])
@@ -231,7 +231,7 @@ namespace vt
 			};
 			int halfModFrameCount = modFrameCount / 2;
 
-			auto drawLine = [&](int i, int regionHeight) {
+			auto drawLine = [&](int64_t i, int regionHeight) {
 				bool baseIndex = ((i % modFrameCount) == 0) || (i == time_max || i == time_min);
 				bool halfIndex = (i % halfModFrameCount) == 0;
 				int px = (int)canvas_pos.x + int(i * framePixelWidth) + legendWidth - int(firstFrameUsed * framePixelWidth);
@@ -255,7 +255,7 @@ namespace vt
 
 			};
 
-			auto drawLineContent = [&](int i, int /*regionHeight*/) {
+			auto drawLineContent = [&](int64_t i, int /*regionHeight*/) {
 				int px = (int)canvas_pos.x + int(i * framePixelWidth) + legendWidth - int(firstFrameUsed * framePixelWidth);
 				int tiretStart = int(contentMin.y);
 				int tiretEnd = int(contentMax.y);
@@ -267,7 +267,7 @@ namespace vt
 					draw_list->AddLine(ImVec2(float(px), float(tiretStart)), ImVec2(float(px), float(tiretEnd)), 0x30606060, 1);
 				}
 				};
-			for (int i = time_min; i <= time_max; i += frameStep)
+			for (int64_t i = time_min; i <= time_max; i += frameStep)
 			{
 				drawLine(i, ItemHeight);
 			}
@@ -322,7 +322,7 @@ namespace vt
 			draw_list->PushClipRect(childFramePos + ImVec2(float(legendWidth), 0.f), childFramePos + childFrameSize, true);
 
 			// vertical frame lines in content area
-			for (int i = time_min; i <= time_max; i += frameStep)
+			for (int64_t i = time_min; i <= time_max; i += frameStep)
 			{
 				drawLineContent(i, int(contentHeight));
 			}
@@ -568,8 +568,8 @@ namespace vt
 						float barNewWidth = std::max(barWidthInPixels + io.MouseDelta.x, MinBarWidth);
 						float barRatio = barNewWidth / barWidthInPixels;
 						framePixelWidthTarget = framePixelWidth = framePixelWidth / barRatio;
-						int newVisibleFrameCount = int((canvas_size.x - legendWidth) / framePixelWidthTarget);
-						int lastFrame = *first_frame + newVisibleFrameCount;
+						int64_t newVisibleFrameCount = int64_t((canvas_size.x - legendWidth) / framePixelWidthTarget);
+						int64_t lastFrame = *first_frame + newVisibleFrameCount;
 						if (lastFrame > time_max)
 						{
 							framePixelWidthTarget = framePixelWidth = (canvas_size.x - legendWidth) / float(time_max - *first_frame);
@@ -590,8 +590,8 @@ namespace vt
 							float barRatio = barNewWidth / barWidthInPixels;
 							float previousFramePixelWidthTarget = framePixelWidthTarget;
 							framePixelWidthTarget = framePixelWidth = framePixelWidth / barRatio;
-							int newVisibleFrameCount = int(visibleFrameCount / barRatio);
-							int newFirstFrame = *first_frame + newVisibleFrameCount - visibleFrameCount;
+							int64_t newVisibleFrameCount = int64_t(visibleFrameCount / barRatio);
+							int64_t newFirstFrame = *first_frame + newVisibleFrameCount - visibleFrameCount;
 							newFirstFrame = std::clamp(newFirstFrame, time_min, std::max(time_max - visibleFrameCount, time_min));
 							if (newFirstFrame == *first_frame)
 							{
@@ -615,7 +615,7 @@ namespace vt
 						else
 						{
 							float framesPerPixelInBar = barWidthInPixels / (float)visibleFrameCount;
-							*first_frame = int((io.MousePos.x - panningViewSource.x) / framesPerPixelInBar) - panningViewFrame;
+							*first_frame = int64_t((io.MousePos.x - panningViewSource.x) / framesPerPixelInBar) - panningViewFrame;
 							*first_frame = std::clamp(*first_frame, time_min, std::max(time_max - visibleFrameCount, time_min));
 						}
 					}

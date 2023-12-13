@@ -350,8 +350,8 @@ namespace vt::widgets
 				int video_width = video.width();
 				int video_height = video.height();
 
-				int scaled_width = video_width * image_avail_size.y / video_height;
-				int scaled_height = image_avail_size.x * video_height / video_width;
+				float scaled_width = video_width * image_avail_size.y / video_height;
+				float scaled_height = image_avail_size.x * video_height / video_width;
 
 				ImVec2 image_size = image_avail_size;
 				if (scaled_width < image_avail_size.x)
@@ -476,7 +476,7 @@ namespace vt::widgets
 		}		
 
 		static int selected_entry = -1;
-		static int first_frame = 0;
+		static int64_t first_frame = 0;
 		static bool expanded = true;
 		video_time_t current_time{ std::chrono::duration_cast<std::chrono::seconds>(video.current_timestamp()) };
 

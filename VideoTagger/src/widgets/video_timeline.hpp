@@ -79,6 +79,6 @@ namespace vt
 
 
 	// return true if selection is made
-	bool video_timeline(timeline_interface* sequence, video_time_t* current_time, bool* expanded, int* selected_entry, int* first_frame, int sequence_options);
+	bool video_timeline(timeline_interface* sequence, video_time_t* current_time, bool* expanded, int* selected_entry, int64_t* first_frame, int sequence_options);
 
 }
