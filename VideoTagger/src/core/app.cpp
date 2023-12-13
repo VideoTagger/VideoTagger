@@ -10,12 +10,20 @@
 #include <nfd.hpp>
 
 #include <widgets/widgets.hpp>
+#include <widgets/project_selector.hpp>
 #include <utils/filesystem.hpp>
+
+#include "project.hpp"
 
 namespace vt
 {
 	app::app() : main_window_{}, renderer_{}, state_{ app_state::uninitialized }
 	{
+		ctx_.project_selector.on_click_project = [&](const project& project)
+		{
+			ctx_.current_project = project;
+			std::cout << "Clicked project: " << project.name << "\nPath: " << project.path << '\n';
+		};
 	}
 	
 	bool app::init(const app_config& config)
@@ -46,12 +54,12 @@ namespace vt
 		ImGui_ImplSDLRenderer2_Init(renderer_);
 
 		ImGuiIO& io = ImGui::GetIO();
-		io.IniFilename = nullptr;
+		io.IniFilename = "layout.ini";
 		io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
 		io.ConfigWindowsMoveFromTitleBarOnly = true;
 
 		std::filesystem::path font_path{ "assets/fonts/NotoSans-Regular.ttf" };
-		float font_size = 18.0f;
+		float font_size = 16.0f;
 
 		if (std::filesystem::exists(font_path))
 		{
@@ -151,8 +159,20 @@ namespace vt
 		ImGui::End();
 	}
 
+	void app::draw_project_selector()
+	{
+		ctx_.project_selector.render();
+		ctx_.project_selector.set_opened(true);
+	}
+
 	void app::draw_ui()
 	{
+		if (!ctx_.current_project.has_value())
+		{
+			draw_project_selector();
+			return;
+		}
+
 		if (ImGui::BeginMainMenuBar())
 		{
 			if (ImGui::BeginMenu("File"))
