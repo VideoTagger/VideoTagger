@@ -3,6 +3,7 @@
 #include <memory>
 
 #include <video/video.hpp>
+#include "app_context.hpp"
 
 struct SDL_Window;
 struct SDL_Renderer;
@@ -35,6 +36,8 @@ namespace vt
 		app_state state_;
 		SDL_Window* main_window_;
 		SDL_Renderer* renderer_;
+
+		app_context ctx_;
 		//temporary
 		video vid;
 
@@ -47,6 +50,7 @@ namespace vt
 		void render();
 
 		void draw();
+		void draw_project_selector();
 		void draw_ui();
 	};
 }
