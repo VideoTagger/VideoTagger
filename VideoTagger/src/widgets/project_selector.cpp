@@ -335,6 +335,7 @@ namespace vt::widgets
 
 						if (BeginButtonDropdown("##ProjectDropdown", button_size))
 						{
+							ImGui::PushStyleColor(ImGuiCol_Button, ImVec4{});
 							if (ImGui::Button("Add Existing Project", button_size))
 							{
 								utils::dialog_filter filter{ "VideoTagger Project", project::extension };
@@ -343,9 +344,10 @@ namespace vt::widgets
 								if (result)
 								{
 									projects_.push_back(project::load_from_file(result.path));
-									ImGui::CloseCurrentPopup();
 								}
+								ImGui::CloseCurrentPopup();
 							}
+							ImGui::PopStyleColor();
 							EndButtonDropdown();
 						}
 					}

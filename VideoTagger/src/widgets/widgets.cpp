@@ -81,7 +81,7 @@ namespace vt::widgets
 		{
 			TimelineTag& tag = tags[index];
 			if (color)
-				*color = 0xFF00FF07; // same color for everyone, return color based on type
+				*color = 0xFF448F64; // same color for everyone, return color based on type
 			if (start)
 				*start = &tag.start_frame;
 			if (end)
@@ -127,8 +127,8 @@ namespace vt::widgets
 
 	struct time_widget_state
 	{
-		static constexpr std::string_view time_string_template = "000:00:00";
-		static constexpr std::string_view time_string_format = "%03d:%02d:%02d";
+		static constexpr std::string_view time_string_template = "00:00:00";
+		static constexpr std::string_view time_string_format = "%02:%02d:%02d";
 		static constexpr size_t buffer_size = time_string_template.size() + 1;
 		
 		int current_offset{};
@@ -378,10 +378,10 @@ namespace vt::widgets
 
 					auto avail_size = ImGui::GetContentRegionAvail();
 					auto cursor_pos = ImGui::GetCursorPos();
-					auto time_text_pos_x = avail_size.x / 2 - ImGui::CalcTextSize("000:00:00 | 000:00:00").x / 2;
+					auto time_text_pos_x = avail_size.x / 2 - ImGui::CalcTextSize("00:00:00 | 00:00:00").x / 2;
 
 					ImGui::SetCursorPosX(cursor_pos.x + time_text_pos_x);
-					ImGui::Text("%03d:%02d:%02d | %03d:%02d:%02d",
+					ImGui::Text("%02d:%02d:%02d | %02d:%02d:%02d",
 						current_time.hours(), current_time.minutes(), current_time.seconds(),
 						duration.hours(), duration.minutes(), duration.seconds()
 					);
@@ -480,6 +480,7 @@ namespace vt::widgets
 		static bool expanded = true;
 		video_time_t current_time{ std::chrono::duration_cast<std::chrono::seconds>(video.current_timestamp()) };
 
+		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2{});
 		if (ImGui::Begin("Timeline"))
 		{
 			int flags = ImSequencer::SEQUENCER_EDIT_STARTEND | ImSequencer::SEQUENCER_ADD | ImSequencer::SEQUENCER_DEL | ImSequencer::SEQUENCER_COPYPASTE | ImSequencer::SEQUENCER_CHANGE_FRAME;
@@ -492,5 +493,6 @@ namespace vt::widgets
 			
 		}
 		ImGui::End();
+		ImGui::PopStyleVar();
 	}
 }

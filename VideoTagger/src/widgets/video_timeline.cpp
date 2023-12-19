@@ -41,20 +41,22 @@ namespace vt
 	static bool SequencerAddDelButton(ImDrawList* draw_list, ImVec2 pos, bool add = true)
 	{
 		ImGuiIO& io = ImGui::GetIO();
+		const ImGuiStyle& style = ImGui::GetStyle();
 		ImRect btnRect(pos, ImVec2(pos.x + 16, pos.y + 16));
 		bool overBtn = btnRect.Contains(io.MousePos);
 		bool containedClick = overBtn && btnRect.Contains(io.MouseClickedPos[0]);
 		bool clickedBtn = containedClick && io.MouseReleased[0];
-		int btnColor = overBtn ? 0xAAEAFFAA : 0x77A3B2AA;
+		//int btnColor = overBtn ? 0xAAEAFFAA : 0x77A3B2AA;
+		ImU32 button_color = ImGui::ColorConvertFloat4ToU32(style.Colors[overBtn ? ImGuiCol_Text : ImGuiCol_TextDisabled]);
 		if (containedClick && io.MouseDownDuration[0] > 0)
 			btnRect.Expand(2.0f);
 
 		float midy = pos.y + 16 / 2 - 0.5f;
 		float midx = pos.x + 16 / 2 - 0.5f;
-		draw_list->AddRect(btnRect.Min, btnRect.Max, btnColor, 4);
-		draw_list->AddLine(ImVec2(btnRect.Min.x + 3, midy), ImVec2(btnRect.Max.x - 3, midy), btnColor, 2);
+		draw_list->AddRect(btnRect.Min, btnRect.Max, button_color, 4);
+		draw_list->AddLine(ImVec2(btnRect.Min.x + 3, midy), ImVec2(btnRect.Max.x - 3, midy), button_color, 2);
 		if (add)
-			draw_list->AddLine(ImVec2(midx, btnRect.Min.y + 3), ImVec2(midx, btnRect.Max.y - 3), btnColor, 2);
+			draw_list->AddLine(ImVec2(midx, btnRect.Min.y + 3), ImVec2(midx, btnRect.Max.y - 3), button_color, 2);
 		return clickedBtn;
 	}
 
@@ -62,6 +64,7 @@ namespace vt
 	{
 		bool ret = false;
 		ImGuiIO& io = ImGui::GetIO();
+		ImGuiStyle& style = ImGui::GetStyle();
 		int cx = (int)(io.MousePos.x);
 		int cy = (int)(io.MousePos.y);
 		static float framePixelWidth = 10.f;
@@ -177,7 +180,9 @@ namespace vt
 			const float contentHeight = contentMax.y - contentMin.y;
 
 			// full background
-			draw_list->AddRectFilled(canvas_pos, canvas_pos + canvas_size, 0xFF242424, 0);
+			
+			ImU32 bg_color = ImGui::ColorConvertFloat4ToU32(style.Colors[ImGuiCol_MenuBarBg]); //0xFF242424
+			draw_list->AddRectFilled(canvas_pos, canvas_pos + canvas_size, bg_color, 0);
 
 			// current frame top
 			ImRect topRect(ImVec2(canvas_pos.x + legendWidth, canvas_pos.y), ImVec2(canvas_pos.x + canvas_size.x, canvas_pos.y + ItemHeight));
@@ -201,7 +206,8 @@ namespace vt
 			}
 
 			//header
-			draw_list->AddRectFilled(canvas_pos, ImVec2(canvas_size.x + canvas_pos.x, canvas_pos.y + ItemHeight), 0xFF3D3837, 0);
+			ImU32 header_color = ImGui::ColorConvertFloat4ToU32(style.Colors[ImGuiCol_WindowBg]); //0xFF3D3837
+			draw_list->AddRectFilled(canvas_pos, ImVec2(canvas_size.x + canvas_pos.x, canvas_pos.y + ItemHeight), header_color, 0);
 			if (sequence_options & ImSequencer::SEQUENCER_ADD)
 			{
 				if (SequencerAddDelButton(draw_list, ImVec2(canvas_pos.x + legendWidth - ItemHeight, canvas_pos.y + 2), true))
@@ -249,8 +255,9 @@ namespace vt
 				{
 					video_time_t time{ std::chrono::seconds(i) };
 					char tmps[512];
-					ImFormatString(tmps, IM_ARRAYSIZE(tmps), "%03d:%02d:%02d", time.hours(), time.minutes(), time.seconds());
-					draw_list->AddText(ImVec2((float)px + 3.f, canvas_pos.y), 0xFFBBBBBB, tmps);
+					ImFormatString(tmps, IM_ARRAYSIZE(tmps), "%02d:%02d:%02d", time.hours(), time.minutes(), time.seconds());
+					ImU32 text_color = ImGui::ColorConvertFloat4ToU32(style.Colors[ImGuiCol_Text]); //0xFFBBBBBB
+					draw_list->AddText(ImVec2((float)px + 3.f, canvas_pos.y), text_color, tmps);
 				}
 
 			};
@@ -264,7 +271,10 @@ namespace vt
 				{
 					//draw_list->AddLine(ImVec2((float)px, canvas_pos.y + (float)tiretStart), ImVec2((float)px, canvas_pos.y + (float)tiretEnd - 1), 0xFF606060, 1);
 
-					draw_list->AddLine(ImVec2(float(px), float(tiretStart)), ImVec2(float(px), float(tiretEnd)), 0x30606060, 1);
+					auto line_color4 = style.Colors[ImGuiCol_TextDisabled];
+					line_color4.w = 30 / 255.0f;
+					ImU32 line_color = ImGui::ColorConvertFloat4ToU32(line_color4); //0x30606060
+					draw_list->AddLine(ImVec2(float(px), float(tiretStart)), ImVec2(float(px), float(tiretEnd)), line_color, 1);
 				}
 				};
 			for (int64_t i = time_min; i <= time_max; i += frameStep)
@@ -288,7 +298,8 @@ namespace vt
 				int type;
 				sequence->get(i, NULL, NULL, &type, NULL);
 				ImVec2 tpos(contentMin.x + 3, contentMin.y + i * ItemHeight + 2 + customHeight);
-				draw_list->AddText(tpos, 0xFFFFFFFF, sequence->get_item_label(i));
+				ImU32 text_color = ImGui::ColorConvertFloat4ToU32(style.Colors[ImGuiCol_Text]); //0xFFFFFFFF
+				draw_list->AddText(tpos, text_color, sequence->get_item_label(i));
 
 				if (sequence_options & ImSequencer::SEQUENCER_DEL)
 				{
@@ -303,9 +314,15 @@ namespace vt
 
 			// slots background
 			customHeight = 0;
+			auto slots_color4 = style.Colors[ImGuiCol_WindowBg];
+			slots_color4.w *= 0.5f;
+			ImU32 slots_color = ImGui::ColorConvertFloat4ToU32(slots_color4); //0xFF413D3D
+
 			for (int i = 0; i < sequenceCount; i++)
 			{
+				//TODO: Change this
 				unsigned int col = (i & 1) ? 0xFF3A3636 : 0xFF413D3D;
+				//ImU32 col = slots_color;
 
 				size_t localCustomHeight = sequence->get_custom_height(i);
 				ImVec2 pos = ImVec2(contentMin.x + legendWidth, contentMin.y + ItemHeight * i + 1 + customHeight);
@@ -336,6 +353,7 @@ namespace vt
 				customHeight = 0;
 				for (int i = 0; i < *selected_entry; i++)
 					customHeight += sequence->get_custom_height(i);
+				//TODO: Change color
 				draw_list->AddRectFilled(ImVec2(contentMin.x, contentMin.y + ItemHeight * *selected_entry + customHeight), ImVec2(contentMin.x + canvas_size.x, contentMin.y + ItemHeight * (*selected_entry + 1) + customHeight), 0x801080FF, 1.f);
 			}
 
@@ -472,20 +490,25 @@ namespace vt
 					sequence->end_edit();
 				}
 			}
+			draw_list->PopClipRect();
+			draw_list->PopClipRect();
 
 			// cursor
 			if (current_time && first_frame && current_time->total_seconds.count() >= *first_frame && current_time->total_seconds.count() <= time_max)
 			{
-				static const float cursorWidth = 8.f;
+				static constexpr float cursorWidth = 4.f;
+				static constexpr float triangle_span = cursorWidth * 2;
 				float cursorOffset = contentMin.x + legendWidth + (current_time->total_seconds.count() - firstFrameUsed) * framePixelWidth + framePixelWidth / 2 - cursorWidth * 0.5f;
-				draw_list->AddLine(ImVec2(cursorOffset, canvas_pos.y), ImVec2(cursorOffset, contentMax.y), 0xA02A2AFF, cursorWidth);
+				ImU32 cursor_color = 0xE33E36FF; //0xA02A2AFF
+				draw_list->AddLine(ImVec2(cursorOffset, canvas_pos.y), ImVec2(cursorOffset, contentMax.y), cursor_color, cursorWidth);
+				draw_list->AddTriangleFilled(ImVec2(cursorOffset - triangle_span, canvas_pos.y), ImVec2(cursorOffset, canvas_pos.y + ItemHeight * 0.5f), ImVec2(cursorOffset + triangle_span, canvas_pos.y), cursor_color);
+				/*
 				char tmps[512];
 				ImFormatString(tmps, IM_ARRAYSIZE(tmps), "%d", *current_time);
 				draw_list->AddText(ImVec2(cursorOffset + 10, canvas_pos.y + 2), 0xFF2A2AFF, tmps);
+				*/
 			}
 
-			draw_list->PopClipRect();
-			draw_list->PopClipRect();
 
 			for (auto& customDraw : customDraws)
 				sequence->custom_draw(customDraw.index, draw_list, customDraw.customRect, customDraw.legendRect, customDraw.clippingRect, customDraw.legendClippingRect);
@@ -498,14 +521,15 @@ namespace vt
 				ImRect rectCopy(ImVec2(contentMin.x + 100, canvas_pos.y + 2)
 					, ImVec2(contentMin.x + 100 + 30, canvas_pos.y + ItemHeight - 2));
 				bool inRectCopy = rectCopy.Contains(io.MousePos);
-				unsigned int copyColor = inRectCopy ? 0xFF1080FF : 0xFF000000;
-				draw_list->AddText(rectCopy.Min, copyColor, "Copy");
+				
+				ImU32 copy_color = ImGui::ColorConvertFloat4ToU32(style.Colors[inRectCopy ? ImGuiCol_Text : ImGuiCol_TextDisabled]);
+				draw_list->AddText(rectCopy.Min, copy_color, "Copy");
 
 				ImRect rectPaste(ImVec2(contentMin.x + 140, canvas_pos.y + 2)
 					, ImVec2(contentMin.x + 140 + 30, canvas_pos.y + ItemHeight - 2));
 				bool inRectPaste = rectPaste.Contains(io.MousePos);
-				unsigned int pasteColor = inRectPaste ? 0xFF1080FF : 0xFF000000;
-				draw_list->AddText(rectPaste.Min, pasteColor, "Paste");
+				ImU32 paste_color = ImGui::ColorConvertFloat4ToU32(style.Colors[inRectPaste ? ImGuiCol_Text : ImGuiCol_TextDisabled]);
+				draw_list->AddText(rectPaste.Min, paste_color, "Paste");
 
 				if (inRectCopy && io.MouseReleased[0])
 				{
@@ -516,12 +540,17 @@ namespace vt
 					sequence->paste();
 				}
 			}
-			//
 
 			ImGui::EndChildFrame();
 			ImGui::PopStyleColor();
 			if (hasScrollBar)
 			{
+				ImU32 scroll_bg_color = ImGui::ColorConvertFloat4ToU32(style.Colors[ImGuiCol_ScrollbarBg]);
+				ImU32 scroll_bg_alt_color = ImGui::ColorConvertFloat4ToU32(style.Colors[ImGuiCol_MenuBarBg]);
+				ImU32 scroll_color = ImGui::ColorConvertFloat4ToU32(style.Colors[ImGuiCol_ScrollbarGrab]);
+				ImU32 scroll_hover_color = ImGui::ColorConvertFloat4ToU32(style.Colors[ImGuiCol_ScrollbarGrabHovered]);
+				ImU32 scroll_active_color = ImGui::ColorConvertFloat4ToU32(style.Colors[ImGuiCol_ScrollbarGrabActive]);
+
 				ImGui::InvisibleButton("scrollBar", scrollBarSize);
 				ImVec2 scrollBarMin = ImGui::GetItemRectMin();
 				ImVec2 scrollBarMax = ImGui::GetItemRectMax();
@@ -531,17 +560,17 @@ namespace vt
 				float startFrameOffset = ((float)(firstFrameUsed - time_min) / (float)frameCount) * (canvas_size.x - legendWidth);
 				ImVec2 scrollBarA(scrollBarMin.x + legendWidth, scrollBarMin.y - 2);
 				ImVec2 scrollBarB(scrollBarMin.x + canvas_size.x, scrollBarMax.y - 1);
-				draw_list->AddRectFilled(scrollBarA, scrollBarB, 0xFF222222, 0);
+				draw_list->AddRectFilled(scrollBarA, scrollBarB, scroll_bg_alt_color, 0);
 
 				ImRect scrollBarRect(scrollBarA, scrollBarB);
 				bool inScrollBar = scrollBarRect.Contains(io.MousePos);
 
-				draw_list->AddRectFilled(scrollBarA, scrollBarB, 0xFF101010, 8);
+				draw_list->AddRectFilled(scrollBarA, scrollBarB, scroll_bg_color, style.ScrollbarRounding);
 
 
 				ImVec2 scrollBarC(scrollBarMin.x + legendWidth + startFrameOffset, scrollBarMin.y);
 				ImVec2 scrollBarD(scrollBarMin.x + legendWidth + barWidthInPixels + startFrameOffset, scrollBarMax.y - 2);
-				draw_list->AddRectFilled(scrollBarC, scrollBarD, (inScrollBar || MovingScrollBar) ? 0xFF606060 : 0xFF505050, 6);
+				draw_list->AddRectFilled(scrollBarC, scrollBarD, (inScrollBar || MovingScrollBar) ? scroll_active_color : scroll_color, style.ScrollbarRounding);
 
 				ImRect barHandleLeft(scrollBarC, ImVec2(scrollBarC.x + 14, scrollBarD.y));
 				ImRect barHandleRight(ImVec2(scrollBarD.x - 14, scrollBarC.y), scrollBarD);
@@ -552,8 +581,9 @@ namespace vt
 				static bool sizingRBar = false;
 				static bool sizingLBar = false;
 
-				draw_list->AddRectFilled(barHandleLeft.Min, barHandleLeft.Max, (onLeft || sizingLBar) ? 0xFFAAAAAA : 0xFF666666, 6);
-				draw_list->AddRectFilled(barHandleRight.Min, barHandleRight.Max, (onRight || sizingRBar) ? 0xFFAAAAAA : 0xFF666666, 6);
+				
+				draw_list->AddRectFilled(barHandleLeft.Min, barHandleLeft.Max, (onLeft || sizingLBar) ? scroll_hover_color : scroll_active_color, style.ScrollbarRounding);
+				draw_list->AddRectFilled(barHandleRight.Min, barHandleRight.Max, (onRight || sizingRBar) ? scroll_hover_color : scroll_active_color, style.ScrollbarRounding);
 
 				ImRect scrollBarThumb(scrollBarC, scrollBarD);
 				static const float MinBarWidth = 44.f;
