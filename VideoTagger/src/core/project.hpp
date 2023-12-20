@@ -21,6 +21,7 @@ namespace vt
 		//TODO: Add keybinds
 
 		bool is_valid() const;
+		std::tm modification_time() const;
 		void save() const;
 
 		bool operator==(const project& other) const;

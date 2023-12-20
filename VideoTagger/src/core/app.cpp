@@ -1,6 +1,6 @@
 #include "app.hpp"
 #include <cmath>
-#include <iostream>
+#include <fstream>
 #include <filesystem>
 
 #include <SDL.h>
@@ -14,6 +14,7 @@
 #include <utils/filesystem.hpp>
 
 #include "project.hpp"
+#include <core/debug.hpp>
 
 namespace vt
 {
@@ -22,12 +23,15 @@ namespace vt
 		ctx_.project_selector.on_click_project = [&](const project& project)
 		{
 			ctx_.current_project = project;
-			std::cout << "Clicked project: " << project.name << "\nPath: " << project.path << '\n';
+			debug::log("Clicked project: " + project.name + ", Filepath: " + project.path.string());
 		};
 	}
 	
 	bool app::init(const app_config& config)
 	{
+		//Clears the log file
+		std::ofstream{ debug::log_filepath };
+
 		if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS) < 0) return false;
 		if (NFD::Init() != NFD_OKAY) return false;
 
@@ -58,7 +62,7 @@ namespace vt
 		io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
 		io.ConfigWindowsMoveFromTitleBarOnly = true;
 
-		std::filesystem::path font_path{ "assets/fonts/NotoSans-Regular.ttf" };
+		std::filesystem::path font_path = std::filesystem::path("assets") / "fonts" / "NotoSans-Regular.ttf";
 		float font_size = 16.0f;
 
 		if (std::filesystem::exists(font_path))
@@ -182,7 +186,7 @@ namespace vt
 					auto result = utils::filesystem::get_file();
 					if (result)
 					{
-						std::cout << result.path << '\n';
+						debug::log("Opening video " + result.path.string());
 						vid.open_file(result.path, renderer_);
 					}
 				}
@@ -191,7 +195,7 @@ namespace vt
 					auto result = utils::filesystem::get_folder();
 					if (result)
 					{
-						std::cout << result.path << '\n';
+						debug::log("Opening directory " + result.path.string());
 					}
 				}
 				if (ImGui::MenuItem("Save As..."))
@@ -199,7 +203,7 @@ namespace vt
 					auto result = utils::filesystem::save_file();
 					if (result)
 					{
-						std::cout << result.path << '\n';
+						debug::log("Saving as " + result.path.string());
 					}
 				}
 				ImGui::EndMenu();

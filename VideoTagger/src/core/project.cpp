@@ -8,6 +8,11 @@ namespace vt
 	{
 		return !path.empty() and !name.empty();
 	}
+
+	std::tm project::modification_time() const
+	{
+		return std::tm();
+	}
 	
 	void project::save() const
 	{

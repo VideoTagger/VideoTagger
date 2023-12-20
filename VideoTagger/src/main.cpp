@@ -2,6 +2,7 @@
 #include <core/debug.hpp>
 #include <fstream>
 #include <iostream>
+
 int main(int argc, char* argv[])
 {
 	vt::app app;
