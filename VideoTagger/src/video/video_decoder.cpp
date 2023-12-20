@@ -489,8 +489,25 @@ namespace vt
 		AVPacket* unwrapped_packet = packet.unwrapped();
 
 		int read_frame_result;
-		while ((read_frame_result = av_read_frame(format_context_, unwrapped_packet)) == 0)
+		while (true)
 		{
+			read_frame_result = av_read_frame(format_context_, unwrapped_packet);
+			
+			if (read_frame_result == AVERROR_EOF)
+			{
+				eof_ = true;
+				return;
+			}
+			else if (read_frame_result == AVERROR_INVALIDDATA)
+			{
+				continue;
+			}
+			else if (read_frame_result != 0)
+			{
+				//TODO: Do something
+				return;
+			}
+
 			auto it = std::find(stream_indices_.begin(), stream_indices_.end(), packet.stream_index());
 			if (it == stream_indices_.end())
 			{
@@ -508,10 +525,10 @@ namespace vt
 			break;
 		}
 
-		if (read_frame_result == AVERROR_EOF)
-		{
-			eof_ = true;
-		}
+		//if (read_frame_result == AVERROR_EOF)
+		//{
+		//	eof_ = true;
+		//}
 
 		//TODO: handle other errors
 	}
@@ -594,10 +611,13 @@ namespace vt
 		}
 		discard_all_packets();
 
-		read_packet();
-		if (eof())
+		while (packet_queue_size(stream_type::video) == 0)
 		{
-			return duration();
+			read_packet();
+			if (eof())
+			{
+				return duration();
+			}
 		}
 		
 		timestamp_t keyframe_ts = peek_next_packet(stream_type::video).timestamp();

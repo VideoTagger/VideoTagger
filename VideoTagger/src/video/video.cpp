@@ -132,6 +132,12 @@ namespace vt
 				break;
 			}
 
+			//TODO: CONTINUE
+			do
+			{
+
+			}
+
 			decoder_.read_packet();
 			if (decoder_.last_read_packet_type() != vt::stream_type::video)
 			{
