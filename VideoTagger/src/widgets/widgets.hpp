@@ -4,5 +4,5 @@
 namespace vt::widgets
 {
 	extern void draw_video_widget(video& video);
-	extern void draw_timeline_widget_sample();
+	extern void draw_timeline_widget_sample(video& video);
 }
