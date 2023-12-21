@@ -1,7 +1,8 @@
 #include <core/app.hpp>
 #include <core/debug.hpp>
-#include <fstream>
-#include <iostream>
+#include <utils/hash.hpp>
+
+
 int main(int argc, char* argv[])
 {
 	vt::app app;
@@ -14,5 +15,6 @@ int main(int argc, char* argv[])
 	{
 		app.run();
 	}
+	
 	return 0;
 }
