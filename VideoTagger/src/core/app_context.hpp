@@ -9,6 +9,7 @@ namespace vt
 	struct app_context
 	{
 		std::optional<project> current_project;
+		std::filesystem::path projects_list_filepath;
 		widgets::project_selector project_selector;
 	};
 }

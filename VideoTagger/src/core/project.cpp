@@ -1,6 +1,14 @@
+#define _CRT_SECURE_NO_WARNINGS
 #include "project.hpp"
 #include <vector>
 #include <utils/json.hpp>
+#include <core/debug.hpp>
+
+static std::chrono::system_clock::time_point to_sys_time(const std::filesystem::file_time_type& ftime)
+{
+	using namespace std::literals;
+	return std::chrono::system_clock::time_point{ ftime.time_since_epoch() - 3234576h };
+}
 
 namespace vt
 {
@@ -9,9 +17,19 @@ namespace vt
 		return !path.empty() and !name.empty();
 	}
 
-	std::tm project::modification_time() const
+	std::optional<std::tm> project::modification_time() const
 	{
-		return std::tm();
+		std::optional<std::tm> result;
+		if (path.empty() or !std::filesystem::exists(path)) return std::nullopt;
+		std::filesystem::file_time_type mod_time = std::filesystem::last_write_time(path);
+
+		if (mod_time != std::filesystem::file_time_type{})
+		{
+			auto time = to_sys_time(mod_time);
+			auto tt = std::chrono::system_clock::to_time_t(time);
+			result = *std::localtime(&tt);
+		}
+		return result;
 	}
 	
 	void project::save() const
@@ -42,14 +60,20 @@ namespace vt
 	
 	project project::load_from_file(const std::filesystem::path& filepath)
 	{
-		//TODO: Add error checking
-
 		project result;
-		nlohmann::json json = utils::json::load_from_file(filepath);
-		const auto& project = json["project"];
 		result.path = filepath;
-		result.name = project["name"];
-		result.working_dir = project["working-dir"].get<std::filesystem::path>();
+		if (!std::filesystem::exists(filepath))
+		{
+			result.name = filepath.stem().string();
+		}
+		else
+		{
+			//TODO: Add error checking
+			nlohmann::json json = utils::json::load_from_file(filepath);
+			const auto& project = json["project"];
+			result.name = project["name"];
+			result.working_dir = project["working-dir"].get<std::filesystem::path>();
+		}			
 		return result;
 	}
 }

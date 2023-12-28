@@ -1,6 +1,6 @@
 .vs/
 .build/
-log.txt
+app.log
 
 **.sln
 **.vcxproj

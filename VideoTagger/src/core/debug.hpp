@@ -14,7 +14,7 @@ namespace vt
 			full = console | file
 		};
 
-		static std::filesystem::path log_filepath;
+		static constexpr const char* log_filepath = "app.log";
 		static logging_mode log_mode;
 
 		//Logs the message with an 'Info' flag

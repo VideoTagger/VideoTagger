@@ -4,7 +4,6 @@
 
 namespace vt
 {
-	std::filesystem::path debug::log_filepath = "log.txt";
 	debug::logging_mode debug::log_mode = debug::logging_mode::full;
 
 	void debug::log(const std::string& message)

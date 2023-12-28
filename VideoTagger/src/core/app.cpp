@@ -20,10 +20,53 @@ namespace vt
 {
 	app::app() : main_window_{}, renderer_{}, state_{ app_state::uninitialized }
 	{
-		ctx_.project_selector.on_click_project = [&](const project& project)
+		ctx_.project_selector.on_click_project = [&](project& project)
 		{
-			ctx_.current_project = project;
 			debug::log("Clicked project: " + project.name + ", Filepath: " + project.path.string());
+			if (!std::filesystem::is_regular_file(project.path))
+			{
+				const SDL_MessageBoxButtonData buttons[] = {
+					// flags, buttonid, text
+					{ SDL_MESSAGEBOX_BUTTON_ESCAPEKEY_DEFAULT, 0, "Cancel" },
+					{ SDL_MESSAGEBOX_BUTTON_RETURNKEY_DEFAULT, 1, "Remove" },
+					{ 0, 2, "Locate" },
+				};
+
+				SDL_MessageBoxData data{};
+				data.flags = SDL_MESSAGEBOX_INFORMATION;
+				
+				//TODO: Replace title
+				data.buttons = buttons;
+				data.numbuttons = sizeof(buttons) / sizeof(buttons[0]);
+				data.title = "VideoTagger";
+				data.message = "This project no longer exists";
+				int buttonid{};
+				SDL_ShowMessageBox(&data, &buttonid);
+
+				switch (buttonid)
+				{
+					case 1: ctx_.project_selector.remove(project); break;
+					case 2:
+					{
+						utils::dialog_filter filter{ "VideoTagger Project", project::extension };
+						auto result = utils::filesystem::get_file({}, { filter });
+						if (result)
+						{
+							project = project::load_from_file(result.path);
+						}
+					}
+					break;
+				}
+				return;
+			}
+			ctx_.current_project = project;
+		};
+
+		ctx_.project_selector.on_project_list_update = [&]()
+		{
+			ctx_.project_selector.sort();
+			ctx_.project_selector.save_projects_file(ctx_.projects_list_filepath);
+			debug::log("Saving projects list to " + std::filesystem::relative(ctx_.projects_list_filepath).string());
 		};
 	}
 	
@@ -71,6 +114,7 @@ namespace vt
 		}
 
 		state_ = app_state::initialized;
+		ctx_.projects_list_filepath = config.projects_list_filepath;
 		return true;
 	}
 	
@@ -79,6 +123,8 @@ namespace vt
 		if (state_ != app_state::initialized) return false;
 
 		state_ = app_state::running;
+		ctx_.project_selector.load_projects_file(ctx_.projects_list_filepath);
+
 		while (state_ == app_state::running)
 		{
 			ImGui_ImplSDLRenderer2_NewFrame();
