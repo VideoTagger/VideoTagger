@@ -13,6 +13,7 @@
 #include <core/debug.hpp>
 #include <utils/filesystem.hpp>
 #include <utils/json.hpp>
+#include <utils/string.hpp>
 
 #include <core/app.hpp>
 
@@ -334,13 +335,11 @@ namespace vt::widgets
 
 		if (ImGui::BeginPopupModal("Project Selector", nullptr, flags))
 		{
-			std::string buffer;
-
 			ImGui::LabelText("##ProjectSelectorTitle", "Projects");
 
 			auto max_content_size = ImGui::GetContentRegionAvail();
 			ImGui::SetNextItemWidth(max_content_size.x);
-			ImGui::InputTextWithHint("##ProjectSelectorSearch", "Search...", &buffer);
+			ImGui::InputTextWithHint("##ProjectSelectorSearch", "Search...", &filter, ImGuiInputTextFlags_AutoSelectAll | ImGuiInputTextFlags_EscapeClearsAll);
 						
 			const auto& style = ImGui::GetStyle();
 			auto panels_area = ImGui::GetContentRegionAvail() - style.WindowPadding;
@@ -353,15 +352,39 @@ namespace vt::widgets
 				ImGui::TableNextColumn();
 				{
 					ImVec2 list_panel_size = ImGui::GetContentRegionAvail();
+					std::vector<project> filtered_projects;
+					if (!filter.empty())
+					{
+						auto tokens = utils::string::split(utils::string::to_lowercase(utils::string::trim_whitespace(filter)), ' ');
+						for (const auto& project : projects_)
+						{
+							bool passes_filter = true;
+							for (const auto& token : tokens)
+							{
+								auto ttoken = utils::string::trim_whitespace(token);
+								std::string name = utils::string::to_lowercase(project.name);
+								passes_filter &= name.find(ttoken) != std::string::npos;
+							}
+
+							if (passes_filter)
+							{
+								filtered_projects.push_back(project);
+							}
+						}
+					}
+					else
+					{
+						filtered_projects = projects_;
+					}
 
 					//list_size.y -= 2 * button_size.y + style.ItemSpacing.y + style.WindowPadding.y;
 					if (ImGui::BeginChild("##Project List", list_panel_size))
 					{
 						if (ImGui::BeginTable("##ProjectListTable", 3, ImGuiTableFlags_SizingStretchProp | ImGuiTableFlags_BordersInnerV))
 						{
-							for (size_t i = 0; i < projects_.size(); ++i)
+							for (size_t i = 0; i < filtered_projects.size(); ++i)
 							{
-								render_project_widget(i, projects_[i]);
+								render_project_widget(i, filtered_projects[i]);
 							}
 							ImGui::EndTable();
 						}

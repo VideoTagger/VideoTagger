@@ -14,6 +14,7 @@ namespace vt::widgets
 		std::function<void(project&)> on_click_project;
 		std::function<void()> on_project_list_update;
 	private:
+		std::string filter;
 		std::vector<project> projects_;
 		project temp_project;
 
