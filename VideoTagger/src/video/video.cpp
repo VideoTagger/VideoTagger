@@ -113,71 +113,55 @@ namespace vt
 			return;
 		}
 
+		//TODO: don't seek if frame with timestamp is buffered or is current
 		//TODO: handle timestamp > duration
 		//TODO: improve after improving decoder
 
 
 		//TODO: remove only unneeded frames
 		frame_buffer_.clear();
-
-		//TODO: don't seek if frame with timestamp is buffered or is current
-		timestamp_t keyframe_ts = decoder_.seek_keyframe(timestamp);
 		
-		bool skip_last_packet = false;
-		bool start_from_last_frame = false;
-		while (true)
+		if (timestamp < last_ts_)
 		{
-			if (decoder_.eof())
-			{
-				break;
-			}
-
-			//TODO: CONTINUE
-			do
-			{
-
-			}
-
+			decoder_.seek_keyframe(0);
+		}
+		
+		while (!decoder_.eof())
+		{
 			decoder_.read_packet();
-			if (decoder_.last_read_packet_type() != vt::stream_type::video)
+			if (decoder_.last_read_packet_type() != stream_type::video)
 			{
 				decoder_.discard_next_packet(decoder_.last_read_packet_type());
+				continue;
 			}
 
-			auto current_ts = decoder_.peek_last_packet(vt::stream_type::video).timestamp();
+			auto& packet = decoder_.peek_last_packet();
 
-			if (last_ts_ > keyframe_ts and current_ts >= last_ts_)
+			if (packet.is_key())
 			{
-				start_from_last_frame = true;
-			}
-
-			if (current_ts >= timestamp)
-			{
-				if (current_ts > timestamp)
+				while (decoder_.packet_queue_size(stream_type::video) > 1)
 				{
-					skip_last_packet = true;
+					decoder_.discard_next_packet(stream_type::video);
 				}
-
-				break;
 			}
-		}
 
-		if (start_from_last_frame)
-		{
-			auto current_ts = decoder_.peek_next_packet(vt::stream_type::video).timestamp();
-			while (current_ts < last_ts_)
+			if (packet.timestamp() < timestamp)
 			{
-				decoder_.discard_next_packet(stream_type::video);
-				current_ts = decoder_.peek_next_packet(vt::stream_type::video).timestamp();
+				continue;
 			}
+
+			break;
 		}
 
-		while (decoder_.packet_queue_size(stream_type::video) != 0)
+		while (decoder_.packet_queue_size(stream_type::video) > 0)
 		{
-			auto decode_result = decoder_.decode_next_packet<vt::stream_type::video>();
-			auto& frame = decode_result.value();
+			auto decode_result = decoder_.decode_next_packet<stream_type::video>();
+			if (!decode_result.has_value())
+			{
+				continue;
+			}
 
-
+			auto& frame = *decode_result;
 			auto [yp, up, vp] = frame.get_planes();
 
 			SDL_UpdateYUVTexture
@@ -191,6 +175,85 @@ namespace vt
 			last_ts_ = frame.timestamp();
 			last_tp_ = std::chrono::steady_clock::now();
 		}
+
+		//decoder_.seek_keyframe(timestamp);
+		//
+		//bool skip_last_packet = false;
+		//bool start_from_last_frame = false;
+		//timestamp_t keyframe_ts{-1};
+		//
+		//while (true)
+		//{
+		//	if (decoder_.eof())
+		//	{
+		//		break;
+		//	}
+
+		//	decoder_.read_packet();
+		//	if (decoder_.last_read_packet_type() != vt::stream_type::video)
+		//	{
+		//		decoder_.discard_next_packet(decoder_.last_read_packet_type());
+		//		continue;
+		//	}
+
+		//	auto current_ts = decoder_.peek_last_packet(vt::stream_type::video).timestamp();
+		//	if (keyframe_ts == timestamp_t{ -1 })
+		//	{
+		//		keyframe_ts = current_ts;
+		//	}
+
+		//	if (last_ts_ > keyframe_ts and current_ts >= last_ts_)
+		//	{
+		//		start_from_last_frame = true;
+		//	}
+
+		//	if (current_ts >= timestamp)
+		//	{
+		//		if (current_ts > timestamp)
+		//		{
+		//			skip_last_packet = true;
+		//		}
+
+		//		break;
+		//	}
+		//}
+
+		//if (start_from_last_frame)
+		//{
+		//	auto current_ts = decoder_.peek_next_packet(vt::stream_type::video).timestamp();
+		//	while (current_ts < last_ts_)
+		//	{
+		//		decoder_.discard_next_packet(stream_type::video);
+		//		current_ts = decoder_.peek_next_packet(vt::stream_type::video).timestamp();
+		//	}
+		//}
+
+		////TODO: I don't think this actually does anything since there're still artifacts in the video. SDL_UpdateYUVTexture probably overwrites everything.
+		//while (decoder_.packet_queue_size(stream_type::video) != 0)
+		//{
+		//	auto decode_result = decoder_.decode_next_packet<vt::stream_type::video>();
+		//	if (!decode_result.has_value())
+		//	{
+		//		decoder_.discard_next_packet(vt::stream_type::video);
+		//		continue;
+		//	}
+
+		//	auto& frame = decode_result.value();
+
+
+		//	auto [yp, up, vp] = frame.get_planes();
+
+		//	SDL_UpdateYUVTexture
+		//	(
+		//		texture_, nullptr,
+		//		yp.data(), yp.pitch(),
+		//		up.data(), up.pitch(),
+		//		vp.data(), vp.pitch()
+		//	);
+
+		//	last_ts_ = frame.timestamp();
+		//	last_tp_ = std::chrono::steady_clock::now();
+		//}
 	}
 
 	void video::buffer_frames(size_t count)

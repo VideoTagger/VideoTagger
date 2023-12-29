@@ -228,7 +228,7 @@ namespace vt
 
 	bool packet_wrapper::is_key() const
 	{
-		return packet_->flags | AV_PKT_FLAG_KEY;
+		return packet_->flags & AV_PKT_FLAG_KEY;
 	}
 
 	packet_queue::packet_queue()
@@ -568,6 +568,11 @@ namespace vt
 		return packet_queues_.at(static_cast<size_t>(type)).back();
 	}
 
+	const packet_wrapper& video_decoder::peek_last_packet() const
+	{
+		return packet_queues_.at(static_cast<size_t>(last_read_packet_type_)).back();
+	}
+
 	video_metadata video_decoder::metadata() const
 	{
 		video_metadata metadata{};
@@ -594,7 +599,12 @@ namespace vt
 		}
 	}
 
-	timestamp_t video_decoder::seek_keyframe(timestamp_t timestamp)
+	void video_decoder::discard_all_packets(stream_type type)
+	{
+		packet_queues_[static_cast<size_t>(type)].clear();
+	}
+
+	void video_decoder::seek_keyframe(timestamp_t timestamp)
 	{
 		//TODO: handle invalid timestamp
 
@@ -607,36 +617,16 @@ namespace vt
 		if (av_seek_frame(format_context_, video_stream_index, seek_timestamp, AVSEEK_FLAG_BACKWARD) < 0)
 		{
 			// TODO: Handle error
-			return timestamp_t(0);
+			return;
 		}
 		discard_all_packets();
-
-		while (packet_queue_size(stream_type::video) == 0)
-		{
-			read_packet();
-			if (eof())
-			{
-				return duration();
-			}
-		}
-		
-		timestamp_t keyframe_ts = peek_next_packet(stream_type::video).timestamp();
-		discard_next_packet(stream_type::video);
-		if (av_seek_frame(format_context_, video_stream_index, seek_timestamp, AVSEEK_FLAG_BACKWARD) < 0)
-		{
-			// TODO: Handle error
-			return timestamp_t(0);
-		}
-		
-
-		return keyframe_ts;
 	}
 
-	timestamp_t video_decoder::seek_keyframe(size_t frame_number)
+	void video_decoder::seek_keyframe(size_t frame_number)
 	{
 		auto video_stream = format_context_->streams[stream_indices_[static_cast<size_t>(stream_type::video)]];
 		
-		return seek_keyframe(timestamp_t(static_cast<int64_t>(frame_number / fps() * 1'000'000'000)));
+		seek_keyframe(timestamp_t(static_cast<int64_t>(frame_number / fps() * 1'000'000'000)));
 	}
 
 	int video_decoder::width() const
