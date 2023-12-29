@@ -11,6 +11,7 @@
 
 #include <widgets/widgets.hpp>
 #include <widgets/project_selector.hpp>
+#include <widgets/time_input.hpp>
 #include <utils/filesystem.hpp>
 
 #include "project.hpp"
@@ -271,5 +272,13 @@ namespace vt
 		
 		widgets::draw_video_widget(vid);
 		widgets::draw_timeline_widget_sample(vid);
+
+		//TODO: Remove this, this is temporary
+		static video_time_t time{};
+		if (ImGui::Begin("Debug"))
+		{
+			widgets::time_input("Test", &time, 1.0f);
+		}
+		ImGui::End();
 	}
 }
