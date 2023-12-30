@@ -9,20 +9,12 @@ namespace vt
 	{
 		std::chrono::seconds total_seconds;
 
-		constexpr video_time_t()
-			: total_seconds{}
-		{
-		}
+		constexpr video_time_t() : total_seconds{} {}
 
-		constexpr explicit video_time_t(std::chrono::seconds total_seconds)
-			: total_seconds{ total_seconds }
-		{
-		}
+		constexpr explicit video_time_t(std::chrono::seconds total_seconds) : total_seconds{ total_seconds } {}
 
-		constexpr video_time_t(uint16_t hours, uint8_t minutes, uint8_t seconds)
-			: total_seconds{ std::chrono::seconds(seconds) + std::chrono::minutes(minutes) + std::chrono::hours(hours) }
-		{
-		}
+		constexpr video_time_t(uint16_t hours, uint8_t minutes, uint8_t seconds) :
+			total_seconds{ std::chrono::seconds(seconds) + std::chrono::minutes(minutes) + std::chrono::hours(hours) } {}
 
 		constexpr void set(uint16_t hours, uint8_t minutes, uint8_t seconds)
 		{

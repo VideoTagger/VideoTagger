@@ -1,6 +1,6 @@
 #include "app.hpp"
 #include <cmath>
-#include <iostream>
+#include <fstream>
 #include <filesystem>
 
 #include <SDL.h>
@@ -11,23 +11,71 @@
 
 #include <widgets/widgets.hpp>
 #include <widgets/project_selector.hpp>
+#include <widgets/time_input.hpp>
 #include <utils/filesystem.hpp>
 
 #include "project.hpp"
+#include <core/debug.hpp>
 
 namespace vt
 {
 	app::app() : main_window_{}, renderer_{}, state_{ app_state::uninitialized }
 	{
-		ctx_.project_selector.on_click_project = [&](const project& project)
+		ctx_.project_selector.on_click_project = [&](project& project)
 		{
+			debug::log("Clicked project: " + project.name + ", Filepath: " + project.path.string());
+			if (!std::filesystem::is_regular_file(project.path))
+			{
+				const SDL_MessageBoxButtonData buttons[] = {
+					// flags, buttonid, text
+					{ SDL_MESSAGEBOX_BUTTON_ESCAPEKEY_DEFAULT, 0, "Cancel" },
+					{ SDL_MESSAGEBOX_BUTTON_RETURNKEY_DEFAULT, 1, "Remove" },
+					{ 0, 2, "Locate" },
+				};
+
+				SDL_MessageBoxData data{};
+				data.flags = SDL_MESSAGEBOX_INFORMATION;
+				
+				//TODO: Replace title
+				data.buttons = buttons;
+				data.numbuttons = sizeof(buttons) / sizeof(buttons[0]);
+				data.title = "VideoTagger";
+				data.message = "This project no longer exists";
+				int buttonid{};
+				SDL_ShowMessageBox(&data, &buttonid);
+
+				switch (buttonid)
+				{
+					case 1: ctx_.project_selector.remove(project); break;
+					case 2:
+					{
+						utils::dialog_filter filter{ "VideoTagger Project", project::extension };
+						auto result = utils::filesystem::get_file({}, { filter });
+						if (result)
+						{
+							project = project::load_from_file(result.path);
+						}
+					}
+					break;
+				}
+				return;
+			}
 			ctx_.current_project = project;
-			std::cout << "Clicked project: " << project.name << "\nPath: " << project.path << '\n';
+		};
+
+		ctx_.project_selector.on_project_list_update = [&]()
+		{
+			ctx_.project_selector.sort();
+			ctx_.project_selector.save_projects_file(ctx_.projects_list_filepath);
+			debug::log("Saving projects list to " + std::filesystem::relative(ctx_.projects_list_filepath).string());
 		};
 	}
 	
 	bool app::init(const app_config& config)
 	{
+		//Clears the log file
+		std::ofstream{ debug::log_filepath };
+
 		if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS) < 0) return false;
 		if (NFD::Init() != NFD_OKAY) return false;
 
@@ -58,7 +106,7 @@ namespace vt
 		io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
 		io.ConfigWindowsMoveFromTitleBarOnly = true;
 
-		std::filesystem::path font_path{ "assets/fonts/NotoSans-Regular.ttf" };
+		std::filesystem::path font_path = std::filesystem::path("assets") / "fonts" / "NotoSans-Regular.ttf";
 		float font_size = 16.0f;
 
 		if (std::filesystem::exists(font_path))
@@ -67,6 +115,7 @@ namespace vt
 		}
 
 		state_ = app_state::initialized;
+		ctx_.projects_list_filepath = config.projects_list_filepath;
 		return true;
 	}
 	
@@ -75,6 +124,8 @@ namespace vt
 		if (state_ != app_state::initialized) return false;
 
 		state_ = app_state::running;
+		ctx_.project_selector.load_projects_file(ctx_.projects_list_filepath);
+
 		while (state_ == app_state::running)
 		{
 			ImGui_ImplSDLRenderer2_NewFrame();
@@ -182,7 +233,7 @@ namespace vt
 					auto result = utils::filesystem::get_file();
 					if (result)
 					{
-						std::cout << result.path << '\n';
+						debug::log("Opening video " + result.path.string());
 						vid.open_file(result.path, renderer_);
 					}
 				}
@@ -191,7 +242,7 @@ namespace vt
 					auto result = utils::filesystem::get_folder();
 					if (result)
 					{
-						std::cout << result.path << '\n';
+						debug::log("Opening directory " + result.path.string());
 					}
 				}
 				if (ImGui::MenuItem("Save As..."))
@@ -199,7 +250,7 @@ namespace vt
 					auto result = utils::filesystem::save_file();
 					if (result)
 					{
-						std::cout << result.path << '\n';
+						debug::log("Saving as " + result.path.string());
 					}
 				}
 				ImGui::EndMenu();
@@ -221,5 +272,13 @@ namespace vt
 		
 		widgets::draw_video_widget(vid);
 		widgets::draw_timeline_widget_sample(vid);
+
+		//TODO: Remove this, this is temporary
+		static video_time_t time{};
+		if (ImGui::Begin("Debug"))
+		{
+			widgets::time_input("Test", &time, 1.0f);
+		}
+		ImGui::End();
 	}
 }

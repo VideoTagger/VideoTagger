@@ -17,6 +17,7 @@ namespace vt
 		int window_pos_x{};
 		int window_pos_y{};
 		std::string window_name;
+		std::filesystem::path projects_list_filepath = std::filesystem::path("projects").replace_extension("json");
 	};
 
 	enum class app_state
