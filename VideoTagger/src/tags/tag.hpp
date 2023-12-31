@@ -5,18 +5,31 @@ namespace vt
 {
 	struct tag
 	{
+		tag(std::string name, uint32_t color)
+			: name{ name }, color{ color }
+		{}
+
 		std::string name;
+		//ABGR
+		uint32_t color;
 	};
 
-	struct point_tag : public tag
+	inline bool operator==(const tag& lhs, const tag& rhs)
 	{
-		size_t timestamp;
-	};
+		return lhs.name == rhs.name;
+	}
 
-	struct span_tag : public tag
+	inline bool operator!=(const tag& lhs, const tag& rhs)
 	{
-		//TODO: Change to timestamp_t when it gets moved to separate header
-		size_t start_timestamp;
-		size_t end_timestamp;
-	};
+		return !(lhs == rhs);
+	}
 }
+
+template <>
+struct std::hash<vt::tag>
+{
+	std::size_t operator()(const vt::tag& value) const
+	{
+		return std::hash<std::string>{}(value.name);
+	}
+};

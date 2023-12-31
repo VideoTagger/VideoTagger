@@ -31,7 +31,7 @@
 #include <algorithm>
 #include <cstdlib>
 
-namespace vt
+namespace vt::widgets
 {
 #ifndef IMGUI_DEFINE_MATH_OPERATORS
 	static ImVec2 operator+(const ImVec2& a, const ImVec2& b) {

@@ -221,5 +221,6 @@ namespace vt
 		
 		widgets::draw_video_widget(vid);
 		widgets::draw_timeline_widget_sample(vid);
+		widgets::draw_tag_manager_widget(ctx_.current_project->tags);
 	}
 }

@@ -3,7 +3,7 @@
 #include <filesystem>
 #include <map>
 
-#include "tags/tag.hpp"
+#include "tags/tag_storage.hpp"
 
 namespace vt
 {
@@ -15,8 +15,7 @@ namespace vt
 		std::filesystem::path path = std::filesystem::current_path();
 		std::filesystem::path working_dir = ".";
 
-		//Custom tags provided by the user
-		std::map<std::string, tag> tags;
+		tag_storage tags;
 
 		//TODO: Add keybinds
 

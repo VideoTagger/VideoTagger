@@ -1,3 +1,5 @@
+// THIS IS A MODIFED VERSION OF THE SEQUENCER WIDGET FROM ImGuizmo
+// 
 // https://github.com/CedricGuillemet/ImGuizmo
 // v 1.89 WIP
 //
@@ -45,7 +47,7 @@ namespace ImSequencer
 	};
 }
 
-namespace vt
+namespace vt::widgets
 {
 	struct timeline_interface
 	{

@@ -5,6 +5,8 @@
 #include <string_view>
 #include <charconv>
 
+#include <iostream>
+
 #include <imgui.h>
 #include <imgui_internal.h>
 
@@ -494,5 +496,18 @@ namespace vt::widgets
 		}
 		ImGui::End();
 		ImGui::PopStyleVar();
+	}
+
+	void draw_tag_manager_widget(tag_storage& tags)
+	{
+		if (ImGui::Begin("Tags test"))
+		{
+			static tag_storage::iterator selected = tags.end();
+			if (widgets::tag_manager(tags, selected))
+			{
+				std::cout << "selected tag " << selected->name << "\n";
+			}
+		}
+		ImGui::End();
 	}
 }
