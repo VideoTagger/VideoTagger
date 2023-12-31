@@ -59,7 +59,6 @@ namespace vt::utils
 		NFD::UniquePathU8 path;
 		std::string dir_str = start_dir.string();
 		auto nfd_result = NFD::OpenDialog(path, make_nfd_filters(filters).data(), (nfdfiltersize_t)filters.size(), make_nfd_path(dir_str));
-		
 		return { convert_nfd_option(nfd_result), convert_nfd_path(path) };
 	}
 

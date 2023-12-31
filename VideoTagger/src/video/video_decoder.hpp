@@ -189,6 +189,7 @@ namespace vt
 		bool open(const std::filesystem::path& path);
 		void close();
 
+		//TODO: Maybe should return the read packet
 		// Will read the file until it encounters a packet that it can save to one of the packet queues or reaches eof.
 		void read_packet();
 
@@ -197,15 +198,16 @@ namespace vt
 		void discard_next_packet(stream_type type);
 		//TODO: discard last packet
 		void discard_all_packets();
+		void discard_all_packets(stream_type type);
 
 		//Seek to the nearest keyframe before or on the timestamp
 		//Discards all packets currently in queues
 		//Returns the keyframe timestamp
-		timestamp_t seek_keyframe(timestamp_t timestamp);
+		void seek_keyframe(timestamp_t timestamp);
 		//Seek to the nearest keyframe before or on the timestamp
 		//Discards all packets currently in queues
 		//Returns the keyframe timestamp
-		timestamp_t seek_keyframe(size_t frame_number);
+		void seek_keyframe(size_t frame_number);
 
 		[[nodiscard]] bool is_open() const;
 		[[nodiscard]] bool eof() const;
@@ -216,6 +218,7 @@ namespace vt
 
 		[[nodiscard]] const packet_wrapper& peek_next_packet(stream_type type) const;
 		[[nodiscard]] const packet_wrapper& peek_last_packet(stream_type type) const;
+		[[nodiscard]] const packet_wrapper& peek_last_packet() const;
 
 		[[nodiscard]] video_metadata metadata() const;
 
