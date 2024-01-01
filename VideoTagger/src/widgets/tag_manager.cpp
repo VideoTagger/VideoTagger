@@ -27,22 +27,22 @@ namespace vt::widgets
 		if (ImGui::BeginPopupModal("Add New Tag", 0, flags))
 		{
 			//I don't know if it's safe for this to be static
-			static char buffer[64]{};
-			ImGui::InputText("Tag Name", buffer, 64);
+			static char tag_name[64]{};
+			ImGui::InputText("Tag Name", tag_name, 64);
 			if (ImGui::Button("Done"))
 			{
-				auto [it, inserted] = tags.insert(buffer);
+				auto [it, inserted] = tags.insert(tag_name);
 				if (inserted)
 				{
 					added_entry = it;
 				}
-				std::fill(std::begin(buffer), std::end(buffer), 0);
+				std::fill(std::begin(tag_name), std::end(tag_name), 0);
 				ImGui::CloseCurrentPopup();
 			}
 			ImGui::SameLine();
 			if (ImGui::Button("Cancel"))
 			{
-				std::fill(std::begin(buffer), std::end(buffer), 0);
+				std::fill(std::begin(tag_name), std::end(tag_name), 0);
 				ImGui::CloseCurrentPopup();
 			}
 		
@@ -53,91 +53,6 @@ namespace vt::widgets
 
 		return return_value;
 	}
-
-	//bool tag_manager_state::add(tag_data data)
-	//{
-	//	if (contains(data.tag))
-	//	{
-	//		return false;
-	//	}
-	//
-	//	is_sorted_ = false;
-	//	tags_.push_back(data);
-	//	
-	//	if (add_callback != nullptr)
-	//	{
-	//		add_callback(*this, tags_.size() - 1);
-	//	}
-	//
-	//	return true;
-	//}
-	//
-	//void tag_manager_state::remove(size_t index)
-	//{
-	//	if (index >= tags_.size())
-	//	{
-	//		return;
-	//	}
-	//
-	//	if (remove_callback != nullptr)
-	//	{
-	//		remove_callback(*this, index);
-	//	}
-	//
-	//	tags_.erase(tags_.begin() + index);
-	//}
-	//
-	//void tag_manager_state::sort(comparator_type comparator)
-	//{
-	//	std::sort(tags_.begin(), tags_.end(), comparator);
-	//	is_sorted_ = true;
-	//}
-	//
-	//size_t tag_manager_state::find(std::string_view tag) const
-	//{
-	//	for (size_t i = 0; i < tags_.size(); i++)
-	//	{
-	//		if (tags_[i].tag == tag)
-	//		{
-	//			return i;
-	//		}
-	//	}
-	//
-	//	return npos;
-	//}
-	//
-	//bool tag_manager_state::contains(std::string_view tag) const
-	//{
-	//	for (const auto& data : tags_)
-	//	{
-	//		if (data.tag == tag)
-	//		{
-	//			return true;
-	//		}
-	//	}
-	//
-	//	return false;
-	//}
-	//
-	//const tag_data& tag_manager_state::get(size_t index) const
-	//{
-	//	return tags_.at(index);
-	//}
-	//
-	//const std::vector<tag_data>& tag_manager_state::tags() const
-	//{
-	//	return tags_;
-	//}
-	//
-	//size_t tag_manager_state::size() const
-	//{
-	//	return tags_.size();
-	//}
-	//
-	//bool tag_manager_state::is_sorted() const
-	//{
-	//	return is_sorted_;
-	//}
 
 	bool tag_manager(tag_storage& tags, tag_storage::iterator& selected_entry)
 	{

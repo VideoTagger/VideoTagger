@@ -1,7 +1,8 @@
 #pragma once
 #include <cstdint>
 #include <cinttypes>
-#include <utils/video_time.hpp>
+
+#include <video/video_time.hpp>
 
 using ImGuiSliderFlags = int;
 

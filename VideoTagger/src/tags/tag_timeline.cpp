@@ -1,0 +1,137 @@
+#include "tag_timeline.hpp"
+
+namespace vt
+{
+	tag_timestamp::tag_timestamp(timestamp_t time_start, timestamp_t time_end)
+		: start{ std::min(time_start, time_end) }, end{ std::max(time_start, time_end) }
+	{
+	}
+
+	tag_timestamp::tag_timestamp(timestamp_t time_point)
+		: start{ time_point }, end{ time_point }
+	{
+	}
+
+	void tag_timestamp::set(timestamp_t time_start, timestamp_t time_end)
+	{
+		start = std::min(time_start, time_end);
+		end = std::max(time_start, time_end);
+	}
+
+	void tag_timestamp::set(timestamp_t time_point)
+	{
+		start = time_point;
+		end = time_point;
+	}
+
+	duration_t tag_timestamp::duration() const
+	{
+		return end - start;
+	}
+
+	tag_timestamp_type tag_timestamp::type() const
+	{
+		return start == end ? tag_timestamp_type::point : tag_timestamp_type::segment;
+	}
+
+	std::pair<tag_timeline::iterator, bool> tag_timeline::insert(timestamp_t time_start, timestamp_t time_end)
+	{
+		auto [it_begin, it_end] = find_range(time_start, time_end);
+		
+		timestamp_t insert_start = time_start;
+		timestamp_t insert_end = time_end;
+		
+		if (it_begin != timestamps_.end())
+		{
+			auto last_it = std::prev(it_end);
+			if (it_begin == last_it and it_begin->start <= time_start and time_end <= it_begin->end)
+			{
+				return { it_begin, false };
+			}
+
+			insert_start = std::min(it_begin->start, time_start);
+			insert_end = std::max(last_it->end, time_end);
+
+			timestamps_.erase(it_begin, it_end);
+		}
+
+		return timestamps_.emplace(insert_start, insert_end);
+	}
+
+	std::pair<tag_timeline::iterator, bool> tag_timeline::insert(timestamp_t time_point)
+	{
+		auto it = find(time_point);
+		if (it != end())
+		{
+			return { it, false };
+		}
+
+		return timestamps_.emplace(time_point);
+	}
+
+	tag_timeline::iterator tag_timeline::erase(iterator it)
+	{
+		return timestamps_.erase(it);
+	}
+
+	std::pair<tag_timeline::iterator, tag_timeline::iterator> tag_timeline::find_range(timestamp_t time_start, timestamp_t time_end) const
+	{
+		//TODO: optimise (use lower/upper bound)
+		 
+		auto it = begin();
+
+		while (it != end() and !(time_start <= it->end and time_end >= it->start))
+		{
+			++it;
+		}
+		auto result_begin = it;
+
+		while (it != end() and (time_start <= it->end and time_end >= it->start))
+		{
+			++it;
+		}
+		auto result_end = it;
+
+		return { result_begin, result_end };
+	}
+
+	tag_timeline::iterator tag_timeline::find(timestamp_t time_point) const
+	{
+		//TODO: optimise (use lower/upper bound)
+
+		for (auto it = begin(); it != end(); ++it)
+		{
+			if (it->start <= time_point and time_point <= it->end)
+			{
+				return it;
+			}
+		}
+
+		return end();
+	}
+
+	tag_timeline::iterator tag_timeline::begin() const
+	{
+		return timestamps_.begin();
+	}
+
+	tag_timeline::reverse_iterator tag_timeline::rbegin() const
+	{
+		return timestamps_.rbegin();
+	}
+
+	tag_timeline::iterator tag_timeline::end() const
+	{
+		return timestamps_.end();
+	}
+
+	tag_timeline::reverse_iterator tag_timeline::rend() const
+	{
+		return timestamps_.rend();
+	}
+
+	size_t tag_timeline::size() const
+	{
+		return timestamps_.size();
+	}
+}

@@ -1,4 +1,5 @@
 #include "widgets.hpp"
+
 #include <string>
 #include <vector>
 #include <array>
@@ -7,11 +8,12 @@
 
 #include <iostream>
 
+#define IMGUI_DEFINE_MATH_OPERATORS
 #include <imgui.h>
 #include <imgui_internal.h>
 
 #include "video_timeline.hpp"
-#include <utils/video_time.hpp>
+#include <video/video_time.hpp>
 
 namespace vt::widgets
 {
@@ -315,6 +317,61 @@ namespace vt::widgets
 			if (widgets::tag_manager(tags, selected))
 			{
 				std::cout << "selected tag " << selected->name << "\n";
+			}
+		}
+		ImGui::End();
+	}
+
+	void draw_test_tag_timeline_widget(tag_storage& tags)
+	{
+		static constexpr float h = 10;
+
+		if (ImGui::Begin("Tag timeline test"))
+		{
+			for (auto& tag : tags)
+			{
+				ImGui::Text("%llu", tag.timeline.size());
+				ImGui::SameLine();
+				auto text_size = ImGui::CalcTextSize(tag.name.c_str());
+				auto cursor_pos = ImGui::GetCursorScreenPos();
+				cursor_pos.x += text_size.x + 10;
+				ImGui::Text(tag.name.c_str());
+				for (auto& timestamp : tag.timeline)
+				{
+					float pos_start = std::chrono::duration_cast<std::chrono::seconds>(timestamp.start).count();
+					float pos_end = std::chrono::duration_cast<std::chrono::seconds>(timestamp.end).count();
+
+					std::string id = std::string("##") + tag.name + std::to_string(timestamp.start.count());
+					ImDrawList* draw_list = ImGui::GetWindowDrawList();
+					draw_list->AddRectFilled(cursor_pos + ImVec2{ pos_start, 0 }, cursor_pos + ImVec2{ pos_end, h }, tag.color);
+				}
+			}
+
+			if (ImGui::Button("Add segment"))
+			{
+				ImGui::OpenPopup("Add segment");
+			}
+			if (ImGui::BeginPopup("Add segment"))
+			{
+				static char tag_name[64]{};
+				ImGui::InputText("Tag Name", tag_name, 64);
+				static int start{};
+				static int end{};
+				ImGui::InputInt("start", &start);
+				ImGui::SameLine();
+				ImGui::InputInt("end", &end);
+
+				if (ImGui::Button("OK"))
+				{
+					auto tag_it = tags.find(tag_name);
+					if (tag_it != tags.end())
+					{
+						tag_it->timeline.insert(std::chrono::seconds(start), std::chrono::seconds(end));
+					}
+					ImGui::CloseCurrentPopup();
+				}
+
+				ImGui::EndPopup();
 			}
 		}
 		ImGui::End();

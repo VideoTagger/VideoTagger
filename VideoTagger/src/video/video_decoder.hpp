@@ -12,10 +12,10 @@ extern "C"
 	#include <avformat.h>
 }
 
+#include "video_time.hpp"
+
 namespace vt
 {
-	using timestamp_t = std::chrono::nanoseconds;
-
 	class video_plane
 	{
 	public:

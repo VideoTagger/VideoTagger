@@ -6,45 +6,6 @@
 
 namespace vt
 {
-	class tag_storage_const_iterator;
-	class tag_storage_iterator;
-
-	class tag_storage
-	{
-	public:
-		using iterator = tag_storage_iterator;
-		using const_iterator = tag_storage_const_iterator;
-
-		static constexpr uint32_t default_tag_color = 0xffffff;
-
-		std::pair<iterator, bool> insert(const std::string& name, uint32_t color);
-		std::pair<iterator, bool> insert(const std::string& name);
-		bool erase(const std::string& name);
-		void erase(iterator it);
-		void erase(const_iterator it);
-
-		tag& at(const std::string& name);
-		const tag& at(const std::string& name) const;
-		tag& operator[](const std::string& name);
-		const tag& operator[](const std::string& name) const;
-		iterator find(const std::string& name);
-		const_iterator find(const std::string& name) const;
-
-		bool contains(const std::string& name) const;
-		size_t size() const;
-		bool empty() const;
-
-		iterator begin();
-		const_iterator begin() const;
-		const_iterator cbegin() const;
-		iterator end();
-		const_iterator end() const;
-		const_iterator cend() const;
-
-	private:
-		std::unordered_map<std::string, tag> tags_;
-	};
-
 	class tag_storage_const_iterator
 	{
 	public:
@@ -64,7 +25,7 @@ namespace vt
 
 		reference operator*() const;
 		pointer operator->() const;
-		
+
 		bool operator==(const tag_storage_const_iterator& rhs) const;
 		bool operator!=(const tag_storage_const_iterator& rhs) const;
 
@@ -105,5 +66,42 @@ namespace vt
 
 	private:
 		unwrapped_it it;
+	};
+
+	//TODO: Maybe add tag renaming (would just make a copy with a new name and delete the old one)
+	class tag_storage
+	{
+	public:
+		using iterator = tag_storage_iterator;
+		using const_iterator = tag_storage_const_iterator;
+
+		static constexpr uint32_t default_tag_color = 0xffffff;
+
+		std::pair<iterator, bool> insert(const std::string& name, uint32_t color);
+		std::pair<iterator, bool> insert(const std::string& name);
+		bool erase(const std::string& name);
+		iterator erase(iterator it);
+		iterator erase(const_iterator it);
+
+		tag& at(const std::string& name);
+		const tag& at(const std::string& name) const;
+		tag& operator[](const std::string& name);
+		const tag& operator[](const std::string& name) const;
+		iterator find(const std::string& name);
+		const_iterator find(const std::string& name) const;
+
+		bool contains(const std::string& name) const;
+		size_t size() const;
+		bool empty() const;
+
+		iterator begin();
+		const_iterator begin() const;
+		const_iterator cbegin() const;
+		iterator end();
+		const_iterator end() const;
+		const_iterator cend() const;
+
+	private:
+		std::unordered_map<std::string, tag> tags_;
 	};
 }

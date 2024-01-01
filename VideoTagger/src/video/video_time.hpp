@@ -4,9 +4,14 @@
 
 namespace vt
 {
+	using timestamp_t = std::chrono::nanoseconds;
+	//TODO: use this everywhere for duration
+	using duration_t = std::chrono::nanoseconds;
+
 	//come up with a better name
 	struct video_time_t
 	{
+		//TODO: change to duration_t
 		std::chrono::seconds total_seconds;
 
 		constexpr video_time_t() : total_seconds{} {}
