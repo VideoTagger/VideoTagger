@@ -42,14 +42,27 @@ namespace vt
 		project["working-dir"] = std::filesystem::relative(working_dir);
 
 		//TODO: Tags
-		auto& tags = json["tags"];
-		tags = nlohmann::json::array();
+		auto& json_tags = json["tags"];
+		for (auto& tag : tags)
+		{
+			auto& json_tag = json_tags[tag.name];
+			json_tag["color"] = tag.color;
+			auto& json_timestamps = json_tag["timestamps"];
+			json_timestamps = nlohmann::json::array();
+			for (auto& timestamp : tag.timeline)
+			{
+				json_timestamps.push_back(nlohmann::json::object({ { "start", timestamp.start.count() }, { "end", timestamp.end.count() } }));
+			}
+		}
 
 		//TODO: Keybinds
 		auto& keybinds = json["keybinds"];
 		keybinds = nlohmann::json::array();
 		auto parent = path.parent_path();
-		std::filesystem::create_directories(parent);
+		if (!parent.empty())
+		{
+			std::filesystem::create_directories(parent);
+		}
 		utils::json::write_to_file(json, path);
 	}
 
@@ -73,6 +86,16 @@ namespace vt
 			const auto& project = json["project"];
 			result.name = project["name"];
 			result.working_dir = project["working-dir"].get<std::filesystem::path>();
+
+			for (auto& [tag_name, values] : json["tags"].items())
+			{
+				auto [tag_it, success] = result.tags.insert(tag_name);
+				tag_it->color = values["color"];
+				for (auto& timestamp : values["timestamps"])
+				{
+					tag_it->timeline.insert(timestamp_t{ timestamp["start"] }, timestamp_t{ timestamp["end"] });
+				}
+			}
 		}			
 		return result;
 	}

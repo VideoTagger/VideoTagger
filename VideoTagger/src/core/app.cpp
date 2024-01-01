@@ -253,6 +253,10 @@ namespace vt
 						debug::log("Saving as " + result.path.string());
 					}
 				}
+				if (ImGui::MenuItem("Save"))
+				{
+					ctx_.current_project->save();
+				}
 				ImGui::EndMenu();
 			}
 			if (ImGui::BeginMenu("Edit"))
