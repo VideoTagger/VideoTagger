@@ -128,7 +128,7 @@ namespace vt
 
 	bool video_frame::is_keyframe() const
 	{
-		return frame_->flags | AV_FRAME_FLAG_KEY;
+		return frame_->flags & AV_FRAME_FLAG_KEY;
 	}
 
 	std::optional<typename stream_type_traits<stream_type::video>::decoded_packet_type>
