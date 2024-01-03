@@ -302,8 +302,7 @@ namespace vt::widgets
 			if (current_time.total_seconds != std::chrono::duration_cast<std::chrono::seconds>(video.current_timestamp()))
 			{
 				video.seek(current_time.total_seconds);
-			}
-			
+			}			
 		}
 		ImGui::End();
 		ImGui::PopStyleVar();
