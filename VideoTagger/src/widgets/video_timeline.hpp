@@ -27,7 +27,7 @@
 
 #include <cstddef>
 
-#include <utils/video_time.hpp>
+#include <utils/timestamp.hpp>
 
 struct ImDrawList;
 struct ImRect;
@@ -50,8 +50,8 @@ namespace vt
 	struct timeline_interface
 	{
 		bool focused = false;
-		virtual video_time_t get_time_min() const = 0;
-		virtual video_time_t get_time_max() const = 0;
+		virtual timestamp get_time_min() const = 0;
+		virtual timestamp get_time_max() const = 0;
 		virtual int get_item_count() const = 0;
 
 		virtual void begin_edit(int /*index*/) {}
@@ -79,6 +79,6 @@ namespace vt
 
 
 	// return true if selection is made
-	bool video_timeline(timeline_interface* sequence, video_time_t* current_time, bool* expanded, int* selected_entry, int64_t* first_frame, int sequence_options);
+	bool video_timeline(timeline_interface* sequence, timestamp* current_time, bool* expanded, int* selected_entry, int64_t* first_frame, int sequence_options);
 
 }

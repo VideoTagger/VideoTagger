@@ -60,7 +60,7 @@ namespace vt
 		return clickedBtn;
 	}
 
-	bool video_timeline(timeline_interface* sequence, video_time_t* current_time, bool* expanded, int* selected_entry, int64_t* first_frame, int sequence_options)
+	bool video_timeline(timeline_interface* sequence, timestamp* current_time, bool* expanded, int* selected_entry, int64_t* first_frame, int sequence_options)
 	{
 		bool ret = false;
 		ImGuiIO& io = ImGui::GetIO();
@@ -253,7 +253,7 @@ namespace vt
 
 				if (baseIndex && px > (canvas_pos.x + legendWidth))
 				{
-					video_time_t time{ std::chrono::seconds(i) };
+					timestamp time{ std::chrono::seconds(i) };
 					char tmps[512];
 					ImFormatString(tmps, IM_ARRAYSIZE(tmps), "%02d:%02d:%02d", time.hours(), time.minutes(), time.seconds());
 					ImU32 text_color = ImGui::ColorConvertFloat4ToU32(style.Colors[ImGuiCol_Text]); //0xFFBBBBBB

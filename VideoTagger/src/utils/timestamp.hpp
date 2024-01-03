@@ -5,15 +5,16 @@
 namespace vt
 {
 	//come up with a better name
-	struct video_time_t
+	struct timestamp
 	{
 		std::chrono::seconds total_seconds;
 
-		constexpr video_time_t() : total_seconds{} {}
+		constexpr timestamp() : total_seconds{} {}
 
-		constexpr explicit video_time_t(std::chrono::seconds total_seconds) : total_seconds{ total_seconds } {}
+		constexpr explicit timestamp(std::chrono::seconds total_seconds) : total_seconds{ total_seconds } {}
+		constexpr explicit timestamp(uint64_t seconds) : timestamp(static_cast<std::chrono::seconds>(seconds)) {}
 
-		constexpr video_time_t(uint16_t hours, uint8_t minutes, uint8_t seconds) :
+		constexpr timestamp(uint16_t hours, uint8_t minutes, uint8_t seconds) :
 			total_seconds{ std::chrono::seconds(seconds) + std::chrono::minutes(minutes) + std::chrono::hours(hours) } {}
 
 		constexpr void set(uint16_t hours, uint8_t minutes, uint8_t seconds)

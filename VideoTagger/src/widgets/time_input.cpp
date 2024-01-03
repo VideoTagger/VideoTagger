@@ -66,7 +66,7 @@ namespace vt::widgets
 		return value_changed;
 	}
 
-	static bool temp_time_input_scalar(const ImRect& bb, ImGuiID id, const char* label, ImGuiDataType data_type, video_time_t* p_data, const char* format, const void* p_clamp_min, const void* p_clamp_max)
+	static bool temp_time_input_scalar(const ImRect& bb, ImGuiID id, const char* label, ImGuiDataType data_type, timestamp* p_data, const char* format, const void* p_clamp_min, const void* p_clamp_max)
 	{
 		// FIXME: May need to clarify display behavior if format doesn't contain %.
 		// "%d" -> "%d" / "There are %d items" -> "%d" / "items" -> "%d" (fallback). Also see #6405
@@ -107,7 +107,7 @@ namespace vt::widgets
 		return value_changed;
 	}
 
-	bool time_input(const char* label, video_time_t* v, float v_speed, uint64_t p_min, uint64_t p_max, const char* format, ImGuiSliderFlags flags)
+	bool time_input(const char* label, timestamp* v, float v_speed, uint64_t p_min, uint64_t p_max, const char* format, ImGuiSliderFlags flags)
 	{
 		ImGuiDataType data_type = ImGuiDataType_U64;
 		uint64_t* p_data = reinterpret_cast<uint64_t*>(v);

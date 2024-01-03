@@ -321,7 +321,7 @@ namespace vt
 		widgets::draw_timeline_widget_sample(vid);
 
 		//TODO: Remove this, this is temporary
-		static video_time_t time{};
+		static timestamp time{};
 		if (ImGui::Begin("Debug"))
 		{
 			widgets::time_input("Test", &time, 1.0f);
