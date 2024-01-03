@@ -337,8 +337,8 @@ namespace vt::widgets
 				ImGui::Text(tag.name.c_str());
 				for (auto& timestamp : tag.timeline)
 				{
-					float pos_start = std::chrono::duration_cast<std::chrono::seconds>(timestamp.start).count();
-					float pos_end = std::chrono::duration_cast<std::chrono::seconds>(timestamp.end).count();
+					float pos_start = (float)std::chrono::duration_cast<std::chrono::seconds>(timestamp.start).count();
+					float pos_end = (float)std::chrono::duration_cast<std::chrono::seconds>(timestamp.end).count();
 
 					std::string id = std::string("##") + tag.name + std::to_string(timestamp.start.count());
 					ImDrawList* draw_list = ImGui::GetWindowDrawList();

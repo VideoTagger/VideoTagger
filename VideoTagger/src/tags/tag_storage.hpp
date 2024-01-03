@@ -68,6 +68,13 @@ namespace vt
 		unwrapped_it it;
 	};
 
+	enum class tag_validate_result
+	{
+		ok,
+		already_exists,
+		invalid_name
+	};
+
 	//TODO: Maybe add tag renaming (would just make a copy with a new name and delete the old one)
 	class tag_storage
 	{
@@ -90,6 +97,7 @@ namespace vt
 		iterator find(const std::string& name);
 		const_iterator find(const std::string& name) const;
 
+		tag_validate_result validate_tag_name(const std::string& name) const;
 		bool contains(const std::string& name) const;
 		size_t size() const;
 		bool empty() const;

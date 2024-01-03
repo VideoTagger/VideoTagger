@@ -21,14 +21,39 @@ namespace vt::widgets
 		auto& io = ImGui::GetIO();
 		ImGui::SetNextWindowPos(ImVec2(io.DisplaySize.x * 0.5f, io.DisplaySize.y * 0.5f), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
 		
-		auto win_size = ImVec2{ 200, 120 };
+		auto win_size = ImVec2{ 290, 110 };
 		ImGui::SetNextWindowSize(win_size, ImGuiCond_Always);
 
 		if (ImGui::BeginPopupModal("Add New Tag", 0, flags))
 		{
 			//I don't know if it's safe for this to be static
+			//TODO: Use std::string
 			static char tag_name[64]{};
+			ImGui::SetNextItemWidth(100);
 			ImGui::InputText("Tag Name", tag_name, 64);
+
+			tag_validate_result valid_tag_name = tags.validate_tag_name(tag_name);
+
+			if (valid_tag_name != tag_validate_result::ok)
+			{
+				std::string error_text;
+				switch (valid_tag_name)
+				{
+				case vt::tag_validate_result::already_exists:
+					error_text = "Already exists";
+					break;
+				case vt::tag_validate_result::invalid_name:
+					error_text = "Invalid name";
+					break;
+				default:
+					break;
+				}
+
+				ImGui::SameLine();
+				ImGui::TextColored({0.9f, 0.05f, 0.05f, 1.0f}, error_text.c_str());
+			}
+
+			ImGui::BeginDisabled(valid_tag_name != tag_validate_result::ok);
 			if (ImGui::Button("Done"))
 			{
 				auto [it, inserted] = tags.insert(tag_name);
@@ -39,6 +64,8 @@ namespace vt::widgets
 				std::fill(std::begin(tag_name), std::end(tag_name), 0);
 				ImGui::CloseCurrentPopup();
 			}
+			ImGui::EndDisabled();
+
 			ImGui::SameLine();
 			if (ImGui::Button("Cancel"))
 			{
@@ -78,8 +105,9 @@ namespace vt::widgets
 			{
 				if (ImGui::BeginTable("##TagManagerList", 2, ImGuiTableFlags_Borders | ImGuiTableFlags_ScrollY))
 				{
-					ImGui::TableSetupColumn(nullptr, 0, 0);
-					ImGui::TableSetupColumn(nullptr, ImGuiTableColumnFlags_WidthFixed, color_picker_size.x);
+					ImGui::TableSetupColumn("Name");
+					ImGui::TableSetupColumn("Color", ImGuiTableColumnFlags_WidthFixed/*, color_picker_size.x*/);
+					ImGui::TableHeadersRow();
 
 					for (auto it = tags.begin(); it != tags.end(); ++it)
 					{
@@ -99,7 +127,7 @@ namespace vt::widgets
 						
 						//I don't know if it's safe for this to be static
 						static ImVec4 backup_color;
-						open_color_picker_popup = ImGui::ColorButton(color_button_id.c_str(), color, flags, color_picker_size);
+						open_color_picker_popup = ImGui::ColorButton(color_button_id.c_str(), color, flags, { ImGui::GetContentRegionAvail().x, color_picker_size.y });
 						if (open_color_picker_popup)
 						{
 							ImGui::OpenPopup(color_picker_id.c_str());

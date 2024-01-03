@@ -15,7 +15,6 @@ namespace vt
 		case AVMEDIA_TYPE_SUBTITLE:		[[fallthrough]];
 		case AVMEDIA_TYPE_ATTACHMENT:	[[fallthrough]];
 		case AVMEDIA_TYPE_NB:			[[fallthrough]];
-		case AVMEDIA_TYPE_UNKNOWN:		[[fallthrough]];
 		default:						return stream_type::unknown;
 		}
 	}
@@ -83,7 +82,7 @@ namespace vt
 
 		//"frame_->linesize[plane_index] * frame_->height" This works but I'm not sure if it's how it should be done or whether it will work in every case.
 		//May not work with different pixel formats
-		return video_plane(frame_->data[plane_index], frame_->linesize[plane_index] * frame_->height, frame_->linesize[plane_index]);
+		return video_plane(frame_->data[plane_index], int64_t(frame_->linesize[plane_index]) * frame_->height, frame_->linesize[plane_index]);
 	}
 
 	video_planes video_frame::get_planes() const
@@ -388,7 +387,6 @@ namespace vt
 		// No idea if one file can have multiple streams of the same type
 		for (unsigned int i = 0; i < format_context_->nb_streams; i++)
 		{
-
 			auto stream = format_context_->streams[i];
 			
 			AVCodecParameters* codec_params = stream->codecpar;
@@ -403,7 +401,6 @@ namespace vt
 			{
 				continue;
 			}
-
 
 			stream_indices_.at(static_cast<size_t>(type)) = static_cast<int>(i);
 

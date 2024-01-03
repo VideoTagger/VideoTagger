@@ -166,6 +166,21 @@ namespace vt
 		return const_iterator(tags_.find(name));
 	}
 
+	tag_validate_result tag_storage::validate_tag_name(const std::string& name) const
+	{
+		if (name.empty())
+		{
+			return tag_validate_result::invalid_name;
+		}
+
+		if (contains(name))
+		{
+			return tag_validate_result::already_exists;
+		}
+
+		return tag_validate_result::ok;
+	}
+
 	bool tag_storage::contains(const std::string& name) const
 	{
 		return tags_.find(name) != tags_.end();
