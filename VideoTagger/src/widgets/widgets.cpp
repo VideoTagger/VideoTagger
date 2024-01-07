@@ -296,8 +296,7 @@ namespace vt::widgets
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2{});
 		if (ImGui::Begin("Timeline"))
 		{
-			int flags = ImSequencer::SEQUENCER_EDIT_STARTEND | ImSequencer::SEQUENCER_ADD | ImSequencer::SEQUENCER_DEL | ImSequencer::SEQUENCER_COPYPASTE | ImSequencer::SEQUENCER_CHANGE_FRAME;
-			video_timeline(&test_timeline, &current_time, nullptr, &selected_entry, &first_frame, flags);
+			video_timeline(&test_timeline, &current_time, nullptr, &selected_entry, &first_frame, 0);
 			
 			if (current_time.seconds_total != std::chrono::duration_cast<std::chrono::seconds>(video.current_timestamp()))
 			{

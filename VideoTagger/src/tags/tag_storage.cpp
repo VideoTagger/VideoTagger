@@ -2,109 +2,6 @@
 
 namespace vt
 {
-
-	tag_storage_const_iterator::tag_storage_const_iterator(unwrapped_it it)
-		: it{ it }
-	{
-	}
-
-	tag_storage_const_iterator& tag_storage_const_iterator::operator++()
-	{
-		++it;
-		return *this;
-	}
-
-	tag_storage_const_iterator tag_storage_const_iterator::operator++(int)
-	{
-		auto prev_it = *this;
-		++it;
-		return prev_it;
-	}
-
-	tag_storage_const_iterator::reference tag_storage_const_iterator::operator*() const
-	{
-		auto& [k, v] = *it;
-		return v;
-	}
-
-	tag_storage_const_iterator::pointer tag_storage_const_iterator::operator->() const
-	{
-		auto& [k, v] = *it;
-		return &v;
-	}
-
-	bool tag_storage_const_iterator::operator==(const tag_storage_const_iterator& rhs) const
-	{
-		return it == rhs.it;
-	}
-
-	bool tag_storage_const_iterator::operator!=(const tag_storage_const_iterator& rhs) const
-	{
-		return it != rhs.it;
-	}
-
-	tag_storage_const_iterator::unwrapped_it tag_storage_const_iterator::unwrapped() const
-	{
-		return it;
-	}
-
-	tag_storage_iterator::tag_storage_iterator(unwrapped_it it)
-		: it{ it }
-	{
-	}
-
-	tag_storage_iterator& tag_storage_iterator::operator++()
-	{
-		++it;
-		return *this;
-	}
-
-	tag_storage_iterator tag_storage_iterator::operator++(int)
-	{
-		auto prev_it = *this;
-		++it;
-		return prev_it;
-	}
-
-	tag_storage_iterator::reference tag_storage_iterator::operator*()
-	{
-		auto& [k, v] = *it;
-		return v;
-	}
-
-	tag_storage_iterator::pointer tag_storage_iterator::operator->()
-	{
-		auto& [k, v] = *it;
-		return &v;
-	}
-
-	tag_storage_iterator::const_reference tag_storage_iterator::operator*() const
-	{
-		auto& [k, v] = *it;
-		return v;
-	}
-
-	tag_storage_iterator::const_pointer tag_storage_iterator::operator->() const
-	{
-		auto& [k, v] = *it;
-		return &v;
-	}
-
-	bool tag_storage_iterator::operator==(const tag_storage_iterator& rhs) const
-	{
-		return it == rhs.it;
-	}
-
-	bool tag_storage_iterator::operator!=(const tag_storage_iterator& rhs) const
-	{
-		return it != rhs.it;
-	}
-
-	tag_storage_iterator::unwrapped_it tag_storage_iterator::unwrapped() const
-	{
-		return it;
-	}
-
 	std::pair<tag_storage::iterator, bool> tag_storage::insert(const std::string& name, uint32_t color)
 	{
 		if (name.empty())
@@ -224,5 +121,107 @@ namespace vt
 	tag_storage::const_iterator tag_storage::cend() const
 	{
 		return end();
+	}
+
+	tag_storage_const_iterator::tag_storage_const_iterator(unwrapped_it it)
+		: it{ it }
+	{
+	}
+
+	tag_storage_const_iterator& tag_storage_const_iterator::operator++()
+	{
+		++it;
+		return *this;
+	}
+
+	tag_storage_const_iterator tag_storage_const_iterator::operator++(int)
+	{
+		auto prev_it = *this;
+		++it;
+		return prev_it;
+	}
+
+	tag_storage_const_iterator::reference tag_storage_const_iterator::operator*() const
+	{
+		auto& [k, v] = *it;
+		return v;
+	}
+
+	tag_storage_const_iterator::pointer tag_storage_const_iterator::operator->() const
+	{
+		auto& [k, v] = *it;
+		return &v;
+	}
+
+	bool tag_storage_const_iterator::operator==(const tag_storage_const_iterator& rhs) const
+	{
+		return it == rhs.it;
+	}
+
+	bool tag_storage_const_iterator::operator!=(const tag_storage_const_iterator& rhs) const
+	{
+		return it != rhs.it;
+	}
+
+	tag_storage_const_iterator::unwrapped_it tag_storage_const_iterator::unwrapped() const
+	{
+		return it;
+	}
+
+	tag_storage_iterator::tag_storage_iterator(unwrapped_it it)
+		: it{ it }
+	{
+	}
+
+	tag_storage_iterator& tag_storage_iterator::operator++()
+	{
+		++it;
+		return *this;
+	}
+
+	tag_storage_iterator tag_storage_iterator::operator++(int)
+	{
+		auto prev_it = *this;
+		++it;
+		return prev_it;
+	}
+
+	tag_storage_iterator::reference tag_storage_iterator::operator*()
+	{
+		auto& [k, v] = *it;
+		return v;
+	}
+
+	tag_storage_iterator::pointer tag_storage_iterator::operator->()
+	{
+		auto& [k, v] = *it;
+		return &v;
+	}
+
+	tag_storage_iterator::const_reference tag_storage_iterator::operator*() const
+	{
+		auto& [k, v] = *it;
+		return v;
+	}
+
+	tag_storage_iterator::const_pointer tag_storage_iterator::operator->() const
+	{
+		auto& [k, v] = *it;
+		return &v;
+	}
+
+	bool tag_storage_iterator::operator==(const tag_storage_iterator& rhs) const
+	{
+		return it == rhs.it;
+	}
+
+	bool tag_storage_iterator::operator!=(const tag_storage_iterator& rhs) const
+	{
+		return it != rhs.it;
+	}
+
+	tag_storage_iterator::unwrapped_it tag_storage_iterator::unwrapped() const
+	{
+		return it;
 	}
 }

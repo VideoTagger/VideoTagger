@@ -1,9 +1,11 @@
 #include "tag_manager.hpp"
 
 #include <algorithm>
+#include <string>
 
 #define IMGUI_DEFINE_MATH_OPERATORS
 #include <imgui.h>
+#include <imgui_stdlib.h>
 
 namespace vt::widgets
 {
@@ -27,10 +29,9 @@ namespace vt::widgets
 		if (ImGui::BeginPopupModal("Add New Tag", 0, flags))
 		{
 			//I don't know if it's safe for this to be static
-			//TODO: Use std::string
-			static char tag_name[64]{};
+			static std::string tag_name;
 			ImGui::SetNextItemWidth(100);
-			ImGui::InputText("Tag Name", tag_name, 64);
+			ImGui::InputText("Tag Name", &tag_name);
 
 			tag_validate_result valid_tag_name = tags.validate_tag_name(tag_name);
 
