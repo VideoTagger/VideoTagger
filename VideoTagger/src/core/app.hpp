@@ -18,6 +18,7 @@ namespace vt
 		int window_pos_y{};
 		std::string window_name;
 		std::filesystem::path projects_list_filepath = std::filesystem::path("projects").replace_extension("json");
+		std::filesystem::path app_settings_filepath = std::filesystem::path("settings").replace_extension("json");
 	};
 
 	enum class app_state
@@ -46,6 +47,8 @@ namespace vt
 		bool init(const app_config& config);
 		bool run();
 		void shutdown();
+
+		bool load_settings();
 
 		void handle_events();
 		void render();

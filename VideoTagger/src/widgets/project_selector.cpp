@@ -14,6 +14,7 @@
 #include <utils/filesystem.hpp>
 #include <utils/json.hpp>
 #include <utils/string.hpp>
+#include <utils/time.hpp>
 
 #include <core/app.hpp>
 
@@ -225,15 +226,26 @@ namespace vt::widgets
 
 		ImGui::TableNextColumn();
 		std::string time_str;
+		std::string exact_time_str;
 		if (mod_time.has_value())
 		{
+			std::tm mod_time_tm = mod_time.value();
+
+			auto last_mod = utils::time::diff(std::time(nullptr), std::mktime(&mod_time_tm));
+			time_str = utils::time::interval_str(last_mod);
+			time_str = (time_str.empty() ? "Just now" : time_str + " ago");
+
 			std::stringstream ss;
-			ss << std::put_time(&mod_time.value(), "%d-%m-%Y %H:%M:%S");
-			time_str = ss.str();
+			ss << std::put_time(&mod_time.value(), "%d.%m.%Y %H:%M:%S");
+			exact_time_str = ss.str();
 		}
 		
 		ImGui::AlignTextToFramePadding();
 		ImGui::Text(time_str.c_str());
+		if (!exact_time_str.empty())
+		{
+			ImGui::SetItemTooltip(exact_time_str.c_str());
+		}
 
 		ImGui::TableNextColumn();
 		ImGui::PushID(imgui_id);

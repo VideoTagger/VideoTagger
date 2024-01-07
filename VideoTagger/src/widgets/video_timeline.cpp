@@ -60,7 +60,7 @@ namespace vt
 		return clickedBtn;
 	}
 
-	bool video_timeline(timeline_interface* sequence, video_time_t* current_time, bool* expanded, int* selected_entry, int64_t* first_frame, int sequence_options)
+	bool video_timeline(timeline_interface* sequence, timestamp* current_time, bool* expanded, int* selected_entry, int64_t* first_frame, int sequence_options)
 	{
 		bool ret = false;
 		ImGuiIO& io = ImGui::GetIO();
@@ -78,8 +78,8 @@ namespace vt
 		int dupEntry = -1;
 		int ItemHeight = 20;
 
-		const int64_t time_min = sequence->get_time_min().total_seconds.count();
-		const int64_t time_max = sequence->get_time_max().total_seconds.count();
+		const int64_t time_min = sequence->get_time_min().seconds_total.count();
+		const int64_t time_max = sequence->get_time_max().seconds_total.count();
 
 		bool popupOpened = false;
 		int sequenceCount = sequence->get_item_count();
@@ -187,7 +187,7 @@ namespace vt
 			// current frame top
 			ImRect topRect(ImVec2(canvas_pos.x + legendWidth, canvas_pos.y), ImVec2(canvas_pos.x + canvas_size.x, canvas_pos.y + ItemHeight));
 
-			if (!MovingCurrentFrame && !MovingScrollBar && movingEntry == -1 && sequence_options & ImSequencer::SEQUENCER_CHANGE_FRAME && current_time && current_time->total_seconds.count() >= 0 && topRect.Contains(io.MousePos) && io.MouseDown[0])
+			if (!MovingCurrentFrame && !MovingScrollBar && movingEntry == -1 && sequence_options & ImSequencer::SEQUENCER_CHANGE_FRAME && current_time && current_time->seconds_total.count() >= 0 && topRect.Contains(io.MousePos) && io.MouseDown[0])
 			{
 				MovingCurrentFrame = true;
 			}
@@ -195,11 +195,11 @@ namespace vt
 			{
 				if (frameCount)
 				{
-					current_time->total_seconds = std::chrono::seconds((int)((io.MousePos.x - topRect.Min.x) / framePixelWidth) + firstFrameUsed);
-					if (current_time->total_seconds.count() < time_min)
-						current_time->total_seconds = std::chrono::seconds(time_min);
-					if (current_time->total_seconds.count() >= time_max)
-						current_time->total_seconds = std::chrono::seconds(time_max);
+					current_time->seconds_total = std::chrono::seconds((int)((io.MousePos.x - topRect.Min.x) / framePixelWidth) + firstFrameUsed);
+					if (current_time->seconds_total.count() < time_min)
+						current_time->seconds_total = std::chrono::seconds(time_min);
+					if (current_time->seconds_total.count() >= time_max)
+						current_time->seconds_total = std::chrono::seconds(time_max);
 				}
 				if (!io.MouseDown[0])
 					MovingCurrentFrame = false;
@@ -253,7 +253,7 @@ namespace vt
 
 				if (baseIndex && px > (canvas_pos.x + legendWidth))
 				{
-					video_time_t time{ std::chrono::seconds(i) };
+					timestamp time{ std::chrono::seconds(i) };
 					char tmps[512];
 					ImFormatString(tmps, IM_ARRAYSIZE(tmps), "%02d:%02d:%02d", time.hours(), time.minutes(), time.seconds());
 					ImU32 text_color = ImGui::ColorConvertFloat4ToU32(style.Colors[ImGuiCol_Text]); //0xFFBBBBBB
@@ -494,11 +494,11 @@ namespace vt
 			draw_list->PopClipRect();
 
 			// cursor
-			if (current_time && first_frame && current_time->total_seconds.count() >= *first_frame && current_time->total_seconds.count() <= time_max)
+			if (current_time && first_frame && current_time->seconds_total.count() >= *first_frame && current_time->seconds_total.count() <= time_max)
 			{
 				static constexpr float cursorWidth = 4.f;
 				static constexpr float triangle_span = cursorWidth * 2;
-				float cursorOffset = contentMin.x + legendWidth + (current_time->total_seconds.count() - firstFrameUsed) * framePixelWidth + framePixelWidth / 2 - cursorWidth * 0.5f;
+				float cursorOffset = contentMin.x + legendWidth + (current_time->seconds_total.count() - firstFrameUsed) * framePixelWidth + framePixelWidth / 2 - cursorWidth * 0.5f;
 				ImU32 cursor_color = 0xE33E36FF; //0xA02A2AFF
 				draw_list->AddLine(ImVec2(cursorOffset, canvas_pos.y), ImVec2(cursorOffset, contentMax.y), cursor_color, cursorWidth);
 				draw_list->AddTriangleFilled(ImVec2(cursorOffset - triangle_span, canvas_pos.y), ImVec2(cursorOffset, canvas_pos.y + ItemHeight * 0.5f), ImVec2(cursorOffset + triangle_span, canvas_pos.y), cursor_color);

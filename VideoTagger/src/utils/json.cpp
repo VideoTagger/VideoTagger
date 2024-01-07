@@ -20,12 +20,12 @@ namespace vt::utils::json
 		return result;
 	}
 
-	void write_to_file(const nlohmann::ordered_json& data, const std::filesystem::path& filepath)
+	void write_to_file(const nlohmann::ordered_json& data, const std::filesystem::path& filepath, bool compact)
 	{
 		std::ofstream file(filepath);
 		if (file.is_open())
 		{
-			file << std::setw(4) << data;
+			file << data.dump(compact ? -1 : 1, '\t') << '\n';
 		}
 		else
 		{

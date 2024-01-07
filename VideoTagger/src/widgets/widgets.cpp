@@ -9,7 +9,7 @@
 #include <imgui_internal.h>
 
 #include "video_timeline.hpp"
-#include <utils/video_time.hpp>
+#include <utils/timestamp.hpp>
 
 namespace vt::widgets
 {
@@ -27,8 +27,8 @@ namespace vt::widgets
 	struct Timeline : public timeline_interface
 	{
 		std::vector<TimelineTag> tags;
-		video_time_t min_time;
-		video_time_t max_time;
+		timestamp min_time;
+		timestamp max_time;
 
 		Timeline()
 			: min_time{}, max_time{}
@@ -36,28 +36,28 @@ namespace vt::widgets
 
 		}
 
-		Timeline(video_time_t min_time, video_time_t max_time)
+		Timeline(timestamp min_time, timestamp max_time)
 			: min_time{ min_time }, max_time{ max_time }
 		{
 
 		}
 
-		void set_time_min(video_time_t value)
+		void set_time_min(timestamp value)
 		{
 			this->min_time = value;
 		}
 
-		void set_time_max(video_time_t value)
+		void set_time_max(timestamp value)
 		{
 			this->max_time = value;
 		}
 
-		virtual video_time_t get_time_min() const override
+		virtual timestamp get_time_min() const override
 		{
 			return min_time;
 		}
 
-		virtual video_time_t get_time_max() const override
+		virtual timestamp get_time_max() const override
 		{
 			return max_time;
 		}
@@ -182,8 +182,8 @@ namespace vt::widgets
 					//static time_widget_state state;
 
 					timestamp_t video_ts = video.current_timestamp();
-					video_time_t current_time{ std::chrono::duration_cast<std::chrono::seconds>(video_ts) };
-					video_time_t duration{ std::chrono::duration_cast<std::chrono::seconds>(video.duration()) };
+					timestamp current_time{ std::chrono::duration_cast<std::chrono::seconds>(video_ts) };
+					timestamp duration{ std::chrono::duration_cast<std::chrono::seconds>(video.duration()) };
 
 					auto avail_size = ImGui::GetContentRegionAvail();
 					auto cursor_pos = ImGui::GetCursorPos();
@@ -199,7 +199,7 @@ namespace vt::widgets
 					
 					//if (input_time(state, current_time))
 					//{
-					//	video.seek(std::chrono::duration_cast<timestamp_t>(current_time.total_seconds));
+					//	video.seek(std::chrono::duration_cast<timestamp_t>(current_time.seconds_total));
 					//}
 					//int64_t ts = video.current_timestamp().count();
 					//if (ImGui::InputScalar("time", ImGuiDataType_S64, (void*)&ts, nullptr, nullptr, nullptr, ImGuiInputTextFlags_EnterReturnsTrue))
@@ -269,12 +269,12 @@ namespace vt::widgets
 		static Timeline test_timeline;
 		if (video.is_open())
 		{
-			video_time_t time_max{ std::chrono::duration_cast<std::chrono::seconds>(video.duration()) };
+			timestamp time_max{ std::chrono::duration_cast<std::chrono::seconds>(video.duration()) };
 			test_timeline.set_time_max(time_max);
 		}
 		else
 		{
-			test_timeline.set_time_max(video_time_t{});
+			test_timeline.set_time_max(timestamp{});
 		}
 
 		if (test_timeline.tags.empty())
@@ -287,7 +287,7 @@ namespace vt::widgets
 		static int selected_entry = -1;
 		static int64_t first_frame = 0;
 		static bool expanded = true;
-		video_time_t current_time{ std::chrono::duration_cast<std::chrono::seconds>(video.current_timestamp()) };
+		timestamp current_time{ std::chrono::duration_cast<std::chrono::seconds>(video.current_timestamp()) };
 
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2{});
 		if (ImGui::Begin("Timeline"))
@@ -295,9 +295,9 @@ namespace vt::widgets
 			int flags = ImSequencer::SEQUENCER_EDIT_STARTEND | ImSequencer::SEQUENCER_ADD | ImSequencer::SEQUENCER_DEL | ImSequencer::SEQUENCER_COPYPASTE | ImSequencer::SEQUENCER_CHANGE_FRAME;
 			video_timeline(&test_timeline, &current_time, nullptr, &selected_entry, &first_frame, flags);
 			
-			if (current_time.total_seconds != std::chrono::duration_cast<std::chrono::seconds>(video.current_timestamp()))
+			if (current_time.seconds_total != std::chrono::duration_cast<std::chrono::seconds>(video.current_timestamp()))
 			{
-				video.seek(current_time.total_seconds);
+				video.seek(current_time.seconds_total);
 			}
 			
 		}

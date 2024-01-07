@@ -61,7 +61,7 @@ namespace vt
 	project project::load_from_file(const std::filesystem::path& filepath)
 	{
 		project result;
-		result.path = filepath;
+		result.path = std::filesystem::absolute(filepath);
 		if (!std::filesystem::exists(filepath))
 		{
 			result.name = filepath.stem().string();

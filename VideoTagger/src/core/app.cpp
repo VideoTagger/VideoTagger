@@ -13,6 +13,7 @@
 #include <widgets/project_selector.hpp>
 #include <widgets/time_input.hpp>
 #include <utils/filesystem.hpp>
+#include <utils/json.hpp>
 
 #include "project.hpp"
 #include <core/debug.hpp>
@@ -73,8 +74,9 @@ namespace vt
 	
 	bool app::init(const app_config& config)
 	{
+		ctx_.app_settings_filepath = config.app_settings_filepath;
 		//Clears the log file
-		std::ofstream{ debug::log_filepath };
+		if (debug::log_filepath != "") std::ofstream{debug::log_filepath};
 
 		if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS) < 0) return false;
 		if (NFD::Init() != NFD_OKAY) return false;
@@ -116,6 +118,8 @@ namespace vt
 
 		state_ = app_state::initialized;
 		ctx_.projects_list_filepath = config.projects_list_filepath;
+
+		load_settings();
 		return true;
 	}
 	
@@ -158,6 +162,20 @@ namespace vt
 		SDL_Quit();
 		state_ = app_state::uninitialized;
 	}
+
+	bool app::load_settings()
+	{
+		if (std::filesystem::exists(ctx_.app_settings_filepath))
+		{
+			//TODO: Error checking
+			debug::log("Loading settings from: " + ctx_.app_settings_filepath.string());
+			auto settings = utils::json::load_from_file(ctx_.app_settings_filepath);
+			auto& size = settings["window.size"];
+			SDL_SetWindowSize(main_window_, size["width"].get<int>(), size["height"].get<int>());
+			return true;
+		}
+		return false;
+	}
 	
 	void app::handle_events()
 	{
@@ -166,10 +184,39 @@ namespace vt
 		{
 			ImGui_ImplSDL2_ProcessEvent(&event);
 
-			if (event.type == SDL_QUIT)
+			switch (event.type)
 			{
-				state_ = app_state::shutdown;
+				case SDL_QUIT:
+				{
+					state_ = app_state::shutdown;
+				}
+				break;
+				case SDL_WINDOWEVENT:
+				{
+					switch (event.window.event)
+					{
+						case SDL_WINDOWEVENT_SIZE_CHANGED:
+						{
+							nlohmann::ordered_json settings;
+							auto& size = settings["window.size"];
+							size["width"] = event.window.data1;
+							size["height"] = event.window.data2;
+							debug::log("Window size changing, saving settings file...");
+							if (!ctx_.app_settings_filepath.empty())
+							{
+								utils::json::write_to_file(settings, ctx_.app_settings_filepath);
+							}
+							else
+							{
+								debug::error("Settings filepath is empty");
+							}
+						}
+						break;
+					}
+				}
+				break;
 			}
+			
 		}
 	}
 	
@@ -274,7 +321,7 @@ namespace vt
 		widgets::draw_timeline_widget_sample(vid);
 
 		//TODO: Remove this, this is temporary
-		static video_time_t time{};
+		static timestamp time{};
 		if (ImGui::Begin("Debug"))
 		{
 			widgets::time_input("Test", &time, 1.0f);
