@@ -87,7 +87,7 @@ namespace vt::widgets
 			memcpy(&data_backup, p_data, data_type_size);
 
 			// Input text parsing
-			p_data->total_seconds = std::chrono::seconds(time_to_seconds(data_buf));
+			p_data->seconds_total = std::chrono::seconds(time_to_seconds(data_buf));
 			/*
 			// Apply new value (or operations) then clamp
 			ImGui::DataTypeApplyFromText(data_buf, data_type, p_data, format);

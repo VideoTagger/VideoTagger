@@ -199,7 +199,7 @@ namespace vt::widgets
 					
 					//if (input_time(state, current_time))
 					//{
-					//	video.seek(std::chrono::duration_cast<timestamp_t>(current_time.total_seconds));
+					//	video.seek(std::chrono::duration_cast<timestamp_t>(current_time.seconds_total));
 					//}
 					//int64_t ts = video.current_timestamp().count();
 					//if (ImGui::InputScalar("time", ImGuiDataType_S64, (void*)&ts, nullptr, nullptr, nullptr, ImGuiInputTextFlags_EnterReturnsTrue))
@@ -295,9 +295,9 @@ namespace vt::widgets
 			int flags = ImSequencer::SEQUENCER_EDIT_STARTEND | ImSequencer::SEQUENCER_ADD | ImSequencer::SEQUENCER_DEL | ImSequencer::SEQUENCER_COPYPASTE | ImSequencer::SEQUENCER_CHANGE_FRAME;
 			video_timeline(&test_timeline, &current_time, nullptr, &selected_entry, &first_frame, flags);
 			
-			if (current_time.total_seconds != std::chrono::duration_cast<std::chrono::seconds>(video.current_timestamp()))
+			if (current_time.seconds_total != std::chrono::duration_cast<std::chrono::seconds>(video.current_timestamp()))
 			{
-				video.seek(current_time.total_seconds);
+				video.seek(current_time.seconds_total);
 			}
 			
 		}

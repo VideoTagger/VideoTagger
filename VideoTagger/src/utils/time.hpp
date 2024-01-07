@@ -5,6 +5,6 @@
 
 namespace vt::utils::time
 {
-	timestamp diff(std::tm& left, std::tm& right);
-	std::string duration_str(timestamp duration);
+	uint64_t diff(std::time_t end, std::time_t start);
+	std::string interval_str(uint64_t interval);
 }
