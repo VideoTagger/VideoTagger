@@ -77,7 +77,7 @@ namespace vt
 	project project::load_from_file(const std::filesystem::path& filepath)
 	{
 		project result;
-		result.path = filepath;
+		result.path = std::filesystem::absolute(filepath);
 		if (!std::filesystem::exists(filepath))
 		{
 			result.name = filepath.stem().string();
@@ -96,7 +96,7 @@ namespace vt
 				tag_it->color = tag_data["color"];
 				for (auto& timestamp : tag_data["timestamps"])
 				{
-					tag_it->timeline.insert(timestamp_t{ timestamp["start"] }, timestamp_t{ timestamp["end"] });
+					tag_it->timeline.insert(std::chrono::nanoseconds{ timestamp["start"] }, std::chrono::nanoseconds{ timestamp["end"] });
 				}
 			}
 		}			

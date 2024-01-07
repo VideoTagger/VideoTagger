@@ -10,6 +10,7 @@ namespace vt
 	{
 		std::optional<project> current_project;
 		std::filesystem::path projects_list_filepath;
+		std::filesystem::path app_settings_filepath;
 		widgets::project_selector project_selector;
 	};
 }

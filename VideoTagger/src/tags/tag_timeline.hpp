@@ -3,8 +3,7 @@
 #include <string>
 #include <utility>
 #include <set>
-
-#include <video/video_time.hpp>
+#include <chrono>
 
 namespace vt
 {
@@ -17,16 +16,16 @@ namespace vt
 
 	struct tag_timestamp
 	{
-		timestamp_t start{};
-		timestamp_t end{};
+		std::chrono::nanoseconds start{};
+		std::chrono::nanoseconds end{};
 		
-		tag_timestamp(timestamp_t time_start, timestamp_t time_end);
-		tag_timestamp(timestamp_t time_point);
+		tag_timestamp(std::chrono::nanoseconds time_start, std::chrono::nanoseconds time_end);
+		tag_timestamp(std::chrono::nanoseconds time_point);
 
-		void set(timestamp_t time_start, timestamp_t time_end);
-		void set(timestamp_t time_point);
+		void set(std::chrono::nanoseconds time_start, std::chrono::nanoseconds time_end);
+		void set(std::chrono::nanoseconds time_point);
 
-		duration_t duration() const;
+		std::chrono::nanoseconds duration() const;
 		tag_timestamp_type type() const;
 	};
 
@@ -44,12 +43,12 @@ namespace vt
 		using iterator = std::set<tag_timestamp, tag_timeline_set_comparator_>::iterator;
 		using reverse_iterator = std::set<tag_timestamp, tag_timeline_set_comparator_>::reverse_iterator;
 
-		std::pair<iterator, bool> insert(timestamp_t time_start, timestamp_t time_end);
-		std::pair<iterator, bool> insert(timestamp_t time_point);
+		std::pair<iterator, bool> insert(std::chrono::nanoseconds time_start, std::chrono::nanoseconds time_end);
+		std::pair<iterator, bool> insert(std::chrono::nanoseconds time_point);
 		iterator erase(iterator it);
 
-		std::pair<iterator, iterator> find_range(timestamp_t time_start, timestamp_t time_end) const;
-		iterator find(timestamp_t time_point) const;
+		std::pair<iterator, iterator> find_range(std::chrono::nanoseconds time_start, std::chrono::nanoseconds time_end) const;
+		iterator find(std::chrono::nanoseconds time_point) const;
 
 		iterator begin() const;
 		reverse_iterator rbegin() const;
