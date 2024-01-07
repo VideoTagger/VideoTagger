@@ -1,7 +1,5 @@
 #include <core/app.hpp>
 #include <core/debug.hpp>
-#include <utils/hash.hpp>
-
 
 int main(int argc, char* argv[])
 {
@@ -14,7 +12,6 @@ int main(int argc, char* argv[])
 	if (app.init(cfg))
 	{
 		app.run();
-	}
-	
+	}	
 	return 0;
 }

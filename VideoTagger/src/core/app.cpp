@@ -2,6 +2,7 @@
 #include <cmath>
 #include <fstream>
 #include <filesystem>
+#include <core/input.hpp>
 
 #include <SDL.h>
 #include <imgui.h>
@@ -183,8 +184,8 @@ namespace vt
 		while (SDL_PollEvent(&event))
 		{
 			ImGui_ImplSDL2_ProcessEvent(&event);
-
-			switch (event.type)
+			
+						switch (event.type)
 			{
 				case SDL_QUIT:
 				{
