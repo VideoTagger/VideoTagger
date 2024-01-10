@@ -40,8 +40,6 @@ namespace vt
 		SDL_Renderer* renderer_;
 
 		app_context ctx_;
-		//temporary
-		video vid;
 
 	public:
 		bool init(const app_config& config);
