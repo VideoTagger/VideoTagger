@@ -56,6 +56,7 @@ namespace vt
 		reverse_iterator rend() const;
 
 		size_t size() const;
+		bool empty() const;
 
 	private:
 		std::set<tag_timestamp, tag_timeline_set_comparator_> timestamps_;

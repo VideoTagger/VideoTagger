@@ -134,4 +134,9 @@ namespace vt
 	{
 		return timestamps_.size();
 	}
+	
+	bool tag_timeline::empty() const
+	{
+		return timestamps_.empty();
+	}
 }
