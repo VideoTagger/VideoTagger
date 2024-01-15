@@ -82,7 +82,7 @@ namespace vt::widgets
 		return return_value;
 	}
 
-	bool tag_manager(tag_storage& tags, tag_storage::iterator& selected_entry)
+	bool tag_manager(tag_storage& tags, tag_storage::iterator& selected_entry, tag_manager_flags flags)
 	{
 		//TODO: Improve UI layout
 		//TODO: Maybe extract some stuff into separate functions for better readability
@@ -97,17 +97,21 @@ namespace vt::widgets
 
 		if (ImGui::BeginTable("##TagManager", 2))
 		{
+			static constexpr float tag_column_width = 100;
 			float button_region_width = button_size.x + style.CellPadding.x;
 
-			ImGui::TableSetupColumn(nullptr, 0, 0);
+			ImGui::TableSetupColumn(nullptr, ImGuiTableColumnFlags_WidthStretch, tag_column_width);
 			ImGui::TableSetupColumn(nullptr, ImGuiTableColumnFlags_WidthFixed, button_region_width);
 
 			if (ImGui::TableNextColumn())
 			{
 				if (ImGui::BeginTable("##TagManagerList", 2, ImGuiTableFlags_Borders | ImGuiTableFlags_ScrollY))
 				{
-					ImGui::TableSetupColumn("Name");
-					ImGui::TableSetupColumn("Color", ImGuiTableColumnFlags_WidthFixed/*, color_picker_size.x*/);
+					static float color_column_width = ImGui::CalcTextSize("Color").x;
+					static float name_column_width = tag_column_width - color_column_width;
+
+					ImGui::TableSetupColumn("Name", ImGuiTableColumnFlags_WidthStretch, name_column_width);
+					ImGui::TableSetupColumn("Color", ImGuiTableColumnFlags_WidthFixed, color_column_width);
 					ImGui::TableHeadersRow();
 
 					for (auto it = tags.begin(); it != tags.end(); ++it)
@@ -161,18 +165,23 @@ namespace vt::widgets
 			{
 				auto button_region_size = ImGui::GetContentRegionAvail();
 
-				ImGui::SetCursorPosX(ImGui::GetCursorPosX() + (button_region_size.x / 2 - button_size.x / 2));
-				if (ImGui::Button("Add", button_size))
+				if (!(flags & tag_manager_flags::no_add))
 				{
-					open_add_tag_popup = true;
+					ImGui::SetCursorPosX(ImGui::GetCursorPosX() + (button_region_size.x / 2 - button_size.x / 2));
+					if (ImGui::Button("Add", button_size))
+					{
+						open_add_tag_popup = true;
 
+					}
 				}
-
-				ImGui::SetCursorPosX(ImGui::GetCursorPosX() + (button_region_size.x / 2 - button_size.x / 2));
-				if (ImGui::Button("Remove", button_size) and selected_entry != tags.end())
+				if (!(flags & tag_manager_flags::no_remove))
 				{
-					tags.erase(selected_entry);
-					selected_entry = tags.end();
+					ImGui::SetCursorPosX(ImGui::GetCursorPosX() + (button_region_size.x / 2 - button_size.x / 2));
+					if (ImGui::Button("Remove", button_size) and selected_entry != tags.end())
+					{
+						tags.erase(selected_entry);
+						selected_entry = tags.end();
+					}
 				}
 			}
 

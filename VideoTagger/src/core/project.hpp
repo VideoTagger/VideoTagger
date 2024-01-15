@@ -18,6 +18,8 @@ namespace vt
 
 		tag_storage tags;
 
+		//TODO: Store tags displayed on the timeline
+
 		//TODO: Add keybinds
 
 		bool is_valid() const;

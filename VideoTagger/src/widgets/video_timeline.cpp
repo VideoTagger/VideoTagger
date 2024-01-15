@@ -32,6 +32,9 @@
 
 #include <algorithm>
 #include <cstdlib>
+#include <optional>
+
+#include <widgets/tag_manager.hpp>
 
 namespace vt::widgets
 {
@@ -82,11 +85,11 @@ namespace vt::widgets
 		const ImGuiStyle& style = ImGui::GetStyle();
 		ImRect btnRect(pos, ImVec2(pos.x + 16, pos.y + 16));
 		bool overBtn = btnRect.Contains(io.MousePos);
-		bool containedClick = overBtn && btnRect.Contains(io.MouseClickedPos[0]);
-		bool clickedBtn = containedClick && io.MouseReleased[0];
+		bool containedClick = overBtn and btnRect.Contains(io.MouseClickedPos[0]);
+		bool clickedBtn = containedClick and io.MouseReleased[0];
 		//int btnColor = overBtn ? 0xAAEAFFAA : 0x77A3B2AA;
 		ImU32 button_color = ImGui::ColorConvertFloat4ToU32(style.Colors[overBtn ? ImGuiCol_Text : ImGuiCol_TextDisabled]);
-		if (containedClick && io.MouseDownDuration[0] > 0)
+		if (containedClick and io.MouseDownDuration[0] > 0)
 			btnRect.Expand(2.0f);
 
 		float midy = pos.y + 16 / 2 - 0.5f;
@@ -98,20 +101,43 @@ namespace vt::widgets
 		return clickedBtn;
 	}
 
+	struct moving_tag_data
+	{
+		tag* tag{};
+		tag_timeline::iterator segment{};
+		uint8_t moving_part;
+		std::chrono::seconds position{};
+		std::chrono::seconds left_position{};
+		std::chrono::seconds right_position{};
+	};
+
+	//TODO:
+	// Right click menu for adding segments:
+	// - add point/timestamp here (at the cursor)
+	// - start segment here (at the cursor)
+	// - end segment here (at the cursor)
+	// - add point/timestamp at the red arrow/line
+	// - start segment at the red arrow/line
+	// - end segment at the red arrow/line
+	// - remove point/segment (at the cursor, only when cursor is over a timestamp)
+	//
+	// Button to remove displayed tag.
+	// Maybe more accurracy than a second.
+	// Display time in 10 second gaps instead of 20
+
 	bool video_timeline(timeline_state* state, timestamp* current_time, int* selected_entry)
 	{
-		bool ret = false;
+		bool return_value = false;
 		ImGuiIO& io = ImGui::GetIO();
 		ImGuiStyle& style = ImGui::GetStyle();
-		int cx = (int)(io.MousePos.x);
-		int cy = (int)(io.MousePos.y);
+		int mouse_pos_x = (int)(io.MousePos.x);
+		int mouse_pos_y = (int)(io.MousePos.y);
 		static float framePixelWidth = 10.f;
 		static float framePixelWidthTarget = 10.f;
 		int legendWidth = 200;
 
-		static int movingEntry = -1;
-		static int movingPos = -1;
-		static int movingPart = -1;
+		//static int movingEntry = -1;
+		static std::optional<moving_tag_data> moving_data;
 		int delEntry = -1;
 		int dupEntry = -1;
 		int ItemHeight = 20;
@@ -120,9 +146,11 @@ namespace vt::widgets
 		const int64_t time_max = state->time_max.seconds_total.count();
 
 		bool popupOpened = false;
+
+		//TODO: when there's no tags nothing would display. prevent this
 		int sequenceCount = state->displayed_tags.size();
-		if (!sequenceCount)
-			return false;
+		//if (!sequenceCount)
+		//	return false;
 		ImGui::BeginGroup();
 
 		ImDrawList* draw_list = ImGui::GetWindowDrawList();
@@ -131,11 +159,12 @@ namespace vt::widgets
 		int64_t firstFrameUsed = state->first_frame;
 
 
-		int controlHeight = sequenceCount * ItemHeight;
+		//TODO: temporary solution to nothing displaying
+		int controlHeight = std::max(sequenceCount, 1) * ItemHeight;
 		int64_t frameCount = std::max(time_max - time_min, 1ll);
 
 		static bool MovingScrollBar = false;
-		//static bool MovingCurrentFrame = false;
+		static bool MovingCurrentFrame = false;
 		struct CustomDraw
 		{
 			int index;
@@ -156,7 +185,7 @@ namespace vt::widgets
 		static bool panningView = false;
 		static ImVec2 panningViewSource;
 		static int64_t panningViewFrame;
-		if (ImGui::IsWindowFocused() && io.KeyAlt && io.MouseDown[2])
+		if (ImGui::IsWindowFocused() and io.KeyAlt and io.MouseDown[2])
 		{
 			if (!panningView)
 			{
@@ -167,7 +196,7 @@ namespace vt::widgets
 			state->first_frame = panningViewFrame - int64_t((io.MousePos.x - panningViewSource.x) / framePixelWidth);
 			state->first_frame = std::clamp(state->first_frame, time_min, time_max - visibleFrameCount);
 		}
-		if (panningView && !io.MouseDown[2])
+		if (panningView and !io.MouseDown[2])
 		{
 			panningView = false;
 		}
@@ -181,7 +210,7 @@ namespace vt::widgets
 
 
 		// --
-		/*if (expanded && !*expanded)
+		/*if (expanded and !*expanded)
 		{
 			ImGui::InvisibleButton("canvas", ImVec2(canvas_size.x - canvas_pos.x, (float)ItemHeight));
 			draw_list->AddRectFilled(canvas_pos, ImVec2(canvas_size.x + canvas_pos.x, canvas_pos.y + ItemHeight), 0xFF3D3837, 0);
@@ -223,7 +252,7 @@ namespace vt::widgets
 			// current frame top
 			ImRect topRect(ImVec2(canvas_pos.x + legendWidth, canvas_pos.y), ImVec2(canvas_pos.x + canvas_size.x, canvas_pos.y + ItemHeight));
 
-			/*if (!MovingCurrentFrame && !MovingScrollBar && movingEntry == -1 && sequence_options & ImSequencer::SEQUENCER_CHANGE_FRAME && current_time && current_time->seconds_total.count() >= 0 && topRect.Contains(io.MousePos) && io.MouseDown[0])
+			if (!MovingCurrentFrame and !MovingScrollBar and !moving_data.has_value() and current_time and current_time->seconds_total.count() >= 0 and topRect.Contains(io.MousePos) and io.MouseDown[0])
 			{
 				MovingCurrentFrame = true;
 			}
@@ -239,31 +268,46 @@ namespace vt::widgets
 				}
 				if (!io.MouseDown[0])
 					MovingCurrentFrame = false;
-			}*/
+			}
 
 			//header
 			ImU32 header_color = ImGui::ColorConvertFloat4ToU32(style.Colors[ImGuiCol_WindowBg]); //0xFF3D3837
 			draw_list->AddRectFilled(canvas_pos, ImVec2(canvas_size.x + canvas_pos.x, canvas_pos.y + ItemHeight), header_color, 0);
 			
-			//TODO: Use this
-			/*if (sequence_options & ImSequencer::SEQUENCER_ADD)
+			//if (sequence_options & ImSequencer::SEQUENCER_ADD)
 			{
 				if (SequencerAddDelButton(draw_list, ImVec2(canvas_pos.x + legendWidth - ItemHeight, canvas_pos.y + 2), true))
-					ImGui::OpenPopup("addEntry");
+					ImGui::OpenPopup("##AddEntry");
 
-				if (ImGui::BeginPopup("addEntry"))
+				auto flags = ImGuiWindowFlags_NoResize | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoTitleBar;
+
+				//TODO: padding for the popup
+
+				auto win_size = ImVec2{ 310, 200 };
+				ImGui::SetNextWindowSize(win_size, ImGuiCond_Always);
+
+				if (ImGui::BeginPopup("##AddEntry", flags))
 				{
-					for (int i = 0; i < state->get_item_type_count(); i++)
-						if (ImGui::Selectable(state->get_item_type_name(i)))
-						{
-							state->add(i);
-							*selected_entry = state->get_item_count() - 1;
-						}
+					//for (int i = 0; i < state->get_item_type_count(); i++)
+					//	if (ImGui::Selectable(state->get_item_type_name(i)))
+					//	{
+					//		state->add(i);
+					//		*selected_entry = state->get_item_count() - 1;
+					//	}
+
+					popupOpened = true;
+
+					auto selected_tag = state->tags->end();
+					if (tag_manager(*state->tags, selected_tag, tag_manager_flags::no_remove))
+					{
+						state->add(selected_tag->name);
+						ImGui::CloseCurrentPopup();
+						popupOpened = false;
+					}
 
 					ImGui::EndPopup();
-					popupOpened = true;
 				}
-			}*/
+			}
 
 			//header frame number and lines
 			int modFrameCount = 10;
@@ -282,14 +326,14 @@ namespace vt::widgets
 				int tiretStart = baseIndex ? 4 : (halfIndex ? 10 : 14);
 				int tiretEnd = baseIndex ? regionHeight : ItemHeight;
 
-				if (px <= (canvas_size.x + canvas_pos.x) && px >= (canvas_pos.x + legendWidth))
+				if (px <= (canvas_size.x + canvas_pos.x) and px >= (canvas_pos.x + legendWidth))
 				{
 					draw_list->AddLine(ImVec2((float)px, canvas_pos.y + (float)tiretStart), ImVec2((float)px, canvas_pos.y + (float)tiretEnd - 1), 0xFF606060, 1);
 
 					draw_list->AddLine(ImVec2((float)px, canvas_pos.y + (float)ItemHeight), ImVec2((float)px, canvas_pos.y + (float)regionHeight - 1), 0x30606060, 1);
 				}
 
-				if (baseIndex && px > (canvas_pos.x + legendWidth))
+				if (baseIndex and px > (canvas_pos.x + legendWidth))
 				{
 					timestamp time{ std::chrono::seconds(i) };
 					char tmps[512];
@@ -305,7 +349,7 @@ namespace vt::widgets
 				int tiretStart = int(contentMin.y);
 				int tiretEnd = int(contentMax.y);
 
-				if (px <= (canvas_size.x + canvas_pos.x) && px >= (canvas_pos.x + legendWidth))
+				if (px <= (canvas_size.x + canvas_pos.x) and px >= (canvas_pos.x + legendWidth))
 				{
 					//draw_list->AddLine(ImVec2((float)px, canvas_pos.y + (float)tiretStart), ImVec2((float)px, canvas_pos.y + (float)tiretEnd - 1), 0xFF606060, 1);
 
@@ -360,7 +404,7 @@ namespace vt::widgets
 
 				ImVec2 pos = ImVec2(contentMin.x + legendWidth, contentMin.y + ItemHeight * i + 1);
 				ImVec2 sz = ImVec2(canvas_size.x + canvas_pos.x, pos.y + ItemHeight - 1);
-				if (!popupOpened && cy >= pos.y && cy < pos.y + (ItemHeight) && movingEntry == -1 && cx>contentMin.x && cx < contentMin.x + canvas_size.x)
+				if (!popupOpened and mouse_pos_y >= pos.y and mouse_pos_y < pos.y + (ItemHeight) and !moving_data.has_value() and mouse_pos_x>contentMin.x and mouse_pos_x < contentMin.x + canvas_size.x)
 				{
 					col += 0x80201008;
 					pos.x -= legendWidth;
@@ -379,23 +423,31 @@ namespace vt::widgets
 			drawLineContent(time_max, int(contentHeight));
 
 			// selection
-			bool selected = selected_entry && (*selected_entry >= 0);
+			/*bool selected = selected_entry and (*selected_entry >= 0);
 			if (selected)
 			{
 				//TODO: Change color
 				draw_list->AddRectFilled(ImVec2(contentMin.x, contentMin.y + ItemHeight * *selected_entry),
 					ImVec2(contentMin.x + canvas_size.x, contentMin.y + ItemHeight * (*selected_entry + 1)), 0x801080FF, 1.f);
-			}
+			}*/
 
 			// slots
 			for (int i = 0; i < sequenceCount; i++)
 			{
 				tag& tag_info = state->get(i);
 
-				for (auto& tag_timestamp : tag_info.timeline)
+				for (auto timestamp_it = tag_info.timeline.begin(); timestamp_it != tag_info.timeline.end(); ++timestamp_it)
 				{
+					auto& tag_timestamp = *timestamp_it;
+
 					int64_t start = std::chrono::duration_cast<std::chrono::seconds>(tag_timestamp.start).count();
 					int64_t end = std::chrono::duration_cast<std::chrono::seconds>(tag_timestamp.end).count();
+					if (moving_data.has_value() and moving_data->tag == &tag_info and moving_data->segment == timestamp_it)
+					{
+						start = moving_data->left_position.count();
+						end = moving_data->right_position.count();
+					}
+
 
 					unsigned int color = tag_info.color;
 
@@ -406,12 +458,12 @@ namespace vt::widgets
 					unsigned int slotColor = color | 0xFF000000;
 					unsigned int slotColorHalf = (color & 0xFFFFFF) | 0x40000000;
 
-					if (slotP1.x <= (canvas_size.x + contentMin.x) && slotP2.x >= (contentMin.x + legendWidth))
+					if (slotP1.x <= (canvas_size.x + contentMin.x) and slotP2.x >= (contentMin.x + legendWidth))
 					{
 						draw_list->AddRectFilled(slotP1, slotP3, slotColorHalf, 2);
 						draw_list->AddRectFilled(slotP1, slotP2, slotColor, 2);
 					}
-					/*if (ImRect(slotP1, slotP2).Contains(io.MousePos) && io.MouseDoubleClicked[0])
+					/*if (ImRect(slotP1, slotP2).Contains(io.MousePos) and io.MouseDoubleClicked[0])
 					{
 						state->double_click(i);
 					}*/
@@ -423,8 +475,8 @@ namespace vt::widgets
 						, ImRect(ImVec2(slotP2.x - handle_width, slotP1.y), slotP2)
 						, ImRect(slotP1, slotP2) };
 
-					const unsigned int quadColor[] = { 0xFFFFFFFF, 0xFFFFFFFF, slotColor + (selected ? 0 : 0x202020) };
-					/*if (movingEntry == -1 && (sequence_options & ImSequencer::SEQUENCER_EDIT_STARTEND))// TODOFOCUS && backgroundRect.Contains(io.MousePos))
+					const unsigned int quadColor[] = { 0xFFFFFFFF, 0xFFFFFFFF, slotColor/* + (selected ? 0 : 0x202020)*/};
+					if (!moving_data.has_value())// TODOFOCUS and backgroundRect.Contains(io.MousePos))
 					{
 						for (int j = 2; j >= 0; j--)
 						{
@@ -434,23 +486,29 @@ namespace vt::widgets
 							draw_list->AddRectFilled(rc.Min, rc.Max, quadColor[j], 2);
 						}
 
-						for (int j = 0; j < 3; j++)
+						for (uint8_t j = 0; j < 3; j++)
 						{
 							ImRect& rc = rects[j];
 							if (!rc.Contains(io.MousePos))
 								continue;
 							if (!ImRect(childFramePos, childFramePos + childFrameSize).Contains(io.MousePos))
 								continue;
-							if (ImGui::IsMouseClicked(0) && !MovingScrollBar && !MovingCurrentFrame)
+							if (ImGui::IsMouseClicked(0) and !MovingScrollBar and !MovingCurrentFrame)
 							{
-								movingEntry = i;
-								movingPos = cx;
-								movingPart = j + 1;
-								state->begin_edit(movingEntry);
+								moving_data = moving_tag_data{
+									&tag_info,
+									timestamp_it,
+									static_cast<uint8_t>(j + 1),
+									std::chrono::seconds{mouse_pos_x},
+									std::chrono::duration_cast<std::chrono::seconds>(timestamp_it->start),
+									std::chrono::duration_cast<std::chrono::seconds>(timestamp_it->end)
+								};
+
+								//state->begin_edit(movingEntry);
 								break;
 							}
 						}
-					}*/
+					}
 
 
 					ImVec2 rp(canvas_pos.x, contentMin.y + ItemHeight * i);
@@ -464,56 +522,58 @@ namespace vt::widgets
 
 
 			// moving
-//			if (/*backgroundRect.Contains(io.MousePos) && */movingEntry >= 0)
-//			{
-//#if IMGUI_VERSION_NUM >= 18723
-//				ImGui::SetNextFrameWantCaptureMouse(true);
-//#else
-//				ImGui::CaptureMouseFromApp();
-//#endif
-//				int diffFrame = int((cx - movingPos) / framePixelWidth);
-//				if (std::abs(diffFrame) > 0)
-//				{
-//					int* start, * end;
-//					state->get(movingEntry, &start, &end, NULL, NULL);
-//					if (selected_entry)
-//						*selected_entry = movingEntry;
-//					int& l = *start;
-//					int& r = *end;
-//					if (movingPart & 1)
-//						l += diffFrame;
-//					if (movingPart & 2)
-//						r += diffFrame;
-//					if (l < 0)
-//					{
-//						if (movingPart & 2)
-//							r -= l;
-//						l = 0;
-//					}
-//					if (movingPart & 1 && l > r)
-//						l = r;
-//					if (movingPart & 2 && r < l)
-//						r = l;
-//					movingPos += int(diffFrame * framePixelWidth);
-//				}
-//				if (!io.MouseDown[0])
-//				{
-//					// single select
-//					if (!diffFrame && movingPart && selected_entry)
-//					{
-//						*selected_entry = movingEntry;
-//						ret = true;
-//					}
-//
-//					movingEntry = -1;
-//					state->end_edit();
-//				}
-//			}
+			if (/*backgroundRect.Contains(io.MousePos) and */moving_data.has_value())
+			{
+#if IMGUI_VERSION_NUM >= 18723
+				ImGui::SetNextFrameWantCaptureMouse(true);
+#else
+				ImGui::CaptureMouseFromApp();
+#endif
+				auto diffFrame = std::chrono::seconds{ int64_t((mouse_pos_x - moving_data->position.count()) / framePixelWidth) };
+				if (std::abs(diffFrame.count()) > 0)
+				{
+					/*if (selected_entry)
+						*selected_entry = movingEntry;*/
+
+					if (moving_data->moving_part & 1)
+						moving_data->left_position += diffFrame;
+					if (moving_data->moving_part & 2)
+						moving_data->right_position += diffFrame;
+					if (moving_data->left_position < std::chrono::seconds{0})
+					{
+						if (moving_data->moving_part & 2)
+							moving_data->right_position -= moving_data->left_position;
+						moving_data->left_position = std::chrono::seconds{0};
+					}
+					if (moving_data->moving_part & 1 and moving_data->left_position > moving_data->right_position)
+						moving_data->left_position = moving_data->right_position;
+					if (moving_data->moving_part & 2 and moving_data->right_position < moving_data->left_position)
+						moving_data->right_position = moving_data->left_position;
+					moving_data->position += std::chrono::duration_cast<std::chrono::seconds>(diffFrame * framePixelWidth);
+				}
+				if (!io.MouseDown[0])
+				{
+					// single select
+					//if (!diffFrame and movingPart and selected_entry)
+					//{
+					//	*selected_entry = movingEntry;
+					//	ret = true;
+					//}
+
+					//TODO: If tags were to overlap, display a popup asking whether to merge the tags or not.
+					auto& timeline = moving_data->tag->timeline;
+					timeline.erase(moving_data->segment);
+					moving_data->segment = timeline.insert(moving_data->left_position, moving_data->right_position).first;
+
+					moving_data.reset();
+					//state->end_edit();
+				}
+			}
 			draw_list->PopClipRect();
 			draw_list->PopClipRect();
 
 			// cursor
-			if (current_time && current_time->seconds_total.count() >= state->first_frame && current_time->seconds_total.count() <= time_max)
+			if (current_time and current_time->seconds_total.count() >= state->first_frame and current_time->seconds_total.count() <= time_max)
 			{
 				static constexpr float cursorWidth = 4.f;
 				static constexpr float triangle_span = cursorWidth * 2;
@@ -550,11 +610,11 @@ namespace vt::widgets
 				ImU32 paste_color = ImGui::ColorConvertFloat4ToU32(style.Colors[inRectPaste ? ImGuiCol_Text : ImGuiCol_TextDisabled]);
 				draw_list->AddText(rectPaste.Min, paste_color, "Paste");
 
-				if (inRectCopy && io.MouseReleased[0])
+				if (inRectCopy and io.MouseReleased[0])
 				{
 					state->copy();
 				}
-				if (inRectPaste && io.MouseReleased[0])
+				if (inRectPaste and io.MouseReleased[0])
 				{
 					state->paste();
 				}
@@ -670,15 +730,15 @@ namespace vt::widgets
 					}
 					else
 					{
-						if (scrollBarThumb.Contains(io.MousePos) && ImGui::IsMouseClicked(0) && movingEntry == -1)
+						if (scrollBarThumb.Contains(io.MousePos) and ImGui::IsMouseClicked(0) and !moving_data.has_value())
 						{
 							MovingScrollBar = true;
 							panningViewSource = io.MousePos;
 							panningViewFrame = -state->first_frame;
 						}
-						if (!sizingRBar && onRight && ImGui::IsMouseClicked(0))
+						if (!sizingRBar and onRight and ImGui::IsMouseClicked(0))
 							sizingRBar = true;
-						if (!sizingLBar && onLeft && ImGui::IsMouseClicked(0))
+						if (!sizingLBar and onLeft and ImGui::IsMouseClicked(0))
 							sizingLBar = true;
 
 					}
@@ -704,10 +764,10 @@ namespace vt::widgets
 		if (delEntry != -1)
 		{
 			state->del(delEntry);
-			if (selected_entry && (*selected_entry == delEntry || *selected_entry >= state->displayed_tags.size()))
+			if (selected_entry and (*selected_entry == delEntry || *selected_entry >= state->displayed_tags.size()))
 				*selected_entry = -1;
 		}
 
-		return ret;
+		return return_value;
 	}
 }
