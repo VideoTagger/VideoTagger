@@ -197,6 +197,9 @@ namespace vt
 					{
 						case SDL_WINDOWEVENT_SIZE_CHANGED:
 						{
+							//Skip if window is maximized
+							if (SDL_GetWindowFlags(main_window_) & SDL_WINDOW_MAXIMIZED) break;
+
 							nlohmann::ordered_json settings;
 							auto& size = settings["window.size"];
 							size["width"] = event.window.data1;
