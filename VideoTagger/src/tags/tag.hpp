@@ -1,40 +1,22 @@
 #pragma once
 #include <string>
-#include <cstdint>
-
-#include "tag_timeline.hpp"
 
 namespace vt
 {
 	struct tag
 	{
 		std::string name;
-		//ABGR
-		uint32_t color{};
-		tag_timeline timeline;
-
-		tag(std::string name, uint32_t color)
-			: name{ name }, color{ color | 0xff000000 }
-		{
-		}
 	};
 
-	inline bool operator==(const tag& lhs, const tag& rhs)
+	struct point_tag : public tag
 	{
-		return lhs.name == rhs.name;
-	}
+		size_t timestamp;
+	};
 
-	inline bool operator!=(const tag& lhs, const tag& rhs)
+	struct span_tag : public tag
 	{
-		return !(lhs == rhs);
-	}
+		//TODO: Change to timestamp_t when it gets moved to separate header
+		size_t start_timestamp;
+		size_t end_timestamp;
+	};
 }
-
-template <>
-struct std::hash<vt::tag>
-{
-	std::size_t operator()(const vt::tag& value) const
-	{
-		return std::hash<std::string>{}(value.name);
-	}
-};

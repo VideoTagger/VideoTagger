@@ -1,5 +1,3 @@
-// THIS IS A MODIFED VERSION OF THE SEQUENCER WIDGET FROM ImGuizmo
-// 
 // https://github.com/CedricGuillemet/ImGuizmo
 // v 1.89 WIP
 //
@@ -28,11 +26,8 @@
 #pragma once
 
 #include <cstddef>
-#include <string>
-#include <vector>
 
 #include <utils/timestamp.hpp>
-#include <tags/tag_storage.hpp>
 
 struct ImDrawList;
 struct ImRect;
@@ -50,31 +45,40 @@ namespace ImSequencer
 	};
 }
 
-namespace vt::widgets
+namespace vt
 {
-	struct timeline_state
+	struct timeline_interface
 	{
 		bool focused = false;
+		virtual timestamp get_time_min() const = 0;
+		virtual timestamp get_time_max() const = 0;
+		virtual int get_item_count() const = 0;
 
-		tag_storage* tags;
-		std::vector<std::string> displayed_tags;
+		virtual void begin_edit(int /*index*/) {}
+		virtual void end_edit() {}
+		virtual int get_item_type_count() const { return 0; }
+		virtual const char* get_item_type_name(int /*typeIndex*/) const { return ""; }
+		virtual const char* get_item_label(int /*index*/) const { return ""; }
+		virtual const char* get_collapse_fmt() const { return "%d Frames / %d entries"; }
 
-		timestamp time_min;
-		timestamp time_max;
+		virtual void get(int index, int** start, int** end, int* type, unsigned int* color) = 0;
+		virtual void add(int /*type*/) {}
+		virtual void del(int /*index*/) {}
+		virtual void duplicate(int /*index*/) {}
 
-		int64_t first_frame{};
+		virtual void copy() {}
+		virtual void paste() {}
 
-		const char* get_collapse_fmt() const { return "%d Frames / %d entries"; }
+		virtual size_t get_custom_height(int /*index*/) { return 0; }
+		virtual void double_click(int /*index*/) {}
+		virtual void custom_draw(int /*index*/, ImDrawList* /*draw_list*/, const ImRect& /*rc*/, const ImRect& /*legendRect*/, const ImRect& /*clippingRect*/, const ImRect& /*legendClippingRect*/) {}
+		virtual void custom_draw_compact(int /*index*/, ImDrawList* /*draw_list*/, const ImRect& /*rc*/, const ImRect& /*clippingRect*/) {}
 
-		tag& get(int index);
-		void add(const std::string& name);
-		void del(int index);
-
-		void sync_tags();
+		virtual ~timeline_interface() = default;
 	};
 
 
 	// return true if selection is made
-	bool video_timeline(timeline_state* state, timestamp* current_time, int* selected_entry);
+	bool video_timeline(timeline_interface* sequence, timestamp* current_time, bool* expanded, int* selected_entry, int64_t* first_frame, int sequence_options);
 
 }

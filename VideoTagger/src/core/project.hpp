@@ -4,7 +4,7 @@
 #include <map>
 #include <optional>
 
-#include "tags/tag_storage.hpp"
+#include "tags/tag.hpp"
 
 namespace vt
 {
@@ -16,7 +16,8 @@ namespace vt
 		std::filesystem::path path = std::filesystem::current_path();
 		std::filesystem::path working_dir = ".";
 
-		tag_storage tags;
+		//Custom tags provided by the user
+		std::map<std::string, tag> tags;
 
 		//TODO: Store tags displayed on the timeline
 
