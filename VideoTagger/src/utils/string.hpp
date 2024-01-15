@@ -1,9 +1,9 @@
 #include <filesystem>
-#include <string_view>
+#include <string>
 
 namespace vt::utils::string
 {
-	uint64_t levenshtein_dist(const std::string& left, const std::string& right, int r_length, int l_length);
+	uint64_t levenshtein_dist(const std::string& left, const std::string& right);
 	
 	std::string to_lowercase(const std::string& input);
 	std::string to_uppercase(const std::string& input);
