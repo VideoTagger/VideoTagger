@@ -55,7 +55,7 @@ namespace vt
 
 	bool project::operator==(const project& other) const
 	{
-		return name == other.name and path == other.path and working_dir == other.working_dir;
+		return (name == other.name) and (path == other.path) and (working_dir == other.working_dir);
 	}
 	
 	project project::load_from_file(const std::filesystem::path& filepath)

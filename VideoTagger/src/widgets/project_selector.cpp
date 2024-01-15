@@ -153,9 +153,16 @@ namespace vt::widgets
 				ImGui::CloseCurrentPopup();
 			}
 			ImGui::SameLine();
-			bool valid = !temp_project.name.empty() and !temp_project.path.empty();
-			valid = valid and std::filesystem::is_directory(temp_project.path) and std::filesystem::exists(temp_project.path);
-			valid = valid and std::filesystem::is_directory(temp_project.working_dir) and std::filesystem::exists(temp_project.working_dir);
+			bool valid = !temp_project.name.empty() and !temp_project.path.empty();			
+			
+			valid &= std::filesystem::is_directory(temp_project.path) and std::filesystem::exists(temp_project.path);
+			valid &= std::filesystem::is_directory(temp_project.working_dir) and std::filesystem::exists(temp_project.working_dir);
+
+			auto temp_project_copy = temp_project;
+			temp_project_copy.path = (temp_project.path / temp_project.name).replace_extension(project::extension);
+
+			auto it = std::find(projects_.begin(), projects_.end(), temp_project_copy);
+			valid &= (it == projects_.end());
 
 			if (!valid) ImGui::BeginDisabled();
 			bool pressed = ImGui::Button("Create##ProjectCfg", button_size) || ImGui::IsKeyPressed(ImGuiKey_Enter);
@@ -164,8 +171,7 @@ namespace vt::widgets
 			if (valid and pressed)
 			{
 				//TODO: Check if such project doesn't already exist
-
-				temp_project.path = (temp_project.path / temp_project.name).replace_extension(project::extension);
+				temp_project = temp_project_copy;
 				temp_project.save();
 				projects_.push_back(temp_project);
 
