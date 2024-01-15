@@ -10,13 +10,13 @@
 
 #include <SDL.h>
 
+#include <core/debug.hpp>
 #include <utils/filesystem.hpp>
+#include <utils/json.hpp>
+#include <utils/string.hpp>
+#include <utils/time.hpp>
 
-std::chrono::system_clock::time_point to_sys_time(const std::filesystem::file_time_type& ftime)
-{
-	using namespace std::literals;
-	return std::chrono::system_clock::time_point{ ftime.time_since_epoch() - 3234576h };
-}
+#include <core/app.hpp>
 
 //Author: https://github.com/ocornut/imgui/issues/474#issuecomment-169480920
 bool BeginButtonDropdown(const char* label, ImVec2 button_size)
@@ -153,9 +153,16 @@ namespace vt::widgets
 				ImGui::CloseCurrentPopup();
 			}
 			ImGui::SameLine();
-			bool valid = !temp_project.name.empty() and !temp_project.path.empty();
-			valid = valid and std::filesystem::is_directory(temp_project.path) and std::filesystem::exists(temp_project.path);
-			valid = valid and std::filesystem::is_directory(temp_project.working_dir) and std::filesystem::exists(temp_project.working_dir);
+			bool valid = !temp_project.name.empty() and !temp_project.path.empty();			
+			
+			valid &= std::filesystem::is_directory(temp_project.path) and std::filesystem::exists(temp_project.path);
+			valid &= std::filesystem::is_directory(temp_project.working_dir) and std::filesystem::exists(temp_project.working_dir);
+
+			auto temp_project_copy = temp_project;
+			temp_project_copy.path = (temp_project.path / temp_project.name).replace_extension(project::extension);
+
+			auto it = std::find(projects_.begin(), projects_.end(), temp_project_copy);
+			valid &= (it == projects_.end());
 
 			if (!valid) ImGui::BeginDisabled();
 			bool pressed = ImGui::Button("Create##ProjectCfg", button_size) || ImGui::IsKeyPressed(ImGuiKey_Enter);
@@ -164,10 +171,12 @@ namespace vt::widgets
 			if (valid and pressed)
 			{
 				//TODO: Check if such project doesn't already exist
-
-				temp_project.path = (temp_project.path / temp_project.name).replace_extension(project::extension);
+				temp_project = temp_project_copy;
 				temp_project.save();
 				projects_.push_back(temp_project);
+
+				if (on_project_list_update == nullptr) return;
+				on_project_list_update();
 				ImGui::CloseCurrentPopup();
 			}
 
@@ -176,7 +185,7 @@ namespace vt::widgets
 		ImGui::PopStyleVar(2);
 	}
 
-	void project_selector::render_project_widget(size_t id, const project& project)
+	void project_selector::render_project_widget(size_t id, project& project)
 	{
 		ImVec2 size = { 0, ImGui::GetTextLineHeightWithSpacing() * 2 };
 		auto imgui_id = static_cast<ImGuiID>(id);
@@ -213,29 +222,36 @@ namespace vt::widgets
 		std::string name = !project.name.empty() ? project.name : "- Invalid Project! -";
 		ImGui::Text(name.c_str());
 		auto path = project.path;
-		std::filesystem::file_time_type mod_time{};
+		std::optional<tm> mod_time = project.modification_time();
 		if (!path.empty() and std::filesystem::exists(path))
 		{
-			mod_time = std::filesystem::last_write_time(path);
-			path = std::filesystem::absolute(path);
+			path = std::filesystem::relative(path);
 		}
 		ImGui::TextDisabled(path.string().c_str());
 		ImGui::EndGroup();
 
 		ImGui::TableNextColumn();
 		std::string time_str;
-		if (mod_time != std::filesystem::file_time_type{})
+		std::string exact_time_str;
+		if (mod_time.has_value())
 		{
-			auto time = to_sys_time(mod_time);
-			auto tt = std::chrono::system_clock::to_time_t(time);
-			std::tm tm = *std::localtime(&tt);
+			std::tm mod_time_tm = mod_time.value();
+
+			auto last_mod = utils::time::diff(std::time(nullptr), std::mktime(&mod_time_tm));
+			time_str = utils::time::interval_str(last_mod);
+			time_str = (time_str.empty() ? "Just now" : time_str + " ago");
+
 			std::stringstream ss;
-			ss << std::put_time(&tm, "%d-%m-%Y %H:%M:%S");
-			time_str = ss.str();
+			ss << std::put_time(&mod_time.value(), "%d.%m.%Y %H:%M:%S");
+			exact_time_str = ss.str();
 		}
 		
 		ImGui::AlignTextToFramePadding();
 		ImGui::Text(time_str.c_str());
+		if (!exact_time_str.empty())
+		{
+			ImGui::SetItemTooltip(exact_time_str.c_str());
+		}
 
 		ImGui::TableNextColumn();
 		ImGui::PushID(imgui_id);
@@ -258,10 +274,63 @@ namespace vt::widgets
 			if (ImGui::MenuItem("Remove"))
 			{
 				projects_.erase(std::find(projects_.begin(), projects_.end(), project));
+				if (on_project_list_update == nullptr) return;
+				on_project_list_update();
 			}
 			ImGui::EndPopup();
 		}
 		ImGui::PopID();
+	}
+
+	void project_selector::sort()
+	{
+		std::sort(projects_.begin(), projects_.end(), [](const project& left, const project& right)
+		{
+			auto ltm = left.modification_time();
+			auto rtm = right.modification_time();
+			if (ltm.has_value() and !rtm.has_value()) return true;
+			else if (!ltm.has_value() and rtm.has_value()) return false;
+			else if (!ltm.has_value() and !rtm.has_value()) return left.name < right.name;
+			return std::mktime(&ltm.value()) > std::mktime(&rtm.value());
+		});
+	}
+
+	void project_selector::remove(const project& project)
+	{
+		projects_.erase(std::find(projects_.begin(), projects_.end(), project));
+	}
+
+	void project_selector::load_projects_file(const std::filesystem::path& filepath)
+	{
+		auto json = utils::json::load_from_file(filepath);
+		const auto& projects = json["projects"];
+		if (!projects.is_array())
+		{
+			debug::error("Invalid projects list file structure");
+			return;
+		}
+		auto list = projects.get<std::vector<std::filesystem::path>>();
+		projects_.clear();
+		projects_.resize(list.size());
+		for (size_t i = 0; i < list.size(); ++i)
+		{
+			projects_[i] = project::load_from_file(list[i]);
+		}
+		if (on_project_list_update == nullptr) return;
+		on_project_list_update();
+	}
+
+	void project_selector::save_projects_file(const std::filesystem::path& filepath)
+	{
+		nlohmann::ordered_json json;
+		auto& projects = json["projects"];
+		std::vector<std::filesystem::path> project_paths(projects_.size());
+		for (size_t i = 0; i < projects_.size(); ++i)
+		{
+			project_paths[i] = std::filesystem::relative(projects_[i].path);
+		}
+		projects = project_paths;
+		utils::json::write_to_file(json, filepath);
 	}
 
 	void project_selector::set_opened(bool value)
@@ -284,13 +353,11 @@ namespace vt::widgets
 
 		if (ImGui::BeginPopupModal("Project Selector", nullptr, flags))
 		{
-			std::string buffer;
-
 			ImGui::LabelText("##ProjectSelectorTitle", "Projects");
 
 			auto max_content_size = ImGui::GetContentRegionAvail();
 			ImGui::SetNextItemWidth(max_content_size.x);
-			ImGui::InputTextWithHint("##ProjectSelectorSearch", "Search...", &buffer);
+			ImGui::InputTextWithHint("##ProjectSelectorSearch", "Search...", &filter, ImGuiInputTextFlags_AutoSelectAll | ImGuiInputTextFlags_EscapeClearsAll);
 						
 			const auto& style = ImGui::GetStyle();
 			auto panels_area = ImGui::GetContentRegionAvail() - style.WindowPadding;
@@ -303,15 +370,39 @@ namespace vt::widgets
 				ImGui::TableNextColumn();
 				{
 					ImVec2 list_panel_size = ImGui::GetContentRegionAvail();
+					std::vector<project> filtered_projects;
+					if (!filter.empty())
+					{
+						auto tokens = utils::string::split(utils::string::to_lowercase(utils::string::trim_whitespace(filter)), ' ');
+						for (const auto& project : projects_)
+						{
+							bool passes_filter = true;
+							for (const auto& token : tokens)
+							{
+								auto ttoken = utils::string::trim_whitespace(token);
+								std::string name = utils::string::to_lowercase(project.name);
+								passes_filter &= name.find(ttoken) != std::string::npos;
+							}
+
+							if (passes_filter)
+							{
+								filtered_projects.push_back(project);
+							}
+						}
+					}
+					else
+					{
+						filtered_projects = projects_;
+					}
 
 					//list_size.y -= 2 * button_size.y + style.ItemSpacing.y + style.WindowPadding.y;
 					if (ImGui::BeginChild("##Project List", list_panel_size))
 					{
 						if (ImGui::BeginTable("##ProjectListTable", 3, ImGuiTableFlags_SizingStretchProp | ImGuiTableFlags_BordersInnerV))
 						{
-							for (size_t i = 0; i < projects_.size(); ++i)
+							for (size_t i = 0; i < filtered_projects.size(); ++i)
 							{
-								render_project_widget(i, projects_[i]);
+								render_project_widget(i, filtered_projects[i]);
 							}
 							ImGui::EndTable();
 						}
@@ -343,7 +434,23 @@ namespace vt::widgets
 
 								if (result)
 								{
-									projects_.push_back(project::load_from_file(result.path));
+									auto it = std::find_if(projects_.begin(), projects_.end(), [result](const project& project)
+									{
+										return std::filesystem::absolute(project.path) == std::filesystem::absolute(result.path);
+									});
+
+									if (it == projects_.end())
+									{
+										projects_.push_back(project::load_from_file(result.path));
+										if (on_project_list_update == nullptr) return;
+										on_project_list_update();
+									}
+									else
+									{
+										std::string message = "Cannot add this project since it already exits.\nFilepath: " + std::filesystem::relative(result.path).string();
+										//TODO: Change the title based on the app window
+										SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_WARNING, "VideoTagger", message.c_str(), nullptr);
+									}									
 								}
 								ImGui::CloseCurrentPopup();
 							}

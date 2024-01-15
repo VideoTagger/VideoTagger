@@ -5,7 +5,7 @@
 #include "string"
 namespace vt::utils::hash
 {
-	std::vector<char> file_to_byte(const std::filesystem::path& filepath)
+	static std::vector<char> file_to_byte(const std::filesystem::path& filepath)
 	{
 		std::ifstream ifs(filepath, std::ios::binary | std::ios::ate);
 		std::ifstream::pos_type pos = ifs.tellg();

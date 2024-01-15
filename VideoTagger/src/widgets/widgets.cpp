@@ -9,7 +9,7 @@
 #include <imgui_internal.h>
 
 #include "video_timeline.hpp"
-#include <utils/video_time.hpp>
+#include <utils/timestamp.hpp>
 
 namespace vt::widgets
 {
@@ -27,8 +27,8 @@ namespace vt::widgets
 	struct Timeline : public timeline_interface
 	{
 		std::vector<TimelineTag> tags;
-		video_time_t min_time;
-		video_time_t max_time;
+		timestamp min_time;
+		timestamp max_time;
 
 		Timeline()
 			: min_time{}, max_time{}
@@ -36,28 +36,28 @@ namespace vt::widgets
 
 		}
 
-		Timeline(video_time_t min_time, video_time_t max_time)
+		Timeline(timestamp min_time, timestamp max_time)
 			: min_time{ min_time }, max_time{ max_time }
 		{
 
 		}
 
-		void set_time_min(video_time_t value)
+		void set_time_min(timestamp value)
 		{
 			this->min_time = value;
 		}
 
-		void set_time_max(video_time_t value)
+		void set_time_max(timestamp value)
 		{
 			this->max_time = value;
 		}
 
-		virtual video_time_t get_time_min() const override
+		virtual timestamp get_time_min() const override
 		{
 			return min_time;
 		}
 
-		virtual video_time_t get_time_max() const override
+		virtual timestamp get_time_max() const override
 		{
 			return max_time;
 		}
@@ -136,197 +136,6 @@ namespace vt::widgets
 		bool active{};
 	};
 
-	bool input_time(time_widget_state& state, video_time_t& value, ImVec2 padding = { 6, 4 })
-	{
-		//struct callback_data_t
-		//{
-		//	int* current_offset;
-		//
-		//} callback_data{};
-		//
-		//static auto callback = [](ImGuiInputTextCallbackData* data)
-		//{
-		//	callback_data_t& callback_data = *(callback_data_t*)data->UserData;
-		//	int& current_offset = *callback_data.current_offset;
-		//
-		//	if (data->EventFlag == ImGuiInputTextFlags_CallbackCharFilter)
-		//	{
-		//		if (data->EventChar < '0' or '9' < data->EventChar)
-		//		{
-		//			return 1;
-		//		}
-		//
-		//		return 0;
-		//	}
-		//	else if (data->EventFlag == ImGuiInputTextFlags_CallbackEdit)
-		//	{
-		//		current_offset++;
-		//
-		//		if (data->Buf[data->BufTextLen - 1 - current_offset] == ':')
-		//		{
-		//			current_offset++;
-		//		}
-		//		
-		//		current_offset = std::clamp(current_offset, 0, data->BufTextLen - 1);
-		//	}
-		//	else if (data->EventFlag == ImGuiInputTextFlags_CallbackAlways)
-		//	{
-		//		if (current_offset < data->BufTextLen)
-		//		{
-		//			data->SelectionStart = data->BufTextLen - 1 - current_offset;
-		//			data->SelectionEnd = data->BufTextLen - current_offset;
-		//			data->CursorPos = data->SelectionStart;
-		//		}
-		//		else
-		//		{
-		//			data->ClearSelection();
-		//			data->CursorPos = 0;
-		//		}
-		//		//data->CursorPos = data->BufTextLen - 1;
-		//	}
-		//	return 0;
-		//};
-		//
-		//static auto string_to_time = [](std::string_view string)
-		//{
-		//	//TODO: crap
-		//
-		//	clock_time_t result;
-		//
-		//	int value{};
-		//	std::from_chars(string.data(), string.data() + 3, value);
-		//	result.set_hours(value);
-		//	std::from_chars(string.data() + 4, string.data() + 6, value);
-		//	result.set_minutes(value);
-		//	std::from_chars(string.data() + 7, string.data() + 9, value);
-		//	result.set_seconds(value);
-		//
-		//	return result;
-		//};
-		//
-		//if (!state.active)
-		//{
-		//	sprintf_s(state.buffer, state.buffer_size, state.time_string_format.data(), value.hours(), value.minutes(), value.seconds());
-		//}
-		//
-		//ImGuiInputTextFlags flags =
-		//	ImGuiInputTextFlags_EnterReturnsTrue |
-		//	ImGuiInputTextFlags_CallbackAlways |
-		//	ImGuiInputTextFlags_CallbackCharFilter |
-		//	ImGuiInputTextFlags_CallbackEdit;
-		//
-		//if (ImGui::IsKeyDown(ImGuiKey_Backspace) or ImGui::IsKeyDown(ImGuiKey_Delete))
-		//{
-		//	flags |= ImGuiInputTextFlags_ReadOnly;
-		//}
-		//
-		//callback_data.current_offset = &state.current_offset;
-		//
-		//bool return_value = false;
-		//
-		//if (ImGui::InputText("time", state.buffer, state.buffer_size, flags, callback, (void*)&callback_data))
-		//{
-		//	if (ImGui::IsKeyDown(ImGuiKey_Enter))
-		//	{
-		//		state.current_offset = 0;
-		//		value = string_to_time(state.buffer);
-		//		return_value = true;
-		//	}
-		//}
-		//
-		//state.active = ImGui::IsItemActive();
-		//
-		//return return_value;
-		//
-		//static constexpr std::string_view size_calc_string = "00000:00:00";
-		//static constexpr size_t buffer_size = size_calc_string.size() + 1;
-		//
-		//auto text_size = ImGui::CalcTextSize(size_calc_string.data());
-		//auto button_size = ImVec2{ text_size.x + padding.x * 2, text_size.y + padding.y * 2 };
-		//
-		//ImGuiWindow* window = ImGui::GetCurrentWindow();
-		//
-		//ImVec2 start_cursor_pos = ImGui::GetCursorPos();
-		//
-		//if (ImGui::InvisibleButton("current_time", button_size, ImGuiButtonFlags_PressedOnClick))
-		//{
-		//	state.active = true;
-		//}
-		//ImGuiID id = ImGui::GetItemID();
-		//
-		//
-		//
-		//ImVec2 end_cursor_pos = ImGui::GetCursorPos();
-		//bool focused = ImGui::IsItemFocused();
-		//bool active = state.active;
-		//bool hovered = ImGui::IsItemHovered();
-		//bool had_focus = window->StateStorage.GetBool(id);
-		//
-		//bool edited_input = false;
-		//if (active)
-		//{
-		//	if (!had_focus)
-		//	{
-		//		std::cout << "gained focus\n";
-		//		state.current_time = value;
-		//	}
-		//	window->StateStorage.SetBool(id, true);
-		//
-		//	if (ImGui::IsKeyPressed(ImGuiKey_Escape))
-		//	{
-		//		window->StateStorage.SetBool(id, false);
-		//		state.current_time = value;
-		//		
-		//	}
-		//
-		//	state.current_time.set_hours(69);
-		//	edited_input = true;
-		//}
-		//else
-		//{
-		//	if (had_focus)
-		//	{
-		//		std::cout << "lost focus\n";
-		//		value = state.current_time;
-		//	}
-		//	window->StateStorage.SetBool(id, false);
-		//}
-		//
-		//if (abort_edit)
-		//{
-		//	ImGui::ClearActiveID();
-		//	state.active = false;
-		//	state.current_time = value;
-		//}
-		//
-		//ImGui::SetCursorPos(start_cursor_pos);
-		//auto screen_cursor_pos = ImGui::GetCursorScreenPos();
-		//
-		//char buffer[buffer_size]{ 0 };
-		//sprintf_s(buffer, buffer_size, "%05llu:%02d:%02d", state.current_time.hours(), state.current_time.minutes(), state.current_time.seconds());
-		//
-		//ImVec2 p_min = screen_cursor_pos;
-		//ImVec2 p_max = { p_min.x + button_size.x, p_min.y + button_size.y };
-		//
-		//if (hovered)
-		//{
-		//	ImGui::RenderFrame(p_min, p_max, ImGui::GetColorU32(ImGuiCol_ButtonHovered));
-		//}
-		//else
-		//{
-		//	ImGui::RenderFrame(p_min, p_max, ImGui::GetColorU32(ImGuiCol_Button));
-		//}
-		//
-		//ImGui::SetCursorPos({ start_cursor_pos.x + padding.x, start_cursor_pos.y + padding.y });
-		//ImGui::TextUnformatted(buffer);
-		//
-		//ImGui::SetCursorPos(end_cursor_pos);
-		//
-		//return edited_input;
-
-		return false;
-	}
-
 	void draw_video_widget(video& video)
 	{
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, { 0, 0 });
@@ -373,8 +182,8 @@ namespace vt::widgets
 					//static time_widget_state state;
 
 					timestamp_t video_ts = video.current_timestamp();
-					video_time_t current_time{ std::chrono::duration_cast<std::chrono::seconds>(video_ts) };
-					video_time_t duration{ std::chrono::duration_cast<std::chrono::seconds>(video.duration()) };
+					timestamp current_time{ std::chrono::duration_cast<std::chrono::seconds>(video_ts) };
+					timestamp duration{ std::chrono::duration_cast<std::chrono::seconds>(video.duration()) };
 
 					auto avail_size = ImGui::GetContentRegionAvail();
 					auto cursor_pos = ImGui::GetCursorPos();
@@ -390,7 +199,7 @@ namespace vt::widgets
 					
 					//if (input_time(state, current_time))
 					//{
-					//	video.seek(std::chrono::duration_cast<timestamp_t>(current_time.total_seconds));
+					//	video.seek(std::chrono::duration_cast<timestamp_t>(current_time.seconds_total));
 					//}
 					//int64_t ts = video.current_timestamp().count();
 					//if (ImGui::InputScalar("time", ImGuiDataType_S64, (void*)&ts, nullptr, nullptr, nullptr, ImGuiInputTextFlags_EnterReturnsTrue))
@@ -460,12 +269,12 @@ namespace vt::widgets
 		static Timeline test_timeline;
 		if (video.is_open())
 		{
-			video_time_t time_max{ std::chrono::duration_cast<std::chrono::seconds>(video.duration()) };
+			timestamp time_max{ std::chrono::duration_cast<std::chrono::seconds>(video.duration()) };
 			test_timeline.set_time_max(time_max);
 		}
 		else
 		{
-			test_timeline.set_time_max(video_time_t{});
+			test_timeline.set_time_max(timestamp{});
 		}
 
 		if (test_timeline.tags.empty())
@@ -478,7 +287,7 @@ namespace vt::widgets
 		static int selected_entry = -1;
 		static int64_t first_frame = 0;
 		static bool expanded = true;
-		video_time_t current_time{ std::chrono::duration_cast<std::chrono::seconds>(video.current_timestamp()) };
+		timestamp current_time{ std::chrono::duration_cast<std::chrono::seconds>(video.current_timestamp()) };
 
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2{});
 		if (ImGui::Begin("Timeline"))
@@ -486,9 +295,9 @@ namespace vt::widgets
 			int flags = ImSequencer::SEQUENCER_EDIT_STARTEND | ImSequencer::SEQUENCER_ADD | ImSequencer::SEQUENCER_DEL | ImSequencer::SEQUENCER_COPYPASTE | ImSequencer::SEQUENCER_CHANGE_FRAME;
 			video_timeline(&test_timeline, &current_time, nullptr, &selected_entry, &first_frame, flags);
 			
-			if (current_time.total_seconds != std::chrono::duration_cast<std::chrono::seconds>(video.current_timestamp()))
+			if (current_time.seconds_total != std::chrono::duration_cast<std::chrono::seconds>(video.current_timestamp()))
 			{
-				video.seek(current_time.total_seconds);
+				video.seek(current_time.seconds_total);
 			}
 			
 		}
