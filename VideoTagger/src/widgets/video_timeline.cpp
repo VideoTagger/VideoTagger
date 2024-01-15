@@ -164,7 +164,7 @@ namespace vt::widgets
 		int64_t frameCount = std::max(time_max - time_min, 1ll);
 
 		static bool MovingScrollBar = false;
-		static bool MovingCurrentFrame = false;
+		//static bool MovingCurrentFrame = false;
 		struct CustomDraw
 		{
 			int index;
@@ -268,7 +268,7 @@ namespace vt::widgets
 				}
 				if (!io.MouseDown[0])
 					MovingCurrentFrame = false;
-			}
+			}*/
 
 			//header
 			ImU32 header_color = ImGui::ColorConvertFloat4ToU32(style.Colors[ImGuiCol_WindowBg]); //0xFF3D3837
@@ -307,7 +307,7 @@ namespace vt::widgets
 
 					ImGui::EndPopup();
 				}
-			}
+			}*/
 
 			//header frame number and lines
 			int modFrameCount = 10;
