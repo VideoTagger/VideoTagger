@@ -20,7 +20,7 @@ namespace vt
 		void set_speed(float value);
 		void set_looping(bool value);
 
-		void seek(std::chrono::nanoseconds timestamp);
+		void seek(timestamp_t timestamp);
 
 		void buffer_frames(size_t count);
 		[[nodiscard]] SDL_Texture* get_frame();
@@ -34,7 +34,7 @@ namespace vt
 		[[nodiscard]] float speed() const;
 		[[nodiscard]] std::chrono::nanoseconds duration() const;
 
-		[[nodiscard]] std::chrono::nanoseconds current_timestamp() const;
+		[[nodiscard]] timestamp_t current_timestamp() const;
 
 	private:
 		video_decoder decoder_;
@@ -44,7 +44,7 @@ namespace vt
 
 		std::vector<video_frame> frame_buffer_;
 		std::chrono::steady_clock::time_point last_tp_;
-		std::chrono::nanoseconds last_ts_;
+		timestamp_t last_ts_;
 
 		float speed_;
 		bool loop_;

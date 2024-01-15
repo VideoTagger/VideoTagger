@@ -14,6 +14,8 @@ extern "C"
 
 namespace vt
 {
+	using timestamp_t = std::chrono::nanoseconds;
+
 	class video_plane
 	{
 	public:
@@ -61,7 +63,7 @@ namespace vt
 		[[nodiscard]] int width() const;
 		[[nodiscard]] int height() const;
 
-		[[nodiscard]] std::chrono::nanoseconds timestamp() const;
+		[[nodiscard]] timestamp_t timestamp() const;
 		[[nodiscard]] std::chrono::nanoseconds duration() const;
 
 		[[nodiscard]] bool is_keyframe() const;
@@ -117,7 +119,7 @@ namespace vt
 		[[nodiscard]] stream_type type() const;
 		[[nodiscard]] int stream_index() const;
 
-		[[nodiscard]] std::chrono::nanoseconds timestamp() const;
+		[[nodiscard]] timestamp_t timestamp() const;
 		[[nodiscard]] std::chrono::nanoseconds duration() const;
 
 		[[nodiscard]] bool is_key() const;
@@ -201,7 +203,7 @@ namespace vt
 		//Seek to the nearest keyframe before or on the timestamp
 		//Discards all packets currently in queues
 		//Returns the keyframe timestamp
-		void seek_keyframe(std::chrono::nanoseconds timestamp);
+		void seek_keyframe(timestamp_t timestamp);
 		//Seek to the nearest keyframe before or on the timestamp
 		//Discards all packets currently in queues
 		//Returns the keyframe timestamp
@@ -227,8 +229,8 @@ namespace vt
 		[[nodiscard]] size_t frame_count() const;
 		[[nodiscard]] std::chrono::nanoseconds duration() const;
 
-		[[nodiscard]] std::chrono::nanoseconds frame_number_to_timestamp(size_t frame);
-		[[nodiscard]] size_t timestamp_to_frame_number(std::chrono::nanoseconds timestamp);
+		[[nodiscard]] timestamp_t frame_number_to_timestamp(size_t frame);
+		[[nodiscard]] size_t timestamp_to_frame_number(timestamp_t timestamp);
 
 	private:
 		AVFormatContext* format_context_;

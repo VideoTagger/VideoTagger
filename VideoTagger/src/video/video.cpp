@@ -46,7 +46,7 @@ namespace vt
 		frame_buffer_.clear();
 
 		last_tp_ = std::chrono::steady_clock::time_point();
-		last_ts_ = std::chrono::nanoseconds(0);
+		last_ts_ = timestamp_t(0);
 
 		speed_ = 1.f;
 
@@ -106,7 +106,7 @@ namespace vt
 
 	}
 
-	void video::seek(std::chrono::nanoseconds timestamp)
+	void video::seek(timestamp_t timestamp)
 	{
 		if (!is_open())
 		{
@@ -305,7 +305,7 @@ namespace vt
 					return texture_;
 				}
 
-				seek(std::chrono::nanoseconds(0));
+				seek(timestamp_t(0));
 				buffer_frames(1);
 			}
 		}
@@ -370,7 +370,7 @@ namespace vt
 		return decoder_.duration();
 	}
 
-	std::chrono::nanoseconds video::current_timestamp() const
+	timestamp_t video::current_timestamp() const
 	{
 		return last_ts_;
 	}

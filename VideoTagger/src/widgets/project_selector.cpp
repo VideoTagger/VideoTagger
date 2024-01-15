@@ -86,7 +86,7 @@ namespace vt::widgets
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 7);
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, style.WindowPadding * 2);
 		auto flags = ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_AlwaysAutoResize;
-		auto& io = ImGui::GetIO();
+		auto io = ImGui::GetIO();
 		ImGui::SetNextWindowPos(ImVec2(io.DisplaySize.x * 0.5f, io.DisplaySize.y * 0.5f), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
 		
 		auto win_size = ImGui::GetContentRegionMax() * 0.5f;

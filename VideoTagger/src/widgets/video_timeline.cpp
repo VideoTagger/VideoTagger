@@ -25,57 +25,19 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 //
-
-#define IMGUI_DEFINE_MATH_OPERATORS
-#include <imgui.h>
-#include <imgui_internal.h>
+#include "imgui.h"
+#include "imgui_internal.h"
 
 #include <algorithm>
 #include <cstdlib>
 
-namespace vt::widgets
+namespace vt
 {
-	tag& timeline_state::get(int index)
-	{
-		return tags->at(displayed_tags.at(index));
+#ifndef IMGUI_DEFINE_MATH_OPERATORS
+	static ImVec2 operator+(const ImVec2& a, const ImVec2& b) {
+		return ImVec2(a.x + b.x, a.y + b.y);
 	}
-
-	void timeline_state::add(const std::string& name)
-	{
-		if (!tags->contains(name))
-		{
-			return;
-		}
-
-		if (std::find(displayed_tags.begin(), displayed_tags.end(), name) != displayed_tags.end())
-		{
-			return;
-		}
-
-		displayed_tags.push_back(name);
-	}
-
-	void timeline_state::del(int index)
-	{
-		displayed_tags.erase(displayed_tags.begin() + index);
-	}
-
-	void timeline_state::sync_tags()
-	{
-		for (auto it = displayed_tags.begin(); it != displayed_tags.end(); ++it)
-		{
-			if (!tags->contains(*it))
-			{
-				it = displayed_tags.erase(it);
-			}
-
-			if (it == displayed_tags.end())
-			{
-				break;
-			}
-		}
-	}
-
+#endif
 	static bool SequencerAddDelButton(ImDrawList* draw_list, ImVec2 pos, bool add = true)
 	{
 		ImGuiIO& io = ImGui::GetIO();
@@ -98,7 +60,7 @@ namespace vt::widgets
 		return clickedBtn;
 	}
 
-	bool video_timeline(timeline_state* state, timestamp* current_time, int* selected_entry)
+	bool video_timeline(timeline_interface* sequence, timestamp* current_time, bool* expanded, int* selected_entry, int64_t* first_frame, int sequence_options)
 	{
 		bool ret = false;
 		ImGuiIO& io = ImGui::GetIO();
@@ -116,11 +78,11 @@ namespace vt::widgets
 		int dupEntry = -1;
 		int ItemHeight = 20;
 
-		const int64_t time_min = state->time_min.seconds_total.count();
-		const int64_t time_max = state->time_max.seconds_total.count();
+		const int64_t time_min = sequence->get_time_min().seconds_total.count();
+		const int64_t time_max = sequence->get_time_max().seconds_total.count();
 
 		bool popupOpened = false;
-		int sequenceCount = state->displayed_tags.size();
+		int sequenceCount = sequence->get_item_count();
 		if (!sequenceCount)
 			return false;
 		ImGui::BeginGroup();
@@ -128,14 +90,16 @@ namespace vt::widgets
 		ImDrawList* draw_list = ImGui::GetWindowDrawList();
 		ImVec2 canvas_pos = ImGui::GetCursorScreenPos();            // ImDrawList API uses screen coordinates!
 		ImVec2 canvas_size = ImGui::GetContentRegionAvail();        // Resize canvas to what's available
-		int64_t firstFrameUsed = state->first_frame;
+		int64_t firstFrameUsed = first_frame ? *first_frame : 0;
 
 
 		int controlHeight = sequenceCount * ItemHeight;
+		for (int i = 0; i < sequenceCount; i++)
+			controlHeight += int(sequence->get_custom_height(i));
 		int64_t frameCount = std::max(time_max - time_min, 1ll);
 
 		static bool MovingScrollBar = false;
-		//static bool MovingCurrentFrame = false;
+		static bool MovingCurrentFrame = false;
 		struct CustomDraw
 		{
 			int index;
@@ -162,10 +126,10 @@ namespace vt::widgets
 			{
 				panningViewSource = io.MousePos;
 				panningView = true;
-				panningViewFrame = state->first_frame;
+				panningViewFrame = *first_frame;
 			}
-			state->first_frame = panningViewFrame - int64_t((io.MousePos.x - panningViewSource.x) / framePixelWidth);
-			state->first_frame = std::clamp(state->first_frame, time_min, time_max - visibleFrameCount);
+			*first_frame = panningViewFrame - int64_t((io.MousePos.x - panningViewSource.x) / framePixelWidth);
+			*first_frame = std::clamp(*first_frame, time_min, time_max - visibleFrameCount);
 		}
 		if (panningView && !io.MouseDown[2])
 		{
@@ -176,20 +140,20 @@ namespace vt::widgets
 		framePixelWidth = ImLerp(framePixelWidth, framePixelWidthTarget, 0.33f);
 
 		frameCount = time_max - time_min;
-		if (visibleFrameCount >= frameCount)
-			state->first_frame = time_min;
+		if (visibleFrameCount >= frameCount && first_frame)
+			*first_frame = time_min;
 
 
 		// --
-		/*if (expanded && !*expanded)
+		if (expanded && !*expanded)
 		{
 			ImGui::InvisibleButton("canvas", ImVec2(canvas_size.x - canvas_pos.x, (float)ItemHeight));
 			draw_list->AddRectFilled(canvas_pos, ImVec2(canvas_size.x + canvas_pos.x, canvas_pos.y + ItemHeight), 0xFF3D3837, 0);
 			char tmps[512];
-			ImFormatString(tmps, IM_ARRAYSIZE(tmps), state->get_collapse_fmt(), frameCount, sequenceCount);
+			ImFormatString(tmps, IM_ARRAYSIZE(tmps), sequence->get_collapse_fmt(), frameCount, sequenceCount);
 			draw_list->AddText(ImVec2(canvas_pos.x + 26, canvas_pos.y + 2), 0xFFFFFFFF, tmps);
 		}
-		else*/
+		else
 		{
 			bool hasScrollBar(true);
 			/*
@@ -208,7 +172,7 @@ namespace vt::widgets
 			ImVec2 childFrameSize(canvas_size.x, canvas_size.y - 8.f - headerSize.y - (hasScrollBar ? scrollBarSize.y : 0));
 			ImGui::PushStyleColor(ImGuiCol_FrameBg, 0);
 			ImGui::BeginChildFrame(889, childFrameSize);
-			state->focused = ImGui::IsWindowFocused();
+			sequence->focused = ImGui::IsWindowFocused();
 			ImGui::InvisibleButton("contentBar", ImVec2(canvas_size.x, float(controlHeight)));
 			const ImVec2 contentMin = ImGui::GetItemRectMin();
 			const ImVec2 contentMax = ImGui::GetItemRectMax();
@@ -223,7 +187,7 @@ namespace vt::widgets
 			// current frame top
 			ImRect topRect(ImVec2(canvas_pos.x + legendWidth, canvas_pos.y), ImVec2(canvas_pos.x + canvas_size.x, canvas_pos.y + ItemHeight));
 
-			/*if (!MovingCurrentFrame && !MovingScrollBar && movingEntry == -1 && sequence_options & ImSequencer::SEQUENCER_CHANGE_FRAME && current_time && current_time->seconds_total.count() >= 0 && topRect.Contains(io.MousePos) && io.MouseDown[0])
+			if (!MovingCurrentFrame && !MovingScrollBar && movingEntry == -1 && sequence_options & ImSequencer::SEQUENCER_CHANGE_FRAME && current_time && current_time->seconds_total.count() >= 0 && topRect.Contains(io.MousePos) && io.MouseDown[0])
 			{
 				MovingCurrentFrame = true;
 			}
@@ -239,31 +203,29 @@ namespace vt::widgets
 				}
 				if (!io.MouseDown[0])
 					MovingCurrentFrame = false;
-			}*/
+			}
 
 			//header
 			ImU32 header_color = ImGui::ColorConvertFloat4ToU32(style.Colors[ImGuiCol_WindowBg]); //0xFF3D3837
 			draw_list->AddRectFilled(canvas_pos, ImVec2(canvas_size.x + canvas_pos.x, canvas_pos.y + ItemHeight), header_color, 0);
-			
-			//TODO: Use this
-			/*if (sequence_options & ImSequencer::SEQUENCER_ADD)
+			if (sequence_options & ImSequencer::SEQUENCER_ADD)
 			{
 				if (SequencerAddDelButton(draw_list, ImVec2(canvas_pos.x + legendWidth - ItemHeight, canvas_pos.y + 2), true))
 					ImGui::OpenPopup("addEntry");
 
 				if (ImGui::BeginPopup("addEntry"))
 				{
-					for (int i = 0; i < state->get_item_type_count(); i++)
-						if (ImGui::Selectable(state->get_item_type_name(i)))
+					for (int i = 0; i < sequence->get_item_type_count(); i++)
+						if (ImGui::Selectable(sequence->get_item_type_name(i)))
 						{
-							state->add(i);
-							*selected_entry = state->get_item_count() - 1;
+							sequence->add(i);
+							*selected_entry = sequence->get_item_count() - 1;
 						}
 
 					ImGui::EndPopup();
 					popupOpened = true;
 				}
-			}*/
+			}
 
 			//header frame number and lines
 			int modFrameCount = 10;
@@ -330,24 +292,28 @@ namespace vt::widgets
 			draw_list->PushClipRect(childFramePos, childFramePos + childFrameSize, true);
 
 			// draw item names in the legend rect on the left
+			size_t customHeight = 0;
 			for (int i = 0; i < sequenceCount; i++)
 			{
-				ImVec2 tpos(contentMin.x + 3, contentMin.y + i * ItemHeight + 2);
+				int type;
+				sequence->get(i, NULL, NULL, &type, NULL);
+				ImVec2 tpos(contentMin.x + 3, contentMin.y + i * ItemHeight + 2 + customHeight);
 				ImU32 text_color = ImGui::ColorConvertFloat4ToU32(style.Colors[ImGuiCol_Text]); //0xFFFFFFFF
-				draw_list->AddText(tpos, text_color, state->displayed_tags.at(i).c_str());
+				draw_list->AddText(tpos, text_color, sequence->get_item_label(i));
 
-				/*if (sequence_options & ImSequencer::SEQUENCER_DEL)
+				if (sequence_options & ImSequencer::SEQUENCER_DEL)
 				{
 					if (SequencerAddDelButton(draw_list, ImVec2(contentMin.x + legendWidth - ItemHeight + 2 - 10, tpos.y + 2), false))
 						delEntry = i;
 
 					if (SequencerAddDelButton(draw_list, ImVec2(contentMin.x + legendWidth - ItemHeight - ItemHeight + 2 - 10, tpos.y + 2), true))
 						dupEntry = i;
-				}*/
-				//customHeight += state->get_custom_height(i);
+				}
+				customHeight += sequence->get_custom_height(i);
 			}
 
 			// slots background
+			customHeight = 0;
 			auto slots_color4 = style.Colors[ImGuiCol_WindowBg];
 			slots_color4.w *= 0.5f;
 			ImU32 slots_color = ImGui::ColorConvertFloat4ToU32(slots_color4); //0xFF413D3D
@@ -358,14 +324,16 @@ namespace vt::widgets
 				unsigned int col = (i & 1) ? 0xFF3A3636 : 0xFF413D3D;
 				//ImU32 col = slots_color;
 
-				ImVec2 pos = ImVec2(contentMin.x + legendWidth, contentMin.y + ItemHeight * i + 1);
-				ImVec2 sz = ImVec2(canvas_size.x + canvas_pos.x, pos.y + ItemHeight - 1);
-				if (!popupOpened && cy >= pos.y && cy < pos.y + (ItemHeight) && movingEntry == -1 && cx>contentMin.x && cx < contentMin.x + canvas_size.x)
+				size_t localCustomHeight = sequence->get_custom_height(i);
+				ImVec2 pos = ImVec2(contentMin.x + legendWidth, contentMin.y + ItemHeight * i + 1 + customHeight);
+				ImVec2 sz = ImVec2(canvas_size.x + canvas_pos.x, pos.y + ItemHeight - 1 + localCustomHeight);
+				if (!popupOpened && cy >= pos.y && cy < pos.y + (ItemHeight + localCustomHeight) && movingEntry == -1 && cx>contentMin.x && cx < contentMin.x + canvas_size.x)
 				{
 					col += 0x80201008;
 					pos.x -= legendWidth;
 				}
 				draw_list->AddRectFilled(pos, sz, col, 0);
+				customHeight += localCustomHeight;
 			}
 
 			draw_list->PushClipRect(childFramePos + ImVec2(float(legendWidth), 0.f), childFramePos + childFrameSize, true);
@@ -382,138 +350,151 @@ namespace vt::widgets
 			bool selected = selected_entry && (*selected_entry >= 0);
 			if (selected)
 			{
+				customHeight = 0;
+				for (int i = 0; i < *selected_entry; i++)
+					customHeight += sequence->get_custom_height(i);
 				//TODO: Change color
-				draw_list->AddRectFilled(ImVec2(contentMin.x, contentMin.y + ItemHeight * *selected_entry),
-					ImVec2(contentMin.x + canvas_size.x, contentMin.y + ItemHeight * (*selected_entry + 1)), 0x801080FF, 1.f);
+				draw_list->AddRectFilled(ImVec2(contentMin.x, contentMin.y + ItemHeight * *selected_entry + customHeight), ImVec2(contentMin.x + canvas_size.x, contentMin.y + ItemHeight * (*selected_entry + 1) + customHeight), 0x801080FF, 1.f);
 			}
 
 			// slots
+			customHeight = 0;
 			for (int i = 0; i < sequenceCount; i++)
 			{
-				tag& tag_info = state->get(i);
+				int* start, * end;
+				unsigned int color;
+				sequence->get(i, &start, &end, NULL, &color);
+				size_t localCustomHeight = sequence->get_custom_height(i);
 
-				for (auto& tag_timestamp : tag_info.timeline)
+				ImVec2 pos = ImVec2(contentMin.x + legendWidth - firstFrameUsed * framePixelWidth, contentMin.y + ItemHeight * i + 1 + customHeight);
+				ImVec2 slotP1(pos.x + *start * framePixelWidth, pos.y + 2);
+				ImVec2 slotP2(pos.x + *end * framePixelWidth + framePixelWidth, pos.y + ItemHeight - 2);
+				ImVec2 slotP3(pos.x + *end * framePixelWidth + framePixelWidth, pos.y + ItemHeight - 2 + localCustomHeight);
+				unsigned int slotColor = color | 0xFF000000;
+				unsigned int slotColorHalf = (color & 0xFFFFFF) | 0x40000000;
+
+				if (slotP1.x <= (canvas_size.x + contentMin.x) && slotP2.x >= (contentMin.x + legendWidth))
 				{
-					int64_t start = std::chrono::duration_cast<std::chrono::seconds>(tag_timestamp.start).count();
-					int64_t end = std::chrono::duration_cast<std::chrono::seconds>(tag_timestamp.end).count();
+					draw_list->AddRectFilled(slotP1, slotP3, slotColorHalf, 2);
+					draw_list->AddRectFilled(slotP1, slotP2, slotColor, 2);
+				}
+				if (ImRect(slotP1, slotP2).Contains(io.MousePos) && io.MouseDoubleClicked[0])
+				{
+					sequence->double_click(i);
+				}
+				// Ensure grabbable handles
+				const float max_handle_width = slotP2.x - slotP1.x / 3.0f;
+				const float min_handle_width = std::min(10.0f, max_handle_width);
+				const float handle_width = std::clamp(framePixelWidth / 2.0f, min_handle_width, max_handle_width);
+				ImRect rects[3] = { ImRect(slotP1, ImVec2(slotP1.x + handle_width, slotP2.y))
+					, ImRect(ImVec2(slotP2.x - handle_width, slotP1.y), slotP2)
+					, ImRect(slotP1, slotP2) };
 
-					unsigned int color = tag_info.color;
-
-					ImVec2 pos = ImVec2(contentMin.x + legendWidth - firstFrameUsed * framePixelWidth, contentMin.y + ItemHeight * i + 1);
-					ImVec2 slotP1(pos.x + start * framePixelWidth, pos.y + 2);
-					ImVec2 slotP2(pos.x + end * framePixelWidth + framePixelWidth, pos.y + ItemHeight - 2);
-					ImVec2 slotP3(pos.x + end * framePixelWidth + framePixelWidth, pos.y + ItemHeight - 2);
-					unsigned int slotColor = color | 0xFF000000;
-					unsigned int slotColorHalf = (color & 0xFFFFFF) | 0x40000000;
-
-					if (slotP1.x <= (canvas_size.x + contentMin.x) && slotP2.x >= (contentMin.x + legendWidth))
+				const unsigned int quadColor[] = { 0xFFFFFFFF, 0xFFFFFFFF, slotColor + (selected ? 0 : 0x202020) };
+				if (movingEntry == -1 && (sequence_options & ImSequencer::SEQUENCER_EDIT_STARTEND))// TODOFOCUS && backgroundRect.Contains(io.MousePos))
+				{
+					for (int j = 2; j >= 0; j--)
 					{
-						draw_list->AddRectFilled(slotP1, slotP3, slotColorHalf, 2);
-						draw_list->AddRectFilled(slotP1, slotP2, slotColor, 2);
+						ImRect& rc = rects[j];
+						if (!rc.Contains(io.MousePos))
+							continue;
+						draw_list->AddRectFilled(rc.Min, rc.Max, quadColor[j], 2);
 					}
-					/*if (ImRect(slotP1, slotP2).Contains(io.MousePos) && io.MouseDoubleClicked[0])
+
+					for (int j = 0; j < 3; j++)
 					{
-						state->double_click(i);
-					}*/
-					// Ensure grabbable handles
-					const float max_handle_width = slotP2.x - slotP1.x / 3.0f;
-					const float min_handle_width = std::min(10.0f, max_handle_width);
-					const float handle_width = std::clamp(framePixelWidth / 2.0f, min_handle_width, max_handle_width);
-					ImRect rects[3] = { ImRect(slotP1, ImVec2(slotP1.x + handle_width, slotP2.y))
-						, ImRect(ImVec2(slotP2.x - handle_width, slotP1.y), slotP2)
-						, ImRect(slotP1, slotP2) };
-
-					const unsigned int quadColor[] = { 0xFFFFFFFF, 0xFFFFFFFF, slotColor + (selected ? 0 : 0x202020) };
-					/*if (movingEntry == -1 && (sequence_options & ImSequencer::SEQUENCER_EDIT_STARTEND))// TODOFOCUS && backgroundRect.Contains(io.MousePos))
-					{
-						for (int j = 2; j >= 0; j--)
+						ImRect& rc = rects[j];
+						if (!rc.Contains(io.MousePos))
+							continue;
+						if (!ImRect(childFramePos, childFramePos + childFrameSize).Contains(io.MousePos))
+							continue;
+						if (ImGui::IsMouseClicked(0) && !MovingScrollBar && !MovingCurrentFrame)
 						{
-							ImRect& rc = rects[j];
-							if (!rc.Contains(io.MousePos))
-								continue;
-							draw_list->AddRectFilled(rc.Min, rc.Max, quadColor[j], 2);
+							movingEntry = i;
+							movingPos = cx;
+							movingPart = j + 1;
+							sequence->begin_edit(movingEntry);
+							break;
 						}
+					}
+				}
 
-						for (int j = 0; j < 3; j++)
-						{
-							ImRect& rc = rects[j];
-							if (!rc.Contains(io.MousePos))
-								continue;
-							if (!ImRect(childFramePos, childFramePos + childFrameSize).Contains(io.MousePos))
-								continue;
-							if (ImGui::IsMouseClicked(0) && !MovingScrollBar && !MovingCurrentFrame)
-							{
-								movingEntry = i;
-								movingPos = cx;
-								movingPart = j + 1;
-								state->begin_edit(movingEntry);
-								break;
-							}
-						}
-					}*/
+				// custom draw
+				if (localCustomHeight > 0)
+				{
+					ImVec2 rp(canvas_pos.x, contentMin.y + ItemHeight * i + 1 + customHeight);
+					ImRect customRect(rp + ImVec2(legendWidth - (firstFrameUsed - time_min - 0.5f) * framePixelWidth, float(ItemHeight)),
+						rp + ImVec2(legendWidth + (time_max - firstFrameUsed - 0.5f + 2.f) * framePixelWidth, float(localCustomHeight + ItemHeight)));
+					ImRect clippingRect(rp + ImVec2(float(legendWidth), float(ItemHeight)), rp + ImVec2(canvas_size.x, float(localCustomHeight + ItemHeight)));
 
-
-					ImVec2 rp(canvas_pos.x, contentMin.y + ItemHeight * i);
+					ImRect legendRect(rp + ImVec2(0.f, float(ItemHeight)), rp + ImVec2(float(legendWidth), float(localCustomHeight)));
+					ImRect legendClippingRect(canvas_pos + ImVec2(0.f, float(ItemHeight)), canvas_pos + ImVec2(float(legendWidth), float(localCustomHeight + ItemHeight)));
+					customDraws.push_back({ i, customRect, legendRect, clippingRect, legendClippingRect });
+				}
+				else
+				{
+					ImVec2 rp(canvas_pos.x, contentMin.y + ItemHeight * i + customHeight);
 					ImRect customRect(rp + ImVec2(legendWidth - (firstFrameUsed - time_min - 0.5f) * framePixelWidth, float(0.f)),
 						rp + ImVec2(legendWidth + (time_max - firstFrameUsed - 0.5f + 2.f) * framePixelWidth, float(ItemHeight)));
 					ImRect clippingRect(rp + ImVec2(float(legendWidth), float(0.f)), rp + ImVec2(canvas_size.x, float(ItemHeight)));
 
 					compactCustomDraws.push_back({ i, customRect, ImRect(), clippingRect, ImRect() });
 				}
+				customHeight += localCustomHeight;
 			}
 
 
 			// moving
-//			if (/*backgroundRect.Contains(io.MousePos) && */movingEntry >= 0)
-//			{
-//#if IMGUI_VERSION_NUM >= 18723
-//				ImGui::SetNextFrameWantCaptureMouse(true);
-//#else
-//				ImGui::CaptureMouseFromApp();
-//#endif
-//				int diffFrame = int((cx - movingPos) / framePixelWidth);
-//				if (std::abs(diffFrame) > 0)
-//				{
-//					int* start, * end;
-//					state->get(movingEntry, &start, &end, NULL, NULL);
-//					if (selected_entry)
-//						*selected_entry = movingEntry;
-//					int& l = *start;
-//					int& r = *end;
-//					if (movingPart & 1)
-//						l += diffFrame;
-//					if (movingPart & 2)
-//						r += diffFrame;
-//					if (l < 0)
-//					{
-//						if (movingPart & 2)
-//							r -= l;
-//						l = 0;
-//					}
-//					if (movingPart & 1 && l > r)
-//						l = r;
-//					if (movingPart & 2 && r < l)
-//						r = l;
-//					movingPos += int(diffFrame * framePixelWidth);
-//				}
-//				if (!io.MouseDown[0])
-//				{
-//					// single select
-//					if (!diffFrame && movingPart && selected_entry)
-//					{
-//						*selected_entry = movingEntry;
-//						ret = true;
-//					}
-//
-//					movingEntry = -1;
-//					state->end_edit();
-//				}
-//			}
+			if (/*backgroundRect.Contains(io.MousePos) && */movingEntry >= 0)
+			{
+#if IMGUI_VERSION_NUM >= 18723
+				ImGui::SetNextFrameWantCaptureMouse(true);
+#else
+				ImGui::CaptureMouseFromApp();
+#endif
+				int diffFrame = int((cx - movingPos) / framePixelWidth);
+				if (std::abs(diffFrame) > 0)
+				{
+					int* start, * end;
+					sequence->get(movingEntry, &start, &end, NULL, NULL);
+					if (selected_entry)
+						*selected_entry = movingEntry;
+					int& l = *start;
+					int& r = *end;
+					if (movingPart & 1)
+						l += diffFrame;
+					if (movingPart & 2)
+						r += diffFrame;
+					if (l < 0)
+					{
+						if (movingPart & 2)
+							r -= l;
+						l = 0;
+					}
+					if (movingPart & 1 && l > r)
+						l = r;
+					if (movingPart & 2 && r < l)
+						r = l;
+					movingPos += int(diffFrame * framePixelWidth);
+				}
+				if (!io.MouseDown[0])
+				{
+					// single select
+					if (!diffFrame && movingPart && selected_entry)
+					{
+						*selected_entry = movingEntry;
+						ret = true;
+					}
+
+					movingEntry = -1;
+					sequence->end_edit();
+				}
+			}
 			draw_list->PopClipRect();
 			draw_list->PopClipRect();
 
 			// cursor
-			if (current_time && current_time->seconds_total.count() >= state->first_frame && current_time->seconds_total.count() <= time_max)
+			if (current_time && first_frame && current_time->seconds_total.count() >= *first_frame && current_time->seconds_total.count() <= time_max)
 			{
 				static constexpr float cursorWidth = 4.f;
 				static constexpr float triangle_span = cursorWidth * 2;
@@ -529,13 +510,13 @@ namespace vt::widgets
 			}
 
 
-			/*for (auto& customDraw : customDraws)
-				state->custom_draw(customDraw.index, draw_list, customDraw.customRect, customDraw.legendRect, customDraw.clippingRect, customDraw.legendClippingRect);
+			for (auto& customDraw : customDraws)
+				sequence->custom_draw(customDraw.index, draw_list, customDraw.customRect, customDraw.legendRect, customDraw.clippingRect, customDraw.legendClippingRect);
 			for (auto& customDraw : compactCustomDraws)
-				state->custom_draw_compact(customDraw.index, draw_list, customDraw.customRect, customDraw.clippingRect);*/
+				sequence->custom_draw_compact(customDraw.index, draw_list, customDraw.customRect, customDraw.clippingRect);
 
 			// copy paste
-			/*if (sequence_options & ImSequencer::SEQUENCER_COPYPASTE)
+			if (sequence_options & ImSequencer::SEQUENCER_COPYPASTE)
 			{
 				ImRect rectCopy(ImVec2(contentMin.x + 100, canvas_pos.y + 2)
 					, ImVec2(contentMin.x + 100 + 30, canvas_pos.y + ItemHeight - 2));
@@ -552,13 +533,13 @@ namespace vt::widgets
 
 				if (inRectCopy && io.MouseReleased[0])
 				{
-					state->copy();
+					sequence->copy();
 				}
 				if (inRectPaste && io.MouseReleased[0])
 				{
-					state->paste();
+					sequence->paste();
 				}
-			}*/
+			}
 
 			ImGui::EndChildFrame();
 			ImGui::PopStyleColor();
@@ -618,10 +599,10 @@ namespace vt::widgets
 						float barRatio = barNewWidth / barWidthInPixels;
 						framePixelWidthTarget = framePixelWidth = framePixelWidth / barRatio;
 						int64_t newVisibleFrameCount = int64_t((canvas_size.x - legendWidth) / framePixelWidthTarget);
-						int64_t lastFrame = state->first_frame + newVisibleFrameCount;
+						int64_t lastFrame = *first_frame + newVisibleFrameCount;
 						if (lastFrame > time_max)
 						{
-							framePixelWidthTarget = framePixelWidth = (canvas_size.x - legendWidth) / float(time_max - state->first_frame);
+							framePixelWidthTarget = framePixelWidth = (canvas_size.x - legendWidth) / float(time_max - *first_frame);
 						}
 					}
 				}
@@ -640,15 +621,15 @@ namespace vt::widgets
 							float previousFramePixelWidthTarget = framePixelWidthTarget;
 							framePixelWidthTarget = framePixelWidth = framePixelWidth / barRatio;
 							int64_t newVisibleFrameCount = int64_t(visibleFrameCount / barRatio);
-							int64_t newFirstFrame = state->first_frame + newVisibleFrameCount - visibleFrameCount;
+							int64_t newFirstFrame = *first_frame + newVisibleFrameCount - visibleFrameCount;
 							newFirstFrame = std::clamp(newFirstFrame, time_min, std::max(time_max - visibleFrameCount, time_min));
-							if (newFirstFrame == state->first_frame)
+							if (newFirstFrame == *first_frame)
 							{
 								framePixelWidth = framePixelWidthTarget = previousFramePixelWidthTarget;
 							}
 							else
 							{
-								state->first_frame = newFirstFrame;
+								*first_frame = newFirstFrame;
 							}
 						}
 					}
@@ -664,17 +645,17 @@ namespace vt::widgets
 						else
 						{
 							float framesPerPixelInBar = barWidthInPixels / (float)visibleFrameCount;
-							state->first_frame = int64_t((io.MousePos.x - panningViewSource.x) / framesPerPixelInBar) - panningViewFrame;
-							state->first_frame = std::clamp(state->first_frame, time_min, std::max(time_max - visibleFrameCount, time_min));
+							*first_frame = int64_t((io.MousePos.x - panningViewSource.x) / framesPerPixelInBar) - panningViewFrame;
+							*first_frame = std::clamp(*first_frame, time_min, std::max(time_max - visibleFrameCount, time_min));
 						}
 					}
 					else
 					{
-						if (scrollBarThumb.Contains(io.MousePos) && ImGui::IsMouseClicked(0) && movingEntry == -1)
+						if (scrollBarThumb.Contains(io.MousePos) && ImGui::IsMouseClicked(0) && first_frame && !MovingCurrentFrame && movingEntry == -1)
 						{
 							MovingScrollBar = true;
 							panningViewSource = io.MousePos;
-							panningViewFrame = -state->first_frame;
+							panningViewFrame = -*first_frame;
 						}
 						if (!sizingRBar && onRight && ImGui::IsMouseClicked(0))
 							sizingRBar = true;
@@ -698,16 +679,54 @@ namespace vt::widgets
 					overCustomDraw = true;
 				}
 			}
+			if (overCustomDraw)
+			{
+			}
+			else
+			{
+#if 0
+				frameOverCursor = *firstFrame + (int)(visibleFrameCount * ((io.MousePos.x - (float)legendWidth - canvas_pos.x) / (canvas_size.x - legendWidth)));
+				//frameOverCursor = max(min(*firstFrame - visibleFrameCount / 2, frameCount - visibleFrameCount), 0);
+
+				/**firstFrame -= frameOverCursor;
+				*firstFrame *= framePixelWidthTarget / framePixelWidth;
+				*firstFrame += frameOverCursor;*/
+				if (io.MouseWheel < -FLT_EPSILON)
+				{
+					*firstFrame -= frameOverCursor;
+					*firstFrame = int(*firstFrame * 1.1f);
+					framePixelWidthTarget *= 0.9f;
+					*firstFrame += frameOverCursor;
+				}
+
+				if (io.MouseWheel > FLT_EPSILON)
+				{
+					*firstFrame -= frameOverCursor;
+					*firstFrame = int(*firstFrame * 0.9f);
+					framePixelWidthTarget *= 1.1f;
+					*firstFrame += frameOverCursor;
+				}
+#endif
+			}
 		}
 
+		if (expanded)
+		{
+			if (SequencerAddDelButton(draw_list, ImVec2(canvas_pos.x + 2, canvas_pos.y + 2), !*expanded))
+				*expanded = !*expanded;
+		}
 
 		if (delEntry != -1)
 		{
-			state->del(delEntry);
-			if (selected_entry && (*selected_entry == delEntry || *selected_entry >= state->displayed_tags.size()))
+			sequence->del(delEntry);
+			if (selected_entry && (*selected_entry == delEntry || *selected_entry >= sequence->get_item_count()))
 				*selected_entry = -1;
 		}
 
+		if (dupEntry != -1)
+		{
+			sequence->duplicate(dupEntry);
+		}
 		return ret;
 	}
 }
