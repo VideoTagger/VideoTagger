@@ -53,7 +53,7 @@ namespace vt::widgets
 					//static clock_time_t time(30, 40, 20);
 					//static time_widget_state state;
 
-					timestamp_t video_ts = video.current_timestamp();
+					std::chrono::nanoseconds video_ts = video.current_timestamp();
 					timestamp current_time{ std::chrono::duration_cast<std::chrono::seconds>(video_ts) };
 					timestamp duration{ std::chrono::duration_cast<std::chrono::seconds>(video.duration()) };
 
@@ -89,7 +89,7 @@ namespace vt::widgets
 					ImGui::SetCursorPosX(cursor_pos.x + button_pos_x);
 					if (ImGui::Button("|<", { button_size, button_size }))
 					{
-						video.seek(timestamp_t(0));
+						video.seek({});
 					}
 					ImGui::SameLine();
 					if (ImGui::Button(is_playing ? "||" : ">", { button_size, button_size }))
@@ -99,7 +99,7 @@ namespace vt::widgets
 					ImGui::SameLine();
 					if (ImGui::Button(">|", { button_size, button_size }))
 					{
-						video.seek(timestamp_t(video.duration()));
+						video.seek(std::chrono::nanoseconds(video.duration()));
 					}
 					ImGui::SameLine();
 					static bool loop = false;

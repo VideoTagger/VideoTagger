@@ -80,8 +80,16 @@ namespace vt
 		//Clears the log file
 		if (debug::log_filepath != "") std::ofstream{debug::log_filepath};
 
-		if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS) < 0) return false;
-		if (NFD::Init() != NFD_OKAY) return false;
+		if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS) < 0)
+		{
+			debug::error("SDL failed to initialize");
+			return false;
+		}
+		if (NFD::Init() != NFD_OKAY)
+		{
+			debug::error("NFD failed to initialize");
+			return false;
+		}
 
 		IMGUI_CHECKVERSION();
 		ImGui::CreateContext();
@@ -90,15 +98,28 @@ namespace vt
 		int pos_y = config.window_pos_y < 0 ? SDL_WINDOWPOS_CENTERED : config.window_pos_y;
 
 		SDL_DisplayMode display_mode;
-		if (SDL_GetCurrentDisplayMode(0, &display_mode) < 0) return false;
+		if (SDL_GetCurrentDisplayMode(0, &display_mode) < 0)
+		{
+			debug::error("Couldn't get main display's parameters");
+			return false;
+		}
+
 		int width = config.window_width != 0 ? config.window_width : (display_mode.w / 2);
 		int height = config.window_height != 0 ? config.window_height : (display_mode.h / 2);
 
 		SDL_Window* window = SDL_CreateWindow(config.window_name.c_str(), pos_x, pos_y, width, height, SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE);
-		if (window == nullptr) return false;
+		if (window == nullptr)
+		{
+			debug::error("Couldn't create the window");
+			return false;
+		}
 
 		SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
-		if (renderer == nullptr) return false;
+		if (renderer == nullptr)
+		{
+			debug::error("Couldn't create the renderer");
+			return false;
+		}
 		renderer_ = renderer;
 		main_window_ = window;
 
@@ -116,6 +137,10 @@ namespace vt
 		if (std::filesystem::exists(font_path))
 		{
 			io.Fonts->AddFontFromFileTTF(font_path.string().c_str(), font_size);
+		}
+		else
+		{
+			debug::log("Not loading a custom font, since the file doesn't exist");
 		}
 
 		state_ = app_state::initialized;
@@ -199,6 +224,9 @@ namespace vt
 					{
 						case SDL_WINDOWEVENT_SIZE_CHANGED:
 						{
+							//Skip if window is maximized
+							if (SDL_GetWindowFlags(main_window_) & SDL_WINDOW_MAXIMIZED) break;
+
 							nlohmann::ordered_json settings;
 							auto& size = settings["window.size"];
 							size["width"] = event.window.data1;
@@ -319,6 +347,10 @@ namespace vt
 					ImGui::EndMenu();
 				}
 
+				if (ImGui::MenuItem("Save"))
+				{
+					ctx_.current_project->save();
+				}
 				ImGui::EndMenu();
 			}
 			if (ImGui::BeginMenu("Window"))
@@ -344,8 +376,9 @@ namespace vt
 		{
 			auto& vid = ctx_.videos[i];
 			widgets::draw_video_widget(*vid, i);
-			widgets::draw_timeline_widget_sample(*vid, i);
+			widgets::draw_timeline_widget_sample(*vid, ctx_.current_project->tags, i);
 		}
+		widgets::draw_tag_manager_widget(ctx_.current_project->tags);
 
 		//TODO: Remove this, this is temporary
 		if (ctx_.win_cfg.show_debug_window)

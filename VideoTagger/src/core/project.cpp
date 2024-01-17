@@ -42,20 +42,36 @@ namespace vt
 		project["working-dir"] = std::filesystem::relative(working_dir);
 
 		//TODO: Tags
-		auto& tags = json["tags"];
-		tags = nlohmann::json::array();
+		auto& json_tags = json["tags"];
+		json_tags = nlohmann::json::array();
+		for (auto& tag : tags)
+		{
+			json_tags.push_back(nlohmann::json::object({}));
+			auto& json_tag_data = json_tags.back();
+			json_tag_data["name"] = tag.name;
+			json_tag_data["color"] = tag.color;
+			auto& json_timestamps = json_tag_data["timestamps"];
+			json_timestamps = nlohmann::json::array();
+			for (auto& timestamp : tag.timeline)
+			{
+				json_timestamps.push_back(nlohmann::json::object({ { "start", timestamp.start.count() }, { "end", timestamp.end.count() } }));
+			}
+		}
 
 		//TODO: Keybinds
 		auto& keybinds = json["keybinds"];
 		keybinds = nlohmann::json::array();
 		auto parent = path.parent_path();
-		std::filesystem::create_directories(parent);
+		if (!parent.empty())
+		{
+			std::filesystem::create_directories(parent);
+		}
 		utils::json::write_to_file(json, path);
 	}
 
 	bool project::operator==(const project& other) const
 	{
-		return name == other.name and path == other.path and working_dir == other.working_dir;
+		return (name == other.name) and (path == other.path) and (working_dir == other.working_dir);
 	}
 	
 	project project::load_from_file(const std::filesystem::path& filepath)
@@ -73,6 +89,16 @@ namespace vt
 			const auto& project = json["project"];
 			result.name = project["name"];
 			result.working_dir = project["working-dir"].get<std::filesystem::path>();
+
+			for (auto& tag_data : json["tags"])
+			{
+				auto [tag_it, success] = result.tags.insert(tag_data["name"]);
+				tag_it->color = tag_data["color"];
+				for (auto& timestamp : tag_data["timestamps"])
+				{
+					tag_it->timeline.insert(std::chrono::nanoseconds{ timestamp["start"] }, std::chrono::nanoseconds{ timestamp["end"] });
+				}
+			}
 		}			
 		return result;
 	}
