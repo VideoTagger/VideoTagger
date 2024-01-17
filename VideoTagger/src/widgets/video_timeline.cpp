@@ -169,8 +169,8 @@ namespace vt::widgets
 			ImRect clippingRect;
 			ImRect legendClippingRect;
 		};
-		ImVector<CustomDraw> customDraws;
-		ImVector<CustomDraw> compactCustomDraws;
+		//ImVector<CustomDraw> customDraws;
+		//ImVector<CustomDraw> compactCustomDraws;
 		// zoom in/out
 		const int64_t visibleFrameCount = (int64_t)floorf((canvas_size.x - legendWidth) / framePixelWidth);
 		const float barWidthRatio = std::min(visibleFrameCount / (float)frameCount, 1.f);
@@ -507,14 +507,14 @@ namespace vt::widgets
 					}
 
 
-					ImVec2 rp(canvas_pos.x, contentMin.y + ItemHeight * i);
-					ImRect customRect(rp + ImVec2(legendWidth - (firstFrameUsed - time_min - 0.5f) * framePixelWidth, float(0.f)),
-						rp + ImVec2(legendWidth + (time_max - firstFrameUsed - 0.5f + 2.f) * framePixelWidth, float(ItemHeight)));
-					ImRect clippingRect(rp + ImVec2(float(legendWidth), float(0.f)), rp + ImVec2(canvas_size.x, float(ItemHeight)));
-
-
-
-					compactCustomDraws.push_back({ i, customRect, ImRect(), clippingRect, ImRect() });
+					//ImVec2 rp(canvas_pos.x, contentMin.y + ItemHeight * i);
+					//ImRect customRect(rp + ImVec2(legendWidth - (firstFrameUsed - time_min - 0.5f) * framePixelWidth, float(0.f)),
+					//	rp + ImVec2(legendWidth + (time_max - firstFrameUsed - 0.5f + 2.f) * framePixelWidth, float(ItemHeight)));
+					//ImRect clippingRect(rp + ImVec2(float(legendWidth), float(0.f)), rp + ImVec2(canvas_size.x, float(ItemHeight)));
+					//
+					//
+					//
+					//compactCustomDraws.push_back({ i, customRect, ImRect(), clippingRect, ImRect() });
 				}
 
 				// Tag segment context menu
@@ -554,19 +554,19 @@ namespace vt::widgets
 						inserted_segment_end = std::chrono::seconds{ static_cast<int64_t>((insert_mouse_pos.x - pos.x) / framePixelWidth) };
 						insert_segment = true;
 					}
-					if (ImGui::MenuItem("Add timestamp AT THE RED THING"))
+					if (ImGui::MenuItem("Add timestamp at marker"))
 					{
 						inserted_segment_start = current_time->seconds_total;
 						inserted_segment_end = inserted_segment_start;
 						insert_segment = true;
 					}
-					if (ImGui::MenuItem("Start segment AT THE RED THING"))
+					if (ImGui::MenuItem("Start segment at marker"))
 					{
 						//TODO: should draw a line or something so you know where you clicked
 						inserted_segment_start = current_time->seconds_total;
 					}
 					//TODO: probably should only be displayed after start was pressed
-					if (ImGui::MenuItem("End segment AT THE RED THING"))
+					if (ImGui::MenuItem("End segment at marker"))
 					{
 						inserted_segment_end = current_time->seconds_total;
 						insert_segment = true;
@@ -820,17 +820,17 @@ namespace vt::widgets
 
 		ImGui::EndGroup();
 
-		if (regionRect.Contains(io.MousePos))
-		{
-			bool overCustomDraw = false;
-			for (auto& custom : customDraws)
-			{
-				if (custom.customRect.Contains(io.MousePos))
-				{
-					overCustomDraw = true;
-				}
-			}
-		}
+		//if (regionRect.Contains(io.MousePos))
+		//{
+		//	bool overCustomDraw = false;
+		//	for (auto& custom : customDraws)
+		//	{
+		//		if (custom.customRect.Contains(io.MousePos))
+		//		{
+		//			overCustomDraw = true;
+		//		}
+		//	}
+		//}
 
 
 		if (delEntry != -1)
