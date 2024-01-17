@@ -47,12 +47,15 @@ namespace vt::widgets
 		static bool expanded = true;
 		timestamp current_time{ std::chrono::duration_cast<std::chrono::seconds>(video.current_timestamp()) };
 
-		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2{});
 		std::string title = "Timeline##" + std::to_string(id);
+		ImVec2 default_window_padding = ImGui::GetStyle().WindowPadding;
+		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2{});
 		if (ImGui::Begin(title.c_str()))
 		{
 			ImGui::PushID(id);
+			ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, default_window_padding);
 			video_timeline(&test_timeline, &current_time, &selected_entry);
+			ImGui::PopStyleVar();
 			
 			if (current_time.seconds_total != std::chrono::duration_cast<std::chrono::seconds>(video.current_timestamp()))
 			{
