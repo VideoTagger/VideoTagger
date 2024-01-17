@@ -4,7 +4,6 @@
 
 namespace vt::widgets
 {
-	extern void draw_video_widget(video& video);
-	extern void draw_timeline_widget_sample(tag_storage& tags, video& video);
+	extern void draw_timeline_widget_sample(video& video, tag_storage& tags, uint32_t id);
 	extern void draw_tag_manager_widget(tag_storage& tags);
 }

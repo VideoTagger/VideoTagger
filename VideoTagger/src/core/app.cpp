@@ -5,11 +5,13 @@
 
 #include <SDL.h>
 #include <imgui.h>
+#include <imgui_internal.h>
 #include <backends/imgui_impl_sdl2.h>
 #include <backends/imgui_impl_sdlrenderer2.h>
 #include <nfd.hpp>
 
 #include <widgets/widgets.hpp>
+#include <widgets/video_widget.hpp>
 #include <widgets/project_selector.hpp>
 #include <widgets/time_input.hpp>
 #include <utils/filesystem.hpp>
@@ -277,7 +279,7 @@ namespace vt
 		ImGui::Begin("##Editor", NULL, WindowFlags);
 		ImGui::PopStyleVar(3);
 
-		static const ImGuiDockNodeFlags dockspace_flags = ImGuiDockNodeFlags_PassthruCentralNode; //| ImGuiDockNodeFlags_NoDocking
+		static constexpr ImGuiDockNodeFlags dockspace_flags = ImGuiDockNodeFlags_PassthruCentralNode; //| ImGuiDockNodeFlags_NoDocking
 		ImGui::DockSpace(DockspaceID, ImVec2{}, dockspace_flags);
 		
 		draw_ui();
@@ -309,7 +311,9 @@ namespace vt
 					if (result)
 					{
 						debug::log("Opening video " + result.path.string());
-						vid.open_file(result.path, renderer_);
+						auto vid = std::make_shared<video>();
+						vid->open_file(result.path, renderer_);
+						ctx_.videos.push_back(vid);
 					}
 				}
 				if (ImGui::MenuItem("Open Dir"))
@@ -328,15 +332,31 @@ namespace vt
 						debug::log("Saving as " + result.path.string());
 					}
 				}
+				ImGui::Separator();
+				if (ImGui::BeginMenu("Project"))
+				{
+					//TODO: Modal window which lets you select what you want to import/export into/from the project
+					if (ImGui::MenuItem("Import"))
+					{
+						//...
+					}
+					if (ImGui::MenuItem("Export"))
+					{
+						//...
+					}
+					ImGui::EndMenu();
+				}
+
 				if (ImGui::MenuItem("Save"))
 				{
 					ctx_.current_project->save();
 				}
 				ImGui::EndMenu();
 			}
-			if (ImGui::BeginMenu("Edit"))
+			if (ImGui::BeginMenu("Window"))
 			{
-				ImGui::MenuItem("Option");
+				ImGui::MenuItem("Demo Window", nullptr, &ctx_.win_cfg.show_demo_window);
+				ImGui::MenuItem("Debug Window", nullptr, &ctx_.win_cfg.show_debug_window);
 				ImGui::EndMenu();
 			}
 			if (ImGui::BeginMenu("View"))
@@ -347,18 +367,28 @@ namespace vt
 			ImGui::EndMainMenuBar();
 		}
 
-		ImGui::ShowDemoWindow();
+		if (ctx_.win_cfg.show_demo_window)
+		{
+			ImGui::ShowDemoWindow();
+		}
 		
-		widgets::draw_video_widget(vid);
-		widgets::draw_timeline_widget_sample(ctx_.current_project->tags, vid);
+		for (uint32_t i = 0; i < ctx_.videos.size(); ++i)
+		{
+			auto& vid = ctx_.videos[i];
+			widgets::draw_video_widget(*vid, i);
+			widgets::draw_timeline_widget_sample(*vid, ctx_.current_project->tags, i);
+		}
 		widgets::draw_tag_manager_widget(ctx_.current_project->tags);
 
 		//TODO: Remove this, this is temporary
-		static timestamp time{};
-		if (ImGui::Begin("Debug"))
+		if (ctx_.win_cfg.show_debug_window)
 		{
-			widgets::time_input("Test", &time, 1.0f);
+			static timestamp time{};
+			if (ImGui::Begin("Debug"))
+			{
+				widgets::time_input("Test", &time, 1.0f);
+			}
+			ImGui::End();
 		}
-		ImGui::End();
 	}
 }

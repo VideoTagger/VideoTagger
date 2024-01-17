@@ -144,7 +144,7 @@ namespace vt::widgets
 		bool popupOpened = false;
 
 		//TODO: when there's no tags nothing would display. prevent this
-		int sequenceCount = state->displayed_tags.size();
+		int sequenceCount = static_cast<int>(state->displayed_tags.size());
 		//if (!sequenceCount)
 		//	return false;
 		ImGui::BeginGroup();
