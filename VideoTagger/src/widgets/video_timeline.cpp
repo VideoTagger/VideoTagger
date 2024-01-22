@@ -135,7 +135,7 @@ namespace vt::widgets
 		//static int movingEntry = -1;
 		static std::optional<moving_tag_data> segment_moving_data;
 		int delEntry = -1;
-		int ItemHeight = 20;
+		float ItemHeight = 20;
 
 		const int64_t time_min = state.time_min.seconds_total.count();
 		const int64_t time_max = state.time_max.seconds_total.count();
@@ -152,10 +152,13 @@ namespace vt::widgets
 		ImVec2 canvas_pos = ImGui::GetCursorScreenPos();            // ImDrawList API uses screen coordinates!
 		ImVec2 canvas_size = ImGui::GetContentRegionAvail();        // Resize canvas to what's available
 		int64_t firstFrameUsed = state.first_frame;
-
+		ImVec2 headerSize(canvas_size.x, (float)ItemHeight);
+		ImVec2 scrollBarSize(canvas_size.x, 14.f);
+		bool hasScrollBar(true);
 
 		//TODO: temporary solution to nothing displaying
-		int controlHeight = std::max(sequenceCount, 1) * ItemHeight;
+		//int controlHeight = std::max(sequenceCount, 1) * ItemHeight;
+		float controlHeight = std::max(std::max(sequenceCount, 1) * ItemHeight, ImGui::GetWindowSize().y - (hasScrollBar ? scrollBarSize.y : 0));
 		int64_t frameCount = std::max(time_max - time_min, 1ll);
 
 		static bool moving_scroll_bar = false;
@@ -215,7 +218,6 @@ namespace vt::widgets
 		}
 		else*/
 		{
-			bool hasScrollBar(true);
 			/*
 			int framesPixelWidth = int(frameCount * framePixelWidth);
 			if ((framesPixelWidth + legendWidth) >= canvas_size.x)
@@ -224,8 +226,6 @@ namespace vt::widgets
 			}
 			*/
 			// test scroll area
-			ImVec2 headerSize(canvas_size.x, (float)ItemHeight);
-			ImVec2 scrollBarSize(canvas_size.x, 14.f);
 			ImGui::InvisibleButton("##TopBar", headerSize);
 			draw_list->AddRectFilled(canvas_pos, canvas_pos + headerSize, 0xFFFF0000, 0);
 			ImVec2 childFramePos = ImGui::GetCursorScreenPos();
