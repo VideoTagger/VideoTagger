@@ -52,5 +52,35 @@ namespace vt
 		{
 			return seconds_total.count() % 60;
 		}
+
+		constexpr bool operator==(const timestamp& rhs) const
+		{
+			return seconds_total == rhs.seconds_total;
+		}
+
+		constexpr bool operator!=(const timestamp& rhs) const
+		{
+			return !(*this == rhs);
+		}
+
+		constexpr bool operator<(const timestamp& rhs) const
+		{
+			return seconds_total < rhs.seconds_total;
+		}
+
+		constexpr bool operator<=(const timestamp& rhs) const
+		{
+			return seconds_total <= rhs.seconds_total;
+		}
+
+		constexpr bool operator>(const timestamp& rhs) const
+		{
+			return seconds_total > rhs.seconds_total;
+		}
+
+		constexpr bool operator>=(const timestamp& rhs) const
+		{
+			return seconds_total >= rhs.seconds_total;
+		}
 	};
 }

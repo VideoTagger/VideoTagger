@@ -426,8 +426,8 @@ namespace vt::widgets
 				{
 					auto& tag_timestamp = *timestamp_it;
 
-					int64_t start = std::chrono::duration_cast<std::chrono::seconds>(tag_timestamp.start).count();
-					int64_t end = std::chrono::duration_cast<std::chrono::seconds>(tag_timestamp.end).count();
+					int64_t start = tag_timestamp.start.seconds_total.count();
+					int64_t end = tag_timestamp.end.seconds_total.count();
 					if (segment_moving_data.has_value() and segment_moving_data->tag == &tag_info and segment_moving_data->segment == timestamp_it)
 					{
 						start = segment_moving_data->left_position.count();
@@ -533,8 +533,8 @@ namespace vt::widgets
 									timestamp_it,
 									static_cast<uint8_t>(j + 1),
 									std::chrono::seconds{mouse_pos_x},
-									std::chrono::duration_cast<std::chrono::seconds>(timestamp_it->start),
-									std::chrono::duration_cast<std::chrono::seconds>(timestamp_it->end)
+									timestamp_it->start.seconds_total,
+									timestamp_it->end.seconds_total
 								};
 
 								//state->begin_edit(movingEntry);
@@ -612,7 +612,7 @@ namespace vt::widgets
 					if (ImGui::MenuItem("Delete timestamp"))
 					{
 						auto selected_timepoint = std::chrono::seconds{ static_cast<int64_t>((insert_mouse_pos.x - pos.x) / framePixelWidth) };
-						auto it = tag_info.timeline.find(selected_timepoint);
+						auto it = tag_info.timeline.find(timestamp{selected_timepoint});
 						if (it != tag_info.timeline.end())
 						{
 							tag_info.timeline.erase(it);
@@ -627,7 +627,7 @@ namespace vt::widgets
 
 				if (insert_segment)
 				{
-					tag_info.timeline.insert(inserted_segment_start, inserted_segment_end);
+					tag_info.timeline.insert(timestamp{ inserted_segment_start }, timestamp{ inserted_segment_end });
 					inserted_segment_start = std::chrono::seconds{};
 					inserted_segment_end = std::chrono::seconds{};
 				}
@@ -687,7 +687,7 @@ namespace vt::widgets
 					bool was_selected = selected_timestamp.has_value() and selected_timestamp->timestamp_timeline == &timeline and selected_timestamp->timestamp == segment_moving_data->segment;
 					
 					timeline.erase(segment_moving_data->segment);
-					auto new_it = timeline.insert(segment_moving_data->left_position, segment_moving_data->right_position).first;
+					auto new_it = timeline.insert(timestamp{ segment_moving_data->left_position }, timestamp{ segment_moving_data->right_position }).first;
 					selected_timestamp->timestamp = new_it;
 					segment_moving_data.reset();
 				}
