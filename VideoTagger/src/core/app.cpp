@@ -29,10 +29,10 @@
 	#include <shlobj.h>
 #endif
 
-
 void sdl_set_dark_mode(SDL_Window* sdl_window, bool value)
 {
 #ifdef _WIN32
+
 	SDL_SysWMinfo wmi;
 
 	SDL_VERSION(&wmi.version);
@@ -46,7 +46,8 @@ void sdl_set_dark_mode(SDL_Window* sdl_window, bool value)
 	DwmSetWindowAttributePTR DwmSetWindowAttribute = (DwmSetWindowAttributePTR)GetProcAddress(dwm, "DwmSetWindowAttribute");
 
 	BOOL dark_mode = value;
-	DwmSetWindowAttribute(hwnd, DWMWINDOWATTRIBUTE::DWMWA_USE_IMMERSIVE_DARK_MODE, &dark_mode, sizeof(dark_mode));
+	constexpr auto DWMWINDOWATTRIBUTE_DWMWA_USE_IMMERSIVE_DARK_MODE = 20;
+	DwmSetWindowAttribute(hwnd, DWMWINDOWATTRIBUTE_DWMWA_USE_IMMERSIVE_DARK_MODE, &dark_mode, sizeof(dark_mode));
 	float opacity;
 	if (SDL_GetWindowOpacity(sdl_window, &opacity) == 0)
 	{
@@ -432,7 +433,7 @@ namespace vt
 		{
 			auto& vid = ctx_.videos[i];
 			widgets::draw_video_widget(*vid, i);
-			widgets::draw_timeline_widget_sample(*vid, ctx_.current_project->tags, i);
+			widgets::draw_timeline_widget_sample(*vid, ctx_.current_project->tags, ctx_.selected_timestamp_data, i);
 		}
 		widgets::draw_tag_manager_widget(ctx_.current_project->tags);
 
@@ -447,10 +448,9 @@ namespace vt
 			ImGui::End();
 		}
 
-		static std::optional<widgets::selected_timestamp_data> selected_timestamp_data;
 		if (ctx_.win_cfg.show_inspector_window)
 		{
-			widgets::inspector(selected_timestamp_data, &ctx_.win_cfg.show_inspector_window);
+			widgets::inspector(ctx_.selected_timestamp_data, &ctx_.win_cfg.show_inspector_window);
 		}
 	}
 }

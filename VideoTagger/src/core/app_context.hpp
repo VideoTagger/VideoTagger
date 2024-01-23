@@ -6,6 +6,7 @@
 #include <json.hpp>
 #include <video/video.hpp>
 #include <widgets/project_selector.hpp>
+#include <widgets/video_timeline.hpp>
 
 namespace vt
 {
@@ -25,5 +26,6 @@ namespace vt
 		std::vector<std::shared_ptr<video>> videos;
 		nlohmann::ordered_json settings;
 		window_config win_cfg;
+		std::optional<widgets::selected_timestamp_data> selected_timestamp_data;
 	};
 }

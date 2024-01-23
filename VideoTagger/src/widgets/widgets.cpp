@@ -27,7 +27,7 @@ namespace vt::widgets
 		bool active{};
 	};
 	
-	void draw_timeline_widget_sample(video& video, tag_storage& tags, uint32_t id)
+	void draw_timeline_widget_sample(video& video, tag_storage& tags, std::optional<selected_timestamp_data>& selected_timestamp, uint32_t id)
 	{
 		static timeline_state test_timeline;
 		test_timeline.tags = &tags;
@@ -44,7 +44,6 @@ namespace vt::widgets
 
 		static int64_t first_frame = 0;
 		static bool expanded = true;
-		static std::optional<selected_timestamp_data> selected_timestamp;
 		timestamp current_time{ std::chrono::duration_cast<std::chrono::seconds>(video.current_timestamp()) };
 
 		std::string title = "Timeline##" + std::to_string(id);
