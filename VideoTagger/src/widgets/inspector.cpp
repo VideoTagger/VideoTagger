@@ -71,7 +71,7 @@ namespace vt::widgets
 						case tag_timestamp_type::segment:
 						{
 							//ImGui::Columns(2, nullptr, false);
-							modified_timestamp |= show_timestamp_control("Start", ts_start, min_timestamp, ts_end.seconds_total.count());
+							modified_timestamp |= show_timestamp_control("Start", ts_start, min_timestamp, std::max(0ll, ts_end.seconds_total.count() - 1));
 							//ImGui::NextColumn();
 							modified_timestamp |= show_timestamp_control("End", ts_end, ts_start.seconds_total.count() + 1, max_timestamp);
 							//ImGui::Columns();
@@ -95,7 +95,9 @@ namespace vt::widgets
 				constexpr const char* text = "Select a segment to display its properties...";
 				auto half_text_size = ImGui::CalcTextSize(text) / 2;
 				ImGui::SetCursorPos(avail_area / 2 - half_text_size);
-				ImGui::TextDisabled(text);
+				ImGui::BeginDisabled();
+				ImGui::TextWrapped(text);
+				ImGui::EndDisabled();
 			}
 		}
 		ImGui::End();

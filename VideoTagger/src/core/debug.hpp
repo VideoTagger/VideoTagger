@@ -17,6 +17,7 @@ namespace vt
 		static constexpr const char* log_filepath = "app.log";
 		static logging_mode log_mode;
 
+		static void init();
 		//Logs the message with an 'Info' flag
 		static void log(const std::string& message);
 		//Logs the message with an 'Error' flag

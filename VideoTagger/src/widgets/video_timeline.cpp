@@ -650,7 +650,8 @@ namespace vt::widgets
 #else
 				ImGui::CaptureMouseFromApp();
 #endif
-				auto diffFrame = std::chrono::seconds{ int64_t((mouse_pos_x - segment_moving_data->position.count()) / framePixelWidth) };
+				auto diff_sec = mouse_pos_x - segment_moving_data->position.count();
+				auto diffFrame = std::chrono::seconds{ int64_t(diff_sec / framePixelWidth) };
 				if (std::abs(diffFrame.count()) > 0)
 				{
 					/*if (selected_entry)
@@ -673,7 +674,20 @@ namespace vt::widgets
 						segment_moving_data->left_position = segment_moving_data->right_position;
 					if (segment_moving_data->moving_part & 2 and segment_moving_data->right_position < segment_moving_data->left_position)
 						segment_moving_data->right_position = segment_moving_data->left_position;
-					segment_moving_data->position += std::chrono::duration_cast<std::chrono::seconds>(diffFrame * framePixelWidth);
+
+					auto segment_size = std::abs((segment_moving_data->right_position - segment_moving_data->left_position).count());
+					if (segment_size < min_segment_size.count())
+					{
+						if (segment_moving_data->moving_part & 1)
+						{
+							segment_moving_data->left_position -= min_segment_size - static_cast<std::chrono::seconds>(segment_size);
+						}
+						else if (segment_moving_data->moving_part & 2)
+						{
+							segment_moving_data->right_position += min_segment_size - static_cast<std::chrono::seconds>(segment_size);
+						}
+					}
+					segment_moving_data->position += static_cast<std::chrono::seconds>(diff_sec);
 				}
 				if (!io.MouseDown[0])
 				{

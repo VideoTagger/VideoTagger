@@ -60,6 +60,34 @@ void sdl_set_dark_mode(SDL_Window* sdl_window, bool value)
 
 namespace vt
 {
+	static void ffmpeg_callback(void* avcl, int level, const char* fmt, va_list va)
+	{
+		if (level == AV_LOG_QUIET) return;
+
+		if (level <= AV_LOG_ERROR)
+		{
+			char buffer[256];
+#ifdef _MSC_VER
+			vsprintf_s(buffer, fmt, va);
+#else
+			vsprintf(buffer, fmt, va);
+#endif
+			std::string message = "<FFmpeg> " + std::string(buffer);
+			if (message.back() == '\n')
+			{
+				message.pop_back();
+			}
+			if (level == AV_LOG_ERROR)
+			{
+				debug::error(message);
+			}
+			else
+			{
+				debug::panic(message);
+			}
+		}
+	}
+
 	app::app() : main_window_{}, renderer_{}, state_{ app_state::uninitialized }
 	{
 		ctx_.project_selector.on_click_project = [&](project& project)
@@ -114,9 +142,10 @@ namespace vt
 	
 	bool app::init(const app_config& config)
 	{
+		debug::init();
 		ctx_.app_settings_filepath = config.app_settings_filepath;
 		//Clears the log file
-		if (debug::log_filepath != "") std::ofstream{debug::log_filepath};
+		if (debug::log_filepath != "") std::ofstream{ debug::log_filepath };
 
 		if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS) < 0)
 		{
@@ -185,6 +214,7 @@ namespace vt
 		state_ = app_state::initialized;
 		ctx_.projects_list_filepath = config.projects_list_filepath;
 
+		av_log_set_callback(ffmpeg_callback);
 		load_settings();
 		return true;
 	}
