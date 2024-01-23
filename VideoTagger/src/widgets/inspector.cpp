@@ -48,7 +48,11 @@ namespace vt::widgets
 			if (selected_timestamp_data.has_value())
 			{
 				static timestamp time{};
-				auto ts = selected_timestamp_data->timestamp;
+				auto& ts = selected_timestamp_data->timestamp;
+				auto ts_start = ts->start;
+				auto ts_end = ts->end;
+
+				bool modified_timestamp = false;
 
 				if (ImGui::CollapsingHeader("Properties", ImGuiTreeNodeFlags_DefaultOpen))
 				{
@@ -61,21 +65,28 @@ namespace vt::widgets
 					{
 						case tag_timestamp_type::point:
 						{
-							show_timestamp_control("Point", ts->start, min_timestamp, max_timestamp);
+							modified_timestamp = show_timestamp_control("Point", ts_start, min_timestamp, max_timestamp);
 						}
 						break;
 						case tag_timestamp_type::segment:
 						{
 							//ImGui::Columns(2, nullptr, false);
-							show_timestamp_control("Start", ts->start, min_timestamp, ts->end);
+							modified_timestamp |= show_timestamp_control("Start", ts_start, min_timestamp, ts_end.seconds_total.count());
 							//ImGui::NextColumn();
-							show_timestamp_control("End", ts->end, ts->start, max_timestamp);
+							modified_timestamp |= show_timestamp_control("End", ts_end, ts_start.seconds_total.count(), max_timestamp);
 							//ImGui::Columns();
 							//show_timestamp_control("Duration", time, min_timestamp, max_timestamp);
 						}
 						break;
 					}
 					ImGui::Columns();
+				}
+
+				if (modified_timestamp)
+				{
+					auto& timeline = selected_timestamp_data->timestamp_timeline;
+					timeline->erase(ts);
+					ts = timeline->insert(ts_start, ts_end).first;
 				}
 			}
 			else

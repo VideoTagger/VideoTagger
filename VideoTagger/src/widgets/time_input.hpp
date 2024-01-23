@@ -2,6 +2,7 @@
 #include <cstdint>
 #include <cinttypes>
 #include <utils/timestamp.hpp>
+#define IMGUI_DEFINE_MATH_OPERATORS
 #include <imgui.h>
 
 namespace vt::widgets
