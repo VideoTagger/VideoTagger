@@ -46,8 +46,8 @@ void sdl_set_dark_mode(SDL_Window* sdl_window, bool value)
 	DwmSetWindowAttributePTR DwmSetWindowAttribute = (DwmSetWindowAttributePTR)GetProcAddress(dwm, "DwmSetWindowAttribute");
 
 	BOOL dark_mode = value;
-	constexpr auto DWMWINDOWATTRIBUTE_DWMWA_USE_IMMERSIVE_DARK_MODE = 20;
-	DwmSetWindowAttribute(hwnd, DWMWINDOWATTRIBUTE_DWMWA_USE_IMMERSIVE_DARK_MODE, &dark_mode, sizeof(dark_mode));
+	constexpr auto dwmwa_use_immersive_dark_mode = 20; //DWMWINDOWATTRIBUTE::DWMWA_USE_IMMERSIVE_DARK_MODE
+	DwmSetWindowAttribute(hwnd, dwmwa_use_immersive_dark_mode, &dark_mode, sizeof(dark_mode));
 	float opacity;
 	if (SDL_GetWindowOpacity(sdl_window, &opacity) == 0)
 	{
