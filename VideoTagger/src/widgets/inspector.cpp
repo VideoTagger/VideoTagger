@@ -19,7 +19,7 @@ namespace vt::widgets
 		}
 		ImGui::SameLine();
 		if (fill_area) ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x);
-		result |= widgets::time_input(("##TimestampCtrlInput" + name).c_str(), &timestamp, 1.0f, min_timestamp, max_timestamp);
+		result |= widgets::time_input(("##TimestampCtrlInput" + name).c_str(), &timestamp, 1.0f, min_timestamp, max_timestamp, widgets::time_input_default_format, ImGuiSliderFlags_AlwaysClamp);
 		if (fill_area) ImGui::PopItemWidth();
 		ImGui::PopStyleVar();
 		auto ctx_name = ("##TimestampCtrlCtx" + name);
@@ -73,7 +73,7 @@ namespace vt::widgets
 							//ImGui::Columns(2, nullptr, false);
 							modified_timestamp |= show_timestamp_control("Start", ts_start, min_timestamp, ts_end.seconds_total.count());
 							//ImGui::NextColumn();
-							modified_timestamp |= show_timestamp_control("End", ts_end, ts_start.seconds_total.count(), max_timestamp);
+							modified_timestamp |= show_timestamp_control("End", ts_end, ts_start.seconds_total.count() + 1, max_timestamp);
 							//ImGui::Columns();
 							//show_timestamp_control("Duration", time, min_timestamp, max_timestamp);
 						}

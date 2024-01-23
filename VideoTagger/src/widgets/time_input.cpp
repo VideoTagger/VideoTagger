@@ -73,7 +73,7 @@ namespace vt::widgets
 		ImFormatString(data_buf, IM_ARRAYSIZE(data_buf), format, p_data->hours(), p_data->minutes(), p_data->seconds());
 		ImStrTrimBlanks(data_buf);
 
-		ImGuiInputTextFlags flags = ImGuiInputTextFlags_AutoSelectAll | ImGuiInputTextFlags_NoMarkEdited;
+		ImGuiInputTextFlags flags = ImGuiInputTextFlags_EnterReturnsTrue | ImGuiInputTextFlags_AutoSelectAll | ImGuiInputTextFlags_NoMarkEdited;
 
 		bool value_changed = false;
 		if (temp_input_text(bb, id, label, data_buf, IM_ARRAYSIZE(data_buf), flags))

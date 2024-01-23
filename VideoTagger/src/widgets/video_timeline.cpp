@@ -656,9 +656,12 @@ namespace vt::widgets
 					/*if (selected_entry)
 						*selected_entry = movingEntry;*/
 
-					if (segment_moving_data->moving_part & 1)
+					//TODO: Maybe this should be shared between the timeline and the inspector since its also "used" there?
+					constexpr auto min_segment_size = std::chrono::seconds{ 1 };
+
+					if (segment_moving_data->moving_part & 1 and std::abs((segment_moving_data->right_position - segment_moving_data->left_position - diffFrame).count()) >= min_segment_size.count())
 						segment_moving_data->left_position += diffFrame;
-					if (segment_moving_data->moving_part & 2)
+					if (segment_moving_data->moving_part & 2 and std::abs((segment_moving_data->right_position - segment_moving_data->left_position + diffFrame).count()) >= min_segment_size.count())
 						segment_moving_data->right_position += diffFrame;
 					if (segment_moving_data->left_position < std::chrono::seconds{0})
 					{
