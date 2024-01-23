@@ -3,6 +3,7 @@
 #include <memory>
 #include "project.hpp"
 
+#include <json.hpp>
 #include <video/video.hpp>
 #include <widgets/project_selector.hpp>
 
@@ -12,15 +13,17 @@ namespace vt
 	{
 		bool show_demo_window = true;
 		bool show_debug_window = true;
+		bool show_inspector_window = true;
 	};
 
 	struct app_context
 	{
+		widgets::project_selector project_selector;
 		std::optional<project> current_project;
 		std::filesystem::path projects_list_filepath;
 		std::filesystem::path app_settings_filepath;
-		widgets::project_selector project_selector;
 		std::vector<std::shared_ptr<video>> videos;
+		nlohmann::ordered_json settings;
 		window_config win_cfg;
 	};
 }

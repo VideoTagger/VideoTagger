@@ -47,6 +47,7 @@ namespace vt
 		void shutdown();
 
 		bool load_settings();
+		void save_settings();
 
 		void handle_events();
 		void render();
