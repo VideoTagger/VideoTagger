@@ -45,10 +45,10 @@ namespace vt::widgets
 		bool result{};
 		if (ImGui::Begin("Inspector", open, ImGuiWindowFlags_NoCollapse))
 		{
-			if (true || selected_timestamp_data.has_value())
+			if (selected_timestamp_data.has_value())
 			{
 				static timestamp time{};
-				//auto ts = selected_timestamp_data->timestamp;
+				auto ts = selected_timestamp_data->timestamp;
 
 				if (ImGui::CollapsingHeader("Properties", ImGuiTreeNodeFlags_DefaultOpen))
 				{
@@ -57,19 +57,19 @@ namespace vt::widgets
 					ImGui::Text("Timestamp");
 					ImGui::Unindent();
 					ImGui::NextColumn();
-					switch (tag_timestamp_type::segment) //ts->type()
+					switch (ts->type())
 					{
 						case tag_timestamp_type::point:
 						{
-							show_timestamp_control("Point", time, min_timestamp, max_timestamp);
+							show_timestamp_control("Point", ts->start, min_timestamp, max_timestamp);
 						}
 						break;
 						case tag_timestamp_type::segment:
 						{
 							//ImGui::Columns(2, nullptr, false);
-							show_timestamp_control("Start", time, min_timestamp, max_timestamp);
+							show_timestamp_control("Start", ts->start, min_timestamp, ts->end);
 							//ImGui::NextColumn();
-							show_timestamp_control("End", time, min_timestamp, max_timestamp);
+							show_timestamp_control("End", ts->end, ts->start, max_timestamp);
 							//ImGui::Columns();
 							//show_timestamp_control("Duration", time, min_timestamp, max_timestamp);
 						}
