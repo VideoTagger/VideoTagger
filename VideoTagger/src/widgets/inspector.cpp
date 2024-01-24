@@ -100,7 +100,7 @@ namespace vt::widgets
 			{
 				auto avail_area = ImGui::GetContentRegionMax();
 				constexpr const char* text = "Select a segment to display its properties...";
-				auto half_text_size = ImGui::CalcTextSize(text) / 2;
+				auto half_text_size = ImGui::CalcTextSize(text, nullptr, false, 3 * avail_area.x / 4) / 2;
 				ImGui::SetCursorPos(avail_area / 2 - half_text_size);
 				ImGui::BeginDisabled();
 				ImGui::TextWrapped(text);
