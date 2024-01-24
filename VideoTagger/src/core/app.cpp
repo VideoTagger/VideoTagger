@@ -284,6 +284,13 @@ namespace vt
 			debug::error("Settings filepath is empty");
 		}
 	}
+
+	void app::close_project()
+	{
+		ctx_.current_project = std::nullopt;
+		ctx_.videos.clear();
+		ctx_.selected_timestamp_data = std::nullopt;
+	}
 	
 	void app::handle_events()
 	{
@@ -426,6 +433,10 @@ namespace vt
 				{
 					ctx_.current_project->save();
 				}
+				if (ImGui::MenuItem("Close Project"))
+				{
+					close_project();
+				}
 				ImGui::EndMenu();
 			}
 			if (ImGui::BeginMenu("Window"))
@@ -465,7 +476,10 @@ namespace vt
 			widgets::draw_video_widget(*vid, i);
 			widgets::draw_timeline_widget_sample(*vid, ctx_.current_project->tags, ctx_.selected_timestamp_data, i);
 		}
-		widgets::draw_tag_manager_widget(ctx_.current_project->tags);
+		if (ctx_.current_project.has_value())
+		{
+			widgets::draw_tag_manager_widget(ctx_.current_project->tags);
+		}
 
 		//TODO: Remove this, this is temporary
 		if (ctx_.win_cfg.show_debug_window)

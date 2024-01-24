@@ -54,14 +54,8 @@ namespace vt::widgets
 			{
 				switch (valid_tag_name)
 				{
-				case vt::tag_validate_result::already_exists:
-					error_text = "Already exists";
-					break;
-				case vt::tag_validate_result::invalid_name:
-					error_text = "Invalid name";
-					break;
-				default:
-					break;
+				case vt::tag_validate_result::already_exists: error_text = "Already exists"; break;
+				case vt::tag_validate_result::invalid_name: error_text = "Invalid name"; break;
 				}
 			}
 
