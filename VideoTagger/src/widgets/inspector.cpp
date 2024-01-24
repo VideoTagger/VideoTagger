@@ -85,8 +85,15 @@ namespace vt::widgets
 				if (modified_timestamp)
 				{
 					auto& timeline = selected_timestamp_data->timestamp_timeline;
-					timeline->erase(ts);
-					ts = timeline->insert(ts_start, ts_end).first;
+
+					if (ts->type() == tag_timestamp_type::point)
+					{
+						ts = timeline->replace(ts, ts_start).first;
+					}
+					else if (ts->type() == tag_timestamp_type::segment)
+					{
+						ts = timeline->replace(ts, ts_start, ts_end).first;
+					}
 				}
 			}
 			else

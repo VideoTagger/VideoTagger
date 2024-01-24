@@ -49,7 +49,10 @@ namespace vt
 		std::pair<iterator, bool> insert(timestamp time_point);
 		iterator erase(iterator it);
 
-		//TODO: add replace timestamp function (erase + insert)
+		//will invalidate it
+		std::pair<iterator, bool> replace(iterator it, timestamp new_start, timestamp new_end);
+		//will invalidate it
+		std::pair<iterator, bool> replace(iterator it, timestamp time_point);
 
 		std::pair<iterator, iterator> find_range(timestamp time_start, timestamp time_end) const;
 		iterator find(timestamp time_point) const;
