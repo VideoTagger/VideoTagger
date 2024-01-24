@@ -74,6 +74,18 @@ namespace vt
 		return timestamps_.erase(it);
 	}
 
+	std::pair<tag_timeline::iterator, bool> tag_timeline::replace(iterator it, timestamp new_start, timestamp new_end)
+	{
+		erase(it);
+		return insert(new_start, new_end);
+	}
+
+	std::pair<tag_timeline::iterator, bool> tag_timeline::replace(iterator it, timestamp time_point)
+	{
+		erase(it);
+		return insert(time_point);
+	}
+
 	std::pair<tag_timeline::iterator, tag_timeline::iterator> tag_timeline::find_range(timestamp time_start, timestamp time_end) const
 	{
 		//TODO: optimise (use lower/upper bound)

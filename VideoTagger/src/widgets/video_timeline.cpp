@@ -703,9 +703,11 @@ namespace vt::widgets
 					
 					bool was_selected = selected_timestamp.has_value() and selected_timestamp->timestamp_timeline == &timeline and selected_timestamp->timestamp == segment_moving_data->segment;
 					
-					timeline.erase(segment_moving_data->segment);
-					auto new_it = timeline.insert(timestamp{ segment_moving_data->left_position }, timestamp{ segment_moving_data->right_position }).first;
-					selected_timestamp->timestamp = new_it;
+					selected_timestamp->timestamp = timeline.replace(
+						selected_timestamp->timestamp,
+						timestamp{ segment_moving_data->left_position },
+						timestamp{ segment_moving_data->right_position }
+					).first;
 					segment_moving_data.reset();
 				}
 			}
