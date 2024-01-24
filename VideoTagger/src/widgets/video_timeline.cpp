@@ -247,7 +247,7 @@ namespace vt::widgets
 			// current frame top
 			ImRect topRect(ImVec2(canvas_pos.x + legendWidth, canvas_pos.y), ImVec2(canvas_pos.x + canvas_size.x, canvas_pos.y + ItemHeight));
 
-			if (!moving_time_marker and !moving_scroll_bar and !segment_moving_data.has_value() and current_time.seconds_total.count() >= 0 and topRect.Contains(io.MousePos) and io.MouseDown[0])
+			if (!moving_time_marker and !moving_scroll_bar and !segment_moving_data.has_value() and current_time.seconds_total.count() >= 0 and topRect.Contains(io.MousePos) and io.MouseDown[0] and !ImGui::IsPopupOpen(nullptr, ImGuiPopupFlags_AnyPopup | ImGuiPopupFlags_AnyPopupId))
 			{
 				moving_time_marker = true;
 			}
