@@ -2,13 +2,18 @@
 
 #include <algorithm>
 #include <string>
+#include <cmath>
 
 #define IMGUI_DEFINE_MATH_OPERATORS
 #include <imgui.h>
 #include <imgui_stdlib.h>
 
+#include <utils/random.hpp>
+
 namespace vt::widgets
 {
+	constexpr ImGuiColorEditFlags color_button_flags = ImGuiColorEditFlags_NoAlpha | ImGuiColorEditFlags_NoTooltip;
+
 	static bool add_tag_popup(tag_storage& tags, tag_storage::iterator& added_entry)
 	{
 		//TODO: Improve UI layout
@@ -22,22 +27,31 @@ namespace vt::widgets
 		auto flags = ImGuiWindowFlags_NoResize | ImGuiWindowFlags_AlwaysAutoResize;
 		auto& io = ImGui::GetIO();
 		ImGui::SetNextWindowPos(ImVec2(io.DisplaySize.x * 0.5f, io.DisplaySize.y * 0.5f), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
-		
 		auto win_size = ImVec2{ 290, 110 };
 		ImGui::SetNextWindowSize(win_size, ImGuiCond_Always);
 
 		if (ImGui::BeginPopupModal("Add New Tag", 0, flags))
 		{
+			std::string error_text;
+			static ImVec4 color{ 0, 0, 0, 1 };
+			if (ImGui::IsWindowAppearing())
+			{
+				auto hue = utils::random::get<float>();
+				auto value = utils::random::get<float>(0.5f, 1.0f);
+				ImGui::ColorConvertHSVtoRGB(hue, 0.75f, value, color.x, color.y, color.z);
+			}
 			//I don't know if it's safe for this to be static
 			static std::string tag_name;
+			ImGui::Text("Tag Name");
+			ImGui::SameLine();
+
 			ImGui::SetNextItemWidth(100);
-			ImGui::InputText("Tag Name", &tag_name);
+			ImGui::InputText("##TagName", &tag_name);
 
 			tag_validate_result valid_tag_name = tags.validate_tag_name(tag_name);
 
 			if (valid_tag_name != tag_validate_result::ok)
 			{
-				std::string error_text;
 				switch (valid_tag_name)
 				{
 				case vt::tag_validate_result::already_exists:
@@ -49,9 +63,17 @@ namespace vt::widgets
 				default:
 					break;
 				}
+			}
 
-				ImGui::SameLine();
-				ImGui::TextColored({0.9f, 0.05f, 0.05f, 1.0f}, error_text.c_str());
+			ImGui::SameLine();
+			if (ImGui::BeginPopup("##ColorPicker"))
+			{
+				ImGui::ColorPicker3("##ColorPicker", reinterpret_cast<float*>(&color), ImGuiColorEditFlags_NoAlpha | ImGuiColorEditFlags_NoSidePreview | ImGuiColorEditFlags_NoSmallPreview);
+				ImGui::EndPopup();
+			}
+			if (ImGui::ColorButton("##ColorPreview", color, color_button_flags))
+			{
+				ImGui::OpenPopup("##ColorPicker");
 			}
 
 			ImGui::BeginDisabled(valid_tag_name != tag_validate_result::ok);
@@ -60,19 +82,23 @@ namespace vt::widgets
 				auto [it, inserted] = tags.insert(tag_name);
 				if (inserted)
 				{
+					it->color = ImGui::ColorConvertFloat4ToU32(color);
 					added_entry = it;
 				}
-				std::fill(std::begin(tag_name), std::end(tag_name), 0);
+				
+				tag_name.clear();
 				ImGui::CloseCurrentPopup();
 			}
 			ImGui::EndDisabled();
-
+			
 			ImGui::SameLine();
 			if (ImGui::Button("Cancel"))
 			{
-				std::fill(std::begin(tag_name), std::end(tag_name), 0);
+				tag_name.clear();
 				ImGui::CloseCurrentPopup();
 			}
+			ImGui::SameLine();
+			ImGui::TextColored({ 0.9f, 0.05f, 0.05f, 1.0f }, error_text.c_str());
 		
 			ImGui::EndPopup();
 		}
@@ -128,11 +154,10 @@ namespace vt::widgets
 						std::string color_button_id = std::string("##Tag_") + it->name + "_ColorButton";
 						std::string color_picker_id = std::string("##Tag_") + it->name + "_ColorPicker";
 						ImVec4 color = ImGui::ColorConvertU32ToFloat4(it->color);
-						ImGuiColorEditFlags flags = ImGuiColorEditFlags_NoAlpha;
-						
+												
 						//I don't know if it's safe for this to be static
 						static ImVec4 backup_color;
-						open_color_picker_popup = ImGui::ColorButton(color_button_id.c_str(), color, flags, { ImGui::GetContentRegionAvail().x, color_picker_size.y });
+						open_color_picker_popup = ImGui::ColorButton(color_button_id.c_str(), color, color_button_flags, { ImGui::GetContentRegionAvail().x, color_picker_size.y });
 						if (open_color_picker_popup)
 						{
 							ImGui::OpenPopup(color_picker_id.c_str());
