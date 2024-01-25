@@ -239,6 +239,12 @@ namespace vt::widgets
 			const ImRect contentRect(contentMin, contentMax);
 			const float contentHeight = contentMax.y - contentMin.y;
 
+
+			auto mouse_pos_to_timestamp = [contentMin, legendWidth, firstFrameUsed](float mouse_pos_x)
+			{
+				return timestamp{ std::chrono::seconds{ static_cast<int64_t>((mouse_pos_x - (contentMin.x + legendWidth - firstFrameUsed * framePixelWidth)) / framePixelWidth) } };
+			};
+
 			// full background
 			
 			ImU32 bg_color = ImGui::ColorConvertFloat4ToU32(style.Colors[ImGuiCol_MenuBarBg]); //0xFF242424
@@ -560,59 +566,60 @@ namespace vt::widgets
 				ImRect tag_line_rect(rp + ImVec2(float(legendWidth), float(0.f)), rp + ImVec2(canvas_size.x, float(ItemHeight)));
 
 				bool insert_segment = false;
-				static std::chrono::seconds inserted_segment_start{};
-				static std::chrono::seconds inserted_segment_end{};
+				static timestamp inserted_segment_start{};
+				static timestamp inserted_segment_end{};
 
-				static ImVec2 insert_mouse_pos{};
+				static timestamp mouse_timestamp;
 				ImGui::SetCursorScreenPos(tag_line_rect.Min);
 				std::string button_id = std::string("##TagContextMenuTrigger") + std::to_string(i);
 				if (ImGui::InvisibleButton(button_id.c_str(), tag_line_rect.Max - tag_line_rect.Min, ImGuiButtonFlags_MouseButtonRight))
 				{
-					insert_mouse_pos = io.MousePos;
+					mouse_timestamp = mouse_pos_to_timestamp(io.MousePos.x);
 				}
+
 
 				if (ImGui::BeginPopupContextItem())
 				{
 					ImVec2 pos = ImVec2(contentMin.x + legendWidth - firstFrameUsed * framePixelWidth, contentMin.y + ItemHeight * i + 1);
 					if (ImGui::MenuItem("Add timestamp here"))
 					{
-						inserted_segment_start = std::chrono::seconds{ static_cast<int64_t>((insert_mouse_pos.x - pos.x) / framePixelWidth) };
+						inserted_segment_start = mouse_timestamp;
 						inserted_segment_end = inserted_segment_start;
 						insert_segment = true;
 					}
 					if (ImGui::MenuItem("Start segment here"))
 					{
 						//TODO: should draw a line or something so you know where you clicked
-						inserted_segment_start = std::chrono::seconds{ static_cast<int64_t>((insert_mouse_pos.x - pos.x) / framePixelWidth) };
+						inserted_segment_start = mouse_timestamp;
 					}
 					//TODO: probably should only be displayed after start was pressed
 					if (ImGui::MenuItem("End segment here"))
 					{
-						inserted_segment_end = std::chrono::seconds{ static_cast<int64_t>((insert_mouse_pos.x - pos.x) / framePixelWidth) };
+						inserted_segment_end = mouse_timestamp;
 						insert_segment = true;
 					}
 					if (ImGui::MenuItem("Add timestamp at marker"))
 					{
-						inserted_segment_start = current_time.seconds_total;
+						inserted_segment_start = current_time;
 						inserted_segment_end = inserted_segment_start;
 						insert_segment = true;
 					}
 					if (ImGui::MenuItem("Start segment at marker"))
 					{
 						//TODO: should draw a line or something so you know where you clicked
-						inserted_segment_start = current_time.seconds_total;
+						inserted_segment_start = current_time;
 					}
 					//TODO: probably should only be displayed after start was pressed
 					if (ImGui::MenuItem("End segment at marker"))
 					{
-						inserted_segment_end = current_time.seconds_total;
+						inserted_segment_end = current_time;
 						insert_segment = true;
 					}
 					//TODO: probably should only be displayed when hovering a timestamp
 					if (ImGui::MenuItem("Delete timestamp"))
 					{
-						auto selected_timepoint = std::chrono::seconds{ static_cast<int64_t>((insert_mouse_pos.x - pos.x) / framePixelWidth) };
-						auto it = tag_info.timeline.find(timestamp{selected_timepoint});
+						auto selected_timepoint = mouse_timestamp;
+						auto it = tag_info.timeline.find(selected_timepoint);
 						if (it != tag_info.timeline.end())
 						{
 							tag_info.timeline.erase(it);
@@ -628,8 +635,8 @@ namespace vt::widgets
 				if (insert_segment)
 				{
 					tag_info.timeline.insert(timestamp{ inserted_segment_start }, timestamp{ inserted_segment_end });
-					inserted_segment_start = std::chrono::seconds{};
-					inserted_segment_end = std::chrono::seconds{};
+					inserted_segment_start = timestamp{};
+					inserted_segment_end = timestamp{};
 				}
 			}
 
@@ -650,6 +657,8 @@ namespace vt::widgets
 #else
 				ImGui::CaptureMouseFromApp();
 #endif
+				//TODO: Maybe could use mouse_pos_to_timestamp
+
 				auto diff_sec = mouse_pos_x - segment_moving_data->position.count();
 				auto diffFrame = std::chrono::seconds{ int64_t(diff_sec / framePixelWidth) };
 				if (std::abs(diffFrame.count()) > 0)
