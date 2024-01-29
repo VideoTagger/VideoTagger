@@ -84,8 +84,10 @@ namespace vt::widgets
 	static bool SequencerAddDelButton(ImDrawList* draw_list, ImVec2 pos, bool add = true)
 	{
 		ImGuiIO& io = ImGui::GetIO();
+		const float font_scale = io.FontGlobalScale;
+		const float button_size = 16.0f * font_scale;
 		const ImGuiStyle& style = ImGui::GetStyle();
-		ImRect btnRect(pos, ImVec2(pos.x + 16, pos.y + 16));
+		ImRect btnRect(pos, ImVec2(pos.x + button_size, pos.y + button_size));
 		bool overBtn = btnRect.Contains(io.MousePos);
 		bool containedClick = overBtn and btnRect.Contains(io.MouseClickedPos[0]);
 		bool clickedBtn = containedClick and io.MouseReleased[0];
@@ -94,8 +96,8 @@ namespace vt::widgets
 		if (containedClick and io.MouseDownDuration[0] > 0)
 			btnRect.Expand(2.0f);
 
-		float midy = pos.y + 16 / 2 - 0.5f;
-		float midx = pos.x + 16 / 2 - 0.5f;
+		float midy = pos.y + button_size / 2 - 0.5f;
+		float midx = pos.x + button_size / 2 - 0.5f;
 		draw_list->AddRect(btnRect.Min, btnRect.Max, button_color, 4);
 		draw_list->AddLine(ImVec2(btnRect.Min.x + 3, midy), ImVec2(btnRect.Max.x - 3, midy), button_color, 2);
 		if (add)
@@ -114,7 +116,7 @@ namespace vt::widgets
 	};
 
 	//TODO:
-	// Improve the context menu
+	// Improve the context dots_hor
 	// Button to remove displayed tag.
 	// Maybe more accurracy than a second.
 	// Display time in 10 second gaps instead of 20
@@ -125,6 +127,7 @@ namespace vt::widgets
 	{
 		bool return_value = false;
 		ImGuiIO& io = ImGui::GetIO();
+		const float font_scale = io.FontGlobalScale;
 		ImGuiStyle& style = ImGui::GetStyle();
 		int mouse_pos_x = (int)(io.MousePos.x);
 		int mouse_pos_y = (int)(io.MousePos.y);
@@ -135,7 +138,7 @@ namespace vt::widgets
 		//static int movingEntry = -1;
 		static std::optional<moving_tag_data> segment_moving_data;
 		int delEntry = -1;
-		float ItemHeight = 20;
+		float ItemHeight = 20 * font_scale;
 
 		const int64_t time_min = state.time_min.seconds_total.count();
 		const int64_t time_max = state.time_max.seconds_total.count();
@@ -311,12 +314,12 @@ namespace vt::widgets
 			};
 			int halfModFrameCount = modFrameCount / 2;
 
-			auto drawLine = [&](int64_t i, int regionHeight) {
+			auto drawLine = [&](int64_t i, float regionHeight) {
 				bool baseIndex = ((i % modFrameCount) == 0) || (i == time_max || i == time_min);
 				bool halfIndex = (i % halfModFrameCount) == 0;
-				int px = (int)canvas_pos.x + int(i * framePixelWidth) + legendWidth - int(firstFrameUsed * framePixelWidth);
-				int tiretStart = baseIndex ? 4 : (halfIndex ? 10 : 14);
-				int tiretEnd = baseIndex ? regionHeight : ItemHeight;
+				float px = canvas_pos.x + i * framePixelWidth + legendWidth - firstFrameUsed * framePixelWidth;
+				float tiretStart = baseIndex ? 4.0f : (halfIndex ? 10.0f : 14.0f);
+				float tiretEnd = baseIndex ? regionHeight : ItemHeight;
 
 				if (px <= (canvas_size.x + canvas_pos.x) and px >= (canvas_pos.x + legendWidth))
 				{
@@ -351,6 +354,7 @@ namespace vt::widgets
 					draw_list->AddLine(ImVec2(float(px), float(tiretStart)), ImVec2(float(px), float(tiretEnd)), line_color, 1);
 				}
 				};
+
 			for (int64_t i = time_min; i <= time_max; i += frameStep)
 			{
 				drawLine(i, ItemHeight);
@@ -560,7 +564,7 @@ namespace vt::widgets
 					//compactCustomDraws.push_back({ i, customRect, ImRect(), clippingRect, ImRect() });
 				}
 
-				// Tag segment context menu
+				// Tag segment context dots_hor
 				//TODO: improve
 				ImVec2 rp(canvas_pos.x, contentMin.y + ItemHeight * i);
 				ImRect tag_line_rect(rp + ImVec2(float(legendWidth), float(0.f)), rp + ImVec2(canvas_size.x, float(ItemHeight)));

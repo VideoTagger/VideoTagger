@@ -31,6 +31,7 @@ namespace vt
 		[[nodiscard]] int height() const;
 
 		[[nodiscard]] bool is_playing() const;
+		[[nodiscard]] bool is_looping() const;
 		[[nodiscard]] float speed() const;
 		[[nodiscard]] std::chrono::nanoseconds duration() const;
 

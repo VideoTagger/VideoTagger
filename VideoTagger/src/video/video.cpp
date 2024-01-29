@@ -355,6 +355,11 @@ namespace vt
 		return playing_;
 	}
 
+	bool video::is_looping() const
+	{
+		return loop_;
+	}
+
 	float video::speed() const
 	{
 		return speed_;

@@ -15,6 +15,7 @@
 #include <utils/json.hpp>
 #include <utils/string.hpp>
 #include <utils/time.hpp>
+#include "icons.hpp"
 
 #include <core/app.hpp>
 
@@ -113,7 +114,8 @@ namespace vt::widgets
 				temp_project.path.make_preferred();
 			}
 			ImGui::SameLine();
-			if (ImGui::Button("...##ProjectCfgPathSelector"))
+			auto path_sel = std::string(icons::dots_hor) + "##ProjectCfgPathSelector";
+			if (ImGui::Button(path_sel.c_str()))
 			{
 				auto result = utils::filesystem::get_folder();
 				if (result)
@@ -134,7 +136,9 @@ namespace vt::widgets
 				temp_project.working_dir.make_preferred();
 			}
 			ImGui::SameLine();
-			if (ImGui::Button("...##ProjectCfgWorkdirSelector"))
+			//TODO: Working dir might be unnecessary
+			auto workdir_sel = std::string(icons::dots_hor) + "##ProjectCfgWorkdirSelector";
+			if (ImGui::Button(workdir_sel.c_str()))
 			{
 				auto result = utils::filesystem::get_folder();
 				if (result)
@@ -193,8 +197,8 @@ namespace vt::widgets
 		if (id == 0)
 		{
 			ImGui::TableSetupColumn("Project Name", ImGuiTableColumnFlags_WidthStretch);
-			ImGui::TableSetupColumn("Modification Time", ImGuiTableColumnFlags_WidthStretch);
-			ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed);
+			ImGui::TableSetupColumn("Modification Time", ImGuiTableColumnFlags_WidthStretch | ImGuiTableColumnFlags_NoResize);
+			ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed | ImGuiTableColumnFlags_NoHeaderLabel);
 			ImGui::TableHeadersRow();
 		}
 		ImGui::TableNextRow();
@@ -255,7 +259,7 @@ namespace vt::widgets
 
 		ImGui::TableNextColumn();
 		ImGui::PushID(imgui_id);
-		if (ImGui::Button("...", size))
+		if (ImGui::Button(icons::dots_hor, size))
 		{
 			ImGui::OpenPopup("##ProjectCtxMenu");
 		}
@@ -275,6 +279,7 @@ namespace vt::widgets
 				}
 			}
 
+			ImGui::Separator();
 			if (ImGui::MenuItem("Remove From List"))
 			{
 				projects_.erase(std::find(projects_.begin(), projects_.end(), project));
@@ -446,7 +451,7 @@ namespace vt::widgets
 					{
 						if (!filtered_projects.empty())
 						{
-							if (ImGui::BeginTable("##ProjectListTable", 3, ImGuiTableFlags_SizingStretchProp | ImGuiTableFlags_BordersInnerV))
+							if (ImGui::BeginTable("##ProjectListTable", 3, ImGuiTableFlags_SizingStretchProp | ImGuiTableFlags_Resizable | ImGuiTableFlags_NoBordersInBody))
 							{
 								for (size_t i = 0; i < filtered_projects.size(); ++i)
 								{

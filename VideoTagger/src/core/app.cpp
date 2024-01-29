@@ -16,6 +16,8 @@
 #include <widgets/project_selector.hpp>
 #include <widgets/time_input.hpp>
 #include <widgets/inspector.hpp>
+#include <widgets/settings.hpp>
+#include <widgets/icons.hpp>
 #include <utils/filesystem.hpp>
 #include <utils/json.hpp>
 
@@ -200,11 +202,27 @@ namespace vt
 		io.ConfigWindowsMoveFromTitleBarOnly = true;
 
 		std::filesystem::path font_path = std::filesystem::path("assets") / "fonts" / "NotoSans-Regular.ttf";
-		float font_size = 16.0f;
+		std::filesystem::path ico_font_path = std::filesystem::path("assets") / "fonts" / "MaterialIconsSharp-Regular.otf";
+		float font_size = 18.0f;
 
 		if (std::filesystem::exists(font_path))
 		{
+			ImVector<ImWchar> ranges;
+			ImFontGlyphRangesBuilder builder;
+			ImFontConfig config{};
+			config.MergeMode = true;
+			config.GlyphOffset = { 0.f, 4.f };
+			config.GlyphMinAdvanceX = font_size; // Use if you want to make the icon monospaced
+
+			for (const auto& icon : icons::all)
+			{
+				builder.AddText(icon.c_str());
+			}
+
+			builder.BuildRanges(&ranges);
 			io.Fonts->AddFontFromFileTTF(font_path.string().c_str(), font_size);
+			io.Fonts->AddFontFromFileTTF(ico_font_path.string().c_str(), font_size, &config, ranges.Data);
+			io.Fonts->Build();
 		}
 		else
 		{
@@ -277,6 +295,7 @@ namespace vt
 	{
 		if (!ctx_.app_settings_filepath.empty())
 		{
+			debug::log("Saving app settings...");
 			utils::json::write_to_file(ctx_.settings, ctx_.app_settings_filepath);
 		}
 		else
@@ -445,10 +464,16 @@ namespace vt
 				if (ImGui::MenuItem("Inspector Window", nullptr, &ctx_.win_cfg.show_inspector_window))
 				{
 					ctx_.settings["show-windows"]["inspector"] = ctx_.win_cfg.show_inspector_window;
-					save_settings();
+					result = true;
+				}
+				if (ImGui::MenuItem("Settings Window", nullptr, &ctx_.win_cfg.show_settings_window))
+				{
+					ctx_.settings["show-windows"]["settings"] = ctx_.win_cfg.show_settings_window;
+					result = true;
 				}
 
 				if (result) save_settings();
+
 				ImGui::EndMenu();
 			}
 			if (ImGui::BeginMenu("View"))
@@ -474,5 +499,11 @@ namespace vt
 		{
 			widgets::inspector(ctx_.selected_timestamp_data, &ctx_.win_cfg.show_inspector_window);
 		}
+
+		if (ctx_.win_cfg.show_settings_window)
+		{
+			widgets::settings(&ctx_.win_cfg.show_settings_window);
+		}
+		ImGui::ShowDemoWindow();
 	}
 }

@@ -13,6 +13,7 @@ namespace vt
 	struct window_config
 	{
 		bool show_inspector_window = true;
+		bool show_settings_window = true;
 	};
 
 	struct app_context
