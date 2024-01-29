@@ -1,5 +1,8 @@
 #include "time.hpp"
 #include <ctime>
+#include <cmath>
+
+#include <imgui_internal.h>
 
 namespace vt::utils::time
 {
@@ -40,5 +43,40 @@ namespace vt::utils::time
 		if (minutes > 0) return std::to_string(minutes) + (minutes > 1 ? " minutes" : " minute");
 		if (seconds > 0) return std::to_string(seconds) + (seconds > 1 ? " seconds" : " second");
 		return {};
+	}
+
+	std::string time_to_string(uint64_t seconds, const char* format)
+	{
+		timestamp ts(seconds);
+		char buffer[256];
+		ImFormatString(buffer, IM_ARRAYSIZE(buffer), format, ts.hours(), ts.minutes(), ts.seconds());
+		return buffer;
+	}
+
+	//parses HH:MM:SS string into seconds
+	uint64_t parse_time_to_sec(const std::string& input, char separator)
+	{
+		uint8_t n = 0;
+		uint8_t segment = 0;
+		constexpr uint8_t segment_max = 3;
+		uint64_t seconds{};
+		uint64_t val{};
+		auto it = input.rbegin();
+		while (it != input.rend() and segment != segment_max)
+		{
+			char c = *it++;
+			bool is_separator = (c == separator);
+			if (!is_separator)
+			{
+				val += static_cast<uint64_t>(c - '0') * static_cast<uint64_t>(std::pow(10, n++));
+			}
+			if (is_separator or it == input.rend())
+			{
+				seconds += val * static_cast<uint64_t>(std::pow(60ull, segment++));
+				n = 0;
+				val = 0;
+			}
+		}
+		return seconds;
 	}
 }

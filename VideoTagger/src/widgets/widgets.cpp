@@ -29,6 +29,7 @@ namespace vt::widgets
 	
 	void draw_timeline_widget_sample(video& video, tag_storage& tags, std::optional<selected_timestamp_data>& selected_timestamp, bool& dirty_flag, uint32_t id)
 	{
+		//TODO: Definitely change this!
 		static timeline_state test_timeline;
 		test_timeline.tags = &tags;
 		test_timeline.sync_tags();

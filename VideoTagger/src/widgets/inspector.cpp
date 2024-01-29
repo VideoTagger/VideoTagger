@@ -19,7 +19,7 @@ namespace vt::widgets
 		}
 		ImGui::SameLine();
 		if (fill_area) ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x);
-		result |= widgets::time_input(("##TimestampCtrlInput" + name).c_str(), &timestamp, 1.0f, min_timestamp, max_timestamp, widgets::time_input_default_format, ImGuiSliderFlags_AlwaysClamp);
+		result |= widgets::time_input(("##TimestampCtrlInput" + name).c_str(), &timestamp, 1.0f, min_timestamp, max_timestamp, utils::time::default_time_format, ImGuiSliderFlags_AlwaysClamp);
 		if (fill_area) ImGui::PopItemWidth();
 		ImGui::PopStyleVar();
 		auto ctx_name = ("##TimestampCtrlCtx" + name);

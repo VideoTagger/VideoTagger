@@ -428,6 +428,7 @@ namespace vt::widgets
 			}*/
 
 			// slots
+			bool deselect = selected_timestamp.has_value();
 			for (int i = 0; i < sequenceCount; i++)
 			{
 				tag& tag_info = state.get(i);
@@ -499,14 +500,21 @@ namespace vt::widgets
 						ImRect(slot_p1, slot_p2)
 					};
 					
+					bool mouse_on_segment = rects[2].Contains(io.MousePos);
 					//timestamp selection
-					if (rects[2].Contains(io.MousePos) and ImGui::IsMouseClicked(ImGuiMouseButton_Left))
+					if (ImGui::IsMouseClicked(ImGuiMouseButton_Left))
 					{
-						selected_timestamp = selected_timestamp_data{
-							tag_info.name,
-							&tag_info.timeline,
-							timestamp_it
-						};
+						if (mouse_on_segment)
+						{
+							selected_timestamp = selected_timestamp_data
+							{
+								tag_info.name,
+								&tag_info.timeline,
+								timestamp_it
+							};
+						}
+
+						deselect &= !mouse_on_segment;
 					}
 
 					const unsigned int quadColor[] = { 0xFFFFFFFF, 0xFFFFFFFF, slot_color/* + (selected ? 0 : 0x202020)*/};
@@ -645,6 +653,11 @@ namespace vt::widgets
 				}
 			}
 
+			if (ImGui::IsMouseClicked(ImGuiMouseButton_Left) and deselect)
+			{
+				selected_timestamp = std::nullopt;
+			}
+
 
 			if (segment_moving_data.has_value())
 			{
@@ -714,14 +727,18 @@ namespace vt::widgets
 
 					//TODO: If tags were to overlap, display a popup asking whether to merge the tags or not.
 					auto& timeline = segment_moving_data->tag->timeline;
-					
+
 					bool was_selected = selected_timestamp.has_value() and selected_timestamp->timestamp_timeline == &timeline and selected_timestamp->timestamp == segment_moving_data->segment;
-					
-					selected_timestamp->timestamp = timeline.replace(
-						selected_timestamp->timestamp,
-						timestamp{ segment_moving_data->left_position },
-						timestamp{ segment_moving_data->right_position }
-					).first;
+
+					if (selected_timestamp.has_value())
+					{
+						selected_timestamp->timestamp = timeline.replace
+						(
+							selected_timestamp->timestamp,
+							timestamp{ segment_moving_data->left_position },
+							timestamp{ segment_moving_data->right_position }
+						).first;
+					}
 					segment_moving_data.reset();
 					dirty_flag = true;
 				}

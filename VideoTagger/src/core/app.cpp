@@ -346,7 +346,7 @@ namespace vt
 						data.buttons = buttons;
 						data.numbuttons = sizeof(buttons) / sizeof(buttons[0]);
 						data.title = "VideoTagger";
-						data.message = "The current project has unsaved changes. Do you want to save pending changes?";
+						data.message = "The current project has unsaved changes.\nDo you want to save pending changes?";
 						int buttonid{};
 						SDL_ShowMessageBox(&data, &buttonid);
 
