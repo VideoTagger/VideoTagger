@@ -266,16 +266,62 @@ namespace vt::widgets
 			{
 				if (ImGui::MenuItem("Open Containing Folder"))
 				{
-					std::string uri = "file://" + std::filesystem::absolute(project.path.parent_path()).string();
-					SDL_OpenURL(uri.c_str());
+					auto path = std::filesystem::absolute(project.path.parent_path()).string();
+					if (!path.empty())
+					{
+						std::string uri = "file://" + path;
+						SDL_OpenURL(uri.c_str());
+					}
 				}
 			}
 
-			if (ImGui::MenuItem("Remove"))
+			if (ImGui::MenuItem("Remove From List"))
 			{
 				projects_.erase(std::find(projects_.begin(), projects_.end(), project));
-				if (on_project_list_update == nullptr) return;
-				on_project_list_update();
+				if (on_project_list_update != nullptr) on_project_list_update();
+			}
+			if (std::filesystem::is_regular_file(project.path) and project.path.extension() == std::string(".") + project::extension and ImGui::MenuItem("Delete"))
+			{
+				const SDL_MessageBoxButtonData buttons[] = {
+					// flags, buttonid, text
+					{ SDL_MESSAGEBOX_BUTTON_ESCAPEKEY_DEFAULT, 0, "Cancel" },
+					{ SDL_MESSAGEBOX_BUTTON_RETURNKEY_DEFAULT, 1, "Delete" }
+				};
+
+				SDL_MessageBoxData data{};
+				data.flags = SDL_MESSAGEBOX_WARNING;
+
+				//TODO: Replace title
+				data.buttons = buttons;
+				data.numbuttons = sizeof(buttons) / sizeof(buttons[0]);
+				data.title = "VideoTagger";
+				auto message = "Are you sure you want to delete the project file?\n\nFilepath:\n" + std::filesystem::absolute(project.path).string();
+				data.message = message.c_str();
+				int buttonid{};
+				SDL_ShowMessageBox(&data, &buttonid);
+
+				switch (buttonid)
+				{
+					case 1:
+					{
+						debug::log("Deleting project file: " + project.path.string());
+						std::error_code ec{};
+						if (std::filesystem::remove(project.path, ec))
+						{
+							projects_.erase(std::find(projects_.begin(), projects_.end(), project));
+							if (on_project_list_update != nullptr) on_project_list_update();
+						}
+						else
+						{
+							debug::error("Project file couldn't be deleted: " + project.path.string());
+							auto message = "Project file couldn't be deleted\n\nFilepath:\n" + project.path.string();
+							message += "\nReason:\n" + ec.message() + "\nCode: " + std::to_string(ec.value());
+							SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "VideoTagger", message.c_str(), nullptr);
+						}
+						
+					}
+					break;
+				}
 			}
 			ImGui::EndPopup();
 		}
@@ -398,13 +444,26 @@ namespace vt::widgets
 					//list_size.y -= 2 * button_size.y + style.ItemSpacing.y + style.WindowPadding.y;
 					if (ImGui::BeginChild("##Project List", list_panel_size))
 					{
-						if (ImGui::BeginTable("##ProjectListTable", 3, ImGuiTableFlags_SizingStretchProp | ImGuiTableFlags_BordersInnerV))
+						if (!filtered_projects.empty())
 						{
-							for (size_t i = 0; i < filtered_projects.size(); ++i)
+							if (ImGui::BeginTable("##ProjectListTable", 3, ImGuiTableFlags_SizingStretchProp | ImGuiTableFlags_BordersInnerV))
 							{
-								render_project_widget(i, filtered_projects[i]);
+								for (size_t i = 0; i < filtered_projects.size(); ++i)
+								{
+									render_project_widget(i, filtered_projects[i]);
+								}
+								ImGui::EndTable();
 							}
-							ImGui::EndTable();
+						}
+						else
+						{
+							auto avail_area = ImGui::GetContentRegionMax();
+							constexpr const char* text = "No Projects Found";
+							auto half_text_size = ImGui::CalcTextSize(text, nullptr, false, 3 * avail_area.x / 4) / 2;
+							ImGui::SetCursorPos(avail_area / 2 - half_text_size);
+							ImGui::BeginDisabled();
+							ImGui::TextWrapped(text);
+							ImGui::EndDisabled();
 						}
 					}
 					ImGui::EndChild();
