@@ -48,6 +48,7 @@ namespace vt
 
 		bool load_settings();
 		void save_settings();
+		void save_project();
 		void close_project();
 
 		void handle_events();

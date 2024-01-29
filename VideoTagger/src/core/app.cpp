@@ -248,7 +248,7 @@ namespace vt
 	
 	void app::shutdown()
 	{
-		if (state_ == app_state::shutdown) return;
+		if (state_ != app_state::shutdown) return;
 
 		ImGui_ImplSDLRenderer2_Shutdown();
 		ImGui_ImplSDL2_Shutdown();
@@ -285,6 +285,14 @@ namespace vt
 		}
 	}
 
+	void app::save_project()
+	{
+		if (!ctx_.current_project.has_value()) return;
+
+		ctx_.current_project->save();
+		ctx_.is_project_dirty = false;
+	}
+
 	void app::close_project()
 	{
 		ctx_.current_project = std::nullopt;
@@ -303,6 +311,42 @@ namespace vt
 			{
 				case SDL_QUIT:
 				{
+					if (ctx_.current_project.has_value() and ctx_.is_project_dirty)
+					{
+						const SDL_MessageBoxButtonData buttons[] = {
+							// flags, buttonid, text
+							{ SDL_MESSAGEBOX_BUTTON_ESCAPEKEY_DEFAULT, 0, "Cancel" },
+							{ 0, 2, "Don't Save" },
+							{ SDL_MESSAGEBOX_BUTTON_RETURNKEY_DEFAULT, 1, "Save" },
+						};
+
+						SDL_MessageBoxData data{};
+						data.flags = SDL_MESSAGEBOX_WARNING;
+
+						//TODO: Replace title
+						data.buttons = buttons;
+						data.numbuttons = sizeof(buttons) / sizeof(buttons[0]);
+						data.title = "VideoTagger";
+						data.message = "The current project has unsaved changes. Do you want to save pending changes?";
+						int buttonid{};
+						SDL_ShowMessageBox(&data, &buttonid);
+
+						switch (buttonid)
+						{
+						case 1:
+						{
+							save_project();
+							state_ = app_state::shutdown;
+						}
+						break;
+						case 2:
+						{
+							state_ = app_state::shutdown;
+						}
+						break;
+						}
+						break;
+					}
 					state_ = app_state::shutdown;
 				}
 				break;
@@ -431,7 +475,7 @@ namespace vt
 
 				if (ImGui::MenuItem("Save"))
 				{
-					ctx_.current_project->save();
+					save_project();
 				}
 				if (ImGui::MenuItem("Close Project"))
 				{
@@ -474,7 +518,7 @@ namespace vt
 		{
 			auto& vid = ctx_.videos[i];
 			widgets::draw_video_widget(*vid, i);
-			widgets::draw_timeline_widget_sample(*vid, ctx_.current_project->tags, ctx_.selected_timestamp_data, i);
+			widgets::draw_timeline_widget_sample(*vid, ctx_.current_project->tags, ctx_.selected_timestamp_data, ctx_.is_project_dirty, i);
 		}
 		if (ctx_.current_project.has_value())
 		{
