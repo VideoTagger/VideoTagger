@@ -404,6 +404,10 @@ namespace vt::widgets
 
 		if (ImGui::BeginPopupModal("Project Selector", nullptr, flags))
 		{
+			if (ImGui::IsWindowAppearing())
+			{
+				sort();
+			}
 			ImGui::LabelText("##ProjectSelectorTitle", "Projects");
 
 			auto max_content_size = ImGui::GetContentRegionAvail();
