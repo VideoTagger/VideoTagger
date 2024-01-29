@@ -26,5 +26,6 @@ namespace vt
 		nlohmann::ordered_json settings;
 		window_config win_cfg;
 		std::optional<widgets::selected_timestamp_data> selected_timestamp_data;
+		bool is_project_dirty{};
 	};
 }

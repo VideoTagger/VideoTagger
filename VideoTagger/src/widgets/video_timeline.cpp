@@ -109,7 +109,7 @@ namespace vt::widgets
 	{
 		tag* tag{};
 		tag_timeline::iterator segment{};
-		uint8_t moving_part;
+		uint8_t grab_part;
 		std::chrono::seconds position{};
 		std::chrono::seconds left_position{};
 		std::chrono::seconds right_position{};
@@ -123,7 +123,7 @@ namespace vt::widgets
 	// Draggable timepoint segment
 	// Merge tags popup
 
-	bool video_timeline(timeline_state& state, timestamp& current_time, std::optional<selected_timestamp_data>& selected_timestamp)
+	bool video_timeline(timeline_state& state, timestamp& current_time, std::optional<selected_timestamp_data>& selected_timestamp, bool& dirty_flag)
 	{
 		bool return_value = false;
 		ImGuiIO& io = ImGui::GetIO();
@@ -453,7 +453,7 @@ namespace vt::widgets
 					//ImVec2 slotP3(pos.x + end * framePixelWidth + framePixelWidth, pos.y + ItemHeight - 2);
 					uint32_t slot_color = color | 0xFF000000;
 					uint32_t slot_color_half = (color & 0xFFFFFF) | 0x40000000;
-					uint32_t selection_color = 0xffffffff;
+					uint32_t selection_color = ImGui::ColorConvertFloat4ToU32({ 1.f, 0xA5 / 255.f, 0.f, 1.f }); //0xFFA500FF
 					float selection_thickness = 2.0f;
 
 					bool is_selected = selected_timestamp.has_value() and selected_timestamp->timestamp_timeline == &tag_info.timeline and selected_timestamp->timestamp == timestamp_it;
@@ -536,7 +536,7 @@ namespace vt::widgets
 								continue;
 							if (!ImRect(childFramePos, childFramePos + childFrameSize).Contains(io.MousePos))
 								continue;
-							if (ImGui::IsMouseClicked(0) and !moving_scroll_bar and !moving_time_marker and timestamp_it->type() != tag_timestamp_type::point)
+							if (ImGui::IsMouseClicked(0) and !moving_scroll_bar and !moving_time_marker and (timestamp_it->type() != tag_timestamp_type::point or j == 2))
 							{
 								segment_moving_data = moving_tag_data{
 									&tag_info,
@@ -641,13 +641,14 @@ namespace vt::widgets
 					tag_info.timeline.insert(timestamp{ inserted_segment_start }, timestamp{ inserted_segment_end });
 					inserted_segment_start = timestamp{};
 					inserted_segment_end = timestamp{};
+					dirty_flag = true;
 				}
 			}
 
 
 			if (segment_moving_data.has_value())
 			{
-				if (segment_moving_data->moving_part == 1 or segment_moving_data->moving_part == 2)
+				if (segment_moving_data->grab_part == 1 or segment_moving_data->grab_part == 2)
 				{
 					ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeEW);
 				}
@@ -673,29 +674,29 @@ namespace vt::widgets
 					//TODO: Maybe this should be shared between the timeline and the inspector since its also "used" there?
 					constexpr auto min_segment_size = std::chrono::seconds{ 1 };
 
-					if (segment_moving_data->moving_part & 1 and std::abs((segment_moving_data->right_position - segment_moving_data->left_position - diffFrame).count()) >= min_segment_size.count())
+					if (segment_moving_data->grab_part & 1)
 						segment_moving_data->left_position += diffFrame;
-					if (segment_moving_data->moving_part & 2 and std::abs((segment_moving_data->right_position - segment_moving_data->left_position + diffFrame).count()) >= min_segment_size.count())
+					if (segment_moving_data->grab_part & 2)
 						segment_moving_data->right_position += diffFrame;
 					if (segment_moving_data->left_position < std::chrono::seconds{0})
 					{
-						if (segment_moving_data->moving_part & 2)
+						if (segment_moving_data->grab_part & 2)
 							segment_moving_data->right_position -= segment_moving_data->left_position;
 						segment_moving_data->left_position = std::chrono::seconds{0};
 					}
-					if (segment_moving_data->moving_part & 1 and segment_moving_data->left_position > segment_moving_data->right_position)
+					if (segment_moving_data->grab_part & 1 and segment_moving_data->left_position > segment_moving_data->right_position)
 						segment_moving_data->left_position = segment_moving_data->right_position;
-					if (segment_moving_data->moving_part & 2 and segment_moving_data->right_position < segment_moving_data->left_position)
+					if (segment_moving_data->grab_part & 2 and segment_moving_data->right_position < segment_moving_data->left_position)
 						segment_moving_data->right_position = segment_moving_data->left_position;
 
 					auto segment_size = std::abs((segment_moving_data->right_position - segment_moving_data->left_position).count());
-					if (segment_size < min_segment_size.count())
+					if (segment_size < min_segment_size.count() and segment_moving_data->segment->type() != tag_timestamp_type::point)
 					{
-						if (segment_moving_data->moving_part & 1)
+						if (segment_moving_data->grab_part & 1)
 						{
 							segment_moving_data->left_position -= min_segment_size - static_cast<std::chrono::seconds>(segment_size);
 						}
-						else if (segment_moving_data->moving_part & 2)
+						else if (segment_moving_data->grab_part & 2)
 						{
 							segment_moving_data->right_position += min_segment_size - static_cast<std::chrono::seconds>(segment_size);
 						}
@@ -722,6 +723,7 @@ namespace vt::widgets
 						timestamp{ segment_moving_data->right_position }
 					).first;
 					segment_moving_data.reset();
+					dirty_flag = true;
 				}
 			}
 			draw_list->PopClipRect();

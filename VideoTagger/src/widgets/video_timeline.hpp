@@ -68,6 +68,6 @@ namespace vt::widgets
 
 
 	// return true if selection is made
-	bool video_timeline(timeline_state& state, timestamp& current_time, std::optional<selected_timestamp_data>& selected_timestamp);
+	bool video_timeline(timeline_state& state, timestamp& current_time, std::optional<selected_timestamp_data>& selected_timestamp, bool& dirty_flag);
 
 }
