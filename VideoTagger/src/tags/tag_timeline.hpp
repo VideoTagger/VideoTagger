@@ -5,6 +5,8 @@
 #include <set>
 #include <chrono>
 
+#include <utils/timestamp.hpp>
+
 namespace vt
 {
 	//TODO: maybe think of something better than "timestamp" for this
@@ -16,14 +18,14 @@ namespace vt
 
 	struct tag_timestamp
 	{
-		std::chrono::nanoseconds start{};
-		std::chrono::nanoseconds end{};
+		timestamp start{};
+		timestamp end{};
 		
-		tag_timestamp(std::chrono::nanoseconds time_start, std::chrono::nanoseconds time_end);
-		tag_timestamp(std::chrono::nanoseconds time_point);
+		tag_timestamp(timestamp time_start, timestamp time_end);
+		tag_timestamp(timestamp time_point);
 
-		void set(std::chrono::nanoseconds time_start, std::chrono::nanoseconds time_end);
-		void set(std::chrono::nanoseconds time_point);
+		void set(timestamp time_start, timestamp time_end);
+		void set(timestamp time_point);
 
 		std::chrono::nanoseconds duration() const;
 		tag_timestamp_type type() const;
@@ -43,12 +45,17 @@ namespace vt
 		using iterator = std::set<tag_timestamp, tag_timeline_set_comparator_>::iterator;
 		using reverse_iterator = std::set<tag_timestamp, tag_timeline_set_comparator_>::reverse_iterator;
 
-		std::pair<iterator, bool> insert(std::chrono::nanoseconds time_start, std::chrono::nanoseconds time_end);
-		std::pair<iterator, bool> insert(std::chrono::nanoseconds time_point);
+		std::pair<iterator, bool> insert(timestamp time_start, timestamp time_end);
+		std::pair<iterator, bool> insert(timestamp time_point);
 		iterator erase(iterator it);
 
-		std::pair<iterator, iterator> find_range(std::chrono::nanoseconds time_start, std::chrono::nanoseconds time_end) const;
-		iterator find(std::chrono::nanoseconds time_point) const;
+		//will invalidate it
+		std::pair<iterator, bool> replace(iterator it, timestamp new_start, timestamp new_end);
+		//will invalidate it
+		std::pair<iterator, bool> replace(iterator it, timestamp time_point);
+
+		std::pair<iterator, iterator> find_range(timestamp time_start, timestamp time_end) const;
+		iterator find(timestamp time_point) const;
 
 		iterator begin() const;
 		reverse_iterator rbegin() const;

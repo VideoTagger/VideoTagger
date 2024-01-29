@@ -54,7 +54,7 @@ namespace vt
 			json_timestamps = nlohmann::json::array();
 			for (auto& timestamp : tag.timeline)
 			{
-				json_timestamps.push_back(nlohmann::json::object({ { "start", timestamp.start.count() }, { "end", timestamp.end.count() } }));
+				json_timestamps.push_back(nlohmann::json::object({ { "start", timestamp.start.seconds_total.count() }, { "end", timestamp.end.seconds_total.count() } }));
 			}
 		}
 
@@ -96,7 +96,7 @@ namespace vt
 				tag_it->color = tag_data["color"];
 				for (auto& timestamp : tag_data["timestamps"])
 				{
-					tag_it->timeline.insert(std::chrono::nanoseconds{ timestamp["start"] }, std::chrono::nanoseconds{ timestamp["end"] });
+					tag_it->timeline.insert(vt::timestamp{ timestamp["start"] }, vt::timestamp{ timestamp["end"] });
 				}
 			}
 		}			

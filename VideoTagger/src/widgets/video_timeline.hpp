@@ -30,37 +30,30 @@
 #include <cstddef>
 #include <string>
 #include <vector>
+#include <optional>
 
 #include <utils/timestamp.hpp>
 #include <tags/tag_storage.hpp>
 
-struct ImDrawList;
-struct ImRect;
-namespace ImSequencer
-{
-	enum SEQUENCER_OPTIONS
-	{
-		SEQUENCER_EDIT_NONE = 0,
-		SEQUENCER_EDIT_STARTEND = 1 << 1,
-		SEQUENCER_CHANGE_FRAME = 1 << 3,
-		SEQUENCER_ADD = 1 << 4,
-		SEQUENCER_DEL = 1 << 5,
-		SEQUENCER_COPYPASTE = 1 << 6,
-		SEQUENCER_EDIT_ALL = SEQUENCER_EDIT_STARTEND | SEQUENCER_CHANGE_FRAME
-	};
-}
-
 namespace vt::widgets
 {
+	//TODO: use this
+	struct selected_timestamp_data
+	{
+		std::string tag_name;
+		tag_timeline* timestamp_timeline;
+		tag_timeline::iterator timestamp;
+	};
+
 	struct timeline_state
 	{
 		bool focused = false;
 
-		tag_storage* tags;
+		tag_storage* tags{};
 		std::vector<std::string> displayed_tags;
 
-		timestamp time_min;
-		timestamp time_max;
+		timestamp time_min{};
+		timestamp time_max{};
 
 		int64_t first_frame{};
 
@@ -75,6 +68,6 @@ namespace vt::widgets
 
 
 	// return true if selection is made
-	bool video_timeline(timeline_state* state, timestamp* current_time, int* selected_entry);
+	bool video_timeline(timeline_state& state, timestamp& current_time, std::optional<selected_timestamp_data>& selected_timestamp);
 
 }

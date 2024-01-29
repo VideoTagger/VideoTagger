@@ -27,7 +27,7 @@ namespace vt::widgets
 		bool active{};
 	};
 	
-	void draw_timeline_widget_sample(video& video, tag_storage& tags, uint32_t id)
+	void draw_timeline_widget_sample(video& video, tag_storage& tags, std::optional<selected_timestamp_data>& selected_timestamp, uint32_t id)
 	{
 		static timeline_state test_timeline;
 		test_timeline.tags = &tags;
@@ -42,7 +42,6 @@ namespace vt::widgets
 			test_timeline.time_min = timestamp{};
 		}
 
-		static int selected_entry = -1;
 		static int64_t first_frame = 0;
 		static bool expanded = true;
 		timestamp current_time{ std::chrono::duration_cast<std::chrono::seconds>(video.current_timestamp()) };
@@ -54,7 +53,7 @@ namespace vt::widgets
 		{
 			ImGui::PushID(id);
 			ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, default_window_padding);
-			video_timeline(&test_timeline, &current_time, &selected_entry);
+			video_timeline(test_timeline, current_time, selected_timestamp);
 			ImGui::PopStyleVar();
 			
 			if (current_time.seconds_total != std::chrono::duration_cast<std::chrono::seconds>(video.current_timestamp()))

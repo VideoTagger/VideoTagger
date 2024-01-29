@@ -12,16 +12,82 @@
 
 #include <widgets/widgets.hpp>
 #include <widgets/video_widget.hpp>
+#include <widgets/video_timeline.hpp>
 #include <widgets/project_selector.hpp>
 #include <widgets/time_input.hpp>
+#include <widgets/inspector.hpp>
 #include <utils/filesystem.hpp>
 #include <utils/json.hpp>
 
 #include "project.hpp"
 #include <core/debug.hpp>
 
+#ifdef _WIN32
+	#include <SDL.h>
+	#include <SDL_syswm.h>
+	#include <dwmapi.h>
+	#include <shlobj.h>
+#endif
+
+void sdl_set_dark_mode(SDL_Window* sdl_window, bool value)
+{
+#ifdef _WIN32
+
+	SDL_SysWMinfo wmi;
+
+	SDL_VERSION(&wmi.version);
+	SDL_GetWindowWMInfo(sdl_window, &wmi);
+	auto hwnd = wmi.info.win.window;
+
+	auto dwm = LoadLibraryA("dwmapi.dll");
+	if (!dwm) return;
+
+	typedef HRESULT(*DwmSetWindowAttributePTR)(HWND, DWORD, LPCVOID, DWORD);
+	DwmSetWindowAttributePTR DwmSetWindowAttribute = (DwmSetWindowAttributePTR)GetProcAddress(dwm, "DwmSetWindowAttribute");
+
+	BOOL dark_mode = value;
+	constexpr auto dwmwa_use_immersive_dark_mode = 20; //DWMWINDOWATTRIBUTE::DWMWA_USE_IMMERSIVE_DARK_MODE
+	DwmSetWindowAttribute(hwnd, dwmwa_use_immersive_dark_mode, &dark_mode, sizeof(dark_mode));
+	float opacity;
+	if (SDL_GetWindowOpacity(sdl_window, &opacity) == 0)
+	{
+		//Tricks Windows to update the titlebar theme, there might be a better way to do this
+		SDL_SetWindowOpacity(sdl_window, opacity - std::numeric_limits<float>::epsilon());
+		SDL_SetWindowOpacity(sdl_window, opacity);
+	}
+#endif
+}
+
 namespace vt
 {
+	static void ffmpeg_callback(void* avcl, int level, const char* fmt, va_list va)
+	{
+		if (level == AV_LOG_QUIET) return;
+
+		if (level <= AV_LOG_ERROR)
+		{
+			char buffer[256];
+#ifdef _MSC_VER
+			vsprintf_s(buffer, fmt, va);
+#else
+			vsprintf(buffer, fmt, va);
+#endif
+			std::string message = "<FFmpeg> " + std::string(buffer);
+			if (message.back() == '\n')
+			{
+				message.pop_back();
+			}
+			if (level == AV_LOG_ERROR)
+			{
+				debug::error(message);
+			}
+			else
+			{
+				debug::panic(message);
+			}
+		}
+	}
+
 	app::app() : main_window_{}, renderer_{}, state_{ app_state::uninitialized }
 	{
 		ctx_.project_selector.on_click_project = [&](project& project)
@@ -76,9 +142,10 @@ namespace vt
 	
 	bool app::init(const app_config& config)
 	{
+		debug::init();
 		ctx_.app_settings_filepath = config.app_settings_filepath;
 		//Clears the log file
-		if (debug::log_filepath != "") std::ofstream{debug::log_filepath};
+		if (debug::log_filepath != "") std::ofstream{ debug::log_filepath };
 
 		if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS) < 0)
 		{
@@ -113,7 +180,8 @@ namespace vt
 			debug::error("Couldn't create the window");
 			return false;
 		}
-
+		
+		sdl_set_dark_mode(window, true);
 		SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
 		if (renderer == nullptr)
 		{
@@ -146,6 +214,7 @@ namespace vt
 		state_ = app_state::initialized;
 		ctx_.projects_list_filepath = config.projects_list_filepath;
 
+		av_log_set_callback(ffmpeg_callback);
 		load_settings();
 		return true;
 	}
@@ -196,12 +265,31 @@ namespace vt
 		{
 			//TODO: Error checking
 			debug::log("Loading settings from: " + ctx_.app_settings_filepath.string());
-			auto settings = utils::json::load_from_file(ctx_.app_settings_filepath);
-			auto& size = settings["window.size"];
+			ctx_.settings = utils::json::load_from_file(ctx_.app_settings_filepath);
+			auto& size = ctx_.settings["window.size"];
 			SDL_SetWindowSize(main_window_, size["width"].get<int>(), size["height"].get<int>());
 			return true;
 		}
 		return false;
+	}
+
+	void app::save_settings()
+	{
+		if (!ctx_.app_settings_filepath.empty())
+		{
+			utils::json::write_to_file(ctx_.settings, ctx_.app_settings_filepath);
+		}
+		else
+		{
+			debug::error("Settings filepath is empty");
+		}
+	}
+
+	void app::close_project()
+	{
+		ctx_.current_project = std::nullopt;
+		ctx_.videos.clear();
+		ctx_.selected_timestamp_data = std::nullopt;
 	}
 	
 	void app::handle_events()
@@ -227,19 +315,11 @@ namespace vt
 							//Skip if window is maximized
 							if (SDL_GetWindowFlags(main_window_) & SDL_WINDOW_MAXIMIZED) break;
 
-							nlohmann::ordered_json settings;
-							auto& size = settings["window.size"];
+							auto& size = ctx_.settings["window.size"];
 							size["width"] = event.window.data1;
 							size["height"] = event.window.data2;
 							debug::log("Window size changing, saving settings file...");
-							if (!ctx_.app_settings_filepath.empty())
-							{
-								utils::json::write_to_file(settings, ctx_.app_settings_filepath);
-							}
-							else
-							{
-								debug::error("Settings filepath is empty");
-							}
+							save_settings();
 						}
 						break;
 					}
@@ -255,6 +335,8 @@ namespace vt
 		if (renderer_ == nullptr) return;
 
 		draw();
+		SDL_SetRenderDrawColor(renderer_, 24, 24, 24, 0xFF);
+		SDL_RenderClear(renderer_);
 		ImGui::Render();
 		ImGui_ImplSDLRenderer2_RenderDrawData(ImGui::GetDrawData());
 		SDL_RenderPresent(renderer_);
@@ -279,7 +361,7 @@ namespace vt
 		ImGui::Begin("##Editor", NULL, WindowFlags);
 		ImGui::PopStyleVar(3);
 
-		static constexpr ImGuiDockNodeFlags dockspace_flags = ImGuiDockNodeFlags_PassthruCentralNode; //| ImGuiDockNodeFlags_NoDocking
+		constexpr ImGuiDockNodeFlags dockspace_flags = ImGuiDockNodeFlags_PassthruCentralNode; //| ImGuiDockNodeFlags_NoDocking
 		ImGui::DockSpace(DockspaceID, ImVec2{}, dockspace_flags);
 		
 		draw_ui();
@@ -351,12 +433,28 @@ namespace vt
 				{
 					ctx_.current_project->save();
 				}
+				if (ImGui::MenuItem("Close Project"))
+				{
+					close_project();
+				}
 				ImGui::EndMenu();
 			}
 			if (ImGui::BeginMenu("Window"))
 			{
+				bool result = false;
+				if (ImGui::MenuItem("Inspector Window", nullptr, &ctx_.win_cfg.show_inspector_window))
+				{
+					ctx_.settings["show-windows"]["inspector"] = ctx_.win_cfg.show_inspector_window;
+					save_settings();
+				}
+
+#if defined(_DEBUG)
+				ImGui::SeparatorText("Debug Only");
 				ImGui::MenuItem("Demo Window", nullptr, &ctx_.win_cfg.show_demo_window);
 				ImGui::MenuItem("Debug Window", nullptr, &ctx_.win_cfg.show_debug_window);
+#endif
+
+				if (result) save_settings();
 				ImGui::EndMenu();
 			}
 			if (ImGui::BeginMenu("View"))
@@ -369,26 +467,34 @@ namespace vt
 
 		if (ctx_.win_cfg.show_demo_window)
 		{
-			ImGui::ShowDemoWindow();
+			ImGui::ShowDemoWindow(&ctx_.win_cfg.show_demo_window);
 		}
 		
 		for (uint32_t i = 0; i < ctx_.videos.size(); ++i)
 		{
 			auto& vid = ctx_.videos[i];
 			widgets::draw_video_widget(*vid, i);
-			widgets::draw_timeline_widget_sample(*vid, ctx_.current_project->tags, i);
+			widgets::draw_timeline_widget_sample(*vid, ctx_.current_project->tags, ctx_.selected_timestamp_data, i);
 		}
-		widgets::draw_tag_manager_widget(ctx_.current_project->tags);
+		if (ctx_.current_project.has_value())
+		{
+			widgets::draw_tag_manager_widget(ctx_.current_project->tags);
+		}
 
 		//TODO: Remove this, this is temporary
 		if (ctx_.win_cfg.show_debug_window)
 		{
 			static timestamp time{};
-			if (ImGui::Begin("Debug"))
+			if (ImGui::Begin("Debug", &ctx_.win_cfg.show_debug_window))
 			{
 				widgets::time_input("Test", &time, 1.0f);
 			}
 			ImGui::End();
+		}
+
+		if (ctx_.win_cfg.show_inspector_window)
+		{
+			widgets::inspector(ctx_.selected_timestamp_data, &ctx_.win_cfg.show_inspector_window);
 		}
 	}
 }

@@ -14,13 +14,6 @@ namespace vt
 
 		constexpr timestamp(uint32_t hours, uint16_t minutes, uint16_t seconds) : seconds_total{ std::chrono::seconds(seconds) + std::chrono::minutes(minutes) + std::chrono::hours(hours) } {}
 
-		constexpr void set(uint16_t days, uint16_t hours, uint16_t minutes, uint16_t seconds)
-		{
-			seconds %= 60;
-			minutes %= 60;
-			seconds_total = std::chrono::seconds(seconds) + std::chrono::minutes(minutes) + std::chrono::hours(hours + 24 * days);
-		}
-
 		constexpr void set(uint32_t hours, uint16_t minutes, uint16_t seconds)
 		{
 			seconds %= 60;
@@ -58,6 +51,36 @@ namespace vt
 		[[nodiscard]] constexpr uint64_t seconds() const
 		{
 			return seconds_total.count() % 60;
+		}
+
+		constexpr bool operator==(const timestamp& rhs) const
+		{
+			return seconds_total == rhs.seconds_total;
+		}
+
+		constexpr bool operator!=(const timestamp& rhs) const
+		{
+			return !(*this == rhs);
+		}
+
+		constexpr bool operator<(const timestamp& rhs) const
+		{
+			return seconds_total < rhs.seconds_total;
+		}
+
+		constexpr bool operator<=(const timestamp& rhs) const
+		{
+			return seconds_total <= rhs.seconds_total;
+		}
+
+		constexpr bool operator>(const timestamp& rhs) const
+		{
+			return seconds_total > rhs.seconds_total;
+		}
+
+		constexpr bool operator>=(const timestamp& rhs) const
+		{
+			return seconds_total >= rhs.seconds_total;
 		}
 	};
 }

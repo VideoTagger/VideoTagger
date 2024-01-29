@@ -2,23 +2,23 @@
 
 namespace vt
 {
-	tag_timestamp::tag_timestamp(std::chrono::nanoseconds time_start, std::chrono::nanoseconds time_end)
+	tag_timestamp::tag_timestamp(timestamp time_start, timestamp time_end)
 		: start{ std::min(time_start, time_end) }, end{ std::max(time_start, time_end) }
 	{
 	}
 
-	tag_timestamp::tag_timestamp(std::chrono::nanoseconds time_point)
+	tag_timestamp::tag_timestamp(timestamp time_point)
 		: start{ time_point }, end{ time_point }
 	{
 	}
 
-	void tag_timestamp::set(std::chrono::nanoseconds time_start, std::chrono::nanoseconds time_end)
+	void tag_timestamp::set(timestamp time_start, timestamp time_end)
 	{
 		start = std::min(time_start, time_end);
 		end = std::max(time_start, time_end);
 	}
 
-	void tag_timestamp::set(std::chrono::nanoseconds time_point)
+	void tag_timestamp::set(timestamp time_point)
 	{
 		start = time_point;
 		end = time_point;
@@ -26,7 +26,7 @@ namespace vt
 
 	std::chrono::nanoseconds tag_timestamp::duration() const
 	{
-		return end - start;
+		return end.seconds_total - start.seconds_total;
 	}
 
 	tag_timestamp_type tag_timestamp::type() const
@@ -34,12 +34,12 @@ namespace vt
 		return start == end ? tag_timestamp_type::point : tag_timestamp_type::segment;
 	}
 
-	std::pair<tag_timeline::iterator, bool> tag_timeline::insert(std::chrono::nanoseconds time_start, std::chrono::nanoseconds time_end)
+	std::pair<tag_timeline::iterator, bool> tag_timeline::insert(timestamp time_start, timestamp time_end)
 	{
 		auto [it_begin, it_end] = find_range(time_start, time_end);
 		
-		std::chrono::nanoseconds insert_start = time_start;
-		std::chrono::nanoseconds insert_end = time_end;
+		timestamp insert_start = time_start;
+		timestamp insert_end = time_end;
 		
 		if (it_begin != timestamps_.end())
 		{
@@ -58,7 +58,7 @@ namespace vt
 		return timestamps_.emplace(insert_start, insert_end);
 	}
 
-	std::pair<tag_timeline::iterator, bool> tag_timeline::insert(std::chrono::nanoseconds time_point)
+	std::pair<tag_timeline::iterator, bool> tag_timeline::insert(timestamp time_point)
 	{
 		auto it = find(time_point);
 		if (it != end())
@@ -74,7 +74,19 @@ namespace vt
 		return timestamps_.erase(it);
 	}
 
-	std::pair<tag_timeline::iterator, tag_timeline::iterator> tag_timeline::find_range(std::chrono::nanoseconds time_start, std::chrono::nanoseconds time_end) const
+	std::pair<tag_timeline::iterator, bool> tag_timeline::replace(iterator it, timestamp new_start, timestamp new_end)
+	{
+		erase(it);
+		return insert(new_start, new_end);
+	}
+
+	std::pair<tag_timeline::iterator, bool> tag_timeline::replace(iterator it, timestamp time_point)
+	{
+		erase(it);
+		return insert(time_point);
+	}
+
+	std::pair<tag_timeline::iterator, tag_timeline::iterator> tag_timeline::find_range(timestamp time_start, timestamp time_end) const
 	{
 		//TODO: optimise (use lower/upper bound)
 		 
@@ -95,7 +107,7 @@ namespace vt
 		return { result_begin, result_end };
 	}
 
-	tag_timeline::iterator tag_timeline::find(std::chrono::nanoseconds time_point) const
+	tag_timeline::iterator tag_timeline::find(timestamp time_point) const
 	{
 		//TODO: optimise (use lower/upper bound)
 
