@@ -53,6 +53,28 @@ namespace vt
 			return seconds_total.count() % 60;
 		}
 
+		constexpr timestamp operator+(const timestamp& other) const
+		{
+			return timestamp(seconds_total + other.seconds_total);
+		}
+
+		constexpr timestamp& operator+=(const timestamp& other)
+		{
+			seconds_total += other.seconds_total;
+			return *this;
+		}
+
+		constexpr timestamp operator-(const timestamp& other) const
+		{
+			return timestamp(seconds_total - other.seconds_total);
+		}
+
+		constexpr timestamp& operator-=(const timestamp& other)
+		{
+			seconds_total -= other.seconds_total;
+			return *this;
+		}
+
 		constexpr bool operator==(const timestamp& rhs) const
 		{
 			return seconds_total == rhs.seconds_total;
