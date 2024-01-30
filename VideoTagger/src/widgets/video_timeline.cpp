@@ -107,10 +107,10 @@ namespace vt::widgets
 	{
 		tag* tag{};
 		tag_timeline::iterator segment{};
-		uint8_t grab_part;
-		std::chrono::seconds position{};
-		std::chrono::seconds left_position{};
-		std::chrono::seconds right_position{};
+		uint8_t grab_part{};
+		timestamp grab_position{};
+		timestamp left_position{};
+		timestamp right_position{};
 	};
 
 	//TODO:
@@ -436,8 +436,8 @@ namespace vt::widgets
 					int64_t end = tag_timestamp.end.seconds_total.count();
 					if (segment_moving_data.has_value() and segment_moving_data->tag == &tag_info and segment_moving_data->segment == timestamp_it)
 					{
-						start = segment_moving_data->left_position.count();
-						end = segment_moving_data->right_position.count();
+						start = segment_moving_data->left_position.seconds_total.count();
+						end = segment_moving_data->right_position.seconds_total.count();
 					}
 
 
@@ -538,9 +538,9 @@ namespace vt::widgets
 									&tag_info,
 									timestamp_it,
 									static_cast<uint8_t>(j + 1),
-									std::chrono::seconds{mouse_pos_x},
-									timestamp_it->start.seconds_total,
-									timestamp_it->end.seconds_total
+									mouse_pos_to_timestamp(io.MousePos.x),
+									timestamp_it->start,
+									timestamp_it->end
 								};
 
 								//state->begin_edit(movingEntry);
@@ -658,11 +658,12 @@ namespace vt::widgets
 #else
 				ImGui::CaptureMouseFromApp();
 #endif
-				//TODO: Maybe could use mouse_pos_to_timestamp
+				auto mouse_timestamp = mouse_pos_to_timestamp(io.MousePos.x);
+				auto move_delta = mouse_timestamp - segment_moving_data->grab_position;
 
-				auto diff_sec = mouse_pos_x - segment_moving_data->position.count();
-				auto diffFrame = std::chrono::seconds{ int64_t(diff_sec / framePixelWidth) };
-				if (std::abs(diffFrame.count()) > 0)
+				//auto diff_sec = mouse_pos_x - segment_moving_data->position.count();
+				//auto diffFrame = std::chrono::seconds{ int64_t(diff_sec / framePixelWidth) };
+				if (std::abs(move_delta.seconds_total.count()) > 0 and (state.time_min <= mouse_timestamp and mouse_timestamp <= state.time_max))
 				{
 					/*if (selected_entry)
 						*selected_entry = movingEntry;*/
@@ -671,33 +672,33 @@ namespace vt::widgets
 					constexpr auto min_segment_size = std::chrono::seconds{ 1 };
 
 					if (segment_moving_data->grab_part & 1)
-						segment_moving_data->left_position += diffFrame;
+						segment_moving_data->left_position += move_delta;
 					if (segment_moving_data->grab_part & 2)
-						segment_moving_data->right_position += diffFrame;
-					if (segment_moving_data->left_position < std::chrono::seconds{0})
+						segment_moving_data->right_position += move_delta;
+					if (segment_moving_data->left_position < timestamp{0})
 					{
 						if (segment_moving_data->grab_part & 2)
 							segment_moving_data->right_position -= segment_moving_data->left_position;
-						segment_moving_data->left_position = std::chrono::seconds{0};
+						segment_moving_data->left_position = timestamp{0};
 					}
 					if (segment_moving_data->grab_part & 1 and segment_moving_data->left_position > segment_moving_data->right_position)
 						segment_moving_data->left_position = segment_moving_data->right_position;
 					if (segment_moving_data->grab_part & 2 and segment_moving_data->right_position < segment_moving_data->left_position)
 						segment_moving_data->right_position = segment_moving_data->left_position;
 
-					auto segment_size = std::abs((segment_moving_data->right_position - segment_moving_data->left_position).count());
+					auto segment_size = std::abs((segment_moving_data->right_position - segment_moving_data->left_position).seconds_total.count());
 					if (segment_size < min_segment_size.count() and segment_moving_data->segment->type() != tag_timestamp_type::point)
 					{
 						if (segment_moving_data->grab_part & 1)
 						{
-							segment_moving_data->left_position -= min_segment_size - static_cast<std::chrono::seconds>(segment_size);
+							segment_moving_data->left_position -= timestamp(min_segment_size - static_cast<std::chrono::seconds>(segment_size));
 						}
 						else if (segment_moving_data->grab_part & 2)
 						{
-							segment_moving_data->right_position += min_segment_size - static_cast<std::chrono::seconds>(segment_size);
+							segment_moving_data->right_position += timestamp(min_segment_size - static_cast<std::chrono::seconds>(segment_size));
 						}
 					}
-					segment_moving_data->position += static_cast<std::chrono::seconds>(diff_sec);
+					segment_moving_data->grab_position = mouse_timestamp;
 				}
 				if (!io.MouseDown[0])
 				{
