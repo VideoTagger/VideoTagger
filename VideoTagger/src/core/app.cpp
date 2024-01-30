@@ -492,12 +492,6 @@ namespace vt
 					save_settings();
 				}
 
-#if defined(_DEBUG)
-				ImGui::SeparatorText("Debug Only");
-				ImGui::MenuItem("Demo Window", nullptr, &ctx_.win_cfg.show_demo_window);
-				ImGui::MenuItem("Debug Window", nullptr, &ctx_.win_cfg.show_debug_window);
-#endif
-
 				if (result) save_settings();
 				ImGui::EndMenu();
 			}
@@ -507,11 +501,6 @@ namespace vt
 				ImGui::EndMenu();
 			}
 			ImGui::EndMainMenuBar();
-		}
-
-		if (ctx_.win_cfg.show_demo_window)
-		{
-			ImGui::ShowDemoWindow(&ctx_.win_cfg.show_demo_window);
 		}
 		
 		for (uint32_t i = 0; i < ctx_.videos.size(); ++i)
@@ -523,17 +512,6 @@ namespace vt
 		if (ctx_.current_project.has_value())
 		{
 			widgets::draw_tag_manager_widget(ctx_.current_project->tags);
-		}
-
-		//TODO: Remove this, this is temporary
-		if (ctx_.win_cfg.show_debug_window)
-		{
-			static timestamp time{};
-			if (ImGui::Begin("Debug", &ctx_.win_cfg.show_debug_window))
-			{
-				widgets::time_input("Test", &time, 1.0f);
-			}
-			ImGui::End();
 		}
 
 		if (ctx_.win_cfg.show_inspector_window)

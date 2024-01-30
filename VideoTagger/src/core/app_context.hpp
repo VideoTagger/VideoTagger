@@ -12,8 +12,6 @@ namespace vt
 {
 	struct window_config
 	{
-		bool show_demo_window = true;
-		bool show_debug_window = true;
 		bool show_inspector_window = true;
 	};
 
