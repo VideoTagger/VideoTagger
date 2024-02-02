@@ -3,6 +3,7 @@
 #include <memory>
 #include "project.hpp"
 
+#include <imgui.h>
 #include <json.hpp>
 #include <video/video.hpp>
 #include <widgets/project_selector.hpp>
@@ -12,8 +13,12 @@ namespace vt
 {
 	struct window_config
 	{
+		//serialized
 		bool show_inspector_window = true;
 		bool show_settings_window = true;
+
+		//not serialized
+		bool show_about_window = false;
 	};
 
 	struct app_context
@@ -25,7 +30,10 @@ namespace vt
 		std::vector<std::shared_ptr<video>> videos;
 		nlohmann::ordered_json settings;
 		window_config win_cfg;
+		std::unordered_map<std::string, ImFont*> fonts;
 		std::optional<widgets::selected_timestamp_data> selected_timestamp_data;
 		bool is_project_dirty{};
 	};
+
+	inline app_context ctx_;
 }

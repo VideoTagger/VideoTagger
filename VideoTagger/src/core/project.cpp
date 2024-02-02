@@ -42,7 +42,6 @@ namespace vt
 		auto& project = json["project"];
 		project["version"] = version;
 		project["name"] = name;
-		project["working-dir"] = std::filesystem::relative(working_dir);
 
 		//TODO: Tags
 		auto& json_tags = json["tags"];
@@ -90,7 +89,7 @@ namespace vt
 
 	bool project::operator==(const project& other) const
 	{
-		return (name == other.name) and (path == other.path) and (working_dir == other.working_dir);
+		return (name == other.name) and (path == other.path);
 	}
 	
 	project project::load_from_file(const std::filesystem::path& filepath)
@@ -108,7 +107,6 @@ namespace vt
 			const auto& project = json["project"];
 			result.version = project["version"];
 			result.name = project["name"];
-			result.working_dir = project["working-dir"].get<std::filesystem::path>();
 
 			for (auto& tag_data : json["tags"])
 			{

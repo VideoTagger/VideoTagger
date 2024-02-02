@@ -15,7 +15,6 @@ namespace vt
 		uint16_t version = 1;
 		std::string name = "New Project";
 		std::filesystem::path path = std::filesystem::current_path();
-		std::filesystem::path working_dir = ".";
 
 		tag_storage tags;
 

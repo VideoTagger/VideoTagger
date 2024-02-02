@@ -16,6 +16,7 @@
 #include <utils/string.hpp>
 #include <utils/time.hpp>
 #include "icons.hpp"
+#include "buttons.hpp"
 
 #include <core/app.hpp>
 
@@ -90,12 +91,16 @@ namespace vt::widgets
 		auto& io = ImGui::GetIO();
 		ImGui::SetNextWindowPos(ImVec2(io.DisplaySize.x * 0.5f, io.DisplaySize.y * 0.5f), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
 		
-		auto win_size = ImGui::GetContentRegionMax() * 0.5f;
+		auto win_size = ImGui::GetContentRegionMax() * ImVec2(0.55f, 0.45f);
 		ImGui::SetNextWindowSize(win_size, ImGuiCond_Always);
 
 		if (ImGui::BeginPopupModal("Project Configuration", nullptr, flags))
 		{
-			ImGui::LabelText("##ProjectCfgTitle", "Configure your new project");
+			ImGui::PushFont(ctx_.fonts["title"]);
+			ImGui::LabelText("##ProjectCfgTitle", "Project Configuration");
+			ImGui::Separator();
+			ImGui::Dummy(style.ItemSpacing);
+			ImGui::PopFont();
 			ImGui::TextDisabled("Name");
 
 			auto avail_size = ImGui::GetContentRegionAvail();
@@ -125,29 +130,6 @@ namespace vt::widgets
 				}
 			}
 
-			ImGui::TextDisabled("Working directory");
-			std::string workdir_path = temp_project.working_dir.string();
-
-			ImGui::SetNextItemWidth(input_width);
-			//TODO: Move those into a separate widget & re-use it
-			if (ImGui::InputTextWithHint("##ProjectCfgWorkdir", "Working directory...", &workdir_path, ImGuiInputTextFlags_AutoSelectAll))
-			{
-				temp_project.working_dir = workdir_path;
-				temp_project.working_dir.make_preferred();
-			}
-			ImGui::SameLine();
-			//TODO: Working dir might be unnecessary
-			auto workdir_sel = std::string(icons::dots_hor) + "##ProjectCfgWorkdirSelector";
-			if (ImGui::Button(workdir_sel.c_str()))
-			{
-				auto result = utils::filesystem::get_folder();
-				if (result)
-				{
-					temp_project.working_dir = result.path;
-					temp_project.working_dir.make_preferred();
-				}
-			}
-
 			auto button_size = ImGui::CalcTextSize("Cancel") + style.ItemInnerSpacing * 2;
 			button_size *= 1.15f;
 
@@ -160,7 +142,6 @@ namespace vt::widgets
 			bool valid = !temp_project.name.empty() and !temp_project.path.empty();			
 			
 			valid &= std::filesystem::is_directory(temp_project.path) and std::filesystem::exists(temp_project.path);
-			valid &= std::filesystem::is_directory(temp_project.working_dir) and std::filesystem::exists(temp_project.working_dir);
 
 			auto temp_project_copy = temp_project;
 			temp_project_copy.path = (temp_project.path / temp_project.name).replace_extension(project::extension);
@@ -259,7 +240,7 @@ namespace vt::widgets
 
 		ImGui::TableNextColumn();
 		ImGui::PushID(imgui_id);
-		if (ImGui::Button(icons::dots_hor, size))
+		if (widgets::icon_button(icons::dots_hor, size))
 		{
 			ImGui::OpenPopup("##ProjectCtxMenu");
 		}
@@ -268,7 +249,8 @@ namespace vt::widgets
 		{
 			if (is_valid)
 			{
-				if (ImGui::MenuItem("Open Containing Folder"))
+				std::string menu_name = std::string(icons::folder) + " Open Containing Folder";
+				if (ImGui::MenuItem(menu_name.c_str()))
 				{
 					auto path = std::filesystem::absolute(project.path.parent_path()).string();
 					if (!path.empty())
@@ -280,52 +262,58 @@ namespace vt::widgets
 			}
 
 			ImGui::Separator();
-			if (ImGui::MenuItem("Remove From List"))
 			{
-				projects_.erase(std::find(projects_.begin(), projects_.end(), project));
-				if (on_project_list_update != nullptr) on_project_list_update();
-			}
-			if (std::filesystem::is_regular_file(project.path) and project.path.extension() == std::string(".") + project::extension and ImGui::MenuItem("Delete"))
-			{
-				const SDL_MessageBoxButtonData buttons[] = {
-					// flags, buttonid, text
-					{ SDL_MESSAGEBOX_BUTTON_ESCAPEKEY_DEFAULT, 0, "Cancel" },
-					{ SDL_MESSAGEBOX_BUTTON_RETURNKEY_DEFAULT, 1, "Delete" }
-				};
-
-				SDL_MessageBoxData data{};
-				data.flags = SDL_MESSAGEBOX_WARNING;
-
-				//TODO: Replace title
-				data.buttons = buttons;
-				data.numbuttons = sizeof(buttons) / sizeof(buttons[0]);
-				data.title = "VideoTagger";
-				auto message = "Are you sure you want to delete the project file?\n\nFilepath:\n" + std::filesystem::absolute(project.path).string();
-				data.message = message.c_str();
-				int buttonid{};
-				SDL_ShowMessageBox(&data, &buttonid);
-
-				switch (buttonid)
+				std::string menu_name = std::string(icons::remove) + " Remove From List";
+				if (ImGui::MenuItem(menu_name.c_str()))
 				{
-					case 1:
+					projects_.erase(std::find(projects_.begin(), projects_.end(), project));
+					if (on_project_list_update != nullptr) on_project_list_update();
+				}
+			}
+			{
+				std::string menu_name = std::string(icons::delete_) + " Delete";
+				if (std::filesystem::is_regular_file(project.path) and project.path.extension() == std::string(".") + project::extension and ImGui::MenuItem(menu_name.c_str()))
+				{
+					const SDL_MessageBoxButtonData buttons[] = {
+						// flags, buttonid, text
+						{ SDL_MESSAGEBOX_BUTTON_ESCAPEKEY_DEFAULT, 0, "Cancel" },
+						{ SDL_MESSAGEBOX_BUTTON_RETURNKEY_DEFAULT, 1, "Delete" }
+					};
+
+					SDL_MessageBoxData data{};
+					data.flags = SDL_MESSAGEBOX_WARNING;
+
+					//TODO: Replace title
+					data.buttons = buttons;
+					data.numbuttons = sizeof(buttons) / sizeof(buttons[0]);
+					data.title = "VideoTagger";
+					auto message = "Are you sure you want to delete the project file?\n\nFilepath:\n" + std::filesystem::absolute(project.path).string();
+					data.message = message.c_str();
+					int buttonid{};
+					SDL_ShowMessageBox(&data, &buttonid);
+
+					switch (buttonid)
 					{
-						debug::log("Deleting project file: " + project.path.string());
-						std::error_code ec{};
-						if (std::filesystem::remove(project.path, ec))
+						case 1:
 						{
-							projects_.erase(std::find(projects_.begin(), projects_.end(), project));
-							if (on_project_list_update != nullptr) on_project_list_update();
+							debug::log("Deleting project file: " + project.path.string());
+							std::error_code ec{};
+							if (std::filesystem::remove(project.path, ec))
+							{
+								projects_.erase(std::find(projects_.begin(), projects_.end(), project));
+								if (on_project_list_update != nullptr) on_project_list_update();
+							}
+							else
+							{
+								debug::error("Project file couldn't be deleted: " + project.path.string());
+								auto message = "Project file couldn't be deleted\n\nFilepath:\n" + project.path.string();
+								message += "\nReason:\n" + ec.message() + "\nCode: " + std::to_string(ec.value());
+								SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "VideoTagger", message.c_str(), nullptr);
+							}
+
 						}
-						else
-						{
-							debug::error("Project file couldn't be deleted: " + project.path.string());
-							auto message = "Project file couldn't be deleted\n\nFilepath:\n" + project.path.string();
-							message += "\nReason:\n" + ec.message() + "\nCode: " + std::to_string(ec.value());
-							SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "VideoTagger", message.c_str(), nullptr);
-						}
-						
+						break;
 					}
-					break;
 				}
 			}
 			ImGui::EndPopup();
@@ -394,7 +382,9 @@ namespace vt::widgets
 
 	void project_selector::render()
 	{
-		ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 7);
+		constexpr auto rounding = 7.0f;
+
+		ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, rounding);
 		auto flags = ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_AlwaysAutoResize;
 		auto io = ImGui::GetIO();
 		ImGui::SetNextWindowPos(ImVec2(io.DisplaySize.x * 0.5f, io.DisplaySize.y * 0.5f), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
@@ -408,7 +398,10 @@ namespace vt::widgets
 			{
 				sort();
 			}
+			ImGui::PushFont(ctx_.fonts["title"]);
 			ImGui::LabelText("##ProjectSelectorTitle", "Projects");
+			ImGui::PopFont();
+			ImGui::Dummy(ImGui::GetStyle().ItemSpacing);
 
 			auto max_content_size = ImGui::GetContentRegionAvail();
 			ImGui::SetNextItemWidth(max_content_size.x);
@@ -457,10 +450,12 @@ namespace vt::widgets
 						{
 							if (ImGui::BeginTable("##ProjectListTable", 3, ImGuiTableFlags_SizingStretchProp | ImGuiTableFlags_Resizable | ImGuiTableFlags_NoBordersInBody))
 							{
+								ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, rounding * 0.5f);
 								for (size_t i = 0; i < filtered_projects.size(); ++i)
 								{
 									render_project_widget(i, filtered_projects[i]);
 								}
+								ImGui::PopStyleVar();
 								ImGui::EndTable();
 							}
 						}
@@ -486,6 +481,7 @@ namespace vt::widgets
 					if (ImGui::BeginChild("##Project List Buttons", button_panel_size))
 					{
 						ImGui::Dummy(style.ItemSpacing);
+						ImGui::BeginGroup();
 						if (ImGui::Button("New Project", button_size))
 						{
 							open_project_config = true;
@@ -525,6 +521,7 @@ namespace vt::widgets
 							ImGui::PopStyleColor();
 							EndButtonDropdown();
 						}
+						ImGui::EndGroup();
 					}
 					ImGui::EndChild();
 				}

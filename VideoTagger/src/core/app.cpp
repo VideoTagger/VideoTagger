@@ -1,3 +1,4 @@
+#define IMGUI_DEFINE_MATH_OPERATORS
 #include "app.hpp"
 #include <cmath>
 #include <fstream>
@@ -195,6 +196,7 @@ namespace vt
 
 		ImGui_ImplSDL2_InitForSDLRenderer(main_window_, renderer_);
 		ImGui_ImplSDLRenderer2_Init(renderer_);
+		ImGui::StyleColorsDark();
 
 		ImGuiIO& io = ImGui::GetIO();
 		io.IniFilename = "layout.ini";
@@ -220,8 +222,9 @@ namespace vt
 			}
 
 			builder.BuildRanges(&ranges);
-			io.Fonts->AddFontFromFileTTF(font_path.string().c_str(), font_size);
+			ctx_.fonts["default"] = io.Fonts->AddFontFromFileTTF(font_path.string().c_str(), font_size);
 			io.Fonts->AddFontFromFileTTF(ico_font_path.string().c_str(), font_size, &config, ranges.Data);
+			ctx_.fonts["title"] = io.Fonts->AddFontFromFileTTF(font_path.string().c_str(), font_size * 1.25f);
 			io.Fonts->Build();
 		}
 		else
@@ -305,6 +308,14 @@ namespace vt
 	}
 
 	void app::save_project()
+	{
+		if (!ctx_.current_project.has_value()) return;
+
+		ctx_.current_project->save();
+		ctx_.is_project_dirty = false;
+	}
+
+	void app::save_project_as(const std::filesystem::path& filepath)
 	{
 		if (!ctx_.current_project.has_value()) return;
 
@@ -427,30 +438,18 @@ namespace vt
 		constexpr ImGuiDockNodeFlags dockspace_flags = ImGuiDockNodeFlags_PassthruCentralNode; //| ImGuiDockNodeFlags_NoDocking
 		ImGui::DockSpace(DockspaceID, ImVec2{}, dockspace_flags);
 		
-		draw_ui();
+		ctx_.current_project.has_value() ? draw_main_app() : draw_project_selector();
 
 		ImGui::End();
 	}
 
-	void app::draw_project_selector()
+	void app::draw_menubar()
 	{
-		ctx_.project_selector.render();
-		ctx_.project_selector.set_opened(true);
-	}
-
-	void app::draw_ui()
-	{
-		if (!ctx_.current_project.has_value())
-		{
-			draw_project_selector();
-			return;
-		}
-
 		if (ImGui::BeginMainMenuBar())
 		{
 			if (ImGui::BeginMenu("File"))
 			{
-				if (ImGui::MenuItem("Open Video"))
+				if (ImGui::MenuItem("Open Video..."))
 				{
 					auto result = utils::filesystem::get_file();
 					if (result)
@@ -469,14 +468,31 @@ namespace vt
 						debug::log("Opening directory " + result.path.string());
 					}
 				}
-				if (ImGui::MenuItem("Save As..."))
+
+				ImGui::Separator();
 				{
-					auto result = utils::filesystem::save_file();
-					if (result)
+					std::string menu_item = std::string(icons::save) + " Save";
+					if (ImGui::MenuItem(menu_item.c_str(), "Ctrl+S"))
 					{
-						debug::log("Saving as " + result.path.string());
+						save_project();
 					}
 				}
+
+				{
+					std::string menu_item = std::string(icons::save_as) + " Save As...";
+					if (ImGui::MenuItem(menu_item.c_str(), "Ctrl+Shift+S") and ctx_.current_project.has_value())
+					{
+						utils::dialog_filters filters{ utils::dialog_filter{ "VideoTagger Project", project::extension } };
+						auto result = utils::filesystem::save_file({}, filters, ctx_.current_project->name);
+						if (result)
+						{
+							save_project_as(result.path);
+							debug::log("Saving as " + result.path.string());
+						}
+
+					}
+				}
+
 				ImGui::Separator();
 				if (ImGui::BeginMenu("Project"))
 				{
@@ -492,13 +508,12 @@ namespace vt
 					ImGui::EndMenu();
 				}
 
-				if (ImGui::MenuItem("Save"))
 				{
-					save_project();
-				}
-				if (ImGui::MenuItem("Close Project"))
-				{
-					close_project();
+					std::string menu_item = std::string(icons::close) + " Close Project";
+					if (ImGui::MenuItem(menu_item.c_str()))
+					{
+						close_project();
+					}
 				}
 				ImGui::EndMenu();
 			}
@@ -520,14 +535,65 @@ namespace vt
 
 				ImGui::EndMenu();
 			}
-			if (ImGui::BeginMenu("View"))
+			if (ImGui::BeginMenu("Help"))
 			{
-				ImGui::MenuItem("Option");
+				if (ImGui::MenuItem("About"))
+				{
+					ctx_.win_cfg.show_about_window = true;
+				}
 				ImGui::EndMenu();
 			}
 			ImGui::EndMainMenuBar();
 		}
-		
+
+		if (ctx_.win_cfg.show_about_window)
+		{
+			ImGui::OpenPopup("AboutPopup");
+		}
+		{
+			ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 7.0f);
+			auto flags = ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_AlwaysAutoResize;
+			ImGui::SetNextWindowSize(ImGui::GetContentRegionMax() * 0.2f, ImGuiCond_Appearing);
+			ImGui::SetNextWindowPos(ImGui::GetMainViewport()->GetCenter(), ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
+			if (ImGui::BeginPopupModal("AboutPopup", &ctx_.win_cfg.show_about_window, flags))
+			{
+				auto style = ImGui::GetStyle();
+
+				ImGui::PushFont(ctx_.fonts["title"]);
+				ImGui::Text("About VideoTagger");
+				ImGui::Separator();
+				ImGui::Dummy(style.ItemSpacing);
+				ImGui::PopFont();
+
+				ImGui::TextDisabled("Version: %s", "1.0.0.0");
+				ImGui::Dummy(style.ItemSpacing);
+
+				auto button_size = ImVec2{ ImGui::GetContentRegionAvail().x, 0 };
+				if (ImGui::Button("Close", button_size) or (!ImGui::IsWindowHovered() and ImGui::IsMouseClicked(ImGuiMouseButton_Left)))
+				{
+					ctx_.win_cfg.show_about_window = false;
+					ImGui::CloseCurrentPopup();
+				}
+				ImGui::EndPopup();
+			}
+			ImGui::PopStyleVar();
+		}
+	}
+
+	void app::draw_project_selector()
+	{
+		if (!ctx_.current_project.has_value())
+		{
+			ctx_.project_selector.render();
+			ctx_.project_selector.set_opened(true);
+			return;
+		}
+	}
+
+	void app::draw_main_app()
+	{
+		draw_menubar();
+				
 		for (uint32_t i = 0; i < ctx_.videos.size(); ++i)
 		{
 			auto& vid = ctx_.videos[i];
@@ -548,6 +614,6 @@ namespace vt
 		{
 			widgets::settings(&ctx_.win_cfg.show_settings_window);
 		}
-		ImGui::ShowDemoWindow();
+		//ImGui::ShowDemoWindow();
 	}
 }

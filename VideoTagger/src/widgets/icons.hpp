@@ -13,6 +13,12 @@ namespace vt::icons
 	inline constexpr auto skip_prev = u8"\xe045";
 	inline constexpr auto fast_back = u8"\xe020";
 	inline constexpr auto fast_fwd = u8"\xe01f";
+	inline constexpr auto save = u8"\xe161";
+	inline constexpr auto save_as = u8"\xeb60";
+	inline constexpr auto close = u8"\xe5cd";
+	inline constexpr auto remove = u8"\xe8f5";
+	inline constexpr auto delete_ = u8"\xe872";
+	inline constexpr auto folder = u8"\xe2c7";
 
-	inline std::vector<std::string> all({ dots_hor, play, pause, repeat, skip_next, skip_prev, fast_back, fast_fwd });
+	inline std::vector<std::string> all({ dots_hor, play, pause, repeat, skip_next, skip_prev, fast_back, fast_fwd, save, save_as, close, remove, delete_, folder });
 }
