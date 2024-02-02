@@ -24,13 +24,13 @@ namespace vt::widgets
 		auto& style = ImGui::GetStyle();
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 7);
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, style.WindowPadding * 2);
-		auto flags = ImGuiWindowFlags_NoResize | ImGuiWindowFlags_AlwaysAutoResize;
+		auto flags = ImGuiWindowFlags_AlwaysAutoResize;
 		auto& io = ImGui::GetIO();
 		ImGui::SetNextWindowPos(ImVec2(io.DisplaySize.x * 0.5f, io.DisplaySize.y * 0.5f), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
 		auto win_size = ImVec2{ 290, 110 };
 		ImGui::SetNextWindowSize(win_size, ImGuiCond_Always);
 
-		if (ImGui::BeginPopupModal("Add New Tag", 0, flags))
+		if (ImGui::BeginPopupModal("Add New Tag", nullptr, flags))
 		{
 			std::string error_text;
 			static ImVec4 color{ 0, 0, 0, 1 };
