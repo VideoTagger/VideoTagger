@@ -147,7 +147,6 @@ namespace vt::widgets
 		bool popupOpened = false;
 
 		//TODO: when there's no tags nothing would display. prevent this
-		int sequenceCount = static_cast<int>(state.displayed_tags.size());
 		//if (!sequenceCount)
 		//	return false;
 		ImGui::BeginGroup();
@@ -162,7 +161,7 @@ namespace vt::widgets
 
 		//TODO: temporary solution to nothing displaying
 		//int controlHeight = std::max(sequenceCount, 1) * ItemHeight;
-		float controlHeight = std::max(std::max(sequenceCount, 1) * ItemHeight, ImGui::GetWindowSize().y - (hasScrollBar ? scrollBarSize.y : 0));
+		float controlHeight = std::max(std::max(state.displayed_tags.size(), size_t{1}) * ItemHeight, ImGui::GetWindowSize().y - (hasScrollBar ? scrollBarSize.y : 0));
 		int64_t frameCount = std::max(time_max - time_min, 1ll);
 
 		static bool moving_scroll_bar = false;
@@ -373,7 +372,7 @@ namespace vt::widgets
 			draw_list->PushClipRect(childFramePos, childFramePos + childFrameSize, true);
 
 			// draw item names in the legend rect on the left
-			for (int i = 0; i < sequenceCount; i++)
+			for (size_t i = 0; i < state.displayed_tags.size(); i++)
 			{
 				ImVec2 tpos(contentMin.x + 3, contentMin.y + i * ItemHeight + 2);
 				ImU32 text_color = ImGui::ColorConvertFloat4ToU32(style.Colors[ImGuiCol_Text]); //0xFFFFFFFF
@@ -432,7 +431,7 @@ namespace vt::widgets
 
 			// slots
 			bool deselect = selected_timestamp.has_value();
-			for (int i = 0; i < sequenceCount; i++)
+			for (size_t i = 0; i < state.displayed_tags.size(); i++)
 			{
 				tag& tag_info = state.get(i);
 
