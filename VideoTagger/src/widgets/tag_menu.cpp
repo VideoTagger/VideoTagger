@@ -10,12 +10,27 @@ namespace vt::widgets
 		bool result{};
 		if (ImGui::SmallButton("Show All"))
 		{
-
+			visible_tags.clear();
+			for (const auto& tag : tags)
+			{
+				visible_tags.push_back(tag.name);
+			}
 		}
 		ImGui::SameLine();
 		if (ImGui::SmallButton("Hide All"))
 		{
-
+			visible_tags.clear();
+		}
+		ImGui::SameLine();
+		if (ImGui::SmallButton("Toggle All"))
+		{
+			std::vector<std::string> new_tags;
+			for (const auto& tag : tags)
+			{
+				if (std::find(visible_tags.begin(), visible_tags.end(), tag.name) != visible_tags.end()) continue;
+				new_tags.push_back(tag.name);
+			}
+			visible_tags = new_tags;
 		}
 
 		if (ImGui::BeginChild("##TagList", { ImGui::GetContentRegionAvail().x, 150}))

@@ -567,6 +567,11 @@ namespace vt
 					ctx_.settings["show-windows"]["settings"] = ctx_.win_cfg.show_settings_window;
 					result = true;
 				}
+				if (ImGui::MenuItem("Tag Manager Window", nullptr, &ctx_.win_cfg.show_tag_manager_window))
+				{
+					ctx_.settings["show-windows"]["tag-manager"] = ctx_.win_cfg.show_tag_manager_window;
+					result = true;
+				}
 
 				if (result) save_settings();
 
@@ -637,7 +642,8 @@ namespace vt
 			widgets::draw_video_widget(*vid, i);
 			widgets::draw_timeline_widget_sample(*vid, ctx_.current_project->tags, ctx_.selected_timestamp_data, ctx_.is_project_dirty, i);
 		}
-		if (ctx_.current_project.has_value())
+
+		if (ctx_.win_cfg.show_tag_manager_window)
 		{
 			widgets::draw_tag_manager_widget(ctx_.current_project->tags);
 		}

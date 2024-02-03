@@ -59,9 +59,9 @@ namespace vt::widgets
 
 		const char* get_collapse_fmt() const { return "%d Frames / %d entries"; }
 
-		tag& get(int index);
+		tag& get(size_t index);
 		void add(const std::string& name);
-		void del(int index);
+		void del(size_t index);
 
 		void sync_tags();
 	};

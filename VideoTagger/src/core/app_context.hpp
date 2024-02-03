@@ -25,6 +25,7 @@ namespace vt
 		window_state window_state = window_state::normal;
 		bool show_inspector_window = true;
 		bool show_settings_window = true;
+		bool show_tag_manager_window = true;
 
 		//not serialized
 		bool show_about_window = false;

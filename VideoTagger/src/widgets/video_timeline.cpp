@@ -41,7 +41,7 @@
 
 namespace vt::widgets
 {
-	tag& timeline_state::get(int index)
+	tag& timeline_state::get(size_t index)
 	{
 		return tags->at(displayed_tags.at(index));
 	}
@@ -61,7 +61,7 @@ namespace vt::widgets
 		displayed_tags.push_back(name);
 	}
 
-	void timeline_state::del(int index)
+	void timeline_state::del(size_t index)
 	{
 		displayed_tags.erase(displayed_tags.begin() + index);
 	}
@@ -289,6 +289,7 @@ namespace vt::widgets
 
 					auto selected_tag = state.tags->end();
 
+					std::sort(state.displayed_tags.begin(), state.displayed_tags.end());
 					if (tag_menu(*state.tags, state.displayed_tags))
 					{
 
@@ -655,11 +656,10 @@ namespace vt::widgets
 				}
 			}
 
-			if (ImGui::IsMouseClicked(ImGuiMouseButton_Left) and deselect)
+			if (ImGui::IsMouseHoveringRect(contentMin, contentMax) and ImGui::IsMouseClicked(ImGuiMouseButton_Left) and deselect)
 			{
 				selected_timestamp = std::nullopt;
 			}
-
 
 			if (segment_moving_data.has_value())
 			{
