@@ -139,7 +139,9 @@ namespace vt::widgets
 			}
 			ImGui::Separator();
 			ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2{});
-			if (ImGui::BeginChild("##ScrollableTagList", ImGui::GetContentRegionAvail() - button_size - ImVec2{0, style.ItemSpacing.y + style.FramePadding.y}))
+			bool is_scrollable_list_open = ImGui::BeginChild("##ScrollableTagList", ImGui::GetContentRegionAvail() - button_size - ImVec2{ 0, style.ItemSpacing.y + style.FramePadding.y });
+			ImGui::PopStyleVar();
+			if (is_scrollable_list_open)
 			{
 				static auto color_ref = tags.end();
 				int id{};
@@ -156,20 +158,25 @@ namespace vt::widgets
 					if (icon_button(icons::close))
 					{
 						tags.erase(tag.name);
+						ctx_.is_project_dirty = true;
 						ImGui::PopStyleVar();
 						ImGui::PopID();
 						break;
 					}
+					auto color = ImGui::ColorConvertU32ToFloat4(tag.color);
+					//ImGui::SameLine();
+					//ImGui::TextColored(color, icons::label);
 					ImGui::SameLine();
 					ImGui::PopStyleVar();
-					auto color = ImGui::ColorConvertU32ToFloat4(tag.color);
 					bool open_color_picker = false;
 
 					if (update_all)
 					{
 						ImGui::SetNextItemOpen(update_state);
 					}
+					ImGui::PushStyleColor(ImGuiCol_Text, color);
 					bool node_open = ImGui::TreeNodeEx("##TagManagerNode", node_flags);
+					ImGui::PopStyleColor();
 
 					ImGui::SameLine();
 					ImGui::Text(tag.name.c_str());
@@ -215,7 +222,6 @@ namespace vt::widgets
 				}
 			}
 			ImGui::EndChild();
-			ImGui::PopStyleVar();
 			//ImGui::Dummy(ImGui::GetStyle().ItemSpacing);
 			if (ImGui::Button("Add Tag", button_size))
 			{
