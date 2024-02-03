@@ -287,8 +287,26 @@ namespace vt
 			//TODO: Error checking
 			debug::log("Loading settings from: " + ctx_.app_settings_filepath.string());
 			ctx_.settings = utils::json::load_from_file(ctx_.app_settings_filepath);
-			auto& size = ctx_.settings["window.size"];
-			SDL_SetWindowSize(main_window_, size["width"].get<int>(), size["height"].get<int>());
+			
+			if (ctx_.settings.contains("window") and ctx_.settings["window"].contains("size"))
+			{
+				auto& size = ctx_.settings["window"]["size"];
+				if (size.contains("width") and size.contains("height"))
+				{
+					SDL_SetWindowSize(main_window_, size["width"].get<int>(), size["height"].get<int>());
+				}
+			}
+			if (ctx_.settings.contains("window") and ctx_.settings["window"].contains("state"))
+			{
+				auto state = ctx_.settings["window"]["state"].get<window_state>();
+				switch (state)
+				{
+					case window_state::maximized: SDL_MaximizeWindow(main_window_); break;
+					default: break;
+				}
+				ctx_.win_cfg.window_state = state;
+			}
+			
 			return true;
 		}
 		return false;
@@ -339,8 +357,46 @@ namespace vt
 
 			switch (event.type)
 			{
+				case SDL_WINDOWEVENT:
+				{
+					switch (event.window.event)
+					{
+						case SDL_WINDOWEVENT_MINIMIZED:
+						{
+							ctx_.win_cfg.window_state = window_state::minimized;
+						}
+						break;
+						case SDL_WINDOWEVENT_MAXIMIZED:
+						{
+							ctx_.win_cfg.window_state = window_state::maximized;
+						}
+						break;
+						case SDL_WINDOWEVENT_RESTORED:
+						{
+							ctx_.win_cfg.window_state = window_state::normal;
+						}
+						break;
+					}
+				}
+				break;
 				case SDL_QUIT:
 				{
+					//Save window size & state
+					{
+						auto& window = ctx_.settings["window"];
+						if (ctx_.win_cfg.window_state == window_state::normal)
+						{
+							auto& size_setting = window["size"];
+							int size[2] = {};
+							SDL_GetWindowSize(main_window_, &size[0], &size[1]);
+							size_setting["width"] = size[0];
+							size_setting["height"] = size[1];
+						}
+						window["state"] = ctx_.win_cfg.window_state;
+						debug::log("Window size changing, saving settings file...");
+						save_settings();
+					}
+
 					if (ctx_.current_project.has_value() and ctx_.is_project_dirty)
 					{
 						const SDL_MessageBoxButtonData buttons[] = {
@@ -363,40 +419,21 @@ namespace vt
 
 						switch (buttonid)
 						{
-						case 1:
-						{
-							save_project();
-							state_ = app_state::shutdown;
-						}
-						break;
-						case 2:
-						{
-							state_ = app_state::shutdown;
-						}
-						break;
+							case 1:
+							{
+								save_project();
+								state_ = app_state::shutdown;
+							}
+							break;
+							case 2:
+							{
+								state_ = app_state::shutdown;
+							}
+							break;
 						}
 						break;
 					}
 					state_ = app_state::shutdown;
-				}
-				break;
-				case SDL_WINDOWEVENT:
-				{
-					switch (event.window.event)
-					{
-						case SDL_WINDOWEVENT_SIZE_CHANGED:
-						{
-							//Skip if window is maximized
-							if (SDL_GetWindowFlags(main_window_) & SDL_WINDOW_MAXIMIZED) break;
-
-							auto& size = ctx_.settings["window.size"];
-							size["width"] = event.window.data1;
-							size["height"] = event.window.data2;
-							debug::log("Window size changing, saving settings file...");
-							save_settings();
-						}
-						break;
-					}
 				}
 				break;
 			}

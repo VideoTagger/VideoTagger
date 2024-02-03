@@ -11,9 +11,17 @@
 
 namespace vt
 {
+	enum class window_state : uint8_t
+	{
+		normal,
+		minimized, //not serialized
+		maximized
+	};
+
 	struct window_config
 	{
 		//serialized
+		window_state window_state = window_state::normal;
 		bool show_inspector_window = true;
 		bool show_settings_window = true;
 
