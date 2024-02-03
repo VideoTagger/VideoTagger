@@ -115,7 +115,6 @@ namespace vt::widgets
 		ImVec2 button_size = ImVec2{ ImGui::GetContentRegionAvail().x, ImGui::GetTextLineHeightWithSpacing() };
 
 		bool open_add_tag_popup = false;
-		bool open_color_picker_popup = false;
 		bool update_all = false;
 		bool update_state = false;
 

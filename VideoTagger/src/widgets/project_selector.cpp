@@ -265,7 +265,7 @@ namespace vt::widgets
 
 			ImGui::Separator();
 			{
-				std::string menu_name = std::string(icons::remove) + " Remove From List";
+				std::string menu_name = std::string(icons::visibility_off) + " Remove From List";
 				if (ImGui::MenuItem(menu_name.c_str()))
 				{
 					projects_.erase(std::find(projects_.begin(), projects_.end(), project));

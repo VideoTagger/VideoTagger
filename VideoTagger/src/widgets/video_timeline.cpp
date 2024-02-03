@@ -36,7 +36,8 @@
 
 #include <iostream>
 
-#include <widgets/tag_manager.hpp>
+//#include <widgets/tag_manager.hpp>
+#include <widgets/tag_menu.hpp>
 
 namespace vt::widgets
 {
@@ -283,22 +284,24 @@ namespace vt::widgets
 				if (SequencerAddDelButton(draw_list, ImVec2(canvas_pos.x + legendWidth - ItemHeight, canvas_pos.y + 2), true))
 					ImGui::OpenPopup("##AddEntry");
 
-				auto flags = ImGuiWindowFlags_NoResize | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoTitleBar;
-
-				auto win_size = ImVec2{ 310, 200 };
-				ImGui::SetNextWindowSize(win_size, ImGuiCond_Always);
-
-				if (ImGui::BeginPopup("##AddEntry", flags))
+				if (ImGui::BeginPopup("##AddEntry", ImGuiWindowFlags_NoMove))
 				{
 					popupOpened = true;
 
 					auto selected_tag = state.tags->end();
+
+					if (tag_menu(*state.tags, state.displayed_tags))
+					{
+
+					}
+					/*
 					if (tag_manager(*state.tags, selected_tag, tag_manager_flags::no_remove))
 					{
 						state.add(selected_tag->name);
 						ImGui::CloseCurrentPopup();
 						popupOpened = false;
 					}
+					*/
 
 					ImGui::EndPopup();
 				}

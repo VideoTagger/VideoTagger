@@ -16,7 +16,8 @@ namespace vt::icons
 	inline constexpr auto save = u8"\xe161";
 	inline constexpr auto save_as = u8"\xeb60";
 	inline constexpr auto close = u8"\xe5cd";
-	inline constexpr auto remove = u8"\xe8f5";
+	inline constexpr auto visibility_on = u8"\xe8f4";
+	inline constexpr auto visibility_off = u8"\xe8f5";
 	inline constexpr auto delete_ = u8"\xe872";
 	inline constexpr auto folder = u8"\xe2c7";
 	inline constexpr auto label = u8"\xe892";
@@ -26,6 +27,6 @@ namespace vt::icons
 	inline std::vector<std::string> all
 	({
 		dots_hor, play, pause, repeat, skip_next, skip_prev, fast_back, fast_fwd,
-		save, save_as, close, remove, delete_, folder, label, expand_less, expand_more
+		save, save_as, close, visibility_on, visibility_off, delete_, folder, label, expand_less, expand_more
 	});
 }
