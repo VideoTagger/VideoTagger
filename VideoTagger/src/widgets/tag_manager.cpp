@@ -9,6 +9,9 @@
 #include <imgui_stdlib.h>
 
 #include <utils/random.hpp>
+#include "buttons.hpp"
+#include "icons.hpp"
+#include <core/app_context.hpp>
 
 namespace vt::widgets
 {
@@ -109,12 +112,121 @@ namespace vt::widgets
 
 		bool return_value = false;
 		auto& style = ImGui::GetStyle();
-		static constexpr ImVec2 button_size = { 100, 50 };
-		static constexpr ImVec2 color_picker_size = { 20, 20 };
+		ImVec2 button_size = ImVec2{ ImGui::GetContentRegionAvail().x, ImGui::GetTextLineHeightWithSpacing() };
 
 		bool open_add_tag_popup = false;
 		bool open_color_picker_popup = false;
+		bool update_all = false;
+		bool update_state = false;
 
+		if (true /*ImGui::BeginTable("##TagManager", 2)*/)
+		{
+			static constexpr float tag_column_width = 100;
+			float button_region_width = button_size.x + style.CellPadding.x;
+
+			//ImGui::TableSetupColumn(nullptr, ImGuiTableColumnFlags_WidthStretch);
+			//ImGui::TableSetupColumn(nullptr, ImGuiTableColumnFlags_WidthFixed);
+			if (ImGui::SmallButton("Expand All"))
+			{
+				update_state = true;
+				update_all = true;
+			}
+			ImGui::SameLine();
+			if (ImGui::SmallButton("Collapse All"))
+			{
+				update_state = false;
+				update_all = true;
+			}
+			ImGui::Separator();
+			ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2{});
+			if (ImGui::BeginChild("##ScrollableTagList", ImGui::GetContentRegionAvail() - button_size - ImVec2{0, style.ItemSpacing.y + style.FramePadding.y}))
+			{
+				static auto color_ref = tags.end();
+				int id{};
+
+				auto node_flags = ImGuiTreeNodeFlags_Framed | ImGuiTreeNodeFlags_SpanFullWidth;
+				
+				for (auto it = tags.begin(); it != tags.end(); ++it)
+				{
+					auto& tag = *it;
+
+					//ImGui::TableNextColumn();
+					ImGui::PushID(id++);
+					ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2{});
+					if (icon_button(icons::close))
+					{
+						tags.erase(tag.name);
+						ImGui::PopStyleVar();
+						ImGui::PopID();
+						break;
+					}
+					ImGui::SameLine();
+					ImGui::PopStyleVar();
+					auto color = ImGui::ColorConvertU32ToFloat4(tag.color);
+					bool open_color_picker = false;
+
+					if (update_all)
+					{
+						ImGui::SetNextItemOpen(update_state);
+					}
+					bool node_open = ImGui::TreeNodeEx("##TagManagerNode", node_flags);
+
+					ImGui::SameLine();
+					ImGui::Text(tag.name.c_str());
+					if (node_open)
+					{
+						ImGui::Columns(2, "##TagColumnSeparator");
+						ImGui::Text("Name");
+						ImGui::NextColumn();
+						ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
+
+						//TODO: Add filtering & readd the tag with a new name since std::map is used as a container (why not std::vector??)
+						if (ImGui::InputText("##TagNameInput", &tag.name, ImGuiInputTextFlags_AutoSelectAll))
+						{
+							ctx_.is_project_dirty = true;
+						}
+						ImGui::NextColumn();
+						ImGui::Text("Color");
+						ImGui::NextColumn();
+						if (ImGui::ColorButton("##ColorButton", color, color_button_flags))
+						{
+							color_ref = it;
+							open_color_picker = true;
+						}
+						ImGui::Columns();
+						ImGui::TreePop();
+					}
+					ImGui::PopID();
+
+					//ImGui::TableNextColumn();
+
+					if (open_color_picker)
+					{
+						color_ref = it;
+						ctx_.color_picker.set_color(ImGui::ColorConvertU32ToFloat4(tag.color));
+						ctx_.color_picker.set_opened(true);
+						//color_copy = ImGui::ColorConvertU32ToFloat4(tag.color);
+					}
+				}
+
+				if (ctx_.color_picker.render("##TagColorPicker") and color_ref != tags.end())
+				{
+					color_ref->color = ImGui::ColorConvertFloat4ToU32(ctx_.color_picker.color());
+				}
+			}
+			ImGui::EndChild();
+			ImGui::PopStyleVar();
+			//ImGui::Dummy(ImGui::GetStyle().ItemSpacing);
+			if (ImGui::Button("Add Tag", button_size))
+			{
+				open_add_tag_popup = true;
+			}
+			
+			//ImGui::EndTable();
+		}
+		
+
+		/*
 		if (ImGui::BeginTable("##TagManager", 2))
 		{
 			static constexpr float tag_column_width = 100;
@@ -206,6 +318,7 @@ namespace vt::widgets
 
 			ImGui::EndTable();
 		}
+		*/
 
 		if (open_add_tag_popup)
 		{

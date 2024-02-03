@@ -69,12 +69,12 @@ namespace vt::widgets
 
 	void draw_tag_manager_widget(tag_storage& tags)
 	{
-		if (ImGui::Begin("Tags test"))
+		if (ImGui::Begin("Tag Configuration", nullptr, ImGuiWindowFlags_NoScrollbar))
 		{
 			static tag_storage::iterator selected = tags.end();
 			if (widgets::tag_manager(tags, selected))
 			{
-				std::cout << "selected tag " << selected->name << "\n";
+				
 			}
 		}
 		ImGui::End();

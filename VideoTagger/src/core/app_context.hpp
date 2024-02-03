@@ -8,6 +8,7 @@
 #include <video/video.hpp>
 #include <widgets/project_selector.hpp>
 #include <widgets/video_timeline.hpp>
+#include <widgets/color_picker.hpp>
 
 namespace vt
 {
@@ -33,6 +34,7 @@ namespace vt
 	{
 		widgets::project_selector project_selector;
 		std::optional<project> current_project;
+		widgets::color_picker color_picker;
 		std::filesystem::path projects_list_filepath;
 		std::filesystem::path app_settings_filepath;
 		std::vector<std::shared_ptr<video>> videos;
