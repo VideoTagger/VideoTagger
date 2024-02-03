@@ -134,13 +134,9 @@ namespace vt::widgets
 			button_size *= 1.15f;
 
 			ImGui::SetCursorPosY(win_size.y - style.WindowPadding.y - button_size.y);
-			if (ImGui::Button("Cancel##ProjectCfg", button_size))
-			{
-				ImGui::CloseCurrentPopup();
-			}
-			ImGui::SameLine();
-			bool valid = !temp_project.name.empty() and !temp_project.path.empty();			
-			
+
+			bool valid = !temp_project.name.empty() and !temp_project.path.empty();
+
 			valid &= std::filesystem::is_directory(temp_project.path) and std::filesystem::exists(temp_project.path);
 
 			auto temp_project_copy = temp_project;
@@ -152,6 +148,12 @@ namespace vt::widgets
 			if (!valid) ImGui::BeginDisabled();
 			bool pressed = ImGui::Button("Create##ProjectCfg", button_size) || ImGui::IsKeyPressed(ImGuiKey_Enter);
 			if (!valid) ImGui::EndDisabled();
+
+			ImGui::SameLine();
+			if (ImGui::Button("Cancel##ProjectCfg", button_size))
+			{
+				ImGui::CloseCurrentPopup();
+			}			
 
 			if (valid and pressed)
 			{

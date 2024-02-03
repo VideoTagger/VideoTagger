@@ -29,9 +29,9 @@ namespace vt::widgets
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, style.WindowPadding * 2);
 		auto flags = ImGuiWindowFlags_AlwaysAutoResize;
 		auto& io = ImGui::GetIO();
-		ImGui::SetNextWindowPos(ImVec2(io.DisplaySize.x * 0.5f, io.DisplaySize.y * 0.5f), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
+		ImGui::SetNextWindowPos(ImGui::GetMainViewport()->GetCenter(), ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
 		auto win_size = ImVec2{ 290, 110 };
-		ImGui::SetNextWindowSize(win_size, ImGuiCond_Always);
+		ImGui::SetNextWindowSize(win_size, ImGuiCond_Appearing);
 
 		if (ImGui::BeginPopupModal("Add New Tag", nullptr, flags))
 		{
@@ -138,9 +138,9 @@ namespace vt::widgets
 				update_all = true;
 			}
 			ImGui::Separator();
-			ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2{});
+			//ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2{});
 			bool is_scrollable_list_open = ImGui::BeginChild("##ScrollableTagList", ImGui::GetContentRegionAvail() - button_size - ImVec2{ 0, style.ItemSpacing.y + style.FramePadding.y });
-			ImGui::PopStyleVar();
+			//ImGui::PopStyleVar();
 			if (is_scrollable_list_open)
 			{
 				static auto color_ref = tags.end();
@@ -154,7 +154,8 @@ namespace vt::widgets
 
 					//ImGui::TableNextColumn();
 					ImGui::PushID(id++);
-					ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2{});
+					
+					/*
 					if (icon_button(icons::close))
 					{
 						tags.erase(tag.name);
@@ -163,44 +164,62 @@ namespace vt::widgets
 						ImGui::PopID();
 						break;
 					}
+					*/
 					auto color = ImGui::ColorConvertU32ToFloat4(tag.color);
-					//ImGui::SameLine();
-					//ImGui::TextColored(color, icons::label);
+					ImGui::SetCursorPosX(ImGui::GetCursorPosX() + style.ItemSpacing.x * 0.5f);
+					ImGui::TextColored(color, icons::label);
+					ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2{});
 					ImGui::SameLine();
-					ImGui::PopStyleVar();
+					
 					bool open_color_picker = false;
 
 					if (update_all)
 					{
 						ImGui::SetNextItemOpen(update_state);
 					}
-					ImGui::PushStyleColor(ImGuiCol_Text, color);
-					bool node_open = ImGui::TreeNodeEx("##TagManagerNode", node_flags);
-					ImGui::PopStyleColor();
 
-					ImGui::SameLine();
+					//A bit of a hack to not render the arrow
+					ImGui::PushStyleColor(ImGuiCol_Text, ImVec4{});
+					bool node_open = ImGui::TreeNodeEx("##TagManagerNode", node_flags);
+					auto icon = node_open ? icons::expand_less : icons::expand_more;
+					ImGui::PopStyleColor();
+					ImGui::PopStyleVar();
+
+					ImGui::SameLine(ImGui::GetTreeNodeToLabelSpacing());
 					ImGui::Text(tag.name.c_str());
+					ImGui::SameLine(ImGui::GetContentRegionMax().x - style.ItemSpacing.x - ImGui::CalcTextSize(icon).x);
+					ImGui::Text(icon);
+
 					if (node_open)
 					{
-						ImGui::Columns(2, "##TagColumnSeparator");
-						ImGui::Text("Name");
-						ImGui::NextColumn();
-						ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
+						ImGui::Unindent();
+						ImGui::PushStyleColor(ImGuiCol_TableRowBg, style.Colors[ImGuiCol_MenuBarBg]);
+						if (ImGui::BeginTable("##Background", 1, ImGuiTableFlags_RowBg))
+						{
+							ImGui::TableNextColumn();
+							ImGui::Columns(2, "##TagColumnSeparator");
+							ImGui::Text("Name");
+							ImGui::NextColumn();
+							ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
 
-						//TODO: Add filtering & readd the tag with a new name since std::map is used as a container (why not std::vector??)
-						if (ImGui::InputText("##TagNameInput", &tag.name, ImGuiInputTextFlags_AutoSelectAll))
-						{
-							ctx_.is_project_dirty = true;
-						}
-						ImGui::NextColumn();
-						ImGui::Text("Color");
-						ImGui::NextColumn();
-						if (ImGui::ColorButton("##ColorButton", color, color_button_flags))
-						{
-							color_ref = it;
-							open_color_picker = true;
-						}
-						ImGui::Columns();
+							//TODO: Add filtering & readd the tag with a new name since std::map is used as a container (why not std::vector??)
+							if (ImGui::InputText("##TagNameInput", &tag.name, ImGuiInputTextFlags_AutoSelectAll))
+							{
+								ctx_.is_project_dirty = true;
+							}
+							ImGui::NextColumn();
+							ImGui::Text("Color");
+							ImGui::NextColumn();
+							if (ImGui::ColorButton("##ColorButton", color, color_button_flags))
+							{
+								color_ref = it;
+								open_color_picker = true;
+							}
+							ImGui::Columns();
+							ImGui::EndTable();
+						}		
+						ImGui::PopStyleColor();
+						ImGui::Indent();
 						ImGui::TreePop();
 					}
 					ImGui::PopID();
@@ -219,6 +238,7 @@ namespace vt::widgets
 				if (ctx_.color_picker.render("##TagColorPicker") and color_ref != tags.end())
 				{
 					color_ref->color = ImGui::ColorConvertFloat4ToU32(ctx_.color_picker.color());
+					ctx_.is_project_dirty = true;
 				}
 			}
 			ImGui::EndChild();

@@ -20,10 +20,12 @@ namespace vt::icons
 	inline constexpr auto delete_ = u8"\xe872";
 	inline constexpr auto folder = u8"\xe2c7";
 	inline constexpr auto label = u8"\xe892";
+	inline constexpr auto expand_less = u8"\xe5ce";
+	inline constexpr auto expand_more = u8"\xe5cf";
 
 	inline std::vector<std::string> all
 	({
 		dots_hor, play, pause, repeat, skip_next, skip_prev, fast_back, fast_fwd,
-		save, save_as, close, remove, delete_, folder, label
+		save, save_as, close, remove, delete_, folder, label, expand_less, expand_more
 	});
 }
