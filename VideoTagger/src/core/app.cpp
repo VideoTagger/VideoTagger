@@ -635,7 +635,8 @@ namespace vt
 	void app::draw_main_app()
 	{
 		draw_menubar();
-				
+		if (!ctx_.current_project.has_value()) return;
+
 		for (uint32_t i = 0; i < ctx_.videos.size(); ++i)
 		{
 			auto& vid = ctx_.videos[i];
