@@ -48,7 +48,7 @@ namespace vt
 		json_tags = nlohmann::json::array();
 		for (auto& tag : tags)
 		{
-			json_tags.push_back(nlohmann::json::object({}));
+			json_tags.push_back(nlohmann::json::value_t::object);
 			auto& json_tag_data = json_tags.back();
 			json_tag_data["name"] = tag.name;
 			decltype(tag.color) rgb = ((tag.color & 0x0000FF) << 16) + (tag.color & 0x00FF00) + ((tag.color & 0xFF0000) >> 16);

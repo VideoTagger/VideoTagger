@@ -1,6 +1,6 @@
 #include "string.hpp"
 #include <numeric>
-#include <vector>
+#include <utility>
 #include <algorithm>
 
 namespace vt::utils::string
@@ -18,7 +18,7 @@ namespace vt::utils::string
 			std::size_t previous_distance = 0;
 			for (std::size_t j = 0; j < size_b; ++j) 
 			{
-				distances[j + 1] = std::min({ std::exchange(previous_distance, distances[j + 1]) + (left[i] == right[j] ? 0 : 1), distances[j] + 1, distances[j + 1] + 1 });
+				distances[j + 1] = std::min(std::exchange(previous_distance, distances[j + 1]) + (left[i] == right[j] ? 0 : 1), std::min(distances[j] + 1, distances[j + 1] + 1));
 			}
 		}
 		return distances[size_b];

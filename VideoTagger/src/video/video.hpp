@@ -2,6 +2,7 @@
 
 #include <filesystem>
 #include <chrono>
+#include <vector>
 #include <SDL.h>
 
 #include "video_decoder.hpp"

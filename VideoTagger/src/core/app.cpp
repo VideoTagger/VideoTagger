@@ -304,7 +304,7 @@ namespace vt
 					case window_state::maximized: SDL_MaximizeWindow(main_window_); break;
 					default: break;
 				}
-				ctx_.win_cfg.window_state = state;
+				ctx_.win_cfg.state = state;
 			}
 			
 			return true;
@@ -363,17 +363,17 @@ namespace vt
 					{
 						case SDL_WINDOWEVENT_MINIMIZED:
 						{
-							ctx_.win_cfg.window_state = window_state::minimized;
+							ctx_.win_cfg.state = window_state::minimized;
 						}
 						break;
 						case SDL_WINDOWEVENT_MAXIMIZED:
 						{
-							ctx_.win_cfg.window_state = window_state::maximized;
+							ctx_.win_cfg.state = window_state::maximized;
 						}
 						break;
 						case SDL_WINDOWEVENT_RESTORED:
 						{
-							ctx_.win_cfg.window_state = window_state::normal;
+							ctx_.win_cfg.state = window_state::normal;
 						}
 						break;
 					}
@@ -384,7 +384,7 @@ namespace vt
 					//Save window size & state
 					{
 						auto& window = ctx_.settings["window"];
-						if (ctx_.win_cfg.window_state == window_state::normal)
+						if (ctx_.win_cfg.state == window_state::normal)
 						{
 							auto& size_setting = window["size"];
 							int size[2] = {};
@@ -392,7 +392,7 @@ namespace vt
 							size_setting["width"] = size[0];
 							size_setting["height"] = size[1];
 						}
-						window["state"] = ctx_.win_cfg.window_state;
+						window["state"] = ctx_.win_cfg.state;
 						debug::log("Window size changing, saving settings file...");
 						save_settings();
 					}

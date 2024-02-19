@@ -108,7 +108,7 @@ namespace vt::widgets
 
 	struct moving_tag_data
 	{
-		tag* tag{};
+		vt::tag* tag{};
 		tag_timeline::iterator segment{};
 		uint8_t grab_part{};
 		timestamp grab_position{};
@@ -162,7 +162,7 @@ namespace vt::widgets
 		//TODO: temporary solution to nothing displaying
 		//int controlHeight = std::max(sequenceCount, 1) * ItemHeight;
 		float controlHeight = std::max(std::max(state.displayed_tags.size(), size_t{1}) * ItemHeight, ImGui::GetWindowSize().y - (hasScrollBar ? scrollBarSize.y : 0));
-		int64_t frameCount = std::max(time_max - time_min, 1ll);
+		int64_t frameCount = std::max<int64_t>(time_max - time_min, 1);
 
 		static bool moving_scroll_bar = false;
 		static bool moving_time_marker = false;

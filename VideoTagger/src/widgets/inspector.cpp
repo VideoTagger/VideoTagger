@@ -71,7 +71,7 @@ namespace vt::widgets
 						case tag_timestamp_type::segment:
 						{
 							//ImGui::Columns(2, nullptr, false);
-							modified_timestamp |= show_timestamp_control("Start", ts_start, min_timestamp, std::max(0ll, ts_end.seconds_total.count() - 1));
+							modified_timestamp |= show_timestamp_control("Start", ts_start, min_timestamp, std::max<uint64_t>(0, ts_end.seconds_total.count() - 1));
 							//ImGui::NextColumn();
 							modified_timestamp |= show_timestamp_control("End", ts_end, ts_start.seconds_total.count() + 1, max_timestamp);
 							//ImGui::Columns();

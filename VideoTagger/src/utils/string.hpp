@@ -1,5 +1,6 @@
 #include <filesystem>
 #include <string>
+#include <vector>
 
 namespace vt::utils::string
 {
