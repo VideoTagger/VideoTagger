@@ -5,24 +5,24 @@ namespace vt::icons
 {
 	//https://fonts.google.com/icons?icon.set=Material+Icons
 
-	inline constexpr auto dots_hor = u8"\xe5d3";
-	inline constexpr auto play = u8"\xe037";
-	inline constexpr auto pause = u8"\xe034";
-	inline constexpr auto repeat = u8"\xe040";
-	inline constexpr auto skip_next = u8"\xe044";
-	inline constexpr auto skip_prev = u8"\xe045";
-	inline constexpr auto fast_back = u8"\xe020";
-	inline constexpr auto fast_fwd = u8"\xe01f";
-	inline constexpr auto save = u8"\xe161";
-	inline constexpr auto save_as = u8"\xeb60";
-	inline constexpr auto close = u8"\xe5cd";
-	inline constexpr auto visibility_on = u8"\xe8f4";
-	inline constexpr auto visibility_off = u8"\xe8f5";
-	inline constexpr auto delete_ = u8"\xe872";
-	inline constexpr auto folder = u8"\xe2c7";
-	inline constexpr auto label = u8"\xe892";
-	inline constexpr auto expand_less = u8"\xe5ce";
-	inline constexpr auto expand_more = u8"\xe5cf";
+	inline constexpr auto dots_hor = "\xee\x97\x93";
+	inline constexpr auto play = "\xee\x80\xb7";
+	inline constexpr auto pause = "\xee\x80\xb4";
+	inline constexpr auto repeat = "\xee\x81\x80";
+	inline constexpr auto skip_next = "\xee\x81\x84";
+	inline constexpr auto skip_prev = "\xee\x81\x85";
+	inline constexpr auto fast_back = "\xee\x80\xa0";
+	inline constexpr auto fast_fwd = "\xee\x80\x9f";
+	inline constexpr auto save = "\xee\x85\xa1";
+	inline constexpr auto save_as = "\xee\xad\xa0";
+	inline constexpr auto close = "\xee\x97\x8d";
+	inline constexpr auto visibility_on = "\xee\xa3\xb4";
+	inline constexpr auto visibility_off = "\xee\xa3\xb5";
+	inline constexpr auto delete_ = "\xee\xa1\xb2";
+	inline constexpr auto folder = "\xee\x8b\x87";
+	inline constexpr auto label = "\xee\xa2\x92";
+	inline constexpr auto expand_less = "\xee\x97\x8e";
+	inline constexpr auto expand_more = "\xee\x97\x8f";
 
 	inline std::vector<std::string> all
 	({
