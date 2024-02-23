@@ -380,4 +380,14 @@ namespace vt
 		return last_ts_;
 	}
 
+	size_t video::current_frame_number() const
+	{
+		return decoder_.timestamp_to_frame_number(current_timestamp());
+	}
+
+	double video::fps() const
+	{
+		return decoder_.fps();
+	}
+
 }

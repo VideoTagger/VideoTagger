@@ -227,8 +227,8 @@ namespace vt
 		[[nodiscard]] size_t frame_count() const;
 		[[nodiscard]] std::chrono::nanoseconds duration() const;
 
-		[[nodiscard]] std::chrono::nanoseconds frame_number_to_timestamp(size_t frame);
-		[[nodiscard]] size_t timestamp_to_frame_number(std::chrono::nanoseconds timestamp);
+		[[nodiscard]] std::chrono::nanoseconds frame_number_to_timestamp(size_t frame) const;
+		[[nodiscard]] size_t timestamp_to_frame_number(std::chrono::nanoseconds timestamp) const;
 
 	private:
 		AVFormatContext* format_context_;

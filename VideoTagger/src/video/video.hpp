@@ -38,6 +38,9 @@ namespace vt
 
 		[[nodiscard]] std::chrono::nanoseconds current_timestamp() const;
 
+		size_t current_frame_number() const;
+		double fps() const;
+
 	private:
 		video_decoder decoder_;
 		SDL_Texture* texture_;
