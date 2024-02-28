@@ -67,12 +67,12 @@ namespace vt::widgets
 		ImGui::PopStyleVar();
 	}
 
-	void draw_tag_manager_widget(tag_storage& tags)
+	void draw_tag_manager_widget(tag_storage& tags, bool& dirty_flag)
 	{
 		if (ImGui::Begin("Tag Manager", nullptr, ImGuiWindowFlags_NoScrollbar))
 		{
 			static tag_storage::iterator selected = tags.end();
-			if (widgets::tag_manager(tags, selected))
+			if (widgets::tag_manager(tags, selected, dirty_flag))
 			{
 				
 			}
