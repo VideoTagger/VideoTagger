@@ -221,10 +221,28 @@ namespace vt
 				builder.AddText(icon.c_str());
 			}
 
+			ImVector<ImWchar> default_ranges;
+			ImFontGlyphRangesBuilder default_font_builder;
+
+			for (const auto& range :
+			{
+				io.Fonts->GetGlyphRangesDefault(),
+				io.Fonts->GetGlyphRangesGreek(),
+				io.Fonts->GetGlyphRangesCyrillic()
+			})
+			{
+				default_font_builder.AddRanges(range);
+			}
+			
+			
+			//Polish characters
+			default_font_builder.AddText(u8"¹æê³ñóœŸ¿¥ÆÊ£ÑÓŒ¯");
+			default_font_builder.BuildRanges(&default_ranges);
+
 			builder.BuildRanges(&ranges);
-			ctx_.fonts["default"] = io.Fonts->AddFontFromFileTTF(font_path.string().c_str(), font_size);
+			ctx_.fonts["default"] = io.Fonts->AddFontFromFileTTF(font_path.string().c_str(), font_size, nullptr, default_ranges.Data);
 			io.Fonts->AddFontFromFileTTF(ico_font_path.string().c_str(), font_size, &config, ranges.Data);
-			ctx_.fonts["title"] = io.Fonts->AddFontFromFileTTF(font_path.string().c_str(), font_size * 1.25f);
+			ctx_.fonts["title"] = io.Fonts->AddFontFromFileTTF(font_path.string().c_str(), font_size * 1.25f, nullptr, default_ranges.Data);
 			io.Fonts->Build();
 		}
 		else
