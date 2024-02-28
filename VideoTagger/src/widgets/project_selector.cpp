@@ -343,6 +343,7 @@ namespace vt::widgets
 
 	void project_selector::load_projects_file(const std::filesystem::path& filepath)
 	{
+		if (!std::filesystem::exists(filepath)) return;
 		auto json = utils::json::load_from_file(filepath);
 		const auto& projects = json["projects"];
 		if (!projects.is_array())
