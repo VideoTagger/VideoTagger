@@ -32,5 +32,5 @@ namespace vt::widgets
 	//
 	//};
 	//
-	bool tag_manager(tag_storage& tags, tag_storage::iterator& selected_entry, tag_manager_flags flags = tag_manager_flags::none);
+	bool tag_manager(tag_storage& tags, tag_storage::iterator& selected_entry, bool& dirty_flag, tag_manager_flags flags = tag_manager_flags::none);
 }

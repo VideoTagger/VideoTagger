@@ -664,7 +664,7 @@ namespace vt
 
 		if (ctx_.win_cfg.show_tag_manager_window)
 		{
-			widgets::draw_tag_manager_widget(ctx_.current_project->tags);
+			widgets::draw_tag_manager_widget(ctx_.current_project->tags, ctx_.is_project_dirty);
 		}
 
 		if (ctx_.win_cfg.show_inspector_window)

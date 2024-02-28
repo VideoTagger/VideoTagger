@@ -79,6 +79,7 @@ namespace vt::widgets
 				auto [it, inserted] = tags.insert(tag_name);
 				if (inserted)
 				{
+					return_value = true;
 					it->color = ImGui::ColorConvertFloat4ToU32(color);
 					added_entry = it;
 				}
@@ -105,7 +106,7 @@ namespace vt::widgets
 		return return_value;
 	}
 
-	bool tag_manager(tag_storage& tags, tag_storage::iterator& selected_entry, tag_manager_flags flags)
+	bool tag_manager(tag_storage& tags, tag_storage::iterator& selected_entry, bool& dirty_flag, tag_manager_flags flags)
 	{
 		//TODO: Improve UI layout
 		//TODO: Maybe extract some stuff into separate functions for better readability
@@ -351,7 +352,10 @@ namespace vt::widgets
 		}
 
 		tag_storage::iterator added_entry = tags.end();
-		add_tag_popup(tags, added_entry);
+		if (add_tag_popup(tags, added_entry))
+		{
+			dirty_flag = true;
+		}
 
 		return return_value;
 	}
