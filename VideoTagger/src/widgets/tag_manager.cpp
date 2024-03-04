@@ -107,7 +107,6 @@ namespace vt::widgets
 
 	bool tag_manager(tag_storage& tags, tag_storage::iterator& selected_entry, bool& dirty_flag, tag_manager_flags flags)
 	{
-		//TODO: Improve UI layout
 		//TODO: Maybe extract some stuff into separate functions for better readability
 
 		bool return_value = false;
@@ -139,6 +138,7 @@ namespace vt::widgets
 			ImGui::Separator();
 			//ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2{});
 			bool is_scrollable_list_open = ImGui::BeginChild("##ScrollableTagList", ImGui::GetContentRegionAvail() - button_size - ImVec2{ 0, style.ItemSpacing.y + style.FramePadding.y });
+			
 			//ImGui::PopStyleVar();
 			if (is_scrollable_list_open)
 			{
@@ -147,7 +147,7 @@ namespace vt::widgets
 
 				auto node_flags = ImGuiTreeNodeFlags_Framed | ImGuiTreeNodeFlags_SpanFullWidth;
 				
-				for (auto it = tags.begin(); it != tags.end(); ++it)
+				for (auto it = tags.begin(); it != tags.end();)
 				{
 					auto& tag = *it;
 
@@ -180,9 +180,25 @@ namespace vt::widgets
 					//A bit of a hack to not render the arrow
 					ImGui::PushStyleColor(ImGuiCol_Text, ImVec4{});
 					bool node_open = ImGui::TreeNodeEx("##TagManagerNode", node_flags);
-					auto icon = node_open ? icons::expand_less : icons::expand_more;
 					ImGui::PopStyleColor();
 					ImGui::PopStyleVar();
+
+					bool delete_tag = false;
+					if (ImGui::BeginPopupContextItem("##TagCtxMenu"))
+					{
+						std::string menu_name = std::string(icons::delete_) + " Delete";
+						if (ImGui::MenuItem(menu_name.c_str()))
+						{
+							delete_tag = true;
+						}
+						ImGui::EndPopup();
+					}
+					if (ImGui::IsItemHovered() and ImGui::IsMouseClicked(1))
+					{
+						ImGui::OpenPopup("##TagCtxMenu");
+					}
+
+					auto icon = node_open ? icons::expand_less : icons::expand_more;
 
 					ImGui::SameLine(ImGui::GetTreeNodeToLabelSpacing());
 					ImGui::Text(tag.name.c_str());
@@ -232,6 +248,16 @@ namespace vt::widgets
 						ctx_.color_picker.set_opened(true);
 						//color_copy = ImGui::ColorConvertU32ToFloat4(tag.color);
 					}
+
+					if (delete_tag)
+					{
+						it = tags.erase(it);
+						ctx_.is_project_dirty = true;
+					}
+					if (it != tags.end())
+					{
+						++it;
+					}
 				}
 
 				if (ctx_.color_picker.render("##TagColorPicker") and color_ref != tags.end())
@@ -241,6 +267,7 @@ namespace vt::widgets
 				}
 			}
 			ImGui::EndChild();
+
 			//ImGui::Dummy(ImGui::GetStyle().ItemSpacing);
 			if (ImGui::Button("Add Tag", button_size))
 			{
