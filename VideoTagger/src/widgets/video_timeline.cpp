@@ -1,5 +1,6 @@
 #include "video_timeline.hpp"
-
+// THIS IS A MODIFED VERSION OF THE SEQUENCER WIDGET FROM ImGuizmo
+// 
 // https://github.com/CedricGuillemet/ImGuizmo
 // v 1.89 WIP
 //
@@ -33,8 +34,8 @@
 #include <algorithm>
 #include <cstdlib>
 #include <optional>
-
-#include <iostream>
+#include <string_view>
+#include <string>
 
 //#include <widgets/tag_manager.hpp>
 #include <widgets/tag_menu.hpp>
@@ -106,6 +107,51 @@ namespace vt::widgets
 		return clickedBtn;
 	}
 
+	static bool merge_timestamps_popup(bool& pressed_button)
+	{
+		//TODO: improve layout
+
+		static constexpr ImVec2 button_size = { 55, 30 };
+		
+		bool return_value = false;
+
+		auto& style = ImGui::GetStyle();
+		ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 7);
+		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, style.WindowPadding * 2);
+		ImGui::SetNextWindowPos(ImGui::GetMainViewport()->GetCenter(), ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
+		auto flags = ImGuiWindowFlags_AlwaysAutoResize;//ImGuiWindowFlags_AlwaysAutoResize;
+
+		if (ImGui::BeginPopupModal("Merge Overlapping", nullptr, flags))
+		{
+			ImGui::Text("Do you want to merge the overlapping timestamps?");
+			ImGui::TextDisabled("(Pressing \"No\" will move the dragged timestamp back to its starting position)");
+			ImGui::NewLine();
+			auto area_size = ImGui::GetWindowSize();
+
+			ImGui::SetCursorPosX(area_size.x / 2 - button_size.x - 20);
+			if (ImGui::Button("Yes", button_size))
+			{
+				pressed_button = true;
+				return_value = true;
+				ImGui::CloseCurrentPopup();
+			}
+			ImGui::SameLine();
+			ImGui::SetCursorPosX(area_size.x / 2 + 20);
+			if (ImGui::Button("No", button_size))
+			{
+				pressed_button = false;
+				return_value = true;
+				ImGui::CloseCurrentPopup();
+			}
+
+			ImGui::EndPopup();
+		}
+
+		ImGui::PopStyleVar(2);
+
+		return return_value;
+	}
+
 	struct moving_tag_data
 	{
 		vt::tag* tag{};
@@ -118,11 +164,8 @@ namespace vt::widgets
 
 	//TODO:
 	// Improve the context dots_hor
-	// Button to remove displayed tag.
 	// Maybe more accurracy than a second.
 	// Display time in 10 second gaps instead of 20
-	// Draggable timepoint segment
-	// Merge tags popup
 
 	bool video_timeline(timeline_state& state, timestamp& current_time, std::optional<selected_timestamp_data>& selected_timestamp, bool& dirty_flag)
 	{
@@ -146,9 +189,6 @@ namespace vt::widgets
 
 		bool popupOpened = false;
 
-		//TODO: when there's no tags nothing would display. prevent this
-		//if (!sequenceCount)
-		//	return false;
 		ImGui::BeginGroup();
 
 		ImDrawList* draw_list = ImGui::GetWindowDrawList();
@@ -159,8 +199,6 @@ namespace vt::widgets
 		ImVec2 scrollBarSize(canvas_size.x, 14.f);
 		bool hasScrollBar(true);
 
-		//TODO: temporary solution to nothing displaying
-		//int controlHeight = std::max(sequenceCount, 1) * ItemHeight;
 		float controlHeight = std::max(std::max(state.displayed_tags.size(), size_t{1}) * ItemHeight, ImGui::GetWindowSize().y - (hasScrollBar ? scrollBarSize.y : 0));
 		int64_t frameCount = std::max<int64_t>(time_max - time_min, 1);
 
@@ -174,8 +212,7 @@ namespace vt::widgets
 			ImRect clippingRect;
 			ImRect legendClippingRect;
 		};
-		//ImVector<CustomDraw> customDraws;
-		//ImVector<CustomDraw> compactCustomDraws;
+
 		// zoom in/out
 		const int64_t visibleFrameCount = (int64_t)floorf((canvas_size.x - legendWidth) / framePixelWidth);
 		const float barWidthRatio = std::min(visibleFrameCount / (float)frameCount, 1.f);
@@ -421,14 +458,6 @@ namespace vt::widgets
 			drawLineContent(time_min, int(contentHeight));
 			drawLineContent(time_max, int(contentHeight));
 
-			// selection
-			/*bool selected = selected_entry and (*selected_entry >= 0);
-			if (selected)
-			{
-				//TODO: Change color
-				draw_list->AddRectFilled(ImVec2(contentMin.x, contentMin.y + ItemHeight * *selected_entry),
-					ImVec2(contentMin.x + canvas_size.x, contentMin.y + ItemHeight * (*selected_entry + 1)), 0x801080FF, 1.f);
-			}*/
 
 			// slots
 			bool deselect = selected_timestamp.has_value();
@@ -670,13 +699,9 @@ namespace vt::widgets
 			}
 
 			// moving
-			if (/*backgroundRect.Contains(io.MousePos) and */segment_moving_data.has_value())
+			if (/*backgroundRect.Contains(io.MousePos) and */segment_moving_data.has_value() and !ImGui::IsPopupOpen("Merge Overlapping"))
 			{
-#if IMGUI_VERSION_NUM >= 18723
 				ImGui::SetNextFrameWantCaptureMouse(true);
-#else
-				ImGui::CaptureMouseFromApp();
-#endif
 				auto mouse_timestamp = mouse_pos_to_timestamp(io.MousePos.x);
 				auto move_delta = mouse_timestamp - segment_moving_data->grab_position;
 
@@ -721,34 +746,65 @@ namespace vt::widgets
 				}
 				if (!io.MouseDown[0])
 				{
-					// single select
-					//if (!diffFrame and movingPart and selected_entry)
-					//{
-					//	*selected_entry = movingEntry;
-					//	ret = true;
-					//}
-
-					//TODO: If tags were to overlap, display a popup asking whether to merge the tags or not.
 					auto& timeline = segment_moving_data->tag->timeline;
 
-					bool was_selected = selected_timestamp.has_value() and selected_timestamp->timestamp_timeline == &timeline and selected_timestamp->timestamp == segment_moving_data->segment;
+					//No idea what this was supposed to be used for
+					//bool was_selected = selected_timestamp.has_value() and selected_timestamp->timestamp_timeline == &timeline and selected_timestamp->timestamp == segment_moving_data->segment;
 
 					if (selected_timestamp.has_value())
 					{
-						selected_timestamp->timestamp = timeline.replace
-						(
-							selected_timestamp->timestamp,
-							timestamp{ segment_moving_data->left_position },
-							timestamp{ segment_moving_data->right_position }
-						).first;
+						auto overlapping = timeline.find_range(segment_moving_data->left_position, segment_moving_data->right_position);
+
+						bool insert_now = true;
+						for (auto it = overlapping.begin(); it != overlapping.end(); ++it)
+						{
+							if (it != selected_timestamp->timestamp)
+							{
+								insert_now = false;
+							}
+						}
+
+						if (insert_now)
+						{
+							selected_timestamp->timestamp = timeline.replace
+							(
+								selected_timestamp->timestamp,
+								timestamp{ segment_moving_data->left_position },
+								timestamp{ segment_moving_data->right_position }
+							).first;
+
+							segment_moving_data.reset();
+							dirty_flag = true;
+						}
+						else
+						{
+							ImGui::OpenPopup("Merge Overlapping");
+						}
 					}
-					segment_moving_data.reset();
-					dirty_flag = true;
 				}
 			}
 			draw_list->PopClipRect();
 			draw_list->PopClipRect();
 
+			bool pressed_yes{};
+			if (merge_timestamps_popup(pressed_yes))
+			{
+				if (pressed_yes)
+				{
+					auto& timeline = segment_moving_data->tag->timeline;
+					selected_timestamp->timestamp = timeline.replace
+					(
+						selected_timestamp->timestamp,
+						timestamp{ segment_moving_data->left_position },
+						timestamp{ segment_moving_data->right_position }
+					).first;
+
+					dirty_flag = true;
+				}
+				
+				segment_moving_data.reset();
+			}
+			
 			// cursor
 			if (current_time.seconds_total.count() >= state.first_frame and current_time.seconds_total.count() <= time_max)
 			{

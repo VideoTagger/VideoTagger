@@ -312,6 +312,7 @@ namespace vt
 				if (size.contains("width") and size.contains("height"))
 				{
 					SDL_SetWindowSize(main_window_, size["width"].get<int>(), size["height"].get<int>());
+					SDL_SetWindowPosition(main_window_, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED);
 				}
 			}
 			if (ctx_.settings.contains("window") and ctx_.settings["window"].contains("state"))

@@ -20,8 +20,7 @@ namespace vt::widgets
 	static bool add_tag_popup(tag_storage& tags, tag_storage::iterator& added_entry)
 	{
 		//TODO: Improve UI layout
-		//TODO: Block "Done" when tag already exists
-
+		
 		bool return_value = false;
 
 		auto& style = ImGui::GetStyle();
