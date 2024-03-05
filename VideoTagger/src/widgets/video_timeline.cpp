@@ -118,8 +118,8 @@ namespace vt::widgets
 		auto& style = ImGui::GetStyle();
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 7);
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, style.WindowPadding * 2);
-		ImGui::SetNextWindowPos(ImGui::GetMainViewport()->GetCenter(), ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
-		auto flags = ImGuiWindowFlags_AlwaysAutoResize;//ImGuiWindowFlags_AlwaysAutoResize;
+		ImGui::SetNextWindowPos(ImGui::GetMainViewport()->GetCenter(), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
+		auto flags = ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoMove; //ImGuiWindowFlags_AlwaysAutoResize;
 
 		if (ImGui::BeginPopupModal("Merge Overlapping", nullptr, flags))
 		{
@@ -137,7 +137,7 @@ namespace vt::widgets
 			}
 			ImGui::SameLine();
 			ImGui::SetCursorPosX(area_size.x / 2 + 20);
-			if (ImGui::Button("No", button_size))
+			if (ImGui::Button("No", button_size) or ImGui::IsKeyPressed(ImGuiKey_Escape))
 			{
 				pressed_button = false;
 				return_value = true;
@@ -326,20 +326,12 @@ namespace vt::widgets
 
 					auto selected_tag = state.tags->end();
 
+					//TODO: This should already be sorted, not sorted every frame
 					std::sort(state.displayed_tags.begin(), state.displayed_tags.end());
 					if (tag_menu(*state.tags, state.displayed_tags))
 					{
-
-					}
-					/*
-					if (tag_manager(*state.tags, selected_tag, tag_manager_flags::no_remove))
-					{
-						state.add(selected_tag->name);
 						ImGui::CloseCurrentPopup();
-						popupOpened = false;
 					}
-					*/
-
 					ImGui::EndPopup();
 				}
 			}

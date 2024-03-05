@@ -698,16 +698,16 @@ namespace vt
 		draw_menubar();
 		if (!ctx_.current_project.has_value()) return;
 
+		if (ctx_.win_cfg.show_video_player_window)
+		{
+			ctx_.player.render();
+		}
+
 		for (uint32_t i = 0; i < ctx_.videos.size(); ++i)
 		{
 			auto& vid = ctx_.videos[i];
 			widgets::draw_video_widget(*vid, i);
 			widgets::draw_timeline_widget_sample(*vid, ctx_.current_project->tags, ctx_.selected_timestamp_data, ctx_.is_project_dirty, i);
-		}
-
-		if (ctx_.win_cfg.show_video_player_window)
-		{
-			ctx_.player.render();
 		}
 
 		if (ctx_.win_cfg.show_tag_manager_window)

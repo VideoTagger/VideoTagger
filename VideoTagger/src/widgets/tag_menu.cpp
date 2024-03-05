@@ -9,6 +9,7 @@ namespace vt::widgets
 	bool tag_menu(tag_storage& tags, std::vector<std::string>& visible_tags)
 	{
 		bool result{};
+		bool hide_popup = false;
 		if (ImGui::SmallButton("Show All"))
 		{
 			visible_tags.clear();
@@ -16,11 +17,13 @@ namespace vt::widgets
 			{
 				visible_tags.push_back(tag.name);
 			}
+			result = true;
 		}
 		ImGui::SameLine();
 		if (ImGui::SmallButton("Hide All"))
 		{
 			visible_tags.clear();
+			result = true;
 		}
 		ImGui::SameLine();
 		if (ImGui::SmallButton("Toggle All"))
@@ -32,6 +35,7 @@ namespace vt::widgets
 				new_tags.push_back(tag.name);
 			}
 			visible_tags = new_tags;
+			result = true;
 		}
 
 		if (ImGui::BeginChild("##TagList", { ImGui::GetContentRegionAvail().x, 150}))
