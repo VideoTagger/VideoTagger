@@ -474,25 +474,52 @@ namespace vt
 	
 	void app::draw()
 	{
-		ImGuiViewport* Viewport = ImGui::GetMainViewport();
-		ImGui::SetNextWindowPos(Viewport->WorkPos);
-		ImGui::SetNextWindowSize(Viewport->WorkSize);
-		ImGui::SetNextWindowViewport(Viewport->ID);
+		ImGuiViewport* viewport = ImGui::GetMainViewport();
+		ImGui::SetNextWindowPos(viewport->WorkPos);
+		ImGui::SetNextWindowSize(viewport->WorkSize);
+		ImGui::SetNextWindowViewport(viewport->ID);
 
-		ImGuiID DockspaceID = ImGui::GetID("##DockspaceID");
+		//ImGui::DockSpaceOverViewport(viewport, ImGuiDockNodeFlags_PassthruCentralNode);
+		ImGuiID dockspace_id = ImGui::GetID("MainDockspace");
 
-		ImGuiWindowFlags WindowFlags = 0;
-		WindowFlags |= ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove; //| ImGuiWindowFlags_NoDocking
-		WindowFlags |= ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus | ImGuiWindowFlags_NoBackground;
+		constexpr ImGuiDockNodeFlags dockspace_flags = ImGuiDockNodeFlags_PassthruCentralNode; //| ImGuiDockNodeFlags_NoDocking
+		ImGuiWindowFlags window_flags = 0;
+		window_flags |= ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove; //| ImGuiWindowFlags_NoDocking
+		window_flags |= ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus | ImGuiWindowFlags_NoBackground;
 
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2{});
-		ImGui::Begin("##Editor", NULL, WindowFlags);
+		ImGui::Begin("##Editor", NULL, window_flags);
 		ImGui::PopStyleVar(3);
 
-		constexpr ImGuiDockNodeFlags dockspace_flags = ImGuiDockNodeFlags_PassthruCentralNode; //| ImGuiDockNodeFlags_NoDocking
-		ImGui::DockSpace(DockspaceID, ImVec2{}, dockspace_flags);
+		if (ctx_.reset_layout and ImGui::DockBuilderGetNode(dockspace_id) != nullptr)
+		{
+			ImGui::DockBuilderRemoveNode(dockspace_id);
+			ImGui::DockBuilderAddNode(dockspace_id, dockspace_flags);
+			ImGuiViewport* viewport = ImGui::GetMainViewport();
+			ImGui::DockBuilderSetNodeSize(dockspace_id, viewport->Size);
+
+			auto dockspace_id_copy = dockspace_id;
+			auto main_dock_right = ImGui::DockBuilderSplitNode(dockspace_id_copy, ImGuiDir_Right, 0.25f, nullptr, &dockspace_id_copy);
+			auto main_dock_up = ImGui::DockBuilderSplitNode(dockspace_id_copy, ImGuiDir_Up, 2 / 3.f, nullptr, &dockspace_id_copy);
+			auto dock_right_up = ImGui::DockBuilderSplitNode(main_dock_right, ImGuiDir_Up, 0.5f, nullptr, &main_dock_right);
+			ImGui::DockBuilderDockWindow("Settings", dock_right_up);
+			ImGui::DockBuilderDockWindow("Inspector", dock_right_up);
+			ImGui::DockBuilderDockWindow("Tag Manager", main_dock_right);
+			for (size_t i = 0; i < 8; ++i)
+			{
+				auto video_id = "Video##" + std::to_string(i);
+				auto timeline_id = "Timeline##" + std::to_string(i);
+				ImGui::DockBuilderDockWindow(video_id.c_str(), main_dock_up);
+				ImGui::DockBuilderDockWindow(timeline_id.c_str(), dockspace_id_copy);
+			}
+			
+			ImGui::DockBuilderFinish(dockspace_id);
+			ctx_.reset_layout = false;
+		}
+
+		ImGui::DockSpace(dockspace_id, ImVec2{}, dockspace_flags);
 		
 		ctx_.current_project.has_value() ? draw_main_app() : draw_project_selector();
 
@@ -594,6 +621,14 @@ namespace vt
 
 				if (result) save_settings();
 
+				ImGui::EndMenu();
+			}
+			if (ImGui::BeginMenu("View"))
+			{
+				if (ImGui::MenuItem("Reset Layout"))
+				{
+					ctx_.reset_layout = true;
+				}
 				ImGui::EndMenu();
 			}
 			if (ImGui::BeginMenu("Help"))
