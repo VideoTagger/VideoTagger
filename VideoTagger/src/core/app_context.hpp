@@ -8,6 +8,7 @@
 #include <video/video.hpp>
 #include <widgets/project_selector.hpp>
 #include <widgets/video_timeline.hpp>
+#include <widgets/video_player.hpp>
 #include <widgets/color_picker.hpp>
 
 namespace vt
@@ -26,6 +27,7 @@ namespace vt
 		bool show_inspector_window = true;
 		bool show_settings_window = true;
 		bool show_tag_manager_window = true;
+		bool show_video_player_window = true;
 
 		//not serialized
 		bool show_about_window = false;
@@ -34,6 +36,7 @@ namespace vt
 	struct app_context
 	{
 		widgets::project_selector project_selector;
+		widgets::video_player player;
 		std::optional<project> current_project;
 		widgets::color_picker color_picker;
 		std::filesystem::path projects_list_filepath;

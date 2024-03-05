@@ -14,6 +14,7 @@
 #include <widgets/widgets.hpp>
 #include <widgets/video_widget.hpp>
 #include <widgets/video_timeline.hpp>
+#include <widgets/video_player.hpp>
 #include <widgets/project_selector.hpp>
 #include <widgets/time_input.hpp>
 #include <widgets/inspector.hpp>
@@ -507,11 +508,12 @@ namespace vt
 			ImGui::DockBuilderDockWindow("Settings", dock_right_up);
 			ImGui::DockBuilderDockWindow("Inspector", dock_right_up);
 			ImGui::DockBuilderDockWindow("Tag Manager", main_dock_right);
+			ImGui::DockBuilderDockWindow("Video Player", main_dock_up);
 			for (size_t i = 0; i < 8; ++i)
 			{
 				auto video_id = "Video##" + std::to_string(i);
 				auto timeline_id = "Timeline##" + std::to_string(i);
-				ImGui::DockBuilderDockWindow(video_id.c_str(), main_dock_up);
+				//ImGui::DockBuilderDockWindow(video_id.c_str(), main_dock_up);
 				ImGui::DockBuilderDockWindow(timeline_id.c_str(), dockspace_id_copy);
 			}
 			
@@ -603,19 +605,24 @@ namespace vt
 			if (ImGui::BeginMenu("Window"))
 			{
 				bool result = false;
+				if (ImGui::MenuItem("Video Player Window", nullptr, &ctx_.win_cfg.show_video_player_window))
+				{
+					ctx_.settings["show-windows"]["video-player"] = ctx_.win_cfg.show_video_player_window;
+					result = true;
+				}
 				if (ImGui::MenuItem("Inspector Window", nullptr, &ctx_.win_cfg.show_inspector_window))
 				{
 					ctx_.settings["show-windows"]["inspector"] = ctx_.win_cfg.show_inspector_window;
 					result = true;
 				}
-				if (ImGui::MenuItem("Settings Window", nullptr, &ctx_.win_cfg.show_settings_window))
-				{
-					ctx_.settings["show-windows"]["settings"] = ctx_.win_cfg.show_settings_window;
-					result = true;
-				}
 				if (ImGui::MenuItem("Tag Manager Window", nullptr, &ctx_.win_cfg.show_tag_manager_window))
 				{
 					ctx_.settings["show-windows"]["tag-manager"] = ctx_.win_cfg.show_tag_manager_window;
+					result = true;
+				}
+				if (ImGui::MenuItem("Settings Window", nullptr, &ctx_.win_cfg.show_settings_window))
+				{
+					ctx_.settings["show-windows"]["settings"] = ctx_.win_cfg.show_settings_window;
 					result = true;
 				}
 
@@ -696,6 +703,11 @@ namespace vt
 			auto& vid = ctx_.videos[i];
 			widgets::draw_video_widget(*vid, i);
 			widgets::draw_timeline_widget_sample(*vid, ctx_.current_project->tags, ctx_.selected_timestamp_data, ctx_.is_project_dirty, i);
+		}
+
+		if (ctx_.win_cfg.show_video_player_window)
+		{
+			ctx_.player.render();
 		}
 
 		if (ctx_.win_cfg.show_tag_manager_window)
