@@ -1,45 +1,40 @@
-#include <iostream>
+#include "input.hpp"
 #include <SDL.h>
+#include <core/app_context.hpp>
+#include <iostream>
 
-namespace vt::utils::input
+namespace vt
 {
-	struct keybind
+	
+	bool is_ctrl_pressed(SDL_Event& event);
+	bool is_alt_pressed(SDL_Event& event);
+	bool is_shift_pressed(SDL_Event& event);
+
+	void input_function(SDL_Event& event, app_context& ctx)
 	{
-		int key_code{};
-		union modifiers
+		for (auto& [name, keybind] : ctx.keybinds)
 		{
-			uint8_t flags{};
-			struct
-			{
-				bool ctrl : 1;
-				bool shift : 1;
-				bool alt : 1;
-			};
-		} modifiers;
-	};
-
-	keybind input_function(SDL_Event& event)
+			if (keybind.modifiers.alt = is_alt_pressed(event));
+			if (keybind.modifiers.ctrl = is_ctrl_pressed(event));
+			if (keybind.modifiers.shift = is_shift_pressed(event));
+			if (keybind.key_code = event.key.keysym.sym); {
+				std::cout << "DOING \n" << name; //Tymczasowe na testy
+				keybind.keyboard_shortcut_function();
+			}
+			
+		}
+	
+	}
+	bool is_ctrl_pressed(SDL_Event& event)
 	{
-		keybind myKeybind = {};
-		myKeybind.key_code = event.key.keysym.sym;
-		myKeybind.modifiers.ctrl = (event.key.keysym.mod & KMOD_CTRL) != 0;
-		myKeybind.modifiers.shift = (event.key.keysym.mod & KMOD_SHIFT) != 0;
-		myKeybind.modifiers.alt = (event.key.keysym.mod & KMOD_ALT) != 0;
-
-		/*
-		std::cout << "Key pressed: " << myKeybind.key_code << std::endl;
-
-		if (myKeybind.modifiers.ctrl) {
-			std::cout << "Ctrl is pressed" << std::endl;
-		}
-		if (myKeybind.modifiers.shift) {
-			std::cout << "Shift is pressed" << std::endl;
-		}
-		if (myKeybind.modifiers.alt) {
-			std::cout << "Alt is pressed" << std::endl;
-		}
-		*/
-		
-		return myKeybind;
+		return ((event.key.keysym.mod & KMOD_CTRL) != 0);
+	}
+	bool is_shift_pressed(SDL_Event& event)
+	{
+		return ((event.key.keysym.mod & KMOD_SHIFT) != 0);
+	}
+	bool is_alt_pressed(SDL_Event& event)
+	{
+		return ((event.key.keysym.mod & KMOD_ALT) != 0);
 	}
 }
