@@ -9,9 +9,11 @@
 #include "icons.hpp"
 #include <core/debug.hpp>
 
+#include <core/app.hpp>
+
 namespace vt::widgets
 {
-	void draw_video_widget(video& video, uint32_t id)
+	void draw_video_widget(video& video, uint64_t id)
 	{
 		auto& io = ImGui::GetIO();
 		ImGuiWindowFlags flags = ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse;
@@ -20,20 +22,32 @@ namespace vt::widgets
 			ImGui::SetNextWindowSize({ static_cast<float>(video.width()), static_cast<float>(video.height()) }, ImGuiCond_FirstUseEver);
 		}
 		float button_size = 25 * io.FontGlobalScale;
-		std::string title = "Video##" + std::to_string(id);
+		std::string str_id = std::to_string(id);
+		std::string title = "Video##" + str_id;
 		if (ImGui::Begin(title.c_str(), nullptr, flags))
 		{
-			auto window = ImGui::GetCurrentWindow();
-			//debug::log(window->DockNode->HostWindow->Name + std::string("\tVideo Player"));
-			bool show_controls = !(window->DockIsActive and window->DockNode->HostWindow->Name == "Video Player");
+			bool show_controls = true;
+			auto window = ctx_.player.dock_window();
+			auto video_window = ImGui::GetCurrentWindow();
+			
+			//A bit of a hack to check if video widget is docked into video player
+			//TODO: There might be a better way to do this
+			if (video_window->ParentWindow != nullptr)
+			{
+				std::string name = video_window->ParentWindow->Name;
+				show_controls = (name.find("Video Player") == std::string::npos);
+			}
 
 			ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, { 0, 0 });
-			ImGui::PushID(id);
+			ImGui::PushID(str_id.c_str());
 			auto& imgui_style = ImGui::GetStyle();
 			bool is_playing = video.is_playing();
-			//window content here
 			auto image_avail_size = ImGui::GetContentRegionMax();
-			image_avail_size.y -= button_size + 2 * imgui_style.ItemSpacing.y + ImGui::GetTextLineHeightWithSpacing() * io.FontGlobalScale;
+
+			if (show_controls)
+			{
+				image_avail_size.y -= button_size + 2 * imgui_style.ItemSpacing.y + ImGui::GetTextLineHeightWithSpacing() * io.FontGlobalScale;
+			}
 
 			SDL_Texture* texture = video.get_frame();
 			if (texture != nullptr)

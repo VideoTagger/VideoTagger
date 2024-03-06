@@ -660,7 +660,7 @@ namespace vt
 			ImGui::SetNextWindowPos(ImGui::GetMainViewport()->GetCenter(), ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
 			if (ImGui::BeginPopupModal("AboutPopup", &ctx_.win_cfg.show_about_window, flags))
 			{
-				auto style = ImGui::GetStyle();
+				const auto& style = ImGui::GetStyle();
 
 				ImGui::PushFont(ctx_.fonts["title"]);
 				ImGui::Text("About VideoTagger");
@@ -703,7 +703,7 @@ namespace vt
 			ctx_.player.render();
 		}
 
-		for (uint32_t i = 0; i < ctx_.videos.size(); ++i)
+		for (uint64_t i = 0; i < ctx_.videos.size(); ++i)
 		{
 			auto& vid = ctx_.videos[i];
 			widgets::draw_video_widget(*vid, i);

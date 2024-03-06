@@ -9,7 +9,7 @@
 
 namespace vt::widgets
 {
-	video_player::video_player() : is_playing{}, is_looping{}
+	video_player::video_player() : dock_child{}, is_playing {}, is_looping{}
     {
 
     }
@@ -35,6 +35,7 @@ namespace vt::widgets
 
 			if (ImGui::BeginChild("##VideoPlayerFrame", image_avail_size))
 			{
+				dock_child = ImGui::GetCurrentWindow();
 				auto flags = ImGuiDockNodeFlags_AutoHideTabBar | ImGuiDockNodeFlags_PassthruCentralNode;
 				ImGui::DockSpace(ImGui::GetID("##VideoPlayerFrameDockspace"), ImGui::GetContentRegionAvail(), flags);
 			}
@@ -133,5 +134,10 @@ namespace vt::widgets
 		}
 		ImGui::PopStyleVar();
 		ImGui::End();
+	}
+	
+	ImGuiWindow* video_player::dock_window() const
+	{
+		return dock_child;
 	}
 }
