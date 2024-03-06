@@ -71,12 +71,12 @@ project "VideoTagger"
 	filter "system:linux"
 		buildoptions
 		{
-			"`pkg-config --cflags libavcodec libavformat SDL2 gtk+-3.0 glib-2.0`"
+			"`pkg-config --cflags libavcodec libavformat sdl2 gtk+-3.0 glib-2.0`"
 		}
 
 		linkoptions
 		{
-			"`pkg-config --libs libavcodec libavformat SSDL2 gtk+-3.0 glib-2.0`"
+			"`pkg-config --libs libavcodec libavformat sdl2 gtk+-3.0 glib-2.0`"
 		}
 	
 	filter "configurations:Debug"
