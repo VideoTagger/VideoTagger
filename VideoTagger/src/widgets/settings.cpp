@@ -20,6 +20,7 @@ namespace vt::widgets
 				auto avail_size = ImGui::GetContentRegionAvail();
 				auto text_size = ImGui::CalcTextSize("Tab 0").x;
 				ImVec2 padding = { avail_size.x - text_size - 2 * style.ItemSpacing.x, 0 };
+				//TODO: Replace with actual tabs
 				ImGui::Dummy(padding);
 				ImGui::SameLine();
 				ImGui::Text("Tab 1");

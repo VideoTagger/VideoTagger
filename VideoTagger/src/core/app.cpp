@@ -25,6 +25,7 @@
 
 #include "project.hpp"
 #include <core/debug.hpp>
+#include <widgets/theme_customizer.hpp>
 
 #ifdef _WIN32
 	#include <SDL.h>
@@ -758,6 +759,8 @@ namespace vt
 			widgets::inspector(ctx_.selected_timestamp_data, ctx_.moving_timestamp_data, link_start_end, ctx_.is_project_dirty, &ctx_.win_cfg.show_inspector_window);
 		}
 
+		static widgets::theme_customizer theme_customizer;
+		theme_customizer.render();
 		//ImGui::ShowDemoWindow();
 	}
 
