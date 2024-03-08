@@ -197,6 +197,10 @@ namespace vt::widgets
 		{
 			on_click_project(project);
 		}
+		if (ImGui::IsItemHovered())
+		{
+			ImGui::SetMouseCursor(ImGuiMouseCursor_Hand);
+		}
 		if (!is_valid)
 		{
 			ImGui::EndDisabled();

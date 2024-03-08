@@ -118,6 +118,7 @@ namespace vt
 					auto abgr = (0xFF << 24) + ((rgb & 0x0000FF) << 16) + (rgb & 0x00FF00) + ((rgb & 0xFF0000) >> 16);
 					tag_it->color = abgr;
 				}
+
 				for (auto& timestamp : tag_data["timestamps"])
 				{
 					if (timestamp.contains("point"))

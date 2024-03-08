@@ -25,11 +25,11 @@ namespace vt
 		//serialized
 		window_state state = window_state::normal;
 		bool show_inspector_window = true;
-		bool show_settings_window = true;
 		bool show_tag_manager_window = true;
 		bool show_video_player_window = true;
 
 		//not serialized
+		bool show_settings_window = true;
 		bool show_about_window = false;
 	};
 
@@ -48,6 +48,7 @@ namespace vt
 		std::optional<widgets::selected_timestamp_data> selected_timestamp_data;
 		std::optional<widgets::moving_timestamp_data> moving_timestamp_data;
 		bool is_project_dirty{};
+		bool first_launch = true;
 		bool reset_layout{};
 	};
 

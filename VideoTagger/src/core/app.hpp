@@ -43,6 +43,7 @@ namespace vt
 		bool init(const app_config& config);
 		bool run();
 		void shutdown();
+		void on_exit();
 
 		bool load_settings();
 		void save_settings();
@@ -57,5 +58,7 @@ namespace vt
 		void draw_menubar();
 		void draw_project_selector();
 		void draw_main_app();
+
+		void set_subtitle(const std::string& title = std::string{});
 	};
 }

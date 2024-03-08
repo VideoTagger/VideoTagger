@@ -134,6 +134,7 @@ namespace vt
 				return;
 			}
 			ctx_.current_project = project;
+			set_subtitle(project.name);
 		};
 
 		ctx_.project_selector.on_project_list_update = [&]()
@@ -299,6 +300,63 @@ namespace vt
 		state_ = app_state::uninitialized;
 	}
 
+	void app::on_exit()
+	{
+		//Save window size & state
+		{
+			auto& window = ctx_.settings["window"];
+			if (ctx_.win_cfg.state == window_state::normal)
+			{
+				auto& size_setting = window["size"];
+				int size[2] = {};
+				SDL_GetWindowSize(main_window_, &size[0], &size[1]);
+				size_setting["width"] = size[0];
+				size_setting["height"] = size[1];
+			}
+			window["state"] = ctx_.win_cfg.state;
+			debug::log("Window size changing, saving settings file...");
+			save_settings();
+		}
+
+		if (ctx_.current_project.has_value() and ctx_.is_project_dirty)
+		{
+			const SDL_MessageBoxButtonData buttons[] = {
+				// flags, buttonid, text
+				{ SDL_MESSAGEBOX_BUTTON_ESCAPEKEY_DEFAULT, 0, "Cancel" },
+				{ 0, 2, "Don't Save" },
+				{ SDL_MESSAGEBOX_BUTTON_RETURNKEY_DEFAULT, 1, "Save" },
+			};
+
+			SDL_MessageBoxData data{};
+			data.flags = SDL_MESSAGEBOX_WARNING;
+
+			//TODO: Replace title
+			data.buttons = buttons;
+			data.numbuttons = sizeof(buttons) / sizeof(buttons[0]);
+			data.title = "VideoTagger";
+			data.message = "The current project has unsaved changes.\nDo you want to save pending changes?";
+			int buttonid{};
+			SDL_ShowMessageBox(&data, &buttonid);
+
+			switch (buttonid)
+			{
+				case 1:
+				{
+					save_project();
+					state_ = app_state::shutdown;
+				}
+				break;
+				case 2:
+				{
+					state_ = app_state::shutdown;
+				}
+				break;
+			}
+			return;
+		}
+		state_ = app_state::shutdown;
+	}
+
 	bool app::load_settings()
 	{
 		if (std::filesystem::exists(ctx_.app_settings_filepath))
@@ -325,6 +383,22 @@ namespace vt
 					default: break;
 				}
 				ctx_.win_cfg.state = state;
+			}
+			if (ctx_.settings.contains("first-launch"))
+			{
+				ctx_.first_launch = ctx_.settings["first-launch"];
+				if (ctx_.first_launch)
+				{
+					ctx_.reset_layout = true;
+				}
+			}
+			ctx_.settings["first-launch"] = false;
+			if (ctx_.settings.contains("show-windows"))
+			{
+				auto& show_windows = ctx_.settings["show-windows"];
+				if (show_windows.contains("inspector")) ctx_.win_cfg.show_inspector_window = show_windows["inspector"];
+				if (show_windows.contains("tag-manager")) ctx_.win_cfg.show_tag_manager_window = show_windows["tag-manager"];
+				if (show_windows.contains("video-player")) ctx_.win_cfg.show_video_player_window = show_windows["video-player"];
 			}
 			
 			return true;
@@ -366,6 +440,7 @@ namespace vt
 		ctx_.current_project = std::nullopt;
 		ctx_.videos.clear();
 		ctx_.selected_timestamp_data = std::nullopt;
+		set_subtitle();
 	}
 	
 	void app::handle_events()
@@ -401,59 +476,7 @@ namespace vt
 				break;
 				case SDL_QUIT:
 				{
-					//Save window size & state
-					{
-						auto& window = ctx_.settings["window"];
-						if (ctx_.win_cfg.state == window_state::normal)
-						{
-							auto& size_setting = window["size"];
-							int size[2] = {};
-							SDL_GetWindowSize(main_window_, &size[0], &size[1]);
-							size_setting["width"] = size[0];
-							size_setting["height"] = size[1];
-						}
-						window["state"] = ctx_.win_cfg.state;
-						debug::log("Window size changing, saving settings file...");
-						save_settings();
-					}
-
-					if (ctx_.current_project.has_value() and ctx_.is_project_dirty)
-					{
-						const SDL_MessageBoxButtonData buttons[] = {
-							// flags, buttonid, text
-							{ SDL_MESSAGEBOX_BUTTON_ESCAPEKEY_DEFAULT, 0, "Cancel" },
-							{ 0, 2, "Don't Save" },
-							{ SDL_MESSAGEBOX_BUTTON_RETURNKEY_DEFAULT, 1, "Save" },
-						};
-
-						SDL_MessageBoxData data{};
-						data.flags = SDL_MESSAGEBOX_WARNING;
-
-						//TODO: Replace title
-						data.buttons = buttons;
-						data.numbuttons = sizeof(buttons) / sizeof(buttons[0]);
-						data.title = "VideoTagger";
-						data.message = "The current project has unsaved changes.\nDo you want to save pending changes?";
-						int buttonid{};
-						SDL_ShowMessageBox(&data, &buttonid);
-
-						switch (buttonid)
-						{
-							case 1:
-							{
-								save_project();
-								state_ = app_state::shutdown;
-							}
-							break;
-							case 2:
-							{
-								state_ = app_state::shutdown;
-							}
-							break;
-						}
-						break;
-					}
-					state_ = app_state::shutdown;
+					on_exit();
 				}
 				break;
 			}
@@ -600,38 +623,46 @@ namespace vt
 						close_project();
 					}
 				}
-				ImGui::EndMenu();
-			}
-			if (ImGui::BeginMenu("Window"))
-			{
-				bool result = false;
-				if (ImGui::MenuItem("Video Player Window", nullptr, &ctx_.win_cfg.show_video_player_window))
+				ImGui::Separator();
 				{
-					ctx_.settings["show-windows"]["video-player"] = ctx_.win_cfg.show_video_player_window;
-					result = true;
+					std::string menu_item = std::string(icons::exit) + " Exit";
+					if (ImGui::MenuItem(menu_item.c_str()))
+					{
+						on_exit();
+					}
 				}
-				if (ImGui::MenuItem("Inspector Window", nullptr, &ctx_.win_cfg.show_inspector_window))
-				{
-					ctx_.settings["show-windows"]["inspector"] = ctx_.win_cfg.show_inspector_window;
-					result = true;
-				}
-				if (ImGui::MenuItem("Tag Manager Window", nullptr, &ctx_.win_cfg.show_tag_manager_window))
-				{
-					ctx_.settings["show-windows"]["tag-manager"] = ctx_.win_cfg.show_tag_manager_window;
-					result = true;
-				}
-				if (ImGui::MenuItem("Settings Window", nullptr, &ctx_.win_cfg.show_settings_window))
-				{
-					ctx_.settings["show-windows"]["settings"] = ctx_.win_cfg.show_settings_window;
-					result = true;
-				}
-
-				if (result) save_settings();
-
 				ImGui::EndMenu();
 			}
 			if (ImGui::BeginMenu("View"))
 			{
+				bool result = false;
+				if (ImGui::MenuItem("Show Video Player", nullptr, &ctx_.win_cfg.show_video_player_window))
+				{
+					ctx_.settings["show-windows"]["video-player"] = ctx_.win_cfg.show_video_player_window;
+					result = true;
+				}
+				if (ImGui::MenuItem("Show Inspector", nullptr, &ctx_.win_cfg.show_inspector_window))
+				{
+					ctx_.settings["show-windows"]["inspector"] = ctx_.win_cfg.show_inspector_window;
+					result = true;
+				}
+				if (ImGui::MenuItem("Show Tag Manager", nullptr, &ctx_.win_cfg.show_tag_manager_window))
+				{
+					ctx_.settings["show-windows"]["tag-manager"] = ctx_.win_cfg.show_tag_manager_window;
+					result = true;
+				}
+#ifdef _DEBUG
+				ImGui::SeparatorText("Debug Only");
+				if (ImGui::MenuItem("Show Settings", nullptr, &ctx_.win_cfg.show_settings_window))
+				{
+					//ctx_.settings["show-windows"]["settings"] = ctx_.win_cfg.show_settings_window;
+					//result = true;
+				}
+#endif
+
+				if (result) save_settings();
+
+				ImGui::Separator();
 				if (ImGui::MenuItem("Reset Layout"))
 				{
 					ctx_.reset_layout = true;
@@ -715,15 +746,27 @@ namespace vt
 			widgets::draw_tag_manager_widget(ctx_.current_project->tags, ctx_.is_project_dirty);
 		}
 
+		if (ctx_.win_cfg.show_settings_window)
+		{
+			widgets::settings(&ctx_.win_cfg.show_settings_window);
+		}
+
 		if (ctx_.win_cfg.show_inspector_window)
 		{
 			widgets::inspector(ctx_.selected_timestamp_data, ctx_.moving_timestamp_data, ctx_.is_project_dirty, &ctx_.win_cfg.show_inspector_window);
 		}
 
-		if (ctx_.win_cfg.show_settings_window)
-		{
-			widgets::settings(&ctx_.win_cfg.show_settings_window);
-		}
 		//ImGui::ShowDemoWindow();
+	}
+
+	void app::set_subtitle(const std::string& title)
+	{
+		//TODO: Change app name to be variable
+		std::string new_title = "VideoTagger";
+		if (!title.empty())
+		{
+			new_title = title + std::string(" - ") + new_title;
+		}
+		SDL_SetWindowTitle(main_window_, new_title.c_str());
 	}
 }
