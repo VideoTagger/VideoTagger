@@ -707,7 +707,7 @@ namespace vt
 		{
 			auto& vid = ctx_.videos[i];
 			widgets::draw_video_widget(*vid, i);
-			widgets::draw_timeline_widget_sample(*vid, ctx_.current_project->tags, ctx_.selected_timestamp_data, ctx_.is_project_dirty, i);
+			widgets::draw_timeline_widget_sample(*vid, ctx_.current_project->tags, ctx_.selected_timestamp_data, ctx_.moving_timestamp_data, ctx_.is_project_dirty, i);
 		}
 
 		if (ctx_.win_cfg.show_tag_manager_window)
@@ -717,7 +717,7 @@ namespace vt
 
 		if (ctx_.win_cfg.show_inspector_window)
 		{
-			widgets::inspector(ctx_.selected_timestamp_data, &ctx_.win_cfg.show_inspector_window);
+			widgets::inspector(ctx_.selected_timestamp_data, ctx_.moving_timestamp_data, ctx_.is_project_dirty, &ctx_.win_cfg.show_inspector_window);
 		}
 
 		if (ctx_.win_cfg.show_settings_window)

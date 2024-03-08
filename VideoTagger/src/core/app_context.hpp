@@ -46,6 +46,7 @@ namespace vt
 		window_config win_cfg;
 		std::unordered_map<std::string, ImFont*> fonts;
 		std::optional<widgets::selected_timestamp_data> selected_timestamp_data;
+		std::optional<widgets::moving_timestamp_data> moving_timestamp_data;
 		bool is_project_dirty{};
 		bool reset_layout{};
 	};

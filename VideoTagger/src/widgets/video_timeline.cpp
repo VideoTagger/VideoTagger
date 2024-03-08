@@ -107,7 +107,7 @@ namespace vt::widgets
 		return clickedBtn;
 	}
 
-	static bool merge_timestamps_popup(bool& pressed_button)
+	bool merge_timestamps_popup(bool& pressed_button)
 	{
 		//TODO: improve layout
 
@@ -152,22 +152,12 @@ namespace vt::widgets
 		return return_value;
 	}
 
-	struct moving_tag_data
-	{
-		vt::tag* tag{};
-		tag_timeline::iterator segment{};
-		uint8_t grab_part{};
-		timestamp grab_position{};
-		timestamp left_position{};
-		timestamp right_position{};
-	};
-
 	//TODO:
 	// Improve the context dots_hor
 	// Maybe more accurracy than a second.
 	// Display time in 10 second gaps instead of 20
 
-	bool video_timeline(timeline_state& state, timestamp& current_time, std::optional<selected_timestamp_data>& selected_timestamp, bool& dirty_flag)
+	bool video_timeline(timeline_state& state, timestamp& current_time, std::optional<selected_timestamp_data>& selected_timestamp, std::optional<moving_timestamp_data>& moving_timestamp, bool& dirty_flag)
 	{
 		bool return_value = false;
 		ImGuiIO& io = ImGui::GetIO();
@@ -180,7 +170,6 @@ namespace vt::widgets
 		int legendWidth = 200;
 
 		//static int movingEntry = -1;
-		static std::optional<moving_tag_data> segment_moving_data;
 		int delEntry = -1;
 		float ItemHeight = 20 * font_scale;
 
@@ -293,7 +282,7 @@ namespace vt::widgets
 			// current frame top
 			ImRect topRect(ImVec2(canvas_pos.x + legendWidth, canvas_pos.y), ImVec2(canvas_pos.x + canvas_size.x, canvas_pos.y + ItemHeight));
 
-			if (!moving_time_marker and !moving_scroll_bar and !segment_moving_data.has_value() and current_time.seconds_total.count() >= 0 and topRect.Contains(io.MousePos) and io.MouseDown[0] and !ImGui::IsPopupOpen(nullptr, ImGuiPopupFlags_AnyPopup | ImGuiPopupFlags_AnyPopupId))
+			if (!moving_time_marker and !moving_scroll_bar and !moving_timestamp.has_value() and current_time.seconds_total.count() >= 0 and topRect.Contains(io.MousePos) and io.MouseDown[0] and !ImGui::IsPopupOpen(nullptr, ImGuiPopupFlags_AnyPopup | ImGuiPopupFlags_AnyPopupId))
 			{
 				moving_time_marker = true;
 			}
@@ -463,10 +452,10 @@ namespace vt::widgets
 
 					int64_t start = tag_timestamp.start.seconds_total.count();
 					int64_t end = tag_timestamp.end.seconds_total.count();
-					if (segment_moving_data.has_value() and segment_moving_data->tag == &tag_info and segment_moving_data->segment == timestamp_it)
+					if (moving_timestamp.has_value() and moving_timestamp->tag == &tag_info and moving_timestamp->segment == timestamp_it)
 					{
-						start = segment_moving_data->left_position.seconds_total.count();
-						end = segment_moving_data->right_position.seconds_total.count();
+						start = moving_timestamp->left_position.seconds_total.count();
+						end = moving_timestamp->right_position.seconds_total.count();
 					}
 
 
@@ -532,7 +521,7 @@ namespace vt::widgets
 						{
 							selected_timestamp = selected_timestamp_data
 							{
-								tag_info.name,
+								&tag_info,
 								&tag_info.timeline,
 								timestamp_it
 							};
@@ -542,7 +531,7 @@ namespace vt::widgets
 					}
 
 					const unsigned int quadColor[] = { 0xFFFFFFFF, 0xFFFFFFFF, slot_color/* + (selected ? 0 : 0x202020)*/};
-					if (!segment_moving_data.has_value())// TODOFOCUS and backgroundRect.Contains(io.MousePos))
+					if (!moving_timestamp.has_value())// TODOFOCUS and backgroundRect.Contains(io.MousePos))
 					{
 						for (int j = 2; j >= 0; j--)
 						{
@@ -570,7 +559,7 @@ namespace vt::widgets
 								continue;
 							if (ImGui::IsMouseClicked(0) and !moving_scroll_bar and !moving_time_marker and (timestamp_it->type() != tag_timestamp_type::point or j == 2))
 							{
-								segment_moving_data = moving_tag_data{
+								moving_timestamp = moving_timestamp_data{
 									&tag_info,
 									timestamp_it,
 									static_cast<uint8_t>(j + 1),
@@ -682,20 +671,20 @@ namespace vt::widgets
 				selected_timestamp = std::nullopt;
 			}
 
-			if (segment_moving_data.has_value())
+			if (moving_timestamp.has_value())
 			{
-				if (segment_moving_data->grab_part == 1 or segment_moving_data->grab_part == 2)
+				if (moving_timestamp->grab_part == 1 or moving_timestamp->grab_part == 2)
 				{
 					ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeEW);
 				}
 			}
 
 			// moving
-			if (/*backgroundRect.Contains(io.MousePos) and */segment_moving_data.has_value() and !ImGui::IsPopupOpen("Merge Overlapping"))
+			if (/*backgroundRect.Contains(io.MousePos) and */moving_timestamp.has_value() and !ImGui::IsPopupOpen("Merge Overlapping"))
 			{
 				ImGui::SetNextFrameWantCaptureMouse(true);
 				auto mouse_timestamp = mouse_pos_to_timestamp(io.MousePos.x);
-				auto move_delta = mouse_timestamp - segment_moving_data->grab_position;
+				auto move_delta = mouse_timestamp - moving_timestamp->grab_position;
 
 				//auto diff_sec = mouse_pos_x - segment_moving_data->position.count();
 				//auto diffFrame = std::chrono::seconds{ int64_t(diff_sec / framePixelWidth) };
@@ -707,45 +696,45 @@ namespace vt::widgets
 					//TODO: Maybe this should be shared between the timeline and the inspector since its also "used" there?
 					constexpr auto min_segment_size = std::chrono::seconds{ 1 };
 
-					if (segment_moving_data->grab_part & 1)
-						segment_moving_data->left_position += move_delta;
-					if (segment_moving_data->grab_part & 2)
-						segment_moving_data->right_position += move_delta;
-					if (segment_moving_data->left_position < timestamp{0})
+					if (moving_timestamp->grab_part & 1)
+						moving_timestamp->left_position += move_delta;
+					if (moving_timestamp->grab_part & 2)
+						moving_timestamp->right_position += move_delta;
+					if (moving_timestamp->left_position < timestamp{0})
 					{
-						if (segment_moving_data->grab_part & 2)
-							segment_moving_data->right_position -= segment_moving_data->left_position;
-						segment_moving_data->left_position = timestamp{0};
+						if (moving_timestamp->grab_part & 2)
+							moving_timestamp->right_position -= moving_timestamp->left_position;
+						moving_timestamp->left_position = timestamp{0};
 					}
-					if (segment_moving_data->grab_part & 1 and segment_moving_data->left_position > segment_moving_data->right_position)
-						segment_moving_data->left_position = segment_moving_data->right_position;
-					if (segment_moving_data->grab_part & 2 and segment_moving_data->right_position < segment_moving_data->left_position)
-						segment_moving_data->right_position = segment_moving_data->left_position;
+					if (moving_timestamp->grab_part & 1 and moving_timestamp->left_position > moving_timestamp->right_position)
+						moving_timestamp->left_position = moving_timestamp->right_position;
+					if (moving_timestamp->grab_part & 2 and moving_timestamp->right_position < moving_timestamp->left_position)
+						moving_timestamp->right_position = moving_timestamp->left_position;
 
-					auto segment_size = std::abs((segment_moving_data->right_position - segment_moving_data->left_position).seconds_total.count());
-					if (segment_size < min_segment_size.count() and segment_moving_data->segment->type() != tag_timestamp_type::point)
+					auto segment_size = std::abs((moving_timestamp->right_position - moving_timestamp->left_position).seconds_total.count());
+					if (segment_size < min_segment_size.count() and moving_timestamp->segment->type() != tag_timestamp_type::point)
 					{
-						if (segment_moving_data->grab_part & 1)
+						if (moving_timestamp->grab_part & 1)
 						{
-							segment_moving_data->left_position -= timestamp(min_segment_size - static_cast<std::chrono::seconds>(segment_size));
+							moving_timestamp->left_position -= timestamp(min_segment_size - static_cast<std::chrono::seconds>(segment_size));
 						}
-						else if (segment_moving_data->grab_part & 2)
+						else if (moving_timestamp->grab_part & 2)
 						{
-							segment_moving_data->right_position += timestamp(min_segment_size - static_cast<std::chrono::seconds>(segment_size));
+							moving_timestamp->right_position += timestamp(min_segment_size - static_cast<std::chrono::seconds>(segment_size));
 						}
 					}
-					segment_moving_data->grab_position = mouse_timestamp;
+					moving_timestamp->grab_position = mouse_timestamp;
 				}
 				if (!io.MouseDown[0])
 				{
-					auto& timeline = segment_moving_data->tag->timeline;
+					auto& timeline = moving_timestamp->tag->timeline;
 
 					//No idea what this was supposed to be used for
 					//bool was_selected = selected_timestamp.has_value() and selected_timestamp->timestamp_timeline == &timeline and selected_timestamp->timestamp == segment_moving_data->segment;
 
 					if (selected_timestamp.has_value())
 					{
-						auto overlapping = timeline.find_range(segment_moving_data->left_position, segment_moving_data->right_position);
+						auto overlapping = timeline.find_range(moving_timestamp->left_position, moving_timestamp->right_position);
 
 						bool insert_now = true;
 						for (auto it = overlapping.begin(); it != overlapping.end(); ++it)
@@ -761,11 +750,11 @@ namespace vt::widgets
 							selected_timestamp->timestamp = timeline.replace
 							(
 								selected_timestamp->timestamp,
-								timestamp{ segment_moving_data->left_position },
-								timestamp{ segment_moving_data->right_position }
+								moving_timestamp->left_position,
+								moving_timestamp->right_position
 							).first;
 
-							segment_moving_data.reset();
+							moving_timestamp.reset();
 							dirty_flag = true;
 						}
 						else
@@ -783,18 +772,18 @@ namespace vt::widgets
 			{
 				if (pressed_yes)
 				{
-					auto& timeline = segment_moving_data->tag->timeline;
+					auto& timeline = moving_timestamp->tag->timeline;
 					selected_timestamp->timestamp = timeline.replace
 					(
 						selected_timestamp->timestamp,
-						timestamp{ segment_moving_data->left_position },
-						timestamp{ segment_moving_data->right_position }
+						timestamp{ moving_timestamp->left_position },
+						timestamp{ moving_timestamp->right_position }
 					).first;
 
 					dirty_flag = true;
 				}
 				
-				segment_moving_data.reset();
+				moving_timestamp.reset();
 			}
 			
 			// cursor
@@ -955,7 +944,7 @@ namespace vt::widgets
 					}
 					else
 					{
-						if (scrollBarThumb.Contains(io.MousePos) and ImGui::IsMouseClicked(0) and !segment_moving_data.has_value())
+						if (scrollBarThumb.Contains(io.MousePos) and ImGui::IsMouseClicked(0) and !moving_timestamp.has_value())
 						{
 							moving_scroll_bar = true;
 							panningViewSource = io.MousePos;

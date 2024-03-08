@@ -40,9 +40,21 @@ namespace vt::widgets
 	//TODO: use this
 	struct selected_timestamp_data
 	{
-		std::string tag_name;
+		//TODO: maybe store the tag name instead of a pointer
+		vt::tag* tag{};
 		tag_timeline* timestamp_timeline;
 		tag_timeline::iterator timestamp;
+	};
+
+	struct moving_timestamp_data
+	{
+		//TODO: maybe store the tag name instead of a pointer
+		vt::tag* tag{};
+		tag_timeline::iterator segment{};
+		uint8_t grab_part{};
+		timestamp grab_position{};
+		timestamp left_position{};
+		timestamp right_position{};
 	};
 
 	struct timeline_state
@@ -66,8 +78,10 @@ namespace vt::widgets
 		void sync_tags();
 	};
 
+	//Inspector needs this
+	bool merge_timestamps_popup(bool& pressed_button);
 
 	// return true if selection is made
-	bool video_timeline(timeline_state& state, timestamp& current_time, std::optional<selected_timestamp_data>& selected_timestamp, bool& dirty_flag);
+	bool video_timeline(timeline_state& state, timestamp& current_time, std::optional<selected_timestamp_data>& selected_timestamp, std::optional<moving_timestamp_data>& moving_timestamp, bool& dirty_flag);
 
 }
