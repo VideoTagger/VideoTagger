@@ -7,26 +7,26 @@ namespace vt
 	class iterator_range
 	{
 	public:
-		iterator_range(Iterator begin, Iterator end)
+		constexpr iterator_range(Iterator begin, Iterator end)
 			: begin_{ begin }, end_{ end }
 		{}
 
-		Iterator begin()
+		constexpr Iterator begin()
 		{
 			return begin_;
 		}
 
-		Iterator end()
+		constexpr Iterator end()
 		{
 			return end_;
 		}
 
-		bool empty() const
+		constexpr bool empty() const
 		{
-			begin_ == end_;
+			return begin_ == end_;
 		}
 
-		size_t size() const
+		constexpr size_t size() const
 		{
 			return static_cast<size_t>(std::distance(begin_, end_));
 		}

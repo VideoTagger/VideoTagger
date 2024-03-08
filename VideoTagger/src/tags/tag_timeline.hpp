@@ -6,7 +6,7 @@
 #include <chrono>
 
 #include <utils/timestamp.hpp>
-#include <utils/iterator_range.h>
+#include <utils/iterator_range.hpp>
 
 namespace vt
 {

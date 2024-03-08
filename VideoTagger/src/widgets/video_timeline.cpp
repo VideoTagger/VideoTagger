@@ -39,6 +39,7 @@
 
 //#include <widgets/tag_manager.hpp>
 #include <widgets/tag_menu.hpp>
+#include <core/debug.hpp>
 
 namespace vt::widgets
 {
@@ -169,14 +170,10 @@ namespace vt::widgets
 		static float framePixelWidthTarget = 10.f;
 		int legendWidth = 200;
 
-		//static int movingEntry = -1;
-		int delEntry = -1;
 		float ItemHeight = 20 * font_scale;
 
 		const int64_t time_min = state.time_min.seconds_total.count();
 		const int64_t time_max = state.time_max.seconds_total.count();
-
-		bool popupOpened = false;
 
 		ImGui::BeginGroup();
 
@@ -207,7 +204,7 @@ namespace vt::widgets
 		const float barWidthRatio = std::min(visibleFrameCount / (float)frameCount, 1.f);
 		const float barWidthInPixels = barWidthRatio * (canvas_size.x - legendWidth);
 
-		ImRect regionRect(canvas_pos, canvas_pos + canvas_size);
+		ImRect region_rect(canvas_pos, canvas_pos + canvas_size);
 
 		static bool panningView = false;
 		static ImVec2 panningViewSource;
@@ -311,8 +308,6 @@ namespace vt::widgets
 
 				if (ImGui::BeginPopup("##AddEntry", ImGuiWindowFlags_NoMove))
 				{
-					popupOpened = true;
-
 					auto selected_tag = state.tags->end();
 
 					//TODO: This should already be sorted, not sorted every frame
@@ -679,8 +674,10 @@ namespace vt::widgets
 				}
 			}
 
+			//debug::log(std::to_string(ImGui::IsPopupOpen("Merge Overlapping", ImGuiPopupFlags_AnyPopupLevel | ImGuiPopupFlags_)));
+
 			// moving
-			if (/*backgroundRect.Contains(io.MousePos) and */moving_timestamp.has_value() and !ImGui::IsPopupOpen("Merge Overlapping"))
+			if (region_rect.Contains(io.MousePos) and moving_timestamp.has_value() and !ImGui::IsPopupOpen(nullptr, ImGuiPopupFlags_AnyPopup))
 			{
 				ImGui::SetNextFrameWantCaptureMouse(true);
 				auto mouse_timestamp = mouse_pos_to_timestamp(io.MousePos.x);
@@ -725,7 +722,7 @@ namespace vt::widgets
 					}
 					moving_timestamp->grab_position = mouse_timestamp;
 				}
-				if (!io.MouseDown[0])
+				if (ImGui::IsMouseReleased(ImGuiMouseButton_Left))
 				{
 					auto& timeline = moving_timestamp->tag->timeline;
 
@@ -770,7 +767,7 @@ namespace vt::widgets
 			bool pressed_yes{};
 			if (merge_timestamps_popup(pressed_yes))
 			{
-				if (pressed_yes)
+				if (pressed_yes and moving_timestamp.has_value())
 				{
 					auto& timeline = moving_timestamp->tag->timeline;
 					selected_timestamp->timestamp = timeline.replace

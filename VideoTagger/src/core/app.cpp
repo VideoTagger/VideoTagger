@@ -753,7 +753,9 @@ namespace vt
 
 		if (ctx_.win_cfg.show_inspector_window)
 		{
-			widgets::inspector(ctx_.selected_timestamp_data, ctx_.moving_timestamp_data, ctx_.is_project_dirty, &ctx_.win_cfg.show_inspector_window);
+			//TODO: No idea where to put this
+			static bool link_start_end = true;
+			widgets::inspector(ctx_.selected_timestamp_data, ctx_.moving_timestamp_data, link_start_end, ctx_.is_project_dirty, &ctx_.win_cfg.show_inspector_window);
 		}
 
 		//ImGui::ShowDemoWindow();
