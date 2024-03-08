@@ -25,7 +25,7 @@ namespace vt
 
 		using container = std::map<std::string, tag>;
 
-		static constexpr uint32_t default_tag_color = 0xffffff;
+		static constexpr uint32_t default_tag_color = 0xFFFFFFFF;
 
 		std::pair<iterator, bool> insert(const std::string& name, uint32_t color);
 		std::pair<iterator, bool> insert(const std::string& name);

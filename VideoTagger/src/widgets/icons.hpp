@@ -23,10 +23,11 @@ namespace vt::icons
 	inline constexpr auto label = "\xee\xa2\x92";
 	inline constexpr auto expand_less = "\xee\x97\x8e";
 	inline constexpr auto expand_more = "\xee\x97\x8f";
+	inline constexpr auto link = "\xee\x85\x97";
 
 	inline std::vector<std::string> all
 	({
 		dots_hor, play, pause, repeat, skip_next, skip_prev, fast_back, fast_fwd,
-		save, save_as, close, visibility_on, visibility_off, delete_, folder, label, expand_less, expand_more
+		save, save_as, close, visibility_on, visibility_off, delete_, folder, label, expand_less, expand_more, link
 	});
 }
