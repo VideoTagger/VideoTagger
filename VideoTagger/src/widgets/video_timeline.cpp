@@ -677,7 +677,7 @@ namespace vt::widgets
 			//debug::log(std::to_string(ImGui::IsPopupOpen("Merge Overlapping", ImGuiPopupFlags_AnyPopupLevel | ImGuiPopupFlags_)));
 
 			// moving
-			if (region_rect.Contains(io.MousePos) and moving_timestamp.has_value() and !ImGui::IsPopupOpen(nullptr, ImGuiPopupFlags_AnyPopup))
+			if (/*region_rect.Contains(io.MousePos) and*/ moving_timestamp.has_value() and !ImGui::IsPopupOpen(nullptr, ImGuiPopupFlags_AnyPopup))
 			{
 				ImGui::SetNextFrameWantCaptureMouse(true);
 				auto mouse_timestamp = mouse_pos_to_timestamp(io.MousePos.x);
