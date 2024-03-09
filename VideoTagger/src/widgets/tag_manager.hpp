@@ -1,5 +1,6 @@
 #pragma once
 #include <vector>
+#include <optional>
 
 #include <tags/tag_storage.hpp>
 
@@ -32,5 +33,12 @@ namespace vt::widgets
 	//
 	//};
 	//
-	bool tag_manager(tag_storage& tags, tag_storage::iterator& selected_entry, bool& dirty_flag, tag_manager_flags flags = tag_manager_flags::none);
+
+	struct tag_rename_data
+	{
+		std::string old_name;
+		std::string new_name;
+	};
+
+	bool tag_manager(tag_storage& tags, std::optional<tag_rename_data>& tag_rename, bool& dirty_flag, tag_manager_flags flags = tag_manager_flags::none);
 }

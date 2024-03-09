@@ -105,7 +105,7 @@ namespace vt::widgets
 		return return_value;
 	}
 
-	bool tag_manager(tag_storage& tags, tag_storage::iterator& selected_entry, bool& dirty_flag, tag_manager_flags flags)
+	bool tag_manager(tag_storage& tags, std::optional<tag_rename_data>& tag_rename, bool& dirty_flag, tag_manager_flags flags)
 	{
 		//TODO: Maybe extract some stuff into separate functions for better readability
 
@@ -147,6 +147,7 @@ namespace vt::widgets
 
 				auto node_flags = ImGuiTreeNodeFlags_Framed | ImGuiTreeNodeFlags_SpanFullWidth;
 				
+				static std::string tag_name;
 				for (auto it = tags.begin(); it != tags.end();)
 				{
 					auto& tag = *it;
@@ -218,9 +219,11 @@ namespace vt::widgets
 							ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
 
 							//TODO: Add filtering & readd the tag with a new name since std::map is used as a container (why not std::vector??)
-							if (ImGui::InputText("##TagNameInput", &tag.name, ImGuiInputTextFlags_AutoSelectAll))
+							
+							tag_name = tag.name;
+							if (ImGui::InputText("##TagNameInput", &tag_name, ImGuiInputTextFlags_AutoSelectAll | ImGuiInputTextFlags_EnterReturnsTrue))
 							{
-								ctx_.is_project_dirty = true;
+								tag_rename = tag_rename_data{ tag.name, tag_name };
 							}
 							ImGui::NextColumn();
 							ImGui::Text("Color");
@@ -257,6 +260,19 @@ namespace vt::widgets
 					if (it != tags.end())
 					{
 						++it;
+					}
+				}
+
+				if (tag_rename.has_value())
+				{
+					auto [it, inserted] = tags.rename(tag_rename->old_name, tag_rename->new_name);
+					if (inserted)
+					{
+						ctx_.is_project_dirty = true;
+					}
+					else
+					{
+						tag_rename.reset();
 					}
 				}
 
