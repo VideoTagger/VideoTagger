@@ -1,11 +1,34 @@
 #include "theme_customizer.hpp"
+#include <string>
+
 #include <imgui_internal.h>
+#include "icons.hpp"
 
 namespace vt::widgets
 {
-	theme_customizer::theme_customizer() : style{ ImGui::GetStyle() }, is_open{ true }
+	static bool draw_collapsing_header(const char* label)
 	{
+		auto& style = ImGui::GetStyle();
+		ImGui::PushStyleColor(ImGuiCol_Text, ImVec4{});
+		std::string node_id = "##Node" + std::string(label);
+		auto cx = ImGui::GetCursorPosX();
+		bool result = ImGui::TreeNodeEx(node_id.c_str(), ImGuiTreeNodeFlags_Framed | ImGuiTreeNodeFlags_SpanFullWidth | ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_NoTreePushOnOpen);
+		ImGui::PopStyleColor();
+		auto icon = result ? icons::expand_less : icons::expand_more;
 
+		ImGui::SameLine();
+		auto px = ImGui::GetCursorPosX();
+		ImGui::SetCursorPosX(px - (px - cx) + style.ItemInnerSpacing.x);
+		//ImGui::SameLine(ImGui::GetTreeNodeToLabelSpacing());
+		ImGui::Text(label);
+		ImGui::SameLine(ImGui::GetContentRegionMax().x - style.FramePadding.x - ImGui::CalcTextSize(icon).x);
+		ImGui::Text(icon);
+		return result;
+	}
+
+	theme_customizer::theme_customizer() : original_style{}, temp_style{ ImGui::GetStyle() }, is_open{ true }, live_preview{ true }
+	{
+		
 	}
 
 	void theme_customizer::render()
@@ -13,78 +36,262 @@ namespace vt::widgets
 		if (!is_open) return;
 
 		auto& ref = ImGui::GetStyle();
-		static int output_dest = 0;
 		static bool output_only_modified = false;
+		auto color_flags = ImGuiColorEditFlags_AlphaBar | ImGuiColorEditFlags_DisplayHSV | ImGuiColorEditFlags_AlphaPreviewHalf | ImGuiColorEditFlags_NoInputs;
+		auto color_preview_flags = ImGuiColorEditFlags_NoTooltip | ImGuiColorEditFlags_NoBorder;
+		auto table_flags = ImGuiTableFlags_RowBg | ImGuiTableFlags_BordersInnerV | ImGuiTableFlags_BordersInnerH;
 
 		if (ImGui::Begin("Theme Customizer", &is_open))
 		{
 			if (ImGui::Button("Export"))
 			{
-				if (output_dest == 0)
-					ImGui::LogToClipboard();
+
+			}
+			ImGui::SameLine();
+			if (ImGui::Checkbox("Live Preview", &live_preview))
+			{
+				if (live_preview)
+				{
+					original_style = ref;
+				}
 				else
-					ImGui::LogToTTY();
-				ImGui::LogText("ImVec4* colors = ImGui::GetStyle().Colors;" IM_NEWLINE);
-				for (int i = 0; i < ImGuiCol_COUNT; i++)
 				{
-					const ImVec4& col = style.Colors[i];
-					const char* name = ImGui::GetStyleColorName(i);
-					if (!output_only_modified || memcmp(&col, &ref.Colors[i], sizeof(ImVec4)) != 0)
-						ImGui::LogText("colors[ImGuiCol_%s]%*s= ImVec4(%.2ff, %.2ff, %.2ff, %.2ff);" IM_NEWLINE,
-							name, 23 - (int)strlen(name), "", col.x, col.y, col.z, col.w);
+					ref = original_style;
 				}
-				ImGui::LogFinish();
 			}
-			ImGui::SameLine(); ImGui::SetNextItemWidth(120); ImGui::Combo("##output_type", &output_dest, "To Clipboard\0To TTY\0");
-			ImGui::SameLine();
-			if (ImGui::Button("Dark Theme"))
+			if (ImGui::BeginChild("##ThemeScrollableView"))
 			{
-				ImGui::StyleColorsDark();
-				style = ref;
-			}
-			ImGui::SameLine();
-			if (ImGui::Button("Light Theme"))
-			{
-				ImGui::StyleColorsLight();
-				style = ref;
-			}
-			//ImGui::SameLine(); ImGui::Checkbox("Only Modified Colors", &output_only_modified);
-
-			static ImGuiTextFilter filter;
-			filter.Draw("Filter colors", ImGui::GetFontSize() * 16);
-
-			static ImGuiColorEditFlags alpha_flags = ImGuiColorEditFlags_AlphaPreviewHalf;
-			/*/
-			if (ImGui::RadioButton("Opaque", alpha_flags == ImGuiColorEditFlags_None)) { alpha_flags = ImGuiColorEditFlags_None; } ImGui::SameLine();
-			if (ImGui::RadioButton("Alpha", alpha_flags == ImGuiColorEditFlags_AlphaPreview)) { alpha_flags = ImGuiColorEditFlags_AlphaPreview; } ImGui::SameLine();
-			if (ImGui::RadioButton("Both", alpha_flags == ImGuiColorEditFlags_AlphaPreviewHalf)) { alpha_flags = ImGuiColorEditFlags_AlphaPreviewHalf; } ImGui::SameLine();
-			*/
-
-			ImGui::SetNextWindowSizeConstraints(ImVec2(0.0f, ImGui::GetTextLineHeightWithSpacing() * 10), ImVec2(FLT_MAX, FLT_MAX));
-			ImGui::BeginChild("##colors", ImVec2(0, 0), ImGuiChildFlags_Border, ImGuiWindowFlags_AlwaysVerticalScrollbar | ImGuiWindowFlags_AlwaysHorizontalScrollbar | ImGuiWindowFlags_NavFlattened);
-			ImGui::PushItemWidth(ImGui::GetFontSize() * -12);
-			for (int i = 0; i < ImGuiCol_COUNT; i++)
-			{
-				const char* name = ImGui::GetStyleColorName(i);
-				if (!filter.PassFilter(name))
-					continue;
-				ImGui::PushID(i);
-				ImGui::ColorEdit4("##color", (float*)&style.Colors[i], ImGuiColorEditFlags_AlphaBar | ImGuiColorEditFlags_DisplayHSV | alpha_flags);
-				if (memcmp(&style.Colors[i], &ref.Colors[i], sizeof(ImVec4)) != 0)
+				static auto draw_option = [&](const std::string& label, std::string info, ImGuiCol_ col_id)
 				{
-					// Tips: in a real user application, you may want to merge and use an icon font into the main font,
-					// so instead of "Save"/"Revert" you'd use icons!
-					// Read the FAQ and docs/FONTS.md about using icon fonts. It's really easy and super convenient!
-					ImGui::SameLine(0.0f, style.ItemInnerSpacing.x); if (ImGui::Button("Save")) { ref.Colors[i] = style.Colors[i]; }
-					ImGui::SameLine(0.0f, style.ItemInnerSpacing.x); if (ImGui::Button("Revert")) { style.Colors[i] = ref.Colors[i]; }
+					std::string color_label = "##" + label + info;
+					auto& color = temp_style.Colors[col_id];
+					ImGui::TableNextRow();
+					ImGui::TableNextColumn(); ImGui::ColorEdit4(color_label.c_str(), (float*)&color, color_flags);
+					ImGui::SameLine(); ImGui::Text(label.c_str());
+					if (!info.empty())
+					{
+						info = "(" + info + ")";
+						ImGui::SameLine(); ImGui::TextDisabled(info.c_str());
+					}
+					ImGui::TableNextColumn();
+				};
+
+				if (draw_collapsing_header("Windows, Frames and Popups"))
+				{
+					ImGui::PushStyleColor(ImGuiCol_TableRowBg, temp_style.Colors[ImGuiCol_MenuBarBg]);
+					if (ImGui::BeginTable("##Background", 2, table_flags))
+					{
+						draw_option("Window", "Background", ImGuiCol_WindowBg);
+						draw_option("Child", "Background", ImGuiCol_ChildBg);
+						draw_option("Popup", "Background", ImGuiCol_PopupBg);
+						draw_option("Border", "", ImGuiCol_Border);
+						//draw_option("Border Shadow", "", ImGuiCol_BorderShadow);
+						draw_option("Menu Bar", "Background", ImGuiCol_MenuBarBg);
+						draw_option("Frame Background", "", ImGuiCol_FrameBg);
+						draw_option("Frame Background", "Hovered", ImGuiCol_FrameBgHovered);
+						draw_option("Frame Background", "Active", ImGuiCol_FrameBgActive);
+						draw_option("Title Background", "", ImGuiCol_TitleBg);
+						draw_option("Title Background", "Active", ImGuiCol_TitleBgActive);
+						draw_option("Title Background", "Collapsed", ImGuiCol_TitleBgCollapsed);
+						ImGui::EndTable();
+					}
+					ImGui::PopStyleColor();
 				}
-				ImGui::SameLine(0.0f, style.ItemInnerSpacing.x);
-				ImGui::TextUnformatted(name);
-				ImGui::PopID();
+				if (draw_collapsing_header("Text"))
+				{
+					static auto draw_text = [&](const std::string& label, std::string info, ImGuiCol_ col_id)
+					{
+						std::string color_label = "##" + label + info;
+						auto& color = temp_style.Colors[col_id];
+						ImGui::TableNextRow();
+						ImGui::TableNextColumn(); ImGui::ColorEdit4(color_label.c_str(), (float*)&color, color_flags);
+						ImGui::SameLine(); ImGui::Text(label.c_str());
+						if (!info.empty())
+						{
+							info = "(" + info + ")";
+							ImGui::SameLine(); ImGui::TextDisabled(info.c_str());
+						}
+						ImGui::TableNextColumn(); ImGui::TextColored(color, "Text");
+					};
+
+					ImGui::PushStyleColor(ImGuiCol_TableRowBg, ref.Colors[ImGuiCol_MenuBarBg]);
+					if (ImGui::BeginTable("##Background", 2, table_flags))
+					{
+						draw_text("Text", "", ImGuiCol_Text);
+						draw_text("Text", "Disabled", ImGuiCol_TextDisabled);
+						ImGui::EndTable();
+					}
+					ImGui::PopStyleColor();
+				}
+				if (draw_collapsing_header("Buttons"))
+				{
+					static auto draw_button = [&](const std::string& label, std::string info, ImGuiCol_ col_id)
+					{
+						std::string color_label = "##" + label + info;
+						auto& color = temp_style.Colors[col_id];
+						ImGui::TableNextRow();
+						ImGui::TableNextColumn(); ImGui::ColorEdit4(color_label.c_str(), (float*)&color, color_flags);
+						ImGui::PushStyleColor(ImGuiCol_Button, color);
+						ImGui::PushStyleColor(ImGuiCol_ButtonHovered, color);
+						ImGui::PushStyleColor(ImGuiCol_ButtonActive, color);
+						ImGui::SameLine(); ImGui::Text(label.c_str());
+						if (!info.empty())
+						{
+							info = "(" + info + ")";
+							ImGui::SameLine(); ImGui::TextDisabled(info.c_str());
+						}
+						ImGui::TableNextColumn(); ImGui::Button("Button");
+						ImGui::PopStyleColor(3);
+					};
+
+					static auto draw_checkbox = [&](const std::string& label, std::string info, ImGuiCol_ col_id)
+					{
+						std::string color_label = "##" + label + info;
+						auto& color = temp_style.Colors[col_id];
+						ImGui::TableNextRow();
+						ImGui::TableNextColumn(); ImGui::ColorEdit4(color_label.c_str(), (float*)&color, color_flags);
+						ImGui::PushStyleColor(ImGuiCol_CheckMark, color);
+						ImGui::PushStyleColor(ImGuiCol_FrameBgHovered, ref.Colors[ImGuiCol_FrameBg]);
+						ImGui::PushStyleColor(ImGuiCol_FrameBgActive, ref.Colors[ImGuiCol_FrameBg]);
+						ImGui::SameLine(); ImGui::Text(label.c_str());
+						if (!info.empty())
+						{
+							info = "(" + info + ")";
+							ImGui::SameLine(); ImGui::TextDisabled(info.c_str());
+						}
+						std::string check_label = color_label + "Checkbox";
+						bool value = true;
+						ImGui::TableNextColumn(); ImGui::Checkbox(check_label.c_str(), &value);
+						ImGui::PopStyleColor(3);
+					};
+
+					ImGui::PushStyleColor(ImGuiCol_TableRowBg, ref.Colors[ImGuiCol_MenuBarBg]);
+					if (ImGui::BeginTable("##Background", 2, table_flags))
+					{
+						draw_button("Button", "", ImGuiCol_Button);
+						draw_button("Button", "Hovered", ImGuiCol_ButtonHovered);
+						draw_button("Button", "Active", ImGuiCol_ButtonActive);
+						draw_checkbox("Checkmark", "", ImGuiCol_CheckMark);
+
+						ImGui::EndTable();
+					}
+					ImGui::PopStyleColor();
+				}
+
+				if (draw_collapsing_header("Tabs"))
+				{
+					static auto draw_tab = [&](const std::string& label, std::string info, ImGuiCol_ col_id)
+					{
+						std::string color_label = "##" + label + info;
+						auto& color = temp_style.Colors[col_id];
+						ImGui::TableNextRow();
+						ImGui::TableNextColumn(); ImGui::ColorEdit4(color_label.c_str(), (float*)&color, color_flags);
+						ImGui::PushStyleColor(ImGuiCol_Tab, color);
+						ImGui::PushStyleColor(ImGuiCol_TabHovered, color);
+						ImGui::PushStyleColor(ImGuiCol_TabActive, color);
+						ImGui::PushStyleColor(ImGuiCol_TabUnfocused, color);
+						ImGui::PushStyleColor(ImGuiCol_TabUnfocusedActive, color);
+						ImGui::SameLine(); ImGui::Text(label.c_str());
+						if (!info.empty())
+						{
+							info = "(" + info + ")";
+							ImGui::SameLine(); ImGui::TextDisabled(info.c_str());
+						}
+						ImGui::TableNextColumn();
+						std::string tab_bar_label = color_label + "TabBar";
+						std::string tab_id = "Tab##" + color_label;
+						if (ImGui::BeginTabBar(tab_bar_label.c_str()))
+						{
+							if (ImGui::BeginTabItem(tab_id.c_str())) ImGui::EndTabItem();
+							ImGui::PopStyleColor(5);
+							ImGui::EndTabBar();
+						}
+					};
+
+					ImGui::PushStyleColor(ImGuiCol_TableRowBg, ref.Colors[ImGuiCol_MenuBarBg]);
+					if (ImGui::BeginTable("##Background", 2, table_flags))
+					{
+						draw_tab("Tab", "", ImGuiCol_Tab);
+						draw_tab("Tab", "Hovered", ImGuiCol_TabHovered);
+						draw_tab("Tab", "Active", ImGuiCol_TabActive);
+						draw_tab("Tab Unfocused", "", ImGuiCol_TabUnfocused);
+						draw_tab("Tab Unfocused", "Active", ImGuiCol_TabUnfocusedActive);
+
+						ImGui::EndTable();
+					}
+					ImGui::PopStyleColor();
+				}
+
+				if (draw_collapsing_header("Scrollbars, Headers and Separators"))
+				{
+					static auto draw_header = [&](const std::string& label, std::string info, ImGuiCol_ col_id)
+					{
+						std::string color_label = "##" + label + info;
+						auto& color = temp_style.Colors[col_id];
+						ImGui::TableNextRow();
+						ImGui::TableNextColumn(); ImGui::ColorEdit4(color_label.c_str(), (float*)&color, color_flags);
+						ImGui::PushStyleColor(ImGuiCol_Header, color);
+						ImGui::PushStyleColor(ImGuiCol_HeaderHovered, color);
+						ImGui::PushStyleColor(ImGuiCol_HeaderActive, color);
+						ImGui::SameLine(); ImGui::Text(label.c_str());
+						if (!info.empty())
+						{
+							info = "(" + info + ")";
+							ImGui::SameLine(); ImGui::TextDisabled(info.c_str());
+						}
+						std::string header_label = color_label + "Header";
+						ImGui::SetNextItemOpen(false);
+						ImGui::TableNextColumn(); ImGui::CollapsingHeader(header_label.c_str(), nullptr);
+						ImGui::PopStyleColor(3);
+					};
+
+					static auto draw_separator = [&](const std::string& label, std::string info, ImGuiCol_ col_id)
+					{
+						std::string color_label = "##" + label + info;
+						auto& color = temp_style.Colors[col_id];
+						ImGui::TableNextRow();
+						ImGui::TableNextColumn(); ImGui::ColorEdit4(color_label.c_str(), (float*)&color, color_flags);
+						ImGui::PushStyleColor(ImGuiCol_Separator, color);
+						ImGui::PushStyleColor(ImGuiCol_SeparatorHovered, color);
+						ImGui::PushStyleColor(ImGuiCol_SeparatorActive, color);
+						ImGui::SameLine(); ImGui::Text(label.c_str());
+						if (!info.empty())
+						{
+							info = "(" + info + ")";
+							ImGui::SameLine(); ImGui::TextDisabled(info.c_str());
+						}
+						ImGui::TableNextColumn(); ImGui::SeparatorEx(ImGuiSeparatorFlags_Horizontal, 5.0f);
+						ImGui::PopStyleColor(3);
+					};
+
+					ImGui::PushStyleColor(ImGuiCol_TableRowBg, ref.Colors[ImGuiCol_MenuBarBg]);
+					if (ImGui::BeginTable("##Background", 2, table_flags))
+					{
+						draw_option("Scrollbar", "Background", ImGuiCol_ScrollbarBg);
+						draw_option("Scrollbar Grab", "", ImGuiCol_ScrollbarGrab);
+						draw_option("Scrollbar Grab", "Hovered", ImGuiCol_ScrollbarGrabHovered);
+						draw_option("Scrollbar Grab", "Active", ImGuiCol_ScrollbarGrabActive);
+
+						draw_header("Header", "", ImGuiCol_Header);
+						draw_header("Header", "Hovered", ImGuiCol_HeaderHovered);
+						draw_header("Header", "Active", ImGuiCol_HeaderActive);
+
+						draw_separator("Separator", "", ImGuiCol_Separator);
+						draw_separator("Separator", "Hovered", ImGuiCol_SeparatorHovered);
+						draw_separator("Separator", "Active", ImGuiCol_SeparatorActive);
+
+						ImGui::EndTable();
+					}
+					ImGui::PopStyleColor();
+				}
+				ImGui::EndChild();
 			}
-			ImGui::PopItemWidth();
-			ImGui::EndChild();
 		}
 		ImGui::End();
+
+		if (live_preview)
+		{
+			ref = temp_style;
+		}
 	}
 }

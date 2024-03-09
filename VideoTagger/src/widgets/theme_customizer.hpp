@@ -7,8 +7,10 @@ namespace vt::widgets
 	{
 		theme_customizer();
 	private:
-		ImGuiStyle style;
+		ImGuiStyle original_style;
+		ImGuiStyle temp_style;
 		bool is_open;
+		bool live_preview;
 
 	public:
 		void render();

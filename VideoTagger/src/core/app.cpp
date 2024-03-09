@@ -202,6 +202,7 @@ namespace vt
 		ImGui::StyleColorsDark();
 
 		ImGuiIO& io = ImGui::GetIO();
+		ImGuiStyle& style = ImGui::GetStyle();
 		io.IniFilename = "layout.ini";
 		io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
 		io.ConfigWindowsMoveFromTitleBarOnly = true;
@@ -217,7 +218,7 @@ namespace vt
 			ImFontConfig config{};
 			config.MergeMode = true;
 			config.GlyphOffset = { 0.f, 4.f };
-			config.GlyphMinAdvanceX = font_size; // Use if you want to make the icon monospaced
+			config.GlyphMinAdvanceX = font_size;
 
 			for (const auto& icon : icons::all)
 			{
@@ -529,10 +530,11 @@ namespace vt
 			auto main_dock_right = ImGui::DockBuilderSplitNode(dockspace_id_copy, ImGuiDir_Right, 0.25f, nullptr, &dockspace_id_copy);
 			auto main_dock_up = ImGui::DockBuilderSplitNode(dockspace_id_copy, ImGuiDir_Up, 2 / 3.f, nullptr, &dockspace_id_copy);
 			auto dock_right_up = ImGui::DockBuilderSplitNode(main_dock_right, ImGuiDir_Up, 0.5f, nullptr, &main_dock_right);
-			ImGui::DockBuilderDockWindow("Settings", dock_right_up);
 			ImGui::DockBuilderDockWindow("Inspector", dock_right_up);
 			ImGui::DockBuilderDockWindow("Tag Manager", main_dock_right);
 			ImGui::DockBuilderDockWindow("Video Player", main_dock_up);
+			ImGui::DockBuilderDockWindow("Theme Customizer", main_dock_up);
+			ImGui::DockBuilderDockWindow("Settings", main_dock_up);
 			for (size_t i = 0; i < 8; ++i)
 			{
 				auto video_id = "Video##" + std::to_string(i);
