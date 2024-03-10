@@ -37,7 +37,7 @@
 
 namespace vt::widgets
 {
-	//TODO: use this
+	//TODO: maybe should be moved somwhere else
 	struct selected_timestamp_data
 	{
 		//TODO: maybe store the tag name instead of a pointer
@@ -79,7 +79,9 @@ namespace vt::widgets
 	};
 
 	//Inspector needs this
-	bool merge_timestamps_popup(bool& pressed_button);
+	bool merge_timestamps_popup(const std::string& id, bool& pressed_button);
+	
+	bool insert_timestamp_popup(const std::string& id, tag& tag, timestamp& start, timestamp& end, uint64_t min_timestamp, uint64_t max_timestamp);
 
 	// return true if selection is made
 	bool video_timeline(timeline_state& state, timestamp& current_time, std::optional<selected_timestamp_data>& selected_timestamp, std::optional<moving_timestamp_data>& moving_timestamp, bool& dirty_flag);

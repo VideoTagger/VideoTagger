@@ -208,7 +208,7 @@ namespace vt::widgets
 				}
 
 				bool pressed_yes{};
-				if (merge_timestamps_popup(pressed_yes))
+				if (merge_timestamps_popup("##MergeSegments", pressed_yes))
 				{
 					if (pressed_yes)
 					{
