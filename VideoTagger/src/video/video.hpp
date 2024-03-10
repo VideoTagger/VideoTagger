@@ -13,9 +13,15 @@ namespace vt
 	{
 	public:
 		video();
+		video(const video&) = delete;
+		video(video&&) = default;
+		~video();
+
+		video& operator=(const video&) = delete;
+		video& operator=(video&&) = default;
+
 		bool open_file(const std::filesystem::path& filepath, SDL_Renderer* renderer);
 		void close();
-		~video();
 
 		void set_playing(bool value);
 		void set_speed(float value);
