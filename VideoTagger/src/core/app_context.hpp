@@ -10,6 +10,7 @@
 #include <widgets/video_timeline.hpp>
 #include <widgets/video_player.hpp>
 #include <widgets/color_picker.hpp>
+#include <widgets/theme_customizer.hpp>
 
 namespace vt
 {
@@ -29,7 +30,8 @@ namespace vt
 		bool show_video_player_window = true;
 
 		//not serialized
-		bool show_settings_window = true;
+		bool show_options_window = false;
+		bool show_theme_customizer_window = false;
 		bool show_about_window = false;
 	};
 
@@ -38,6 +40,7 @@ namespace vt
 		widgets::timeline_state timeline_state;
 		widgets::project_selector project_selector;
 		widgets::video_player player;
+		widgets::theme_customizer theme_customizer;
 		std::optional<project> current_project;
 		widgets::color_picker color_picker;
 		std::filesystem::path projects_list_filepath;

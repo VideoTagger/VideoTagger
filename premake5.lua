@@ -17,9 +17,13 @@ workspace "VideoTagger"
 	{
 		".editorconfig"
 	}
-	startproject "VideoTagger"
 
-outputdir = "%{cfg.system}-%{cfg.architecture}/%{cfg.buildcfg}"
+	flags
+	{
+		"MultiProcessorCompile"
+	}
+
+	startproject "VideoTagger"
 
 include "VideoTagger"
 include "tools/premake"

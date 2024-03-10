@@ -25,6 +25,7 @@ namespace vt
 		bool is_valid() const;
 		std::optional<std::tm> modification_time() const;
 		void save() const;
+		void save_as(const std::filesystem::path& filepath);
 
 		bool operator==(const project& other) const;
 

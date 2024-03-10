@@ -26,12 +26,12 @@ namespace vt::widgets
 		return result;
 	}
 
-	theme_customizer::theme_customizer() : original_style{}, temp_style{ ImGui::GetStyle() }, is_open{ true }, live_preview{ true }
+	theme_customizer::theme_customizer() : original_style{}, temp_style{}, live_preview{ true }
 	{
 		
 	}
 
-	void theme_customizer::render()
+	void theme_customizer::render(bool& is_open)
 	{
 		if (!is_open) return;
 
@@ -43,6 +43,11 @@ namespace vt::widgets
 
 		if (ImGui::Begin("Theme Customizer", &is_open))
 		{
+			if (ImGui::IsWindowAppearing())
+			{
+				temp_style = ImGui::GetStyle();
+			}
+
 			if (ImGui::Button("Export"))
 			{
 

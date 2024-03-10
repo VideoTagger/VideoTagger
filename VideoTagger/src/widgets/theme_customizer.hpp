@@ -9,10 +9,9 @@ namespace vt::widgets
 	private:
 		ImGuiStyle original_style;
 		ImGuiStyle temp_style;
-		bool is_open;
 		bool live_preview;
 
 	public:
-		void render();
+		void render(bool& is_open);
 	};
 }

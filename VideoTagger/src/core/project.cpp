@@ -87,6 +87,12 @@ namespace vt
 		utils::json::write_to_file(json, path);
 	}
 
+	void project::save_as(const std::filesystem::path& filepath)
+	{
+		path = filepath;
+		save();
+	}
+
 	bool project::operator==(const project& other) const
 	{
 		return (name == other.name) and (path == other.path);

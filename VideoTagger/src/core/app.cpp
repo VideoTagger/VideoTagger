@@ -20,7 +20,7 @@
 #include <widgets/project_selector.hpp>
 #include <widgets/time_input.hpp>
 #include <widgets/inspector.hpp>
-#include <widgets/settings.hpp>
+#include <widgets/modal/options.hpp>
 #include <widgets/icons.hpp>
 #include <utils/filesystem.hpp>
 #include <utils/json.hpp>
@@ -435,7 +435,7 @@ namespace vt
 	{
 		if (!ctx_.current_project.has_value()) return;
 
-		ctx_.current_project->save();
+		ctx_.current_project->save_as(filepath);
 		ctx_.is_project_dirty = false;
 	}
 
@@ -537,7 +537,7 @@ namespace vt
 			ImGui::DockBuilderDockWindow("Tag Manager", main_dock_right);
 			ImGui::DockBuilderDockWindow("Video Player", main_dock_up);
 			ImGui::DockBuilderDockWindow("Theme Customizer", main_dock_up);
-			ImGui::DockBuilderDockWindow("Settings", main_dock_up);
+			//ImGui::DockBuilderDockWindow("Options", main_dock_up);
 			for (size_t i = 0; i < 8; ++i)
 			{
 				auto video_id = "Video##" + std::to_string(i);
@@ -603,7 +603,6 @@ namespace vt
 							save_project_as(result.path);
 							debug::log("Saving as " + result.path.string());
 						}
-
 					}
 				}
 
@@ -639,7 +638,19 @@ namespace vt
 				}
 				ImGui::EndMenu();
 			}
-			if (ImGui::BeginMenu("View"))
+			if (ImGui::BeginMenu("Edit"))
+			{
+				if (ImGui::MenuItem("Undo"))
+				{
+
+				}
+				if (ImGui::MenuItem("Redo"))
+				{
+
+				}
+				ImGui::EndMenu();
+			}
+			if (ImGui::BeginMenu("Window"))
 			{
 				bool result = false;
 				if (ImGui::MenuItem("Show Video Player", nullptr, &ctx_.win_cfg.show_video_player_window))
@@ -659,11 +670,8 @@ namespace vt
 				}
 #ifdef _DEBUG
 				ImGui::SeparatorText("Debug Only");
-				if (ImGui::MenuItem("Show Settings", nullptr, &ctx_.win_cfg.show_settings_window))
-				{
-					//ctx_.settings["show-windows"]["settings"] = ctx_.win_cfg.show_settings_window;
-					//result = true;
-				}
+				ImGui::MenuItem("Show Theme Customizer", nullptr, &ctx_.win_cfg.show_theme_customizer_window);
+				ImGui::MenuItem("Show Options", nullptr, &ctx_.win_cfg.show_options_window);
 #endif
 
 				if (result) save_settings();
@@ -672,6 +680,23 @@ namespace vt
 				if (ImGui::MenuItem("Reset Layout"))
 				{
 					ctx_.reset_layout = true;
+				}
+				ImGui::EndMenu();
+			}
+			if (ImGui::BeginMenu("Tools"))
+			{
+				if (ImGui::BeginMenu("Theme"))
+				{
+					bool selected = true;
+					ImGui::MenuItem("Theme 1", nullptr, &selected);
+					ImGui::MenuItem("Theme 2", nullptr, nullptr);
+					ImGui::EndMenu();
+				}
+				ImGui::MenuItem("Theme Customizer", nullptr, &ctx_.win_cfg.show_theme_customizer_window);
+				ImGui::Separator();
+				if (ImGui::MenuItem("Options"))
+				{
+					ctx_.win_cfg.show_options_window = true;
 				}
 				ImGui::EndMenu();
 			}
@@ -690,6 +715,11 @@ namespace vt
 		{
 			ImGui::OpenPopup("AboutPopup");
 		}
+		if (ctx_.win_cfg.show_options_window)
+		{
+			ImGui::OpenPopup("Options");
+		}
+
 		{
 			ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 7.0f);
 			auto flags = ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_AlwaysAutoResize;
@@ -764,9 +794,9 @@ namespace vt
 			}
 		}
 
-		if (ctx_.win_cfg.show_settings_window)
+		if (ctx_.win_cfg.show_options_window)
 		{
-			widgets::settings(&ctx_.win_cfg.show_settings_window);
+			widgets::modal::options(&ctx_.win_cfg.show_options_window);
 		}
 
 		if (ctx_.win_cfg.show_inspector_window)
@@ -776,8 +806,10 @@ namespace vt
 			widgets::inspector(ctx_.selected_timestamp_data, ctx_.moving_timestamp_data, link_start_end, ctx_.is_project_dirty, &ctx_.win_cfg.show_inspector_window);
 		}
 
-		static widgets::theme_customizer theme_customizer;
-		theme_customizer.render();
+		if (ctx_.win_cfg.show_theme_customizer_window)
+		{
+			ctx_.theme_customizer.render(ctx_.win_cfg.show_theme_customizer_window);
+		}
 		//ImGui::ShowDemoWindow();
 	}
 
