@@ -65,8 +65,8 @@ namespace vt::widgets
 
 				if (moving_timestamp.has_value())
 				{
-					ts_start = moving_timestamp->left_position;
-					ts_end = moving_timestamp->right_position;
+					ts_start = moving_timestamp->start;
+					ts_end = moving_timestamp->end;
 				}
 
 				bool finished_editing = false;
@@ -170,8 +170,8 @@ namespace vt::widgets
 
 				if (modified_timestamp and moving_timestamp.has_value())
 				{
-					moving_timestamp->left_position = ts_start;
-					moving_timestamp->right_position = ts_end;
+					moving_timestamp->start = ts_start;
+					moving_timestamp->end = ts_end;
 				}
 
 				if (finished_editing)
@@ -191,9 +191,13 @@ namespace vt::widgets
 
 					if (insert_now)
 					{
-						ts = timeline->replace(ts, ts_start, ts_end).first;
+						if (ts->start != ts_start or ts->end != ts_end)
+						{
+							ts = timeline->replace(ts, ts_start, ts_end).first;
+							dirty_flag = true;
+						}
+
 						moving_timestamp.reset();
-						dirty_flag = true;
 					}
 					else
 					{

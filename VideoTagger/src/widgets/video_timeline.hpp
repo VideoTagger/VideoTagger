@@ -53,8 +53,8 @@ namespace vt::widgets
 		tag_timeline::iterator segment{};
 		uint8_t grab_part{};
 		timestamp grab_position{};
-		timestamp left_position{};
-		timestamp right_position{};
+		timestamp start{};
+		timestamp end{};
 	};
 
 	struct timeline_state

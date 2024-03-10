@@ -585,8 +585,8 @@ namespace vt::widgets
 				{
 					auto& tag_timestamp = *moving_timestamp->segment;
 
-					int64_t start = moving_timestamp->left_position.seconds_total.count();
-					int64_t end = moving_timestamp->right_position.seconds_total.count();
+					int64_t start = moving_timestamp->start.seconds_total.count();
+					int64_t end = moving_timestamp->end.seconds_total.count();
 					ImVec2 pos = ImVec2(contentMin.x + legendWidth - firstFrameUsed * framePixelWidth, contentMin.y + ItemHeight * i + 1);
 					ImVec2 slot_p1(pos.x + start * framePixelWidth, pos.y + 2);
 					ImVec2 slot_p2(pos.x + end * framePixelWidth + framePixelWidth, pos.y + ItemHeight - 2);
@@ -732,30 +732,30 @@ namespace vt::widgets
 					constexpr auto min_segment_size = std::chrono::seconds{ 1 };
 
 					if (moving_timestamp->grab_part & 1)
-						moving_timestamp->left_position += move_delta;
+						moving_timestamp->start += move_delta;
 					if (moving_timestamp->grab_part & 2)
-						moving_timestamp->right_position += move_delta;
-					if (moving_timestamp->left_position < timestamp{0})
+						moving_timestamp->end += move_delta;
+					if (moving_timestamp->start < timestamp{0})
 					{
 						if (moving_timestamp->grab_part & 2)
-							moving_timestamp->right_position -= moving_timestamp->left_position;
-						moving_timestamp->left_position = timestamp{0};
+							moving_timestamp->end -= moving_timestamp->start;
+						moving_timestamp->start = timestamp{0};
 					}
-					if (moving_timestamp->grab_part & 1 and moving_timestamp->left_position > moving_timestamp->right_position)
-						moving_timestamp->left_position = moving_timestamp->right_position;
-					if (moving_timestamp->grab_part & 2 and moving_timestamp->right_position < moving_timestamp->left_position)
-						moving_timestamp->right_position = moving_timestamp->left_position;
+					if (moving_timestamp->grab_part & 1 and moving_timestamp->start > moving_timestamp->end)
+						moving_timestamp->start = moving_timestamp->end;
+					if (moving_timestamp->grab_part & 2 and moving_timestamp->end < moving_timestamp->start)
+						moving_timestamp->end = moving_timestamp->start;
 
-					auto segment_size = std::abs((moving_timestamp->right_position - moving_timestamp->left_position).seconds_total.count());
+					auto segment_size = std::abs((moving_timestamp->end - moving_timestamp->start).seconds_total.count());
 					if (segment_size < min_segment_size.count() and moving_timestamp->segment->type() != tag_timestamp_type::point)
 					{
 						if (moving_timestamp->grab_part & 1)
 						{
-							moving_timestamp->left_position -= timestamp(min_segment_size - static_cast<std::chrono::seconds>(segment_size));
+							moving_timestamp->start -= timestamp(min_segment_size - static_cast<std::chrono::seconds>(segment_size));
 						}
 						else if (moving_timestamp->grab_part & 2)
 						{
-							moving_timestamp->right_position += timestamp(min_segment_size - static_cast<std::chrono::seconds>(segment_size));
+							moving_timestamp->end += timestamp(min_segment_size - static_cast<std::chrono::seconds>(segment_size));
 						}
 					}
 					moving_timestamp->grab_position = mouse_timestamp;
@@ -769,7 +769,7 @@ namespace vt::widgets
 
 					if (selected_timestamp.has_value())
 					{
-						auto overlapping = timeline.find_range(moving_timestamp->left_position, moving_timestamp->right_position);
+						auto overlapping = timeline.find_range(moving_timestamp->start, moving_timestamp->end);
 
 						bool insert_now = true;
 						for (auto it = overlapping.begin(); it != overlapping.end(); ++it)
@@ -782,15 +782,18 @@ namespace vt::widgets
 
 						if (insert_now)
 						{
-							selected_timestamp->timestamp = timeline.replace
-							(
-								selected_timestamp->timestamp,
-								moving_timestamp->left_position,
-								moving_timestamp->right_position
-							).first;
+							if (selected_timestamp->timestamp->start != moving_timestamp->start or selected_timestamp->timestamp->end != moving_timestamp->end)
+							{
+								selected_timestamp->timestamp = timeline.replace
+								(
+									selected_timestamp->timestamp,
+									moving_timestamp->start,
+									moving_timestamp->end
+								).first;
 
+								dirty_flag = true;
+							}
 							moving_timestamp.reset();
-							dirty_flag = true;
 						}
 						else
 						{
@@ -811,8 +814,8 @@ namespace vt::widgets
 					selected_timestamp->timestamp = timeline.replace
 					(
 						selected_timestamp->timestamp,
-						timestamp{ moving_timestamp->left_position },
-						timestamp{ moving_timestamp->right_position }
+						timestamp{ moving_timestamp->start },
+						timestamp{ moving_timestamp->end }
 					).first;
 
 					dirty_flag = true;
