@@ -122,10 +122,10 @@ namespace vt::widgets
 		ImGui::SetNextWindowPos(ImGui::GetMainViewport()->GetCenter(), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
 		auto flags = ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoMove; //ImGuiWindowFlags_AlwaysAutoResize;
 
-		if (ImGui::BeginPopupModal("Merge Overlapping", nullptr, flags))
+		if (ImGui::BeginPopupModal("##MergeSegments", nullptr, flags))
 		{
-			ImGui::Text("Do you want to merge the overlapping timestamps?");
-			ImGui::TextDisabled("(Pressing \"No\" will move the dragged timestamp back to its starting position)");
+			ImGui::Text("Do you want to merge the overlapping segments?");
+			ImGui::TextDisabled("(Pressing \"No\" will move the currently dragged segment back to its original position)");
 			ImGui::NewLine();
 			auto area_size = ImGui::GetWindowSize();
 
@@ -794,7 +794,7 @@ namespace vt::widgets
 						}
 						else
 						{
-							ImGui::OpenPopup("Merge Overlapping");
+							ImGui::OpenPopup("##MergeSegments");
 						}
 					}
 				}
