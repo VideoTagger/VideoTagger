@@ -43,7 +43,7 @@ namespace vt
 		bool init(const app_config& config);
 		bool run();
 		void shutdown();
-		void on_exit();
+		void on_close_project(bool should_shutdown);
 
 		bool load_settings();
 		void save_settings();

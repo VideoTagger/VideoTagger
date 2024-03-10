@@ -304,7 +304,7 @@ namespace vt
 		state_ = app_state::uninitialized;
 	}
 
-	void app::on_exit()
+	void app::on_close_project(bool should_shutdown)
 	{
 		//Save window size & state
 		{
@@ -347,18 +347,18 @@ namespace vt
 				case 1:
 				{
 					save_project();
-					state_ = app_state::shutdown;
+					if (should_shutdown) state_ = app_state::shutdown;
 				}
 				break;
 				case 2:
 				{
-					state_ = app_state::shutdown;
+					if (should_shutdown) state_ = app_state::shutdown;
 				}
 				break;
 			}
 			return;
 		}
-		state_ = app_state::shutdown;
+		if (should_shutdown) state_ = app_state::shutdown;
 	}
 
 	bool app::load_settings()
@@ -441,9 +441,10 @@ namespace vt
 
 	void app::close_project()
 	{
+		on_close_project(false);
 		ctx_.current_project = std::nullopt;
-		ctx_.videos.clear();
 		ctx_.selected_timestamp_data = std::nullopt;
+		ctx_.videos.clear();
 		set_subtitle();
 	}
 	
@@ -480,7 +481,7 @@ namespace vt
 				break;
 				case SDL_QUIT:
 				{
-					on_exit();
+					on_close_project(true);
 				}
 				break;
 			}
@@ -633,7 +634,7 @@ namespace vt
 					std::string menu_item = std::string(icons::exit) + " Exit";
 					if (ImGui::MenuItem(menu_item.c_str()))
 					{
-						on_exit();
+						on_close_project(true);
 					}
 				}
 				ImGui::EndMenu();
