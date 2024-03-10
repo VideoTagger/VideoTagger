@@ -211,9 +211,9 @@ namespace vt::widgets
 					ImGui::PushStyleColor(ImGuiCol_TableRowBg, ref.Colors[ImGuiCol_MenuBarBg]);
 					if (ImGui::BeginTable("##Background", 2, table_flags))
 					{
-						draw_tab("Tab", "", ImGuiCol_Tab);
-						draw_tab("Tab", "Hovered", ImGuiCol_TabHovered);
-						draw_tab("Tab", "Active", ImGuiCol_TabActive);
+						draw_tab("Tab Focused", "", ImGuiCol_Tab);
+						draw_tab("Tab Focused", "Hovered", ImGuiCol_TabHovered);
+						draw_tab("Tab Focused", "Active", ImGuiCol_TabActive);
 						draw_tab("Tab Unfocused", "", ImGuiCol_TabUnfocused);
 						draw_tab("Tab Unfocused", "Active", ImGuiCol_TabUnfocusedActive);
 
