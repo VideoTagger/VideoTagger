@@ -36,23 +36,23 @@ namespace vt
 
 	std::pair<tag_timeline::iterator, bool> tag_timeline::insert(timestamp time_start, timestamp time_end)
 	{
-		auto [it_begin, it_end] = find_range(time_start, time_end);
+		auto overlapping = find_range(time_start, time_end);
 		
 		timestamp insert_start = time_start;
 		timestamp insert_end = time_end;
 		
-		if (it_begin != timestamps_.end())
+		if (overlapping.begin() != timestamps_.end())
 		{
-			auto last_it = std::prev(it_end);
-			if (it_begin == last_it and it_begin->start <= time_start and time_end <= it_begin->end)
+			auto last_it = std::prev(overlapping.end());
+			if (overlapping.begin() == last_it and overlapping.begin()->start <= time_start and time_end <= overlapping.begin()->end)
 			{
-				return { it_begin, false };
+				return { overlapping.begin(), false};
 			}
 
-			insert_start = std::min(it_begin->start, time_start);
+			insert_start = std::min(overlapping.begin()->start, time_start);
 			insert_end = std::max(last_it->end, time_end);
 
-			timestamps_.erase(it_begin, it_end);
+			timestamps_.erase(overlapping.begin(), overlapping.end());
 		}
 
 		return timestamps_.emplace(insert_start, insert_end);
@@ -86,7 +86,7 @@ namespace vt
 		return insert(time_point);
 	}
 
-	std::pair<tag_timeline::iterator, tag_timeline::iterator> tag_timeline::find_range(timestamp time_start, timestamp time_end) const
+	iterator_range<tag_timeline::iterator> tag_timeline::find_range(timestamp time_start, timestamp time_end) const
 	{
 		//TODO: optimise (use lower/upper bound)
 		 

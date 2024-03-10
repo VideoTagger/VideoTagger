@@ -9,6 +9,9 @@
 #include <imgui_stdlib.h>
 
 #include <utils/random.hpp>
+#include "buttons.hpp"
+#include "icons.hpp"
+#include <core/app_context.hpp>
 
 namespace vt::widgets
 {
@@ -17,20 +20,19 @@ namespace vt::widgets
 	static bool add_tag_popup(tag_storage& tags, tag_storage::iterator& added_entry)
 	{
 		//TODO: Improve UI layout
-		//TODO: Block "Done" when tag already exists
-
+		
 		bool return_value = false;
 
 		auto& style = ImGui::GetStyle();
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 7);
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, style.WindowPadding * 2);
-		auto flags = ImGuiWindowFlags_NoResize | ImGuiWindowFlags_AlwaysAutoResize;
+		auto flags = ImGuiWindowFlags_AlwaysAutoResize;
 		auto& io = ImGui::GetIO();
-		ImGui::SetNextWindowPos(ImVec2(io.DisplaySize.x * 0.5f, io.DisplaySize.y * 0.5f), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
+		ImGui::SetNextWindowPos(ImGui::GetMainViewport()->GetCenter(), ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
 		auto win_size = ImVec2{ 290, 110 };
-		ImGui::SetNextWindowSize(win_size, ImGuiCond_Always);
+		ImGui::SetNextWindowSize(win_size, ImGuiCond_Appearing);
 
-		if (ImGui::BeginPopupModal("Add New Tag", 0, flags))
+		if (ImGui::BeginPopupModal("Add New Tag", nullptr, flags))
 		{
 			std::string error_text;
 			static ImVec4 color{ 0, 0, 0, 1 };
@@ -76,6 +78,7 @@ namespace vt::widgets
 				auto [it, inserted] = tags.insert(tag_name);
 				if (inserted)
 				{
+					return_value = true;
 					it->color = ImGui::ColorConvertFloat4ToU32(color);
 					added_entry = it;
 				}
@@ -102,19 +105,196 @@ namespace vt::widgets
 		return return_value;
 	}
 
-	bool tag_manager(tag_storage& tags, tag_storage::iterator& selected_entry, tag_manager_flags flags)
+	bool tag_manager(tag_storage& tags, std::optional<tag_rename_data>& tag_rename, bool& dirty_flag, tag_manager_flags flags)
 	{
-		//TODO: Improve UI layout
 		//TODO: Maybe extract some stuff into separate functions for better readability
 
 		bool return_value = false;
 		auto& style = ImGui::GetStyle();
-		static constexpr ImVec2 button_size = { 100, 50 };
-		static constexpr ImVec2 color_picker_size = { 20, 20 };
+		ImVec2 button_size = ImVec2{ ImGui::GetContentRegionAvail().x, ImGui::GetTextLineHeightWithSpacing() };
 
 		bool open_add_tag_popup = false;
-		bool open_color_picker_popup = false;
+		bool update_all = false;
+		bool update_state = false;
 
+		if (true /*ImGui::BeginTable("##TagManager", 2)*/)
+		{
+			static constexpr float tag_column_width = 100;
+			float button_region_width = button_size.x + style.CellPadding.x;
+
+			//ImGui::TableSetupColumn(nullptr, ImGuiTableColumnFlags_WidthStretch);
+			//ImGui::TableSetupColumn(nullptr, ImGuiTableColumnFlags_WidthFixed);
+			if (ImGui::SmallButton("Expand All"))
+			{
+				update_state = true;
+				update_all = true;
+			}
+			ImGui::SameLine();
+			if (ImGui::SmallButton("Collapse All"))
+			{
+				update_state = false;
+				update_all = true;
+			}
+			ImGui::Separator();
+			//ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2{});
+			bool is_scrollable_list_open = ImGui::BeginChild("##ScrollableTagList", ImGui::GetContentRegionAvail() - button_size - ImVec2{ 0, style.ItemSpacing.y + style.FramePadding.y });
+			
+			//ImGui::PopStyleVar();
+			if (is_scrollable_list_open)
+			{
+				static auto color_ref = tags.end();
+				int id{};
+
+				auto node_flags = ImGuiTreeNodeFlags_Framed | ImGuiTreeNodeFlags_SpanFullWidth;
+				
+				static std::string tag_name;
+				for (auto it = tags.begin(); it != tags.end();)
+				{
+					auto& tag = *it;
+
+					//ImGui::TableNextColumn();
+					ImGui::PushID(id++);
+					
+					/*
+					if (icon_button(icons::close))
+					{
+						tags.erase(tag.name);
+						ctx_.is_project_dirty = true;
+						ImGui::PopStyleVar();
+						ImGui::PopID();
+						break;
+					}
+					*/
+					auto color = ImGui::ColorConvertU32ToFloat4(tag.color);
+					ImGui::SetCursorPosX(ImGui::GetCursorPosX() + style.ItemSpacing.x * 0.5f);
+					ImGui::TextColored(color, icons::label);
+					ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2{});
+					ImGui::SameLine();
+					
+					bool open_color_picker = false;
+
+					if (update_all)
+					{
+						ImGui::SetNextItemOpen(update_state);
+					}
+
+					//A bit of a hack to not render the arrow
+					ImGui::PushStyleColor(ImGuiCol_Text, ImVec4{});
+					bool node_open = ImGui::TreeNodeEx("##TagManagerNode", node_flags);
+					ImGui::PopStyleColor();
+					ImGui::PopStyleVar();
+
+					bool delete_tag = false;
+					if (ImGui::BeginPopupContextItem("##TagCtxMenu"))
+					{
+						std::string menu_name = std::string(icons::delete_) + " Delete";
+						if (ImGui::MenuItem(menu_name.c_str()))
+						{
+							delete_tag = true;
+						}
+						ImGui::EndPopup();
+					}
+					if (ImGui::IsItemHovered() and ImGui::IsMouseClicked(1))
+					{
+						ImGui::OpenPopup("##TagCtxMenu");
+					}
+
+					auto icon = node_open ? icons::expand_less : icons::expand_more;
+
+					ImGui::SameLine(ImGui::GetTreeNodeToLabelSpacing());
+					ImGui::Text(tag.name.c_str());
+					ImGui::SameLine(ImGui::GetContentRegionMax().x - style.ItemSpacing.x - ImGui::CalcTextSize(icon).x);
+					ImGui::Text(icon);
+
+					if (node_open)
+					{
+						ImGui::Unindent();
+						ImGui::PushStyleColor(ImGuiCol_TableRowBg, style.Colors[ImGuiCol_MenuBarBg]);
+						if (ImGui::BeginTable("##Background", 1, ImGuiTableFlags_RowBg))
+						{
+							ImGui::TableNextColumn();
+							ImGui::Columns(2, "##TagColumnSeparator");
+							ImGui::Text("Name");
+							ImGui::NextColumn();
+							ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
+
+							//TODO: Add filtering & readd the tag with a new name since std::map is used as a container (why not std::vector??)
+							
+							tag_name = tag.name;
+							if (ImGui::InputText("##TagNameInput", &tag_name, ImGuiInputTextFlags_AutoSelectAll | ImGuiInputTextFlags_EnterReturnsTrue))
+							{
+								tag_rename = tag_rename_data{ tag.name, tag_name };
+							}
+							ImGui::NextColumn();
+							ImGui::Text("Color");
+							ImGui::NextColumn();
+							if (ImGui::ColorButton("##ColorButton", color, color_button_flags))
+							{
+								color_ref = it;
+								open_color_picker = true;
+							}
+							ImGui::Columns();
+							ImGui::EndTable();
+						}		
+						ImGui::PopStyleColor();
+						ImGui::Indent();
+						ImGui::TreePop();
+					}
+					ImGui::PopID();
+
+					//ImGui::TableNextColumn();
+
+					if (open_color_picker)
+					{
+						color_ref = it;
+						ctx_.color_picker.set_color(ImGui::ColorConvertU32ToFloat4(tag.color));
+						ctx_.color_picker.set_opened(true);
+						//color_copy = ImGui::ColorConvertU32ToFloat4(tag.color);
+					}
+
+					if (delete_tag)
+					{
+						it = tags.erase(it);
+						ctx_.is_project_dirty = true;
+					}
+					if (it != tags.end())
+					{
+						++it;
+					}
+				}
+
+				if (tag_rename.has_value())
+				{
+					auto [it, inserted] = tags.rename(tag_rename->old_name, tag_rename->new_name);
+					if (inserted)
+					{
+						ctx_.is_project_dirty = true;
+					}
+					else
+					{
+						tag_rename.reset();
+					}
+				}
+
+				if (ctx_.color_picker.render("##TagColorPicker") and color_ref != tags.end())
+				{
+					color_ref->color = ImGui::ColorConvertFloat4ToU32(ctx_.color_picker.color());
+					ctx_.is_project_dirty = true;
+				}
+			}
+			ImGui::EndChild();
+
+			//ImGui::Dummy(ImGui::GetStyle().ItemSpacing);
+			if (ImGui::Button("Add Tag", button_size))
+			{
+				open_add_tag_popup = true;
+			}
+			
+			//ImGui::EndTable();
+		}
+		
+
+		/*
 		if (ImGui::BeginTable("##TagManager", 2))
 		{
 			static constexpr float tag_column_width = 100;
@@ -206,6 +386,7 @@ namespace vt::widgets
 
 			ImGui::EndTable();
 		}
+		*/
 
 		if (open_add_tag_popup)
 		{
@@ -213,7 +394,10 @@ namespace vt::widgets
 		}
 
 		tag_storage::iterator added_entry = tags.end();
-		add_tag_popup(tags, added_entry);
+		if (add_tag_popup(tags, added_entry))
+		{
+			dirty_flag = true;
+		}
 
 		return return_value;
 	}

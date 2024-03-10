@@ -688,12 +688,12 @@ namespace vt
 		return std::chrono::nanoseconds(static_cast<int64_t>(format_context_->duration / (double)(AV_TIME_BASE) * 1'000'000'000));
 	}
 
-	std::chrono::nanoseconds video_decoder::frame_number_to_timestamp(size_t frame)
+	std::chrono::nanoseconds video_decoder::frame_number_to_timestamp(size_t frame) const
 	{
 		return std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::duration<double>(frame / fps()));
 	}
 	
-	size_t video_decoder::timestamp_to_frame_number(std::chrono::nanoseconds timestamp)
+	size_t video_decoder::timestamp_to_frame_number(std::chrono::nanoseconds timestamp) const
 	{
 		//TODO: test
 		return static_cast<size_t>(std::round(std::chrono::duration_cast<std::chrono::duration<double>>(timestamp).count() * fps()));

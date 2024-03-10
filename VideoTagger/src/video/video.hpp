@@ -2,6 +2,7 @@
 
 #include <filesystem>
 #include <chrono>
+#include <vector>
 #include <SDL.h>
 
 #include "video_decoder.hpp"
@@ -12,9 +13,15 @@ namespace vt
 	{
 	public:
 		video();
+		video(const video&) = delete;
+		video(video&&) = default;
+		~video();
+
+		video& operator=(const video&) = delete;
+		video& operator=(video&&) = default;
+
 		bool open_file(const std::filesystem::path& filepath, SDL_Renderer* renderer);
 		void close();
-		~video();
 
 		void set_playing(bool value);
 		void set_speed(float value);
@@ -31,10 +38,14 @@ namespace vt
 		[[nodiscard]] int height() const;
 
 		[[nodiscard]] bool is_playing() const;
+		[[nodiscard]] bool is_looping() const;
 		[[nodiscard]] float speed() const;
 		[[nodiscard]] std::chrono::nanoseconds duration() const;
 
 		[[nodiscard]] std::chrono::nanoseconds current_timestamp() const;
+
+		size_t current_frame_number() const;
+		double fps() const;
 
 	private:
 		video_decoder decoder_;

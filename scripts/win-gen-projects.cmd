@@ -7,7 +7,7 @@ if exist win-projects.buildcfg (
 	set /p vs_ver=<win-projects.buildcfg
 ) else (
 	set cfg_loaded=0
-	set /p vs_ver="What is your Visual Studio version? (2019/2022): "
+	set /p vs_ver="What is your Visual Studio version? [2019/2022]: "
 )
 
 set "vs_ver=%vs_ver: =%"
@@ -28,7 +28,7 @@ if %errorlevel% neq 0 (
 )
 
 if %cfg_loaded% equ 0 (
-	set /p save_cfg="Would you like to save this build config? (y/n): "
+	set /p save_cfg="Would you like to save this build config? [y/N]: "
 
 	if /i "!save_cfg!"=="y" (
 		echo Saving config...
@@ -36,7 +36,7 @@ if %cfg_loaded% equ 0 (
 	)
 )
 
-set /p response="Would you like to open the solution file? (y/n): "
+set /p response="Would you like to open the solution file? [y/N]: "
 
 if /i "%response%"=="y" (
     for %%f in (*.sln) do (

@@ -16,7 +16,6 @@ namespace vt
 	class tag_storage_iterator;
 	class tag_storage_const_iterator;
 
-	//TODO: Maybe add tag renaming (would just make a copy with a new name and delete the old one)
 	class tag_storage
 	{
 	public:
@@ -25,13 +24,18 @@ namespace vt
 
 		using container = std::map<std::string, tag>;
 
-		static constexpr uint32_t default_tag_color = 0xffffff;
+		static constexpr uint32_t default_tag_color = 0xFFFFFFFF;
 
 		std::pair<iterator, bool> insert(const std::string& name, uint32_t color);
 		std::pair<iterator, bool> insert(const std::string& name);
 		bool erase(const std::string& name);
 		iterator erase(iterator it);
 		iterator erase(const_iterator it);
+		// returns:
+		//	if current_name doesn't exist: { end, false }
+		//	if new_name already exists: { iterator-to-new_name, false }
+		//	otherwise: { iterator-to-inserted, true }
+		std::pair<iterator, bool> rename(const std::string& current_name, const std::string& new_name);
 
 		tag& at(const std::string& name);
 		const tag& at(const std::string& name) const;
