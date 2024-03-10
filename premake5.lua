@@ -9,7 +9,8 @@ workspace "VideoTagger"
 	configurations
 	{
 		"Debug",
-		"Release"
+		"Release",
+		"Shipping"
 	}
 
 	solution_items
@@ -17,6 +18,8 @@ workspace "VideoTagger"
 		".editorconfig"
 	}
 	startproject "VideoTagger"
+
 outputdir = "%{cfg.system}-%{cfg.architecture}/%{cfg.buildcfg}"
+
 include "VideoTagger"
 include "tools/premake"

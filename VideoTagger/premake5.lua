@@ -1,5 +1,4 @@
 project "VideoTagger"
-	kind "ConsoleApp"
 	language "C++"
 	targetdir "%{wks.location}/.build/%{prj.name}/%{cfg.system}-%{cfg.architecture}/%{cfg.buildcfg}"
 	objdir "%{wks.location}/.build/temp/%{prj.name}/%{cfg.system}-%{cfg.architecture}/%{cfg.buildcfg}"
@@ -80,15 +79,24 @@ project "VideoTagger"
 		}
 	
 	filter "configurations:Debug"
+		kind "ConsoleApp"
 		defines { "DEBUG" }
 		symbols "On"
 		runtime "Debug"
 
 	filter "configurations:Release"
+		kind "ConsoleApp"
 		defines { "NDEBUG" }
 		optimize "Speed"
 		runtime "Release"
 		flags { "LinkTimeOptimization" }
-
+	
+	filter "configurations:Shipping"
+		kind "WindowedApp"
+		defines { "NDEBUG" }
+		optimize "Speed"
+		runtime "Release"
+		flags { "LinkTimeOptimization" }
+		
 	filter "platforms:x86_64"
 		architecture "x86_64"
