@@ -161,6 +161,7 @@ namespace vt
 				ctx_.settings["window"]["font-size"] = font_size;
 			}
 
+			//TODO: Add theme selection
 			//TODO: Add messagebox informing that the changes will be applied only after restart
 
 #ifdef _DEBUG

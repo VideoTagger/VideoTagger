@@ -2,11 +2,64 @@
 #include <string>
 
 #include <imgui_internal.h>
+#include <utils/filesystem.hpp>
+#include <core/debug.hpp>
 #include "controls.hpp"
+#include <utils/json.hpp>
+#include <utils/color.hpp>
 
 namespace vt::widgets
 {
-	theme_customizer::theme_customizer() : original_style{}, temp_style{}, live_preview{ true }
+	static std::unordered_map<ImGuiCol_, std::string> color_names
+	{
+		{ ImGuiCol_WindowBg, "window.background" },
+		{ ImGuiCol_ChildBg, "child.background" },
+		{ ImGuiCol_PopupBg, "popup.background" },
+		{ ImGuiCol_Border, "border" },
+		{ ImGuiCol_MenuBarBg, "menubar.background" },
+		{ ImGuiCol_FrameBg, "frame.background.normal" },
+		{ ImGuiCol_FrameBgHovered, "frame.background.hovered" },
+		{ ImGuiCol_FrameBgActive, "frame.background.active" },
+		{ ImGuiCol_TitleBg, "title.background.normal" },
+		{ ImGuiCol_TitleBgActive, "title.background.active" },
+		{ ImGuiCol_TitleBgCollapsed, "title.background.collapsed" },
+		{ ImGuiCol_Text, "text.normal" },
+		{ ImGuiCol_TextDisabled, "text.disabled" },
+		{ ImGuiCol_Button, "button.normal" },
+		{ ImGuiCol_ButtonHovered, "button.hovered" },
+		{ ImGuiCol_ButtonActive, "button.active" },
+		{ ImGuiCol_CheckMark, "checkmark" },
+		{ ImGuiCol_Tab, "tab.focused.normal" },
+		{ ImGuiCol_TabHovered, "tab.focused.hovered" },
+		{ ImGuiCol_TabActive, "tab.focused.active" },
+		{ ImGuiCol_TabUnfocused, "tab.unfocused.normal" },
+		{ ImGuiCol_TabUnfocusedActive, "tab.unfocused.active" },
+		{ ImGuiCol_ScrollbarBg, "scrollbar.background" },
+		{ ImGuiCol_ScrollbarGrab, "scrollbar.grab.normal" },
+		{ ImGuiCol_ScrollbarGrabHovered, "scrollbar.grab.hovered" },
+		{ ImGuiCol_ScrollbarGrabActive, "scrollbar.grab.active" },
+		{ ImGuiCol_Header, "header.normal" },
+		{ ImGuiCol_HeaderHovered, "header.hovered" },
+		{ ImGuiCol_HeaderActive, "header.active" },
+		{ ImGuiCol_Separator, "separator.normal" },
+		{ ImGuiCol_SeparatorHovered, "separator.hovered" },
+		{ ImGuiCol_SeparatorActive, "separator.active" }
+	};
+
+	void theme::save(const std::filesystem::path& filepath) const
+	{
+		nlohmann::ordered_json json;
+		auto& colors = json["colors"];
+		for (size_t i = 0; i < ImGuiCol_COUNT; ++i)
+		{
+			auto it = color_names.find(static_cast<ImGuiCol_>(i));
+			if (it == color_names.end()) continue;
+			colors[it->second] = utils::color::to_string(ImGui::GetColorU32(style.Colors[i]));
+		}
+		utils::json::write_to_file(json, filepath);
+	}
+
+	theme_customizer::theme_customizer() : live_preview{ true }
 	{
 		
 	}
@@ -25,23 +78,29 @@ namespace vt::widgets
 		{
 			if (ImGui::IsWindowAppearing())
 			{
-				temp_style = ImGui::GetStyle();
+				temp_theme.style = ImGui::GetStyle();
 			}
 
 			if (ImGui::Button("Export"))
 			{
-
+				utils::dialog_filters filters{ utils::dialog_filter{ "VideoTagger Theme", "vttheme"}};
+				auto result = utils::filesystem::save_file({}, filters, "Theme");
+				if (result)
+				{
+					debug::log("Saving theme as " + result.path.string());
+					temp_theme.save(result.path);
+				}
 			}
 			ImGui::SameLine();
 			if (ImGui::Checkbox("Live Preview", &live_preview))
 			{
 				if (live_preview)
 				{
-					original_style = ref;
+					original_theme.style = ref;
 				}
 				else
 				{
-					ref = original_style;
+					ref = original_theme.style;
 				}
 			}
 			if (ImGui::BeginChild("##ThemeScrollableView"))
@@ -49,7 +108,7 @@ namespace vt::widgets
 				static auto draw_option = [&](const std::string& label, std::string info, ImGuiCol_ col_id)
 				{
 					std::string color_label = "##" + label + info;
-					auto& color = temp_style.Colors[col_id];
+					auto& color = temp_theme.style.Colors[col_id];
 					ImGui::TableNextRow();
 					ImGui::TableNextColumn(); ImGui::ColorEdit4(color_label.c_str(), (float*)&color, color_flags);
 					ImGui::SameLine(); ImGui::Text(label.c_str());
@@ -63,7 +122,7 @@ namespace vt::widgets
 
 				if (collapsing_header("Windows, Frames and Popups"))
 				{
-					ImGui::PushStyleColor(ImGuiCol_TableRowBg, temp_style.Colors[ImGuiCol_MenuBarBg]);
+					ImGui::PushStyleColor(ImGuiCol_TableRowBg, temp_theme.style.Colors[ImGuiCol_MenuBarBg]);
 					if (ImGui::BeginTable("##Background", 2, table_flags))
 					{
 						draw_option("Window", "Background", ImGuiCol_WindowBg);
@@ -87,7 +146,7 @@ namespace vt::widgets
 					static auto draw_text = [&](const std::string& label, std::string info, ImGuiCol_ col_id)
 					{
 						std::string color_label = "##" + label + info;
-						auto& color = temp_style.Colors[col_id];
+						auto& color = temp_theme.style.Colors[col_id];
 						ImGui::TableNextRow();
 						ImGui::TableNextColumn(); ImGui::ColorEdit4(color_label.c_str(), (float*)&color, color_flags);
 						ImGui::SameLine(); ImGui::Text(label.c_str());
@@ -113,7 +172,7 @@ namespace vt::widgets
 					static auto draw_button = [&](const std::string& label, std::string info, ImGuiCol_ col_id)
 					{
 						std::string color_label = "##" + label + info;
-						auto& color = temp_style.Colors[col_id];
+						auto& color = temp_theme.style.Colors[col_id];
 						ImGui::TableNextRow();
 						ImGui::TableNextColumn(); ImGui::ColorEdit4(color_label.c_str(), (float*)&color, color_flags);
 						ImGui::PushStyleColor(ImGuiCol_Button, color);
@@ -132,7 +191,7 @@ namespace vt::widgets
 					static auto draw_checkbox = [&](const std::string& label, std::string info, ImGuiCol_ col_id)
 					{
 						std::string color_label = "##" + label + info;
-						auto& color = temp_style.Colors[col_id];
+						auto& color = temp_theme.style.Colors[col_id];
 						ImGui::TableNextRow();
 						ImGui::TableNextColumn(); ImGui::ColorEdit4(color_label.c_str(), (float*)&color, color_flags);
 						ImGui::PushStyleColor(ImGuiCol_CheckMark, color);
@@ -168,7 +227,7 @@ namespace vt::widgets
 					static auto draw_tab = [&](const std::string& label, std::string info, ImGuiCol_ col_id)
 					{
 						std::string color_label = "##" + label + info;
-						auto& color = temp_style.Colors[col_id];
+						auto& color = temp_theme.style.Colors[col_id];
 						ImGui::TableNextRow();
 						ImGui::TableNextColumn(); ImGui::ColorEdit4(color_label.c_str(), (float*)&color, color_flags);
 						ImGui::PushStyleColor(ImGuiCol_Tab, color);
@@ -212,7 +271,7 @@ namespace vt::widgets
 					static auto draw_header = [&](const std::string& label, std::string info, ImGuiCol_ col_id)
 					{
 						std::string color_label = "##" + label + info;
-						auto& color = temp_style.Colors[col_id];
+						auto& color = temp_theme.style.Colors[col_id];
 						ImGui::TableNextRow();
 						ImGui::TableNextColumn(); ImGui::ColorEdit4(color_label.c_str(), (float*)&color, color_flags);
 						ImGui::PushStyleColor(ImGuiCol_Header, color);
@@ -233,7 +292,7 @@ namespace vt::widgets
 					static auto draw_separator = [&](const std::string& label, std::string info, ImGuiCol_ col_id)
 					{
 						std::string color_label = "##" + label + info;
-						auto& color = temp_style.Colors[col_id];
+						auto& color = temp_theme.style.Colors[col_id];
 						ImGui::TableNextRow();
 						ImGui::TableNextColumn(); ImGui::ColorEdit4(color_label.c_str(), (float*)&color, color_flags);
 						ImGui::PushStyleColor(ImGuiCol_Separator, color);
@@ -276,7 +335,7 @@ namespace vt::widgets
 
 		if (live_preview)
 		{
-			ref = temp_style;
+			ref = temp_theme.style;
 		}
 	}
 }

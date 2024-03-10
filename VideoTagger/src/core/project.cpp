@@ -5,6 +5,7 @@
 #include <utils/string.hpp>
 #include <core/debug.hpp>
 #include <widgets/time_input.hpp>
+#include <utils/color.hpp>
 
 static std::chrono::system_clock::time_point to_sys_time(const std::filesystem::file_time_type& ftime)
 {
@@ -51,8 +52,7 @@ namespace vt
 			json_tags.push_back(nlohmann::json::value_t::object);
 			auto& json_tag_data = json_tags.back();
 			json_tag_data["name"] = tag.name;
-			decltype(tag.color) rgb = ((tag.color & 0x0000FF) << 16) + (tag.color & 0x00FF00) + ((tag.color & 0xFF0000) >> 16);
-			json_tag_data["color"] = "#" + utils::string::to_hex(rgb, (sizeof(decltype(rgb)) << 1) - 2);
+			json_tag_data["color"] = utils::color::to_string(tag.color);
 			auto& json_timestamps = json_tag_data["timestamps"];
 			json_timestamps = nlohmann::json::array();
 			for (const auto& timestamp : tag.timeline)
@@ -118,11 +118,10 @@ namespace vt
 			{
 				auto [tag_it, success] = result.tags.insert(tag_data["name"]);
 				auto col_str = tag_data["color"].get<std::string>();
-				if (col_str.size() == 7 and col_str[0] == '#')
+				uint32_t color{};
+				if (utils::color::parse_string(col_str, color))
 				{
-					auto rgb = std::stoul(col_str.substr(1), nullptr, 16);
-					auto abgr = (0xFF << 24) + ((rgb & 0x0000FF) << 16) + (rgb & 0x00FF00) + ((rgb & 0xFF0000) >> 16);
-					tag_it->color = abgr;
+					tag_it->color = color;
 				}
 
 				for (auto& timestamp : tag_data["timestamps"])

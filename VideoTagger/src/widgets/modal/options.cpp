@@ -35,7 +35,7 @@ namespace vt::widgets::modal
 			}
 			ImGui::Separator();
 			
-			if (ImGui::BeginTable("##OptionsColumns", 2, ImGuiTableFlags_BordersInnerV | ImGuiTableFlags_NoSavedSettings | ImGuiTableFlags_SizingStretchProp | ImGuiTableFlags_Resizable, ImGui::GetContentRegionAvail()))
+			if (ImGui::BeginTable("##OptionsColumns", 2, ImGuiTableFlags_BordersInnerV | ImGuiTableFlags_NoSavedSettings | ImGuiTableFlags_SizingStretchProp, ImGui::GetContentRegionAvail()))
 			{
 				ImGui::TableSetupColumn(nullptr, 0, 0.25f);
 				ImGui::TableSetupColumn(nullptr, 0, 0.75f);
@@ -66,11 +66,11 @@ namespace vt::widgets::modal
 								}
 								if (active) ImGui::PopStyleColor();
 							}
-						}
 
-						if (++group_id != group_count)
-						{
-							ImGui::Dummy({ 0, 0.25f * ImGui::GetTextLineHeightWithSpacing() });
+							if (++group_id != group_count)
+							{
+								ImGui::Dummy({ 0, 0.25f * ImGui::GetTextLineHeightWithSpacing() });
+							}
 						}
 					}
 					ImGui::EndChild();
