@@ -13,11 +13,13 @@ namespace vt
 	{
 	public:
 		video();
-		video(const video&) = delete;
+		//DOESN'T ACTUALLY COPY ANYTHING
+		video(const video&);
 		video(video&&) = default;
 		~video();
 
-		video& operator=(const video&) = delete;
+		//DOESN'T ACTUALLY COPY ANYTHING
+		video& operator=(const video&);
 		video& operator=(video&&) = default;
 
 		bool open_file(const std::filesystem::path& filepath, SDL_Renderer* renderer);

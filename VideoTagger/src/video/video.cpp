@@ -7,6 +7,11 @@ namespace vt
 	{
 	}
 
+	video::video(const video&)
+		: video()
+	{
+	}
+
 	bool video::open_file(const std::filesystem::path& filepath, SDL_Renderer* renderer)
 	{
 		if (is_open())
@@ -58,6 +63,12 @@ namespace vt
 	video::~video()
 	{
 		close();
+	}
+
+	video& video::operator=(const video&)
+	{
+		*this = std::move(video());
+		return *this;
 	}
 
 	void video::set_playing(bool value)

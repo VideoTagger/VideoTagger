@@ -4,7 +4,9 @@
 #include <map>
 #include <optional>
 
-#include "tags/tag_storage.hpp"
+#include <tags/tag_storage.hpp>
+#include <video/video_pool.hpp>
+
 
 namespace vt
 {
@@ -17,6 +19,7 @@ namespace vt
 		std::filesystem::path path = std::filesystem::current_path();
 
 		tag_storage tags;
+		video_pool videos;
 
 		//TODO: Store tags displayed on the timeline
 
