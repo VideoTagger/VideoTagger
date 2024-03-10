@@ -35,6 +35,7 @@ namespace vt
 
 	struct app_context
 	{
+		widgets::timeline_state timeline_state;
 		widgets::project_selector project_selector;
 		widgets::video_player player;
 		std::optional<project> current_project;

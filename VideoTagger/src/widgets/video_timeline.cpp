@@ -443,36 +443,36 @@ namespace vt::widgets
 
 				for (auto timestamp_it = tag_info.timeline.begin(); timestamp_it != tag_info.timeline.end(); ++timestamp_it)
 				{
+					if (moving_timestamp.has_value() and *moving_timestamp->tag == tag_info and moving_timestamp->segment == timestamp_it)
+					{
+						continue;
+					}
+
 					auto& tag_timestamp = *timestamp_it;
 
 					int64_t start = tag_timestamp.start.seconds_total.count();
 					int64_t end = tag_timestamp.end.seconds_total.count();
-					if (moving_timestamp.has_value() and moving_timestamp->tag == &tag_info and moving_timestamp->segment == timestamp_it)
-					{
-						start = moving_timestamp->left_position.seconds_total.count();
-						end = moving_timestamp->right_position.seconds_total.count();
-					}
 
-
-					uint32_t color = tag_info.color;
+					uint32_t timestamp_color = tag_info.color & 0x00FFFFFF | 0xFF000000;
 
 					ImVec2 pos = ImVec2(contentMin.x + legendWidth - firstFrameUsed * framePixelWidth, contentMin.y + ItemHeight * i + 1);
 					ImVec2 slot_p1(pos.x + start * framePixelWidth, pos.y + 2);
 					ImVec2 slot_p2(pos.x + end * framePixelWidth + framePixelWidth, pos.y + ItemHeight - 2);
 					//ImVec2 slotP3(pos.x + end * framePixelWidth + framePixelWidth, pos.y + ItemHeight - 2);
-					uint32_t slot_color = color | 0xFF000000;
-					uint32_t slot_color_half = (color & 0xFFFFFF) | 0x40000000;
+
+					//TODO: should be somewhere else
 					uint32_t selection_color = ImGui::ColorConvertFloat4ToU32({ 1.f, 0xA5 / 255.f, 0.f, 1.f }); //0xFFA500FF
 					float selection_thickness = 2.0f;
 
 					bool is_selected = selected_timestamp.has_value() and selected_timestamp->timestamp_timeline == &tag_info.timeline and selected_timestamp->timestamp == timestamp_it;
 
+					// Drawing
 					if (slot_p1.x <= (canvas_size.x + contentMin.x) and slot_p2.x >= (contentMin.x + legendWidth))
 					{
 						if (tag_timestamp.type() == tag_timestamp_type::segment)
 						{
 							//draw_list->AddRectFilled(slotP1, slotP3, slotColorHalf, 2);
-							draw_list->AddRectFilled(slot_p1, slot_p2, slot_color, 2);
+							draw_list->AddRectFilled(slot_p1, slot_p2, timestamp_color, 2);
 							if (is_selected)
 							{
 								draw_list->AddRect(slot_p1, slot_p2, selection_color, 2, 0, selection_thickness);
@@ -486,14 +486,14 @@ namespace vt::widgets
 							ImVec2 p3 = { pos.x, pos.y + ItemHeight / 2 - 1 };
 							ImVec2 p4 = { pos.x - (slot_p2.x - slot_p1.x) / 2, pos.y };
 
-							draw_list->AddQuadFilled(p1, p2, p3, p4, slot_color);
+							draw_list->AddQuadFilled(p1, p2, p3, p4, timestamp_color);
 							if (is_selected)
 							{
 								draw_list->AddQuad(p1, p2, p3, p4, selection_color, selection_thickness);
 							}
 						}
 					}
-					
+
 					/*if (ImRect(slotP1, slotP2).Contains(io.MousePos) and io.MouseDoubleClicked[0])
 					{
 						state->double_click(i);
@@ -507,9 +507,9 @@ namespace vt::widgets
 						ImRect(ImVec2(slot_p2.x - handle_width, slot_p1.y), slot_p2),
 						ImRect(slot_p1, slot_p2)
 					};
-					
+
 					bool mouse_on_segment = rects[2].Contains(io.MousePos);
-					//timestamp selection
+					// Timestamp selection
 					if (ImGui::IsMouseClicked(ImGuiMouseButton_Left))
 					{
 						if (mouse_on_segment)
@@ -525,7 +525,7 @@ namespace vt::widgets
 						deselect &= !mouse_on_segment;
 					}
 
-					const unsigned int quadColor[] = { 0xFFFFFFFF, 0xFFFFFFFF, slot_color/* + (selected ? 0 : 0x202020)*/};
+					const unsigned int quadColor[] = { 0xFFFFFFFF, 0xFFFFFFFF, timestamp_color/* + (selected ? 0 : 0x202020)*/ };
 					if (!moving_timestamp.has_value())// TODOFOCUS and backgroundRect.Contains(io.MousePos))
 					{
 						for (int j = 2; j >= 0; j--)
@@ -578,6 +578,44 @@ namespace vt::widgets
 					//
 					//
 					//compactCustomDraws.push_back({ i, customRect, ImRect(), clippingRect, ImRect() });
+				}
+
+				// Moving timestamp drawing
+				if (moving_timestamp.has_value() and *moving_timestamp->tag == tag_info)
+				{
+					auto& tag_timestamp = *moving_timestamp->segment;
+
+					int64_t start = moving_timestamp->left_position.seconds_total.count();
+					int64_t end = moving_timestamp->right_position.seconds_total.count();
+					ImVec2 pos = ImVec2(contentMin.x + legendWidth - firstFrameUsed * framePixelWidth, contentMin.y + ItemHeight * i + 1);
+					ImVec2 slot_p1(pos.x + start * framePixelWidth, pos.y + 2);
+					ImVec2 slot_p2(pos.x + end * framePixelWidth + framePixelWidth, pos.y + ItemHeight - 2);
+
+					uint32_t timestamp_color = tag_info.color & 0x00FFFFFF | 0x80000000;
+					//TODO: should be somewhere else
+					uint32_t selection_color = ImGui::ColorConvertFloat4ToU32({ 1.f, 0xA5 / 255.f, 0.f, 1.f });
+					float selection_thickness = 2.0f;
+
+					if (slot_p1.x <= (canvas_size.x + contentMin.x) and slot_p2.x >= (contentMin.x + legendWidth))
+					{
+						if (tag_timestamp.type() == tag_timestamp_type::segment)
+						{
+							//draw_list->AddRectFilled(slotP1, slotP3, slotColorHalf, 2);
+							draw_list->AddRectFilled(slot_p1, slot_p2, timestamp_color, 2);
+							draw_list->AddRect(slot_p1, slot_p2, selection_color, 2, 0, selection_thickness);
+						}
+						else if (tag_timestamp.type() == tag_timestamp_type::point)
+						{
+							ImVec2 pos = { (slot_p2.x + slot_p1.x) / 2, slot_p1.y + ItemHeight / 2 - 2 };
+							ImVec2 p1 = { pos.x, pos.y - ItemHeight / 2 + 1 };
+							ImVec2 p2 = { pos.x + (slot_p2.x - slot_p1.x) / 2, pos.y };
+							ImVec2 p3 = { pos.x, pos.y + ItemHeight / 2 - 1 };
+							ImVec2 p4 = { pos.x - (slot_p2.x - slot_p1.x) / 2, pos.y };
+
+							draw_list->AddQuadFilled(p1, p2, p3, p4, timestamp_color);
+							draw_list->AddQuad(p1, p2, p3, p4, selection_color, selection_thickness);
+						}
+					}
 				}
 
 				// Tag segment context dots_hor

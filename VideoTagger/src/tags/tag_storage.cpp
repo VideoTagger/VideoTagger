@@ -33,6 +33,27 @@ namespace vt
 		return iterator{ tags_.erase(it.unwrapped()) };
 	}
 
+	std::pair<tag_storage::iterator, bool> tag_storage::rename(const std::string& current_name, const std::string& new_name)
+	{
+		auto current_it = tags_.find(current_name);
+		if (current_it == tags_.end())
+		{
+			return { tags_.end(), false };
+		}
+
+		if (auto it = tags_.find(new_name); it != tags_.end())
+		{
+			return { it, false };
+		}
+		
+		auto node_handle = tags_.extract(current_name);
+		node_handle.key() = new_name;
+		node_handle.mapped().name = new_name;
+		auto insert_return = tags_.insert(std::move(node_handle));
+
+		return { iterator{ insert_return.position }, true };
+	}
+
 	tag& tag_storage::at(const std::string& name)
 	{
 		return tags_.at(name);

@@ -3,6 +3,7 @@
 #include <cmath>
 #include <fstream>
 #include <filesystem>
+#include <optional>
 
 #include <SDL.h>
 #include <imgui.h>
@@ -12,6 +13,7 @@
 #include <nfd.hpp>
 
 #include <widgets/widgets.hpp>
+#include <widgets/tag_manager.hpp>
 #include <widgets/video_widget.hpp>
 #include <widgets/video_timeline.hpp>
 #include <widgets/video_player.hpp>
@@ -741,12 +743,24 @@ namespace vt
 		{
 			auto& vid = ctx_.videos[i];
 			widgets::draw_video_widget(*vid, i);
-			widgets::draw_timeline_widget_sample(*vid, ctx_.current_project->tags, ctx_.selected_timestamp_data, ctx_.moving_timestamp_data, ctx_.is_project_dirty, i);
+			widgets::draw_timeline_widget_sample(ctx_.timeline_state, *vid, ctx_.current_project->tags, ctx_.selected_timestamp_data, ctx_.moving_timestamp_data, ctx_.is_project_dirty, i);
 		}
 
 		if (ctx_.win_cfg.show_tag_manager_window)
 		{
-			widgets::draw_tag_manager_widget(ctx_.current_project->tags, ctx_.is_project_dirty);
+			std::optional<widgets::tag_rename_data> tag_rename;
+			widgets::draw_tag_manager_widget(ctx_.current_project->tags, tag_rename, ctx_.is_project_dirty);
+			if (tag_rename.has_value())
+			{
+				for (auto& tag_name : ctx_.timeline_state.displayed_tags)
+				{
+					if (tag_name == tag_rename->old_name)
+					{
+						tag_name = tag_rename->new_name;
+					}
+				}
+				tag_rename.reset();
+			}
 		}
 
 		if (ctx_.win_cfg.show_settings_window)
