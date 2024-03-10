@@ -11,6 +11,7 @@
 #include <widgets/video_player.hpp>
 #include <widgets/color_picker.hpp>
 #include <widgets/theme_customizer.hpp>
+#include <widgets/modal/options.hpp>
 
 namespace vt
 {
@@ -41,6 +42,7 @@ namespace vt
 		widgets::project_selector project_selector;
 		widgets::video_player player;
 		widgets::theme_customizer theme_customizer;
+		widgets::modal::options options;
 		std::optional<project> current_project;
 		widgets::color_picker color_picker;
 		std::filesystem::path projects_list_filepath;

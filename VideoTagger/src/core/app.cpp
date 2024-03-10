@@ -22,6 +22,7 @@
 #include <widgets/inspector.hpp>
 #include <widgets/modal/options.hpp>
 #include <widgets/icons.hpp>
+#include <widgets/controls.hpp>
 #include <utils/filesystem.hpp>
 #include <utils/json.hpp>
 
@@ -146,6 +147,40 @@ namespace vt
 			ctx_.project_selector.save_projects_file(ctx_.projects_list_filepath);
 			debug::log("Saving projects list to " + std::filesystem::relative(ctx_.projects_list_filepath).string());
 		};
+
+		auto& options = ctx_.options;
+		options("Application Settings", "General") = [this]()
+		{
+			widgets::label("Font Size");
+			ImGui::SameLine();
+			int start_font_size = static_cast<int>(ctx_.fonts["default"]->FontSize);
+			static int font_size = start_font_size;
+			ImGui::SetNextItemWidth(ImGui::CalcTextSize("000").x);
+			if (ImGui::DragInt("##FontSize", &font_size, 1.0f, 8, 72, "%d", ImGuiSliderFlags_AlwaysClamp))
+			{
+				ctx_.settings["window"]["font-size"] = font_size;
+			}
+
+			//TODO: Add messagebox informing that the changes will be applied only after restart
+
+#ifdef _DEBUG
+			auto& io = ImGui::GetIO();
+			ImGui::SeparatorText("Debug Only");
+			ImGui::DragFloat("Font Scale", &io.FontGlobalScale, 0.005f, 0.5f, 2.0f, "%.2f", ImGuiSliderFlags_AlwaysClamp);
+#endif
+		};
+
+		options("Project Settings", "Keybinds") = []()
+		{
+			auto avail_area = ImGui::GetContentRegionMax();
+			constexpr const char* text = "Keybinds coming soon...";
+			auto half_text_size = ImGui::CalcTextSize(text, nullptr, false, 3 * avail_area.x / 4) / 2;
+			ImGui::SetCursorPos(avail_area / 2 - half_text_size);
+			ImGui::BeginDisabled();
+			ImGui::TextWrapped(text);
+			ImGui::EndDisabled();
+		};
+		options.set_active_tab("Application Settings", "General");
 	}
 	
 	bool app::init(const app_config& config)
@@ -208,53 +243,6 @@ namespace vt
 		io.IniFilename = "layout.ini";
 		io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
 		io.ConfigWindowsMoveFromTitleBarOnly = true;
-
-		std::filesystem::path font_path = std::filesystem::path("assets") / "fonts" / "NotoSans-Regular.ttf";
-		std::filesystem::path ico_font_path = std::filesystem::path("assets") / "fonts" / "MaterialIconsSharp-Regular.otf";
-		float font_size = 18.0f;
-
-		if (std::filesystem::exists(font_path))
-		{
-			ImVector<ImWchar> ranges;
-			ImFontGlyphRangesBuilder builder;
-			ImFontConfig config{};
-			config.MergeMode = true;
-			config.GlyphOffset = { 0.f, 4.f };
-			config.GlyphMinAdvanceX = font_size;
-
-			for (const auto& icon : icons::all)
-			{
-				builder.AddText(icon.c_str());
-			}
-
-			ImVector<ImWchar> default_ranges;
-			ImFontGlyphRangesBuilder default_font_builder;
-
-			for (const auto& range :
-			{
-				io.Fonts->GetGlyphRangesDefault(),
-				io.Fonts->GetGlyphRangesGreek(),
-				io.Fonts->GetGlyphRangesCyrillic()
-			})
-			{
-				default_font_builder.AddRanges(range);
-			}
-			
-			
-			//Polish characters
-			default_font_builder.AddText(u8"¹æê³ñóœŸ¿¥ÆÊ£ÑÓŒ¯");
-			default_font_builder.BuildRanges(&default_ranges);
-
-			builder.BuildRanges(&ranges);
-			ctx_.fonts["default"] = io.Fonts->AddFontFromFileTTF(font_path.string().c_str(), font_size, nullptr, default_ranges.Data);
-			io.Fonts->AddFontFromFileTTF(ico_font_path.string().c_str(), font_size, &config, ranges.Data);
-			ctx_.fonts["title"] = io.Fonts->AddFontFromFileTTF(font_path.string().c_str(), font_size * 1.25f, nullptr, default_ranges.Data);
-			io.Fonts->Build();
-		}
-		else
-		{
-			debug::log("Not loading a custom font, since the file doesn't exist");
-		}
 
 		state_ = app_state::initialized;
 		ctx_.projects_list_filepath = config.projects_list_filepath;
@@ -380,13 +368,21 @@ namespace vt
 			}
 			if (ctx_.settings.contains("window") and ctx_.settings["window"].contains("state"))
 			{
-				auto state = ctx_.settings["window"]["state"].get<window_state>();
+				auto& window = ctx_.settings["window"];
+				auto state = window["state"].get<window_state>();
 				switch (state)
 				{
 					case window_state::maximized: SDL_MaximizeWindow(main_window_); break;
 					default: break;
 				}
 				ctx_.win_cfg.state = state;
+
+				float font_size = 18.0f;
+				if (window.contains("font-size"))
+				{
+					font_size = window["font-size"].get<float>();
+				}
+				build_fonts(font_size);
 			}
 			if (ctx_.settings.contains("first-launch"))
 			{
@@ -448,6 +444,57 @@ namespace vt
 		set_subtitle();
 	}
 	
+	void app::build_fonts(float size)
+	{
+		auto& io = ImGui::GetIO();
+
+		std::filesystem::path font_path = std::filesystem::path("assets") / "fonts" / "NotoSans-Regular.ttf";
+		std::filesystem::path ico_font_path = std::filesystem::path("assets") / "fonts" / "MaterialIconsSharp-Regular.otf";
+
+		if (std::filesystem::exists(font_path))
+		{
+			ImVector<ImWchar> ranges;
+			ImFontGlyphRangesBuilder builder;
+			ImFontConfig config{};
+			config.MergeMode = true;
+			config.GlyphOffset = { 0.f, 4.f };
+			config.GlyphMinAdvanceX = size;
+
+			for (const auto& icon : icons::all)
+			{
+				builder.AddText(icon.c_str());
+			}
+
+			ImVector<ImWchar> default_ranges;
+			ImFontGlyphRangesBuilder default_font_builder;
+
+			for (const auto& range :
+			{
+				io.Fonts->GetGlyphRangesDefault(),
+				io.Fonts->GetGlyphRangesGreek(),
+				io.Fonts->GetGlyphRangesCyrillic()
+			})
+			{
+				default_font_builder.AddRanges(range);
+			}
+
+
+			//Polish characters
+			default_font_builder.AddText(u8"¹æê³ñóœŸ¿¥ÆÊ£ÑÓŒ¯");
+			default_font_builder.BuildRanges(&default_ranges);
+
+			builder.BuildRanges(&ranges);
+			ctx_.fonts["default"] = io.Fonts->AddFontFromFileTTF(font_path.string().c_str(), size, nullptr, default_ranges.Data);
+			io.Fonts->AddFontFromFileTTF(ico_font_path.string().c_str(), size, &config, ranges.Data);
+			ctx_.fonts["title"] = io.Fonts->AddFontFromFileTTF(font_path.string().c_str(), size * 1.25f, nullptr, default_ranges.Data);
+			io.Fonts->Build();
+		}
+		else
+		{
+			debug::log("Not loading a custom font, since the file doesn't exist");
+		}
+	}
+
 	void app::handle_events()
 	{
 		SDL_Event event{};
@@ -640,11 +687,11 @@ namespace vt
 			}
 			if (ImGui::BeginMenu("Edit"))
 			{
-				if (ImGui::MenuItem("Undo"))
+				if (ImGui::MenuItem("Undo", nullptr, nullptr, false))
 				{
 
 				}
-				if (ImGui::MenuItem("Redo"))
+				if (ImGui::MenuItem("Redo", nullptr, nullptr, false))
 				{
 
 				}
@@ -685,7 +732,7 @@ namespace vt
 			}
 			if (ImGui::BeginMenu("Tools"))
 			{
-				if (ImGui::BeginMenu("Theme"))
+				if (ImGui::BeginMenu("Theme", false))
 				{
 					bool selected = true;
 					ImGui::MenuItem("Theme 1", nullptr, &selected);
@@ -796,7 +843,7 @@ namespace vt
 
 		if (ctx_.win_cfg.show_options_window)
 		{
-			widgets::modal::options(&ctx_.win_cfg.show_options_window);
+			ctx_.options.render(&ctx_.win_cfg.show_options_window);
 		}
 
 		if (ctx_.win_cfg.show_inspector_window)

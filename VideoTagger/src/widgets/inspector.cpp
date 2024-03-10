@@ -4,7 +4,7 @@
 #include <imgui_internal.h>
 
 #include "time_input.hpp"
-#include "buttons.hpp"
+#include "controls.hpp"
 #include <tags/tag_timeline.hpp>
 #include <utils/time.hpp>
 #include "icons.hpp"

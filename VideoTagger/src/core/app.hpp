@@ -51,6 +51,7 @@ namespace vt
 		void save_project_as(const std::filesystem::path& filepath);
 		void close_project();
 
+		void build_fonts(float size);
 		void handle_events();
 		void render();
 

@@ -2,30 +2,10 @@
 #include <string>
 
 #include <imgui_internal.h>
-#include "icons.hpp"
+#include "controls.hpp"
 
 namespace vt::widgets
 {
-	static bool draw_collapsing_header(const char* label)
-	{
-		auto& style = ImGui::GetStyle();
-		ImGui::PushStyleColor(ImGuiCol_Text, ImVec4{});
-		std::string node_id = "##Node" + std::string(label);
-		auto cx = ImGui::GetCursorPosX();
-		bool result = ImGui::TreeNodeEx(node_id.c_str(), ImGuiTreeNodeFlags_Framed | ImGuiTreeNodeFlags_SpanFullWidth | ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_NoTreePushOnOpen);
-		ImGui::PopStyleColor();
-		auto icon = result ? icons::expand_less : icons::expand_more;
-
-		ImGui::SameLine();
-		auto px = ImGui::GetCursorPosX();
-		ImGui::SetCursorPosX(px - (px - cx) + style.ItemInnerSpacing.x);
-		//ImGui::SameLine(ImGui::GetTreeNodeToLabelSpacing());
-		ImGui::Text(label);
-		ImGui::SameLine(ImGui::GetContentRegionMax().x - style.FramePadding.x - ImGui::CalcTextSize(icon).x);
-		ImGui::Text(icon);
-		return result;
-	}
-
 	theme_customizer::theme_customizer() : original_style{}, temp_style{}, live_preview{ true }
 	{
 		
@@ -81,7 +61,7 @@ namespace vt::widgets
 					ImGui::TableNextColumn();
 				};
 
-				if (draw_collapsing_header("Windows, Frames and Popups"))
+				if (collapsing_header("Windows, Frames and Popups"))
 				{
 					ImGui::PushStyleColor(ImGuiCol_TableRowBg, temp_style.Colors[ImGuiCol_MenuBarBg]);
 					if (ImGui::BeginTable("##Background", 2, table_flags))
@@ -102,7 +82,7 @@ namespace vt::widgets
 					}
 					ImGui::PopStyleColor();
 				}
-				if (draw_collapsing_header("Text"))
+				if (collapsing_header("Text"))
 				{
 					static auto draw_text = [&](const std::string& label, std::string info, ImGuiCol_ col_id)
 					{
@@ -128,7 +108,7 @@ namespace vt::widgets
 					}
 					ImGui::PopStyleColor();
 				}
-				if (draw_collapsing_header("Buttons"))
+				if (collapsing_header("Buttons"))
 				{
 					static auto draw_button = [&](const std::string& label, std::string info, ImGuiCol_ col_id)
 					{
@@ -183,7 +163,7 @@ namespace vt::widgets
 					ImGui::PopStyleColor();
 				}
 
-				if (draw_collapsing_header("Tabs"))
+				if (collapsing_header("Tabs"))
 				{
 					static auto draw_tab = [&](const std::string& label, std::string info, ImGuiCol_ col_id)
 					{
@@ -227,7 +207,7 @@ namespace vt::widgets
 					ImGui::PopStyleColor();
 				}
 
-				if (draw_collapsing_header("Scrollbars, Headers and Separators"))
+				if (collapsing_header("Scrollbars, Headers and Separators"))
 				{
 					static auto draw_header = [&](const std::string& label, std::string info, ImGuiCol_ col_id)
 					{
