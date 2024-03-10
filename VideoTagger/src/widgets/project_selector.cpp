@@ -139,9 +139,8 @@ namespace vt::widgets
 
 			valid &= std::filesystem::is_directory(temp_project.path) and std::filesystem::exists(temp_project.path);
 
-			project temp_project_copy;
+			project temp_project_copy = project::shallow_copy(temp_project);
 			temp_project_copy.path = (temp_project.path / temp_project.name).replace_extension(project::extension);
-			temp_project_copy.name = temp_project.name;
 
 			auto it = std::find(projects_.begin(), projects_.end(), temp_project_copy);
 			valid &= (it == projects_.end());
@@ -159,7 +158,7 @@ namespace vt::widgets
 			if (valid and pressed)
 			{
 				//TODO: Check if such project doesn't already exist
-				temp_project.path = temp_project_copy.path;
+				temp_project = project::shallow_copy(temp_project_copy);
 				temp_project.save();
 				projects_.push_back(temp_project);
 

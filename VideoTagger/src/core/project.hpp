@@ -33,5 +33,6 @@ namespace vt
 		bool operator==(const project& other) const;
 
 		static project load_from_file(const std::filesystem::path& filepath);
+		static project shallow_copy(const project& other);
 	};
 }

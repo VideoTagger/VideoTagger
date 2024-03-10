@@ -136,8 +136,7 @@ namespace vt
 				}
 				return;
 			}
-			auto copy = project;
-			ctx_.current_project = std::move(copy);
+			ctx_.current_project = project;
 			set_subtitle(project.name);
 		};
 

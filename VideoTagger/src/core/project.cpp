@@ -143,4 +143,13 @@ namespace vt
 		}			
 		return result;
 	}
+
+	project project::shallow_copy(const project& other)
+	{
+		project result;
+		result.version = other.version;
+		result.name = other.name;
+		result.path = other.path;
+		return result;
+	}
 }
