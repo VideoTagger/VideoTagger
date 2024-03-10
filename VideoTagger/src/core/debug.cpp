@@ -53,7 +53,7 @@ namespace vt
 		if (static_cast<uint8_t>(log_mode) & static_cast<uint8_t>(debug::logging_mode::file))
 		{
 			std::ofstream log(log_filepath, std::ios::app);
-			if (log.is_open()) log << msg;
+			if (log.is_open()) log << flag << msg;
 		}
 	}
 

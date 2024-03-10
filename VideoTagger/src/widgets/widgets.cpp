@@ -27,19 +27,19 @@ namespace vt::widgets
 		bool active{};
 	};
 	
-	void draw_timeline_widget_sample(video& video, tag_storage& tags, std::optional<selected_timestamp_data>& selected_timestamp, bool& dirty_flag, uint32_t id)
+	void draw_timeline_widget_sample(timeline_state& state, video& video, tag_storage& tags, std::optional<selected_timestamp_data>& selected_timestamp, std::optional<moving_timestamp_data>& moving_timestamp, bool& dirty_flag, uint32_t id)
 	{
-		static timeline_state test_timeline;
-		test_timeline.tags = &tags;
-		test_timeline.sync_tags();
+		//TODO: Definitely change this!
+		state.tags = &tags;
+		state.sync_tags();
 
 		if (video.is_open())
 		{
-			test_timeline.time_max = timestamp(std::chrono::duration_cast<std::chrono::seconds>(video.duration()));
+			state.time_max = timestamp(std::chrono::duration_cast<std::chrono::seconds>(video.duration()));
 		}
 		else
 		{
-			test_timeline.time_min = timestamp{};
+			state.time_min = timestamp{};
 		}
 
 		static int64_t first_frame = 0;
@@ -53,7 +53,7 @@ namespace vt::widgets
 		{
 			ImGui::PushID(id);
 			ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, default_window_padding);
-			video_timeline(test_timeline, current_time, selected_timestamp, dirty_flag);
+			video_timeline(state, current_time, selected_timestamp, moving_timestamp, dirty_flag);
 			ImGui::PopStyleVar();
 			
 			if (current_time.seconds_total != std::chrono::duration_cast<std::chrono::seconds>(video.current_timestamp()))
@@ -66,15 +66,11 @@ namespace vt::widgets
 		ImGui::PopStyleVar();
 	}
 
-	void draw_tag_manager_widget(tag_storage& tags)
+	void draw_tag_manager_widget(tag_storage& tags, std::optional<tag_rename_data>& tag_rename, bool& dirty_flag)
 	{
-		if (ImGui::Begin("Tags test"))
+		if (ImGui::Begin("Tag Manager", nullptr, ImGuiWindowFlags_NoScrollbar))
 		{
-			static tag_storage::iterator selected = tags.end();
-			if (widgets::tag_manager(tags, selected))
-			{
-				std::cout << "selected tag " << selected->name << "\n";
-			}
+			widgets::tag_manager(tags, tag_rename, dirty_flag);
 		}
 		ImGui::End();
 	}

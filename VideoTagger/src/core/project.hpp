@@ -10,11 +10,11 @@ namespace vt
 {
 	struct project
 	{
-		static constexpr const char* extension = "json";
+		static constexpr const char* extension = "vtproj";
 
+		uint16_t version = 1;
 		std::string name = "New Project";
 		std::filesystem::path path = std::filesystem::current_path();
-		std::filesystem::path working_dir = ".";
 
 		tag_storage tags;
 
@@ -25,6 +25,7 @@ namespace vt
 		bool is_valid() const;
 		std::optional<std::tm> modification_time() const;
 		void save() const;
+		void save_as(const std::filesystem::path& filepath);
 
 		bool operator==(const project& other) const;
 

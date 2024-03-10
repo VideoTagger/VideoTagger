@@ -18,32 +18,6 @@ namespace vt::widgets
 		return 0;
 	}
 
-	//parses HH:MM:SS string into seconds
-	uint64_t time_to_seconds(const std::string& input)
-	{
-		uint8_t n = 0;
-		uint8_t mul = 0;
-		uint64_t seconds{};
-		uint64_t val{};
-		auto it = input.rbegin();
-		while (it != input.rend() and mul != 3)
-		{
-			char c = *it++;
-			bool is_separator = (c == ':');
-			if (!is_separator)
-			{
-				val += static_cast<uint64_t>(c - '0') * static_cast<uint64_t>(std::pow(10, n++));
-			}
-			if (is_separator or it == input.rend())
-			{
-				seconds += val * static_cast<uint64_t>(std::pow(60ull, mul++));
-				n = 0;
-				val = 0;
-			}
-		}
-		return seconds;
-	}
-
 	static bool temp_input_text(const ImRect& bb, ImGuiID id, const char* label, char* buf, int buf_size, ImGuiInputTextFlags flags)
 	{
 		// On the first frame, g.TempInputTextId == 0, then on subsequent frames it becomes == id.
@@ -85,7 +59,7 @@ namespace vt::widgets
 			memcpy(&data_backup, p_data, data_type_size);
 
 			// Input text parsing
-			p_data->seconds_total = std::chrono::seconds(time_to_seconds(data_buf));
+			p_data->seconds_total = std::chrono::seconds(utils::time::parse_time_to_sec(data_buf));
 			/*
 			// Apply new value (or operations) then clamp
 			ImGui::DataTypeApplyFromText(data_buf, data_type, p_data, format);

@@ -6,6 +6,7 @@
 #include <chrono>
 
 #include <utils/timestamp.hpp>
+#include <utils/iterator_range.hpp>
 
 namespace vt
 {
@@ -54,7 +55,7 @@ namespace vt
 		//will invalidate it
 		std::pair<iterator, bool> replace(iterator it, timestamp time_point);
 
-		std::pair<iterator, iterator> find_range(timestamp time_start, timestamp time_end) const;
+		iterator_range<iterator> find_range(timestamp time_start, timestamp time_end) const;
 		iterator find(timestamp time_point) const;
 
 		iterator begin() const;

@@ -3,5 +3,5 @@
 
 namespace vt::widgets
 {
-	extern void draw_video_widget(video& video, uint32_t id);
+	extern void draw_video_widget(video& video, uint64_t id);
 }

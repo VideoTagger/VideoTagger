@@ -37,12 +37,24 @@
 
 namespace vt::widgets
 {
-	//TODO: use this
+	//TODO: maybe should be moved somwhere else
 	struct selected_timestamp_data
 	{
-		std::string tag_name;
+		//TODO: maybe store the tag name instead of a pointer
+		vt::tag* tag{};
 		tag_timeline* timestamp_timeline;
 		tag_timeline::iterator timestamp;
+	};
+
+	struct moving_timestamp_data
+	{
+		//TODO: maybe store the tag name instead of a pointer
+		vt::tag* tag{};
+		tag_timeline::iterator segment{};
+		uint8_t grab_part{};
+		timestamp grab_position{};
+		timestamp start{};
+		timestamp end{};
 	};
 
 	struct timeline_state
@@ -59,15 +71,19 @@ namespace vt::widgets
 
 		const char* get_collapse_fmt() const { return "%d Frames / %d entries"; }
 
-		tag& get(int index);
+		tag& get(size_t index);
 		void add(const std::string& name);
-		void del(int index);
+		void del(size_t index);
 
 		void sync_tags();
 	};
 
+	//Inspector needs this
+	extern bool merge_timestamps_popup(const std::string& id, bool& pressed_button);
+	
+	extern bool insert_timestamp_popup(const std::string& id, tag& tag, timestamp& start, timestamp& end, uint64_t min_timestamp, uint64_t max_timestamp);
 
 	// return true if selection is made
-	bool video_timeline(timeline_state& state, timestamp& current_time, std::optional<selected_timestamp_data>& selected_timestamp, bool& dirty_flag);
+	bool video_timeline(timeline_state& state, timestamp& current_time, std::optional<selected_timestamp_data>& selected_timestamp, std::optional<moving_timestamp_data>& moving_timestamp, bool& dirty_flag);
 
 }
