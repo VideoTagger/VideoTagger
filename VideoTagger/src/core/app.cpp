@@ -481,7 +481,7 @@ namespace vt
 
 
 			//Polish characters
-			default_font_builder.AddText(u8"¹æê³ñóœŸ¿¥ÆÊ£ÑÓŒ¯");
+			default_font_builder.AddText(u8"ï¿½ï¿½ï¿½ï¿½óœŸ¿ï¿½ï¿½Ê£ï¿½ÓŒï¿½ï¿½");
 			default_font_builder.BuildRanges(&default_ranges);
 
 			builder.BuildRanges(&ranges);
@@ -502,8 +502,8 @@ namespace vt
 		while (SDL_PollEvent(&event))
 		{
 			ImGui_ImplSDL2_ProcessEvent(&event);
-
-			switch (event.type)
+			
+						switch (event.type)
 			{
 				case SDL_WINDOWEVENT:
 				{
