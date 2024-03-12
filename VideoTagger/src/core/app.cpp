@@ -673,7 +673,7 @@ namespace vt
 				ImGui::Separator();
 				{
 					std::string menu_item = std::string(icons::save) + " Save";
-					if (ImGui::MenuItem(menu_item.c_str(), "Ctrl+S", ctx_.current_project.has_value()))
+					if (ImGui::MenuItem(menu_item.c_str(), "Ctrl+S"))
 					{
 						on_save();
 					}
@@ -681,7 +681,7 @@ namespace vt
 
 				{
 					std::string menu_item = std::string(icons::save_as) + " Save As...";
-					if (ImGui::MenuItem(menu_item.c_str(), "Ctrl+Shift+S", nullptr, ctx_.current_project.has_value()))
+					if (ImGui::MenuItem(menu_item.c_str(), "Ctrl+Shift+S"))
 					{
 						on_save_as();
 					}
