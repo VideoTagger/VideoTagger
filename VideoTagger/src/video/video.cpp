@@ -1,4 +1,5 @@
 #include "video.hpp"
+#define VT_ENABLE_THUMBNAILS 0
 
 namespace vt
 {
@@ -135,6 +136,7 @@ namespace vt
 		if (timestamp < last_ts_)
 		{
 			decoder_.seek_keyframe(0);
+			last_ts_ = std::chrono::nanoseconds(0);
 		}
 		
 		while (!decoder_.eof())
@@ -401,4 +403,25 @@ namespace vt
 		return decoder_.fps();
 	}
 
+	void video::get_thumbnail(SDL_Renderer* renderer, SDL_Texture* texture, std::optional<std::chrono::nanoseconds> timestamp)
+	{
+#if VT_ENABLE_THUMBNAILS
+		auto start_timestamp = current_timestamp();
+
+		if (!timestamp.has_value())
+		{
+			timestamp = duration() / 2;
+		}
+
+		seek(*timestamp);
+
+		SDL_Texture* target = SDL_GetRenderTarget(renderer);
+		SDL_SetRenderTarget(renderer, texture);
+		SDL_RenderCopy(renderer, texture_, NULL, NULL);
+		SDL_RenderPresent(renderer);
+		SDL_SetRenderTarget(renderer, target);
+
+		seek(start_timestamp);
+#endif
+	}
 }

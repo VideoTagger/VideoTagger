@@ -49,6 +49,8 @@ namespace vt
 		size_t current_frame_number() const;
 		double fps() const;
 
+		void get_thumbnail(SDL_Renderer* renderer, SDL_Texture* texture, std::optional<std::chrono::nanoseconds> timestamp = std::nullopt);
+
 	private:
 		video_decoder decoder_;
 		SDL_Texture* texture_;

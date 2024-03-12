@@ -200,11 +200,9 @@ namespace vt
 
 		//Seek to the nearest keyframe before or on the timestamp
 		//Discards all packets currently in queues
-		//Returns the keyframe timestamp
 		void seek_keyframe(std::chrono::nanoseconds timestamp);
 		//Seek to the nearest keyframe before or on the timestamp
 		//Discards all packets currently in queues
-		//Returns the keyframe timestamp
 		void seek_keyframe(size_t frame_number);
 
 		[[nodiscard]] bool is_open() const;
