@@ -9,7 +9,7 @@
 #include <imgui_stdlib.h>
 
 #include <utils/random.hpp>
-#include "buttons.hpp"
+#include "controls.hpp"
 #include "icons.hpp"
 #include <core/app_context.hpp>
 

@@ -16,7 +16,7 @@
 #include <utils/string.hpp>
 #include <utils/time.hpp>
 #include "icons.hpp"
-#include "buttons.hpp"
+#include "controls.hpp"
 
 #include <core/app.hpp>
 

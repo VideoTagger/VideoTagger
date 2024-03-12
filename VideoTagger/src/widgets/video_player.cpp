@@ -4,7 +4,7 @@
 #include <chrono>
 #include <utils/timestamp.hpp>
 #include "slider.hpp"
-#include "buttons.hpp"
+#include "controls.hpp"
 #include "icons.hpp"
 
 namespace vt::widgets

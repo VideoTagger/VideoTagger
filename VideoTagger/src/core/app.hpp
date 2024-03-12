@@ -44,6 +44,8 @@ namespace vt
 		bool run();
 		void shutdown();
 		void on_close_project(bool should_shutdown);
+		void on_save();
+		void on_save_as();
 
 		bool load_settings();
 		void save_settings();
@@ -51,6 +53,8 @@ namespace vt
 		void save_project_as(const std::filesystem::path& filepath);
 		void close_project();
 
+		void build_fonts(float size);
+		void init_keybinds();
 		void handle_events();
 		void render();
 

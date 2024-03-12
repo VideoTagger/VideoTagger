@@ -5,7 +5,7 @@
 #include <imgui_internal.h>
 #include <utils/timestamp.hpp>
 #include "slider.hpp"
-#include "buttons.hpp"
+#include "controls.hpp"
 #include "icons.hpp"
 #include <core/debug.hpp>
 
