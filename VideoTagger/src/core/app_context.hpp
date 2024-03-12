@@ -9,6 +9,7 @@
 #include <widgets/video_timeline.hpp>
 #include <widgets/video_player.hpp>
 #include <widgets/color_picker.hpp>
+#include <widgets/video_browser.hpp>
 #include <widgets/theme_customizer.hpp>
 #include <widgets/modal/options.hpp>
 
@@ -31,6 +32,7 @@ namespace vt
 		bool show_inspector_window = true;
 		bool show_tag_manager_window = true;
 		bool show_video_player_window = true;
+		bool show_video_browser_window = true;
 
 		//not serialized
 		bool show_options_window = false;
@@ -43,6 +45,7 @@ namespace vt
 		widgets::timeline_state timeline_state;
 		widgets::project_selector project_selector;
 		widgets::video_player player;
+		widgets::video_browser browser;
 		widgets::theme_customizer theme_customizer;
 		widgets::modal::options options;
 		std::optional<project> current_project;

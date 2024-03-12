@@ -420,6 +420,7 @@ namespace vt
 				if (show_windows.contains("inspector")) ctx_.win_cfg.show_inspector_window = show_windows["inspector"];
 				if (show_windows.contains("tag-manager")) ctx_.win_cfg.show_tag_manager_window = show_windows["tag-manager"];
 				if (show_windows.contains("video-player")) ctx_.win_cfg.show_video_player_window = show_windows["video-player"];
+				if (show_windows.contains("video-browser")) ctx_.win_cfg.show_video_browser_window = show_windows["video-browser"];
 			}
 			
 			return true;
@@ -624,6 +625,7 @@ namespace vt
 			ImGui::DockBuilderDockWindow("Tag Manager", main_dock_right);
 			ImGui::DockBuilderDockWindow("Video Player", main_dock_up);
 			ImGui::DockBuilderDockWindow("Theme Customizer", main_dock_up);
+			ImGui::DockBuilderDockWindow("Video Browser", dockspace_id_copy);
 			//ImGui::DockBuilderDockWindow("Options", main_dock_up);
 			for (size_t i = 0; i < 8; ++i)
 			{
@@ -650,23 +652,16 @@ namespace vt
 		{
 			if (ImGui::BeginMenu("File"))
 			{
-				if (ImGui::MenuItem("Open Video..."))
+				if (ImGui::MenuItem("Import Video"))
 				{
 					auto result = utils::filesystem::get_file();
 					if (result)
 					{
-						debug::log("Opening video " + result.path.string());
-						auto vid = std::make_shared<video>();
-						vid->open_file(result.path, renderer_);
-						ctx_.videos.push_back(vid);
-					}
-				}
-				if (ImGui::MenuItem("Open Dir"))
-				{
-					auto result = utils::filesystem::get_folder();
-					if (result)
-					{
-						debug::log("Opening directory " + result.path.string());
+						debug::log("Importing video " + result.path.string());
+						//auto vid = std::make_shared<video>();
+						//vid->open_file(result.path, renderer_);
+						//ctx_.videos.push_back(vid);
+						ctx_.current_project->videos.insert(result.path);
 					}
 				}
 
@@ -688,20 +683,6 @@ namespace vt
 				}
 
 				ImGui::Separator();
-				if (ImGui::BeginMenu("Project"))
-				{
-					//TODO: Modal window which lets you select what you want to import/export into/from the project
-					if (ImGui::MenuItem("Import"))
-					{
-						//...
-					}
-					if (ImGui::MenuItem("Export"))
-					{
-						//...
-					}
-					ImGui::EndMenu();
-				}
-
 				{
 					std::string menu_item = std::string(icons::close) + " Close Project";
 					if (ImGui::MenuItem(menu_item.c_str()))
@@ -737,6 +718,11 @@ namespace vt
 				if (ImGui::MenuItem("Show Video Player", nullptr, &ctx_.win_cfg.show_video_player_window))
 				{
 					ctx_.settings["show-windows"]["video-player"] = ctx_.win_cfg.show_video_player_window;
+					result = true;
+				}
+				if (ImGui::MenuItem("Show Video Browser", nullptr, &ctx_.win_cfg.show_video_browser_window))
+				{
+					ctx_.settings["show-windows"]["video-browser"] = ctx_.win_cfg.show_video_browser_window;
 					result = true;
 				}
 				if (ImGui::MenuItem("Show Inspector", nullptr, &ctx_.win_cfg.show_inspector_window))
@@ -885,6 +871,11 @@ namespace vt
 			//TODO: No idea where to put this
 			static bool link_start_end = true;
 			widgets::inspector(ctx_.selected_timestamp_data, ctx_.moving_timestamp_data, link_start_end, ctx_.is_project_dirty, &ctx_.win_cfg.show_inspector_window);
+		}
+
+		if (ctx_.win_cfg.show_video_browser_window)
+		{
+			ctx_.browser.render(ctx_.win_cfg.show_video_browser_window);
 		}
 
 		if (ctx_.win_cfg.show_theme_customizer_window)
