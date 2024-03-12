@@ -13,14 +13,20 @@ namespace vt
 	class video_group
 	{
 	public:
-		using container = std::vector<video_id_type>;
+		struct video_info
+		{
+			video_id_type id;
+			std::chrono::nanoseconds offset;
+		};
+
+		using container = std::vector<video_info>;
 		using iterator = container::iterator;
 		using const_iterator = container::const_iterator;
 
 		video_group() = default;
-		explicit video_group(std::vector<video_id_type> video_ids);
+		explicit video_group(std::vector<video_info> video_infos);
 
-		bool insert(video_id_type video_id);
+		bool insert(video_info video_info);
 		bool erase(video_id_type video_id);
 
 		bool contains(video_id_type video_id) const;
@@ -37,18 +43,18 @@ namespace vt
 		const_iterator cend() const;
 
 	private:
-		std::vector<video_id_type> video_ids_;
-	};
-
-	struct video_info
-	{
-		std::filesystem::path path;
-		video video;
+		container video_ids_;
 	};
 
 	class video_pool
 	{
 	public:
+		struct video_info
+		{
+			std::filesystem::path path;
+			video video;
+		};
+
 		using container = std::unordered_map<video_id_type, video_info>;
 		using iterator = container::iterator;
 		using const_iterator = container::const_iterator;

@@ -1,7 +1,7 @@
 #pragma once
 #include <string>
 #include <filesystem>
-#include <map>
+#include <unordered_map>
 #include <optional>
 
 #include <tags/tag_storage.hpp>
@@ -20,6 +20,7 @@ namespace vt
 
 		tag_storage tags;
 		video_pool videos;
+		std::unordered_map<uint64_t, video_group> video_groups;
 
 		//TODO: Store tags displayed on the timeline
 

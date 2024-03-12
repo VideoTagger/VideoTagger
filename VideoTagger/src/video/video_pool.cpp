@@ -1,19 +1,19 @@
 #include "video_pool.hpp"
 namespace vt
 {
-	video_group::video_group(std::vector<video_id_type> video_ids)
+	video_group::video_group(std::vector<video_info> video_ids)
 		: video_ids_(video_ids)
 	{
 	}
 
-	bool video_group::insert(video_id_type video_id)
+	bool video_group::insert(video_info video_info)
 	{
-		if (contains(video_id))
+		if (contains(video_info.id))
 		{
 			return false;
 		}
 
-		video_ids_.push_back(video_id);
+		video_ids_.push_back(video_info);
 		return true;
 	}
 
@@ -36,7 +36,7 @@ namespace vt
 	{
 		for (auto it = begin(); it != end(); ++it)
 		{
-			if (*it == video_id)
+			if (it->id == video_id)
 			{
 				return it;
 			}
@@ -49,7 +49,7 @@ namespace vt
 	{
 		for (auto it = begin(); it != end(); ++it)
 		{
-			if (*it == video_id)
+			if (it->id == video_id)
 			{
 				return it;
 			}
@@ -138,11 +138,11 @@ namespace vt
 	{
 		std::vector<video_id_type> result;
 
-		for (auto& id : group)
+		for (auto& vi : group)
 		{
-			if (!open_video(id, renderer))
+			if (!open_video(vi.id, renderer))
 			{
-				result.push_back(id);
+				result.push_back(vi.id);
 			}
 		}
 
@@ -153,11 +153,11 @@ namespace vt
 	{
 		std::vector<video_id_type> result;
 
-		for (auto& id : group)
+		for (auto& vi : group)
 		{
-			if (!close_video(id))
+			if (!close_video(vi.id))
 			{
-				result.push_back(id);
+				result.push_back(vi.id);
 			}
 		}
 
@@ -185,9 +185,9 @@ namespace vt
 		std::vector<video*> result;
 		result.reserve(group.size());
 
-		for (auto& id : group)
+		for (auto& vi : group)
 		{
-			result.push_back(get(id));
+			result.push_back(get(vi.id));
 		}
 
 		return result;
@@ -198,9 +198,9 @@ namespace vt
 		std::vector<const video*> result;
 		result.reserve(group.size());
 
-		for (auto& id : group)
+		for (auto& vi : group)
 		{
-			result.push_back(get(id));
+			result.push_back(get(vi.id));
 		}
 
 		return result;
