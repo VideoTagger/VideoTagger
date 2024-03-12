@@ -8,14 +8,14 @@
 
 namespace vt
 {
-	using video_id_type = uint64_t;
+	using video_id_t = uint64_t;
 
 	class video_group
 	{
 	public:
 		struct video_info
 		{
-			video_id_type id;
+			video_id_t id;
 			std::chrono::nanoseconds offset;
 		};
 
@@ -27,13 +27,13 @@ namespace vt
 		explicit video_group(std::vector<video_info> video_infos);
 
 		bool insert(video_info video_info);
-		bool erase(video_id_type video_id);
+		bool erase(video_id_t video_id);
 
-		bool contains(video_id_type video_id) const;
+		bool contains(video_id_t video_id) const;
 		size_t size() const;
 
-		iterator find(video_id_type video_id);
-		const_iterator find(video_id_type video_id) const;
+		iterator find(video_id_t video_id);
+		const_iterator find(video_id_t video_id) const;
 
 		iterator begin();
 		const_iterator begin() const;
@@ -53,32 +53,33 @@ namespace vt
 		{
 			std::filesystem::path path;
 			video video;
+			bool is_widget_open{};
 		};
 
-		using container = std::unordered_map<video_id_type, video_info>;
+		using container = std::unordered_map<video_id_t, video_info>;
 		using iterator = container::iterator;
 		using const_iterator = container::const_iterator;
 
-		video_id_type insert(const std::filesystem::path& video_path);
-		bool erase(video_id_type video_id);
+		video_id_t insert(const std::filesystem::path& video_path);
+		bool erase(video_id_t video_id);
 
-		bool open_video(video_id_type video_id, SDL_Renderer* renderer);
-		bool close_video(video_id_type video_id);
+		bool open_video(video_id_t video_id, SDL_Renderer* renderer);
+		bool close_video(video_id_t video_id);
 		//return ids which failed to open
-		std::vector<video_id_type> open_group(const video_group& group, SDL_Renderer* renderer);
+		std::vector<video_id_t> open_group(const video_group& group, SDL_Renderer* renderer);
 		//return ids which failed to close (<- is this necessary???)
-		std::vector<video_id_type> close_group(const video_group& group);
+		std::vector<video_id_t> close_group(const video_group& group);
 
-		video* get(video_id_type video_id);
-		const video* get(video_id_type video_id) const;
+		video_info* get(video_id_t video_id);
+		const video_info* get(video_id_t video_id) const;
 		
 		//TODO: consider taking a vector as an argument instead of returning. This could allow to avoid unnecessary allocations
-		std::vector<video*> get_group(const video_group& group);
+		std::vector<video_info*> get_group(const video_group& group);
 		//TODO: consider taking a vector as an argument instead of returning. This could allow to avoid unnecessary allocations
-		std::vector<const video*> get_group(const video_group& group) const;
+		std::vector<const video_info*> get_group(const video_group& group) const;
 
-		bool is_open(video_id_type video_id) const;
-		bool exists(video_id_type video_id) const;
+		bool is_open(video_id_t video_id) const;
+		bool exists(video_id_t video_id) const;
 		size_t size() const;
 
 		iterator begin();

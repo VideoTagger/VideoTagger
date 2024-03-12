@@ -15,10 +15,10 @@ namespace vt::widgets
 	{
 		if (!ctx_.current_project.has_value()) return;
 
-		static auto draw_video_tile = [](const std::filesystem::path& path, ImVec2 img_size, ImVec2 tile_size, SDL_Texture* texture = nullptr)
+		static auto draw_video_tile = [this](const video_pool::video_info& vinfo, ImVec2 img_size, ImVec2 tile_size, bool& open, bool& remove, SDL_Texture* texture = nullptr)
 		{
 			auto& style = ImGui::GetStyle();
-			std::string name = path.stem().u8string();
+			std::string name = vinfo.path.stem().u8string();
 			ImGui::TableNextColumn();
 			ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2{});
 			ImTextureID imgui_tex = static_cast<ImTextureID>(texture);
@@ -34,10 +34,21 @@ namespace vt::widgets
 			}
 			if (ImGui::IsItemActivated() and ImGui::IsMouseDoubleClicked(0))
 			{
-				debug::log("Double clicked " + name + " in video browser");
+				open = true;
 			}
-			std::string path_str = std::filesystem::relative(path, ctx_.current_project->path.parent_path()).u8string();
-			ImGui::SetItemTooltip(path_str.c_str());
+			if (ImGui::BeginPopupContextItem("##VideoTileCtxMenu"))
+			{
+				if (!vinfo.is_widget_open and ImGui::MenuItem("Open"))
+				{
+					open = true;
+				}
+				if (ImGui::MenuItem("Remove"))
+				{
+					remove = true;
+				}
+				ImGui::EndPopup();
+			}
+
 			ImGui::SetCursorPos(std::exchange(cpos, ImGui::GetCursorPos()));
 			ImGui::BeginGroup();
 			ImGui::Image(imgui_tex, img_size);
@@ -73,10 +84,25 @@ namespace vt::widgets
 				if (ImGui::BeginTable("##VideoDrawer", columns, ImGuiTableFlags_ScrollY | ImGuiTableFlags_SizingFixedSame))
 				{
 					ImGui::TableNextRow();
-					for (const auto& video : ctx_.current_project->videos)
+					for (const auto& [id, vinfo] : ctx_.current_project->videos)
 					{
-						const auto& info = video.second;
-						draw_video_tile(info.path, img_size, tile_size);
+						bool open = false;
+						bool remove = false;
+						draw_video_tile(vinfo, img_size, tile_size, open, remove);
+						if (remove)
+						{
+							ctx_.current_project->videos.erase(id);
+							break;
+						}
+
+						if (open and !vinfo.is_widget_open)
+						{
+							debug::log("Opening video " + vinfo.path.string());
+							if (on_open_video != nullptr)
+							{
+								std::invoke(on_open_video, id);
+							}
+						}
 					}
 					ImGui::EndTable();
 				}

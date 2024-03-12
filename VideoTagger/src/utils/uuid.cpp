@@ -2,7 +2,7 @@
 
 namespace vt::utils::uuid
 {
-	uint64_t uuid::gen_uuid()
+	uint64_t get()
 	{
 		static std::random_device rd;
 		static std::mt19937_64 generator(rd());

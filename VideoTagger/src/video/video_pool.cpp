@@ -1,10 +1,10 @@
 #include "video_pool.hpp"
+#include <utils/hash.hpp>
+
+
 namespace vt
 {
-	video_group::video_group(std::vector<video_info> video_ids)
-		: video_ids_(video_ids)
-	{
-	}
+	video_group::video_group(std::vector<video_info> video_ids) : video_ids_(video_ids) {}
 
 	bool video_group::insert(video_info video_info)
 	{
@@ -17,12 +17,12 @@ namespace vt
 		return true;
 	}
 
-	bool video_group::erase(video_id_type video_id)
+	bool video_group::erase(video_id_t video_id)
 	{
 		return false;
 	}
 
-	bool video_group::contains(video_id_type video_id) const
+	bool video_group::contains(video_id_t video_id) const
 	{
 		return find(video_id) != end();
 	}
@@ -32,7 +32,7 @@ namespace vt
 		return video_ids_.size();
 	}
 
-	video_group::iterator video_group::find(video_id_type video_id)
+	video_group::iterator video_group::find(video_id_t video_id)
 	{
 		for (auto it = begin(); it != end(); ++it)
 		{
@@ -45,7 +45,7 @@ namespace vt
 		return end();
 	}
 
-	video_group::const_iterator video_group::find(video_id_type video_id) const
+	video_group::const_iterator video_group::find(video_id_t video_id) const
 	{
 		for (auto it = begin(); it != end(); ++it)
 		{
@@ -88,15 +88,15 @@ namespace vt
 		return video_ids_.cend();
 	}
 
-	video_id_type video_pool::insert(const std::filesystem::path& video_path)
+	video_id_t video_pool::insert(const std::filesystem::path& video_path)
 	{
-		video_id_type video_id = utils::uuid::gen_uuid();
+		video_id_t video_id = utils::hash::fnv_hash(video_path); //utils::uuid::get()
 		video_info videoInfo = { video_path, video() };
 		videos_.try_emplace(video_id, std::move(videoInfo));
 		return video_id;
 	}
 
-	bool video_pool::erase(video_id_type video_id)
+	bool video_pool::erase(video_id_t video_id)
 	{
 		auto it = videos_.find(video_id);
 		if (it == videos_.end())
@@ -108,7 +108,7 @@ namespace vt
 		return true;
 	}
 
-	bool video_pool::open_video(video_id_type video_id, SDL_Renderer* renderer)
+	bool video_pool::open_video(video_id_t video_id, SDL_Renderer* renderer)
 	{
 		auto it = videos_.find(video_id);
 		if (it == videos_.end())
@@ -121,7 +121,7 @@ namespace vt
 		return true;
 	}
 
-	bool video_pool::close_video(video_id_type video_id)
+	bool video_pool::close_video(video_id_t video_id)
 	{
 		auto it = videos_.find(video_id);
 		if (it == videos_.end())
@@ -134,9 +134,9 @@ namespace vt
 		return true;
 	}
 
-	std::vector<video_id_type> video_pool::open_group(const video_group& group, SDL_Renderer* renderer)
+	std::vector<video_id_t> video_pool::open_group(const video_group& group, SDL_Renderer* renderer)
 	{
-		std::vector<video_id_type> result;
+		std::vector<video_id_t> result;
 
 		for (auto& vi : group)
 		{
@@ -149,9 +149,9 @@ namespace vt
 		return result;
 	}
 
-	std::vector<video_id_type> video_pool::close_group(const video_group& group)
+	std::vector<video_id_t> video_pool::close_group(const video_group& group)
 	{
-		std::vector<video_id_type> result;
+		std::vector<video_id_t> result;
 
 		for (auto& vi : group)
 		{
@@ -164,12 +164,12 @@ namespace vt
 		return result;
 	}
 
-	video* video_pool::get(video_id_type video_id)
+	video_pool::video_info* video_pool::get(video_id_t video_id)
 	{
-		return const_cast<video*>(std::as_const(*this).get(video_id));
+		return const_cast<video_info*>(std::as_const(*this).get(video_id));
 	}
 
-	const video* video_pool::get(video_id_type video_id) const
+	const video_pool::video_info* video_pool::get(video_id_t video_id) const
 	{
 		auto it = videos_.find(video_id);
 		if (it == videos_.end())
@@ -177,12 +177,12 @@ namespace vt
 			return nullptr;
 		}
 
-		return &it->second.video;
+		return &it->second;
 	}
 
-	std::vector<video*> video_pool::get_group(const video_group& group)
+	std::vector<video_pool::video_info*> video_pool::get_group(const video_group& group)
 	{
-		std::vector<video*> result;
+		std::vector<video_info*> result;
 		result.reserve(group.size());
 
 		for (auto& vi : group)
@@ -193,9 +193,9 @@ namespace vt
 		return result;
 	}
 
-	std::vector<const video*> video_pool::get_group(const video_group& group) const
+	std::vector<const video_pool::video_info*> video_pool::get_group(const video_group& group) const
 	{
-		std::vector<const video*> result;
+		std::vector<const video_info*> result;
 		result.reserve(group.size());
 
 		for (auto& vi : group)
@@ -206,7 +206,7 @@ namespace vt
 		return result;
 	}
 
-	bool video_pool::is_open(video_id_type video_id) const
+	bool video_pool::is_open(video_id_t video_id) const
 	{
 		auto it = videos_.find(video_id);
 		if (it == videos_.end())
@@ -218,7 +218,7 @@ namespace vt
 		return video_info.video.is_open();
 	}
 
-	bool video_pool::exists(video_id_type video_id) const
+	bool video_pool::exists(video_id_t video_id) const
 	{
 		return videos_.count(video_id) != 0;
 	}

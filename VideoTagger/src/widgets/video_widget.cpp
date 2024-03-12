@@ -13,7 +13,7 @@
 
 namespace vt::widgets
 {
-	void draw_video_widget(video& video, uint64_t id)
+	void draw_video_widget(video& video, bool& is_open, uint64_t id)
 	{
 		auto& io = ImGui::GetIO();
 		ImGuiWindowFlags flags = ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse;
@@ -24,10 +24,9 @@ namespace vt::widgets
 		float button_size = 25 * io.FontGlobalScale;
 		std::string str_id = std::to_string(id);
 		std::string title = "Video##" + str_id;
-		if (ImGui::Begin(title.c_str(), nullptr, flags))
+		if (ImGui::Begin(title.c_str(), &is_open, flags))
 		{
 			bool show_controls = true;
-			auto window = ctx_.player.dock_window();
 			auto video_window = ImGui::GetCurrentWindow();
 			
 			//A bit of a hack to check if video widget is docked into video player

@@ -3,5 +3,5 @@
 
 namespace vt::utils::uuid
 {
-	uint64_t gen_uuid();
+	uint64_t get();
 }

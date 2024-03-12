@@ -148,6 +148,13 @@ namespace vt
 			debug::log("Saving projects list to " + std::filesystem::relative(ctx_.projects_list_filepath).string());
 		};
 
+		ctx_.browser.on_open_video = [this](video_id_t id)
+		{
+			auto* vinfo = ctx_.current_project->videos.get(id);
+			vinfo->is_widget_open = true;
+			ctx_.current_project->videos.open_video(id, renderer_);
+		};
+
 		auto& options = ctx_.options;
 		options("Application Settings", "General") = [this]()
 		{
@@ -251,6 +258,7 @@ namespace vt
 		av_log_set_callback(ffmpeg_callback);
 		load_settings();
 		init_keybinds();
+		init_player();
 		return true;
 	}
 	
@@ -535,6 +543,51 @@ namespace vt
 		});
 	}
 
+	void app::init_player()
+	{
+		ctx_.player.callbacks.on_set_playing = [](bool is_playing)
+		{
+			for (auto& [id, vinfo] : ctx_.current_project->videos)
+			{
+				if (!vinfo.is_widget_open) continue;
+				vinfo.video.set_playing(is_playing);
+			}
+		};
+
+		ctx_.player.callbacks.on_set_looping = [](bool is_looping)
+		{
+			for (auto& [id, vinfo] : ctx_.current_project->videos)
+			{
+				if (!vinfo.is_widget_open) continue;
+				vinfo.video.set_looping(is_looping);
+			}
+		};
+
+		ctx_.player.callbacks.on_set_speed = [](float speed)
+		{
+			for (auto& [id, vinfo] : ctx_.current_project->videos)
+			{
+				if (!vinfo.is_widget_open) continue;
+				vinfo.video.set_speed(speed);
+			}
+		};
+
+		ctx_.player.callbacks.on_skip = [](int dir)
+		{
+			//TODO: Implement
+		};
+
+		ctx_.player.callbacks.on_seek = [](std::chrono::nanoseconds ts)
+		{
+			for (auto& [id, vinfo] : ctx_.current_project->videos)
+			{
+				if (!vinfo.is_widget_open) continue;
+				vinfo.video.seek(ts);
+			}
+		};
+
+	}
+
 	void app::handle_events()
 	{
 		SDL_Event event{};
@@ -626,7 +679,6 @@ namespace vt
 			ImGui::DockBuilderDockWindow("Video Player", main_dock_up);
 			ImGui::DockBuilderDockWindow("Theme Customizer", main_dock_up);
 			ImGui::DockBuilderDockWindow("Video Browser", dockspace_id_copy);
-			//ImGui::DockBuilderDockWindow("Options", main_dock_up);
 			for (size_t i = 0; i < 8; ++i)
 			{
 				auto video_id = "Video##" + std::to_string(i);
@@ -834,14 +886,35 @@ namespace vt
 
 		if (ctx_.win_cfg.show_video_player_window)
 		{
+			video_player_data data = ctx_.player.data();
+			//TODO: include offsets
+			auto& vids = ctx_.current_project->videos;
+			if (vids.size() > 0)
+			{
+				std::vector<std::chrono::nanoseconds> durations;
+				for (const auto& [id, vinfo] : vids)
+				{
+					if (!vinfo.is_widget_open) continue;
+					durations.push_back(vinfo.video.duration());
+				}
+
+				auto min_it = std::min_element(durations.begin(), durations.end());
+				if (min_it != durations.end())
+				{
+					data.end_ts = *min_it;
+					ctx_.player.update_data(data);
+				}
+			}			
 			ctx_.player.render();
 		}
 
-		for (uint64_t i = 0; i < ctx_.videos.size(); ++i)
+		for (auto& [id, vinfo] : ctx_.current_project->videos)
 		{
-			auto& vid = ctx_.videos[i];
-			widgets::draw_video_widget(*vid, i);
-			widgets::draw_timeline_widget_sample(ctx_.timeline_state, *vid, ctx_.current_project->tags, ctx_.selected_timestamp_data, ctx_.moving_timestamp_data, ctx_.is_project_dirty, i);
+			if (!vinfo.is_widget_open) continue;
+			auto& vid = vinfo.video;
+
+			widgets::draw_video_widget(vid, vinfo.is_widget_open, id);
+			widgets::draw_timeline_widget_sample(ctx_.timeline_state, vid, ctx_.current_project->tags, ctx_.selected_timestamp_data, ctx_.moving_timestamp_data, ctx_.is_project_dirty, id);
 		}
 
 		if (ctx_.win_cfg.show_tag_manager_window)

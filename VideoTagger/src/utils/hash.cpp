@@ -22,11 +22,10 @@ namespace vt::utils::hash
 		return result;
 
 	}
+
 	uint64_t fnv_hash(const std::filesystem::path& filepath)
 	{
-
 		std::vector<char> bytefile = file_to_byte(filepath);
-
 
 		uint64_t hash = 14695981039346656037; //FNV_offset_basis
 		for (auto fileB : bytefile)

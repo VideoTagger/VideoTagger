@@ -27,7 +27,7 @@ namespace vt::widgets
 		bool active{};
 	};
 	
-	void draw_timeline_widget_sample(timeline_state& state, video& video, tag_storage& tags, std::optional<selected_timestamp_data>& selected_timestamp, std::optional<moving_timestamp_data>& moving_timestamp, bool& dirty_flag, uint32_t id)
+	void draw_timeline_widget_sample(timeline_state& state, video& video, tag_storage& tags, std::optional<selected_timestamp_data>& selected_timestamp, std::optional<moving_timestamp_data>& moving_timestamp, bool& dirty_flag, uint64_t id)
 	{
 		//TODO: Definitely change this!
 		state.tags = &tags;
@@ -51,7 +51,7 @@ namespace vt::widgets
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2{});
 		if (ImGui::Begin(title.c_str()))
 		{
-			ImGui::PushID(id);
+			ImGui::PushID(title.c_str());
 			ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, default_window_padding);
 			video_timeline(state, current_time, selected_timestamp, moving_timestamp, dirty_flag);
 			ImGui::PopStyleVar();
