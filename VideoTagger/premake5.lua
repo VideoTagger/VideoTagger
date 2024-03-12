@@ -1,5 +1,4 @@
 project "VideoTagger"
-	kind "ConsoleApp"
 	language "C++"
 	targetdir "%{wks.location}/.build/%{prj.name}/%{cfg.system}-%{cfg.architecture}/%{cfg.buildcfg}"
 	objdir "%{wks.location}/.build/temp/%{prj.name}/%{cfg.system}-%{cfg.architecture}/%{cfg.buildcfg}"
@@ -69,38 +68,35 @@ project "VideoTagger"
 		}
 
 	filter "system:linux"
-		externalincludedirs
-		{
-			"/usr/include/SDL2",
-			"/usr/include/libavcodec",
-			"/usr/include/libavformat"
-		}
-
-		libdirs
-		{
-			"/usr/lib/"
-		}
-
 		buildoptions
 		{
-			"`pkg-config --cflags gtk+-3.0 glib-2.0`"
+			"`pkg-config --cflags libavcodec libavformat sdl2 gtk+-3.0 glib-2.0`"
 		}
 
 		linkoptions
 		{
-			"`pkg-config --libs gtk+-3.0 glib-2.0`"
+			"`pkg-config --libs libavcodec libavformat sdl2 gtk+-3.0 glib-2.0`"
 		}
 	
 	filter "configurations:Debug"
+		kind "ConsoleApp"
 		defines { "DEBUG" }
 		symbols "On"
 		runtime "Debug"
 
 	filter "configurations:Release"
+		kind "ConsoleApp"
 		defines { "NDEBUG" }
 		optimize "Speed"
 		runtime "Release"
 		flags { "LinkTimeOptimization" }
-
+	
+	filter "configurations:Shipping"
+		kind "WindowedApp"
+		defines { "NDEBUG" }
+		optimize "Speed"
+		runtime "Release"
+		flags { "LinkTimeOptimization" }
+		
 	filter "platforms:x86_64"
 		architecture "x86_64"

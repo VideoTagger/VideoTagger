@@ -15,7 +15,6 @@ namespace vt
 		case AVMEDIA_TYPE_SUBTITLE:		[[fallthrough]];
 		case AVMEDIA_TYPE_ATTACHMENT:	[[fallthrough]];
 		case AVMEDIA_TYPE_NB:			[[fallthrough]];
-		case AVMEDIA_TYPE_UNKNOWN:		[[fallthrough]];
 		default:						return stream_type::unknown;
 		}
 	}
@@ -83,7 +82,7 @@ namespace vt
 
 		//"frame_->linesize[plane_index] * frame_->height" This works but I'm not sure if it's how it should be done or whether it will work in every case.
 		//May not work with different pixel formats
-		return video_plane(frame_->data[plane_index], frame_->linesize[plane_index] * frame_->height, frame_->linesize[plane_index]);
+		return video_plane(frame_->data[plane_index], int64_t(frame_->linesize[plane_index]) * frame_->height, frame_->linesize[plane_index]);
 	}
 
 	video_planes video_frame::get_planes() const
@@ -128,7 +127,7 @@ namespace vt
 
 	bool video_frame::is_keyframe() const
 	{
-		return frame_->flags | AV_FRAME_FLAG_KEY;
+		return frame_->flags & AV_FRAME_FLAG_KEY;
 	}
 
 	std::optional<typename stream_type_traits<stream_type::video>::decoded_packet_type>
@@ -216,7 +215,7 @@ namespace vt
 		return packet_;
 	}
 
-	timestamp_t packet_wrapper::timestamp() const
+	std::chrono::nanoseconds packet_wrapper::timestamp() const
 	{
 		return std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::duration<double>(packet_->pts * av_q2d(packet_->time_base)));
 	}
@@ -388,7 +387,6 @@ namespace vt
 		// No idea if one file can have multiple streams of the same type
 		for (unsigned int i = 0; i < format_context_->nb_streams; i++)
 		{
-
 			auto stream = format_context_->streams[i];
 			
 			AVCodecParameters* codec_params = stream->codecpar;
@@ -403,7 +401,6 @@ namespace vt
 			{
 				continue;
 			}
-
 
 			stream_indices_.at(static_cast<size_t>(type)) = static_cast<int>(i);
 
@@ -604,7 +601,7 @@ namespace vt
 		packet_queues_[static_cast<size_t>(type)].clear();
 	}
 
-	void video_decoder::seek_keyframe(timestamp_t timestamp)
+	void video_decoder::seek_keyframe(std::chrono::nanoseconds timestamp)
 	{
 		//TODO: handle invalid timestamp
 
@@ -626,7 +623,7 @@ namespace vt
 	{
 		auto video_stream = format_context_->streams[stream_indices_[static_cast<size_t>(stream_type::video)]];
 		
-		seek_keyframe(timestamp_t(static_cast<int64_t>(frame_number / fps() * 1'000'000'000)));
+		seek_keyframe(std::chrono::nanoseconds(static_cast<int64_t>(frame_number / fps() * 1'000'000'000)));
 	}
 
 	int video_decoder::width() const
@@ -691,12 +688,12 @@ namespace vt
 		return std::chrono::nanoseconds(static_cast<int64_t>(format_context_->duration / (double)(AV_TIME_BASE) * 1'000'000'000));
 	}
 
-	timestamp_t video_decoder::frame_number_to_timestamp(size_t frame)
+	std::chrono::nanoseconds video_decoder::frame_number_to_timestamp(size_t frame) const
 	{
-		return std::chrono::duration_cast<timestamp_t>(std::chrono::duration<double>(frame / fps()));
+		return std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::duration<double>(frame / fps()));
 	}
 	
-	size_t video_decoder::timestamp_to_frame_number(timestamp_t timestamp)
+	size_t video_decoder::timestamp_to_frame_number(std::chrono::nanoseconds timestamp) const
 	{
 		//TODO: test
 		return static_cast<size_t>(std::round(std::chrono::duration_cast<std::chrono::duration<double>>(timestamp).count() * fps()));

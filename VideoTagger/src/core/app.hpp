@@ -39,22 +39,27 @@ namespace vt
 		SDL_Window* main_window_;
 		SDL_Renderer* renderer_;
 
-		app_context ctx_;
-		//temporary
-		video vid;
-
 	public:
 		bool init(const app_config& config);
 		bool run();
 		void shutdown();
+		void on_close_project(bool should_shutdown);
 
 		bool load_settings();
+		void save_settings();
+		void save_project();
+		void save_project_as(const std::filesystem::path& filepath);
+		void close_project();
 
+		void build_fonts(float size);
 		void handle_events();
 		void render();
 
 		void draw();
+		void draw_menubar();
 		void draw_project_selector();
-		void draw_ui();
+		void draw_main_app();
+
+		void set_subtitle(const std::string& title = std::string{});
 	};
 }

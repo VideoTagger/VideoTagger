@@ -1,3 +1,5 @@
+// THIS IS A MODIFED VERSION OF THE SEQUENCER WIDGET FROM ImGuizmo
+// 
 // https://github.com/CedricGuillemet/ImGuizmo
 // v 1.89 WIP
 //
@@ -26,59 +28,62 @@
 #pragma once
 
 #include <cstddef>
+#include <string>
+#include <vector>
+#include <optional>
 
 #include <utils/timestamp.hpp>
+#include <tags/tag_storage.hpp>
 
-struct ImDrawList;
-struct ImRect;
-namespace ImSequencer
+namespace vt::widgets
 {
-	enum SEQUENCER_OPTIONS
+	//TODO: maybe should be moved somwhere else
+	struct selected_timestamp_data
 	{
-		SEQUENCER_EDIT_NONE = 0,
-		SEQUENCER_EDIT_STARTEND = 1 << 1,
-		SEQUENCER_CHANGE_FRAME = 1 << 3,
-		SEQUENCER_ADD = 1 << 4,
-		SEQUENCER_DEL = 1 << 5,
-		SEQUENCER_COPYPASTE = 1 << 6,
-		SEQUENCER_EDIT_ALL = SEQUENCER_EDIT_STARTEND | SEQUENCER_CHANGE_FRAME
+		//TODO: maybe store the tag name instead of a pointer
+		vt::tag* tag{};
+		tag_timeline* timestamp_timeline;
+		tag_timeline::iterator timestamp;
 	};
-}
 
-namespace vt
-{
-	struct timeline_interface
+	struct moving_timestamp_data
+	{
+		//TODO: maybe store the tag name instead of a pointer
+		vt::tag* tag{};
+		tag_timeline::iterator segment{};
+		uint8_t grab_part{};
+		timestamp grab_position{};
+		timestamp start{};
+		timestamp end{};
+	};
+
+	struct timeline_state
 	{
 		bool focused = false;
-		virtual timestamp get_time_min() const = 0;
-		virtual timestamp get_time_max() const = 0;
-		virtual int get_item_count() const = 0;
 
-		virtual void begin_edit(int /*index*/) {}
-		virtual void end_edit() {}
-		virtual int get_item_type_count() const { return 0; }
-		virtual const char* get_item_type_name(int /*typeIndex*/) const { return ""; }
-		virtual const char* get_item_label(int /*index*/) const { return ""; }
-		virtual const char* get_collapse_fmt() const { return "%d Frames / %d entries"; }
+		tag_storage* tags{};
+		std::vector<std::string> displayed_tags;
 
-		virtual void get(int index, int** start, int** end, int* type, unsigned int* color) = 0;
-		virtual void add(int /*type*/) {}
-		virtual void del(int /*index*/) {}
-		virtual void duplicate(int /*index*/) {}
+		timestamp time_min{};
+		timestamp time_max{};
 
-		virtual void copy() {}
-		virtual void paste() {}
+		int64_t first_frame{};
 
-		virtual size_t get_custom_height(int /*index*/) { return 0; }
-		virtual void double_click(int /*index*/) {}
-		virtual void custom_draw(int /*index*/, ImDrawList* /*draw_list*/, const ImRect& /*rc*/, const ImRect& /*legendRect*/, const ImRect& /*clippingRect*/, const ImRect& /*legendClippingRect*/) {}
-		virtual void custom_draw_compact(int /*index*/, ImDrawList* /*draw_list*/, const ImRect& /*rc*/, const ImRect& /*clippingRect*/) {}
+		const char* get_collapse_fmt() const { return "%d Frames / %d entries"; }
 
-		virtual ~timeline_interface() = default;
+		tag& get(size_t index);
+		void add(const std::string& name);
+		void del(size_t index);
+
+		void sync_tags();
 	};
 
+	//Inspector needs this
+	extern bool merge_timestamps_popup(const std::string& id, bool& pressed_button);
+	
+	extern bool insert_timestamp_popup(const std::string& id, tag& tag, timestamp& start, timestamp& end, uint64_t min_timestamp, uint64_t max_timestamp);
 
 	// return true if selection is made
-	bool video_timeline(timeline_interface* sequence, timestamp* current_time, bool* expanded, int* selected_entry, int64_t* first_frame, int sequence_options);
+	bool video_timeline(timeline_state& state, timestamp& current_time, std::optional<selected_timestamp_data>& selected_timestamp, std::optional<moving_timestamp_data>& moving_timestamp, bool& dirty_flag);
 
 }

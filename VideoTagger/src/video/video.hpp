@@ -2,6 +2,7 @@
 
 #include <filesystem>
 #include <chrono>
+#include <vector>
 #include <SDL.h>
 
 #include "video_decoder.hpp"
@@ -12,15 +13,21 @@ namespace vt
 	{
 	public:
 		video();
+		video(const video&) = delete;
+		video(video&&) = default;
+		~video();
+
+		video& operator=(const video&) = delete;
+		video& operator=(video&&) = default;
+
 		bool open_file(const std::filesystem::path& filepath, SDL_Renderer* renderer);
 		void close();
-		~video();
 
 		void set_playing(bool value);
 		void set_speed(float value);
 		void set_looping(bool value);
 
-		void seek(timestamp_t timestamp);
+		void seek(std::chrono::nanoseconds timestamp);
 
 		void buffer_frames(size_t count);
 		[[nodiscard]] SDL_Texture* get_frame();
@@ -31,10 +38,14 @@ namespace vt
 		[[nodiscard]] int height() const;
 
 		[[nodiscard]] bool is_playing() const;
+		[[nodiscard]] bool is_looping() const;
 		[[nodiscard]] float speed() const;
 		[[nodiscard]] std::chrono::nanoseconds duration() const;
 
-		[[nodiscard]] timestamp_t current_timestamp() const;
+		[[nodiscard]] std::chrono::nanoseconds current_timestamp() const;
+
+		size_t current_frame_number() const;
+		double fps() const;
 
 	private:
 		video_decoder decoder_;
@@ -44,7 +55,7 @@ namespace vt
 
 		std::vector<video_frame> frame_buffer_;
 		std::chrono::steady_clock::time_point last_tp_;
-		timestamp_t last_ts_;
+		std::chrono::nanoseconds last_ts_;
 
 		float speed_;
 		bool loop_;
