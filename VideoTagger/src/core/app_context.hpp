@@ -1,10 +1,9 @@
 #pragma once
 #include <optional>
 #include <memory>
-#include "project.hpp"
 
-#include <imgui.h>
-#include <json.hpp>
+#include "project.hpp"
+#include "input.hpp"
 #include <video/video.hpp>
 #include <widgets/project_selector.hpp>
 #include <widgets/video_timeline.hpp>
@@ -12,6 +11,9 @@
 #include <widgets/color_picker.hpp>
 #include <widgets/theme_customizer.hpp>
 #include <widgets/modal/options.hpp>
+
+#include <imgui.h>
+#include <json.hpp>
 
 namespace vt
 {
@@ -51,6 +53,7 @@ namespace vt
 		nlohmann::ordered_json settings;
 		window_config win_cfg;
 		std::unordered_map<std::string, ImFont*> fonts;
+		std::unordered_map<std::string, keybind> keybinds;
 		std::optional<widgets::selected_timestamp_data> selected_timestamp_data;
 		std::optional<widgets::moving_timestamp_data> moving_timestamp_data;
 		bool is_project_dirty{};

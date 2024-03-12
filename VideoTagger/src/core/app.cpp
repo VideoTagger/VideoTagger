@@ -250,6 +250,7 @@ namespace vt
 
 		av_log_set_callback(ffmpeg_callback);
 		load_settings();
+		init_keybinds();
 		return true;
 	}
 	
@@ -335,7 +336,7 @@ namespace vt
 			{
 				case 1:
 				{
-					save_project();
+					on_save();
 					if (should_shutdown) state_ = app_state::shutdown;
 				}
 				break;
@@ -348,6 +349,25 @@ namespace vt
 			return;
 		}
 		if (should_shutdown) state_ = app_state::shutdown;
+	}
+
+	void app::on_save()
+	{
+		if (!ctx_.current_project.has_value()) return;
+		debug::log("Saving project...");
+		save_project();
+	}
+
+	void app::on_save_as()
+	{
+		if (!ctx_.current_project.has_value()) return;
+		utils::dialog_filters filters{ utils::dialog_filter{ "VideoTagger Project", project::extension } };
+		auto result = utils::filesystem::save_file({}, filters, ctx_.current_project->name);
+		if (result)
+		{
+			debug::log("Saving project as " + result.path.string());
+			save_project_as(result.path);
+		}
 	}
 
 	bool app::load_settings()
@@ -496,14 +516,33 @@ namespace vt
 		}
 	}
 
+	void app::init_keybinds()
+	{
+		ctx_.keybinds.clear();
+
+		//TODO: Make these editable, not hard coded
+		ctx_.keybinds["save"] = keybind(SDLK_s, keybind_modifiers{ true },
+		[this]()
+		{
+			on_save();
+		});
+
+		ctx_.keybinds["save.as"] = keybind(SDLK_s, keybind_modifiers{ true, true },
+		[this]()
+		{
+			on_save_as();
+		});
+	}
+
 	void app::handle_events()
 	{
 		SDL_Event event{};
 		while (SDL_PollEvent(&event))
 		{
 			ImGui_ImplSDL2_ProcessEvent(&event);
-			
-						switch (event.type)
+			process_inputs(event, ctx_.keybinds);
+
+			switch (event.type)
 			{
 				case SDL_WINDOWEVENT:
 				{
@@ -634,23 +673,17 @@ namespace vt
 				ImGui::Separator();
 				{
 					std::string menu_item = std::string(icons::save) + " Save";
-					if (ImGui::MenuItem(menu_item.c_str(), "Ctrl+S"))
+					if (ImGui::MenuItem(menu_item.c_str(), "Ctrl+S", ctx_.current_project.has_value()))
 					{
-						save_project();
+						on_save();
 					}
 				}
 
 				{
 					std::string menu_item = std::string(icons::save_as) + " Save As...";
-					if (ImGui::MenuItem(menu_item.c_str(), "Ctrl+Shift+S") and ctx_.current_project.has_value())
+					if (ImGui::MenuItem(menu_item.c_str(), "Ctrl+Shift+S", nullptr, ctx_.current_project.has_value()))
 					{
-						utils::dialog_filters filters{ utils::dialog_filter{ "VideoTagger Project", project::extension } };
-						auto result = utils::filesystem::save_file({}, filters, ctx_.current_project->name);
-						if (result)
-						{
-							save_project_as(result.path);
-							debug::log("Saving as " + result.path.string());
-						}
+						on_save_as();
 					}
 				}
 
