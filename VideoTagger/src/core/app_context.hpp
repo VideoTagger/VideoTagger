@@ -1,9 +1,7 @@
 #pragma once
 #include <optional>
-#include "project.hpp"
 #include <string>
-#include <core/input.hpp>
-
+#include "project.hpp"
 #include <widgets/project_selector.hpp>
 
 namespace vt
@@ -14,6 +12,5 @@ namespace vt
 		std::filesystem::path projects_list_filepath;
 		std::filesystem::path app_settings_filepath;
 		widgets::project_selector project_selector;
-		std::unordered_map<std::string, vt::keybind> keybinds;
 	};
 }

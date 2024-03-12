@@ -1,40 +1,23 @@
 #include "input.hpp"
-#include <SDL.h>
-#include <core/app_context.hpp>
-#include <iostream>
 
 namespace vt
 {
-	
-	bool is_ctrl_pressed(SDL_Event& event);
-	bool is_alt_pressed(SDL_Event& event);
-	bool is_shift_pressed(SDL_Event& event);
+	void process_inputs(SDL_Event& event, const std::unordered_map<std::string, vt::keybind>& keybinds)
+	{
+		if (event.type != SDL_KEYDOWN) return;
 
-	void input_function(SDL_Event& event, app_context& ctx)
-	{
-		for (auto& [name, keybind] : ctx.keybinds)
+		for (const auto& [name, keybind] : keybinds)
 		{
-			if (keybind.modifiers.alt = is_alt_pressed(event));
-			if (keybind.modifiers.ctrl = is_ctrl_pressed(event));
-			if (keybind.modifiers.shift = is_shift_pressed(event));
-			if (keybind.key_code = event.key.keysym.sym); {
-				std::cout << "DOING \n" << name; //Tymczasowe na testy
-				keybind.keyboard_shortcut_function();
+			bool condition = keybind.key_code == event.key.keysym.sym;
+			condition &= keybind.modifiers.alt and (event.key.keysym.mod & KMOD_ALT) != 0;
+			condition &= keybind.modifiers.ctrl and (event.key.keysym.mod & KMOD_CTRL) != 0;
+			condition &= keybind.modifiers.shift and (event.key.keysym.mod & KMOD_SHIFT) != 0;
+
+			if (condition and keybind.action != nullptr)
+			{
+				std::invoke(keybind.action);
+				return;
 			}
-			
 		}
-	
-	}
-	bool is_ctrl_pressed(SDL_Event& event)
-	{
-		return ((event.key.keysym.mod & KMOD_CTRL) != 0);
-	}
-	bool is_shift_pressed(SDL_Event& event)
-	{
-		return ((event.key.keysym.mod & KMOD_SHIFT) != 0);
-	}
-	bool is_alt_pressed(SDL_Event& event)
-	{
-		return ((event.key.keysym.mod & KMOD_ALT) != 0);
 	}
 }

@@ -1,8 +1,10 @@
+#pragma once
+#include <string>
 #include <functional>
 #include <SDL.h>
+
 namespace vt
 {
-
 	struct keybind
 	{
 		int key_code{};
@@ -16,7 +18,8 @@ namespace vt
 				bool alt : 1;
 			};
 		} modifiers;
-		std::function<void(void)> keyboard_shortcut_function;
+		std::function<void(void)> action;
 	};
-	void input_function(SDL_Event &event, app_context &ctx);
+
+	extern void process_inputs(SDL_Event& event, const std::unordered_map<std::string, vt::keybind>& keybinds);
 }
