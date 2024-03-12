@@ -370,6 +370,23 @@ namespace vt
 		}
 	}
 
+	void app::on_delete()
+	{
+		//TODO: This should be implemented as a function in timeline, currently disabled since,
+		//segments dont get deselected when windows other than Inspector are active, which should be changed
+		/*
+		if (!ctx_.selected_timestamp_data.has_value()) return;
+
+		ctx_.is_project_dirty = true;
+		auto it = ctx_.selected_timestamp_data->timestamp_timeline->find(ctx_.selected_timestamp_data->timestamp->start);
+		if (it != ctx_.selected_timestamp_data->timestamp_timeline->end())
+		{
+			ctx_.selected_timestamp_data->timestamp_timeline->erase(it);
+			ctx_.selected_timestamp_data.reset();
+		}
+		*/
+	}
+
 	bool app::load_settings()
 	{
 		if (std::filesystem::exists(ctx_.app_settings_filepath))
@@ -531,6 +548,12 @@ namespace vt
 		[this]()
 		{
 			on_save_as();
+		});
+
+		ctx_.keybinds["delete"] = keybind(SDLK_DELETE,
+		[this]()
+		{
+			on_delete();
 		});
 	}
 
