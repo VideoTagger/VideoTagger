@@ -89,11 +89,18 @@ namespace vt
 	}
 
 	video_id_t video_pool::insert(const std::filesystem::path& video_path)
-	{
+	{ 
 		video_id_t video_id = utils::hash::fnv_hash(video_path); //utils::uuid::get()
 		video_info videoInfo = { video_path, video() };
 		videos_.try_emplace(video_id, std::move(videoInfo));
 		return video_id;
+	}
+
+	bool video_pool::insert(video_id_t video_id, const std::filesystem::path& video_path)
+	{
+		video_info videoInfo = { video_path, video() };
+		auto[_, inserted] = videos_.try_emplace(video_id, std::move(videoInfo));
+		return inserted;
 	}
 
 	bool video_pool::erase(video_id_t video_id)

@@ -10,6 +10,8 @@
 
 namespace vt
 {
+	using group_id_t = uint64_t;
+
 	struct project
 	{
 		static constexpr const char* extension = "vtproj";
@@ -20,7 +22,7 @@ namespace vt
 
 		tag_storage tags;
 		video_pool videos;
-		std::unordered_map<uint64_t, video_group> video_groups;
+		std::unordered_map<group_id_t, video_group> video_groups;
 
 		//TODO: Store tags displayed on the timeline
 

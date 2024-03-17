@@ -246,7 +246,7 @@ namespace vt::widgets
 	// Maybe more accurracy than a second.
 	// Display time in 10 second intervals instead of 20
 
-	bool video_timeline(timeline_state& state, timestamp& current_time, std::optional<selected_timestamp_data>& selected_timestamp, std::optional<moving_timestamp_data>& moving_timestamp, bool& dirty_flag)
+	bool video_timeline(timeline_state& state, std::optional<selected_timestamp_data>& selected_timestamp, std::optional<moving_timestamp_data>& moving_timestamp, bool& dirty_flag)
 	{
 		bool return_value = false;
 		ImGuiIO& io = ImGui::GetIO();
@@ -367,7 +367,7 @@ namespace vt::widgets
 			// current frame top
 			ImRect topRect(ImVec2(canvas_pos.x + legendWidth, canvas_pos.y), ImVec2(canvas_pos.x + canvas_size.x, canvas_pos.y + ItemHeight));
 
-			if (!moving_time_marker and !moving_scroll_bar and !moving_timestamp.has_value() and current_time.seconds_total.count() >= 0 and topRect.Contains(io.MousePos) and io.MouseDown[0] and !ImGui::IsPopupOpen(nullptr, ImGuiPopupFlags_AnyPopup | ImGuiPopupFlags_AnyPopupId))
+			if (!moving_time_marker and !moving_scroll_bar and !moving_timestamp.has_value() and state.current_time.seconds_total.count() >= 0 and topRect.Contains(io.MousePos) and io.MouseDown[0] and !ImGui::IsPopupOpen(nullptr, ImGuiPopupFlags_AnyPopup | ImGuiPopupFlags_AnyPopupId))
 			{
 				moving_time_marker = true;
 			}
@@ -375,11 +375,11 @@ namespace vt::widgets
 			{
 				if (frameCount)
 				{
-					current_time.seconds_total = std::chrono::seconds((int)((io.MousePos.x - topRect.Min.x) / framePixelWidth) + firstFrameUsed);
-					if (current_time.seconds_total.count() < time_min)
-						current_time.seconds_total = std::chrono::seconds(time_min);
-					if (current_time.seconds_total.count() >= time_max)
-						current_time.seconds_total = std::chrono::seconds(time_max);
+					state.current_time.seconds_total = std::chrono::seconds((int)((io.MousePos.x - topRect.Min.x) / framePixelWidth) + firstFrameUsed);
+					if (state.current_time.seconds_total.count() < time_min)
+						state.current_time.seconds_total = std::chrono::seconds(time_min);
+					if (state.current_time.seconds_total.count() >= time_max)
+						state.current_time.seconds_total = std::chrono::seconds(time_max);
 				}
 				if (!io.MouseDown[0])
 					moving_time_marker = false;
@@ -763,19 +763,19 @@ namespace vt::widgets
 							//TODO: maybe could use the moving timestamp
 							if (ImGui::MenuItem("Add timestamp at marker"))
 							{
-								inserted_segment_start = current_time;
+								inserted_segment_start = state.current_time;
 								inserted_segment_end = inserted_segment_start;
 								insert_segment = true;
 							}
 							if (ImGui::MenuItem("Start segment at marker"))
 							{
 								//TODO: should draw a line or something so you know where you clicked
-								inserted_segment_start = current_time;
+								inserted_segment_start = state.current_time;
 							}
 							//TODO: probably should only be displayed after start was pressed
 							if (ImGui::MenuItem("End segment at marker"))
 							{
-								inserted_segment_end = current_time;
+								inserted_segment_end = state.current_time;
 								insert_segment = true;
 							}
 						}
@@ -947,52 +947,19 @@ namespace vt::widgets
 			}
 			
 			// cursor
-			if (current_time.seconds_total.count() >= state.first_frame and current_time.seconds_total.count() <= time_max)
+			if (state.current_time.seconds_total.count() >= state.first_frame and state.current_time.seconds_total.count() <= time_max)
 			{
 				static constexpr float cursorWidth = 4.f;
 				static constexpr float triangle_span = cursorWidth * 2;
-				float cursorOffset = contentMin.x + legendWidth + (current_time.seconds_total.count() - firstFrameUsed) * framePixelWidth + framePixelWidth / 2 - cursorWidth * 0.5f;
+				float cursorOffset = contentMin.x + legendWidth + (state.current_time.seconds_total.count() - firstFrameUsed) * framePixelWidth + framePixelWidth / 2 - cursorWidth * 0.5f;
 				ImU32 cursor_color = 0xE33E36FF; //0xA02A2AFF
 				draw_list->AddLine(ImVec2(cursorOffset, canvas_pos.y), ImVec2(cursorOffset, contentMax.y), cursor_color, cursorWidth);
-				draw_list->AddTriangleFilled(ImVec2(cursorOffset - triangle_span, canvas_pos.y), ImVec2(cursorOffset, canvas_pos.y + ItemHeight * 0.5f), ImVec2(cursorOffset + triangle_span, canvas_pos.y), cursor_color);
-				/*
-				char tmps[512];
-				ImFormatString(tmps, IM_ARRAYSIZE(tmps), "%d", *current_time);
-				draw_list->AddText(ImVec2(cursorOffset + 10, canvas_pos.y + 2), 0xFF2A2AFF, tmps);
-				*/
+				draw_list->AddTriangleFilled(
+					ImVec2(cursorOffset - triangle_span, canvas_pos.y),
+					ImVec2(cursorOffset, canvas_pos.y + ItemHeight * 0.5f),
+					ImVec2(cursorOffset + triangle_span, canvas_pos.y), cursor_color
+				);
 			}
-
-
-			/*for (auto& customDraw : customDraws)
-				state->custom_draw(customDraw.index, draw_list, customDraw.customRect, customDraw.legendRect, customDraw.clippingRect, customDraw.legendClippingRect);
-			for (auto& customDraw : compactCustomDraws)
-				state->custom_draw_compact(customDraw.index, draw_list, customDraw.customRect, customDraw.clippingRect);*/
-
-			// copy paste
-			/*if (sequence_options & ImSequencer::SEQUENCER_COPYPASTE)
-			{
-				ImRect rectCopy(ImVec2(contentMin.x + 100, canvas_pos.y + 2)
-					, ImVec2(contentMin.x + 100 + 30, canvas_pos.y + ItemHeight - 2));
-				bool inRectCopy = rectCopy.Contains(io.MousePos);
-				
-				ImU32 copy_color = ImGui::ColorConvertFloat4ToU32(style.Colors[inRectCopy ? ImGuiCol_Text : ImGuiCol_TextDisabled]);
-				draw_list->AddText(rectCopy.Min, copy_color, "Copy");
-
-				ImRect rectPaste(ImVec2(contentMin.x + 140, canvas_pos.y + 2)
-					, ImVec2(contentMin.x + 140 + 30, canvas_pos.y + ItemHeight - 2));
-				bool inRectPaste = rectPaste.Contains(io.MousePos);
-				ImU32 paste_color = ImGui::ColorConvertFloat4ToU32(style.Colors[inRectPaste ? ImGuiCol_Text : ImGuiCol_TextDisabled]);
-				draw_list->AddText(rectPaste.Min, paste_color, "Paste");
-
-				if (inRectCopy and io.MouseReleased[0])
-				{
-					state->copy();
-				}
-				if (inRectPaste and io.MouseReleased[0])
-				{
-					state->paste();
-				}
-			}*/
 
 			ImGui::EndChildFrame();
 			//ImGui::PopStyleColor();
@@ -1121,26 +1088,6 @@ namespace vt::widgets
 		}
 
 		ImGui::EndGroup();
-
-		//if (regionRect.Contains(io.MousePos))
-		//{
-		//	bool overCustomDraw = false;
-		//	for (auto& custom : customDraws)
-		//	{
-		//		if (custom.customRect.Contains(io.MousePos))
-		//		{
-		//			overCustomDraw = true;
-		//		}
-		//	}
-		//}
-
-
-		//if (delEntry != -1)
-		//{
-		//	state.del(delEntry);
-		//	if (selected_entry and (*selected_entry == delEntry || *selected_entry >= state.displayed_tags.size()))
-		//		*selected_entry = -1;
-		//}
 
 		return return_value;
 	}

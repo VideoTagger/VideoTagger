@@ -1,6 +1,10 @@
 #pragma once
 #include <optional>
 #include <memory>
+#include <unordered_map>
+#include <filesystem>
+#include <string>
+#include <vector>
 
 #include "project.hpp"
 #include "input.hpp"
@@ -12,6 +16,7 @@
 #include <widgets/video_browser.hpp>
 #include <widgets/theme_customizer.hpp>
 #include <widgets/modal/options.hpp>
+#include "active_video_group.hpp"
 
 #include <imgui.h>
 #include <json.hpp>
@@ -48,20 +53,27 @@ namespace vt
 		widgets::video_browser browser;
 		widgets::theme_customizer theme_customizer;
 		widgets::modal::options options;
-		std::optional<project> current_project;
 		widgets::color_picker color_picker;
+
 		std::filesystem::path projects_list_filepath;
 		std::filesystem::path app_settings_filepath;
-		std::vector<std::shared_ptr<video>> videos;
 		nlohmann::ordered_json settings;
 		window_config win_cfg;
 		std::unordered_map<std::string, ImFont*> fonts;
 		std::unordered_map<std::string, keybind> keybinds;
+
+		std::optional<project> current_project;
+		group_id_t active_video_group_id{};
+		active_video_group active_video_group;
 		std::optional<widgets::selected_timestamp_data> selected_timestamp_data;
 		std::optional<widgets::moving_timestamp_data> moving_timestamp_data;
+
 		bool is_project_dirty{};
 		bool first_launch = true;
 		bool reset_layout{};
+
+		void update_active_video_group();
+		void reset_active_video_group();
 	};
 
 	inline app_context ctx_;

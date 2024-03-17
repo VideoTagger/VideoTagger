@@ -61,6 +61,7 @@ namespace vt
 		using const_iterator = container::const_iterator;
 
 		video_id_t insert(const std::filesystem::path& video_path);
+		bool insert(video_id_t video_id, const std::filesystem::path& video_path);
 		bool erase(video_id_t video_id);
 
 		bool open_video(video_id_t video_id, SDL_Renderer* renderer);

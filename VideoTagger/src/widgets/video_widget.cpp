@@ -43,6 +43,8 @@ namespace vt::widgets
 			bool is_playing = video.is_playing();
 			auto image_avail_size = ImGui::GetContentRegionMax();
 
+			//TODO: a video probably shouldn't have its own controls since they could break synchronization 
+			show_controls = false;
 			if (show_controls)
 			{
 				image_avail_size.y -= button_size + 2 * imgui_style.ItemSpacing.y + ImGui::GetTextLineHeightWithSpacing() * io.FontGlobalScale;
@@ -141,12 +143,12 @@ namespace vt::widgets
 
 					ImGui::NextColumn();
 					{
-						bool loop = video.is_looping();
-						if (icon_toggle_button(icons::repeat, loop, { button_size, button_size }))
-						{
-							video.set_looping(!loop);
-						}
-						ImGui::SameLine();
+						//bool loop = video.is_looping();
+						//if (icon_toggle_button(icons::repeat, loop, { button_size, button_size }))
+						//{
+						//	video.set_looping(!loop);
+						//}
+						//ImGui::SameLine();
 
 						auto avail_size = ImGui::GetContentRegionAvail();
 						float speed_control_size_x = avail_size.x * 0.5f;

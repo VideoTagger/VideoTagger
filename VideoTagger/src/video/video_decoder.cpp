@@ -565,7 +565,7 @@ namespace vt
 		return packet_queues_.at(static_cast<size_t>(type)).back();
 	}
 
-	const packet_wrapper& video_decoder::peek_last_packet() const
+	const packet_wrapper& video_decoder::peek_last_read_packet() const
 	{
 		return packet_queues_.at(static_cast<size_t>(last_read_packet_type_)).back();
 	}
@@ -586,6 +586,11 @@ namespace vt
 	void video_decoder::discard_next_packet(stream_type type)
 	{
 		packet_queues_[static_cast<size_t>(type)].pop();
+	}
+
+	void video_decoder::discard_last_read_packet()
+	{
+		packet_queues_[static_cast<size_t>(last_read_packet_type())].pop();
 	}
 
 	void video_decoder::discard_all_packets()

@@ -194,7 +194,7 @@ namespace vt
 		template<stream_type type>
 		[[nodiscard]] std::optional<typename stream_type_traits<type>::decoded_packet_type> decode_next_packet();
 		void discard_next_packet(stream_type type);
-		//TODO: discard last packet
+		void discard_last_read_packet();
 		void discard_all_packets();
 		void discard_all_packets(stream_type type);
 
@@ -214,7 +214,7 @@ namespace vt
 
 		[[nodiscard]] const packet_wrapper& peek_next_packet(stream_type type) const;
 		[[nodiscard]] const packet_wrapper& peek_last_packet(stream_type type) const;
-		[[nodiscard]] const packet_wrapper& peek_last_packet() const;
+		[[nodiscard]] const packet_wrapper& peek_last_read_packet() const;
 
 		[[nodiscard]] video_metadata metadata() const;
 

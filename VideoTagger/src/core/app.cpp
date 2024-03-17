@@ -153,6 +153,10 @@ namespace vt
 			auto* vinfo = ctx_.current_project->videos.get(id);
 			vinfo->is_widget_open = true;
 			ctx_.current_project->videos.open_video(id, renderer_);
+
+			//TODO: temporary
+			ctx_.active_video_group_id = 1;
+			ctx_.current_project->video_groups[1].insert({ id, std::chrono::nanoseconds{0} });
 		};
 
 		auto& options = ctx_.options;
@@ -470,7 +474,7 @@ namespace vt
 		on_close_project(false);
 		ctx_.current_project = std::nullopt;
 		ctx_.selected_timestamp_data = std::nullopt;
-		ctx_.videos.clear();
+		ctx_.reset_active_video_group();
 		set_subtitle();
 	}
 	
@@ -547,29 +551,45 @@ namespace vt
 	{
 		ctx_.player.callbacks.on_set_playing = [](bool is_playing)
 		{
-			for (auto& [id, vinfo] : ctx_.current_project->videos)
+			//for (auto& [id, vinfo] : ctx_.current_project->videos)
+			//{
+			//	if (!vinfo.is_widget_open) continue;
+			//	vinfo.video.set_playing(is_playing);
+			//}
+			if (ctx_.active_video_group_id == 0)
 			{
-				if (!vinfo.is_widget_open) continue;
-				vinfo.video.set_playing(is_playing);
+				return;
 			}
+			ctx_.active_video_group.set_playing(is_playing);
 		};
 
 		ctx_.player.callbacks.on_set_looping = [](bool is_looping)
 		{
-			for (auto& [id, vinfo] : ctx_.current_project->videos)
+			//for (auto& [id, vinfo] : ctx_.current_project->videos)
+			//{
+			//	if (!vinfo.is_widget_open) continue;
+			//	vinfo.video.set_looping(is_looping);
+			//}
+			if (ctx_.active_video_group_id == 0)
 			{
-				if (!vinfo.is_widget_open) continue;
-				vinfo.video.set_looping(is_looping);
+				return;
 			}
+			ctx_.active_video_group.set_looping(is_looping);
 		};
 
 		ctx_.player.callbacks.on_set_speed = [](float speed)
 		{
-			for (auto& [id, vinfo] : ctx_.current_project->videos)
+			//for (auto& [id, vinfo] : ctx_.current_project->videos)
+			//{
+			//	if (!vinfo.is_widget_open) continue;
+			//	vinfo.video.set_speed(speed);
+			//}
+
+			if (ctx_.active_video_group_id == 0)
 			{
-				if (!vinfo.is_widget_open) continue;
-				vinfo.video.set_speed(speed);
+				return;
 			}
+			ctx_.active_video_group.set_speed(speed);
 		};
 
 		ctx_.player.callbacks.on_skip = [](int dir)
@@ -579,11 +599,17 @@ namespace vt
 
 		ctx_.player.callbacks.on_seek = [](std::chrono::nanoseconds ts)
 		{
-			for (auto& [id, vinfo] : ctx_.current_project->videos)
+			//for (auto& [id, vinfo] : ctx_.current_project->videos)
+			//{
+			//	if (!vinfo.is_widget_open) continue;
+			//	vinfo.video.seek(ts);
+			//}
+
+			if (ctx_.active_video_group_id == 0)
 			{
-				if (!vinfo.is_widget_open) continue;
-				vinfo.video.seek(ts);
+				return;
 			}
+			ctx_.active_video_group.seek(ts);
 		};
 
 	}
@@ -884,27 +910,41 @@ namespace vt
 		draw_menubar();
 		if (!ctx_.current_project.has_value()) return;
 
+		//TODO: probably should be done somewhere else
+		ctx_.update_active_video_group();
+
 		if (ctx_.win_cfg.show_video_player_window)
 		{
 			video_player_data data = ctx_.player.data();
-			//TODO: include offsets
-			auto& vids = ctx_.current_project->videos;
-			if (vids.size() > 0)
-			{
-				std::vector<std::chrono::nanoseconds> durations;
-				for (const auto& [id, vinfo] : vids)
-				{
-					if (!vinfo.is_widget_open) continue;
-					durations.push_back(vinfo.video.duration());
-				}
+			////TODO: include offsets
+			//auto& vids = ctx_.current_project->videos;
+			//if (vids.size() > 0)
+			//{
+			//	std::vector<std::chrono::nanoseconds> durations;
+			//	for (const auto& [id, vinfo] : vids)
+			//	{
+			//		if (!vinfo.is_widget_open) continue;
+			//		durations.push_back(vinfo.video.duration());
+			//	}
+			//
+			//	auto min_it = std::min_element(durations.begin(), durations.end());
+			//	if (min_it != durations.end())
+			//	{
+			//		data.end_ts = *min_it;
+			//		ctx_.player.update_data(data);
+			//	}
+			//}
 
-				auto min_it = std::min_element(durations.begin(), durations.end());
-				if (min_it != durations.end())
-				{
-					data.end_ts = *min_it;
-					ctx_.player.update_data(data);
-				}
-			}			
+			if (ctx_.active_video_group_id != 0)
+			{
+				//TODO: probably could be done only when needed instead of on every frame.
+				// Video timeline does the same thing and group duration needs to be calculated
+				data.current_ts = ctx_.active_video_group.current_timestamp();
+				data.start_ts = std::chrono::nanoseconds{ 0 };
+				data.end_ts = ctx_.active_video_group.duration();
+				ctx_.player.update_data(data);
+			}
+
 			ctx_.player.render();
 		}
 
@@ -914,8 +954,8 @@ namespace vt
 			auto& vid = vinfo.video;
 
 			widgets::draw_video_widget(vid, vinfo.is_widget_open, id);
-			widgets::draw_timeline_widget_sample(ctx_.timeline_state, vid, ctx_.current_project->tags, ctx_.selected_timestamp_data, ctx_.moving_timestamp_data, ctx_.is_project_dirty, id);
 		}
+		widgets::draw_timeline_widget_sample(ctx_.timeline_state, ctx_.active_video_group, ctx_.current_project->tags, ctx_.selected_timestamp_data, ctx_.moving_timestamp_data, ctx_.is_project_dirty, 0);
 
 		if (ctx_.win_cfg.show_tag_manager_window)
 		{

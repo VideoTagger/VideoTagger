@@ -27,24 +27,19 @@ namespace vt::widgets
 		bool active{};
 	};
 	
-	void draw_timeline_widget_sample(timeline_state& state, video& video, tag_storage& tags, std::optional<selected_timestamp_data>& selected_timestamp, std::optional<moving_timestamp_data>& moving_timestamp, bool& dirty_flag, uint64_t id)
+	void draw_timeline_widget_sample(timeline_state& state, active_video_group& video_group, tag_storage& tags, std::optional<selected_timestamp_data>& selected_timestamp, std::optional<moving_timestamp_data>& moving_timestamp, bool& dirty_flag, uint64_t id)
 	{
+		auto group_duration = video_group.duration();
+
 		//TODO: Definitely change this!
 		state.tags = &tags;
 		state.sync_tags();
-
-		if (video.is_open())
-		{
-			state.time_max = timestamp(std::chrono::duration_cast<std::chrono::seconds>(video.duration()));
-		}
-		else
-		{
-			state.time_min = timestamp{};
-		}
+		state.time_min = timestamp{};
+		state.time_max = timestamp(std::chrono::duration_cast<std::chrono::seconds>(group_duration));
 
 		static int64_t first_frame = 0;
 		static bool expanded = true;
-		timestamp current_time{ std::chrono::duration_cast<std::chrono::seconds>(video.current_timestamp()) };
+		state.current_time = timestamp{ std::chrono::duration_cast<std::chrono::seconds>(video_group.current_timestamp()) };
 
 		std::string title = "Timeline##" + std::to_string(id);
 		ImVec2 default_window_padding = ImGui::GetStyle().WindowPadding;
@@ -53,12 +48,12 @@ namespace vt::widgets
 		{
 			ImGui::PushID(title.c_str());
 			ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, default_window_padding);
-			video_timeline(state, current_time, selected_timestamp, moving_timestamp, dirty_flag);
+			video_timeline(state, selected_timestamp, moving_timestamp, dirty_flag);
 			ImGui::PopStyleVar();
 			
-			if (current_time.seconds_total != std::chrono::duration_cast<std::chrono::seconds>(video.current_timestamp()))
+			if (state.current_time.seconds_total != std::chrono::duration_cast<std::chrono::seconds>(video_group.current_timestamp()))
 			{
-				video.seek(current_time.seconds_total);
+				video_group.seek(state.current_time.seconds_total);
 			}
 			ImGui::PopID();
 		}

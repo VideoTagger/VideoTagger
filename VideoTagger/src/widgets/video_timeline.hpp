@@ -37,7 +37,7 @@
 
 namespace vt::widgets
 {
-	//TODO: maybe should be moved somwhere else
+	//TODO: maybe should be moved somewhere else
 	struct selected_timestamp_data
 	{
 		//TODO: maybe store the tag name instead of a pointer
@@ -69,7 +69,7 @@ namespace vt::widgets
 
 		int64_t first_frame{};
 
-		const char* get_collapse_fmt() const { return "%d Frames / %d entries"; }
+		timestamp current_time{};
 
 		tag& get(size_t index);
 		void add(const std::string& name);
@@ -84,6 +84,6 @@ namespace vt::widgets
 	extern bool insert_timestamp_popup(const std::string& id, tag& tag, timestamp& start, timestamp& end, uint64_t min_timestamp, uint64_t max_timestamp);
 
 	// return true if selection is made
-	bool video_timeline(timeline_state& state, timestamp& current_time, std::optional<selected_timestamp_data>& selected_timestamp, std::optional<moving_timestamp_data>& moving_timestamp, bool& dirty_flag);
+	bool video_timeline(timeline_state& state, std::optional<selected_timestamp_data>& selected_timestamp, std::optional<moving_timestamp_data>& moving_timestamp, bool& dirty_flag);
 
 }

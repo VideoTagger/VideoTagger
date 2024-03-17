@@ -2,7 +2,7 @@
 
 #include <filesystem>
 #include <chrono>
-#include <vector>
+#include <deque>
 #include <SDL.h>
 
 #include "video_decoder.hpp"
@@ -27,11 +27,11 @@ namespace vt
 
 		void set_playing(bool value);
 		void set_speed(float value);
-		void set_looping(bool value);
 
+		void update(std::chrono::nanoseconds target_timestamp);
 		void seek(std::chrono::nanoseconds timestamp);
 
-		void buffer_frames(size_t count);
+		size_t buffer_frames(size_t count);
 		[[nodiscard]] SDL_Texture* get_frame();
 
 		[[nodiscard]] bool is_open() const;
@@ -40,7 +40,6 @@ namespace vt
 		[[nodiscard]] int height() const;
 
 		[[nodiscard]] bool is_playing() const;
-		[[nodiscard]] bool is_looping() const;
 		[[nodiscard]] float speed() const;
 		[[nodiscard]] std::chrono::nanoseconds duration() const;
 
@@ -48,20 +47,21 @@ namespace vt
 
 		size_t current_frame_number() const;
 		double fps() const;
+		std::chrono::nanoseconds frame_time() const;
+		size_t buffered_frames_count() const;
 
 		void get_thumbnail(SDL_Renderer* renderer, SDL_Texture* texture, std::optional<std::chrono::nanoseconds> timestamp = std::nullopt);
 
 	private:
 		video_decoder decoder_;
+		std::deque<video_frame> frame_buffer_;
+
 		SDL_Texture* texture_;
-
-		bool playing_;
-
-		std::vector<video_frame> frame_buffer_;
-		std::chrono::steady_clock::time_point last_tp_;
 		std::chrono::nanoseconds last_ts_;
 
 		float speed_;
-		bool loop_;
+		bool playing_;
+
+		void update_texture(const video_frame& frame_data);
 	};
 }
