@@ -3,6 +3,7 @@
 
 namespace vt
 {
+	struct project;
 	struct keybind_action
 	{
 	public:
@@ -13,6 +14,7 @@ namespace vt
 
 	public:
 		virtual void invoke() const = 0;
+		virtual void render_properties(bool compact) = 0;
 		const std::string& name() const;
 	};
 }

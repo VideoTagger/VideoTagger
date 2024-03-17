@@ -46,6 +46,7 @@ namespace vt
 		keybind() : key_code{ -1 }, modifiers{}, flags{}, action{ std::make_shared<no_action>() } {}
 		template<typename keybind_action_t> keybind(int key_code, keybind_flags flags, const keybind_action_t& action) : key_code{ key_code }, modifiers{}, flags{ flags }, action{ std::make_shared<keybind_action_t>(action) } {}
 		template<typename keybind_action_t> keybind(int key_code, keybind_modifiers modifiers, keybind_flags flags, const keybind_action_t& action) : key_code{ key_code }, modifiers{ modifiers }, flags{ flags }, action{ std::make_shared<keybind_action_t>(action) } {}
+		keybind(int key_code, keybind_modifiers modifiers, keybind_flags flags, const std::shared_ptr<keybind_action>& action) : key_code{ key_code }, modifiers{ modifiers }, flags{ flags }, action{ action } {}
 
 
 		std::shared_ptr<keybind_action> action;

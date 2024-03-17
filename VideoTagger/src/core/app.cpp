@@ -25,6 +25,7 @@
 #include <widgets/icons.hpp>
 #include <widgets/controls.hpp>
 #include <widgets/modal/keybind_popup.hpp>
+#include <widgets/modal/keybind_creation_popup.hpp>
 #include <utils/filesystem.hpp>
 #include <utils/json.hpp>
 
@@ -342,9 +343,8 @@ namespace vt
 
 	void app::on_delete()
 	{
-		//TODO: This should be implemented as a function in timeline, currently disabled since,
-		//segments dont get deselected when windows other than Inspector are active, which should be changed
-		/*
+		//TODO: This should be implemented as a function in timeline
+		//also segments dont get deselected when windows other than Inspector are active, which should probably be changed
 		if (!ctx_.selected_timestamp_data.has_value()) return;
 
 		ctx_.is_project_dirty = true;
@@ -354,7 +354,6 @@ namespace vt
 			ctx_.selected_timestamp_data->timestamp_timeline->erase(it);
 			ctx_.selected_timestamp_data.reset();
 		}
-		*/
 	}
 
 	bool app::load_settings()
@@ -555,10 +554,17 @@ namespace vt
 				auto avail = ImGui::GetContentRegionAvail();
 				if (ImGui::Button("Add Keybind", { avail.x, ImGui::GetTextLineHeightWithSpacing() * 1.5f * io.FontGlobalScale }))
 				{
-					for (size_t i = 0; i < 100; i++)
-					{
-						keybinds[std::to_string(i)];
-					}
+					ImGui::OpenPopup("##KeybindCreationPopup");
+				}
+				static std::vector<std::shared_ptr<keybind_action>> actions;
+				static std::string keybind_name;
+				static int selected_action{};
+				
+				if (widgets::modal::keybind_creation_popup("##KeybindCreationPopup", keybind_name, input::last_keybind, actions, selected_action))
+				{
+					keybind_flags flags(true, true, true);
+					keybinds.insert({ keybind_name, keybind(input::last_keybind.key_code, input::last_keybind.modifiers, flags, input::last_keybind.action) });
+					input::last_keybind.action = nullptr;
 				}
 				ImGui::Separator();
 			}
@@ -648,6 +654,7 @@ namespace vt
 					{
 						ImGui::TableNextColumn();
 						ImGui::Text(keybind.action->name().c_str());
+						keybind.action->render_properties(true);
 					}
 					++row;
 				}
@@ -676,7 +683,6 @@ namespace vt
 			ImGui::DragFloat("Font Scale", &io.FontGlobalScale, 0.005f, 0.5f, 2.0f, "%.2f", ImGuiSliderFlags_AlwaysClamp);
 #endif
 		};
-
 		options("Application Settings", "Keybinds") = []()
 		{
 			display_keybinds_panel(ctx_.keybinds, false, false, false);

@@ -1,4 +1,5 @@
 #include "input.hpp"
+#include <imgui_internal.h>
 
 namespace vt
 {
@@ -48,6 +49,7 @@ namespace vt
 			if (event.key.keysym.sym == blacklisted) return;
 		}
 		
+		if (ImGui::IsAnyItemActive()) return;
 		keybind_modifiers modifiers((event.key.keysym.mod & KMOD_CTRL) != 0, (event.key.keysym.mod & KMOD_SHIFT) != 0, (event.key.keysym.mod & KMOD_ALT) != 0);
 		last_keybind.key_code = event.key.keysym.sym;
 		last_keybind.modifiers = modifiers;

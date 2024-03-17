@@ -1,6 +1,8 @@
 #include "video_player.hpp"
 #include <imgui.h>
 #include <string>
+#include <sstream>
+#include <iomanip>
 #include <chrono>
 #include <utils/timestamp.hpp>
 #include "slider.hpp"
@@ -107,18 +109,44 @@ namespace vt::widgets
 				ImGui::SameLine();
 
 				auto avail_size = ImGui::GetContentRegionAvail();
-				float speed_control_size_x = avail_size.x * 0.5f;
+				auto speed_control_size = ImVec2{ avail_size.x * 0.5f, ImGui::GetTextLineHeight() * io.FontGlobalScale + style.FramePadding.y * 2.f};
 
 				//TODO: Implement this
 				float speed = 1.0f/*video.speed()*/;
 				static constexpr float min_speed = 0.25f;
 				static constexpr float max_speed = 8.0f;
 
-				ImGui::SetNextItemWidth(speed_control_size_x);
+				ImGui::SetNextItemWidth(speed_control_size.x);
 				if (ImGui::DragFloat("##VideoPlayerSpeed", &speed, 0.1f, min_speed, max_speed, "%.2fx", ImGuiSliderFlags_AlwaysClamp))
 				{
 					//video.set_speed(speed);
 				}
+
+				//TODO: Maybe expose number of speeds in options
+				size_t speed_option_count = 8;
+				float popup_height = (speed_control_size.y + style.ItemSpacing.y) * speed_option_count + style.WindowPadding.y * 2.f;
+				if (widgets::begin_button_dropdown("##VideoPlayerSpeedDropdown", speed_control_size, popup_height))
+				{
+					ImGui::PushStyleColor(ImGuiCol_Button, ImVec4{});
+					for (size_t i = 0; i < speed_option_count; ++i)
+					{
+						float new_speed = 0.25f * (i + 1);
+						std::stringstream ss;
+						ss << std::setprecision(3) << new_speed << 'x';
+						std::string speed_str = (i + 1 == speed_option_count / 2) ? "Normal" : ss.str();
+						bool disabled = (speed == new_speed);
+						if (disabled) ImGui::BeginDisabled();
+						if (ImGui::Button(speed_str.c_str(), speed_control_size))
+						{
+							speed = new_speed;
+							ImGui::CloseCurrentPopup();
+						}
+						if (disabled) ImGui::EndDisabled();
+					}
+					ImGui::PopStyleColor();
+					widgets::end_button_dropdown();
+				}
+
 				if (ImGui::BeginPopupContextItem("##VideoPlayerSpeedCtx"))
 				{
 					if (ImGui::MenuItem("Reset"))

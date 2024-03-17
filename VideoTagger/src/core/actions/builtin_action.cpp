@@ -11,4 +11,9 @@ namespace vt
 			std::invoke(action_);
 		}
 	}
+
+	void builtin_action::render_properties(bool compact)
+	{
+		
+	}
 }

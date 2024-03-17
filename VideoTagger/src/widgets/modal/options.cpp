@@ -28,23 +28,20 @@ namespace vt::widgets::modal
 			ImGui::Text("Options");
 			ImGui::PopFont();
 			ImGui::SameLine(ImGui::GetWindowWidth() - ImGui::CalcTextSize(icon).x - style.WindowPadding.x - style.WindowRounding);
-			if (icon_button(icon) and open != nullptr)
+			if (open != nullptr and icon_button(icon))
 			{
 				*open = false;
 				ImGui::CloseCurrentPopup();
 			}
 			ImGui::Separator();
 			
+			bool is_popup_over{};
 			if (ImGui::BeginTable("##OptionsColumns", 2, ImGuiTableFlags_BordersInnerV | ImGuiTableFlags_NoSavedSettings | ImGuiTableFlags_SizingStretchProp, ImGui::GetContentRegionAvail()))
 			{
 				ImGui::TableSetupColumn(nullptr, 0, 0.25f);
 				ImGui::TableSetupColumn(nullptr, 0, 0.75f);
 
 				ImGui::TableNextColumn();
-				auto avail_size = ImGui::GetContentRegionAvail();
-				auto text_size = ImGui::CalcTextSize("Tab 0").x;
-				ImVec2 padding = { avail_size.x - text_size - 2 * style.ItemSpacing.x, 0 };
-				//ImGui::PushStyleVar(ImGuiStyleVar_SelectableTextAlign, ImVec2(0.125f, 0.0f));
 				size_t group_id = 0;
 				size_t group_count = groups.size();
 
@@ -95,11 +92,14 @@ namespace vt::widgets::modal
 				ImGui::EndTable();
 			}
 
-			if (ImGui::IsKeyPressed(ImGuiKey_Escape) and open != nullptr)
+			//TODO: This causes too many problems for now
+			/*
+			if (open != nullptr and ImGui::IsKeyPressed(ImGuiKey_Escape))
 			{
 				*open = false;
 				ImGui::CloseCurrentPopup();
 			}
+			*/
 			ImGui::EndPopup();
 		}
 		ImGui::PopStyleVar();
