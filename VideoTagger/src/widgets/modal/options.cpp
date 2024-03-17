@@ -56,15 +56,15 @@ namespace vt::widgets::modal
 						{
 							for (auto& [name, body] : tabs)
 							{
-								bool active = name != active_tab;
+								bool inactive = name != active_tab or group != active_group;
 
-								if (active) ImGui::PushStyleColor(ImGuiCol_Text, style.Colors[ImGuiCol_TextDisabled]);
+								if (inactive) ImGui::PushStyleColor(ImGuiCol_Text, style.Colors[ImGuiCol_TextDisabled]);
 								if (ImGui::TreeNodeEx(name.c_str(), ImGuiTreeNodeFlags_SpanFullWidth | ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_NoTreePushOnOpen | ImGuiTreeNodeFlags_Leaf) and ImGui::IsItemClicked())
 								{
 									active_group = group;
 									active_tab = name;
 								}
-								if (active) ImGui::PopStyleColor();
+								if (inactive) ImGui::PopStyleColor();
 							}
 
 							if (++group_id != group_count)

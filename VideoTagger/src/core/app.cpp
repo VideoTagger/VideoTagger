@@ -18,17 +18,19 @@
 #include <widgets/video_timeline.hpp>
 #include <widgets/video_player.hpp>
 #include <widgets/project_selector.hpp>
+#include <widgets/theme_customizer.hpp>
 #include <widgets/time_input.hpp>
 #include <widgets/inspector.hpp>
 #include <widgets/modal/options.hpp>
 #include <widgets/icons.hpp>
 #include <widgets/controls.hpp>
+#include <widgets/modal/keybind_popup.hpp>
 #include <utils/filesystem.hpp>
 #include <utils/json.hpp>
 
 #include "project.hpp"
 #include <core/debug.hpp>
-#include <widgets/theme_customizer.hpp>
+#include <core/actions.hpp>
 
 #ifdef _WIN32
 	#include <SDL.h>
@@ -148,40 +150,7 @@ namespace vt
 			debug::log("Saving projects list to " + std::filesystem::relative(ctx_.projects_list_filepath).string());
 		};
 
-		auto& options = ctx_.options;
-		options("Application Settings", "General") = [this]()
-		{
-			widgets::label("Font Size");
-			ImGui::SameLine();
-			int start_font_size = static_cast<int>(ctx_.fonts["default"]->FontSize);
-			static int font_size = start_font_size;
-			ImGui::SetNextItemWidth(ImGui::CalcTextSize("000").x);
-			if (ImGui::DragInt("##FontSize", &font_size, 1.0f, 8, 72, "%d", ImGuiSliderFlags_AlwaysClamp))
-			{
-				ctx_.settings["window"]["font-size"] = font_size;
-			}
-
-			//TODO: Add theme selection
-			//TODO: Add messagebox informing that the changes will be applied only after restart
-
-#ifdef _DEBUG
-			auto& io = ImGui::GetIO();
-			ImGui::SeparatorText("Debug Only");
-			ImGui::DragFloat("Font Scale", &io.FontGlobalScale, 0.005f, 0.5f, 2.0f, "%.2f", ImGuiSliderFlags_AlwaysClamp);
-#endif
-		};
-
-		options("Project Settings", "Keybinds") = []()
-		{
-			auto avail_area = ImGui::GetContentRegionMax();
-			constexpr const char* text = "Keybinds coming soon...";
-			auto half_text_size = ImGui::CalcTextSize(text, nullptr, false, 3 * avail_area.x / 4) / 2;
-			ImGui::SetCursorPos(avail_area / 2 - half_text_size);
-			ImGui::BeginDisabled();
-			ImGui::TextWrapped(text);
-			ImGui::EndDisabled();
-		};
-		options.set_active_tab("Application Settings", "General");
+		init_options();
 	}
 	
 	bool app::init(const app_config& config)
@@ -191,6 +160,7 @@ namespace vt
 		//Clears the log file
 		if (debug::log_filepath != "") std::ofstream{ debug::log_filepath };
 
+		SDL_SetHint(SDL_HINT_WINDOWS_NO_CLOSE_ON_ALT_F4, "1");
 		if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS) < 0)
 		{
 			debug::error("SDL failed to initialize");
@@ -537,24 +507,186 @@ namespace vt
 	{
 		ctx_.keybinds.clear();
 
-		//TODO: Make these editable, not hard coded
-		ctx_.keybinds["save"] = keybind(SDLK_s, keybind_modifiers{ true },
-		[this]()
+		keybind_flags flags(true, false, false);
+		ctx_.keybinds["Save Project"] = keybind(SDLK_s, keybind_modifiers{ true }, flags,
+		builtin_action([this]()
 		{
+			if (ImGui::IsPopupOpen(nullptr, ImGuiPopupFlags_AnyPopup)) return;
 			on_save();
-		});
+		}));
 
-		ctx_.keybinds["save.as"] = keybind(SDLK_s, keybind_modifiers{ true, true },
-		[this]()
+		ctx_.keybinds["Save Project As"] = keybind(SDLK_s, keybind_modifiers{ true, true }, flags,
+		builtin_action([this]()
 		{
+			if (ImGui::IsPopupOpen(nullptr, ImGuiPopupFlags_AnyPopup)) return;
 			on_save_as();
-		});
+		}));
 
-		ctx_.keybinds["delete"] = keybind(SDLK_DELETE,
-		[this]()
+		ctx_.keybinds["Delete"] = keybind(SDLK_DELETE, flags,
+		builtin_action([this]()
 		{
+			if (ImGui::IsPopupOpen(nullptr, ImGuiPopupFlags_AnyPopup)) return;
 			on_delete();
-		});
+		}));
+
+		ctx_.keybinds["Close Project"] = keybind(SDLK_F4, keybind_modifiers{ true }, flags,
+		builtin_action([this]()
+		{
+			if (ImGui::IsPopupOpen(nullptr, ImGuiPopupFlags_AnyPopup)) return;
+			close_project();
+		}));
+
+		ctx_.keybinds["Exit"] = keybind(SDLK_F4, keybind_modifiers{ false, false, true }, flags,
+		builtin_action([this]()
+		{
+			if (ImGui::IsPopupOpen(nullptr, ImGuiPopupFlags_AnyPopup)) return;
+			on_close_project(true);
+		}));
+	}
+
+	void app::init_options()
+	{
+		auto& options = ctx_.options;
+		static auto display_keybinds_panel = [&](std::map<std::string, keybind>& keybinds, bool toggleable = true, bool show_actions = true, bool can_add_new = true)
+		{
+			if (can_add_new)
+			{
+				auto& io = ImGui::GetIO();
+				auto avail = ImGui::GetContentRegionAvail();
+				if (ImGui::Button("Add Keybind", { avail.x, ImGui::GetTextLineHeightWithSpacing() * 1.5f * io.FontGlobalScale }))
+				{
+					for (size_t i = 0; i < 100; i++)
+					{
+						keybinds[std::to_string(i)];
+					}
+				}
+				ImGui::Separator();
+			}
+
+			if (keybinds.empty())
+			{
+				auto avail_area = ImGui::GetContentRegionAvail();
+				constexpr const char* text = "No keybinds to display...";
+				auto half_text_size = ImGui::CalcTextSize(text, nullptr, false, 3 * avail_area.x / 4) / 2;
+				ImGui::SetCursorPos(avail_area / 2 - half_text_size);
+				ImGui::BeginDisabled();
+				ImGui::TextWrapped(text);
+				ImGui::EndDisabled();
+				return;
+			}
+
+			if (ImGui::BeginTable("##ApplicationKeybinds", 2 + (int)toggleable + (int)show_actions, ImGuiTableFlags_BordersInner | ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_ScrollY, ImGui::GetContentRegionAvail()))
+			{
+				if (toggleable)
+				{
+					ImGui::TableSetupColumn(nullptr);
+				}
+				ImGui::TableSetupColumn("Shortcut Name");
+				ImGui::TableSetupColumn("Keybind");
+				if (show_actions)
+				{
+					ImGui::TableSetupColumn("Action");
+				}
+				ImGui::BeginDisabled();
+				ImGui::TableHeadersRow();
+				ImGui::EndDisabled();
+				int row{};
+				for (auto& [name, keybind] : keybinds)
+				{
+					ImGui::TableNextRow();
+					if (toggleable)
+					{
+						ImGui::TableNextColumn();
+						bool enabled = keybind.flags.enabled;
+						if (widgets::checkbox(("##KeybindEnabled" + name).c_str(), &enabled))
+						{
+							keybind.flags.enabled = enabled;
+						}
+					}
+					ImGui::TableNextColumn();
+					const char* id = name.c_str();
+					ImGui::Text(id);
+					ImGui::TableNextColumn();
+					std::string keybind_name = keybind.name(false);
+					ImGui::Text(keybind_name.c_str());
+
+					auto& style = ImGui::GetStyle();
+					auto& io = ImGui::GetIO();
+
+					bool is_row_selected{};
+					if (keybind.flags.rebindable)
+					{
+						ImGui::PushID(id);
+						is_row_selected = ImGui::TableGetHoveredRow() - 1 == row or (ImGui::GetHoveredID() == ImGui::GetID(icons::edit));
+						if (is_row_selected)
+						{
+							ImGui::SameLine();
+							ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, style.FramePadding * 0.5f);
+							if (widgets::icon_button(icons::edit))
+							{
+								//resets the last keybind
+								input::last_keybind.key_code = -1;
+								ImGui::OpenPopup("##KeybindPopup");
+							}
+							ImGui::PopStyleVar();
+						}
+
+						if (widgets::modal::keybind_popup("##KeybindPopup", keybind, input::last_keybind))
+						{
+							keybind.rebind(input::last_keybind);
+						}
+						ImGui::PopID();
+					}
+					if (!keybind.flags.rebindable or !is_row_selected)
+					{
+						ImGui::SameLine();
+						auto text_height = ImGui::GetTextLineHeight() * io.FontGlobalScale;
+						ImGui::Dummy(ImVec2{ text_height, text_height } + style.FramePadding);
+					}
+
+					if (show_actions)
+					{
+						ImGui::TableNextColumn();
+						ImGui::Text(keybind.action->name().c_str());
+					}
+					++row;
+				}
+				ImGui::EndTable();
+			}
+		};
+
+		options("Application Settings", "General") = [this]()
+		{
+			widgets::label("Font Size");
+			ImGui::SameLine();
+			int start_font_size = static_cast<int>(ctx_.fonts["default"]->FontSize);
+			static int font_size = start_font_size;
+			ImGui::SetNextItemWidth(ImGui::CalcTextSize("000").x);
+			//TODO: Add messagebox informing that the changes will be applied only after restart
+			if (ImGui::DragInt("##FontSize", &font_size, 1.0f, 8, 72, "%d", ImGuiSliderFlags_AlwaysClamp))
+			{
+				ctx_.settings["window"]["font-size"] = font_size;
+			}
+
+			//TODO: Add theme selection
+
+#ifdef _DEBUG
+			auto& io = ImGui::GetIO();
+			ImGui::SeparatorText("Debug Only");
+			ImGui::DragFloat("Font Scale", &io.FontGlobalScale, 0.005f, 0.5f, 2.0f, "%.2f", ImGuiSliderFlags_AlwaysClamp);
+#endif
+		};
+
+		options("Application Settings", "Keybinds") = []()
+		{
+			display_keybinds_panel(ctx_.keybinds, false, false, false);
+		};
+
+		options("Project Settings", "Keybinds") = []()
+		{
+			display_keybinds_panel(ctx_.current_project->keybinds);
+		};
+		options.set_active_tab("Application Settings", "General");
 	}
 
 	void app::handle_events()
@@ -563,7 +695,12 @@ namespace vt
 		while (SDL_PollEvent(&event))
 		{
 			ImGui_ImplSDL2_ProcessEvent(&event);
-			process_inputs(event, ctx_.keybinds);
+			decltype(ctx_.current_project->keybinds)* project_keybinds{};
+			if (ctx_.current_project.has_value())
+			{
+				project_keybinds = &ctx_.current_project->keybinds;
+			}
+			input::process_event(event, ctx_.keybinds, project_keybinds);
 
 			switch (event.type)
 			{
@@ -696,7 +833,7 @@ namespace vt
 				ImGui::Separator();
 				{
 					std::string menu_item = std::string(icons::save) + " Save";
-					if (ImGui::MenuItem(menu_item.c_str(), "Ctrl+S"))
+					if (ImGui::MenuItem(menu_item.c_str(), ctx_.keybinds["Save Project"].name().c_str()))
 					{
 						on_save();
 					}
@@ -704,7 +841,7 @@ namespace vt
 
 				{
 					std::string menu_item = std::string(icons::save_as) + " Save As...";
-					if (ImGui::MenuItem(menu_item.c_str(), "Ctrl+Shift+S"))
+					if (ImGui::MenuItem(menu_item.c_str(), ctx_.keybinds["Save Project As"].name().c_str()))
 					{
 						on_save_as();
 					}
@@ -727,7 +864,7 @@ namespace vt
 
 				{
 					std::string menu_item = std::string(icons::close) + " Close Project";
-					if (ImGui::MenuItem(menu_item.c_str()))
+					if (ImGui::MenuItem(menu_item.c_str(), ctx_.keybinds["Close Project"].name().c_str()))
 					{
 						close_project();
 					}
@@ -735,7 +872,7 @@ namespace vt
 				ImGui::Separator();
 				{
 					std::string menu_item = std::string(icons::exit) + " Exit";
-					if (ImGui::MenuItem(menu_item.c_str()))
+					if (ImGui::MenuItem(menu_item.c_str(), ctx_.keybinds["Exit"].name().c_str()))
 					{
 						on_close_project(true);
 					}

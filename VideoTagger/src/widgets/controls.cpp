@@ -4,6 +4,17 @@
 
 namespace vt::widgets
 {
+	bool checkbox(const char* label, bool* value)
+	{
+		auto& style = ImGui::GetStyle();
+
+		bool result{};
+		ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 3);
+		result = ImGui::Checkbox(label, value);
+		ImGui::PopStyleVar();
+		return result;
+	}
+
 	bool icon_button(const char* label, const ImVec2& size)
 	{
 		ImGui::PushStyleColor(ImGuiCol_Button, ImVec4{});

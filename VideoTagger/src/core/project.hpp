@@ -4,7 +4,8 @@
 #include <map>
 #include <optional>
 
-#include "tags/tag_storage.hpp"
+#include <core/input.hpp>
+#include <tags/tag_storage.hpp>
 
 namespace vt
 {
@@ -17,6 +18,7 @@ namespace vt
 		std::filesystem::path path = std::filesystem::current_path();
 
 		tag_storage tags;
+		std::map<std::string, keybind> keybinds;
 
 		//TODO: Store tags displayed on the timeline
 
