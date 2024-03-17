@@ -2,11 +2,12 @@
 #include <string>
 #include <filesystem>
 #include <unordered_map>
+#include <map>
 #include <optional>
 
 #include <tags/tag_storage.hpp>
 #include <video/video_pool.hpp>
-
+#include <core/input.hpp>
 
 namespace vt
 {
@@ -23,6 +24,7 @@ namespace vt
 		tag_storage tags;
 		video_pool videos;
 		std::unordered_map<group_id_t, video_group> video_groups;
+		std::map<std::string, keybind> keybinds;
 
 		//TODO: Store tags displayed on the timeline
 

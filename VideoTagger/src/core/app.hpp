@@ -46,6 +46,7 @@ namespace vt
 		void on_close_project(bool should_shutdown);
 		void on_save();
 		void on_save_as();
+		void on_delete();
 
 		bool load_settings();
 		void save_settings();
@@ -56,6 +57,7 @@ namespace vt
 		void build_fonts(float size);
 		void init_keybinds();
 		void init_player();
+		void init_options();
 		void handle_events();
 		void render();
 

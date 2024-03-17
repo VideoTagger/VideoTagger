@@ -1,10 +1,11 @@
 #pragma once
 #include <optional>
 #include <memory>
-#include <unordered_map>
 #include <filesystem>
 #include <string>
 #include <vector>
+#include <map>
+#include <unordered_map>
 
 #include "project.hpp"
 #include "input.hpp"
@@ -60,7 +61,7 @@ namespace vt
 		nlohmann::ordered_json settings;
 		window_config win_cfg;
 		std::unordered_map<std::string, ImFont*> fonts;
-		std::unordered_map<std::string, keybind> keybinds;
+		std::map<std::string, keybind> keybinds;
 
 		std::optional<project> current_project;
 		group_id_t active_video_group_id{};
