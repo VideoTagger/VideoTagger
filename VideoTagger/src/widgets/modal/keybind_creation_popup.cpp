@@ -24,6 +24,7 @@ namespace vt::widgets::modal
 			{
 				keybind_name = "Keybind";
 				selected_action = 0;
+				keybind.key_code = -1;
 				actions.clear();
 				actions.push_back(std::make_shared<no_action>());
 				actions.push_back(std::make_shared<add_timestamp_action>());

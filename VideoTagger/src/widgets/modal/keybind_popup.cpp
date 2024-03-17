@@ -23,7 +23,11 @@ namespace vt::widgets::modal
 			ImGui::BeginDisabled();
 			ImGui::InputText(input_id.c_str(), &key_combination, ImGuiInputTextFlags_ReadOnly);
 			ImGui::EndDisabled();
-			if (ImGui::IsKeyPressed(ImGuiKey_Enter))
+			if (ImGui::IsKeyPressed(ImGuiKey_Escape))
+			{
+				ImGui::CloseCurrentPopup();
+			}
+			else if (ImGui::IsKeyPressed(ImGuiKey_Enter))
 			{
 				result = (last_keybind.key_code != -1);
 				ImGui::CloseCurrentPopup();
