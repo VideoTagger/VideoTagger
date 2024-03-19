@@ -34,7 +34,6 @@
 #include <core/actions.hpp>
 
 #ifdef _WIN32
-	#include <SDL.h>
 	#include <SDL_syswm.h>
 	#include <dwmapi.h>
 	#include <shlobj.h>
@@ -565,7 +564,7 @@ namespace vt
 				static std::string keybind_name;
 				static int selected_action{};
 				
-				if (widgets::modal::keybind_options_popup("##KeybindCreationPopup", keybind_name, input::last_keybind, actions, selected_action, true))
+				if (widgets::modal::keybind_options_popup("##KeybindCreationPopup", keybind_name, input::last_keybind, actions, selected_action, keybind_options_config::show_name_field | keybind_options_config::show_keybind_field | keybind_options_config::show_action_field | keybind_options_config::creation_mode))
 				{
 					keybind_flags flags(true, true, true);
 					auto kb = keybind(input::last_keybind.key_code, input::last_keybind.modifiers, flags, input::last_keybind.action);
@@ -591,7 +590,7 @@ namespace vt
 			}
 
 			std::optional<std::string> delete_kb_name;
-			if (ImGui::BeginTable("##ApplicationKeybinds", 2 + (int)toggleable + (int)show_actions, ImGuiTableFlags_BordersInner | ImGuiTableFlags_ScrollY | ImGuiTableFlags_SizingFixedFit, ImGui::GetContentRegionAvail()))
+			if (ImGui::BeginTable("##ApplicationKeybinds", 2 + (int)toggleable + (int)show_actions, ImGuiTableFlags_BordersInner | ImGuiTableFlags_ScrollX | ImGuiTableFlags_ScrollY | ImGuiTableFlags_SizingFixedFit, ImGui::GetContentRegionAvail()))
 			{
 				if (toggleable)
 				{
@@ -601,7 +600,7 @@ namespace vt
 				ImGui::TableSetupColumn("Keybind");
 				if (show_actions)
 				{
-					ImGui::TableSetupColumn("Action", ImGuiTableColumnFlags_WidthFixed, ImGui::GetContentRegionAvail().x);
+					ImGui::TableSetupColumn("Action", ImGuiTableColumnFlags_WidthFixed);
 				}
 				ImGui::BeginDisabled();
 				ImGui::TableHeadersRow();
@@ -637,20 +636,54 @@ namespace vt
 					}
 					ImGui::TableNextColumn();
 					ImGui::Text(id);
+
+					//TODO: This is repeated 3 times, refactor this
+					{
+						static std::string new_kb_name;
+						static std::vector<std::shared_ptr<keybind_action>> actions;
+
+						ImGui::PushID(id);
+						std::string edit_id = std::string(icons::edit) + "##KbName";
+						is_row_selected = ImGui::TableGetHoveredRow() - 1 == row or (ImGui::GetHoveredID() == ImGui::GetID(edit_id.c_str()));
+						ImGui::SameLine();
+						if (is_row_selected and ImGui::TableGetColumnIndex() == ImGui::TableGetHoveredColumn())
+						{
+							ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, style.FramePadding * 0.5f);
+							if (widgets::icon_button(edit_id.c_str()))
+							{
+								new_kb_name = keybind.display_name;
+								actions = get_all_keybind_actions();
+								ImGui::OpenPopup("##KeybindNamePopup");
+							}
+							ImGui::PopStyleVar();
+						}
+						else
+						{
+							ImGui::SameLine(0.0f, ImGui::CalcTextSize(icons::edit).x + style.FramePadding.x);
+							ImGui::Dummy(style.ItemSpacing);
+						}
+
+						int dummy{};
+						if (widgets::modal::keybind_options_popup("##KeybindNamePopup", new_kb_name, keybind, actions, dummy, keybind_options_config::show_name_field | keybind_options_config::show_save_button))
+						{
+							keybind.display_name = new_kb_name;
+						}
+						ImGui::PopID();
+					}
+
 					ImGui::TableNextColumn();
 					std::string key_combination = keybind.name(false);
 					ImGui::Text(key_combination.c_str());
 
-					//TODO: This is repeated 2 times, refactor this
 					if (keybind.flags.rebindable)
 					{
 						ImGui::PushID(id);
 						std::string edit_combination_id = std::string(icons::edit) + "##EditCombination";
 						is_row_selected |= (ImGui::GetHoveredID() == ImGui::GetID(edit_combination_id.c_str()));
 
+						ImGui::SameLine();
 						if (is_row_selected and ImGui::TableGetColumnIndex() == ImGui::TableGetHoveredColumn())
 						{
-							ImGui::SameLine();
 							ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, style.FramePadding * 0.5f);
 							if (widgets::icon_button(edit_combination_id.c_str()))
 							{
@@ -660,19 +693,17 @@ namespace vt
 							}
 							ImGui::PopStyleVar();
 						}
+						else
+						{
+							ImGui::SameLine(0.0f, ImGui::CalcTextSize(icons::edit).x + style.FramePadding.x);
+							ImGui::Dummy(style.ItemSpacing);
+						}
 
 						if (widgets::modal::keybind_popup("##KeybindPopup", keybind, input::last_keybind))
 						{
 							keybind.rebind(input::last_keybind);
 						}
 						ImGui::PopID();
-					}
-
-					if (!keybind.flags.rebindable or !is_row_selected)
-					{
-						ImGui::SameLine();
-						auto text_height = ImGui::GetTextLineHeight() * io.FontGlobalScale;
-						ImGui::Dummy(ImVec2{ text_height, text_height } + style.FramePadding);
 					}
 
 					if (show_actions)
@@ -683,22 +714,25 @@ namespace vt
 						if (keybind.flags.rebindable)
 						{
 							static std::vector<std::shared_ptr<keybind_action>> actions;
-							static std::string new_kb_name;
 
 							ImGui::PushID(id);
 							std::string edit_kb_id = std::string(icons::edit) + "##EditKb";
 							is_row_selected = ImGui::TableGetHoveredRow() - 1 == row or (ImGui::GetHoveredID() == ImGui::GetID(edit_kb_id.c_str()));
+							ImGui::SameLine();
 							if (is_row_selected and ImGui::TableGetColumnIndex() == ImGui::TableGetHoveredColumn())
 							{
-								ImGui::SameLine();
 								ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, style.FramePadding * 0.5f);
 								if (widgets::icon_button(edit_kb_id.c_str()))
 								{
-									new_kb_name = keybind.display_name;
 									actions = get_all_keybind_actions();
 									ImGui::OpenPopup("##KeybindOptionsPopup");
 								}
 								ImGui::PopStyleVar();
+							}
+							else
+							{
+								ImGui::SameLine(0.0f, ImGui::CalcTextSize(icons::edit).x + style.FramePadding.x);
+								ImGui::Dummy(style.ItemSpacing);
 							}
 
 							auto it = std::find_if(actions.begin(), actions.end(), [&](const std::shared_ptr<keybind_action>& action)
@@ -707,17 +741,12 @@ namespace vt
 							});
 
 							int selected_action = (it != actions.end() ? static_cast<int>(std::distance(actions.begin(), it)) : 0);
-							if (widgets::modal::keybind_options_popup("##KeybindOptionsPopup", new_kb_name, keybind, actions, selected_action))
+							std::string dummy;
+							if (widgets::modal::keybind_options_popup("##KeybindOptionsPopup", dummy, keybind, actions, selected_action, keybind_options_config::show_action_field | keybind_options_config::show_save_button))
 							{
-								keybind.display_name = new_kb_name;
+								
 							}
 							ImGui::PopID();
-						}
-						if (!keybind.flags.rebindable or !is_row_selected)
-						{
-							ImGui::SameLine();
-							auto text_height = ImGui::GetTextLineHeight() * io.FontGlobalScale;
-							ImGui::Dummy(ImVec2{ text_height, text_height } + style.FramePadding);
 						}
 					}
 					++row;
