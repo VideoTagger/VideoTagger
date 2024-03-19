@@ -83,15 +83,15 @@ namespace vt
 
 	void active_video_group::set_speed(float value)
 	{
-		for (auto& video_data : videos)
-		{
-			if (video_data.video == nullptr)
-			{
-				continue;
-			}
-
-			video_data.video->set_speed(value);
-		}
+		//for (auto& video_data : videos)
+		//{
+		//	if (video_data.video == nullptr)
+		//	{
+		//		continue;
+		//	}
+		//
+		//	video_data.video->set_speed(value);
+		//}
 
 		speed_ = value;
 	}

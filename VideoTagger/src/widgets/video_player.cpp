@@ -16,9 +16,10 @@ namespace vt::widgets
 
     }
 
-	void video_player::update_data(video_player_data data)
+	void video_player::update_data(video_player_data data, bool is_playing)
 	{
 		data_ = data;
+		is_playing_ = is_playing;
 	}
 
 	void video_player::render()

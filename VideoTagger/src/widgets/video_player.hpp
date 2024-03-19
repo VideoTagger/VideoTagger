@@ -40,7 +40,7 @@ namespace vt::widgets
 		video_player_callbacks callbacks;
 
 	public:
-		void update_data(video_player_data data);
+		void update_data(video_player_data data, bool is_playing);
 		void render();
 		const video_player_data& data() const;
 	};

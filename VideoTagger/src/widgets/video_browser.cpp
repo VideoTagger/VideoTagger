@@ -88,7 +88,7 @@ namespace vt::widgets
 					{
 						bool open = false;
 						bool remove = false;
-						draw_video_tile(vinfo, img_size, tile_size, open, remove);
+						draw_video_tile(vinfo, img_size, tile_size, open, remove, vinfo.thumbnail);
 						if (remove)
 						{
 							ctx_.current_project->videos.erase(id);

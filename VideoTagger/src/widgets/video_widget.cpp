@@ -153,24 +153,24 @@ namespace vt::widgets
 						auto avail_size = ImGui::GetContentRegionAvail();
 						float speed_control_size_x = avail_size.x * 0.5f;
 
-						float speed = video.speed();
+						//float speed = video.speed();
 						static constexpr float min_speed = 0.25f;
 						static constexpr float max_speed = 8.0f;
 
 						ImGui::SetNextItemWidth(speed_control_size_x);
-						if (ImGui::DragFloat("##VideoPlayerSpeed", &speed, 0.1f, min_speed, max_speed, "%.2fx", ImGuiSliderFlags_AlwaysClamp))
-						{
-							video.set_speed(speed);
-						}
-						if (ImGui::BeginPopupContextItem("##VideoPlayerSpeedCtx"))
-						{
-							if (ImGui::MenuItem("Reset"))
-							{
-								speed = 1.0f;
-								video.set_speed(speed);
-							}
-							ImGui::EndPopup();
-						}
+						//if (ImGui::DragFloat("##VideoPlayerSpeed", &speed, 0.1f, min_speed, max_speed, "%.2fx", ImGuiSliderFlags_AlwaysClamp))
+						//{
+						//	video.set_speed(speed);
+						//}
+						//if (ImGui::BeginPopupContextItem("##VideoPlayerSpeedCtx"))
+						//{
+						//	if (ImGui::MenuItem("Reset"))
+						//	{
+						//		speed = 1.0f;
+						//		video.set_speed(speed);
+						//	}
+						//	ImGui::EndPopup();
+						//}
 					}
 
 					ImGui::Columns();

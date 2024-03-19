@@ -134,12 +134,18 @@ namespace vt
 	class packet_queue
 	{
 	public:
+		using container = std::deque<packet_wrapper>;
+		using iterator = container::iterator;
+		using const_iterator = container::const_iterator;
+
 		packet_queue();
 
 		// The stream index of the first packet pushed onto the queue will become this queue's stream index.
 		// Trying to push a packet with stream index different from this queue's index will fail (function will return false).
-		bool push(packet_wrapper&& packet);
-		void pop();
+		bool push_front(packet_wrapper&& packet);
+		bool push_back(packet_wrapper&& packet);
+		void pop_front();
+		void pop_back();
 
 		//TODO: maybe add push_front, pop_back. Rename push push_back, pop_front
 
@@ -151,16 +157,30 @@ namespace vt
 		[[nodiscard]] packet_wrapper& back();
 		[[nodiscard]] const packet_wrapper& back() const;
 
+		[[nodiscard]] packet_wrapper& at(size_t index);
+		[[nodiscard]] const packet_wrapper& at(size_t index) const;
+
 		[[nodiscard]] size_t size() const;
 		[[nodiscard]] int stream_index() const;
 		[[nodiscard]] bool empty() const;
+
+		[[nodiscard]] iterator begin();
+		[[nodiscard]] const_iterator begin() const;
+		[[nodiscard]] const_iterator cbegin() const;
+
+		[[nodiscard]] iterator end();
+		[[nodiscard]] const_iterator end() const;
+		[[nodiscard]] const_iterator cend() const;
+
+		iterator erase(iterator it);
+		iterator erase(const_iterator it);
 
 		packet_queue& operator>>(packet_wrapper& rhs);
 		packet_queue& operator<<(packet_wrapper&& rhs);
 
 	private:
 		int stream_index_;
-		std::deque<packet_wrapper> packets_;
+		container packets_;
 	};
 
 	struct video_metadata
@@ -228,6 +248,11 @@ namespace vt
 		[[nodiscard]] std::chrono::nanoseconds frame_number_to_timestamp(size_t frame) const;
 		[[nodiscard]] size_t timestamp_to_frame_number(std::chrono::nanoseconds timestamp) const;
 
+		[[nodiscard]] packet_queue& get_packet_queue(stream_type type);
+		[[nodiscard]] const packet_queue& get_packet_queue(stream_type type) const;
+
+		[[nodiscard]] AVFormatContext* av_format_context();
+
 	private:
 		AVFormatContext* format_context_;
 
@@ -262,6 +287,4 @@ namespace vt
 
 		return stream_type_traits<type>::decode(codec_context, packet);
 	}
-
-	
 }

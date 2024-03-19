@@ -51,9 +51,17 @@ namespace vt
 	public:
 		struct video_info
 		{
+			~video_info();
+
 			std::filesystem::path path;
 			video video;
 			bool is_widget_open{};
+			SDL_Texture* thumbnail{};
+
+			bool update_thumbnail(SDL_Renderer* renderer);
+
+			bool open_video(SDL_Renderer* renderer);
+			void close_video();
 		};
 
 		using container = std::unordered_map<video_id_t, video_info>;

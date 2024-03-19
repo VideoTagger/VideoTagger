@@ -92,7 +92,11 @@ namespace vt
 	{ 
 		video_id_t video_id = utils::hash::fnv_hash(video_path); //utils::uuid::get()
 		video_info videoInfo = { video_path, video() };
-		videos_.try_emplace(video_id, std::move(videoInfo));
+		auto [it, inserted] = videos_.try_emplace(video_id, std::move(videoInfo));
+		if (!inserted)
+		{
+			video_id = 0;
+		}
 		return video_id;
 	}
 
@@ -124,8 +128,7 @@ namespace vt
 		}
 
 		video_info& video_info = it->second;
-		video_info.video.open_file(video_info.path, renderer);
-		return true;
+		return video_info.open_video(renderer);
 	}
 
 	bool video_pool::close_video(video_id_t video_id)
@@ -137,7 +140,7 @@ namespace vt
 		}
 
 		video_info& video_info = it->second;
-		video_info.video.close();
+		video_info.close_video();
 		return true;
 	}
 
@@ -263,5 +266,56 @@ namespace vt
 	video_pool::const_iterator video_pool::cend() const
 	{
 		return videos_.cend();
+	}
+
+
+	video_pool::video_info::~video_info()
+	{
+		if (thumbnail != nullptr)
+		{
+			SDL_DestroyTexture(thumbnail);
+		}
+	}
+
+	bool video_pool::video_info::update_thumbnail(SDL_Renderer* renderer)
+	{
+		bool was_open = video.is_open();
+		if (!was_open)
+		{
+			if (!video.open_file(path, renderer))
+			{
+				return false;
+			}
+		}
+
+		if (thumbnail != nullptr)
+		{
+			SDL_DestroyTexture(thumbnail);
+		}
+
+		thumbnail = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGB888, SDL_TEXTUREACCESS_TARGET, video.width() / 2, video.height() / 2);
+		if (thumbnail == nullptr)
+		{
+			return false;
+		}
+
+		video.get_thumbnail(renderer, thumbnail);
+
+		if (!was_open)
+		{
+			video.close();
+		}
+
+		return true;
+	}
+
+	bool video_pool::video_info::open_video(SDL_Renderer* renderer)
+	{
+		return video.open_file(path, renderer);
+	}
+
+	void video_pool::video_info::close_video()
+	{
+		video.close();
 	}
 }

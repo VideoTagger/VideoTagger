@@ -1,10 +1,9 @@
 #include "video.hpp"
-#define VT_ENABLE_THUMBNAILS 0
 
 namespace vt
 {
 	video::video()
-		: texture_{}, playing_{}, last_ts_{}, speed_{ 1.f }
+		: texture_{}, playing_{}, last_ts_{}
 	{
 	}
 
@@ -27,12 +26,8 @@ namespace vt
 		}
 
 		texture_ = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_YV12, SDL_TEXTUREACCESS_STREAMING, decoder_.width(), decoder_.height());
-
-		buffer_frames(1);
-
-		auto& next_frame = frame_buffer_.front();
-		update_texture(next_frame);
-		last_ts_ = next_frame.timestamp();
+		clear_texture();
+		last_ts_ = std::chrono::nanoseconds{ 0 };
 
 		return true;
 	}
@@ -41,11 +36,7 @@ namespace vt
 	{
 		set_playing(false);
 
-		frame_buffer_.clear();
-
 		last_ts_ = std::chrono::nanoseconds(0);
-
-		speed_ = 1.f;
 
 		SDL_DestroyTexture(texture_);
 		texture_ = nullptr;
@@ -70,31 +61,7 @@ namespace vt
 			return;
 		}
 
-		if (!playing_ and value)
-		{
-			if (frame_buffer_.empty())
-			{
-				buffer_frames(1);
-			}
-
-			if (frame_buffer_.empty())
-			{
-				return;
-			}
-
-			last_ts_ = frame_buffer_.front().timestamp();
-		}
 		playing_ = value;
-	}
-
-	void video::set_speed(float value)
-	{
-		if (!is_open())
-		{
-			return;
-		}
-
-		speed_ = value;
 	}
 
 	void video::update(std::chrono::nanoseconds target_timestamp)
@@ -106,23 +73,54 @@ namespace vt
 			return;
 		}
 
-		if (frame_buffer_.empty())
+		while (!decoder_.eof())
 		{
-			if (buffer_frames(1) == 0)
+			if (decoder_.packet_queue_size(stream_type::video) == 0)
 			{
-				set_playing(false);
+				//TODO: this probably should be a function in the decoder class
+				decoder_.read_packet();
+				if (decoder_.eof())
+				{
+					continue;
+				}
+
+				if (decoder_.last_read_packet_type() != stream_type::video)
+				{
+					decoder_.discard_last_read_packet();
+					continue;
+				}
+				//---
+			}
+
+			auto& packet_queue = decoder_.get_packet_queue(stream_type::video);
+			auto& packet = packet_queue.front();
+			if (packet.timestamp() > target_timestamp)
+			{
 				return;
 			}
+
+			if (packet.timestamp() >= last_ts_)
+			{
+				if (packet.timestamp() + frame_time() > target_timestamp)
+				{
+					break;
+				}
+			}
+
+			decoder_.discard_next_packet(stream_type::video);
 		}
 
-		auto& next_frame = frame_buffer_.front();
-		if (next_frame.timestamp() > target_timestamp)
+		if (decoder_.eof())
 		{
+			set_playing(false);
 			return;
 		}
 
-		update_texture(next_frame);
-		frame_buffer_.pop_front();
+		auto decode_result = decoder_.decode_next_packet<stream_type::video>();
+		if (decode_result.has_value())
+		{
+			update_texture(*decode_result);
+		}
 	}
 
 	void video::seek(std::chrono::nanoseconds target_timestamp)
@@ -134,31 +132,9 @@ namespace vt
 
 		if (target_timestamp < last_ts_)
 		{
-			frame_buffer_.clear();
 			decoder_.seek_keyframe(0);
 			last_ts_ = std::chrono::nanoseconds(0);
 		}
-
-		//TODO: improve after improving decoder
-
-		std::chrono::nanoseconds ft = frame_time();
-		while (!frame_buffer_.empty())
-		{
-			std::chrono::nanoseconds estimated_next_timestamp = frame_buffer_[0].timestamp() + ft;
-
-			if (!(frame_buffer_[0].timestamp() <= target_timestamp and target_timestamp < estimated_next_timestamp))
-			{
-				frame_buffer_.pop_front();
-				continue;
-			}
-
-			auto& frame = frame_buffer_[0];
-			update_texture(frame);
-			last_ts_ = frame.timestamp();
-			return;
-		}
-
-		//TODO: remove only unneeded frames
 		
 		while (!decoder_.eof())
 		{
@@ -200,38 +176,6 @@ namespace vt
 			last_ts_ = frame.timestamp();
 		}
 	}
-
-	size_t video::buffer_frames(size_t count)
-	{
-		if (!is_open())
-		{
-			return 0;
-		}
-
-		size_t buffered_frame_count = 0;
-		while (buffered_frame_count < count)
-		{
-			decoder_.read_packet();
-			auto decode_result = decoder_.decode_next_packet<stream_type::video>();
-			if (!decode_result.has_value())
-			{
-				if (decoder_.eof())
-				{
-					break;
-				}
-				else
-				{
-					continue;
-				}
-			}
-
-			frame_buffer_.push_back(std::move(decode_result.value()));
-			buffered_frame_count++;
-		}
-
-		return buffered_frame_count;
-	}
-
 	SDL_Texture* video::get_frame()
 	{
 		return texture_;
@@ -255,11 +199,6 @@ namespace vt
 	bool video::is_playing() const
 	{
 		return playing_;
-	}
-
-	float video::speed() const
-	{
-		return speed_;
 	}
 
 	std::chrono::nanoseconds video::duration() const
@@ -292,14 +231,8 @@ namespace vt
 		return std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::duration<double>(1.0 / fps()));;
 	}
 
-	size_t video::buffered_frames_count() const
-	{
-		return frame_buffer_.size();
-	}
-
 	void video::get_thumbnail(SDL_Renderer* renderer, SDL_Texture* texture, std::optional<std::chrono::nanoseconds> timestamp)
 	{
-#if VT_ENABLE_THUMBNAILS
 		auto start_timestamp = current_timestamp();
 
 		if (!timestamp.has_value())
@@ -316,7 +249,6 @@ namespace vt
 		SDL_SetRenderTarget(renderer, target);
 
 		seek(start_timestamp);
-#endif
 	}
 
 	void video::update_texture(const video_frame& frame_data)
@@ -330,5 +262,14 @@ namespace vt
 			up.data(), up.pitch(),
 			vp.data(), vp.pitch()
 		);
+
+		last_ts_ = frame_data.timestamp();
+	}
+
+	void video::clear_texture()
+	{
+		std::vector<uint8_t> y_plane(width() * height(), 16);
+		std::vector<uint8_t> uv_plane((width() / 2) * (height() / 2), 128);
+		SDL_UpdateYUVTexture(texture_, NULL, y_plane.data(), width(), uv_plane.data(), width() / 2, uv_plane.data(), width() / 2);
 	}
 }

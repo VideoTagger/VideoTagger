@@ -904,7 +904,11 @@ namespace vt
 						//auto vid = std::make_shared<video>();
 						//vid->open_file(result.path, renderer_);
 						//ctx_.videos.push_back(vid);
-						ctx_.current_project->videos.insert(result.path);
+						auto video_id = ctx_.current_project->videos.insert(result.path);
+						if (video_id != 0)
+						{
+							ctx_.current_project->videos.get(video_id)->update_thumbnail(renderer_);
+						}
 					}
 				}
 
@@ -1107,7 +1111,7 @@ namespace vt
 				data.current_ts = ctx_.active_video_group.current_timestamp();
 				data.start_ts = std::chrono::nanoseconds{ 0 };
 				data.end_ts = ctx_.active_video_group.duration();
-				ctx_.player.update_data(data);
+				ctx_.player.update_data(data, ctx_.active_video_group.is_playing());
 			}
 
 			ctx_.player.render();

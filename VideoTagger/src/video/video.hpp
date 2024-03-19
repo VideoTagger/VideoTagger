@@ -26,12 +26,10 @@ namespace vt
 		void close();
 
 		void set_playing(bool value);
-		void set_speed(float value);
 
 		void update(std::chrono::nanoseconds target_timestamp);
 		void seek(std::chrono::nanoseconds timestamp);
 
-		size_t buffer_frames(size_t count);
 		[[nodiscard]] SDL_Texture* get_frame();
 
 		[[nodiscard]] bool is_open() const;
@@ -40,7 +38,6 @@ namespace vt
 		[[nodiscard]] int height() const;
 
 		[[nodiscard]] bool is_playing() const;
-		[[nodiscard]] float speed() const;
 		[[nodiscard]] std::chrono::nanoseconds duration() const;
 
 		[[nodiscard]] std::chrono::nanoseconds current_timestamp() const;
@@ -48,20 +45,18 @@ namespace vt
 		size_t current_frame_number() const;
 		double fps() const;
 		std::chrono::nanoseconds frame_time() const;
-		size_t buffered_frames_count() const;
 
 		void get_thumbnail(SDL_Renderer* renderer, SDL_Texture* texture, std::optional<std::chrono::nanoseconds> timestamp = std::nullopt);
 
 	private:
 		video_decoder decoder_;
-		std::deque<video_frame> frame_buffer_;
-
+		
 		SDL_Texture* texture_;
 		std::chrono::nanoseconds last_ts_;
 
-		float speed_;
 		bool playing_;
 
 		void update_texture(const video_frame& frame_data);
+		void clear_texture();
 	};
 }

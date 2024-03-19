@@ -235,7 +235,23 @@ namespace vt
 	{
 	}
 
-	bool packet_queue::push(packet_wrapper&& packet)
+	bool packet_queue::push_front(packet_wrapper&& packet)
+	{
+		if (stream_index_ == -1)
+		{
+			stream_index_ = packet.stream_index();
+		}
+
+		if (packet.stream_index() != stream_index_)
+		{
+			return false;
+		}
+
+		packets_.push_front(std::move(packet));
+		return true;
+	}
+
+	bool packet_queue::push_back(packet_wrapper&& packet)
 	{
 		if (stream_index_ == -1)
 		{
@@ -271,7 +287,17 @@ namespace vt
 		return packets_.back();
 	}
 
-	void packet_queue::pop()
+	packet_wrapper& packet_queue::at(size_t index)
+	{
+		return packets_.at(index);
+	}
+
+	const packet_wrapper& packet_queue::at(size_t index) const
+	{
+		return packets_.at(index);
+	}
+
+	void packet_queue::pop_front()
 	{
 		if (empty())
 		{
@@ -281,12 +307,19 @@ namespace vt
 		return packets_.pop_front();
 	}
 
+	void packet_queue::pop_back()
+	{
+		if (empty())
+		{
+			return;
+		}
+
+		return packets_.pop_back();
+	}
+
 	void packet_queue::clear()
 	{
-		while (!empty())
-		{
-			pop();
-		}
+		packets_.clear();
 	}
 
 	size_t packet_queue::size() const
@@ -304,6 +337,46 @@ namespace vt
 		return packets_.empty();
 	}
 
+	packet_queue::iterator packet_queue::begin()
+	{
+		return packets_.begin();
+	}
+
+	packet_queue::const_iterator packet_queue::begin() const
+	{
+		return packets_.begin();
+	}
+
+	packet_queue::const_iterator packet_queue::cbegin() const
+	{
+		return packets_.cbegin();
+	}
+
+	packet_queue::iterator packet_queue::end()
+	{
+		return packets_.end();
+	}
+
+	packet_queue::const_iterator packet_queue::end() const
+	{
+		return packets_.end();
+	}
+
+	packet_queue::const_iterator packet_queue::cend() const
+	{
+		return packets_.cend();
+	}
+
+	packet_queue::iterator packet_queue::erase(iterator it)
+	{
+		return packets_.erase(it);
+	}
+
+	packet_queue::iterator packet_queue::erase(const_iterator it)
+	{
+		return packets_.erase(it);
+	}
+
 	packet_queue& packet_queue::operator>>(packet_wrapper& rhs)
 	{
 		if (empty())
@@ -312,14 +385,14 @@ namespace vt
 		}
 
 		rhs = std::move(front());
-		pop();
+		pop_front();
 
 		return *this;
 	}
 
 	packet_queue& packet_queue::operator<<(packet_wrapper&& rhs)
 	{
-		push(std::move(rhs));
+		push_back(std::move(rhs));
 
 		return *this;
 	}
@@ -585,12 +658,12 @@ namespace vt
 
 	void video_decoder::discard_next_packet(stream_type type)
 	{
-		packet_queues_[static_cast<size_t>(type)].pop();
+		packet_queues_[static_cast<size_t>(type)].pop_front();
 	}
 
 	void video_decoder::discard_last_read_packet()
 	{
-		packet_queues_[static_cast<size_t>(last_read_packet_type())].pop();
+		packet_queues_[static_cast<size_t>(last_read_packet_type())].pop_back();
 	}
 
 	void video_decoder::discard_all_packets()
@@ -702,5 +775,19 @@ namespace vt
 	{
 		//TODO: test
 		return static_cast<size_t>(std::round(std::chrono::duration_cast<std::chrono::duration<double>>(timestamp).count() * fps()));
+	}
+
+	packet_queue& video_decoder::get_packet_queue(stream_type type)
+	{
+		return packet_queues_.at(static_cast<size_t>(type));
+	}
+	const packet_queue& video_decoder::get_packet_queue(stream_type type) const
+	{
+		return packet_queues_.at(static_cast<size_t>(type));
+	}
+
+	AVFormatContext* video_decoder::av_format_context()
+	{
+		return format_context_;
 	}
 }
