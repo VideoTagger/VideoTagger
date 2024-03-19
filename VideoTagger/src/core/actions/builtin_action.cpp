@@ -12,7 +12,7 @@ namespace vt
 		}
 	}
 
-	void builtin_action::render_properties(bool compact)
+	void builtin_action::render_properties()
 	{
 		
 	}

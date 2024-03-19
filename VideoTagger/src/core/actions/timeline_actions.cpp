@@ -20,15 +20,12 @@ namespace vt
 		}
 	}
 
-	void add_timestamp_action::render_properties(bool compact)
+	void add_timestamp_action::render_properties()
 	{
-		if (!compact)
-		{
-			ImGui::TableNextColumn();
-			ImGui::Text("Tag Name");
-			ImGui::TableNextColumn();
-		}
-		else ImGui::SameLine();
+		ImGui::TableNextColumn();
+		ImGui::Text("Tag Name");
+		ImGui::TableNextColumn();
+
 		const auto& tags = ctx_.current_project->tags;
 		int selected_tag{};
 		std::vector<const char*> tag_names{ "Ask Later" };
@@ -55,11 +52,8 @@ namespace vt
 			}
 		}
 
-		if (!compact)
-		{
-			ImGui::SameLine();
-			widgets::help_marker("Choosing \"Ask Later\" will display a window, where you will have to select the tag");
-		}
+		ImGui::SameLine();
+		widgets::help_marker("Choosing \"Ask Later\" will display a window, where you will have to select the tag");
 	}
 
 	segment_action::segment_action() : keybind_action("Start/End Segment"), type_{ segment_action_type::auto_ } {}
@@ -68,15 +62,12 @@ namespace vt
 
 	}
 
-	void segment_action::render_properties(bool compact)
+	void segment_action::render_properties()
 	{
-		if (!compact)
-		{
-			ImGui::TableNextColumn();
-			ImGui::Text("Tag Name");
-			ImGui::TableNextColumn();
-		}
-		else ImGui::SameLine();
+		ImGui::TableNextColumn();
+		ImGui::Text("Tag Name");
+		ImGui::TableNextColumn();
+
 		const auto& tags = ctx_.current_project->tags;
 		int selected_tag{};
 		std::vector<const char*> tag_names{ "Ask Later" };
@@ -102,24 +93,19 @@ namespace vt
 				tag_.clear();
 			}
 		}
-		if (!compact)
-		{
-			ImGui::SameLine();
-			widgets::help_marker("Choosing \"Ask Later\" will display a window, where you will have to select the tag");
-			
-			ImGui::TableNextColumn();
-			ImGui::Text("Type");
-			ImGui::TableNextColumn();
-		}
-		else ImGui::SameLine();
+
+		ImGui::SameLine();
+		widgets::help_marker("Choosing \"Ask Later\" will display a window, where you will have to select the tag");
+
+		ImGui::TableNextColumn();
+		ImGui::Text("Type");
+		ImGui::TableNextColumn();
+
 		int* selected_type = reinterpret_cast<int*>(&type_);
 		static const char* types[]{ "Auto", "Start", "End" };
 		ImGui::Combo("##Type", selected_type, types, sizeof(types) / sizeof(types[0]));
 
-		if (!compact)
-		{
-			ImGui::SameLine();
-			widgets::help_marker("Choosing \"Auto\" will automatically detect whether the segment should start or end");
-		}
+		ImGui::SameLine();
+		widgets::help_marker("Choosing \"Auto\" will automatically detect whether the segment should start or end");
 	}
 }

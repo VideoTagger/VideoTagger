@@ -51,6 +51,7 @@ namespace vt
 
 		std::shared_ptr<keybind_action> action;
 		int key_code = -1;
+		std::string display_name;
 		keybind_modifiers modifiers;
 		keybind_flags flags;
 

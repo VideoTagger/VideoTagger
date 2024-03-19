@@ -14,6 +14,6 @@ namespace vt
 
 	public:
 		virtual void invoke() const final override;
-		virtual void render_properties(bool compact) final override;
+		virtual void render_properties() final override;
 	};
 }

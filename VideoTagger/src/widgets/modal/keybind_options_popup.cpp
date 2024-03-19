@@ -6,7 +6,7 @@
 
 namespace vt::widgets::modal
 {
-	bool keybind_creation_popup(const char* id, std::string& keybind_name, keybind& keybind, std::vector<std::shared_ptr<keybind_action>>& actions, int& selected_action)
+	bool keybind_options_popup(const char* id, std::string& keybind_name, keybind& keybind, std::vector<std::shared_ptr<keybind_action>>& actions, int& selected_action, bool is_new)
 	{
 		bool result{};
 
@@ -22,11 +22,14 @@ namespace vt::widgets::modal
 		{
 			if (ImGui::IsWindowAppearing())
 			{
-				keybind_name = "Keybind";
-				selected_action = 0;
-				keybind.key_code = -1;
-				actions = get_all_keybind_actions();				
-				keybind.action = actions[selected_action];
+				actions = get_all_keybind_actions();
+				if (is_new)
+				{
+					keybind_name = "Keybind";
+					selected_action = 0;
+					keybind.key_code = -1;
+					keybind.action = actions[selected_action];
+				}
 			}
 			std::vector<const char*> action_names;
 			for (const auto& action : actions)
@@ -36,13 +39,18 @@ namespace vt::widgets::modal
 
 			std::string name_id = "##Input" + std::string(id);
 			std::string key_input_id = name_id + "Key";
-			std::string key_combination = keybind.name();
 			ImGui::Text("Keybind Name");
 			ImGui::InputText(name_id.c_str(), &keybind_name);
-			ImGui::Text("Press the desired key combination");
-			ImGui::BeginDisabled();
-			ImGui::InputText(key_input_id.c_str(), &key_combination, ImGuiInputTextFlags_ReadOnly);
-			ImGui::EndDisabled();
+			
+			if (is_new)
+			{
+				ImGui::Text("Press the desired key combination");
+				ImGui::BeginDisabled();
+				std::string key_combination = keybind.name();
+				ImGui::InputText(key_input_id.c_str(), &key_combination, ImGuiInputTextFlags_ReadOnly);
+				ImGui::EndDisabled();
+			}
+
 			ImGui::Text("Action");
 			std::string combo_id = "##Combo" + std::string(id);
 			if (ImGui::Combo(combo_id.c_str(), &selected_action, action_names.data(), static_cast<int>(actions.size())))
@@ -52,12 +60,12 @@ namespace vt::widgets::modal
 			ImGui::PushStyleColor(ImGuiCol_TableRowBg, style.Colors[ImGuiCol_MenuBarBg]);
 			if (ImGui::BeginTable("##KeybindPropertiesBackground", 2, ImGuiTableFlags_RowBg | ImGuiTableFlags_SizingStretchProp | ImGuiTableFlags_BordersInnerV))
 			{
-				keybind.action->render_properties(false);
+				keybind.action->render_properties();
 				ImGui::EndTable();
 			}
 			ImGui::PopStyleColor();
 			ImGui::Dummy(style.ItemSpacing);
-			if (ImGui::Button("Add"))
+			if (ImGui::Button(is_new ? "Add" : "Save"))
 			{
 				result = (keybind.key_code != -1);
 				ImGui::CloseCurrentPopup();

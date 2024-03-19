@@ -8,7 +8,7 @@ namespace vt
 
 	}
 
-	void no_action::render_properties(bool compact)
+	void no_action::render_properties()
 	{
 
 	}

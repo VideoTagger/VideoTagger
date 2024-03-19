@@ -25,7 +25,7 @@
 #include <widgets/icons.hpp>
 #include <widgets/controls.hpp>
 #include <widgets/modal/keybind_popup.hpp>
-#include <widgets/modal/keybind_creation_popup.hpp>
+#include <widgets/modal/keybind_options_popup.hpp>
 #include <utils/filesystem.hpp>
 #include <utils/json.hpp>
 
@@ -507,40 +507,45 @@ namespace vt
 		ctx_.keybinds.clear();
 
 		keybind_flags flags(true, false, false);
-		ctx_.keybinds["Save Project"] = keybind(SDLK_s, keybind_modifiers{ true }, flags,
+		ctx_.keybinds["save"] = keybind(SDLK_s, keybind_modifiers{ true }, flags,
 		builtin_action([this]()
 		{
 			if (ImGui::IsPopupOpen(nullptr, ImGuiPopupFlags_AnyPopup)) return;
 			on_save();
 		}));
+		ctx_.keybinds["save"].display_name = "Save Project";
 
-		ctx_.keybinds["Save Project As"] = keybind(SDLK_s, keybind_modifiers{ true, true }, flags,
+		ctx_.keybinds["save-as"] = keybind(SDLK_s, keybind_modifiers{ true, true }, flags,
 		builtin_action([this]()
 		{
 			if (ImGui::IsPopupOpen(nullptr, ImGuiPopupFlags_AnyPopup)) return;
 			on_save_as();
 		}));
+		ctx_.keybinds["save-as"].display_name = "Save Project As";
 
-		ctx_.keybinds["Delete"] = keybind(SDLK_DELETE, flags,
+		ctx_.keybinds["delete"] = keybind(SDLK_DELETE, flags,
 		builtin_action([this]()
 		{
 			if (ImGui::IsPopupOpen(nullptr, ImGuiPopupFlags_AnyPopup)) return;
 			on_delete();
 		}));
+		ctx_.keybinds["delete"].display_name = "Delete";
 
-		ctx_.keybinds["Close Project"] = keybind(SDLK_F4, keybind_modifiers{ true }, flags,
+		ctx_.keybinds["close-project"] = keybind(SDLK_F4, keybind_modifiers{ true }, flags,
 		builtin_action([this]()
 		{
 			if (ImGui::IsPopupOpen(nullptr, ImGuiPopupFlags_AnyPopup)) return;
 			close_project();
 		}));
+		ctx_.keybinds["close-project"].display_name = "Close Project";
 
-		ctx_.keybinds["Exit"] = keybind(SDLK_F4, keybind_modifiers{ false, false, true }, flags,
+		ctx_.keybinds["exit"] = keybind(SDLK_F4, keybind_modifiers{ false, false, true }, flags,
 		builtin_action([this]()
 		{
 			if (ImGui::IsPopupOpen(nullptr, ImGuiPopupFlags_AnyPopup)) return;
 			on_close_project(true);
 		}));
+		ctx_.keybinds["exit"].display_name = "Exit";
 	}
 
 	void app::init_options()
@@ -560,10 +565,12 @@ namespace vt
 				static std::string keybind_name;
 				static int selected_action{};
 				
-				if (widgets::modal::keybind_creation_popup("##KeybindCreationPopup", keybind_name, input::last_keybind, actions, selected_action))
+				if (widgets::modal::keybind_options_popup("##KeybindCreationPopup", keybind_name, input::last_keybind, actions, selected_action, true))
 				{
 					keybind_flags flags(true, true, true);
-					keybinds.insert({ keybind_name, keybind(input::last_keybind.key_code, input::last_keybind.modifiers, flags, input::last_keybind.action) });
+					auto kb = keybind(input::last_keybind.key_code, input::last_keybind.modifiers, flags, input::last_keybind.action);
+					kb.display_name = keybind_name;
+					keybinds.insert({ keybind_name, kb });
 					input::last_keybind.action = nullptr;
 				}
 				ImGui::Separator();
@@ -583,6 +590,7 @@ namespace vt
 				return;
 			}
 
+			std::optional<std::string> delete_kb_name;
 			if (ImGui::BeginTable("##ApplicationKeybinds", 2 + (int)toggleable + (int)show_actions, ImGuiTableFlags_BordersInner | ImGuiTableFlags_ScrollY | ImGuiTableFlags_SizingFixedFit, ImGui::GetContentRegionAvail()))
 			{
 				if (toggleable)
@@ -599,9 +607,14 @@ namespace vt
 				ImGui::TableHeadersRow();
 				ImGui::EndDisabled();
 				int row{};
+				auto& style = ImGui::GetStyle();
+				auto& io = ImGui::GetIO();
+
 				for (auto& [name, keybind] : keybinds)
 				{
 					ImGui::TableNextRow();
+					const char* id = keybind.display_name.c_str();
+					bool is_row_selected = ImGui::TableGetHoveredRow() - 1 == row;
 					if (toggleable)
 					{
 						ImGui::TableNextColumn();
@@ -610,27 +623,36 @@ namespace vt
 						{
 							keybind.flags.enabled = enabled;
 						}
+
+						ImGui::SameLine();
+						ImGui::PushID(id);
+						if (!is_row_selected) ImGui::BeginDisabled();
+						std::string delete_kb_id = std::string(icons::delete_) + "##DeleteKb" + name;
+						if (widgets::icon_button(delete_kb_id.c_str()))
+						{
+							delete_kb_name = name;
+						}
+						if (!is_row_selected) ImGui::EndDisabled();
+						ImGui::PopID();
 					}
 					ImGui::TableNextColumn();
-					const char* id = name.c_str();
 					ImGui::Text(id);
 					ImGui::TableNextColumn();
-					std::string keybind_name = keybind.name(false);
-					ImGui::Text(keybind_name.c_str());
+					std::string key_combination = keybind.name(false);
+					ImGui::Text(key_combination.c_str());
 
-					auto& style = ImGui::GetStyle();
-					auto& io = ImGui::GetIO();
-
-					bool is_row_selected{};
+					//TODO: This is repeated 2 times, refactor this
 					if (keybind.flags.rebindable)
 					{
 						ImGui::PushID(id);
-						is_row_selected = ImGui::TableGetHoveredRow() - 1 == row or (ImGui::GetHoveredID() == ImGui::GetID(icons::edit));
-						if (is_row_selected)
+						std::string edit_combination_id = std::string(icons::edit) + "##EditCombination";
+						is_row_selected |= (ImGui::GetHoveredID() == ImGui::GetID(edit_combination_id.c_str()));
+
+						if (is_row_selected and ImGui::TableGetColumnIndex() == ImGui::TableGetHoveredColumn())
 						{
 							ImGui::SameLine();
 							ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, style.FramePadding * 0.5f);
-							if (widgets::icon_button(icons::edit))
+							if (widgets::icon_button(edit_combination_id.c_str()))
 							{
 								//resets the last keybind
 								input::last_keybind.key_code = -1;
@@ -645,6 +667,7 @@ namespace vt
 						}
 						ImGui::PopID();
 					}
+
 					if (!keybind.flags.rebindable or !is_row_selected)
 					{
 						ImGui::SameLine();
@@ -655,17 +678,56 @@ namespace vt
 					if (show_actions)
 					{
 						ImGui::TableNextColumn();
-						std::string action_col_id = "##OptionsAction" + name;
-						if (ImGui::BeginChild(action_col_id.c_str(), { ImGui::GetColumnWidth(), ImGui::GetTextLineHeightWithSpacing() + (style.ItemSpacing.y + style.FramePadding.y) * 2.f }, 0, ImGuiWindowFlags_HorizontalScrollbar))
+						ImGui::Text(keybind.action->name().c_str());
+
+						if (keybind.flags.rebindable)
 						{
-							ImGui::Text(keybind.action->name().c_str());
-							keybind.action->render_properties(true);
-							ImGui::EndChild();
+							static std::vector<std::shared_ptr<keybind_action>> actions;
+							static std::string new_kb_name;
+
+							ImGui::PushID(id);
+							std::string edit_kb_id = std::string(icons::edit) + "##EditKb";
+							is_row_selected = ImGui::TableGetHoveredRow() - 1 == row or (ImGui::GetHoveredID() == ImGui::GetID(edit_kb_id.c_str()));
+							if (is_row_selected and ImGui::TableGetColumnIndex() == ImGui::TableGetHoveredColumn())
+							{
+								ImGui::SameLine();
+								ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, style.FramePadding * 0.5f);
+								if (widgets::icon_button(edit_kb_id.c_str()))
+								{
+									new_kb_name = keybind.display_name;
+									actions = get_all_keybind_actions();
+									ImGui::OpenPopup("##KeybindOptionsPopup");
+								}
+								ImGui::PopStyleVar();
+							}
+
+							auto it = std::find_if(actions.begin(), actions.end(), [&](const std::shared_ptr<keybind_action>& action)
+							{
+								return keybind.action->name() == action->name();
+							});
+
+							int selected_action = (it != actions.end() ? static_cast<int>(std::distance(actions.begin(), it)) : 0);
+							if (widgets::modal::keybind_options_popup("##KeybindOptionsPopup", new_kb_name, keybind, actions, selected_action))
+							{
+								keybind.display_name = new_kb_name;
+							}
+							ImGui::PopID();
+						}
+						if (!keybind.flags.rebindable or !is_row_selected)
+						{
+							ImGui::SameLine();
+							auto text_height = ImGui::GetTextLineHeight() * io.FontGlobalScale;
+							ImGui::Dummy(ImVec2{ text_height, text_height } + style.FramePadding);
 						}
 					}
 					++row;
 				}
 				ImGui::EndTable();
+			}
+
+			if (delete_kb_name.has_value())
+			{
+				keybinds.erase(delete_kb_name.value());
 			}
 		};
 
@@ -845,16 +907,19 @@ namespace vt
 
 				ImGui::Separator();
 				{
-					std::string menu_item = std::string(icons::save) + " Save";
-					if (ImGui::MenuItem(menu_item.c_str(), ctx_.keybinds["Save Project"].name().c_str()))
+					auto& kb = ctx_.keybinds["save"];
+					std::string menu_item = std::string(icons::save) + ' ' + kb.display_name;
+					if (ImGui::MenuItem(menu_item.c_str(), kb.name().c_str()))
 					{
 						on_save();
 					}
 				}
 
 				{
-					std::string menu_item = std::string(icons::save_as) + " Save As...";
-					if (ImGui::MenuItem(menu_item.c_str(), ctx_.keybinds["Save Project As"].name().c_str()))
+
+					auto& kb = ctx_.keybinds["save-as"];
+					std::string menu_item = std::string(icons::save_as) + ' ' + kb.display_name;
+					if (ImGui::MenuItem(menu_item.c_str(), kb.name().c_str()))
 					{
 						on_save_as();
 					}
@@ -876,16 +941,18 @@ namespace vt
 				}
 
 				{
-					std::string menu_item = std::string(icons::close) + " Close Project";
-					if (ImGui::MenuItem(menu_item.c_str(), ctx_.keybinds["Close Project"].name().c_str()))
+					auto& kb = ctx_.keybinds["close-project"];
+					std::string menu_item = std::string(icons::close) + ' ' + kb.display_name;
+					if (ImGui::MenuItem(menu_item.c_str(), kb.name().c_str()))
 					{
 						close_project();
 					}
 				}
 				ImGui::Separator();
 				{
-					std::string menu_item = std::string(icons::exit) + " Exit";
-					if (ImGui::MenuItem(menu_item.c_str(), ctx_.keybinds["Exit"].name().c_str()))
+					auto& kb = ctx_.keybinds["exit"];
+					std::string menu_item = std::string(icons::exit) + ' ' + kb.display_name;
+					if (ImGui::MenuItem(menu_item.c_str(), kb.name().c_str()))
 					{
 						on_close_project(true);
 					}

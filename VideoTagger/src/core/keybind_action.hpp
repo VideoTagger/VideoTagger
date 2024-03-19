@@ -7,14 +7,14 @@ namespace vt
 	struct keybind_action
 	{
 	public:
-		keybind_action(const std::string& name = "None") : name_{ name } {}
+		keybind_action(const std::string& name) : name_{ name } {}
 
 	private:
 		std::string name_;
 
 	public:
 		virtual void invoke() const = 0;
-		virtual void render_properties(bool compact) = 0;
+		virtual void render_properties() = 0;
 		const std::string& name() const;
 	};
 }
