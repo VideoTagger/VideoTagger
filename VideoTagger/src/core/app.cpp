@@ -574,14 +574,16 @@ namespace vt
 				auto avail_area = ImGui::GetContentRegionAvail();
 				constexpr const char* text = "No keybinds to display...";
 				auto half_text_size = ImGui::CalcTextSize(text, nullptr, false, 3 * avail_area.x / 4) / 2;
+				auto cpos = ImGui::GetCursorPos();
 				ImGui::SetCursorPos(avail_area / 2 - half_text_size);
 				ImGui::BeginDisabled();
 				ImGui::TextWrapped(text);
 				ImGui::EndDisabled();
+				ImGui::SetCursorPos(cpos);
 				return;
 			}
 
-			if (ImGui::BeginTable("##ApplicationKeybinds", 2 + (int)toggleable + (int)show_actions, ImGuiTableFlags_BordersInner | ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_ScrollY, ImGui::GetContentRegionAvail()))
+			if (ImGui::BeginTable("##ApplicationKeybinds", 2 + (int)toggleable + (int)show_actions, ImGuiTableFlags_BordersInner | ImGuiTableFlags_ScrollY | ImGuiTableFlags_SizingFixedFit, ImGui::GetContentRegionAvail()))
 			{
 				if (toggleable)
 				{
@@ -591,7 +593,7 @@ namespace vt
 				ImGui::TableSetupColumn("Keybind");
 				if (show_actions)
 				{
-					ImGui::TableSetupColumn("Action");
+					ImGui::TableSetupColumn("Action", ImGuiTableColumnFlags_WidthFixed, ImGui::GetContentRegionAvail().x);
 				}
 				ImGui::BeginDisabled();
 				ImGui::TableHeadersRow();
@@ -653,8 +655,13 @@ namespace vt
 					if (show_actions)
 					{
 						ImGui::TableNextColumn();
-						ImGui::Text(keybind.action->name().c_str());
-						keybind.action->render_properties(true);
+						std::string action_col_id = "##OptionsAction" + name;
+						if (ImGui::BeginChild(action_col_id.c_str(), { ImGui::GetColumnWidth(), ImGui::GetTextLineHeightWithSpacing() + (style.ItemSpacing.y + style.FramePadding.y) * 2.f }, 0, ImGuiWindowFlags_HorizontalScrollbar))
+						{
+							ImGui::Text(keybind.action->name().c_str());
+							keybind.action->render_properties(true);
+							ImGui::EndChild();
+						}
 					}
 					++row;
 				}
