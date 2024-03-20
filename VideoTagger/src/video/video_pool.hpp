@@ -58,6 +58,8 @@ namespace vt
 			bool is_widget_open{};
 			SDL_Texture* thumbnail{};
 
+			//TODO: Store video resolution, duration, etc.
+
 			bool update_thumbnail(SDL_Renderer* renderer);
 
 			bool open_video(SDL_Renderer* renderer);

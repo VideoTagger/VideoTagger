@@ -54,6 +54,11 @@ namespace vt
 		SDL_Texture* texture_;
 		std::chrono::nanoseconds last_ts_;
 
+		int width_;
+		int height_;
+		double fps_;
+		std::chrono::nanoseconds duration_;
+
 		bool playing_;
 
 		void update_texture(const video_frame& frame_data);

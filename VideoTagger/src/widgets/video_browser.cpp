@@ -17,6 +17,22 @@ namespace vt::widgets
 
 		static auto draw_video_tile = [this](const video_pool::video_info& vinfo, ImVec2 img_size, ImVec2 tile_size, bool& open, bool& remove, SDL_Texture* texture = nullptr)
 		{
+			int video_width = vinfo.video.width();
+			int video_height = vinfo.video.height();
+
+			float scaled_width = video_width * img_size.y / video_height;
+			float scaled_height = img_size.x * video_height / video_width;
+
+			ImVec2 image_size = img_size;
+			if (scaled_width < img_size.x)
+			{
+				image_size.x = scaled_width;
+			}
+			else if (scaled_height < img_size.y)
+			{
+				image_size.y = scaled_height;
+			}
+
 			auto& style = ImGui::GetStyle();
 			std::string name = vinfo.path.stem().u8string();
 			ImGui::TableNextColumn();
@@ -27,7 +43,7 @@ namespace vt::widgets
 			bool selected = false;
 			auto text_size = ImVec2{ 0, ImGui::CalcTextSize(id, nullptr, false, tile_size.x).y };
 			auto selectable_size = tile_size + style.FramePadding + text_size;
-			ImVec2 cpos = ImGui::GetCursorPos() + (selectable_size - img_size - text_size) / 2;
+			ImVec2 cpos = ImGui::GetCursorPos() + (selectable_size - image_size - text_size) / 2;
 			if (ImGui::Selectable("##VideoTileButton", &selected, ImGuiSelectableFlags_AllowItemOverlap | ImGuiSelectableFlags_AllowDoubleClick, selectable_size))
 			{
 				
@@ -51,7 +67,7 @@ namespace vt::widgets
 
 			ImGui::SetCursorPos(std::exchange(cpos, ImGui::GetCursorPos()));
 			ImGui::BeginGroup();
-			ImGui::Image(imgui_tex, img_size);
+			ImGui::Image(imgui_tex, image_size);
 			ImGui::TextWrapped(id);
 			ImGui::EndGroup();
 			ImGui::SetCursorPos(cpos);

@@ -25,6 +25,11 @@ namespace vt
 			return false;
 		}
 
+		width_ = decoder_.width();
+		height_ = decoder_.height();
+		fps_ = decoder_.fps();
+		duration_ = decoder_.duration();
+
 		texture_ = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_YV12, SDL_TEXTUREACCESS_STREAMING, decoder_.width(), decoder_.height());
 		clear_texture();
 		last_ts_ = std::chrono::nanoseconds{ 0 };
@@ -38,8 +43,16 @@ namespace vt
 
 		last_ts_ = std::chrono::nanoseconds(0);
 
-		SDL_DestroyTexture(texture_);
-		texture_ = nullptr;
+		if (texture_ != nullptr)
+		{
+			SDL_DestroyTexture(texture_);
+			texture_ = nullptr;
+		}
+
+		//width_ = 0;
+		//height_ = 0;
+		//fps_ = 0;
+
 		decoder_.close();
 	}
 
@@ -188,12 +201,12 @@ namespace vt
 
 	int video::width() const
 	{
-		return decoder_.width();
+		return width_;
 	}
 
 	int video::height() const
 	{
-		return decoder_.height();
+		return height_;
 	}
 
 	bool video::is_playing() const
@@ -203,12 +216,7 @@ namespace vt
 
 	std::chrono::nanoseconds video::duration() const
 	{
-		if (!is_open())
-		{
-			return std::chrono::nanoseconds(0);
-		}
-
-		return decoder_.duration();
+		return duration_;
 	}
 
 	std::chrono::nanoseconds video::current_timestamp() const
@@ -223,7 +231,7 @@ namespace vt
 
 	double video::fps() const
 	{
-		return decoder_.fps();
+		return fps_;
 	}
 
 	std::chrono::nanoseconds video::frame_time() const
