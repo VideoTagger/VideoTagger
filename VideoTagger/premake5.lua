@@ -67,7 +67,7 @@ project "VideoTagger"
 			"{COPYFILE} vendor/ffmpeg/lib/%{cfg.architecture}/*.dll %{cfg.targetdir}"
 		}
 
-	filter "system:linux"
+	filter "system:linux or macosx"
 		buildoptions
 		{
 			"`pkg-config --cflags libavcodec libavformat sdl2 gtk+-3.0 glib-2.0`"
@@ -77,6 +77,7 @@ project "VideoTagger"
 		{
 			"`pkg-config --libs libavcodec libavformat sdl2 gtk+-3.0 glib-2.0`"
 		}
+		
 	
 	filter "configurations:Debug"
 		kind "ConsoleApp"
