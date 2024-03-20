@@ -12,7 +12,7 @@ namespace vt
 	class video
 	{
 	public:
-		video();
+		video() = default;
 		//DOESN'T ACTUALLY COPY ANYTHING
 		video(const video&);
 		video(video&&) = default;
@@ -50,16 +50,16 @@ namespace vt
 
 	private:
 		video_decoder decoder_;
-		
-		SDL_Texture* texture_;
-		std::chrono::nanoseconds last_ts_;
 
-		int width_;
-		int height_;
-		double fps_;
-		std::chrono::nanoseconds duration_;
+		SDL_Texture* texture_{};
+		std::chrono::nanoseconds last_ts_{};
 
-		bool playing_;
+		int width_{};
+		int height_{};
+		double fps_{};
+		std::chrono::nanoseconds duration_{};
+
+		bool playing_{};
 
 		void update_texture(const video_frame& frame_data);
 		void clear_texture();

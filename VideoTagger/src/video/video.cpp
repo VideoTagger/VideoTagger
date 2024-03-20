@@ -2,11 +2,6 @@
 
 namespace vt
 {
-	video::video()
-		: texture_{}, playing_{}, last_ts_{}
-	{
-	}
-
 	video::video(const video&)
 		: video()
 	{

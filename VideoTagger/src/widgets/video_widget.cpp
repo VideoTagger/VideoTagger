@@ -37,7 +37,7 @@ namespace vt::widgets
 				show_controls = (name.find("Video Player") == std::string::npos);
 			}
 
-			ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, { 0, 0 });
+			
 			ImGui::PushID(str_id.c_str());
 			auto& imgui_style = ImGui::GetStyle();
 			bool is_playing = video.is_playing();
@@ -68,7 +68,7 @@ namespace vt::widgets
 				{
 					image_size.y = scaled_height;
 				}
-
+				ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, { 0, 0 });
 				ImGui::SetCursorPos({ (image_avail_size.x - image_size.x) / 2, (image_avail_size.y - image_size.y) / 2 });
 				ImGui::Image((ImTextureID)texture, image_size);
 				ImGui::PopStyleVar();

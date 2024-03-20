@@ -58,10 +58,10 @@ namespace vt
 			bool is_widget_open{};
 			SDL_Texture* thumbnail{};
 
-			int width;
-			int height;
-			double fps;
-			std::chrono::nanoseconds duration;
+			int width{};
+			int height{};
+			double fps{};
+			std::chrono::nanoseconds duration{};
 
 			//TODO: Store video resolution, duration, etc.
 
