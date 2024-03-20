@@ -15,20 +15,20 @@ namespace vt::widgets
 	{
 		if (!ctx_.current_project.has_value()) return;
 
-		static auto draw_video_tile = [this](const video_pool::video_info& vinfo, ImVec2 img_size, ImVec2 tile_size, bool& open, bool& remove, SDL_Texture* texture = nullptr)
+		static auto draw_video_tile = [this](const video_pool::video_info& vinfo, ImVec2 image_tile_size, ImVec2 tile_size, bool& open, bool& remove, SDL_Texture* texture = nullptr)
 		{
 			int video_width = vinfo.video.width();
 			int video_height = vinfo.video.height();
 
-			float scaled_width = video_width * img_size.y / video_height;
-			float scaled_height = img_size.x * video_height / video_width;
+			float scaled_width = video_width * image_tile_size.y / video_height;
+			float scaled_height = image_tile_size.x * video_height / video_width;
 
-			ImVec2 image_size = img_size;
-			if (scaled_width < img_size.x)
+			ImVec2 image_size = image_tile_size;
+			if (scaled_width < image_tile_size.x)
 			{
 				image_size.x = scaled_width;
 			}
-			else if (scaled_height < img_size.y)
+			else if (scaled_height < image_tile_size.y)
 			{
 				image_size.y = scaled_height;
 			}
@@ -68,6 +68,7 @@ namespace vt::widgets
 			ImGui::SetCursorPos(std::exchange(cpos, ImGui::GetCursorPos()));
 			ImGui::BeginGroup();
 			ImGui::Image(imgui_tex, image_size);
+			ImGui::Dummy({ 0, (image_tile_size.y - image_size.y) / 2.f });
 			ImGui::TextWrapped(id);
 			ImGui::EndGroup();
 			ImGui::SetCursorPos(cpos);
