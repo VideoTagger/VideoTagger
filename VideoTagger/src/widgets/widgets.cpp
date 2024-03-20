@@ -12,6 +12,7 @@
 #include <imgui_internal.h>
 
 #include "video_timeline.hpp"
+#include "controls.hpp"
 #include <utils/timestamp.hpp>
 
 namespace vt::widgets
@@ -27,7 +28,7 @@ namespace vt::widgets
 		bool active{};
 	};
 	
-	void draw_timeline_widget_sample(timeline_state& state, active_video_group& video_group, tag_storage& tags, std::optional<selected_timestamp_data>& selected_timestamp, std::optional<moving_timestamp_data>& moving_timestamp, bool& dirty_flag, uint64_t id)
+	void draw_timeline_widget(timeline_state& state, active_video_group& video_group, tag_storage& tags, std::optional<selected_timestamp_data>& selected_timestamp, std::optional<moving_timestamp_data>& moving_timestamp, bool& dirty_flag, uint64_t id, bool is_group_open)
 	{
 		auto group_duration = video_group.duration();
 
@@ -48,7 +49,14 @@ namespace vt::widgets
 		{
 			ImGui::PushID(title.c_str());
 			ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, default_window_padding);
-			video_timeline(state, selected_timestamp, moving_timestamp, dirty_flag);
+			if (is_group_open)
+			{
+				video_timeline(state, selected_timestamp, moving_timestamp, dirty_flag);
+			}
+			else
+			{
+				centered_text("Select a segment to display its properties...", ImGui::GetContentRegionMax());
+			}
 			ImGui::PopStyleVar();
 			
 			if (state.current_time.seconds_total != std::chrono::duration_cast<std::chrono::seconds>(video_group.current_timestamp()))

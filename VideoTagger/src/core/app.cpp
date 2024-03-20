@@ -1231,7 +1231,7 @@ namespace vt
 
 			widgets::draw_video_widget(vid, vinfo.is_widget_open, id);
 		}
-		widgets::draw_timeline_widget_sample(ctx_.timeline_state, ctx_.active_video_group, ctx_.current_project->tags, ctx_.selected_timestamp_data, ctx_.moving_timestamp_data, ctx_.is_project_dirty, 0);
+		widgets::draw_timeline_widget(ctx_.timeline_state, ctx_.active_video_group, ctx_.current_project->tags, ctx_.selected_timestamp_data, ctx_.moving_timestamp_data, ctx_.is_project_dirty, 0, ctx_.active_video_group_id != 0);
 
 		if (ctx_.win_cfg.show_tag_manager_window)
 		{
