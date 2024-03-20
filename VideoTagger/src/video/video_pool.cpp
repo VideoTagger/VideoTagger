@@ -91,7 +91,7 @@ namespace vt
 	video_id_t video_pool::insert(const std::filesystem::path& video_path)
 	{ 
 		video_id_t video_id = utils::hash::fnv_hash(video_path); //utils::uuid::get()
-		video_info videoInfo = { video_path, video() };
+		video_metadata videoInfo = { video_path, video() };
 		auto [it, inserted] = videos_.try_emplace(video_id, std::move(videoInfo));
 		if (!inserted)
 		{
@@ -102,7 +102,7 @@ namespace vt
 
 	bool video_pool::insert(video_id_t video_id, const std::filesystem::path& video_path)
 	{
-		video_info videoInfo = { video_path, video() };
+		video_metadata videoInfo = { video_path, video() };
 		auto[_, inserted] = videos_.try_emplace(video_id, std::move(videoInfo));
 		return inserted;
 	}
@@ -127,7 +127,7 @@ namespace vt
 			return false;
 		}
 
-		video_info& video_info = it->second;
+		video_metadata& video_info = it->second;
 		return video_info.open_video(renderer);
 	}
 
@@ -139,7 +139,7 @@ namespace vt
 			return false;
 		}
 
-		video_info& video_info = it->second;
+		video_metadata& video_info = it->second;
 		video_info.close_video();
 		return true;
 	}
@@ -174,12 +174,12 @@ namespace vt
 		return result;
 	}
 
-	video_pool::video_info* video_pool::get(video_id_t video_id)
+	video_pool::video_metadata* video_pool::get(video_id_t video_id)
 	{
-		return const_cast<video_info*>(std::as_const(*this).get(video_id));
+		return const_cast<video_metadata*>(std::as_const(*this).get(video_id));
 	}
 
-	const video_pool::video_info* video_pool::get(video_id_t video_id) const
+	const video_pool::video_metadata* video_pool::get(video_id_t video_id) const
 	{
 		auto it = videos_.find(video_id);
 		if (it == videos_.end())
@@ -190,9 +190,9 @@ namespace vt
 		return &it->second;
 	}
 
-	std::vector<video_pool::video_info*> video_pool::get_group(const video_group& group)
+	std::vector<video_pool::video_metadata*> video_pool::get_group(const video_group& group)
 	{
-		std::vector<video_info*> result;
+		std::vector<video_metadata*> result;
 		result.reserve(group.size());
 
 		for (auto& vi : group)
@@ -203,9 +203,9 @@ namespace vt
 		return result;
 	}
 
-	std::vector<const video_pool::video_info*> video_pool::get_group(const video_group& group) const
+	std::vector<const video_pool::video_metadata*> video_pool::get_group(const video_group& group) const
 	{
-		std::vector<const video_info*> result;
+		std::vector<const video_metadata*> result;
 		result.reserve(group.size());
 
 		for (auto& vi : group)
@@ -224,7 +224,7 @@ namespace vt
 			return false;
 		}
 
-		const video_info& video_info = it->second;
+		const video_metadata& video_info = it->second;
 		return video_info.video.is_open();
 	}
 
@@ -269,7 +269,7 @@ namespace vt
 	}
 
 
-	video_pool::video_info::~video_info()
+	video_pool::video_metadata::~video_metadata()
 	{
 		if (thumbnail != nullptr)
 		{
@@ -277,7 +277,32 @@ namespace vt
 		}
 	}
 
-	bool video_pool::video_info::update_thumbnail(SDL_Renderer* renderer)
+	bool video_pool::video_metadata::update_data(SDL_Renderer* renderer)
+	{
+		bool was_open = video.is_open();
+		if (!was_open)
+		{
+			if (!video.open_file(path, renderer))
+			{
+				return false;
+			}
+		}
+
+		width = video.width();
+		height = video.height();
+		duration = video.duration();
+		fps = video.fps();
+		update_thumbnail(renderer);
+
+		if (!was_open)
+		{
+			video.close();
+		}
+
+		return true;
+	}
+
+	bool video_pool::video_metadata::update_thumbnail(SDL_Renderer* renderer)
 	{
 		bool was_open = video.is_open();
 		if (!was_open)
@@ -309,12 +334,12 @@ namespace vt
 		return true;
 	}
 
-	bool video_pool::video_info::open_video(SDL_Renderer* renderer)
+	bool video_pool::video_metadata::open_video(SDL_Renderer* renderer)
 	{
 		return video.open_file(path, renderer);
 	}
 
-	void video_pool::video_info::close_video()
+	void video_pool::video_metadata::close_video()
 	{
 		video.close();
 	}
