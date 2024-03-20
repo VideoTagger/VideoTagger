@@ -49,24 +49,30 @@ namespace vt
 	class video_pool
 	{
 	public:
-		struct video_info
+		struct video_metadata
 		{
-			~video_info();
+			~video_metadata();
 
 			std::filesystem::path path;
 			video video;
 			bool is_widget_open{};
 			SDL_Texture* thumbnail{};
 
+			int width;
+			int height;
+			double fps;
+			std::chrono::nanoseconds duration;
+
 			//TODO: Store video resolution, duration, etc.
 
+			bool update_data(SDL_Renderer* renderer);
 			bool update_thumbnail(SDL_Renderer* renderer);
 
 			bool open_video(SDL_Renderer* renderer);
 			void close_video();
 		};
 
-		using container = std::unordered_map<video_id_t, video_info>;
+		using container = std::unordered_map<video_id_t, video_metadata>;
 		using iterator = container::iterator;
 		using const_iterator = container::const_iterator;
 
@@ -81,13 +87,13 @@ namespace vt
 		//return ids which failed to close (<- is this necessary???)
 		std::vector<video_id_t> close_group(const video_group& group);
 
-		video_info* get(video_id_t video_id);
-		const video_info* get(video_id_t video_id) const;
+		video_metadata* get(video_id_t video_id);
+		const video_metadata* get(video_id_t video_id) const;
 		
 		//TODO: consider taking a vector as an argument instead of returning. This could allow to avoid unnecessary allocations
-		std::vector<video_info*> get_group(const video_group& group);
+		std::vector<video_metadata*> get_group(const video_group& group);
 		//TODO: consider taking a vector as an argument instead of returning. This could allow to avoid unnecessary allocations
-		std::vector<const video_info*> get_group(const video_group& group) const;
+		std::vector<const video_metadata*> get_group(const video_group& group) const;
 
 		bool is_open(video_id_t video_id) const;
 		bool exists(video_id_t video_id) const;

@@ -15,10 +15,10 @@ namespace vt::widgets
 	{
 		if (!ctx_.current_project.has_value()) return;
 
-		static auto draw_video_tile = [this](const video_pool::video_info& vinfo, ImVec2 img_size, ImVec2 tile_size, bool& open, bool& remove, SDL_Texture* texture = nullptr)
+		static auto draw_video_tile = [this](const video_pool::video_metadata& vinfo, ImVec2 img_size, ImVec2 tile_size, bool& open, bool& remove, SDL_Texture* texture = nullptr)
 		{
-			int video_width = vinfo.video.width();
-			int video_height = vinfo.video.height();
+			int video_width = vinfo.width;
+			int video_height = vinfo.height;
 
 			float scaled_width = video_width * img_size.y / video_height;
 			float scaled_height = img_size.x * video_height / video_width;

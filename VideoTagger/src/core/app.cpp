@@ -1009,7 +1009,7 @@ namespace vt
 						auto video_id = ctx_.current_project->videos.insert(result.path);
 						if (video_id != 0)
 						{
-							ctx_.current_project->videos.get(video_id)->update_thumbnail(renderer_);
+							ctx_.current_project->videos.get(video_id)->update_data(renderer_);
 						}
 					}
 				}
