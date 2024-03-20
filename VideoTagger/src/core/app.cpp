@@ -398,7 +398,6 @@ namespace vt
 					ctx_.reset_layout = true;
 				}
 			}
-			ctx_.settings["first-launch"] = false;
 			if (ctx_.settings.contains("show-windows"))
 			{
 				auto& show_windows = ctx_.settings["show-windows"];
@@ -408,6 +407,11 @@ namespace vt
 			}
 			
 			return true;
+		}
+		else
+		{
+			ctx_.reset_layout = true;
+			ctx_.settings["first-launch"] = false;
 		}
 		return false;
 	}
