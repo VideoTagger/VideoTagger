@@ -479,38 +479,7 @@ namespace vt::widgets
 				ImVec2 tpos(contentMin.x + 3, contentMin.y + i * ItemHeight + 2);
 				ImU32 text_color = ImGui::ColorConvertFloat4ToU32(style.Colors[ImGuiCol_Text]); //0xFFFFFFFF
 				draw_list->AddText(tpos, text_color, state.displayed_tags.at(i).c_str());
-
-				/*if (sequence_options & ImSequencer::SEQUENCER_DEL)
-				{
-					if (SequencerAddDelButton(draw_list, ImVec2(contentMin.x + legendWidth - ItemHeight + 2 - 10, tpos.y + 2), false))
-						delEntry = i;
-
-					if (SequencerAddDelButton(draw_list, ImVec2(contentMin.x + legendWidth - ItemHeight - ItemHeight + 2 - 10, tpos.y + 2), true))
-						dupEntry = i;
-				}*/
-				//customHeight += state->get_custom_height(i);
 			}
-
-			// slots background
-			//auto slots_color4 = style.Colors[ImGuiCol_WindowBg];
-			//slots_color4.w *= 0.5f;
-			//ImU32 slots_color = ImGui::ColorConvertFloat4ToU32(slots_color4); //0xFF413D3D
-			//
-			//for (int i = 0; i < sequenceCount; i++)
-			//{
-			//	//TODO: Change this
-			//	unsigned int col = (i & 1) ? 0xFF3A3636 : 0xFF413D3D;
-			//	//ImU32 col = slots_color;
-			//
-			//	ImVec2 pos = ImVec2(contentMin.x + legendWidth, contentMin.y + ItemHeight * i + 1);
-			//	ImVec2 sz = ImVec2(canvas_size.x + canvas_pos.x, pos.y + ItemHeight - 1);
-			//	if (!popupOpened and mouse_pos_y >= pos.y and mouse_pos_y < pos.y + (ItemHeight) and !segment_moving_data.has_value() and mouse_pos_x>contentMin.x and mouse_pos_x < contentMin.x + canvas_size.x)
-			//	{
-			//		col += 0x80201008;
-			//		pos.x -= legendWidth;
-			//	}
-			//	//draw_list->AddRectFilled(pos, sz, col, 0);
-			//}
 
 			draw_list->PushClipRect(childFramePos + ImVec2(float(legendWidth), 0.f), childFramePos + childFrameSize, true);
 

@@ -15,7 +15,24 @@ static std::chrono::system_clock::time_point to_sys_time(const std::filesystem::
 
 namespace vt
 {
-    bool project::is_valid() const
+	bool project::import_video(const std::filesystem::path& file_path, SDL_Renderer* renderer)
+	{
+		auto video_id = videos.insert(file_path);
+		if (video_id == 0)
+		{
+			return false;
+		}
+
+		video_group::video_info group_info{};
+		group_info.id = video_id;
+
+		video_groups[utils::uuid::get()].insert(group_info);
+		videos.get(video_id)->update_data(renderer);
+
+		return true;
+	}
+
+	bool project::is_valid() const
 	{
 		return !path.empty() and !name.empty() and version != 0;
 	}

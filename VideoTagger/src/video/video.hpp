@@ -28,7 +28,7 @@ namespace vt
 		void set_playing(bool value);
 
 		void update(std::chrono::nanoseconds target_timestamp);
-		void seek(std::chrono::nanoseconds timestamp);
+		void seek(std::chrono::nanoseconds target_timestamp);
 
 		[[nodiscard]] SDL_Texture* get_frame();
 

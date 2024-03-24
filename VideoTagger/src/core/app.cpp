@@ -500,9 +500,18 @@ namespace vt
 				default_font_builder.AddRanges(range);
 			}
 
-
 			//Polish characters
-			default_font_builder.AddText(u8"����󜟿��ʣ�ӌ��");
+			default_font_builder.AddText(
+				"\xC4\x84" "\xC4\x85" "\xC4\x86" "\xC4\x87" "\xC4\x98" "\xC4\x99"
+				"\xC5\x81" "\xC5\x82" "\xC5\x83" "\xC5\x84" "\xC3\x93" "\xC3\xB3"
+				"\xC5\x9A" "\xC5\x9B" "\xC5\xB9" "\xC5\xBA" "\xC5\xBB" "\xC5\xBC"
+			);
+
+			//German characters
+			default_font_builder.AddText(
+				"\xC3\x84" "\xC3\xA4" "\xC3\x96" "\xC3\xB6" "\xC3\x9C" "\xC3\xBC" "\xC3\x9F"
+			);
+
 			default_font_builder.BuildRanges(&default_ranges);
 
 			builder.BuildRanges(&ranges);
@@ -1002,14 +1011,10 @@ namespace vt
 					auto result = utils::filesystem::get_file();
 					if (result)
 					{
-						debug::log("Importing video " + result.path.string());
-						//auto vid = std::make_shared<video>();
-						//vid->open_file(result.path, renderer_);
-						//ctx_.videos.push_back(vid);
-						auto video_id = ctx_.current_project->videos.insert(result.path);
-						if (video_id != 0)
+						debug::log("Importing video " + result.path.u8string());
+						if (!ctx_.current_project->import_video(result.path, renderer_))
 						{
-							ctx_.current_project->videos.get(video_id)->update_data(renderer_);
+							debug::error("Failed to import " + result.path.u8string());
 						}
 					}
 				}

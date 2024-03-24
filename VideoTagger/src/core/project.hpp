@@ -31,6 +31,8 @@ namespace vt
 
 		//TODO: save tags displayed in the timeline in the project file
 
+		bool import_video(const std::filesystem::path& file_path, SDL_Renderer* renderer);
+
 		bool is_valid() const;
 		std::optional<std::tm> modification_time() const;
 		void save() const;

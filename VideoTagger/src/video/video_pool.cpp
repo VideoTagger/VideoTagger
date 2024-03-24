@@ -89,19 +89,29 @@ namespace vt
 	}
 
 	video_id_t video_pool::insert(const std::filesystem::path& video_path)
-	{ 
+	{
 		video_id_t video_id = utils::hash::fnv_hash(video_path); //utils::uuid::get()
-		video_metadata videoInfo = { video_path, video() };
-		auto [it, inserted] = videos_.try_emplace(video_id, std::move(videoInfo));
-		if (!inserted)
+		
+		if (!insert(video_id, video_path))
 		{
-			video_id = 0;
+			return 0;
 		}
+
 		return video_id;
 	}
 
 	bool video_pool::insert(video_id_t video_id, const std::filesystem::path& video_path)
 	{
+		{
+			//TODO: maybe add a function to check if a file is a video file
+			// some files don't fail to open despite not being a video
+			video_decoder decoder;
+			if (!decoder.open(video_path))
+			{
+				return false;
+			}
+		}
+
 		video_metadata videoInfo = { video_path, video() };
 		auto[_, inserted] = videos_.try_emplace(video_id, std::move(videoInfo));
 		return inserted;
