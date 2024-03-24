@@ -6,6 +6,7 @@
 #include <optional>
 
 #include <tags/tag_storage.hpp>
+#include <tags/tag_timeline.hpp>
 #include <video/video_pool.hpp>
 #include <core/input.hpp>
 
@@ -22,13 +23,13 @@ namespace vt
 		std::filesystem::path path = std::filesystem::current_path();
 
 		tag_storage tags;
+		//TODO: associate segments with video groups
+		segment_storage segments;
 		video_pool videos;
 		std::unordered_map<group_id_t, video_group> video_groups;
 		std::map<std::string, keybind> keybinds;
 
-		//TODO: Store tags displayed on the timeline
-
-		//TODO: Add keybinds
+		//TODO: save tags displayed in the timeline in the project file
 
 		bool is_valid() const;
 		std::optional<std::tm> modification_time() const;

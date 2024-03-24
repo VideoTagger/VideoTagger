@@ -355,14 +355,14 @@ namespace vt
 	{
 		//TODO: This should be implemented as a function in timeline
 		//also segments dont get deselected when windows other than Inspector are active, which should probably be changed
-		if (!ctx_.selected_timestamp_data.has_value()) return;
+		if (!ctx_.selected_segment_data.has_value()) return;
 
 		ctx_.is_project_dirty = true;
-		auto it = ctx_.selected_timestamp_data->timestamp_timeline->find(ctx_.selected_timestamp_data->timestamp->start);
-		if (it != ctx_.selected_timestamp_data->timestamp_timeline->end())
+		auto it = ctx_.selected_segment_data->segments->find(ctx_.selected_segment_data->segment_it->start);
+		if (it != ctx_.selected_segment_data->segments->end())
 		{
-			ctx_.selected_timestamp_data->timestamp_timeline->erase(it);
-			ctx_.selected_timestamp_data.reset();
+			ctx_.selected_segment_data->segments->erase(it);
+			ctx_.selected_segment_data.reset();
 		}
 	}
 
@@ -461,7 +461,7 @@ namespace vt
 	{
 		on_close_project(false);
 		ctx_.current_project = std::nullopt;
-		ctx_.selected_timestamp_data = std::nullopt;
+		ctx_.selected_segment_data = std::nullopt;
 		ctx_.reset_active_video_group();
 		set_subtitle();
 	}
@@ -1231,7 +1231,24 @@ namespace vt
 
 			widgets::draw_video_widget(vid, vinfo.is_widget_open, id);
 		}
-		widgets::draw_timeline_widget(ctx_.timeline_state, ctx_.active_video_group, ctx_.current_project->tags, ctx_.selected_timestamp_data, ctx_.moving_timestamp_data, ctx_.is_project_dirty, 0, ctx_.active_video_group_id != 0);
+		{
+			auto group_duration = ctx_.active_video_group.duration();
+
+			//TODO: Definitely change this!
+			ctx_.timeline_state.tags = &ctx_.current_project->tags;
+			ctx_.timeline_state.segments = &ctx_.current_project->segments;
+			ctx_.timeline_state.sync_tags();
+			ctx_.timeline_state.time_min = timestamp{};
+			ctx_.timeline_state.time_max = timestamp(std::chrono::duration_cast<std::chrono::seconds>(group_duration));
+			ctx_.timeline_state.current_time = timestamp{ std::chrono::duration_cast<std::chrono::seconds>(ctx_.active_video_group.current_timestamp()) };
+			
+			widgets::draw_timeline_widget(ctx_.timeline_state, ctx_.selected_segment_data, ctx_.moving_segment_data, ctx_.is_project_dirty, 0, ctx_.active_video_group_id != 0);
+
+			if (ctx_.timeline_state.current_time.seconds_total != std::chrono::duration_cast<std::chrono::seconds>(ctx_.active_video_group.current_timestamp()))
+			{
+				ctx_.active_video_group.seek(ctx_.timeline_state.current_time.seconds_total);
+			}
+		}
 
 		if (ctx_.win_cfg.show_tag_manager_window)
 		{
@@ -1259,7 +1276,7 @@ namespace vt
 		{
 			//TODO: No idea where to put this
 			static bool link_start_end = true;
-			widgets::inspector(ctx_.selected_timestamp_data, ctx_.moving_timestamp_data, link_start_end, ctx_.is_project_dirty, &ctx_.win_cfg.show_inspector_window);
+			widgets::inspector(ctx_.selected_segment_data, ctx_.moving_segment_data, link_start_end, ctx_.is_project_dirty, &ctx_.win_cfg.show_inspector_window);
 		}
 
 		if (ctx_.win_cfg.show_video_browser_window)

@@ -28,20 +28,8 @@ namespace vt::widgets
 		bool active{};
 	};
 	
-	void draw_timeline_widget(timeline_state& state, active_video_group& video_group, tag_storage& tags, std::optional<selected_timestamp_data>& selected_timestamp, std::optional<moving_timestamp_data>& moving_timestamp, bool& dirty_flag, uint64_t id, bool is_group_open)
+	void draw_timeline_widget(timeline_state& state, std::optional<selected_segment_data>& selected_timestamp, std::optional<moving_segment_data>& moving_timestamp, bool& dirty_flag, uint64_t id, bool is_group_open)
 	{
-		auto group_duration = video_group.duration();
-
-		//TODO: Definitely change this!
-		state.tags = &tags;
-		state.sync_tags();
-		state.time_min = timestamp{};
-		state.time_max = timestamp(std::chrono::duration_cast<std::chrono::seconds>(group_duration));
-
-		static int64_t first_frame = 0;
-		static bool expanded = true;
-		state.current_time = timestamp{ std::chrono::duration_cast<std::chrono::seconds>(video_group.current_timestamp()) };
-
 		std::string title = "Timeline##" + std::to_string(id);
 		ImVec2 default_window_padding = ImGui::GetStyle().WindowPadding;
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2{});
@@ -58,11 +46,6 @@ namespace vt::widgets
 				centered_text("Select a segment to display its properties...", ImGui::GetContentRegionMax());
 			}
 			ImGui::PopStyleVar();
-			
-			if (state.current_time.seconds_total != std::chrono::duration_cast<std::chrono::seconds>(video_group.current_timestamp()))
-			{
-				video_group.seek(state.current_time.seconds_total);
-			}
 			ImGui::PopID();
 		}
 		ImGui::End();

@@ -66,8 +66,8 @@ namespace vt
 		std::optional<project> current_project;
 		group_id_t active_video_group_id{};
 		active_video_group active_video_group;
-		std::optional<widgets::selected_timestamp_data> selected_timestamp_data;
-		std::optional<widgets::moving_timestamp_data> moving_timestamp_data;
+		std::optional<widgets::selected_segment_data> selected_segment_data;
+		std::optional<widgets::moving_segment_data> moving_segment_data;
 
 		bool is_project_dirty{};
 		bool first_launch = true;
