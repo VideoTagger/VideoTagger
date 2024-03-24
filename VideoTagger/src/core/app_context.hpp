@@ -64,7 +64,7 @@ namespace vt
 		std::map<std::string, keybind> keybinds;
 
 		std::optional<project> current_project;
-		group_id_t active_video_group_id{};
+		video_group_id_t active_video_group_id{};
 		active_video_group active_video_group;
 		std::optional<widgets::selected_segment_data> selected_segment_data;
 		std::optional<widgets::moving_segment_data> moving_segment_data;

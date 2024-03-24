@@ -12,7 +12,7 @@
 
 namespace vt
 {
-	using group_id_t = uint64_t;
+	using video_group_id_t = uint64_t;
 
 	struct project
 	{
@@ -26,7 +26,7 @@ namespace vt
 		//TODO: associate segments with video groups
 		segment_storage segments;
 		video_pool videos;
-		std::unordered_map<group_id_t, video_group> video_groups;
+		std::unordered_map<video_group_id_t, video_group> video_groups;
 		std::map<std::string, keybind> keybinds;
 
 		//TODO: save tags displayed in the timeline in the project file
