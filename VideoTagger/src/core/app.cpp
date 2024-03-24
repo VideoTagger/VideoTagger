@@ -155,10 +155,6 @@ namespace vt
 			auto* vinfo = ctx_.current_project->videos.get(id);
 			vinfo->is_widget_open = true;
 			ctx_.current_project->videos.open_video(id, renderer_);
-
-			//TODO: temporary
-			ctx_.active_video_group_id = 1;
-			ctx_.current_project->video_groups[1].insert({ id, std::chrono::nanoseconds{0} });
 		};
 		init_options();
 	}
@@ -1011,10 +1007,23 @@ namespace vt
 					auto result = utils::filesystem::get_file();
 					if (result)
 					{
-						debug::log("Importing video " + result.path.u8string());
-						if (!ctx_.current_project->import_video(result.path, renderer_))
+						auto& videos = ctx_.current_project->videos;
+						auto it = std::find_if(videos.begin(), videos.end(), [&result](const video_pool::iterator::value_type& video_data)
 						{
-							debug::error("Failed to import " + result.path.u8string());
+							return video_data.second.path == result.path;
+						});
+
+						if (it == videos.end())
+						{
+							debug::log("Importing video " + result.path.u8string());
+							if (!ctx_.current_project->import_video(result.path, renderer_))
+							{
+								debug::error("Failed to import " + result.path.u8string());
+							}
+						}
+						else
+						{
+							//TODO: Display message box
 						}
 					}
 				}

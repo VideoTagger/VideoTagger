@@ -204,7 +204,7 @@ namespace vt::widgets
 						{
 							auto& pool = ctx_.current_project->videos;
 							auto& vgroup = ctx_.current_project->video_groups.at(ctx_.active_video_group_id);
-							for (auto& vinfo : vgroup)
+							for (auto& vinfo : ctx_.active_video_group)
 							{
 								auto metadata = pool.get(vinfo.id);
 								if (metadata == nullptr) continue;

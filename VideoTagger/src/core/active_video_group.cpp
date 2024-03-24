@@ -176,4 +176,34 @@ namespace vt
 	{
 		return videos.size();
 	}
+
+	active_video_group::iterator active_video_group::begin()
+	{
+		return videos.begin();
+	}
+
+	active_video_group::const_iterator active_video_group::begin() const
+	{
+		return videos.begin();
+	}
+
+	active_video_group::const_iterator active_video_group::cbegin() const
+	{
+		return videos.cbegin();
+	}
+
+	active_video_group::iterator active_video_group::end()
+	{
+		return videos.end();
+	}
+
+	active_video_group::const_iterator active_video_group::end() const
+	{
+		return videos.end();
+	}
+
+	active_video_group::const_iterator active_video_group::cend() const
+	{
+		return videos.cend();
+	}
 }

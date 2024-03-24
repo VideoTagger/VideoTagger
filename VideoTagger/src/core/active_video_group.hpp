@@ -16,7 +16,11 @@ namespace vt
 	class active_video_group
 	{
 	public:
-		std::vector<active_video_data> videos;
+		using container = std::vector<active_video_data>;
+		using iterator = container::iterator;
+		using const_iterator = container::const_iterator;
+
+		container videos;
 
 		void update();
 
@@ -32,6 +36,13 @@ namespace vt
 		std::chrono::nanoseconds current_timestamp() const;
 		size_t size() const;
 	
+		iterator begin();
+		const_iterator begin() const;
+		const_iterator cbegin() const;
+		iterator end();
+		const_iterator end() const;
+		const_iterator cend() const;
+
 	private:
 		bool is_playing_{};
 		bool is_looping_{};
