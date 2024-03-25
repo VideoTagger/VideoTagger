@@ -12,6 +12,7 @@
 #include <imgui_internal.h>
 
 #include "video_timeline.hpp"
+#include "controls.hpp"
 #include <utils/timestamp.hpp>
 
 namespace vt::widgets
@@ -27,39 +28,24 @@ namespace vt::widgets
 		bool active{};
 	};
 	
-	void draw_timeline_widget_sample(timeline_state& state, video& video, tag_storage& tags, std::optional<selected_timestamp_data>& selected_timestamp, std::optional<moving_timestamp_data>& moving_timestamp, bool& dirty_flag, uint32_t id)
+	void draw_timeline_widget(timeline_state& state, std::optional<selected_segment_data>& selected_timestamp, std::optional<moving_segment_data>& moving_timestamp, bool& dirty_flag, uint64_t id, bool is_group_open)
 	{
-		//TODO: Definitely change this!
-		state.tags = &tags;
-		state.sync_tags();
-
-		if (video.is_open())
-		{
-			state.time_max = timestamp(std::chrono::duration_cast<std::chrono::seconds>(video.duration()));
-		}
-		else
-		{
-			state.time_min = timestamp{};
-		}
-
-		static int64_t first_frame = 0;
-		static bool expanded = true;
-		timestamp current_time{ std::chrono::duration_cast<std::chrono::seconds>(video.current_timestamp()) };
-
 		std::string title = "Timeline##" + std::to_string(id);
 		ImVec2 default_window_padding = ImGui::GetStyle().WindowPadding;
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2{});
 		if (ImGui::Begin(title.c_str()))
 		{
-			ImGui::PushID(id);
+			ImGui::PushID(title.c_str());
 			ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, default_window_padding);
-			video_timeline(state, current_time, selected_timestamp, moving_timestamp, dirty_flag);
-			ImGui::PopStyleVar();
-			
-			if (current_time.seconds_total != std::chrono::duration_cast<std::chrono::seconds>(video.current_timestamp()))
+			if (is_group_open)
 			{
-				video.seek(current_time.seconds_total);
+				video_timeline(state, selected_timestamp, moving_timestamp, dirty_flag);
 			}
+			else
+			{
+				centered_text("Select a segment to display its properties...", ImGui::GetContentRegionMax());
+			}
+			ImGui::PopStyleVar();
 			ImGui::PopID();
 		}
 		ImGui::End();

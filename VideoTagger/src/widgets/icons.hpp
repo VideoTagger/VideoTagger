@@ -28,6 +28,7 @@ namespace vt::icons
 	inline constexpr auto link = "\xee\x85\x97";
 	inline constexpr auto edit = "\xee\x8f\x89";
 	inline constexpr auto help = "\xee\xa3\xbd";
+	inline constexpr auto video_library = "\xee\x81\x8a";
 
 	inline std::vector<std::string> all
 	({

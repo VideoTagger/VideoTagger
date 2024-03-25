@@ -34,23 +34,24 @@
 
 #include <utils/timestamp.hpp>
 #include <tags/tag_storage.hpp>
+#include <tags/tag_timeline.hpp>
 
 namespace vt::widgets
 {
-	//TODO: maybe should be moved somwhere else
-	struct selected_timestamp_data
+	//TODO: maybe should be moved somewhere else
+	struct selected_segment_data
 	{
 		//TODO: maybe store the tag name instead of a pointer
 		vt::tag* tag{};
-		tag_timeline* timestamp_timeline;
-		tag_timeline::iterator timestamp;
+		tag_timeline* segments;
+		tag_timeline::iterator segment_it;
 	};
 
-	struct moving_timestamp_data
+	struct moving_segment_data
 	{
 		//TODO: maybe store the tag name instead of a pointer
 		vt::tag* tag{};
-		tag_timeline::iterator segment{};
+		tag_timeline::iterator segment_it{};
 		uint8_t grab_part{};
 		timestamp grab_position{};
 		timestamp start{};
@@ -62,6 +63,7 @@ namespace vt::widgets
 		bool focused = false;
 
 		tag_storage* tags{};
+		segment_storage* segments{};
 		std::vector<std::string> displayed_tags;
 
 		timestamp time_min{};
@@ -69,7 +71,7 @@ namespace vt::widgets
 
 		int64_t first_frame{};
 
-		const char* get_collapse_fmt() const { return "%d Frames / %d entries"; }
+		timestamp current_time{};
 
 		tag& get(size_t index);
 		void add(const std::string& name);
@@ -84,6 +86,6 @@ namespace vt::widgets
 	extern bool insert_timestamp_popup(const std::string& id, tag& tag, timestamp& start, timestamp& end, uint64_t min_timestamp, uint64_t max_timestamp);
 
 	// return true if selection is made
-	bool video_timeline(timeline_state& state, timestamp& current_time, std::optional<selected_timestamp_data>& selected_timestamp, std::optional<moving_timestamp_data>& moving_timestamp, bool& dirty_flag);
+	bool video_timeline(timeline_state& state, std::optional<selected_segment_data>& selected_timestamp, std::optional<moving_segment_data>& moving_timestamp, bool& dirty_flag);
 
 }

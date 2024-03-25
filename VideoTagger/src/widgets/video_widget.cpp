@@ -13,7 +13,7 @@
 
 namespace vt::widgets
 {
-	void draw_video_widget(video& video, uint64_t id)
+	void draw_video_widget(video& video, bool& is_open, uint64_t id)
 	{
 		auto& io = ImGui::GetIO();
 		ImGuiWindowFlags flags = ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse;
@@ -24,10 +24,9 @@ namespace vt::widgets
 		float button_size = 25 * io.FontGlobalScale;
 		std::string str_id = std::to_string(id);
 		std::string title = "Video##" + str_id;
-		if (ImGui::Begin(title.c_str(), nullptr, flags))
+		if (ImGui::Begin(title.c_str(), &is_open, flags))
 		{
 			bool show_controls = true;
-			auto window = ctx_.player.dock_window();
 			auto video_window = ImGui::GetCurrentWindow();
 			
 			//A bit of a hack to check if video widget is docked into video player
@@ -38,12 +37,14 @@ namespace vt::widgets
 				show_controls = (name.find("Video Player") == std::string::npos);
 			}
 
-			ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, { 0, 0 });
+			
 			ImGui::PushID(str_id.c_str());
 			auto& imgui_style = ImGui::GetStyle();
 			bool is_playing = video.is_playing();
 			auto image_avail_size = ImGui::GetContentRegionMax();
 
+			//TODO: a video probably shouldn't have its own controls since they could break synchronization 
+			show_controls = false;
 			if (show_controls)
 			{
 				image_avail_size.y -= button_size + 2 * imgui_style.ItemSpacing.y + ImGui::GetTextLineHeightWithSpacing() * io.FontGlobalScale;
@@ -67,7 +68,7 @@ namespace vt::widgets
 				{
 					image_size.y = scaled_height;
 				}
-
+				ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, { 0, 0 });
 				ImGui::SetCursorPos({ (image_avail_size.x - image_size.x) / 2, (image_avail_size.y - image_size.y) / 2 });
 				ImGui::Image((ImTextureID)texture, image_size);
 				ImGui::PopStyleVar();
@@ -142,34 +143,34 @@ namespace vt::widgets
 
 					ImGui::NextColumn();
 					{
-						bool loop = video.is_looping();
-						if (icon_toggle_button(icons::repeat, loop, { button_size, button_size }))
-						{
-							video.set_looping(!loop);
-						}
-						ImGui::SameLine();
+						//bool loop = video.is_looping();
+						//if (icon_toggle_button(icons::repeat, loop, { button_size, button_size }))
+						//{
+						//	video.set_looping(!loop);
+						//}
+						//ImGui::SameLine();
 
 						auto avail_size = ImGui::GetContentRegionAvail();
 						float speed_control_size_x = avail_size.x * 0.5f;
 
-						float speed = video.speed();
+						//float speed = video.speed();
 						static constexpr float min_speed = 0.25f;
 						static constexpr float max_speed = 8.0f;
 
 						ImGui::SetNextItemWidth(speed_control_size_x);
-						if (ImGui::DragFloat("##VideoPlayerSpeed", &speed, 0.1f, min_speed, max_speed, "%.2fx", ImGuiSliderFlags_AlwaysClamp))
-						{
-							video.set_speed(speed);
-						}
-						if (ImGui::BeginPopupContextItem("##VideoPlayerSpeedCtx"))
-						{
-							if (ImGui::MenuItem("Reset"))
-							{
-								speed = 1.0f;
-								video.set_speed(speed);
-							}
-							ImGui::EndPopup();
-						}
+						//if (ImGui::DragFloat("##VideoPlayerSpeed", &speed, 0.1f, min_speed, max_speed, "%.2fx", ImGuiSliderFlags_AlwaysClamp))
+						//{
+						//	video.set_speed(speed);
+						//}
+						//if (ImGui::BeginPopupContextItem("##VideoPlayerSpeedCtx"))
+						//{
+						//	if (ImGui::MenuItem("Reset"))
+						//	{
+						//		speed = 1.0f;
+						//		video.set_speed(speed);
+						//	}
+						//	ImGui::EndPopup();
+						//}
 					}
 
 					ImGui::Columns();

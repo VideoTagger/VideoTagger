@@ -2,7 +2,7 @@
 
 #include <filesystem>
 #include <chrono>
-#include <vector>
+#include <deque>
 #include <SDL.h>
 
 #include "video_decoder.hpp"
@@ -12,24 +12,24 @@ namespace vt
 	class video
 	{
 	public:
-		video();
-		video(const video&) = delete;
+		video() = default;
+		//DOESN'T ACTUALLY COPY ANYTHING
+		video(const video&);
 		video(video&&) = default;
 		~video();
 
-		video& operator=(const video&) = delete;
+		//DOESN'T ACTUALLY COPY ANYTHING
+		video& operator=(const video&);
 		video& operator=(video&&) = default;
 
 		bool open_file(const std::filesystem::path& filepath, SDL_Renderer* renderer);
 		void close();
 
 		void set_playing(bool value);
-		void set_speed(float value);
-		void set_looping(bool value);
 
-		void seek(std::chrono::nanoseconds timestamp);
+		void update(std::chrono::nanoseconds target_timestamp);
+		void seek(std::chrono::nanoseconds target_timestamp);
 
-		void buffer_frames(size_t count);
 		[[nodiscard]] SDL_Texture* get_frame();
 
 		[[nodiscard]] bool is_open() const;
@@ -38,26 +38,30 @@ namespace vt
 		[[nodiscard]] int height() const;
 
 		[[nodiscard]] bool is_playing() const;
-		[[nodiscard]] bool is_looping() const;
-		[[nodiscard]] float speed() const;
 		[[nodiscard]] std::chrono::nanoseconds duration() const;
 
 		[[nodiscard]] std::chrono::nanoseconds current_timestamp() const;
 
 		size_t current_frame_number() const;
 		double fps() const;
+		std::chrono::nanoseconds frame_time() const;
+
+		void get_thumbnail(SDL_Renderer* renderer, SDL_Texture* texture, std::optional<std::chrono::nanoseconds> timestamp = std::nullopt);
 
 	private:
 		video_decoder decoder_;
-		SDL_Texture* texture_;
 
-		bool playing_;
+		SDL_Texture* texture_{};
+		std::chrono::nanoseconds last_ts_{};
 
-		std::vector<video_frame> frame_buffer_;
-		std::chrono::steady_clock::time_point last_tp_;
-		std::chrono::nanoseconds last_ts_;
+		int width_{};
+		int height_{};
+		double fps_{};
+		std::chrono::nanoseconds duration_{};
 
-		float speed_;
-		bool loop_;
+		bool playing_{};
+
+		void update_texture(const video_frame& frame_data);
+		void clear_texture();
 	};
 }

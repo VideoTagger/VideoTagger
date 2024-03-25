@@ -11,8 +11,9 @@ namespace vt::widgets
 	extern bool collapsing_header(const char* label, bool hide_background = false);
 	extern void label(const char* label);
 
-	bool begin_button_dropdown(const char* label, ImVec2 button_size, float popup_height = 0.0f);
-	void end_button_dropdown();
+	extern bool begin_button_dropdown(const char* label, ImVec2 button_size, float popup_height = 0.0f);
+	extern void end_button_dropdown();
 
-	void help_marker(const char* description);
+	extern void help_marker(const char* description);
+	extern void centered_text(const char* text, ImVec2 avail_area);
 }

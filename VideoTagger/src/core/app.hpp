@@ -56,6 +56,7 @@ namespace vt
 
 		void build_fonts(float size);
 		void init_keybinds();
+		void init_player();
 		void init_options();
 		void handle_events();
 		void render();

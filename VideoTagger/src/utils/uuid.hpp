@@ -1,5 +1,7 @@
+#pragma once
 #include <filesystem>
-#include<random>
+#include <random>
+#include <cstdint>
 
 namespace vt::utils
 {

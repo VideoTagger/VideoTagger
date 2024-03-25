@@ -150,6 +150,12 @@ namespace vt
 			debug::log("Saving projects list to " + std::filesystem::relative(ctx_.projects_list_filepath).string());
 		};
 
+		ctx_.browser.on_open_video = [this](video_id_t id)
+		{
+			auto* vinfo = ctx_.current_project->videos.get(id);
+			vinfo->is_widget_open = true;
+			ctx_.current_project->videos.open_video(id, renderer_);
+		};
 		init_options();
 	}
 	
@@ -221,6 +227,7 @@ namespace vt
 		av_log_set_callback(ffmpeg_callback);
 		load_settings();
 		init_keybinds();
+		init_player();
 		return true;
 	}
 	
@@ -344,14 +351,14 @@ namespace vt
 	{
 		//TODO: This should be implemented as a function in timeline
 		//also segments dont get deselected when windows other than Inspector are active, which should probably be changed
-		if (!ctx_.selected_timestamp_data.has_value()) return;
+		if (!ctx_.selected_segment_data.has_value()) return;
 
 		ctx_.is_project_dirty = true;
-		auto it = ctx_.selected_timestamp_data->timestamp_timeline->find(ctx_.selected_timestamp_data->timestamp->start);
-		if (it != ctx_.selected_timestamp_data->timestamp_timeline->end())
+		auto it = ctx_.selected_segment_data->segments->find(ctx_.selected_segment_data->segment_it->start);
+		if (it != ctx_.selected_segment_data->segments->end())
 		{
-			ctx_.selected_timestamp_data->timestamp_timeline->erase(it);
-			ctx_.selected_timestamp_data.reset();
+			ctx_.selected_segment_data->segments->erase(it);
+			ctx_.selected_segment_data.reset();
 		}
 	}
 
@@ -404,6 +411,7 @@ namespace vt
 				if (show_windows.contains("inspector")) ctx_.win_cfg.show_inspector_window = show_windows["inspector"];
 				if (show_windows.contains("tag-manager")) ctx_.win_cfg.show_tag_manager_window = show_windows["tag-manager"];
 				if (show_windows.contains("video-player")) ctx_.win_cfg.show_video_player_window = show_windows["video-player"];
+				if (show_windows.contains("video-browser")) ctx_.win_cfg.show_video_browser_window = show_windows["video-browser"];
 			}
 			
 			return true;
@@ -449,8 +457,8 @@ namespace vt
 	{
 		on_close_project(false);
 		ctx_.current_project = std::nullopt;
-		ctx_.selected_timestamp_data = std::nullopt;
-		ctx_.videos.clear();
+		ctx_.selected_segment_data = std::nullopt;
+		ctx_.reset_active_video_group();
 		set_subtitle();
 	}
 	
@@ -488,9 +496,18 @@ namespace vt
 				default_font_builder.AddRanges(range);
 			}
 
-
 			//Polish characters
-			default_font_builder.AddText(u8"����󜟿��ʣ�ӌ��");
+			default_font_builder.AddText(
+				"\xC4\x84" "\xC4\x85" "\xC4\x86" "\xC4\x87" "\xC4\x98" "\xC4\x99"
+				"\xC5\x81" "\xC5\x82" "\xC5\x83" "\xC5\x84" "\xC3\x93" "\xC3\xB3"
+				"\xC5\x9A" "\xC5\x9B" "\xC5\xB9" "\xC5\xBA" "\xC5\xBB" "\xC5\xBC"
+			);
+
+			//German characters
+			default_font_builder.AddText(
+				"\xC3\x84" "\xC3\xA4" "\xC3\x96" "\xC3\xB6" "\xC3\x9C" "\xC3\xBC" "\xC3\x9F"
+			);
+
 			default_font_builder.BuildRanges(&default_ranges);
 
 			builder.BuildRanges(&ranges);
@@ -798,6 +815,73 @@ namespace vt
 		options.set_active_tab("Application Settings", "General");
 	}
 
+	void app::init_player()
+	{
+		ctx_.player.callbacks.on_set_playing = [](bool is_playing)
+		{
+			//for (auto& [id, vinfo] : ctx_.current_project->videos)
+			//{
+			//	if (!vinfo.is_widget_open) continue;
+			//	vinfo.video.set_playing(is_playing);
+			//}
+			if (ctx_.active_video_group_id == 0)
+			{
+				return;
+			}
+			ctx_.active_video_group.set_playing(is_playing);
+		};
+
+		ctx_.player.callbacks.on_set_looping = [](bool is_looping)
+		{
+			//for (auto& [id, vinfo] : ctx_.current_project->videos)
+			//{
+			//	if (!vinfo.is_widget_open) continue;
+			//	vinfo.video.set_looping(is_looping);
+			//}
+			if (ctx_.active_video_group_id == 0)
+			{
+				return;
+			}
+			ctx_.active_video_group.set_looping(is_looping);
+		};
+
+		ctx_.player.callbacks.on_set_speed = [](float speed)
+		{
+			//for (auto& [id, vinfo] : ctx_.current_project->videos)
+			//{
+			//	if (!vinfo.is_widget_open) continue;
+			//	vinfo.video.set_speed(speed);
+			//}
+
+			if (ctx_.active_video_group_id == 0)
+			{
+				return;
+			}
+			ctx_.active_video_group.set_speed(speed);
+		};
+
+		ctx_.player.callbacks.on_skip = [](int dir)
+		{
+			//TODO: Implement
+		};
+
+		ctx_.player.callbacks.on_seek = [](std::chrono::nanoseconds ts)
+		{
+			//for (auto& [id, vinfo] : ctx_.current_project->videos)
+			//{
+			//	if (!vinfo.is_widget_open) continue;
+			//	vinfo.video.seek(ts);
+			//}
+
+			if (ctx_.active_video_group_id == 0)
+			{
+				return;
+			}
+			ctx_.active_video_group.seek(ts);
+		};
+
+	}
+
 	void app::handle_events()
 	{
 		SDL_Event event{};
@@ -893,7 +977,7 @@ namespace vt
 			ImGui::DockBuilderDockWindow("Tag Manager", main_dock_right);
 			ImGui::DockBuilderDockWindow("Video Player", main_dock_up);
 			ImGui::DockBuilderDockWindow("Theme Customizer", main_dock_up);
-			//ImGui::DockBuilderDockWindow("Options", main_dock_up);
+			ImGui::DockBuilderDockWindow("Video Browser", dockspace_id_copy);
 			for (size_t i = 0; i < 8; ++i)
 			{
 				auto video_id = "Video##" + std::to_string(i);
@@ -919,23 +1003,29 @@ namespace vt
 		{
 			if (ImGui::BeginMenu("File"))
 			{
-				if (ImGui::MenuItem("Open Video..."))
+				if (ImGui::MenuItem("Import Video"))
 				{
 					auto result = utils::filesystem::get_file();
 					if (result)
 					{
-						debug::log("Opening video " + result.path.string());
-						auto vid = std::make_shared<video>();
-						vid->open_file(result.path, renderer_);
-						ctx_.videos.push_back(vid);
-					}
-				}
-				if (ImGui::MenuItem("Open Dir"))
-				{
-					auto result = utils::filesystem::get_folder();
-					if (result)
-					{
-						debug::log("Opening directory " + result.path.string());
+						auto& videos = ctx_.current_project->videos;
+						auto it = std::find_if(videos.begin(), videos.end(), [&result](const video_pool::iterator::value_type& video_data)
+						{
+							return video_data.second.path == result.path;
+						});
+
+						if (it == videos.end())
+						{
+							debug::log("Importing video " + result.path.u8string());
+							if (!ctx_.current_project->import_video(result.path, renderer_))
+							{
+								debug::error("Failed to import " + result.path.u8string());
+							}
+						}
+						else
+						{
+							//TODO: Display message box
+						}
 					}
 				}
 
@@ -962,20 +1052,6 @@ namespace vt
 				}
 
 				ImGui::Separator();
-				if (ImGui::BeginMenu("Project"))
-				{
-					//TODO: Modal window which lets you select what you want to import/export into/from the project
-					if (ImGui::MenuItem("Import"))
-					{
-						//...
-					}
-					if (ImGui::MenuItem("Export"))
-					{
-						//...
-					}
-					ImGui::EndMenu();
-				}
-
 				{
 					std::string key_name = "Close Project";
 					auto& kb = ctx_.keybinds.at(key_name);
@@ -1015,6 +1091,11 @@ namespace vt
 				if (ImGui::MenuItem("Show Video Player", nullptr, &ctx_.win_cfg.show_video_player_window))
 				{
 					ctx_.settings["show-windows"]["video-player"] = ctx_.win_cfg.show_video_player_window;
+					result = true;
+				}
+				if (ImGui::MenuItem("Show Video Browser", nullptr, &ctx_.win_cfg.show_video_browser_window))
+				{
+					ctx_.settings["show-windows"]["video-browser"] = ctx_.win_cfg.show_video_browser_window;
 					result = true;
 				}
 				if (ImGui::MenuItem("Show Inspector", nullptr, &ctx_.win_cfg.show_inspector_window))
@@ -1124,16 +1205,68 @@ namespace vt
 		draw_menubar();
 		if (!ctx_.current_project.has_value()) return;
 
+		//TODO: probably should be done somewhere else
+		ctx_.update_active_video_group();
+
 		if (ctx_.win_cfg.show_video_player_window)
 		{
+			video_player_data data = ctx_.player.data();
+			//TODO: include offsets
+			//auto& vids = ctx_.current_project->videos;
+			//if (vids.size() > 0)
+			//{
+			//	std::vector<std::chrono::nanoseconds> durations;
+			//	for (const auto& [id, vinfo] : vids)
+			//	{
+			//		if (!vinfo.is_widget_open) continue;
+			//		durations.push_back(vinfo.video.duration());
+			//	}
+			//
+			//	auto min_it = std::min_element(durations.begin(), durations.end());
+			//	if (min_it != durations.end())
+			//	{
+			//		data.end_ts = *min_it;
+			//		ctx_.player.update_data(data);
+			//	}
+			//}
+
+			if (ctx_.active_video_group_id != 0)
+			{
+				//TODO: probably could be done only when needed instead of on every frame.
+				// Video timeline does the same thing and group duration needs to be calculated
+				data.current_ts = ctx_.active_video_group.current_timestamp();
+				data.start_ts = std::chrono::nanoseconds{ 0 };
+				data.end_ts = ctx_.active_video_group.duration();
+				ctx_.player.update_data(data, ctx_.active_video_group.is_playing());
+			}
+
 			ctx_.player.render();
 		}
 
-		for (uint64_t i = 0; i < ctx_.videos.size(); ++i)
+		for (auto& [id, vinfo] : ctx_.current_project->videos)
 		{
-			auto& vid = ctx_.videos[i];
-			widgets::draw_video_widget(*vid, i);
-			widgets::draw_timeline_widget_sample(ctx_.timeline_state, *vid, ctx_.current_project->tags, ctx_.selected_timestamp_data, ctx_.moving_timestamp_data, ctx_.is_project_dirty, i);
+			if (!vinfo.is_widget_open) continue;
+			auto& vid = vinfo.video;
+
+			widgets::draw_video_widget(vid, vinfo.is_widget_open, id);
+		}
+		{
+			auto group_duration = ctx_.active_video_group.duration();
+
+			//TODO: Definitely change this!
+			ctx_.timeline_state.tags = &ctx_.current_project->tags;
+			ctx_.timeline_state.segments = &ctx_.current_project->segments;
+			ctx_.timeline_state.sync_tags();
+			ctx_.timeline_state.time_min = timestamp{};
+			ctx_.timeline_state.time_max = timestamp(std::chrono::duration_cast<std::chrono::seconds>(group_duration));
+			ctx_.timeline_state.current_time = timestamp{ std::chrono::duration_cast<std::chrono::seconds>(ctx_.active_video_group.current_timestamp()) };
+			
+			widgets::draw_timeline_widget(ctx_.timeline_state, ctx_.selected_segment_data, ctx_.moving_segment_data, ctx_.is_project_dirty, 0, ctx_.active_video_group_id != 0);
+
+			if (ctx_.timeline_state.current_time.seconds_total != std::chrono::duration_cast<std::chrono::seconds>(ctx_.active_video_group.current_timestamp()))
+			{
+				ctx_.active_video_group.seek(ctx_.timeline_state.current_time.seconds_total);
+			}
 		}
 
 		if (ctx_.win_cfg.show_tag_manager_window)
@@ -1162,7 +1295,12 @@ namespace vt
 		{
 			//TODO: No idea where to put this
 			static bool link_start_end = true;
-			widgets::inspector(ctx_.selected_timestamp_data, ctx_.moving_timestamp_data, link_start_end, ctx_.is_project_dirty, &ctx_.win_cfg.show_inspector_window);
+			widgets::inspector(ctx_.selected_segment_data, ctx_.moving_segment_data, link_start_end, ctx_.is_project_dirty, &ctx_.win_cfg.show_inspector_window);
+		}
+
+		if (ctx_.win_cfg.show_video_browser_window)
+		{
+			ctx_.browser.render(ctx_.win_cfg.show_video_browser_window);
 		}
 
 		if (ctx_.win_cfg.show_theme_customizer_window)

@@ -2,36 +2,36 @@
 
 namespace vt
 {
-	tag_timestamp::tag_timestamp(timestamp time_start, timestamp time_end)
+	tag_segment::tag_segment(timestamp time_start, timestamp time_end)
 		: start{ std::min(time_start, time_end) }, end{ std::max(time_start, time_end) }
 	{
 	}
 
-	tag_timestamp::tag_timestamp(timestamp time_point)
+	tag_segment::tag_segment(timestamp time_point)
 		: start{ time_point }, end{ time_point }
 	{
 	}
 
-	void tag_timestamp::set(timestamp time_start, timestamp time_end)
+	void tag_segment::set(timestamp time_start, timestamp time_end)
 	{
 		start = std::min(time_start, time_end);
 		end = std::max(time_start, time_end);
 	}
 
-	void tag_timestamp::set(timestamp time_point)
+	void tag_segment::set(timestamp time_point)
 	{
 		start = time_point;
 		end = time_point;
 	}
 
-	std::chrono::nanoseconds tag_timestamp::duration() const
+	std::chrono::nanoseconds tag_segment::duration() const
 	{
 		return end.seconds_total - start.seconds_total;
 	}
 
-	tag_timestamp_type tag_timestamp::type() const
+	tag_segment_type tag_segment::type() const
 	{
-		return start == end ? tag_timestamp_type::point : tag_timestamp_type::segment;
+		return start == end ? tag_segment_type::point : tag_segment_type::segment;
 	}
 
 	std::pair<tag_timeline::iterator, bool> tag_timeline::insert(timestamp time_start, timestamp time_end)

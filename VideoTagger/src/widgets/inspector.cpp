@@ -50,23 +50,23 @@ namespace vt::widgets
 		return result;
 	}
 
-	bool inspector(std::optional<selected_timestamp_data>& selected_timestamp, std::optional<moving_timestamp_data>& moving_timestamp, bool& link_start_end, bool& dirty_flag, bool* open, uint64_t min_timestamp, uint64_t max_timestamp)
+	bool inspector(std::optional<selected_segment_data>& selected_segment, std::optional<moving_segment_data>& moving_segment, bool& link_start_end, bool& dirty_flag, bool* open, uint64_t min_timestamp, uint64_t max_timestamp)
 	{
 		bool result{};
 		if (ImGui::Begin("Inspector", open, ImGuiWindowFlags_NoCollapse))
 		{
-			if (selected_timestamp.has_value())
+			if (selected_segment.has_value())
 			{
 				static timestamp popup_ts_start;
 				static timestamp popup_ts_end;
-				auto& ts = selected_timestamp->timestamp;
+				auto& ts = selected_segment->segment_it;
 				auto ts_start = ts->start;
 				auto ts_end = ts->end;
 
-				if (moving_timestamp.has_value())
+				if (moving_segment.has_value())
 				{
-					ts_start = moving_timestamp->start;
-					ts_end = moving_timestamp->end;
+					ts_start = moving_segment->start;
+					ts_end = moving_segment->end;
 				}
 
 				bool finished_editing = false;
@@ -84,7 +84,7 @@ namespace vt::widgets
 					ImGui::NextColumn();
 					switch (ts->type())
 					{
-						case tag_timestamp_type::point:
+						case tag_segment_type::point:
 						{
 							modified_timestamp = show_timestamp_control("Point", ts_start, min_timestamp, max_timestamp, started_editing, finished_editing);
 							ts_end = ts_start;
@@ -92,7 +92,7 @@ namespace vt::widgets
 							grab_position = ts_start;
 						}
 						break;
-						case tag_timestamp_type::segment:
+						case tag_segment_type::segment:
 						{
 							timestamp prev_ts_start = ts_start;
 							timestamp prev_ts_end = ts_end;
@@ -157,10 +157,10 @@ namespace vt::widgets
 
 				if (started_editing)
 				{
-					moving_timestamp = moving_timestamp_data
+					moving_segment = moving_segment_data
 					{
-						selected_timestamp->tag,
-						selected_timestamp->timestamp,
+						selected_segment->tag,
+						selected_segment->segment_it,
 						0, // grab_part,
 						grab_position,
 						ts_start,
@@ -168,22 +168,22 @@ namespace vt::widgets
 					};
 				}
 
-				if (modified_timestamp and moving_timestamp.has_value())
+				if (modified_timestamp and moving_segment.has_value())
 				{
-					moving_timestamp->start = ts_start;
-					moving_timestamp->end = ts_end;
+					moving_segment->start = ts_start;
+					moving_segment->end = ts_end;
 				}
 
 				if (finished_editing)
 				{
 					//TODO: All of this is just copied from video timeline. Probably should do something about this
-					auto& timeline = selected_timestamp->timestamp_timeline;
+					auto& timeline = selected_segment->segments;
 					auto overlapping = timeline->find_range(ts_start, ts_end);
 
 					bool insert_now = true;
 					for (auto it = overlapping.begin(); it != overlapping.end(); ++it)
 					{
-						if (it != selected_timestamp->timestamp)
+						if (it != selected_segment->segment_it)
 						{
 							insert_now = false;
 						}
@@ -197,7 +197,7 @@ namespace vt::widgets
 							dirty_flag = true;
 						}
 
-						moving_timestamp.reset();
+						moving_segment.reset();
 					}
 					else
 					{
@@ -212,23 +212,17 @@ namespace vt::widgets
 				{
 					if (pressed_yes)
 					{
-						auto& timeline = selected_timestamp->timestamp_timeline;
+						auto& timeline = selected_segment->segments;
 						ts = timeline->replace(ts, popup_ts_start, popup_ts_end).first;
 
 						dirty_flag = true;
 					}
-					moving_timestamp.reset();
+					moving_segment.reset();
 				}
 			}
 			else
 			{
-				auto avail_area = ImGui::GetContentRegionMax();
-				constexpr const char* text = "Select a segment to display its properties...";
-				auto half_text_size = ImGui::CalcTextSize(text, nullptr, false, 3 * avail_area.x / 4) / 2;
-				ImGui::SetCursorPos(avail_area / 2 - half_text_size);
-				ImGui::BeginDisabled();
-				ImGui::TextWrapped(text);
-				ImGui::EndDisabled();
+				centered_text("Select a segment to display its properties...", ImGui::GetContentRegionMax());
 			}
 		}
 		ImGui::End();

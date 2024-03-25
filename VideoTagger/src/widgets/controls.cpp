@@ -142,4 +142,15 @@ namespace vt::widgets
 		}
 		ImGui::PopStyleVar();
 	}
+	
+	void centered_text(const char* text, ImVec2 avail_area)
+	{
+		auto half_text_size = ImGui::CalcTextSize(text, nullptr, false, 3 * avail_area.x / 4) / 2;
+		auto cpos = ImGui::GetCursorPos();
+		ImGui::SetCursorPos(avail_area / 2 - half_text_size);
+		ImGui::BeginDisabled();
+		ImGui::TextWrapped(text);
+		ImGui::EndDisabled();
+		ImGui::SetCursorPos(cpos);
+	}
 }

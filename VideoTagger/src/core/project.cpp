@@ -15,7 +15,24 @@ static std::chrono::system_clock::time_point to_sys_time(const std::filesystem::
 
 namespace vt
 {
-    bool project::is_valid() const
+	bool project::import_video(const std::filesystem::path& file_path, SDL_Renderer* renderer)
+	{
+		auto video_id = videos.insert(file_path);
+		if (video_id == 0)
+		{
+			return false;
+		}
+
+		video_group::video_info group_info{};
+		group_info.id = video_id;
+
+		video_groups[utils::uuid::get()].insert(group_info);
+		videos.get(video_id)->update_data(renderer);
+
+		return true;
+	}
+
+	bool project::is_valid() const
 	{
 		return !path.empty() and !name.empty() and version != 0;
 	}
@@ -53,26 +70,32 @@ namespace vt
 			auto& json_tag_data = json_tags.back();
 			json_tag_data["name"] = tag.name;
 			json_tag_data["color"] = utils::color::to_string(tag.color);
-			auto& json_timestamps = json_tag_data["timestamps"];
-			json_timestamps = nlohmann::json::array();
-			for (const auto& timestamp : tag.timeline)
+
+			auto segments_it = segments.find(tag.name);
+			if (segments_it != segments.end())
 			{
-				auto timestamp_json = nlohmann::ordered_json::object();
-				switch (timestamp.type())
+				auto& tag_segments = segments_it->second;
+				auto& json_segments = json_tag_data["timestamps"];
+				json_segments = nlohmann::json::array();
+				for (const auto& segment : tag_segments)
 				{
-					case tag_timestamp_type::point:
+					auto segment_json = nlohmann::ordered_json::object();
+					switch (segment.type())
 					{
-						timestamp_json["point"] = utils::time::time_to_string(timestamp.start.seconds_total.count());
+					case tag_segment_type::point:
+					{
+						segment_json["point"] = utils::time::time_to_string(segment.start.seconds_total.count());
 					}
 					break;
 					default:
 					{
-						timestamp_json["start"] = utils::time::time_to_string(timestamp.start.seconds_total.count());
-						timestamp_json["end"] = utils::time::time_to_string(timestamp.end.seconds_total.count());
+						segment_json["start"] = utils::time::time_to_string(segment.start.seconds_total.count());
+						segment_json["end"] = utils::time::time_to_string(segment.end.seconds_total.count());
 					}
 					break;
+					}
+					json_segments.push_back(segment_json);
 				}
-				json_timestamps.push_back(timestamp_json);
 			}
 		}
 
@@ -123,24 +146,33 @@ namespace vt
 					tag_it->color = color;
 				}
 
-				for (auto& timestamp : tag_data["timestamps"])
+				for (auto& segment : tag_data["timestamps"])
 				{
-					if (timestamp.contains("point"))
+					if (segment.contains("point"))
 					{
-						auto point = utils::time::parse_time_to_sec(timestamp["point"]);
-						tag_it->timeline.insert(vt::timestamp{ point }, vt::timestamp{ point });
+						auto point = utils::time::parse_time_to_sec(segment["point"]);
+						result.segments[tag_it->name].insert(vt::timestamp{point}, vt::timestamp{point});
 					}
-					else if (timestamp.contains("start") and timestamp.contains("end"))
+					else if (segment.contains("start") and segment.contains("end"))
 					{
-						auto start = utils::time::parse_time_to_sec(timestamp["start"]);
-						auto end = utils::time::parse_time_to_sec(timestamp["end"]);
-						tag_it->timeline.insert(vt::timestamp{ start }, vt::timestamp{ end });
+						auto start = utils::time::parse_time_to_sec(segment["start"]);
+						auto end = utils::time::parse_time_to_sec(segment["end"]);
+						result.segments[tag_it->name].insert(vt::timestamp{ start }, vt::timestamp{ end });
 					}
 				}
 			}
 
 			result.keybinds = json["keybinds"];
 		}			
+		return result;
+	}
+
+	project project::shallow_copy(const project& other)
+	{
+		project result;
+		result.version = other.version;
+		result.name = other.name;
+		result.path = other.path;
 		return result;
 	}
 }

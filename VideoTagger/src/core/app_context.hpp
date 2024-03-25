@@ -1,7 +1,11 @@
 #pragma once
 #include <optional>
 #include <memory>
+#include <filesystem>
+#include <string>
+#include <vector>
 #include <map>
+#include <unordered_map>
 
 #include "project.hpp"
 #include "input.hpp"
@@ -11,8 +15,10 @@
 #include <widgets/video_timeline.hpp>
 #include <widgets/video_player.hpp>
 #include <widgets/color_picker.hpp>
+#include <widgets/video_browser.hpp>
 #include <widgets/theme_customizer.hpp>
 #include <widgets/modal/options.hpp>
+#include "active_video_group.hpp"
 
 #include <imgui.h>
 #include <json.hpp>
@@ -33,6 +39,7 @@ namespace vt
 		bool show_inspector_window = true;
 		bool show_tag_manager_window = true;
 		bool show_video_player_window = true;
+		bool show_video_browser_window = true;
 
 		//not serialized
 		bool show_options_window = false;
@@ -45,23 +52,30 @@ namespace vt
 		widgets::timeline_state timeline_state;
 		widgets::project_selector project_selector;
 		widgets::video_player player;
+		widgets::video_browser browser;
 		widgets::theme_customizer theme_customizer;
 		widgets::modal::options options;
-		std::optional<project> current_project;
 		widgets::color_picker color_picker;
+
 		std::filesystem::path projects_list_filepath;
 		std::filesystem::path app_settings_filepath;
-		std::vector<std::shared_ptr<video>> videos;
 		nlohmann::ordered_json settings;
 		window_config win_cfg;
 		std::unordered_map<std::string, ImFont*> fonts;
 		keybind_storage keybinds;
-		std::optional<widgets::selected_timestamp_data> selected_timestamp_data;
-		std::optional<widgets::moving_timestamp_data> moving_timestamp_data;
+
+		std::optional<project> current_project;
+		video_group_id_t active_video_group_id{};
+		active_video_group active_video_group;
+		std::optional<widgets::selected_segment_data> selected_segment_data;
+		std::optional<widgets::moving_segment_data> moving_segment_data;
 
 		bool is_project_dirty{};
 		bool first_launch = true;
 		bool reset_layout{};
+
+		void update_active_video_group();
+		void reset_active_video_group();
 	};
 
 	inline app_context ctx_;

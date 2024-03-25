@@ -246,7 +246,7 @@ namespace vt::widgets
 	// Maybe more accurracy than a second.
 	// Display time in 10 second intervals instead of 20
 
-	bool video_timeline(timeline_state& state, timestamp& current_time, std::optional<selected_timestamp_data>& selected_timestamp, std::optional<moving_timestamp_data>& moving_timestamp, bool& dirty_flag)
+	bool video_timeline(timeline_state& state, std::optional<selected_segment_data>& selected_timestamp, std::optional<moving_segment_data>& moving_timestamp, bool& dirty_flag)
 	{
 		bool return_value = false;
 		ImGuiIO& io = ImGui::GetIO();
@@ -367,7 +367,7 @@ namespace vt::widgets
 			// current frame top
 			ImRect topRect(ImVec2(canvas_pos.x + legendWidth, canvas_pos.y), ImVec2(canvas_pos.x + canvas_size.x, canvas_pos.y + ItemHeight));
 
-			if (!moving_time_marker and !moving_scroll_bar and !moving_timestamp.has_value() and current_time.seconds_total.count() >= 0 and topRect.Contains(io.MousePos) and io.MouseDown[0] and !ImGui::IsPopupOpen(nullptr, ImGuiPopupFlags_AnyPopup | ImGuiPopupFlags_AnyPopupId))
+			if (!moving_time_marker and !moving_scroll_bar and !moving_timestamp.has_value() and state.current_time.seconds_total.count() >= 0 and topRect.Contains(io.MousePos) and io.MouseDown[0] and !ImGui::IsPopupOpen(nullptr, ImGuiPopupFlags_AnyPopup | ImGuiPopupFlags_AnyPopupId))
 			{
 				moving_time_marker = true;
 			}
@@ -375,11 +375,11 @@ namespace vt::widgets
 			{
 				if (frameCount)
 				{
-					current_time.seconds_total = std::chrono::seconds((int)((io.MousePos.x - topRect.Min.x) / framePixelWidth) + firstFrameUsed);
-					if (current_time.seconds_total.count() < time_min)
-						current_time.seconds_total = std::chrono::seconds(time_min);
-					if (current_time.seconds_total.count() >= time_max)
-						current_time.seconds_total = std::chrono::seconds(time_max);
+					state.current_time.seconds_total = std::chrono::seconds((int)((io.MousePos.x - topRect.Min.x) / framePixelWidth) + firstFrameUsed);
+					if (state.current_time.seconds_total.count() < time_min)
+						state.current_time.seconds_total = std::chrono::seconds(time_min);
+					if (state.current_time.seconds_total.count() >= time_max)
+						state.current_time.seconds_total = std::chrono::seconds(time_max);
 				}
 				if (!io.MouseDown[0])
 					moving_time_marker = false;
@@ -479,38 +479,7 @@ namespace vt::widgets
 				ImVec2 tpos(contentMin.x + 3, contentMin.y + i * ItemHeight + 2);
 				ImU32 text_color = ImGui::ColorConvertFloat4ToU32(style.Colors[ImGuiCol_Text]); //0xFFFFFFFF
 				draw_list->AddText(tpos, text_color, state.displayed_tags.at(i).c_str());
-
-				/*if (sequence_options & ImSequencer::SEQUENCER_DEL)
-				{
-					if (SequencerAddDelButton(draw_list, ImVec2(contentMin.x + legendWidth - ItemHeight + 2 - 10, tpos.y + 2), false))
-						delEntry = i;
-
-					if (SequencerAddDelButton(draw_list, ImVec2(contentMin.x + legendWidth - ItemHeight - ItemHeight + 2 - 10, tpos.y + 2), true))
-						dupEntry = i;
-				}*/
-				//customHeight += state->get_custom_height(i);
 			}
-
-			// slots background
-			//auto slots_color4 = style.Colors[ImGuiCol_WindowBg];
-			//slots_color4.w *= 0.5f;
-			//ImU32 slots_color = ImGui::ColorConvertFloat4ToU32(slots_color4); //0xFF413D3D
-			//
-			//for (int i = 0; i < sequenceCount; i++)
-			//{
-			//	//TODO: Change this
-			//	unsigned int col = (i & 1) ? 0xFF3A3636 : 0xFF413D3D;
-			//	//ImU32 col = slots_color;
-			//
-			//	ImVec2 pos = ImVec2(contentMin.x + legendWidth, contentMin.y + ItemHeight * i + 1);
-			//	ImVec2 sz = ImVec2(canvas_size.x + canvas_pos.x, pos.y + ItemHeight - 1);
-			//	if (!popupOpened and mouse_pos_y >= pos.y and mouse_pos_y < pos.y + (ItemHeight) and !segment_moving_data.has_value() and mouse_pos_x>contentMin.x and mouse_pos_x < contentMin.x + canvas_size.x)
-			//	{
-			//		col += 0x80201008;
-			//		pos.x -= legendWidth;
-			//	}
-			//	//draw_list->AddRectFilled(pos, sz, col, 0);
-			//}
 
 			draw_list->PushClipRect(childFramePos + ImVec2(float(legendWidth), 0.f), childFramePos + childFrameSize, true);
 
@@ -533,18 +502,20 @@ namespace vt::widgets
 			for (size_t i = 0; i < state.displayed_tags.size(); i++)
 			{
 				tag& tag_info = state.get(i);
+				//TODO: consider using at() instead but then an entry would need to be created somewhere first
+				tag_timeline& segments = (*state.segments)[tag_info.name];
 
-				for (auto timestamp_it = tag_info.timeline.begin(); timestamp_it != tag_info.timeline.end(); ++timestamp_it)
+				for (auto segment_it = segments.begin(); segment_it != segments.end(); ++segment_it)
 				{
-					if (moving_timestamp.has_value() and *moving_timestamp->tag == tag_info and moving_timestamp->segment == timestamp_it)
+					if (moving_timestamp.has_value() and *moving_timestamp->tag == tag_info and moving_timestamp->segment_it == segment_it)
 					{
 						continue;
 					}
 
-					auto& tag_timestamp = *timestamp_it;
+					auto& tag_segment = *segment_it;
 
-					int64_t start = tag_timestamp.start.seconds_total.count();
-					int64_t end = tag_timestamp.end.seconds_total.count();
+					int64_t start = tag_segment.start.seconds_total.count();
+					int64_t end = tag_segment.end.seconds_total.count();
 
 					uint32_t timestamp_color = tag_info.color & 0x00FFFFFF | 0xFF000000;
 
@@ -557,12 +528,12 @@ namespace vt::widgets
 					uint32_t selection_color = ImGui::ColorConvertFloat4ToU32({ 1.f, 0xA5 / 255.f, 0.f, 1.f }); //0xFFA500FF
 					float selection_thickness = 2.0f;
 
-					bool is_selected = selected_timestamp.has_value() and selected_timestamp->timestamp_timeline == &tag_info.timeline and selected_timestamp->timestamp == timestamp_it;
+					bool is_selected = selected_timestamp.has_value() and selected_timestamp->segments == &segments and selected_timestamp->segment_it == segment_it;
 
 					// Drawing
 					if (slot_p1.x <= (canvas_size.x + contentMin.x) and slot_p2.x >= (contentMin.x + legendWidth))
 					{
-						if (tag_timestamp.type() == tag_timestamp_type::segment)
+						if (tag_segment.type() == tag_segment_type::segment)
 						{
 							//draw_list->AddRectFilled(slotP1, slotP3, slotColorHalf, 2);
 							draw_list->AddRectFilled(slot_p1, slot_p2, timestamp_color, 2);
@@ -571,7 +542,7 @@ namespace vt::widgets
 								draw_list->AddRect(slot_p1, slot_p2, selection_color, 2, 0, selection_thickness);
 							}
 						}
-						else if (tag_timestamp.type() == tag_timestamp_type::point)
+						else if (tag_segment.type() == tag_segment_type::point)
 						{
 							ImVec2 pos = { (slot_p2.x + slot_p1.x) / 2, slot_p1.y + ItemHeight / 2 - 2 };
 							ImVec2 p1 = { pos.x, pos.y - ItemHeight / 2 + 1 };
@@ -607,11 +578,11 @@ namespace vt::widgets
 					{
 						if (mouse_on_segment)
 						{
-							selected_timestamp = selected_timestamp_data
+							selected_timestamp = selected_segment_data
 							{
 								&tag_info,
-								&tag_info.timeline,
-								timestamp_it
+								&segments,
+								segment_it
 							};
 						}
 
@@ -627,7 +598,7 @@ namespace vt::widgets
 							if (!rc.Contains(io.MousePos))
 								continue;
 							ImGuiMouseCursor cursor = ImGui::GetMouseCursor();
-							if ((j == 0 or j == 1) and timestamp_it->type() != tag_timestamp_type::point)
+							if ((j == 0 or j == 1) and segment_it->type() != tag_segment_type::point)
 							{
 								cursor = ImGuiMouseCursor_ResizeEW;
 							}
@@ -645,15 +616,15 @@ namespace vt::widgets
 								continue;
 							if (!ImRect(childFramePos, childFramePos + childFrameSize).Contains(io.MousePos))
 								continue;
-							if (ImGui::IsMouseClicked(0) and !moving_scroll_bar and !moving_time_marker and (timestamp_it->type() != tag_timestamp_type::point or j == 2))
+							if (ImGui::IsMouseClicked(0) and !moving_scroll_bar and !moving_time_marker and (segment_it->type() != tag_segment_type::point or j == 2))
 							{
-								moving_timestamp = moving_timestamp_data{
+								moving_timestamp = moving_segment_data{
 									&tag_info,
-									timestamp_it,
+									segment_it,
 									static_cast<uint8_t>(j + 1),
 									mouse_pos_to_timestamp(io.MousePos.x),
-									timestamp_it->start,
-									timestamp_it->end
+									segment_it->start,
+									segment_it->end
 								};
 
 								//state->begin_edit(movingEntry);
@@ -676,7 +647,7 @@ namespace vt::widgets
 				// Moving timestamp drawing
 				if (moving_timestamp.has_value() and *moving_timestamp->tag == tag_info)
 				{
-					auto& tag_timestamp = *moving_timestamp->segment;
+					auto& tag_segment = *moving_timestamp->segment_it;
 
 					int64_t start = moving_timestamp->start.seconds_total.count();
 					int64_t end = moving_timestamp->end.seconds_total.count();
@@ -691,13 +662,13 @@ namespace vt::widgets
 
 					if (slot_p1.x <= (canvas_size.x + contentMin.x) and slot_p2.x >= (contentMin.x + legendWidth))
 					{
-						if (tag_timestamp.type() == tag_timestamp_type::segment)
+						if (tag_segment.type() == tag_segment_type::segment)
 						{
 							//draw_list->AddRectFilled(slotP1, slotP3, slotColorHalf, 2);
 							draw_list->AddRectFilled(slot_p1, slot_p2, timestamp_color, 2);
 							draw_list->AddRect(slot_p1, slot_p2, selection_color, 2, 0, selection_thickness);
 						}
-						else if (tag_timestamp.type() == tag_timestamp_type::point)
+						else if (tag_segment.type() == tag_segment_type::point)
 						{
 							ImVec2 pos = { (slot_p2.x + slot_p1.x) / 2, slot_p1.y + ItemHeight / 2 - 2 };
 							ImVec2 p1 = { pos.x, pos.y - ItemHeight / 2 + 1 };
@@ -729,6 +700,8 @@ namespace vt::widgets
 				if (mouse_tag_line_index.has_value())
 				{
 					tag_info = &state.get(*mouse_tag_line_index);
+					auto& segments = state.segments->at(tag_info->name);
+
 					bool insert_segment = false;
 					bool insert_segment_with_popup = false;
 
@@ -742,8 +715,8 @@ namespace vt::widgets
 					if (ImGui::BeginPopupContextItem("##SegmentContextMenu"))
 					{
 						auto selected_timepoint = mouse_timestamp;
-						auto it = tag_info->timeline.find(selected_timepoint);
-						bool is_segment_ctx = it != tag_info->timeline.end();
+						auto it = segments.find(selected_timepoint);
+						bool is_segment_ctx = it != segments.end();
 
 						if (!is_segment_ctx)
 						{
@@ -763,28 +736,28 @@ namespace vt::widgets
 							//TODO: maybe could use the moving timestamp
 							if (ImGui::MenuItem("Add timestamp at marker"))
 							{
-								inserted_segment_start = current_time;
+								inserted_segment_start = state.current_time;
 								inserted_segment_end = inserted_segment_start;
 								insert_segment = true;
 							}
 							if (ImGui::MenuItem("Start segment at marker"))
 							{
 								//TODO: should draw a line or something so you know where you clicked
-								inserted_segment_start = current_time;
+								inserted_segment_start = state.current_time;
 							}
 							//TODO: probably should only be displayed after start was pressed
 							if (ImGui::MenuItem("End segment at marker"))
 							{
-								inserted_segment_end = current_time;
+								inserted_segment_end = state.current_time;
 								insert_segment = true;
 							}
 						}
 						else
 						{
-							if (ImGui::MenuItem(it->type() == tag_timestamp_type::point ? "Delete timestamp" : "Delete segment"))
+							if (ImGui::MenuItem(it->type() == tag_segment_type::point ? "Delete timestamp" : "Delete segment"))
 							{
-								tag_info->timeline.erase(it);
-								if (selected_timestamp.has_value() and selected_timestamp->timestamp_timeline == &tag_info->timeline and selected_timestamp->timestamp == it)
+								segments.erase(it);
+								if (selected_timestamp.has_value() and selected_timestamp->segments == &segments and selected_timestamp->segment_it == it)
 								{
 									selected_timestamp.reset();
 								}
@@ -797,7 +770,7 @@ namespace vt::widgets
 					{
 						//TODO: this doesn't display the merge popup
 
-						tag_info->timeline.insert(timestamp{ inserted_segment_start }, timestamp{ inserted_segment_end });
+						segments.insert(timestamp{ inserted_segment_start }, timestamp{ inserted_segment_end });
 						inserted_segment_start = timestamp{};
 						inserted_segment_end = timestamp{};
 						dirty_flag = true;
@@ -814,7 +787,8 @@ namespace vt::widgets
 				{
 					//TODO: this doesn't display the merge popup
 
-					tag_info->timeline.insert(timestamp{ inserted_segment_start }, timestamp{ inserted_segment_end });
+					auto& segments = state.segments->at(tag_info->name);
+					segments.insert(timestamp{ inserted_segment_start }, timestamp{ inserted_segment_end });
 					inserted_segment_start = timestamp{};
 					inserted_segment_end = timestamp{};
 					dirty_flag = true;
@@ -869,7 +843,7 @@ namespace vt::widgets
 						moving_timestamp->end = moving_timestamp->start;
 
 					auto segment_size = std::abs((moving_timestamp->end - moving_timestamp->start).seconds_total.count());
-					if (segment_size < min_segment_size.count() and moving_timestamp->segment->type() != tag_timestamp_type::point)
+					if (segment_size < min_segment_size.count() and moving_timestamp->segment_it->type() != tag_segment_type::point)
 					{
 						if (moving_timestamp->grab_part & 1)
 						{
@@ -884,19 +858,19 @@ namespace vt::widgets
 				}
 				if (ImGui::IsMouseReleased(ImGuiMouseButton_Left))
 				{
-					auto& timeline = moving_timestamp->tag->timeline;
+					auto& segments = state.segments->at(moving_timestamp->tag->name);
 
 					//No idea what this was supposed to be used for
 					//bool was_selected = selected_timestamp.has_value() and selected_timestamp->timestamp_timeline == &timeline and selected_timestamp->timestamp == segment_moving_data->segment;
 
 					if (selected_timestamp.has_value())
 					{
-						auto overlapping = timeline.find_range(moving_timestamp->start, moving_timestamp->end);
+						auto overlapping = segments.find_range(moving_timestamp->start, moving_timestamp->end);
 
 						bool insert_now = true;
 						for (auto it = overlapping.begin(); it != overlapping.end(); ++it)
 						{
-							if (it != selected_timestamp->timestamp)
+							if (it != selected_timestamp->segment_it)
 							{
 								insert_now = false;
 							}
@@ -904,11 +878,11 @@ namespace vt::widgets
 
 						if (insert_now)
 						{
-							if (selected_timestamp->timestamp->start != moving_timestamp->start or selected_timestamp->timestamp->end != moving_timestamp->end)
+							if (selected_timestamp->segment_it->start != moving_timestamp->start or selected_timestamp->segment_it->end != moving_timestamp->end)
 							{
-								selected_timestamp->timestamp = timeline.replace
+								selected_timestamp->segment_it = segments.replace
 								(
-									selected_timestamp->timestamp,
+									selected_timestamp->segment_it,
 									moving_timestamp->start,
 									moving_timestamp->end
 								).first;
@@ -932,10 +906,10 @@ namespace vt::widgets
 			{
 				if (pressed_yes and moving_timestamp.has_value())
 				{
-					auto& timeline = moving_timestamp->tag->timeline;
-					selected_timestamp->timestamp = timeline.replace
+					auto& segments = state.segments->at(moving_timestamp->tag->name);
+					selected_timestamp->segment_it = segments.replace
 					(
-						selected_timestamp->timestamp,
+						selected_timestamp->segment_it,
 						timestamp{ moving_timestamp->start },
 						timestamp{ moving_timestamp->end }
 					).first;
@@ -947,52 +921,19 @@ namespace vt::widgets
 			}
 			
 			// cursor
-			if (current_time.seconds_total.count() >= state.first_frame and current_time.seconds_total.count() <= time_max)
+			if (state.current_time.seconds_total.count() >= state.first_frame and state.current_time.seconds_total.count() <= time_max)
 			{
 				static constexpr float cursorWidth = 4.f;
 				static constexpr float triangle_span = cursorWidth * 2;
-				float cursorOffset = contentMin.x + legendWidth + (current_time.seconds_total.count() - firstFrameUsed) * framePixelWidth + framePixelWidth / 2 - cursorWidth * 0.5f;
+				float cursorOffset = contentMin.x + legendWidth + (state.current_time.seconds_total.count() - firstFrameUsed) * framePixelWidth + framePixelWidth / 2 - cursorWidth * 0.5f;
 				ImU32 cursor_color = 0xE33E36FF; //0xA02A2AFF
 				draw_list->AddLine(ImVec2(cursorOffset, canvas_pos.y), ImVec2(cursorOffset, contentMax.y), cursor_color, cursorWidth);
-				draw_list->AddTriangleFilled(ImVec2(cursorOffset - triangle_span, canvas_pos.y), ImVec2(cursorOffset, canvas_pos.y + ItemHeight * 0.5f), ImVec2(cursorOffset + triangle_span, canvas_pos.y), cursor_color);
-				/*
-				char tmps[512];
-				ImFormatString(tmps, IM_ARRAYSIZE(tmps), "%d", *current_time);
-				draw_list->AddText(ImVec2(cursorOffset + 10, canvas_pos.y + 2), 0xFF2A2AFF, tmps);
-				*/
+				draw_list->AddTriangleFilled(
+					ImVec2(cursorOffset - triangle_span, canvas_pos.y),
+					ImVec2(cursorOffset, canvas_pos.y + ItemHeight * 0.5f),
+					ImVec2(cursorOffset + triangle_span, canvas_pos.y), cursor_color
+				);
 			}
-
-
-			/*for (auto& customDraw : customDraws)
-				state->custom_draw(customDraw.index, draw_list, customDraw.customRect, customDraw.legendRect, customDraw.clippingRect, customDraw.legendClippingRect);
-			for (auto& customDraw : compactCustomDraws)
-				state->custom_draw_compact(customDraw.index, draw_list, customDraw.customRect, customDraw.clippingRect);*/
-
-			// copy paste
-			/*if (sequence_options & ImSequencer::SEQUENCER_COPYPASTE)
-			{
-				ImRect rectCopy(ImVec2(contentMin.x + 100, canvas_pos.y + 2)
-					, ImVec2(contentMin.x + 100 + 30, canvas_pos.y + ItemHeight - 2));
-				bool inRectCopy = rectCopy.Contains(io.MousePos);
-				
-				ImU32 copy_color = ImGui::ColorConvertFloat4ToU32(style.Colors[inRectCopy ? ImGuiCol_Text : ImGuiCol_TextDisabled]);
-				draw_list->AddText(rectCopy.Min, copy_color, "Copy");
-
-				ImRect rectPaste(ImVec2(contentMin.x + 140, canvas_pos.y + 2)
-					, ImVec2(contentMin.x + 140 + 30, canvas_pos.y + ItemHeight - 2));
-				bool inRectPaste = rectPaste.Contains(io.MousePos);
-				ImU32 paste_color = ImGui::ColorConvertFloat4ToU32(style.Colors[inRectPaste ? ImGuiCol_Text : ImGuiCol_TextDisabled]);
-				draw_list->AddText(rectPaste.Min, paste_color, "Paste");
-
-				if (inRectCopy and io.MouseReleased[0])
-				{
-					state->copy();
-				}
-				if (inRectPaste and io.MouseReleased[0])
-				{
-					state->paste();
-				}
-			}*/
 
 			ImGui::EndChildFrame();
 			//ImGui::PopStyleColor();
@@ -1121,26 +1062,6 @@ namespace vt::widgets
 		}
 
 		ImGui::EndGroup();
-
-		//if (regionRect.Contains(io.MousePos))
-		//{
-		//	bool overCustomDraw = false;
-		//	for (auto& custom : customDraws)
-		//	{
-		//		if (custom.customRect.Contains(io.MousePos))
-		//		{
-		//			overCustomDraw = true;
-		//		}
-		//	}
-		//}
-
-
-		//if (delEntry != -1)
-		//{
-		//	state.del(delEntry);
-		//	if (selected_entry and (*selected_entry == delEntry || *selected_entry >= state.displayed_tags.size()))
-		//		*selected_entry = -1;
-		//}
 
 		return return_value;
 	}

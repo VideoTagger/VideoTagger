@@ -1,6 +1,8 @@
 #pragma once
 #include <map>
 #include <utility>
+#include <string>
+#include <iterator>
 
 #include "tag.hpp"
 

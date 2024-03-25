@@ -11,8 +11,9 @@ namespace vt
 		if (!tag_.empty())
 		{
 			auto& tag = ctx_.current_project->tags[tag_];
+			auto& segments = ctx_.current_project->segments[tag.name];
 			//TODO: Change this to insert the timestamp at the timeline's cursor
-			tag.timeline.insert(timestamp{});
+			segments.insert(timestamp{});
 		}
 		else
 		{
