@@ -5,6 +5,7 @@
 
 #include "project.hpp"
 #include "input.hpp"
+#include "keybind_storage.hpp"
 #include <video/video.hpp>
 #include <widgets/project_selector.hpp>
 #include <widgets/video_timeline.hpp>
@@ -54,9 +55,10 @@ namespace vt
 		nlohmann::ordered_json settings;
 		window_config win_cfg;
 		std::unordered_map<std::string, ImFont*> fonts;
-		std::map<std::string, keybind> keybinds;
+		keybind_storage keybinds;
 		std::optional<widgets::selected_timestamp_data> selected_timestamp_data;
 		std::optional<widgets::moving_timestamp_data> moving_timestamp_data;
+
 		bool is_project_dirty{};
 		bool first_launch = true;
 		bool reset_layout{};

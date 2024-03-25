@@ -9,6 +9,8 @@
 
 namespace vt
 {
+	class keybind_storage;
+
 	union keybind_modifiers
 	{
 	public:
@@ -51,7 +53,6 @@ namespace vt
 
 		std::shared_ptr<keybind_action> action;
 		int key_code = -1;
-		std::string display_name;
 		keybind_modifiers modifiers;
 		keybind_flags flags;
 
@@ -64,6 +65,6 @@ namespace vt
 	struct input
 	{
 		static keybind last_keybind;
-		static void process_event(SDL_Event& event, const std::map<std::string, vt::keybind>& app_keybinds, std::map<std::string, vt::keybind>* project_keybinds);
+		static void process_event(SDL_Event& event, const keybind_storage& app_keybinds, keybind_storage* project_keybinds);
 	};
 }
