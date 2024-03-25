@@ -38,10 +38,13 @@ namespace vt::widgets::modal
 					keybind.action = actions[selected_action];
 				}
 			}
-			std::vector<const char*> action_names;
+
+			std::vector<std::string> action_names;
+			std::vector<const char*> action_names_cstr;
+
 			for (const auto& action : actions)
 			{
-				action_names.push_back(_strdup(action->name().c_str()));
+				action_names_cstr.push_back(action->name().c_str());
 			}
 
 			std::string name_id = "##Input" + std::string(id);
@@ -65,7 +68,7 @@ namespace vt::widgets::modal
 			{
 				ImGui::Text("Action");
 				std::string combo_id = "##Combo" + std::string(id);
-				if (ImGui::Combo(combo_id.c_str(), &selected_action, action_names.data(), static_cast<int>(actions.size())))
+				if (ImGui::Combo(combo_id.c_str(), &selected_action, action_names_cstr.data(), static_cast<int>(actions.size())))
 				{
 					keybind.action = actions[selected_action];
 				}

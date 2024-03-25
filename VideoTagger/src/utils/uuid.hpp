@@ -1,7 +1,10 @@
 #include <filesystem>
 #include<random>
 
-namespace vt::utils::uuid
+namespace vt::utils
 {
-	uint64_t gen_uuid();
+	struct uuid
+	{
+		static uint64_t get();
+	};
 }

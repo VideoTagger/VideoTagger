@@ -5,37 +5,19 @@
 #include "string"
 namespace vt::utils::hash
 {
-	static std::vector<char> file_to_byte(const std::filesystem::path& filepath)
-	{
-		std::ifstream ifs(filepath, std::ios::binary | std::ios::ate);
-		std::ifstream::pos_type pos = ifs.tellg();
-
-		if (pos == 0) {
-			return std::vector<char>{};
-		}
-
-		std::vector<char>  result(pos);
-
-		ifs.seekg(0, std::ios::beg);
-		ifs.read(&result[0], pos);
-
-		return result;
-
-	}
 	uint64_t fnv_hash(const std::filesystem::path& filepath)
 	{
+		std::ifstream in(filepath, std::ios::binary);
+		uint64_t hash = 14695981039346656037ull;
 
-		std::vector<char> bytefile = file_to_byte(filepath);
-
-
-		uint64_t hash = 14695981039346656037; //FNV_offset_basis
-		for (auto fileB : bytefile)
+		while (!in.eof())
 		{
-			hash *= 1099511628211;//using FNV Prime
-			hash ^= fileB;
+			uint8_t byte{};
+			in.read((char*)&byte, sizeof(byte));
 
+			hash *= 1099511628211ull;
+			hash ^= byte;
 		}
-
 		return hash;
 	}
 }

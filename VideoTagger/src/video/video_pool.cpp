@@ -3,7 +3,7 @@ namespace vt
 {
 	uint64_t video_pool::insert(const std::filesystem::path& video_path)
 	{
-		uint64_t video_id = utils::uuid::gen_uuid();
+		uint64_t video_id = utils::uuid::get();
 		video_info videoInfo = { video_path, video() };
 		videos_.try_emplace(video_id, std::move(videoInfo));
 		return video_id;

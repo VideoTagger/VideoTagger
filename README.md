@@ -13,6 +13,7 @@ In order to generate project files run `scripts/linux-gen-projects.sh`.
 - `SDL2` version 2.0.17 or later
 
 #### Building
-To build the projects run `./make config=<config>`, where `<config>` is your desired configuration. Available configurations:
+To build the projects run `make config=<config>`, where `<config>` is your desired configuration. Available configurations:
 - `debug_x86_64`
 - `release_x86_64`
+- `shipping_x86_64`

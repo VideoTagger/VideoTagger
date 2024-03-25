@@ -1,8 +1,9 @@
 #include "uuid.hpp"
+#include <cstdint>
 
-namespace vt::utils::uuid
+namespace vt::utils
 {
-	uint64_t uuid::gen_uuid()
+	uint64_t uuid::get()
 	{
 		static std::random_device rd;
 		static std::mt19937_64 generator(rd());
