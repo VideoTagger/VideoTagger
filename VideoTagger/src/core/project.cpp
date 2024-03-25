@@ -99,9 +99,8 @@ namespace vt
 			}
 		}
 
-		//TODO: Keybinds
-		auto& keybinds = json["keybinds"];
-		keybinds = nlohmann::json::array();
+		json["keybinds"] = keybinds;
+
 		auto parent = path.parent_path();
 		if (!parent.empty())
 		{
@@ -132,7 +131,7 @@ namespace vt
 		else
 		{
 			//TODO: Add error checking
-			nlohmann::json json = utils::json::load_from_file(filepath);
+			auto json = utils::json::load_from_file(filepath);
 			const auto& project = json["project"];
 			result.version = project["version"];
 			result.name = project["name"];
@@ -162,6 +161,8 @@ namespace vt
 					}
 				}
 			}
+
+			result.keybinds = json["keybinds"];
 		}			
 		return result;
 	}

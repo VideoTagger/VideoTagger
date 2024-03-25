@@ -1,7 +1,12 @@
+#pragma once
 #include <filesystem>
-#include<random>
+#include <random>
+#include <cstdint>
 
-namespace vt::utils::uuid
+namespace vt::utils
 {
-	uint64_t get();
+	struct uuid
+	{
+		static uint64_t get();
+	};
 }

@@ -5,6 +5,8 @@
 #include <map>
 #include <optional>
 
+#include "keybind_storage.hpp"
+#include "input.hpp"
 #include <tags/tag_storage.hpp>
 #include <tags/tag_timeline.hpp>
 #include <video/video_pool.hpp>
@@ -27,7 +29,7 @@ namespace vt
 		segment_storage segments;
 		video_pool videos;
 		std::unordered_map<video_group_id_t, video_group> video_groups;
-		std::map<std::string, keybind> keybinds;
+		keybind_storage keybinds;
 
 		//TODO: save tags displayed in the timeline in the project file
 

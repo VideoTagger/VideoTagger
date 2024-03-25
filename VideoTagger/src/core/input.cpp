@@ -1,6 +1,8 @@
 #include "input.hpp"
 #include <imgui_internal.h>
 
+#include "keybind_storage.hpp"
+
 namespace vt
 {
 	keybind input::last_keybind;
@@ -36,7 +38,7 @@ namespace vt
 		return key_code == other.key_code and modifiers.ctrl == other.modifiers.ctrl and modifiers.shift == other.modifiers.shift and modifiers.alt == other.modifiers.alt;
 	}
 
-	void input::process_event(SDL_Event& event, const std::map<std::string, vt::keybind>& app_keybinds, std::map<std::string, vt::keybind>* project_keybinds)
+	void input::process_event(SDL_Event& event, const keybind_storage& app_keybinds, keybind_storage* project_keybinds)
 	{
 		if (event.type != SDL_KEYDOWN) return;
 		static constexpr auto key_blacklist =

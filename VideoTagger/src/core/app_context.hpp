@@ -9,6 +9,7 @@
 
 #include "project.hpp"
 #include "input.hpp"
+#include "keybind_storage.hpp"
 #include <video/video.hpp>
 #include <widgets/project_selector.hpp>
 #include <widgets/video_timeline.hpp>
@@ -61,7 +62,7 @@ namespace vt
 		nlohmann::ordered_json settings;
 		window_config win_cfg;
 		std::unordered_map<std::string, ImFont*> fonts;
-		std::map<std::string, keybind> keybinds;
+		keybind_storage keybinds;
 
 		std::optional<project> current_project;
 		video_group_id_t active_video_group_id{};

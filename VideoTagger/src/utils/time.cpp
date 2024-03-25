@@ -13,7 +13,7 @@ namespace vt::utils::time
 	
 	std::string interval_str(uint64_t interval)
 	{
-		//This most likely could be written better
+		//TODO: This most likely could be written better
 
 		static constexpr uint64_t days_in_year = 365;
 		static constexpr uint64_t days_in_month = 30;
