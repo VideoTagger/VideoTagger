@@ -14,8 +14,7 @@ project "VideoTagger"
 		"vendor/ImGui/**.h",
 		"vendor/ImGui/**.cpp",
 		"vendor/ImGuizmo/**.h",
-		"vendor/ImGuizmo/**.cpp",
-		"vendor/NativeFileDialog/nfd_wrapper.cpp"
+		"vendor/ImGuizmo/**.cpp"
 	}
 
 	includedirs
@@ -23,12 +22,13 @@ project "VideoTagger"
 		"src",
 		"vendor/ImGui",
 		"vendor/ImGuizmo",
-		"vendor/NativeFileDialog/include",
-		"vendor/nlohmann/include"
+		"vendor/nativefiledialog-extended/src/include",
+		"vendor/nlohmann/single_include"
 	}
 
 	links
 	{
+		"nativefiledialog-extended",
 		"SDL2",
 		"SDL2main",
 		"avcodec",

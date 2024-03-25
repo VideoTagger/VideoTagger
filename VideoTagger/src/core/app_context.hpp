@@ -21,7 +21,7 @@
 #include "active_video_group.hpp"
 
 #include <imgui.h>
-#include <json.hpp>
+#include <utils/json.hpp>
 
 namespace vt
 {

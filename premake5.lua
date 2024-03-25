@@ -1,4 +1,5 @@
 include "tools/premake/solution_items.lua"
+OutputDir = "%{cfg.system}-%{cfg.architecture}/%{cfg.buildcfg}"
 
 workspace "VideoTagger"
 	platforms
@@ -25,5 +26,14 @@ workspace "VideoTagger"
 
 	startproject "VideoTagger"
 
-include "VideoTagger"
-include "tools/premake"
+group ".Scripts"
+	include "tools/premake"
+group ""
+
+group "Dependencies"
+	include "VideoTagger/vendor/nativefiledialog-extended"
+group ""
+
+group "Core"
+	include "VideoTagger"
+group ""

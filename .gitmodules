@@ -1,0 +1,6 @@
+[submodule "VideoTagger/vendor/nativefiledialog-extended"]
+	path = VideoTagger/vendor/nativefiledialog-extended
+	url = https://github.com/ScriptExec/nativefiledialog-extended
+[submodule "VideoTagger/vendor/nlohmann"]
+	path = VideoTagger/vendor/nlohmann
+	url = https://github.com/nlohmann/json
