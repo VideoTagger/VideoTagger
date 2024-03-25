@@ -11,18 +11,26 @@ project "VideoTagger"
 	{
 		"src/**.hpp",
 		"src/**.cpp",
-		"vendor/ImGui/**.h",
-		"vendor/ImGui/**.cpp",
-		"vendor/ImGuizmo/**.h",
-		"vendor/ImGuizmo/**.cpp"
+		"vendor/ImGui/*.h",
+		"vendor/ImGui/*.cpp",
+		"vendor/ImGui/misc/cpp/*.h",
+		"vendor/ImGui/misc/cpp/*.cpp",
+		"vendor/ImGui/backends/imgui_impl_sdl2.h",
+		"vendor/ImGui/backends/imgui_impl_sdl2.cpp",
+		"vendor/ImGui/backends/imgui_impl_sdlrenderer2.h",
+		"vendor/ImGui/backends/imgui_impl_sdlrenderer2.cpp",
+		"vendor/ImGuizmo/ImSequencer.h",
+		"vendor/ImGuizmo/ImSequencer.cpp"
 	}
 
 	includedirs
 	{
 		"src",
 		"vendor/ImGui",
+		"vendor/ImGui/misc/cpp/",
 		"vendor/ImGuizmo",
 		"vendor/nativefiledialog-extended/src/include",
+		"vendor/fmt/include",
 		"vendor/nlohmann/single_include"
 	}
 

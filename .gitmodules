@@ -4,3 +4,13 @@
 [submodule "VideoTagger/vendor/nlohmann"]
 	path = VideoTagger/vendor/nlohmann
 	url = https://github.com/nlohmann/json
+[submodule "VideoTagger/vendor/ImGuizmo"]
+	path = VideoTagger/vendor/ImGuizmo
+	url = https://github.com/CedricGuillemet/ImGuizmo
+[submodule "VideoTagger/vendor/ImGui"]
+	path = VideoTagger/vendor/ImGui
+	url = https://github.com/ocornut/imgui
+	branch = docking
+[submodule "VideoTagger/vendor/fmt"]
+	path = VideoTagger/vendor/fmt
+	url = https://github.com/fmtlib/fmt

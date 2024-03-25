@@ -94,7 +94,6 @@ namespace vt::widgets
 		window->DrawList->AddTriangleFilled(a, b, c, ImGui::GetColorU32(ImGuiCol_Text));
 
 		// Popup
-
 		ImVec2 popup_pos;
 
 		popup_pos.x = window->Pos.x + cursor_pos.x - button_size.x;
