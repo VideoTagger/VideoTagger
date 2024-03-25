@@ -12,8 +12,7 @@ namespace vt
 		{
 			auto& tag = ctx_.current_project->tags[tag_];
 			auto& segments = ctx_.current_project->segments[tag.name];
-			//TODO: Change this to insert the timestamp at the timeline's cursor
-			segments.insert(timestamp{});
+			segments.insert(ctx_.timeline_state.current_time);
 		}
 		else
 		{
