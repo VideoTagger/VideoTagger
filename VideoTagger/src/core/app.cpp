@@ -26,6 +26,8 @@
 #include <widgets/controls.hpp>
 #include <widgets/modal/keybind_popup.hpp>
 #include <widgets/modal/keybind_options_popup.hpp>
+#include <widgets/insert_segment_popup.hpp>
+
 #include <utils/filesystem.hpp>
 #include <utils/json.hpp>
 

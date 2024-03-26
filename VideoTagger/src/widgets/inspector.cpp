@@ -14,42 +14,6 @@
 
 namespace vt::widgets
 {
-	static bool show_timestamp_control(const std::string& name, timestamp& timestamp, uint64_t min_timestamp, uint64_t max_timestamp, bool& was_activated, bool& was_released, bool fill_area = true)
-	{
-		bool result = false;
-		auto cstr = name.c_str();
-		ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2{ 0, ImGui::GetStyle().ItemSpacing.y });
-		if (ImGui::Button(cstr))
-		{
-			timestamp = vt::timestamp(min_timestamp);
-			result = true;
-		}
-		ImGui::SameLine();
-		if (fill_area) ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x);
-		auto time_input_id = "##TimestampCtrlInput" + name;
-		result |= widgets::time_input(time_input_id.c_str(), &timestamp, 1.0f, min_timestamp, max_timestamp, utils::time::default_time_format, ImGuiSliderFlags_AlwaysClamp);
-		was_activated = ImGui::IsItemActivated();
-		was_released = ImGui::IsItemDeactivated();
-		if (fill_area) ImGui::PopItemWidth();
-		ImGui::PopStyleVar();
-		auto ctx_name = ("##TimestampCtrlCtx" + name);
-		if (ImGui::BeginPopupContextItem(ctx_name.c_str()))
-		{
-			if (ImGui::MenuItem("Set Min"))
-			{
-				timestamp = vt::timestamp(min_timestamp);
-				result = true;
-			}
-			if (ImGui::MenuItem("Set Max"))
-			{
-				timestamp = vt::timestamp(max_timestamp);
-				result = true;
-			}
-			ImGui::EndPopup();
-		}
-		return result;
-	}
-
 	bool inspector(std::optional<selected_segment_data>& selected_segment, std::optional<moving_segment_data>& moving_segment, bool& link_start_end, bool& dirty_flag, bool* open, uint64_t min_timestamp, uint64_t max_timestamp)
 	{
 		bool result{};
@@ -86,7 +50,7 @@ namespace vt::widgets
 					{
 						case tag_segment_type::point:
 						{
-							modified_timestamp = show_timestamp_control("Point", ts_start, min_timestamp, max_timestamp, started_editing, finished_editing);
+							modified_timestamp = show_timestamp_control("Point", ts_start, min_timestamp, max_timestamp, &started_editing, &finished_editing);
 							ts_end = ts_start;
 							grab_part = 0b11;
 							grab_position = ts_start;
@@ -100,11 +64,11 @@ namespace vt::widgets
 							//ImGui::Columns(2, nullptr, false);
 							bool start_activated = false;
 							bool start_released = false;
-							bool modified_start = show_timestamp_control("Start", ts_start, min_timestamp, std::max<uint64_t>(0, ts_end.seconds_total.count() - 1), start_activated, start_released);
+							bool modified_start = show_timestamp_control("Start", ts_start, min_timestamp, std::max<uint64_t>(0, ts_end.seconds_total.count() - 1), &start_activated, &start_released);
 							//ImGui::NextColumn();
 							bool end_activated = false;
 							bool end_released = false;
-							bool modified_end = show_timestamp_control("End", ts_end, ts_start.seconds_total.count() + 1, max_timestamp, end_activated, end_released);
+							bool modified_end = show_timestamp_control("End", ts_end, ts_start.seconds_total.count() + 1, max_timestamp, &end_activated, &end_released);
 							std::string name = icons::link + std::string("##LinkTimestamps");
 							if (icon_toggle_button(name.c_str(), link_start_end))
 							{
