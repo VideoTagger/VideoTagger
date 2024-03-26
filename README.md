@@ -24,5 +24,6 @@ To build the projects run `make config=<config>`, where `<config>` is your desir
 - [ImGui](https://github.com/ocornut/imgui)
 - [ImGuizmo](https://github.com/CedricGuillemet/ImGuizmo)
 - [Native File Dialog Extended](https://github.com/btzy/nativefiledialog-extended/tree/master)
+- [fmt](https://github.com/fmtlib/fmt)
 - [Nlohmann Json](https://github.com/nlohmann/json)
 - [ffmpeg](https://ffmpeg.org/)
