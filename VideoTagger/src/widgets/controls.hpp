@@ -1,6 +1,7 @@
 #pragma once
 #define IMGUI_DEFINE_MATH_OPERATORS
 #include <imgui.h>
+#include <utils/timestamp.hpp>
 
 namespace vt::widgets
 {
@@ -16,4 +17,6 @@ namespace vt::widgets
 
 	extern void help_marker(const char* description);
 	extern void centered_text(const char* text, ImVec2 avail_area);
+
+	extern bool show_timestamp_control(const std::string& name, timestamp& timestamp, uint64_t min_timestamp, uint64_t max_timestamp, bool* was_activated, bool* was_released, bool fill_area = true);
 }

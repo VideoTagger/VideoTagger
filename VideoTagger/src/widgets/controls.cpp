@@ -3,6 +3,7 @@
 #include <string>
 
 #include <imgui_internal.h>
+#include "time_input.hpp"
 
 namespace vt::widgets
 {
@@ -151,5 +152,42 @@ namespace vt::widgets
 		ImGui::TextWrapped(text);
 		ImGui::EndDisabled();
 		ImGui::SetCursorPos(cpos);
+	}
+
+	
+	bool show_timestamp_control(const std::string& name, timestamp& timestamp, uint64_t min_timestamp, uint64_t max_timestamp, bool* was_activated, bool* was_released, bool fill_area)
+	{
+		bool result = false;
+		auto cstr = name.c_str();
+		ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2{ 0, ImGui::GetStyle().ItemSpacing.y });
+		if (ImGui::Button(cstr))
+		{
+			timestamp = vt::timestamp(min_timestamp);
+			result = true;
+		}
+		ImGui::SameLine();
+		if (fill_area) ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x);
+		auto time_input_id = "##TimestampCtrlInput" + name;
+		result |= widgets::time_input(time_input_id.c_str(), &timestamp, 1.0f, min_timestamp, max_timestamp, utils::time::default_time_format, ImGuiSliderFlags_AlwaysClamp);
+		if (was_activated != nullptr) *was_activated = ImGui::IsItemActivated();
+		if (was_released != nullptr) *was_released = ImGui::IsItemDeactivated();
+		if (fill_area) ImGui::PopItemWidth();
+		ImGui::PopStyleVar();
+		auto ctx_name = ("##TimestampCtrlCtx" + name);
+		if (ImGui::BeginPopupContextItem(ctx_name.c_str()))
+		{
+			if (ImGui::MenuItem("Set Min"))
+			{
+				timestamp = vt::timestamp(min_timestamp);
+				result = true;
+			}
+			if (ImGui::MenuItem("Set Max"))
+			{
+				timestamp = vt::timestamp(max_timestamp);
+				result = true;
+			}
+			ImGui::EndPopup();
+		}
+		return result;
 	}
 }

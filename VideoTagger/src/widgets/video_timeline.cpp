@@ -39,8 +39,8 @@
 
 //#include <widgets/tag_manager.hpp>
 #include <widgets/tag_menu.hpp>
-#include <widgets/time_input.hpp>
 #include <core/debug.hpp>
+#include "insert_segment_popup.hpp"
 
 namespace vt::widgets
 {
@@ -85,43 +85,7 @@ namespace vt::widgets
 		}
 	}
 
-	//TODO: copied from inspector should be moved somewhere
-	static bool show_timestamp_control(const std::string& name, timestamp& timestamp, uint64_t min_timestamp, uint64_t max_timestamp, bool& was_activated, bool& was_released, bool fill_area = true)
-	{
-		bool result = false;
-		auto cstr = name.c_str();
-		ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2{ 0, ImGui::GetStyle().ItemSpacing.y });
-		if (ImGui::Button(cstr))
-		{
-			timestamp = vt::timestamp(min_timestamp);
-			result = true;
-		}
-		ImGui::SameLine();
-		if (fill_area) ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x);
-		auto time_input_id = "##TimestampCtrlInput" + name;
-		result |= widgets::time_input(time_input_id.c_str(), &timestamp, 1.0f, min_timestamp, max_timestamp, utils::time::default_time_format, ImGuiSliderFlags_AlwaysClamp);
-		was_activated = ImGui::IsItemActivated();
-		was_released = ImGui::IsItemDeactivated();
-		if (fill_area) ImGui::PopItemWidth();
-		ImGui::PopStyleVar();
-		auto ctx_name = ("##TimestampCtrlCtx" + name);
-		if (ImGui::BeginPopupContextItem(ctx_name.c_str()))
-		{
-			if (ImGui::MenuItem("Set Min"))
-			{
-				timestamp = vt::timestamp(min_timestamp);
-				result = true;
-			}
-			if (ImGui::MenuItem("Set Max"))
-			{
-				timestamp = vt::timestamp(max_timestamp);
-				result = true;
-			}
-			ImGui::EndPopup();
-		}
-		return result;
-	}
-
+	
 	static bool SequencerAddDelButton(ImDrawList* draw_list, ImVec2 pos, bool add = true)
 	{
 		ImGuiIO& io = ImGui::GetIO();
@@ -180,56 +144,6 @@ namespace vt::widgets
 			{
 				pressed_button = false;
 				return_value = true;
-				ImGui::CloseCurrentPopup();
-			}
-
-			ImGui::EndPopup();
-		}
-
-		ImGui::PopStyleVar(2);
-
-		return return_value;
-	}
-
-	//TODO: Improve
-	bool insert_timestamp_popup(const std::string& id, tag& tag, timestamp& start, timestamp& end, uint64_t min_timestamp, uint64_t max_timestamp)
-	{
-		static constexpr ImVec2 button_size = { 55, 30 };
-
-		bool return_value = false;
-
-		auto& style = ImGui::GetStyle();
-		ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 7);
-		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, style.WindowPadding * 2);
-		ImGui::SetNextWindowPos(ImGui::GetMainViewport()->GetCenter(), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
-		auto flags = ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoMove;
-
-		if (ImGui::BeginPopupModal(id.c_str(), nullptr, flags))
-		{
-			bool start_activated = false;
-			bool start_released = false;
-			bool modified_start = show_timestamp_control("Start", start, min_timestamp, max_timestamp, start_activated, start_released);
-			bool end_activated = false;
-			bool end_released = false;
-			bool modified_end = show_timestamp_control("End", end, min_timestamp, max_timestamp, end_activated, end_released);
-
-			if (start > end)
-			{
-				std::swap(start, end);
-			}
-
-			auto area_size = ImGui::GetWindowSize();
-
-			ImGui::SetCursorPosX(area_size.x / 2 - button_size.x - 20);
-			if (ImGui::Button("OK", button_size))
-			{
-				return_value = true;
-				ImGui::CloseCurrentPopup();
-			}
-			ImGui::SameLine();
-			ImGui::SetCursorPosX(area_size.x / 2 + 20);
-			if (ImGui::Button("Cancel", button_size) or ImGui::IsKeyPressed(ImGuiKey_Escape))
-			{
 				ImGui::CloseCurrentPopup();
 			}
 
@@ -697,6 +611,8 @@ namespace vt::widgets
 				static timestamp inserted_segment_start{};
 				static timestamp inserted_segment_end{};
 				static tag* tag_info{};
+				static int selected_tag{};
+
 				if (mouse_tag_line_index.has_value())
 				{
 					tag_info = &state.get(*mouse_tag_line_index);
@@ -778,16 +694,19 @@ namespace vt::widgets
 
 					if (insert_segment_with_popup)
 					{
+						auto it = std::find(state.displayed_tags.begin(), state.displayed_tags.end(), tag_info->name);
+						selected_tag = (it != state.displayed_tags.end()) ? it - state.displayed_tags.begin() : 0;
 						ImGui::OpenPopup("Add Segment");
 					}
 				}
-
-				if (insert_timestamp_popup("Add Segment", *tag_info, inserted_segment_start, inserted_segment_end,
-					state.time_min.seconds_total.count(), state.time_max.seconds_total.count()))
+				
+				
+				if (insert_segment_popup("Add Segment", inserted_segment_start, inserted_segment_end,
+					state.time_min.seconds_total.count(), state.time_max.seconds_total.count(), state.displayed_tags, selected_tag))
 				{
 					//TODO: this doesn't display the merge popup
 
-					auto& segments = state.segments->at(tag_info->name);
+					auto& segments = state.segments->at(state.displayed_tags[selected_tag]);
 					segments.insert(timestamp{ inserted_segment_start }, timestamp{ inserted_segment_end });
 					inserted_segment_start = timestamp{};
 					inserted_segment_end = timestamp{};
