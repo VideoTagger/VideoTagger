@@ -2,11 +2,29 @@
 .build/
 app.log
 
-**.sln
-**.vcxproj
-**.vcxproj.filters
-**.vcxproj.user
-
-**/Makefile
+# Premake generated files
+.DS_Store
+Makefile
+*.make
+*.xcodeproj
+*.xcworkspace
+*.swp
+*.sdf
+*.sln
+*.suo
+*.ncb
+*.vcproj*
+*.vcxproj*
+*.VC.opendb
+*.VC.db
+*.opensdf
+*.workspace
+*.project
+*.tags
+*.sublime-*
+.cproject
+.settings
+.buildpath
+*.vs
 
 **.buildcfg
