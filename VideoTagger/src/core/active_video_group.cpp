@@ -1,5 +1,5 @@
 #include "active_video_group.hpp"
-
+#include <algorithm>
 #include <utility>
 
 namespace vt

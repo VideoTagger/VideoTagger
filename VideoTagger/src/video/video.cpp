@@ -1,13 +1,12 @@
-#include "video.hpp"
+#include "video_stream.hpp"
 
 namespace vt
 {
-	video::video(const video&)
-		: video()
+	video_stream::video_stream(const video_stream&) : video_stream()
 	{
 	}
 
-	bool video::open_file(const std::filesystem::path& filepath, SDL_Renderer* renderer)
+	bool video_stream::open_file(const std::filesystem::path& filepath, SDL_Renderer* renderer)
 	{
 		if (is_open())
 		{
@@ -32,7 +31,7 @@ namespace vt
 		return true;
 	}
 
-	void video::close()
+	void video_stream::close()
 	{
 		set_playing(false);
 
@@ -51,18 +50,18 @@ namespace vt
 		decoder_.close();
 	}
 
-	video::~video()
+	video_stream::~video_stream()
 	{
 		close();
 	}
 
-	video& video::operator=(const video&)
+	video_stream& video_stream::operator=(const video_stream&)
 	{
-		*this = std::move(video());
+		*this = std::move(video_stream());
 		return *this;
 	}
 
-	void video::set_playing(bool value)
+	void video_stream::set_playing(bool value)
 	{
 		if (!is_open())
 		{
@@ -72,7 +71,7 @@ namespace vt
 		playing_ = value;
 	}
 
-	void video::update(std::chrono::nanoseconds target_timestamp)
+	void video_stream::update(std::chrono::nanoseconds target_timestamp)
 	{
 		//TODO: drop frames
 
@@ -131,7 +130,7 @@ namespace vt
 		}
 	}
 
-	void video::seek(std::chrono::nanoseconds target_timestamp)
+	void video_stream::seek(std::chrono::nanoseconds target_timestamp)
 	{
 		if (!is_open())
 		{
@@ -184,57 +183,57 @@ namespace vt
 			last_ts_ = frame.timestamp();
 		}
 	}
-	SDL_Texture* video::get_frame()
+	SDL_Texture* video_stream::get_frame()
 	{
 		return texture_;
 	}
 
-	bool video::is_open() const
+	bool video_stream::is_open() const
 	{
 		return decoder_.is_open();
 	}
 
-	int video::width() const
+	int video_stream::width() const
 	{
 		return width_;
 	}
 
-	int video::height() const
+	int video_stream::height() const
 	{
 		return height_;
 	}
 
-	bool video::is_playing() const
+	bool video_stream::is_playing() const
 	{
 		return playing_;
 	}
 
-	std::chrono::nanoseconds video::duration() const
+	std::chrono::nanoseconds video_stream::duration() const
 	{
 		return duration_;
 	}
 
-	std::chrono::nanoseconds video::current_timestamp() const
+	std::chrono::nanoseconds video_stream::current_timestamp() const
 	{
 		return last_ts_;
 	}
 
-	size_t video::current_frame_number() const
+	size_t video_stream::current_frame_number() const
 	{
 		return decoder_.timestamp_to_frame_number(current_timestamp());
 	}
 
-	double video::fps() const
+	double video_stream::fps() const
 	{
 		return fps_;
 	}
 
-	std::chrono::nanoseconds video::frame_time() const
+	std::chrono::nanoseconds video_stream::frame_time() const
 	{
 		return std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::duration<double>(1.0 / fps()));;
 	}
 
-	void video::get_thumbnail(SDL_Renderer* renderer, SDL_Texture* texture, std::optional<std::chrono::nanoseconds> timestamp)
+	void video_stream::get_thumbnail(SDL_Renderer* renderer, SDL_Texture* texture, std::optional<std::chrono::nanoseconds> timestamp)
 	{
 		auto start_timestamp = current_timestamp();
 
@@ -254,7 +253,7 @@ namespace vt
 		seek(start_timestamp);
 	}
 
-	void video::update_texture(const video_frame& frame_data)
+	void video_stream::update_texture(const video_frame& frame_data)
 	{
 		auto [yp, up, vp] = frame_data.get_planes();
 
@@ -269,7 +268,7 @@ namespace vt
 		last_ts_ = frame_data.timestamp();
 	}
 
-	void video::clear_texture()
+	void video_stream::clear_texture()
 	{
 		std::vector<uint8_t> y_plane(width() * height(), 16);
 		std::vector<uint8_t> uv_plane((width() / 2) * (height() / 2), 128);

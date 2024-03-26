@@ -13,7 +13,7 @@
 
 namespace vt::widgets
 {
-	void draw_video_widget(video& video, bool& is_open, uint64_t id)
+	void draw_video_widget(video_stream& video, bool& is_open, uint64_t id)
 	{
 		auto& io = ImGui::GetIO();
 		ImGuiWindowFlags flags = ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse;

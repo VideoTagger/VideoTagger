@@ -9,18 +9,18 @@
 
 namespace vt
 {
-	class video
+	class video_stream
 	{
 	public:
-		video() = default;
+		video_stream() = default;
 		//DOESN'T ACTUALLY COPY ANYTHING
-		video(const video&);
-		video(video&&) = default;
-		~video();
+		video_stream(const video_stream&);
+		video_stream(video_stream&&) = default;
+		~video_stream();
 
 		//DOESN'T ACTUALLY COPY ANYTHING
-		video& operator=(const video&);
-		video& operator=(video&&) = default;
+		video_stream& operator=(const video_stream&);
+		video_stream& operator=(video_stream&&) = default;
 
 		bool open_file(const std::filesystem::path& filepath, SDL_Renderer* renderer);
 		void close();

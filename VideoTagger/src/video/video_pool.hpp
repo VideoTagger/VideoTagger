@@ -3,7 +3,7 @@
 
 #include <SDL.h>
 
-#include "video.hpp"
+#include "video_stream.hpp"
 #include <utils/uuid.hpp>
 
 namespace vt
@@ -54,7 +54,7 @@ namespace vt
 			~video_metadata();
 
 			std::filesystem::path path;
-			video video;
+			video_stream video;
 			bool is_widget_open{};
 			SDL_Texture* thumbnail{};
 

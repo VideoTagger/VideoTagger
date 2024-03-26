@@ -112,7 +112,7 @@ namespace vt
 			}
 		}
 
-		video_metadata video_info = { video_path, video() };
+		video_metadata video_info = { video_path, video_stream() };
 		auto[_, inserted] = videos_.try_emplace(video_id, std::move(video_info));
 		return inserted;
 	}

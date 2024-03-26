@@ -9,7 +9,7 @@ namespace vt
 	struct active_video_data
 	{
 		video_id_t id;
-		video* video;
+		video_stream* video;
 		std::chrono::nanoseconds offset;
 	};
 

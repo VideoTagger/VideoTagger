@@ -2,7 +2,7 @@
 #include <string>
 #include <memory>
 
-#include <video/video.hpp>
+#include <video/video_stream.hpp>
 #include "app_context.hpp"
 
 struct SDL_Window;

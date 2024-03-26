@@ -1,5 +1,5 @@
 #pragma once
-#include <video/video.hpp>
+#include <video/video_stream.hpp>
 #include "tag_manager.hpp"
 #include "video_timeline.hpp"
 #include <core/active_video_group.hpp>

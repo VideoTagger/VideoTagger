@@ -10,7 +10,7 @@
 #include "project.hpp"
 #include "input.hpp"
 #include "keybind_storage.hpp"
-#include <video/video.hpp>
+#include <video/video_stream.hpp>
 #include <widgets/project_selector.hpp>
 #include <widgets/video_timeline.hpp>
 #include <widgets/video_player.hpp>
