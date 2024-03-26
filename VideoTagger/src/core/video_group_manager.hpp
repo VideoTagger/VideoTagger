@@ -6,17 +6,17 @@
 
 namespace vt
 {
-	struct active_video_data
+	struct video_group_data
 	{
 		video_id_t id;
 		video_stream* video;
 		std::chrono::nanoseconds offset;
 	};
 
-	class active_video_group
+	class video_group_manager
 	{
 	public:
-		using container = std::vector<active_video_data>;
+		using container = std::vector<video_group_data>;
 		using iterator = container::iterator;
 		using const_iterator = container::const_iterator;
 

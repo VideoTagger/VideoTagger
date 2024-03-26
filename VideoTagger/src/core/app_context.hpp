@@ -18,7 +18,7 @@
 #include <widgets/video_browser.hpp>
 #include <widgets/theme_customizer.hpp>
 #include <widgets/modal/options.hpp>
-#include "active_video_group.hpp"
+#include "video_group_manager.hpp"
 
 #include <imgui.h>
 #include <utils/json.hpp>
@@ -65,8 +65,8 @@ namespace vt
 		keybind_storage keybinds;
 
 		std::optional<project> current_project;
-		video_group_id_t active_video_group_id{};
-		active_video_group active_video_group;
+		video_group_id_t current_video_group_id{};
+		video_group_manager group_manager;
 		std::optional<widgets::selected_segment_data> selected_segment_data;
 		std::optional<widgets::moving_segment_data> moving_segment_data;
 

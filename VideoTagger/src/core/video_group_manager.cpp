@@ -1,10 +1,11 @@
-#include "active_video_group.hpp"
+#include "video_group_manager.hpp"
+
 #include <algorithm>
 #include <utility>
 
 namespace vt
 {
-	void active_video_group::update()
+	void video_group_manager::update()
 	{
 		//TODO: maybe should do something to ensure that videos don't get desynchronized
 
@@ -56,7 +57,7 @@ namespace vt
 		}
 	}
 
-	void active_video_group::set_playing(bool value)
+	void video_group_manager::set_playing(bool value)
 	{
 		for (auto& video_data : videos)
 		{
@@ -81,7 +82,7 @@ namespace vt
 		is_playing_ = value;
 	}
 
-	void active_video_group::set_speed(float value)
+	void video_group_manager::set_speed(float value)
 	{
 		//for (auto& video_data : videos)
 		//{
@@ -96,12 +97,12 @@ namespace vt
 		speed_ = value;
 	}
 
-	void active_video_group::set_looping(bool value)
+	void video_group_manager::set_looping(bool value)
 	{
 		is_looping_ = value;
 	}
 
-	void active_video_group::seek(std::chrono::nanoseconds timestamp)
+	void video_group_manager::seek(std::chrono::nanoseconds timestamp)
 	{
 		for (auto& video_data : videos)
 		{
@@ -132,22 +133,22 @@ namespace vt
 		}
 	}
 
-	bool active_video_group::is_playing() const
+	bool video_group_manager::is_playing() const
 	{
 		return is_playing_;
 	}
 
-	bool active_video_group::is_looping() const
+	bool video_group_manager::is_looping() const
 	{
 		return is_looping_;
 	}
 
-	float active_video_group::speed() const
+	float video_group_manager::speed() const
 	{
 		return speed_;
 	}
 
-	std::chrono::nanoseconds active_video_group::duration() const
+	std::chrono::nanoseconds video_group_manager::duration() const
 	{
 		std::chrono::nanoseconds group_duration{};
 		for (auto& video_data : videos)
@@ -167,42 +168,42 @@ namespace vt
 		return group_duration;
 	}
 
-	std::chrono::nanoseconds active_video_group::current_timestamp() const
+	std::chrono::nanoseconds video_group_manager::current_timestamp() const
 	{
 		return current_timestamp_;
 	}
 
-	size_t active_video_group::size() const
+	size_t video_group_manager::size() const
 	{
 		return videos.size();
 	}
 
-	active_video_group::iterator active_video_group::begin()
+	video_group_manager::iterator video_group_manager::begin()
 	{
 		return videos.begin();
 	}
 
-	active_video_group::const_iterator active_video_group::begin() const
+	video_group_manager::const_iterator video_group_manager::begin() const
 	{
 		return videos.begin();
 	}
 
-	active_video_group::const_iterator active_video_group::cbegin() const
+	video_group_manager::const_iterator video_group_manager::cbegin() const
 	{
 		return videos.cbegin();
 	}
 
-	active_video_group::iterator active_video_group::end()
+	video_group_manager::iterator video_group_manager::end()
 	{
 		return videos.end();
 	}
 
-	active_video_group::const_iterator active_video_group::end() const
+	video_group_manager::const_iterator video_group_manager::end() const
 	{
 		return videos.end();
 	}
 
-	active_video_group::const_iterator active_video_group::cend() const
+	video_group_manager::const_iterator video_group_manager::cend() const
 	{
 		return videos.cend();
 	}

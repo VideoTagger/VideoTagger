@@ -148,12 +148,12 @@ namespace vt::widgets
 			{
 				static auto draw_group_tab = [&style](const std::string& group_name, video_group_id_t gid)
 				{
-					bool inactive = ctx_.active_video_group_id != gid;
+					bool inactive = ctx_.current_video_group_id != gid;
 
 					if (inactive) ImGui::PushStyleColor(ImGuiCol_Text, style.Colors[ImGuiCol_TextDisabled]);
 					if (ImGui::TreeNodeEx(group_name.c_str(), ImGuiTreeNodeFlags_SpanFullWidth | ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_NoTreePushOnOpen | ImGuiTreeNodeFlags_Leaf) and ImGui::IsItemClicked())
 					{
-						ctx_.active_video_group_id = gid;
+						ctx_.current_video_group_id = gid;
 					}
 					if (inactive) ImGui::PopStyleColor();
 				};
@@ -179,7 +179,7 @@ namespace vt::widgets
 					if (ImGui::BeginTable("##VideoBrowserBody", columns, ImGuiTableFlags_ScrollY | ImGuiTableFlags_SizingFixedSame, ImGui::GetContentRegionMax()))
 					{
 						ImGui::TableNextRow();
-						if (ctx_.active_video_group_id == 0)
+						if (ctx_.current_video_group_id == 0)
 						{
 							for (const auto& [gid, group] : ctx_.current_project->video_groups)
 							{
@@ -196,15 +196,15 @@ namespace vt::widgets
 								if (open_group)
 								{
 									debug::log("Opening group " + std::to_string(gid));
-									ctx_.active_video_group_id = gid;
+									ctx_.current_video_group_id = gid;
 								}
 							}
 						}
 						else
 						{
 							auto& pool = ctx_.current_project->videos;
-							auto& vgroup = ctx_.current_project->video_groups.at(ctx_.active_video_group_id);
-							for (auto& vinfo : ctx_.active_video_group)
+							auto& vgroup = ctx_.current_project->video_groups.at(ctx_.current_video_group_id);
+							for (auto& vinfo : ctx_.group_manager)
 							{
 								auto metadata = pool.get(vinfo.id);
 								if (metadata == nullptr) continue;
@@ -229,7 +229,7 @@ namespace vt::widgets
 
 								if (ImGui::IsWindowFocused() and ImGui::IsKeyPressed(ImGuiKey_Escape))
 								{
-									ctx_.active_video_group_id = 0;
+									ctx_.current_video_group_id = 0;
 								}
 							}
 						}
