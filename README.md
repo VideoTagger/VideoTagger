@@ -1,4 +1,10 @@
 ## Getting started
+## Downloading the repository
+To download the repository use `git clone --recursive https://github.com/Vexte/VideoTagger`.
+
+If the repository was cloned non-recursively use `git submodule update --init` to clone the submodules.
+
+---
 
 ### Visual Studio (Windows)
 Visual Studio 2019 or 2022 is recommended
@@ -7,17 +13,26 @@ In order to generate project files run `scripts/win-gen-projects.cmd`.
 #### Building
 To build the projects, open the `.sln` file in Visual Studio and build the projects with chosen configuration.
 
+---
 
 ### Makefile (Linux)
 In order to generate project files run `scripts/linux-gen-projects.sh`.
 #### Requirements
 - `SDL2` version 2.0.17 or later
-
 #### Building
 To build the projects run `make config=<config>`, where `<config>` is your desired configuration. Available configurations:
 - `debug_x86_64`
 - `release_x86_64`
 - `shipping_x86_64`
+
+---
+
+### Xcode (MacOS)
+In order to generate project files run `scripts/macos-gen-projects.sh`.
+#### Requirements
+- `SDL2` version 2.0.17 or later
+#### Building
+To build the projects, open the Xcode file and build the projects with chosen configuration.
 
 ## Third party libraries
 - [SDL2](https://github.com/libsdl-org/SDL)

@@ -1,6 +1,5 @@
-.vs/
 .build/
-app.log
+*.log
 
 # Premake generated files
 .DS_Store
