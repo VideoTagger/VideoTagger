@@ -13,3 +13,4 @@
 [submodule "VideoTagger/vendor/ImGui"]
 	path = VideoTagger/vendor/ImGui
 	url = https://github.com/ScriptExec/imgui
+	branch = docking
