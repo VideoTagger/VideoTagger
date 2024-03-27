@@ -32,6 +32,7 @@ namespace vt::widgets
 
 	private:
 		video_player_data data_;
+		size_t dock_window_count_;
 		float speed_;
 		bool is_playing_;
 		bool is_looping_;
@@ -42,6 +43,7 @@ namespace vt::widgets
 	public:
 		void update_data(video_player_data data, bool is_playing);
 		void render();
+		void dock_windows(size_t count);
 		const video_player_data& data() const;
 	};
 }

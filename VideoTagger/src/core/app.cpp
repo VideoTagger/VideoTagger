@@ -156,6 +156,7 @@ namespace vt
 		{
 			auto* vinfo = ctx_.current_project->videos.get(id);
 			vinfo->is_widget_open = true;
+			ctx_.reset_player_docking = true;
 			ctx_.current_project->videos.open_video(id, renderer_);
 		};
 		init_options();
@@ -366,7 +367,9 @@ namespace vt
 
 	bool app::load_settings()
 	{
-		if (std::filesystem::exists(ctx_.app_settings_filepath))
+		float font_size = 18.0f;
+		bool result = std::filesystem::exists(ctx_.app_settings_filepath);
+		if (result)
 		{
 			//TODO: Error checking
 			debug::log("Loading settings from: " + ctx_.app_settings_filepath.string());
@@ -392,12 +395,10 @@ namespace vt
 				}
 				ctx_.win_cfg.state = state;
 
-				float font_size = 18.0f;
 				if (window.contains("font-size"))
 				{
 					font_size = window["font-size"].get<float>();
 				}
-				build_fonts(font_size);
 			}
 			if (ctx_.settings.contains("first-launch"))
 			{
@@ -415,15 +416,14 @@ namespace vt
 				if (show_windows.contains("video-player")) ctx_.win_cfg.show_video_player_window = show_windows["video-player"];
 				if (show_windows.contains("video-browser")) ctx_.win_cfg.show_video_browser_window = show_windows["video-browser"];
 			}
-			
-			return true;
 		}
 		else
 		{
 			ctx_.reset_layout = true;
 			ctx_.settings["first-launch"] = false;
 		}
-		return false;
+		build_fonts(font_size);
+		return result;
 	}
 
 	void app::save_settings()
@@ -980,13 +980,12 @@ namespace vt
 			ImGui::DockBuilderDockWindow("Video Player", main_dock_up);
 			ImGui::DockBuilderDockWindow("Theme Customizer", main_dock_up);
 			ImGui::DockBuilderDockWindow("Video Browser", dockspace_id_copy);
-			for (size_t i = 0; i < 8; ++i)
+			/*for (size_t i = 0; i < 4; ++i)
 			{
 				auto video_id = "Video##" + std::to_string(i);
-				auto timeline_id = "Timeline##" + std::to_string(i);
-				//ImGui::DockBuilderDockWindow(video_id.c_str(), main_dock_up);
-				ImGui::DockBuilderDockWindow(timeline_id.c_str(), dockspace_id_copy);
-			}
+				ImGui::DockBuilderDockWindow(video_id.c_str(), main_dock_up);
+			}*/
+			ImGui::DockBuilderDockWindow("Timeline##0", dockspace_id_copy);
 			
 			ImGui::DockBuilderFinish(dockspace_id);
 			ctx_.reset_layout = false;
@@ -1245,13 +1244,21 @@ namespace vt
 			ctx_.player.render();
 		}
 
+		uint64_t vid_id{};
 		for (auto& [id, vinfo] : ctx_.current_project->videos)
 		{
 			if (!vinfo.is_widget_open) continue;
 			auto& vid = vinfo.video;
 
-			widgets::draw_video_widget(vid, vinfo.is_widget_open, id);
+			widgets::draw_video_widget(vid, vinfo.is_widget_open, vid_id++);
 		}
+
+		if (ctx_.reset_player_docking)
+		{
+			ctx_.player.dock_windows(4);
+			ctx_.reset_player_docking = false;
+		}
+
 		{
 			auto group_duration = ctx_.group_manager.duration();
 

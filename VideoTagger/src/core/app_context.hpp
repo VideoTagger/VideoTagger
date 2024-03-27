@@ -73,6 +73,7 @@ namespace vt
 		bool is_project_dirty{};
 		bool first_launch = true;
 		bool reset_layout{};
+		bool reset_player_docking{};
 
 		void update_active_video_group();
 		void reset_active_video_group();

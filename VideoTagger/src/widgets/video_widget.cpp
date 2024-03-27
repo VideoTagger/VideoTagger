@@ -16,7 +16,7 @@ namespace vt::widgets
 	void draw_video_widget(video_stream& video, bool& is_open, uint64_t id)
 	{
 		auto& io = ImGui::GetIO();
-		ImGuiWindowFlags flags = ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse;
+		ImGuiWindowFlags flags = ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoSavedSettings;
 		if (video.is_open())
 		{
 			ImGui::SetNextWindowSize({ static_cast<float>(video.width()), static_cast<float>(video.height()) }, ImGuiCond_FirstUseEver);

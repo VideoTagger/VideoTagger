@@ -3,15 +3,18 @@
 #include <string>
 #include <sstream>
 #include <iomanip>
+#include <cmath>
+#include <vector>
 #include <chrono>
 #include <utils/timestamp.hpp>
+#include <core/debug.hpp>
 #include "slider.hpp"
 #include "controls.hpp"
 #include "icons.hpp"
 
 namespace vt::widgets
 {
-	video_player::video_player() : speed_{ 1.0f }, is_playing_{}, is_looping_{}
+	video_player::video_player() : dock_window_count_{}, speed_ { 1.0f }, is_playing_{}, is_looping_{}
     {
 
     }
@@ -44,6 +47,42 @@ namespace vt::widgets
 
 			if (ImGui::BeginChild("##VideoPlayerFrame", image_avail_size))
 			{
+				if (dock_window_count_ > 0)
+				{
+					ImGuiID dock_node_id = ImGui::GetID("##VideoPlayerFrameDockspace");
+					auto node = ImGui::DockBuilderGetNode(dock_node_id);
+					if (node != nullptr)
+					{
+						debug::log("Redocking videos...");
+						auto node_size = node->Size;
+						ImGui::DockBuilderRemoveNode(dock_node_id);
+						auto dockspace_flags = ImGuiDockNodeFlags_AutoHideTabBar | ImGuiDockNodeFlags_PassthruCentralNode;
+						dock_node_id = ImGui::DockBuilderAddNode(dock_node_id, dockspace_flags);
+						ImGui::DockBuilderSetNodeSize(dock_node_id, node_size);
+
+						ImGuiID temp_id = dock_node_id;
+						size_t rows = static_cast<size_t>(std::ceil(std::sqrt(dock_window_count_)));
+						size_t columns = (dock_window_count_ + rows - 1) / rows;
+
+						for (size_t y = 0; y < rows; ++y)
+						{
+							ImGuiID lower_node{};
+							temp_id = ImGui::DockBuilderSplitNode(temp_id, ImGuiDir_Up, 1.0f / rows, nullptr, &lower_node);
+
+							for (size_t x = 0; x < columns; ++x)
+							{
+								size_t id = y * rows + x;
+								auto video_id = "Video##" + std::to_string(id);
+
+								ImGui::DockBuilderSplitNode(temp_id, ImGuiDir_Right, 1.0f / columns, &temp_id, nullptr);
+								ImGui::DockBuilderDockWindow(video_id.c_str(), temp_id);
+							}
+							temp_id = lower_node;
+						}
+						ImGui::DockBuilderFinish(dock_node_id);
+						dock_window_count_ = 0;
+					}
+				}
 				auto flags = ImGuiDockNodeFlags_AutoHideTabBar | ImGuiDockNodeFlags_PassthruCentralNode;
 				ImGui::DockSpace(ImGui::GetID("##VideoPlayerFrameDockspace"), ImGui::GetContentRegionAvail(), flags);
 			}
@@ -178,6 +217,11 @@ namespace vt::widgets
 		}
 		ImGui::PopStyleVar();
 		ImGui::End();
+	}
+
+	void video_player::dock_windows(size_t count)
+	{
+		dock_window_count_ = count;
 	}
 
 	const video_player_data& video_player::data() const

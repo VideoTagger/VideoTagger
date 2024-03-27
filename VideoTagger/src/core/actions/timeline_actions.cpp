@@ -79,7 +79,7 @@ namespace vt
 			{
 				selected_tag = i;
 			}
-			tag_names.push_back(_strdup(tag.name.c_str()));
+			tag_names.push_back(tag.name.c_str());
 			++i;
 		}
 

@@ -3,6 +3,7 @@
 #include <filesystem>
 #include <chrono>
 #include <deque>
+#include <optional>
 #include <SDL.h>
 
 #include "video_decoder.hpp"

@@ -1,4 +1,5 @@
 #include "video_stream.hpp"
+#include <vector>
 
 namespace vt
 {
