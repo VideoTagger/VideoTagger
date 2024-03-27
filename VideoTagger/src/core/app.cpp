@@ -420,8 +420,14 @@ namespace vt
 		else
 		{
 			ctx_.reset_layout = true;
-			ctx_.settings["first-launch"] = false;
 		}
+
+		auto& io = ImGui::GetIO();
+		if (!std::filesystem::exists(io.IniFilename))
+		{
+			ctx_.reset_layout = true;
+		}
+		ctx_.settings["first-launch"] = false;
 		build_fonts(font_size);
 		return result;
 	}
@@ -1121,6 +1127,10 @@ namespace vt
 				if (ImGui::MenuItem("Reset Layout"))
 				{
 					ctx_.reset_layout = true;
+				}
+				if (ImGui::MenuItem("Reset Player Docking"))
+				{
+					ctx_.reset_player_docking = true;
 				}
 				ImGui::EndMenu();
 			}
