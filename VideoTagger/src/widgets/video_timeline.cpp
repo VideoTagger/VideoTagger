@@ -613,92 +613,112 @@ namespace vt::widgets
 				static tag* tag_info{};
 				static int selected_tag{};
 
+				tag_timeline* segments{};
 				if (mouse_tag_line_index.has_value())
 				{
 					tag_info = &state.get(*mouse_tag_line_index);
-					auto& segments = state.segments->at(tag_info->name);
+					segments = &state.segments->at(tag_info->name);
+				}
 
-					bool insert_segment = false;
-					bool insert_segment_with_popup = false;
+				bool insert_segment = false;
+				bool insert_segment_with_popup = false;
 
-					static timestamp mouse_timestamp;
+				static timestamp mouse_timestamp;
 
-					if (ImGui::IsMouseReleased(ImGuiMouseButton_Right))
+				if (ImGui::IsMouseReleased(ImGuiMouseButton_Right))
+				{
+					mouse_timestamp = mouse_pos_to_timestamp(io.MousePos.x);
+				}
+
+				if (ImGui::BeginPopupContextItem("##SegmentContextMenu"))
+				{
+					auto selected_timepoint = mouse_timestamp;
+					
+					std::optional<tag_timeline::iterator> segment_it;
+					if (segments != nullptr)
 					{
-						mouse_timestamp = mouse_pos_to_timestamp(io.MousePos.x);
+						segment_it = segments->find(selected_timepoint);
+						if (*segment_it == segments->end())
+						{
+							segment_it.reset();
+						}
 					}
 
-					if (ImGui::BeginPopupContextItem("##SegmentContextMenu"))
+					if (!segment_it.has_value())
 					{
-						auto selected_timepoint = mouse_timestamp;
-						auto it = segments.find(selected_timepoint);
-						bool is_segment_ctx = it != segments.end();
-
-						if (!is_segment_ctx)
+						if (ImGui::MenuItem("Add timestamp"))
 						{
-							if (ImGui::MenuItem("Add timestamp"))
+							inserted_segment_start = mouse_timestamp;
+							inserted_segment_end = inserted_segment_start;
+							insert_segment_with_popup = true;
+						}
+						if (ImGui::MenuItem("Add segment"))
+						{
+							inserted_segment_start = mouse_timestamp;
+							inserted_segment_end = inserted_segment_start + timestamp(1);
+							insert_segment_with_popup = true;
+						}
+						ImGui::SeparatorText("Marker");
+						//TODO: maybe could use the moving timestamp
+						if (ImGui::MenuItem("Add timestamp at marker"))
+						{
+							inserted_segment_start = state.current_time;
+							inserted_segment_end = inserted_segment_start;
+							insert_segment_with_popup = true;
+						}
+						if (ImGui::MenuItem("Add segment at marker"))
+						{
+							//TODO: should draw a line or something so you know where you clicked
+							inserted_segment_start = state.current_time;
+							inserted_segment_start = state.current_time + timestamp(1);
+							insert_segment_with_popup = true;
+						}
+						if (ImGui::MenuItem("Start segment at marker"))
+						{
+							//TODO: should draw a line or something so you know where you clicked
+							inserted_segment_start = state.current_time;
+						}
+						//TODO: probably should only be displayed after start was pressed
+						if (ImGui::MenuItem("End segment at marker"))
+						{
+							inserted_segment_end = state.current_time;
+							insert_segment_with_popup = true;
+						}
+					}
+					else
+					{
+						if (ImGui::MenuItem((*segment_it)->type() == tag_segment_type::point ? "Delete timestamp" : "Delete segment"))
+						{
+							segments->erase(*segment_it);
+							if (selected_timestamp.has_value() and selected_timestamp->segments == segments and selected_timestamp->segment_it == *segment_it)
 							{
-								inserted_segment_start = mouse_timestamp;
-								inserted_segment_end = inserted_segment_start;
-								insert_segment = true;
-							}
-							if (ImGui::MenuItem("Add segment"))
-							{
-								inserted_segment_start = mouse_timestamp;
-								inserted_segment_end = inserted_segment_start + timestamp(1);
-								insert_segment_with_popup = true;
-							}
-							ImGui::SeparatorText("Marker");
-							//TODO: maybe could use the moving timestamp
-							if (ImGui::MenuItem("Add timestamp at marker"))
-							{
-								inserted_segment_start = state.current_time;
-								inserted_segment_end = inserted_segment_start;
-								insert_segment = true;
-							}
-							if (ImGui::MenuItem("Start segment at marker"))
-							{
-								//TODO: should draw a line or something so you know where you clicked
-								inserted_segment_start = state.current_time;
-							}
-							//TODO: probably should only be displayed after start was pressed
-							if (ImGui::MenuItem("End segment at marker"))
-							{
-								inserted_segment_end = state.current_time;
-								insert_segment = true;
+								selected_timestamp.reset();
 							}
 						}
-						else
-						{
-							if (ImGui::MenuItem(it->type() == tag_segment_type::point ? "Delete timestamp" : "Delete segment"))
-							{
-								segments.erase(it);
-								if (selected_timestamp.has_value() and selected_timestamp->segments == &segments and selected_timestamp->segment_it == it)
-								{
-									selected_timestamp.reset();
-								}
-							}
-						}
-						ImGui::EndPopup();
 					}
+					ImGui::EndPopup();
+				}
 
-					if (insert_segment)
-					{
-						//TODO: this doesn't display the merge popup
+				if (insert_segment)
+				{
+					//TODO: this doesn't display the merge popup
 
-						segments.insert(timestamp{ inserted_segment_start }, timestamp{ inserted_segment_end });
-						inserted_segment_start = timestamp{};
-						inserted_segment_end = timestamp{};
-						dirty_flag = true;
-					}
+					segments->insert(timestamp{ inserted_segment_start }, timestamp{ inserted_segment_end });
+					inserted_segment_start = timestamp{};
+					inserted_segment_end = timestamp{};
+					dirty_flag = true;
+				}
 
-					if (insert_segment_with_popup)
+				if (insert_segment_with_popup)
+				{
+					if (segments != nullptr)
 					{
 						auto it = std::find(state.displayed_tags.begin(), state.displayed_tags.end(), tag_info->name);
 						selected_tag = (it != state.displayed_tags.end()) ? it - state.displayed_tags.begin() : 0;
-						ImGui::OpenPopup("Add Segment");
 					}
+					ImGui::OpenPopup("Add Segment");
 				}
+				
 				
 				
 				if (insert_segment_popup("Add Segment", inserted_segment_start, inserted_segment_end,
