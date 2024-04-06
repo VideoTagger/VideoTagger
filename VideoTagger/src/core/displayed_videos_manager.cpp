@@ -1,5 +1,5 @@
 #include "pch.hpp"
-#include "video_group_manager.hpp"
+#include "displayed_videos_manager.hpp"
 
 namespace vt
 {

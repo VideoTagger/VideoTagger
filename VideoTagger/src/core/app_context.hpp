@@ -21,7 +21,7 @@
 #include <widgets/video_browser.hpp>
 #include <widgets/theme_customizer.hpp>
 #include <widgets/modal/options.hpp>
-#include "video_group_manager.hpp"
+#include "displayed_videos_manager.hpp"
 #include <utils/json.hpp>
 
 namespace vt
