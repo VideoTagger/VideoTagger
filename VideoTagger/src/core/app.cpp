@@ -221,7 +221,12 @@ namespace vt
 
 				switch (buttonid)
 				{
-					case 1: ctx_.project_selector.remove(project_info); break;
+					case 1:
+					{
+						ctx_.project_selector.remove(project_info);
+						ctx_.project_selector.on_project_list_update();
+					}
+					break;
 					case 2:
 					{
 						utils::dialog_filter filter{ "VideoTagger Project", project::extension };
@@ -229,6 +234,7 @@ namespace vt
 						if (result)
 						{
 							project_info = project_info::load_from_file(result.path);
+							ctx_.project_selector.on_project_list_update();
 						}
 					}
 					break;
