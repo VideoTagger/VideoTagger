@@ -44,6 +44,14 @@ namespace vt::widgets
 			{
 				
 			}
+			auto max_chars = 4 * static_cast<size_t>(tile_size.x / ImGui::GetTextLineHeight());
+			std::string temp = strlen(id) > max_chars ? std::string(id, max_chars) + "..." : name;
+
+			if (ImGui::IsItemHovered(ImGuiHoveredFlags_ForTooltip | ImGuiHoveredFlags_DelayNormal) and name.size() != temp.size() and ImGui::BeginTooltip())
+			{
+				ImGui::Text("%s", id);
+				ImGui::EndTooltip();
+			}
 			if (ImGui::IsItemActivated() and ImGui::IsMouseDoubleClicked(0))
 			{
 				open = true;
@@ -66,8 +74,6 @@ namespace vt::widgets
 			ImGui::Image(imgui_tex, image_size);
 			ImGui::Dummy({ 0, (image_tile_size.y - image_size.y) / 2.f });
 			//widgets::clipped_text(id, { tile_size.x, text_size.y });
-			auto max_chars = 4 * static_cast<size_t>(tile_size.x / ImGui::GetTextLineHeight());
-			std::string temp = strlen(id) > max_chars ? std::string(id, max_chars) + "..." : std::string(id, max_chars);
 			ImGui::TextWrapped(temp.c_str());
 			ImGui::EndGroup();
 			ImGui::SetCursorPos(cpos);
