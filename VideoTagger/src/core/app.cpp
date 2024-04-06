@@ -1,16 +1,5 @@
-#define IMGUI_DEFINE_MATH_OPERATORS
+#include "pch.hpp"
 #include "app.hpp"
-#include <cmath>
-#include <fstream>
-#include <filesystem>
-#include <optional>
-
-#include <SDL.h>
-#include <imgui.h>
-#include <imgui_internal.h>
-#include <backends/imgui_impl_sdl2.h>
-#include <backends/imgui_impl_sdlrenderer2.h>
-#include <nfd.hpp>
 
 #include <widgets/widgets.hpp>
 #include <widgets/tag_manager.hpp>
@@ -100,12 +89,117 @@ namespace vt
 		}
 	}
 
-	app::app() : main_window_{}, renderer_{}, state_{ app_state::uninitialized }
+	static void set_default_theme(bool light)
 	{
-		ctx_.project_selector.on_click_project = [&](project& project)
+		ImGuiStyle& style = ImGui::GetStyle();
+		ImVec4* colors = style.Colors;
+		colors[ImGuiCol_Text] = ImVec4(1.00f, 1.00f, 1.00f, 1.00f);
+		colors[ImGuiCol_TextDisabled] = ImVec4(0.50f, 0.50f, 0.50f, 1.00f);
+		colors[ImGuiCol_WindowBg] = ImVec4(0.14f, 0.14f, 0.14f, 1.00f);
+		colors[ImGuiCol_ChildBg] = ImVec4(0.00f, 0.00f, 0.00f, 0.00f);
+		colors[ImGuiCol_PopupBg] = ImVec4(0.16f, 0.16f, 0.16f, 0.95f);
+		colors[ImGuiCol_Border] = ImVec4(0.19f, 0.19f, 0.19f, 0.60f);
+		colors[ImGuiCol_BorderShadow] = ImVec4(0.00f, 0.00f, 0.00f, 0.24f);
+		colors[ImGuiCol_FrameBg] = ImVec4(0.25f, 0.25f, 0.25f, 0.63f);
+		colors[ImGuiCol_FrameBgHovered] = ImVec4(0.35f, 0.35f, 0.35f, 0.54f);
+		colors[ImGuiCol_FrameBgActive] = ImVec4(0.20f, 0.22f, 0.23f, 1.00f);
+		colors[ImGuiCol_TitleBg] = ImVec4(0.10f, 0.10f, 0.10f, 1.00f);
+		colors[ImGuiCol_TitleBgActive] = ImVec4(0.12f, 0.12f, 0.12f, 1.00f);
+		colors[ImGuiCol_TitleBgCollapsed] = ImVec4(0.09f, 0.09f, 0.09f, 1.00f);
+		colors[ImGuiCol_MenuBarBg] = ImVec4(0.16f, 0.16f, 0.16f, 1.00f);
+		colors[ImGuiCol_ScrollbarBg] = ImVec4(0.05f, 0.05f, 0.05f, 0.54f);
+		colors[ImGuiCol_ScrollbarGrab] = ImVec4(0.34f, 0.34f, 0.34f, 0.54f);
+		colors[ImGuiCol_ScrollbarGrabHovered] = ImVec4(0.40f, 0.40f, 0.40f, 0.54f);
+		colors[ImGuiCol_ScrollbarGrabActive] = ImVec4(0.56f, 0.56f, 0.56f, 0.54f);
+		colors[ImGuiCol_CheckMark] = ImVec4(1.00f, 1.00f, 1.00f, 1.00f);
+		colors[ImGuiCol_SliderGrab] = ImVec4(0.34f, 0.34f, 0.34f, 0.54f);
+		colors[ImGuiCol_SliderGrabActive] = ImVec4(0.56f, 0.56f, 0.56f, 0.54f);
+		colors[ImGuiCol_Button] = ImVec4(0.30f, 0.30f, 0.30f, 0.52f);
+		colors[ImGuiCol_ButtonHovered] = ImVec4(0.47f, 0.47f, 0.47f, 0.36f);
+		colors[ImGuiCol_ButtonActive] = ImVec4(0.20f, 0.20f, 0.20f, 0.36f);
+		colors[ImGuiCol_Header] = ImVec4(0.30f, 0.30f, 0.30f, 0.52f);
+		colors[ImGuiCol_HeaderHovered] = ImVec4(0.47f, 0.47f, 0.47f, 0.52f);
+		colors[ImGuiCol_HeaderActive] = ImVec4(0.20f, 0.22f, 0.23f, 0.36f);
+		colors[ImGuiCol_Separator] = ImVec4(0.40f, 0.40f, 0.40f, 0.29f);
+		colors[ImGuiCol_SeparatorHovered] = ImVec4(0.58f, 0.58f, 0.58f, 0.29f);
+		colors[ImGuiCol_SeparatorActive] = ImVec4(0.40f, 0.44f, 0.47f, 1.00f);
+		colors[ImGuiCol_ResizeGrip] = ImVec4(0.28f, 0.28f, 0.28f, 0.29f);
+		colors[ImGuiCol_ResizeGripHovered] = ImVec4(0.44f, 0.44f, 0.44f, 0.29f);
+		colors[ImGuiCol_ResizeGripActive] = ImVec4(0.40f, 0.44f, 0.47f, 1.00f);
+		colors[ImGuiCol_Tab] = ImVec4(0.10f, 0.10f, 0.10f, 0.52f);
+		colors[ImGuiCol_TabHovered] = ImVec4(0.14f, 0.14f, 0.14f, 1.00f);
+		colors[ImGuiCol_TabActive] = ImVec4(0.20f, 0.20f, 0.20f, 1.00f);
+		colors[ImGuiCol_TabUnfocused] = ImVec4(0.04f, 0.04f, 0.04f, 0.52f);
+		colors[ImGuiCol_TabUnfocusedActive] = ImVec4(0.14f, 0.14f, 0.14f, 0.36f);
+		colors[ImGuiCol_DockingPreview] = ImVec4(0.26f, 0.59f, 0.98f, 0.22f);
+		colors[ImGuiCol_DockingEmptyBg] = ImVec4(0.14f, 0.14f, 0.14f, 1.00f);
+		colors[ImGuiCol_PlotLines] = ImVec4(0.16f, 0.50f, 0.00f, 1.00f);
+		colors[ImGuiCol_PlotLinesHovered] = ImVec4(1.00f, 0.00f, 0.00f, 1.00f);
+		colors[ImGuiCol_PlotHistogram] = ImVec4(0.16f, 0.50f, 0.00f, 1.00f);
+		colors[ImGuiCol_PlotHistogramHovered] = ImVec4(1.00f, 0.00f, 0.00f, 1.00f);
+		colors[ImGuiCol_TableHeaderBg] = ImVec4(0.00f, 0.00f, 0.00f, 0.52f);
+		colors[ImGuiCol_TableBorderStrong] = ImVec4(0.00f, 0.00f, 0.00f, 0.52f);
+		colors[ImGuiCol_TableBorderLight] = ImVec4(0.28f, 0.28f, 0.28f, 0.29f);
+		colors[ImGuiCol_TableRowBg] = ImVec4(0.00f, 0.00f, 0.00f, 0.00f);
+		colors[ImGuiCol_TableRowBgAlt] = ImVec4(1.00f, 1.00f, 1.00f, 0.06f);
+		colors[ImGuiCol_TextSelectedBg] = ImVec4(0.32f, 0.34f, 0.35f, 1.00f);
+		colors[ImGuiCol_DragDropTarget] = ImVec4(0.33f, 0.67f, 0.86f, 1.00f);
+		colors[ImGuiCol_NavHighlight] = ImVec4(1.00f, 0.00f, 0.00f, 1.00f);
+		colors[ImGuiCol_NavWindowingHighlight] = ImVec4(0.20f, 0.20f, 0.20f, 1.00f);
+		colors[ImGuiCol_NavWindowingDimBg] = ImVec4(1.00f, 0.00f, 0.00f, 0.20f);
+		colors[ImGuiCol_ModalWindowDimBg] = ImVec4(0.00f, 0.00f, 0.00f, 0.35f);
+
+		/*
+		style.WindowPadding = ImVec2(8.00f, 8.00f);
+		style.FramePadding = ImVec2(5.00f, 2.00f);
+		style.CellPadding = ImVec2(6.00f, 6.00f);
+		style.ItemSpacing = ImVec2(6.00f, 6.00f);
+		style.ItemInnerSpacing = ImVec2(6.00f, 6.00f);
+		style.TouchExtraPadding = ImVec2(0.00f, 0.00f);
+		*/
+		style.IndentSpacing = 25;
+		style.ScrollbarSize = 15;
+		style.GrabMinSize = 10;
+		style.WindowBorderSize = 1;
+		style.ChildBorderSize = 1;
+		//style.PopupBorderSize = 1;
+		style.FrameBorderSize = 0;
+		style.TabBorderSize = 1;
+		style.WindowRounding = 0;//style.WindowRounding = 7;
+		style.ChildRounding = 0;
+		style.FrameRounding = 0;
+		style.PopupRounding = 0; //style.PopupRounding = 4;
+		style.ScrollbarRounding = 5;
+		style.GrabRounding = 3;
+		style.LogSliderDeadzone = 4;
+		style.TabRounding = 0; //style.TabRounding = 4;
+
+		if (light)
 		{
-			debug::log("Clicked project: " + project.name + ", Filepath: " + project.path.string());
-			if (!std::filesystem::is_regular_file(project.path))
+			for (int i = 0; i < ImGuiCol_COUNT; i++)
+			{
+				ImVec4& col = style.Colors[i];
+				float H, S, V;
+				ImGui::ColorConvertRGBtoHSV(col.x, col.y, col.z, H, S, V);
+
+				if (S < 0.1f)
+				{
+					V = 1.0f - V;
+				}
+				ImGui::ColorConvertHSVtoRGB(H, S, V, col.x, col.y, col.z);
+			}
+		}
+		style.AntiAliasedFill = true;
+		style.AntiAliasedLines = true;
+		style.AntiAliasedLinesUseTex = true;
+	}
+
+	app::app() : state_{ app_state::uninitialized }
+	{
+		ctx_.project_selector.on_click_project = [&](project_info& project_info)
+		{
+			debug::log("Clicked project: " + project_info.name + ", Filepath: " + project_info.path.string());
+			if (!std::filesystem::is_regular_file(project_info.path))
 			{
 				const SDL_MessageBoxButtonData buttons[] = {
 					// flags, buttonid, text
@@ -127,22 +221,22 @@ namespace vt
 
 				switch (buttonid)
 				{
-					case 1: ctx_.project_selector.remove(project); break;
+					case 1: ctx_.project_selector.remove(project_info); break;
 					case 2:
 					{
 						utils::dialog_filter filter{ "VideoTagger Project", project::extension };
 						auto result = utils::filesystem::get_file({}, { filter });
 						if (result)
 						{
-							project = project::load_from_file(result.path);
+							project_info = project_info::load_from_file(result.path);
 						}
 					}
 					break;
 				}
 				return;
 			}
-			ctx_.current_project = project;
-			set_subtitle(project.name);
+			ctx_.current_project = project::load_from_file(project_info.path);
+			set_subtitle(ctx_.current_project->name);
 		};
 
 		ctx_.project_selector.on_project_list_update = [&]()
@@ -157,7 +251,7 @@ namespace vt
 			auto* vinfo = ctx_.current_project->videos.get(id);
 			vinfo->is_widget_open = true;
 			ctx_.reset_player_docking = true;
-			ctx_.current_project->videos.open_video(id, renderer_);
+			ctx_.current_project->videos.open_video(id, ctx_.renderer);
 		};
 		init_options();
 	}
@@ -165,7 +259,6 @@ namespace vt
 	bool app::init(const app_config& config)
 	{
 		debug::init();
-		ctx_.app_settings_filepath = config.app_settings_filepath;
 		//Clears the log file
 		if (debug::log_filepath != "") std::ofstream{ debug::log_filepath };
 
@@ -211,12 +304,12 @@ namespace vt
 			debug::error("Couldn't create the renderer");
 			return false;
 		}
-		renderer_ = renderer;
-		main_window_ = window;
+		ctx_.renderer = renderer;
+		ctx_.main_window = window;
 
-		ImGui_ImplSDL2_InitForSDLRenderer(main_window_, renderer_);
-		ImGui_ImplSDLRenderer2_Init(renderer_);
-		ImGui::StyleColorsDark();
+		ImGui_ImplSDL2_InitForSDLRenderer(ctx_.main_window, ctx_.renderer);
+		ImGui_ImplSDLRenderer2_Init(ctx_.renderer);
+		set_default_theme(false);
 
 		ImGuiIO& io = ImGui::GetIO();
 		ImGuiStyle& style = ImGui::GetStyle();
@@ -225,12 +318,12 @@ namespace vt
 		io.ConfigWindowsMoveFromTitleBarOnly = true;
 
 		state_ = app_state::initialized;
-		ctx_.projects_list_filepath = config.projects_list_filepath;
 
 		av_log_set_callback(ffmpeg_callback);
 		load_settings();
 		init_keybinds();
 		init_player();
+		fetch_themes();
 		return true;
 	}
 	
@@ -248,9 +341,9 @@ namespace vt
 			ImGui::NewFrame();
 
 			handle_events();
-			if (renderer_ != nullptr)
+			if (ctx_.renderer != nullptr)
 			{
-				SDL_RenderClear(renderer_);
+				SDL_RenderClear(ctx_.renderer);
 				render();
 			}
 		}
@@ -283,7 +376,7 @@ namespace vt
 			{
 				auto& size_setting = window["size"];
 				int size[2] = {};
-				SDL_GetWindowSize(main_window_, &size[0], &size[1]);
+				SDL_GetWindowSize(ctx_.main_window, &size[0], &size[1]);
 				size_setting["width"] = size[0];
 				size_setting["height"] = size[1];
 			}
@@ -350,6 +443,38 @@ namespace vt
 		}
 	}
 
+	void app::on_import_videos()
+	{
+		if (!ctx_.current_project.has_value()) return;
+
+		auto result = utils::filesystem::get_files();
+		if (result)
+		{
+			for (const auto& path : result.paths)
+			{
+				const auto& videos = ctx_.current_project->videos;
+				auto it = std::find_if(videos.begin(), videos.end(), [path](const video_pool::iterator::value_type& video_data)
+				{
+					return video_data.second.path == path;
+				});
+
+				if (it == videos.end())
+				{
+					debug::log("Importing video " + path.u8string());
+					//TODO: This should be done asynchronously
+					if (!ctx_.current_project->import_video(path))
+					{
+						debug::error("Failed to import " + path.u8string());
+					}
+				}
+				else
+				{
+					//TODO: Display message box
+				}
+			}
+		}
+	}
+
 	void app::on_delete()
 	{
 		//TODO: This should be implemented as a function in timeline
@@ -380,8 +505,8 @@ namespace vt
 				auto& size = ctx_.settings["window"]["size"];
 				if (size.contains("width") and size.contains("height"))
 				{
-					SDL_SetWindowSize(main_window_, size["width"].get<int>(), size["height"].get<int>());
-					SDL_SetWindowPosition(main_window_, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED);
+					SDL_SetWindowSize(ctx_.main_window, size["width"].get<int>(), size["height"].get<int>());
+					SDL_SetWindowPosition(ctx_.main_window, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED);
 				}
 			}
 			if (ctx_.settings.contains("window") and ctx_.settings["window"].contains("state"))
@@ -390,7 +515,7 @@ namespace vt
 				auto state = window["state"].get<window_state>();
 				switch (state)
 				{
-					case window_state::maximized: SDL_MaximizeWindow(main_window_); break;
+					case window_state::maximized: SDL_MaximizeWindow(ctx_.main_window); break;
 					default: break;
 				}
 				ctx_.win_cfg.state = state;
@@ -470,6 +595,20 @@ namespace vt
 		set_subtitle();
 	}
 	
+	void app::fetch_themes()
+	{
+		ctx_.themes.clear();
+		if (!std::filesystem::is_directory(ctx_.theme_dir_filepath)) return;
+		for (auto& dir_entry : std::filesystem::directory_iterator(ctx_.theme_dir_filepath))
+		{
+			if (!dir_entry.is_regular_file()) continue;
+			
+			auto path = dir_entry.path();
+			if (path.extension() != fmt::format(".{}", theme::extension)) continue;
+			ctx_.themes.push_back(path);
+		}
+	}
+
 	void app::build_fonts(float size)
 	{
 		auto& io = ImGui::GetIO();
@@ -504,17 +643,15 @@ namespace vt
 				default_font_builder.AddRanges(range);
 			}
 
-			//Polish characters
-			default_font_builder.AddText(
-				"\xC4\x84" "\xC4\x85" "\xC4\x86" "\xC4\x87" "\xC4\x98" "\xC4\x99"
-				"\xC5\x81" "\xC5\x82" "\xC5\x83" "\xC5\x84" "\xC3\x93" "\xC3\xB3"
-				"\xC5\x9A" "\xC5\x9B" "\xC5\xB9" "\xC5\xBA" "\xC5\xBB" "\xC5\xBC"
-			);
-
-			//German characters
-			default_font_builder.AddText(
-				"\xC3\x84" "\xC3\xA4" "\xC3\x96" "\xC3\xB6" "\xC3\x9C" "\xC3\xBC" "\xC3\x9F"
-			);
+			static const ImWchar latin_extended[] =
+			{
+				0x0020, 0x00FF, // Basic Latin + Latin Supplement
+				0x0100, 0x017F, // Latin Extended-A
+				0x0180, 0x024F, // Latin Extended-B
+				//0x1E00, 0x1EFF, // Latin Extended Additional
+				0,
+			};
+			default_font_builder.AddRanges(latin_extended);
 
 			default_font_builder.BuildRanges(&default_ranges);
 
@@ -547,6 +684,13 @@ namespace vt
 		{
 			if (ImGui::IsPopupOpen(nullptr, ImGuiPopupFlags_AnyPopup)) return;
 			on_save_as();
+		})));
+
+		ctx_.keybinds.insert("Import Videos", keybind(SDLK_i, keybind_modifiers{ true }, flags,
+		builtin_action([this]()
+		{
+			if (ImGui::IsPopupOpen(nullptr, ImGuiPopupFlags_AnyPopup)) return;
+			on_import_videos();
 		})));
 
 		ctx_.keybinds.insert("Delete", keybind(SDLK_DELETE, flags,
@@ -939,14 +1083,14 @@ namespace vt
 	
 	void app::render()
 	{
-		if (renderer_ == nullptr) return;
+		if (ctx_.renderer == nullptr) return;
 
 		draw();
-		SDL_SetRenderDrawColor(renderer_, 24, 24, 24, 0xFF);
-		SDL_RenderClear(renderer_);
+		SDL_SetRenderDrawColor(ctx_.renderer, 24, 24, 24, 0xFF);
+		SDL_RenderClear(ctx_.renderer);
 		ImGui::Render();
 		ImGui_ImplSDLRenderer2_RenderDrawData(ImGui::GetDrawData());
-		SDL_RenderPresent(renderer_);
+		SDL_RenderPresent(ctx_.renderer);
 	}
 	
 	void app::draw()
@@ -1010,32 +1154,13 @@ namespace vt
 		{
 			if (ImGui::BeginMenu("File"))
 			{
-				if (ImGui::MenuItem("Import Video"))
+				std::string key_name = "Import Videos";
+				auto& kb = ctx_.keybinds.at(key_name);
+				std::string menu_name = fmt::format("{} {}", icons::import_, key_name);
+				if (ImGui::MenuItem(menu_name.c_str(), kb.name().c_str()))
 				{
-					auto result = utils::filesystem::get_file();
-					if (result)
-					{
-						auto& videos = ctx_.current_project->videos;
-						auto it = std::find_if(videos.begin(), videos.end(), [&result](const video_pool::iterator::value_type& video_data)
-						{
-							return video_data.second.path == result.path;
-						});
-
-						if (it == videos.end())
-						{
-							debug::log("Importing video " + result.path.u8string());
-							if (!ctx_.current_project->import_video(result.path, renderer_))
-							{
-								debug::error("Failed to import " + result.path.u8string());
-							}
-						}
-						else
-						{
-							//TODO: Display message box
-						}
-					}
+					on_import_videos();
 				}
-
 				ImGui::Separator();
 				{
 					std::string key_name = "Save Project";
@@ -1057,7 +1182,19 @@ namespace vt
 						on_save_as();
 					}
 				}
-
+				ImGui::Separator();
+				{
+					std::string menu_name = fmt::format("{} Show In Explorer", icons::folder);
+					if (ImGui::MenuItem(menu_name.c_str()))
+					{
+						auto path = std::filesystem::absolute(ctx_.current_project->path.parent_path()).u8string();
+						if (!path.empty())
+						{
+							std::string uri = fmt::format("file://{}", path);
+							SDL_OpenURL(uri.c_str());
+						}
+					}
+				}
 				ImGui::Separator();
 				{
 					std::string key_name = "Close Project";
@@ -1136,11 +1273,24 @@ namespace vt
 			}
 			if (ImGui::BeginMenu("Tools"))
 			{
-				if (ImGui::BeginMenu("Theme", false))
+				if (ImGui::BeginMenu("Themes"))
 				{
-					bool selected = true;
-					ImGui::MenuItem("Theme 1", nullptr, &selected);
-					ImGui::MenuItem("Theme 2", nullptr, nullptr);
+					if (ImGui::MenuItem("Reload"))
+					{
+						fetch_themes();
+					}
+					ImGui::Separator();
+
+					//TODO: Select current theme
+					for (const auto& path : ctx_.themes)
+					{
+						auto name = path.stem().u8string();
+						if (ImGui::MenuItem(name.c_str()))
+						{
+							auto theme = theme::load_from_file(path);
+							ImGui::GetStyle() = theme.style;
+						}
+					}
 					ImGui::EndMenu();
 				}
 				ImGui::MenuItem("Theme Customizer", nullptr, &ctx_.win_cfg.show_theme_customizer_window);
@@ -1214,6 +1364,14 @@ namespace vt
 	void app::draw_main_app()
 	{
 		draw_menubar();
+		for (auto it = ctx_.tasks.begin(); it != ctx_.tasks.end(); ++it)
+		{
+			auto status = it->wait_for(std::chrono::nanoseconds(0));
+			if (status == std::future_status::ready)
+			{
+				it = ctx_.tasks.erase(it);
+			}
+		}
 		if (!ctx_.current_project.has_value()) return;
 
 		//TODO: probably should be done somewhere else
@@ -1255,12 +1413,15 @@ namespace vt
 		}
 
 		uint64_t vid_id{};
-		for (auto& [id, vinfo] : ctx_.current_project->videos)
+		if (ctx_.player.is_visible())
 		{
-			if (!vinfo.is_widget_open) continue;
-			auto& vid = vinfo.video;
+			for (auto& [id, vinfo] : ctx_.current_project->videos)
+			{
+				if (!vinfo.is_widget_open) continue;
+				auto& vid = vinfo.video;
 
-			widgets::draw_video_widget(vid, vinfo.is_widget_open, vid_id++);
+				widgets::draw_video_widget(vid, vinfo.is_widget_open, vid_id++);
+			}
 		}
 
 		if (ctx_.reset_player_docking)
@@ -1337,6 +1498,6 @@ namespace vt
 		{
 			new_title = title + std::string(" - ") + new_title;
 		}
-		SDL_SetWindowTitle(main_window_, new_title.c_str());
+		SDL_SetWindowTitle(ctx_.main_window, new_title.c_str());
 	}
 }

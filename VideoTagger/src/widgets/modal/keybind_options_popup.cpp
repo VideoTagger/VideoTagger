@@ -1,8 +1,6 @@
-#define IMGUI_DEFINE_MATH_OPERATORS
+#include "pch.hpp"
 #include "keybind_options_popup.hpp"
 #include "keybind_popup.hpp"
-#include <imgui.h>
-#include <imgui_stdlib.h>
 #include <core/actions.hpp>
 
 namespace vt::widgets::modal

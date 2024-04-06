@@ -1,43 +1,28 @@
-#define _CRT_SECURE_NO_WARNINGS
+#include "pch.hpp"
 #include "project.hpp"
-#include <vector>
 #include <utils/json.hpp>
 #include <utils/string.hpp>
 #include <core/debug.hpp>
 #include <widgets/time_input.hpp>
 #include <utils/color.hpp>
+#include <utils/hash.hpp>
+#include <utils/filesystem.hpp>
+#include "app_context.hpp"
 
 static std::chrono::system_clock::time_point to_sys_time(const std::filesystem::file_time_type& ftime)
 {
-	using namespace std::literals;
-	return std::chrono::system_clock::time_point{ ftime.time_since_epoch() - 3234576h };
+	using namespace std::chrono;
+	return time_point_cast<system_clock::duration>(ftime - std::filesystem::file_time_type::clock::now() + system_clock::now());
 }
 
 namespace vt
 {
-	bool project::import_video(const std::filesystem::path& file_path, SDL_Renderer* renderer)
-	{
-		auto video_id = videos.insert(file_path);
-		if (video_id == 0)
-		{
-			return false;
-		}
-
-		video_group::video_info group_info{};
-		group_info.id = video_id;
-
-		video_groups[utils::uuid::get()].insert(group_info);
-		videos.get(video_id)->update_data(renderer);
-
-		return true;
-	}
-
-	bool project::is_valid() const
+	bool project_info::is_valid() const
 	{
 		return !path.empty() and !name.empty() and version != 0;
 	}
 
-	std::optional<std::tm> project::modification_time() const
+	std::optional<std::tm> project_info::modification_time() const
 	{
 		std::optional<std::tm> result;
 		if (path.empty() or !std::filesystem::exists(path)) return std::nullopt;
@@ -51,6 +36,66 @@ namespace vt
 		}
 		return result;
 	}
+
+	void project_info::save()
+	{
+		nlohmann::ordered_json json;
+		auto& project = json["project"];
+		project["version"] = version;
+		project["name"] = name;
+		utils::json::write_to_file(json, path);
+	}
+
+	bool project_info::operator==(const project_info& other) const
+	{
+		return (name == other.name) and (path == other.path);
+	}
+
+	project_info project_info::load_from_file(const std::filesystem::path& filepath)
+	{
+		project_info result;
+		result.path = std::filesystem::absolute(filepath);
+		if (!std::filesystem::exists(filepath))
+		{
+			result.name = filepath.stem().string();
+		}
+		else
+		{
+			auto json = utils::json::load_from_file(filepath);
+			if (!json.contains("project"))
+			{
+				debug::error("Project format is invalid");
+				return {};
+			}
+
+			const auto& project = json["project"];
+			if (!project.contains("version") or !project.contains("name"))
+			{
+				debug::error("Project format is invalid");
+				return {};
+			}
+
+			result.version = project["version"];
+			result.name = project["name"];
+		}
+		return result;
+	}
+
+	bool project::import_video(const std::filesystem::path& filepath)
+	{
+		video_id_t video_id = utils::hash::fnv_hash(filepath); //utils::uuid::get()
+		
+		if (!videos.insert(video_id, filepath)) return false;
+
+		video_group::video_info group_info{};
+		group_info.id = video_id;
+
+		auto gid = (ctx_.current_video_group_id == 0) ? utils::uuid::get() : ctx_.current_video_group_id;
+		video_groups[gid].insert(group_info);
+		videos.get(video_id)->update_data(ctx_.renderer);
+
+		return true;
+	}
 	
 	void project::save() const
 	{
@@ -61,13 +106,11 @@ namespace vt
 		project["version"] = version;
 		project["name"] = name;
 
-		//TODO: Tags
 		auto& json_tags = json["tags"];
 		json_tags = nlohmann::json::array();
 		for (auto& tag : tags)
 		{
-			json_tags.push_back(nlohmann::json::value_t::object);
-			auto& json_tag_data = json_tags.back();
+			nlohmann::ordered_json json_tag_data;
 			json_tag_data["name"] = tag.name;
 			json_tag_data["color"] = utils::color::to_string(tag.color);
 
@@ -97,15 +140,49 @@ namespace vt
 					json_segments.push_back(segment_json);
 				}
 			}
+			json_tags.push_back(json_tag_data);
 		}
 
+		auto& json_videos = json["videos"];
+		json_videos = nlohmann::json::array();
+		for (auto& [id, metadata] : videos)
+		{
+			nlohmann::ordered_json vid;
+			vid["id"] = id;
+
+			std::string vid_path = utils::filesystem::normalize(std::filesystem::relative(metadata.path));
+
+			vid["path"] = vid_path;
+			json_videos.push_back(vid);
+		}
+
+		auto& json_groups = json["groups"];
+		json_groups = nlohmann::json::array();
+		for (auto& [id, group] : video_groups)
+		{
+			nlohmann::ordered_json json_group;
+			json_group["id"] = id;
+			auto& group_videos = json_group["videos"];
+			group_videos = nlohmann::json::array();
+			for (auto& video : group)
+			{
+				nlohmann::ordered_json group_video;
+				group_video["id"] = video.id;
+				group_video["offset"] = utils::time::time_to_string(video.offset.count());				
+				group_videos.push_back(group_video);
+			}
+			json_groups.push_back(json_group);
+		}
 		json["keybinds"] = keybinds;
 
+		//TODO: This probably shouldnt be done
+		/*
 		auto parent = path.parent_path();
 		if (!parent.empty())
 		{
 			std::filesystem::create_directories(parent);
 		}
+		*/
 		utils::json::write_to_file(json, path);
 	}
 
@@ -113,11 +190,6 @@ namespace vt
 	{
 		path = filepath;
 		save();
-	}
-
-	bool project::operator==(const project& other) const
-	{
-		return (name == other.name) and (path == other.path);
 	}
 	
 	project project::load_from_file(const std::filesystem::path& filepath)
@@ -130,49 +202,103 @@ namespace vt
 		}
 		else
 		{
-			//TODO: Add error checking
 			auto json = utils::json::load_from_file(filepath);
+			if (!json.contains("project"))
+			{
+				debug::error("Project forrmat is invalid");
+				return {};
+			}
+
 			const auto& project = json["project"];
+			if (!project.contains("version") or !project.contains("name"))
+			{
+				debug::error("Project format is invalid");
+				return {};
+			}
+
 			result.version = project["version"];
 			result.name = project["name"];
 
-			for (auto& tag_data : json["tags"])
+			if (result.version < project::current_version)
 			{
-				auto [tag_it, success] = result.tags.insert(tag_data["name"]);
-				auto col_str = tag_data["color"].get<std::string>();
-				uint32_t color{};
-				if (utils::color::parse_string(col_str, color))
-				{
-					tag_it->color = color;
-				}
+				//TODO: Run project updater/error
+			}
 
-				for (auto& segment : tag_data["timestamps"])
+			if (json.contains("tags"))
+			{
+				for (auto& tag_data : json["tags"])
 				{
-					if (segment.contains("point"))
+					auto [tag_it, success] = result.tags.insert(tag_data["name"]);
+					auto col_str = tag_data["color"].get<std::string>();
+					uint32_t color{};
+					if (utils::color::parse_string(col_str, color))
 					{
-						auto point = utils::time::parse_time_to_sec(segment["point"]);
-						result.segments[tag_it->name].insert(vt::timestamp{point}, vt::timestamp{point});
+						tag_it->color = color;
 					}
-					else if (segment.contains("start") and segment.contains("end"))
+
+					for (auto& segment : tag_data["timestamps"])
 					{
-						auto start = utils::time::parse_time_to_sec(segment["start"]);
-						auto end = utils::time::parse_time_to_sec(segment["end"]);
-						result.segments[tag_it->name].insert(vt::timestamp{ start }, vt::timestamp{ end });
+						if (segment.contains("point"))
+						{
+							auto point = utils::time::parse_time_to_sec(segment["point"]);
+							result.segments[tag_it->name].insert(vt::timestamp{ point }, vt::timestamp{ point });
+						}
+						else if (segment.contains("start") and segment.contains("end"))
+						{
+							auto start = utils::time::parse_time_to_sec(segment["start"]);
+							auto end = utils::time::parse_time_to_sec(segment["end"]);
+							result.segments[tag_it->name].insert(vt::timestamp{ start }, vt::timestamp{ end });
+						}
 					}
 				}
 			}
 
-			result.keybinds = json["keybinds"];
-		}			
-		return result;
-	}
+			if (!json.contains("groups") or !json["groups"].is_array())
+			{
+				debug::error("Project's video groups format was invalid");
+			}
+			else
+			{
+				const auto& json_groups = json["groups"];
+				for (auto& group : json_groups)
+				{
+					video_group vgroup;
+					if (!group.contains("id"))
+					{
+						debug::error("Project's video group doesn't contain id, skipping...");
+						continue;
+					}
 
-	project project::shallow_copy(const project& other)
-	{
-		project result;
-		result.version = other.version;
-		result.name = other.name;
-		result.path = other.path;
+					video_group_id_t id = group["id"];
+					if (!group.contains("videos") or !json["videos"].is_array())
+					{
+						debug::error("Project's video group's videos format was invalid, skipping...");
+						continue;
+					}
+
+					const auto& group_videos = group["videos"];
+					for (const auto& group_video : group_videos)
+					{
+						if (!group_video.contains("id") or !group_video.contains("offset"))
+						{
+							debug::error("Video's format was invalid, skipping...");
+							continue;
+						}
+
+						video_group::video_info vinfo;
+						vinfo.id = group_video["id"];
+						vinfo.offset = (decltype(vinfo.offset))utils::time::parse_time_to_sec(group_video["offset"]);
+						vgroup.insert(vinfo);
+					}
+					result.video_groups.insert({ id, vgroup });
+				}
+			}
+
+			if (json.contains("keybinds"))
+			{
+				result.keybinds = json["keybinds"];
+			}
+		}			
 		return result;
 	}
 }

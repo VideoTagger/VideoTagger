@@ -1,10 +1,6 @@
-#define IMGUI_DEFINE_MATH_OPERATORS
+#include "pch.hpp"
 #include "video_browser.hpp"
-#include <cstdint>
-#include <string>
 
-#include <SDL.h>
-#include <imgui.h>
 #include <core/debug.hpp>
 #include <core/app_context.hpp>
 #include "controls.hpp"
@@ -41,7 +37,7 @@ namespace vt::widgets
 			const char* id = name.c_str();
 			ImGui::PushID(id);
 			bool selected = false;
-			auto text_size = ImVec2{ 0, ImGui::CalcTextSize(id, nullptr, false, tile_size.x).y };
+			auto text_size = ImVec2{ 0, 2 * ImGui::GetTextLineHeight() };
 			auto selectable_size = tile_size + style.FramePadding + text_size;
 			ImVec2 cpos = ImGui::GetCursorPos() + (selectable_size - image_size - text_size) / 2;
 			if (ImGui::Selectable("##VideoTileButton", &selected, ImGuiSelectableFlags_AllowItemOverlap | ImGuiSelectableFlags_AllowDoubleClick, selectable_size))
@@ -69,7 +65,10 @@ namespace vt::widgets
 			ImGui::BeginGroup();
 			ImGui::Image(imgui_tex, image_size);
 			ImGui::Dummy({ 0, (image_tile_size.y - image_size.y) / 2.f });
-			ImGui::TextWrapped(id);
+			//widgets::clipped_text(id, { tile_size.x, text_size.y });
+			auto max_chars = 4 * static_cast<size_t>(tile_size.x / ImGui::GetTextLineHeight());
+			std::string temp = strlen(id) > max_chars ? std::string(id, max_chars) + "..." : std::string(id, max_chars);
+			ImGui::TextWrapped(temp.c_str());
 			ImGui::EndGroup();
 			ImGui::SetCursorPos(cpos);
 
@@ -89,7 +88,7 @@ namespace vt::widgets
 			const char* id = name.c_str();
 			ImGui::PushID(id);
 			bool selected = false;
-			auto text_size = ImVec2{ 0, ImGui::CalcTextSize(id, nullptr, false, tile_size.x).y };
+			auto text_size = ImVec2{ 0, 2 * ImGui::GetTextLineHeight() };
 			auto selectable_size = tile_size + style.FramePadding + text_size;
 			ImVec2 cpos = ImGui::GetCursorPos() + (selectable_size - image_size - text_size) / 2;
 			if (ImGui::Selectable("##GroupTileButton", &selected, ImGuiSelectableFlags_AllowItemOverlap | ImGuiSelectableFlags_AllowDoubleClick, selectable_size))
@@ -117,7 +116,10 @@ namespace vt::widgets
 			ImGui::BeginGroup();
 			ImGui::Image(imgui_tex, image_size);
 			ImGui::Dummy({ 0, (image_tile_size.y - image_size.y) / 2.f });
-			ImGui::TextWrapped(id);
+			//widgets::clipped_text(id, { tile_size.x, text_size.y});
+			auto max_chars = 4 * static_cast<size_t>(tile_size.x / ImGui::GetTextLineHeight());
+			std::string temp = strlen(id) > max_chars ? std::string(id, max_chars - 3) + "..." : std::string(id, max_chars);
+			ImGui::TextWrapped(temp.c_str());
 			ImGui::EndGroup();
 			ImGui::SetCursorPos(cpos);
 

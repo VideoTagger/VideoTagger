@@ -1,6 +1,7 @@
 #pragma once
 #include <vector>
 #include <filesystem>
+#include <string>
 
 namespace vt::utils
 {
@@ -25,7 +26,7 @@ namespace vt::utils
 	struct dialog_results
 	{
 		dialog_option option;
-		std::vector<std::filesystem::path> path;
+		std::vector<std::filesystem::path> paths;
 
 		constexpr operator bool() const
 		{
@@ -46,6 +47,8 @@ namespace vt::utils
 		static dialog_result get_file(const std::filesystem::path& start_dir = {}, const dialog_filters& filters = {});
 		static dialog_result get_folder(const std::filesystem::path& start_dir = {});
 		static dialog_result save_file(const std::filesystem::path& start_dir = {}, const dialog_filters& filters = {}, const std::string& default_filename = {});
-		static dialog_results get_paths(const std::filesystem::path& start_dir = {}, const dialog_filters& filters = {});
+		static dialog_results get_files(const std::filesystem::path& start_dir = {}, const dialog_filters& filters = {});
+
+		static std::string normalize(const std::filesystem::path& filepath);
 	};
 }

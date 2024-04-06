@@ -1,15 +1,5 @@
+#include "pch.hpp"
 #include "widgets.hpp"
-
-#include <string>
-#include <vector>
-#include <array>
-#include <string_view>
-
-#include <iostream>
-
-#define IMGUI_DEFINE_MATH_OPERATORS
-#include <imgui.h>
-#include <imgui_internal.h>
 
 #include "video_timeline.hpp"
 #include "controls.hpp"

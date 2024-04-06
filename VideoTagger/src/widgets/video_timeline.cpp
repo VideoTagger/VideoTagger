@@ -1,3 +1,4 @@
+#include "pch.hpp"
 #include "video_timeline.hpp"
 // THIS IS A MODIFED VERSION OF THE SEQUENCER WIDGET FROM ImGuizmo
 // 

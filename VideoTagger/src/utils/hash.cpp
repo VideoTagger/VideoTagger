@@ -1,7 +1,5 @@
+#include "pch.hpp"
 #include "hash.hpp"
-#include <fstream>
-#include <string>
-#include <array>
 
 namespace vt::utils::hash
 {
@@ -30,8 +28,8 @@ namespace vt::utils::hash
 
 			for (std::streamsize i = 0; i < read_bytes; i++)
 			{
-				hash *= 1099511628211ull;
 				hash ^= file_buffer[i];
+				hash *= 1099511628211ull;
 			}
 		}
 		return hash;

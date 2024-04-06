@@ -1,7 +1,6 @@
+#include "pch.hpp"
 #include "theme_customizer.hpp"
-#include <string>
 
-#include <imgui_internal.h>
 #include <utils/filesystem.hpp>
 #include <core/debug.hpp>
 #include "controls.hpp"

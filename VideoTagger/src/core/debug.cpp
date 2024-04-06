@@ -1,6 +1,5 @@
+#include "pch.hpp"
 #include "debug.hpp"
-#include <iostream>
-#include <fstream>
 
 #define NOMINMAX
 #define WIN32_LEAN_AND_MEAN

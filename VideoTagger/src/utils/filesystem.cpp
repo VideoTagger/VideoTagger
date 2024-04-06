@@ -1,5 +1,5 @@
+#include "pch.hpp"
 #include "filesystem.hpp"
-#include <nfd.hpp>
 
 static nfdu8char_t* make_nfd_path(const std::string& input)
 {
@@ -78,11 +78,23 @@ namespace vt::utils
 		return { convert_nfd_option(nfd_result), convert_nfd_path(path) };
 	}
 
-	dialog_results filesystem::get_paths(const std::filesystem::path& start_dir, const dialog_filters& filters)
+	dialog_results filesystem::get_files(const std::filesystem::path& start_dir, const dialog_filters& filters)
 	{
 		NFD::UniquePathSet paths;
 		std::string dir_str = start_dir.string();
 		auto nfd_result = NFD::OpenDialogMultiple(paths, make_nfd_filters(filters).data(), (nfdfiltersize_t)filters.size(), make_nfd_path(dir_str));
 		return { convert_nfd_option(nfd_result), convert_nfd_paths(paths) };
+	}
+
+	std::string filesystem::normalize(const std::filesystem::path& filepath)
+	{
+		std::string result = filepath.u8string();
+#ifdef _WIN32
+		for (auto& c : result)
+		{
+			if (c == '\\') c = '/';
+		}
+#endif
+		return result;
 	}
 }

@@ -1,9 +1,5 @@
+#include "pch.hpp"
 #include "time_input.hpp"
-#include <cctype>
-#include <sstream>
-#include <iomanip>
-
-#include <imgui_internal.h>
 
 namespace vt::widgets
 {

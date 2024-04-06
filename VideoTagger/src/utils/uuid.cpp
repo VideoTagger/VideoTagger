@@ -1,5 +1,5 @@
+#include "pch.hpp"
 #include "uuid.hpp"
-#include <cstdint>
 
 namespace vt::utils
 {

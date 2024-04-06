@@ -1,8 +1,5 @@
+#include "pch.hpp"
 #include "time.hpp"
-#include <ctime>
-#include <cmath>
-
-#include <imgui_internal.h>
 
 namespace vt::utils::time
 {

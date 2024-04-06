@@ -1,5 +1,5 @@
+#include "pch.hpp"
 #include "slider.hpp"
-#include <imgui_internal.h>
 
 namespace vt::widgets
 {

@@ -10,5 +10,6 @@ namespace vt
 
 		ImGuiStyle style;
 		void save(const std::filesystem::path& filepath) const;
+		static theme load_from_file(const std::filesystem::path& filepath);
 	};
 }

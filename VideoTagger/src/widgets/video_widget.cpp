@@ -1,8 +1,6 @@
+#include "pch.hpp"
 #include "video_widget.hpp"
 
-#include <string>
-#include <imgui.h>
-#include <imgui_internal.h>
 #include <utils/timestamp.hpp>
 #include "slider.hpp"
 #include "controls.hpp"
