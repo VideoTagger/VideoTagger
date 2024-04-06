@@ -4,7 +4,7 @@ namespace vt
 {
 	void app_context::update_active_video_group()
 	{
-		group_manager.videos.clear();
+		videos_manager.videos.clear();
 		if (!current_project.has_value() or current_video_group_id == 0)
 		{
 			return;
@@ -30,16 +30,16 @@ namespace vt
 				group_video_info.offset
 			};
 
-			group_manager.videos.push_back(video_data);
+			videos_manager.videos.push_back(video_data);
 		}
 
-		group_manager.update();
+		videos_manager.update();
 	}
 
 	void app_context::reset_active_video_group()
 	{
-		group_manager.videos.clear();
-		group_manager.update();
+		videos_manager.videos.clear();
+		videos_manager.update();
 		current_video_group_id = 0;
 	}
 }

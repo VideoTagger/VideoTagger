@@ -66,7 +66,8 @@ namespace vt
 
 		std::optional<project> current_project;
 		video_group_id_t current_video_group_id{};
-		video_group_manager group_manager;
+		displayed_videos_manager videos_manager;
+
 		std::optional<widgets::selected_segment_data> selected_segment_data;
 		std::optional<widgets::moving_segment_data> moving_segment_data;
 

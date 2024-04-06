@@ -13,7 +13,7 @@ namespace vt
 		std::chrono::nanoseconds offset;
 	};
 
-	class video_group_manager
+	class displayed_videos_manager
 	{
 	public:
 		using container = std::vector<video_group_data>;

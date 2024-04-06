@@ -836,7 +836,7 @@ namespace vt
 			{
 				return;
 			}
-			ctx_.group_manager.set_playing(is_playing);
+			ctx_.videos_manager.set_playing(is_playing);
 		};
 
 		ctx_.player.callbacks.on_set_looping = [](bool is_looping)
@@ -850,7 +850,7 @@ namespace vt
 			{
 				return;
 			}
-			ctx_.group_manager.set_looping(is_looping);
+			ctx_.videos_manager.set_looping(is_looping);
 		};
 
 		ctx_.player.callbacks.on_set_speed = [](float speed)
@@ -865,7 +865,7 @@ namespace vt
 			{
 				return;
 			}
-			ctx_.group_manager.set_speed(speed);
+			ctx_.videos_manager.set_speed(speed);
 		};
 
 		ctx_.player.callbacks.on_skip = [](int dir)
@@ -885,7 +885,7 @@ namespace vt
 			{
 				return;
 			}
-			ctx_.group_manager.seek(ts);
+			ctx_.videos_manager.seek(ts);
 		};
 
 	}
@@ -1245,10 +1245,10 @@ namespace vt
 			{
 				//TODO: probably could be done only when needed instead of on every frame.
 				// Video timeline does the same thing and group duration needs to be calculated
-				data.current_ts = ctx_.group_manager.current_timestamp();
+				data.current_ts = ctx_.videos_manager.current_timestamp();
 				data.start_ts = std::chrono::nanoseconds{ 0 };
-				data.end_ts = ctx_.group_manager.duration();
-				ctx_.player.update_data(data, ctx_.group_manager.is_playing());
+				data.end_ts = ctx_.videos_manager.duration();
+				ctx_.player.update_data(data, ctx_.videos_manager.is_playing());
 			}
 
 			ctx_.player.render();
@@ -1270,7 +1270,7 @@ namespace vt
 		}
 
 		{
-			auto group_duration = ctx_.group_manager.duration();
+			auto group_duration = ctx_.videos_manager.duration();
 
 			//TODO: Definitely change this!
 			ctx_.timeline_state.tags = &ctx_.current_project->tags;
@@ -1278,13 +1278,13 @@ namespace vt
 			ctx_.timeline_state.sync_tags();
 			ctx_.timeline_state.time_min = timestamp{};
 			ctx_.timeline_state.time_max = timestamp(std::chrono::duration_cast<std::chrono::seconds>(group_duration));
-			ctx_.timeline_state.current_time = timestamp{ std::chrono::duration_cast<std::chrono::seconds>(ctx_.group_manager.current_timestamp()) };
+			ctx_.timeline_state.current_time = timestamp{ std::chrono::duration_cast<std::chrono::seconds>(ctx_.videos_manager.current_timestamp()) };
 			
 			widgets::draw_timeline_widget(ctx_.timeline_state, ctx_.selected_segment_data, ctx_.moving_segment_data, ctx_.is_project_dirty, 0, ctx_.current_video_group_id != 0);
 
-			if (ctx_.timeline_state.current_time.seconds_total != std::chrono::duration_cast<std::chrono::seconds>(ctx_.group_manager.current_timestamp()))
+			if (ctx_.timeline_state.current_time.seconds_total != std::chrono::duration_cast<std::chrono::seconds>(ctx_.videos_manager.current_timestamp()))
 			{
-				ctx_.group_manager.seek(ctx_.timeline_state.current_time.seconds_total);
+				ctx_.videos_manager.seek(ctx_.timeline_state.current_time.seconds_total);
 			}
 		}
 
