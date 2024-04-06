@@ -37,7 +37,7 @@ namespace vt::widgets
 				auto result = utils::filesystem::save_file({}, filters, "Theme");
 				if (result)
 				{
-					debug::log("Saving theme as " + result.path.string());
+					debug::log("Saving theme as {}", result.path.u8string());
 					temp_theme.save(result.path);
 				}
 			}

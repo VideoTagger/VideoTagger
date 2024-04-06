@@ -40,14 +40,22 @@ namespace vt::widgets
 			auto text_size = ImVec2{ 0, 2 * ImGui::GetTextLineHeight() };
 			auto selectable_size = tile_size + style.FramePadding + text_size;
 			ImVec2 cpos = ImGui::GetCursorPos() + (selectable_size - image_size - text_size) / 2;
-			if (ImGui::Selectable("##VideoTileButton", &selected, ImGuiSelectableFlags_AllowItemOverlap | ImGuiSelectableFlags_AllowDoubleClick, selectable_size))
+			if (ImGui::Selectable("##VideoTileButton", &selected, ImGuiSelectableFlags_AllowOverlap | ImGuiSelectableFlags_AllowDoubleClick, selectable_size))
 			{
 				
 			}
-			if (ImGui::IsItemActivated() and ImGui::IsMouseDoubleClicked(0))
+			if (ImGui::IsItemHovered() and ImGui::IsMouseDoubleClicked(0))
 			{
 				open = true;
 			}
+			auto max_chars = 4 * static_cast<size_t>(tile_size.x / ImGui::GetTextLineHeight());
+			std::string temp = strlen(id) > max_chars ? std::string(id, max_chars) + "..." : name;
+
+			if (ImGui::IsItemHovered(ImGuiHoveredFlags_ForTooltip | ImGuiHoveredFlags_DelayNormal) and name.size() != temp.size() and ImGui::BeginTooltip())
+			{
+				ImGui::Text("%s", id);
+				ImGui::EndTooltip();
+			}			
 			if (ImGui::BeginPopupContextItem("##VideoTileCtxMenu"))
 			{
 				if (!vmeta.is_widget_open and ImGui::MenuItem("Open"))
@@ -66,8 +74,6 @@ namespace vt::widgets
 			ImGui::Image(imgui_tex, image_size);
 			ImGui::Dummy({ 0, (image_tile_size.y - image_size.y) / 2.f });
 			//widgets::clipped_text(id, { tile_size.x, text_size.y });
-			auto max_chars = 4 * static_cast<size_t>(tile_size.x / ImGui::GetTextLineHeight());
-			std::string temp = strlen(id) > max_chars ? std::string(id, max_chars) + "..." : std::string(id, max_chars);
 			ImGui::TextWrapped(temp.c_str());
 			ImGui::EndGroup();
 			ImGui::SetCursorPos(cpos);
@@ -91,17 +97,17 @@ namespace vt::widgets
 			auto text_size = ImVec2{ 0, 2 * ImGui::GetTextLineHeight() };
 			auto selectable_size = tile_size + style.FramePadding + text_size;
 			ImVec2 cpos = ImGui::GetCursorPos() + (selectable_size - image_size - text_size) / 2;
-			if (ImGui::Selectable("##GroupTileButton", &selected, ImGuiSelectableFlags_AllowItemOverlap | ImGuiSelectableFlags_AllowDoubleClick, selectable_size))
+			if (ImGui::Selectable("##GroupTileButton", &selected, ImGuiSelectableFlags_AllowOverlap | ImGuiSelectableFlags_AllowDoubleClick, selectable_size))
 			{
 
 			}
-			if (ImGui::IsItemActivated() and ImGui::IsMouseDoubleClicked(0))
+			if (ImGui::IsItemHovered() and ImGui::IsMouseDoubleClicked(0))
 			{
 				open_group = true;
 			}
 			if (ImGui::BeginPopupContextItem("##GroupTileCtxMenu"))
 			{
-				if (!ImGui::MenuItem("Open"))
+				if (ImGui::MenuItem("Open"))
 				{
 					open_group = true;
 				}
@@ -191,13 +197,14 @@ namespace vt::widgets
 								draw_group_tile(group, gid, img_tile_size, tile_size, open_group, remove_group);
 								if (remove_group)
 								{
+									ctx_.is_project_dirty = true;
 									ctx_.current_project->video_groups.erase(gid);
 									break;
 								}
 
 								if (open_group)
 								{
-									debug::log("Opening group " + std::to_string(gid));
+									debug::log("Opening group {}", gid);
 									ctx_.current_video_group_id = gid;
 								}
 							}
@@ -222,7 +229,7 @@ namespace vt::widgets
 
 								if (open_video and !metadata->is_widget_open)
 								{
-									debug::log("Opening video " + metadata->path.string());
+									debug::log("Opening video {}", metadata->path.u8string());
 									if (on_open_video != nullptr)
 									{
 										std::invoke(on_open_video, vinfo.id);

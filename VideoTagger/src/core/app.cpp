@@ -198,7 +198,7 @@ namespace vt
 	{
 		ctx_.project_selector.on_click_project = [&](project_info& project_info)
 		{
-			debug::log("Clicked project: " + project_info.name + ", Filepath: " + project_info.path.string());
+			debug::log("Clicked project: {}, Filepath: {}", project_info.name, project_info.path.u8string());
 			if (!std::filesystem::is_regular_file(project_info.path))
 			{
 				const SDL_MessageBoxButtonData buttons[] = {
@@ -249,7 +249,7 @@ namespace vt
 		{
 			ctx_.project_selector.sort();
 			ctx_.project_selector.save_projects_file(ctx_.projects_list_filepath);
-			debug::log("Saving projects list to " + std::filesystem::relative(ctx_.projects_list_filepath).string());
+			debug::log("Saving projects list to {}", std::filesystem::relative(ctx_.projects_list_filepath).u8string());
 		};
 
 		ctx_.browser.on_open_video = [this](video_id_t id)
@@ -444,7 +444,7 @@ namespace vt
 		auto result = utils::filesystem::save_file({}, filters, ctx_.current_project->name);
 		if (result)
 		{
-			debug::log("Saving project as " + result.path.string());
+			debug::log("Saving project as {}", result.path.u8string());
 			save_project_as(result.path);
 		}
 	}
@@ -466,11 +466,11 @@ namespace vt
 
 				if (it == videos.end())
 				{
-					debug::log("Importing video " + path.u8string());
+					debug::log("Importing video {}", path.u8string());
 					//TODO: This should be done asynchronously
 					if (!ctx_.current_project->import_video(path))
 					{
-						debug::error("Failed to import " + path.u8string());
+						debug::error("Failed to import {}", path.u8string());
 					}
 				}
 				else
@@ -503,7 +503,7 @@ namespace vt
 		if (result)
 		{
 			//TODO: Error checking
-			debug::log("Loading settings from: " + ctx_.app_settings_filepath.string());
+			debug::log("Loading settings from: {}", ctx_.app_settings_filepath.string());
 			ctx_.settings = utils::json::load_from_file(ctx_.app_settings_filepath);
 			
 			if (ctx_.settings.contains("window") and ctx_.settings["window"].contains("size"))

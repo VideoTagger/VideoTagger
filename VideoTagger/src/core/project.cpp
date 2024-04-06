@@ -97,8 +97,8 @@ namespace vt
 
 			auto gid = (ctx_.current_video_group_id == 0) ? utils::uuid::get() : ctx_.current_video_group_id;
 			video_groups[gid].insert(group_info);
-			videos.get(id)->update_data(ctx_.renderer);
 		}
+		videos.get(id)->update_data(ctx_.renderer);
 		return true;
 	}
 	
@@ -148,37 +148,47 @@ namespace vt
 			json_tags.push_back(json_tag_data);
 		}
 
-		auto& json_videos = json["videos"];
-		json_videos = nlohmann::json::array();
-		for (auto& [id, metadata] : videos)
+		if (videos.size() != 0)
 		{
-			nlohmann::ordered_json vid;
-			vid["id"] = id;
-
-			std::string vid_path = utils::filesystem::normalize(std::filesystem::relative(metadata.path));
-
-			vid["path"] = vid_path;
-			json_videos.push_back(vid);
-		}
-
-		auto& json_groups = json["groups"];
-		json_groups = nlohmann::json::array();
-		for (auto& [id, group] : video_groups)
-		{
-			nlohmann::ordered_json json_group;
-			json_group["id"] = id;
-			auto& group_videos = json_group["videos"];
-			group_videos = nlohmann::json::array();
-			for (auto& video : group)
+			auto& json_videos = json["videos"];
+			json_videos = nlohmann::json::array();
+			for (auto& [id, metadata] : videos)
 			{
-				nlohmann::ordered_json group_video;
-				group_video["id"] = video.id;
-				group_video["offset"] = utils::time::time_to_string(video.offset.count());				
-				group_videos.push_back(group_video);
+				nlohmann::ordered_json vid;
+				vid["id"] = id;
+
+				std::string vid_path = utils::filesystem::normalize(std::filesystem::relative(metadata.path));
+
+				vid["path"] = vid_path;
+				json_videos.push_back(vid);
 			}
-			json_groups.push_back(json_group);
 		}
-		json["keybinds"] = keybinds;
+
+		if (video_groups.size() != 0)
+		{
+			auto& json_groups = json["groups"];
+			json_groups = nlohmann::json::array();
+			for (auto& [id, group] : video_groups)
+			{
+				nlohmann::ordered_json json_group;
+				json_group["id"] = id;
+				auto& group_videos = json_group["videos"];
+				group_videos = nlohmann::json::array();
+				for (auto& video : group)
+				{
+					nlohmann::ordered_json group_video;
+					group_video["id"] = video.id;
+					group_video["offset"] = utils::time::time_to_string(video.offset.count());
+					group_videos.push_back(group_video);
+				}
+				json_groups.push_back(json_group);
+			}
+		}
+
+		if (!keybinds.empty())
+		{
+			json["keybinds"] = keybinds;
+		}
 
 		//TODO: This probably shouldnt be done
 		/*

@@ -238,7 +238,7 @@ namespace vt::widgets
 					{
 						case 1:
 						{
-							debug::log("Deleting project file: " + project.path.string());
+							debug::log("Deleting project file: {}", project.path.u8string());
 							std::error_code ec{};
 							if (std::filesystem::remove(project.path, ec))
 							{
@@ -247,8 +247,8 @@ namespace vt::widgets
 							}
 							else
 							{
-								debug::error("Project file couldn't be deleted: " + project.path.string());
-								auto message = "Project file couldn't be deleted\n\nFilepath:\n" + project.path.string();
+								debug::error("Project file couldn't be deleted: {}", project.path.u8string());
+								auto message = "Project file couldn't be deleted\n\nFilepath:\n" + project.path.u8string();
 								message += "\nReason:\n" + ec.message() + "\nCode: " + std::to_string(ec.value());
 								SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "VideoTagger", message.c_str(), nullptr);
 							}
