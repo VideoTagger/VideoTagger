@@ -1,6 +1,5 @@
-#define IMGUI_DEFINE_MATH_OPERATORS
+#include "pch.hpp"
 #include "insert_segment_popup.hpp"
-#include <imgui.h>
 #include "controls.hpp"
 
 namespace vt::widgets

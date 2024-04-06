@@ -1,14 +1,5 @@
-#define _CRT_SECURE_NO_WARNINGS
+#include "pch.hpp"
 #include "project_selector.hpp"
-#include <sstream>
-#include <chrono>
-
-#define IMGUI_DEFINE_MATH_OPERATORS
-#include <imgui.h>
-#include <imgui_internal.h>
-#include <imgui_stdlib.h>
-
-#include <SDL.h>
 
 #include <core/debug.hpp>
 #include <utils/filesystem.hpp>
@@ -22,7 +13,7 @@
 
 namespace vt::widgets
 {
-	project_selector::project_selector(const std::vector<project>& projects) : projects_{ projects }
+	project_selector::project_selector(const std::vector<project_info>& projects) : projects_{ projects }
 	{
 
 	}
@@ -84,7 +75,7 @@ namespace vt::widgets
 
 			valid &= std::filesystem::is_directory(temp_project.path) and std::filesystem::exists(temp_project.path);
 
-			project temp_project_copy = project::shallow_copy(temp_project);
+			project_info temp_project_copy = temp_project;
 			temp_project_copy.path = (temp_project.path / temp_project.name).replace_extension(project::extension);
 
 			auto it = std::find(projects_.begin(), projects_.end(), temp_project_copy);
@@ -103,7 +94,7 @@ namespace vt::widgets
 			if (valid and pressed)
 			{
 				//TODO: Check if such project doesn't already exist
-				temp_project = project::shallow_copy(temp_project_copy);
+				temp_project = temp_project_copy;
 				temp_project.save();
 				projects_.push_back(temp_project);
 
@@ -117,7 +108,7 @@ namespace vt::widgets
 		ImGui::PopStyleVar(2);
 	}
 
-	void project_selector::render_project_widget(size_t id, project& project)
+	void project_selector::render_project_widget(size_t id, project_info& project)
 	{
 		ImVec2 size = { 0, ImGui::GetTextLineHeightWithSpacing() * 2 };
 		auto imgui_id = static_cast<ImGuiID>(id);
@@ -203,10 +194,10 @@ namespace vt::widgets
 				std::string menu_name = std::string(icons::folder) + " Open Containing Folder";
 				if (ImGui::MenuItem(menu_name.c_str()))
 				{
-					auto path = std::filesystem::absolute(project.path.parent_path()).string();
+					auto path = std::filesystem::absolute(project.path.parent_path()).u8string();
 					if (!path.empty())
 					{
-						std::string uri = "file://" + path;
+						std::string uri = fmt::format("file://{}", path);
 						SDL_OpenURL(uri.c_str());
 					}
 				}
@@ -274,7 +265,7 @@ namespace vt::widgets
 
 	void project_selector::sort()
 	{
-		std::sort(projects_.begin(), projects_.end(), [](const project& left, const project& right)
+		std::sort(projects_.begin(), projects_.end(), [](const project_info& left, const project_info& right)
 		{
 			auto ltm = left.modification_time();
 			auto rtm = right.modification_time();
@@ -285,7 +276,7 @@ namespace vt::widgets
 		});
 	}
 
-	void project_selector::remove(const project& project)
+	void project_selector::remove(const project_info& project)
 	{
 		projects_.erase(std::find(projects_.begin(), projects_.end(), project));
 	}
@@ -305,7 +296,7 @@ namespace vt::widgets
 		projects_.resize(list.size());
 		for (size_t i = 0; i < list.size(); ++i)
 		{
-			projects_[i] = project::load_from_file(list[i]);
+			projects_[i] = project_info::load_from_file(list[i]);
 		}
 		if (on_project_list_update == nullptr) return;
 		on_project_list_update();
@@ -370,7 +361,7 @@ namespace vt::widgets
 				ImGui::TableNextColumn();
 				{
 					ImVec2 list_panel_size = ImGui::GetContentRegionAvail();
-					std::vector<project> filtered_projects;
+					std::vector<project_info> filtered_projects;
 					if (!filter.empty())
 					{
 						auto tokens = utils::string::split(utils::string::to_lowercase(utils::string::trim_whitespace(filter)), ' ');
@@ -445,19 +436,19 @@ namespace vt::widgets
 							ImGui::PushStyleColor(ImGuiCol_Button, ImVec4{});
 							if (ImGui::Button("Add Existing Project", button_size))
 							{
-								utils::dialog_filter filter{ "VideoTagger Project", project::extension };
+								utils::dialog_filter filter{ "VideoTagger Project", project_info::extension };
 								auto result = utils::filesystem::get_file({}, { filter });
 
 								if (result)
 								{
-									auto it = std::find_if(projects_.begin(), projects_.end(), [result](const project& project)
+									auto it = std::find_if(projects_.begin(), projects_.end(), [result](const project_info& project)
 									{
 										return std::filesystem::absolute(project.path) == std::filesystem::absolute(result.path);
 									});
 
 									if (it == projects_.end())
 									{
-										projects_.push_back(project::load_from_file(result.path));
+										projects_.push_back(project_info::load_from_file(result.path));
 										if (on_project_list_update == nullptr) return;
 										on_project_list_update();
 									}
@@ -487,7 +478,7 @@ namespace vt::widgets
 
 		if (open_project_config)
 		{
-			temp_project = project{};
+			temp_project = project_info{};
 			ImGui::OpenPopup("Project Configuration", ImGuiPopupFlags_NoOpenOverExistingPopup);
 		}
 	}

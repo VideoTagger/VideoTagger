@@ -1,7 +1,6 @@
+#include "pch.hpp"
 #include "controls.hpp"
 #include "icons.hpp"
-
-#include <imgui_internal.h>
 #include "time_input.hpp"
 
 namespace vt::widgets
@@ -153,6 +152,36 @@ namespace vt::widgets
 		ImGui::SetCursorPos(cpos);
 	}
 
+	void clipped_text(const char* text, ImVec2 avail_area)
+	{
+		static auto get_text_size = [&](const char* text)
+		{
+			auto size = ImGui::CalcTextSize(text, nullptr, false, avail_area.x);
+			return size;
+		};
+
+		ImVec2 text_size = get_text_size(text);
+
+		std::string str = text;
+		if (text_size.x <= avail_area.x and text_size.y <= avail_area.y)
+		{
+			ImGui::TextWrapped(text);
+			return;
+		}
+
+		while (!str.empty() and (text_size.x > avail_area.x or text_size.y > avail_area.y))
+		{
+			str.pop_back();
+			std::string temp = str + "...";
+			text_size = get_text_size(temp.c_str());
+		}
+
+		if (!str.empty())
+		{
+			std::string temp = str + "...";
+			ImGui::TextWrapped(temp.c_str());
+		}
+	}
 	
 	bool show_timestamp_control(const std::string& name, timestamp& timestamp, uint64_t min_timestamp, uint64_t max_timestamp, bool* was_activated, bool* was_released, bool fill_area)
 	{

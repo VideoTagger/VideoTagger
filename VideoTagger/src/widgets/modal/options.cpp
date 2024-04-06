@@ -1,6 +1,5 @@
-#define IMGUI_DEFINE_MATH_OPERATORS
+#include "pch.hpp"
 #include "options.hpp"
-#include <imgui.h>
 #include <widgets/controls.hpp>
 #include <widgets/icons.hpp>
 #include <core/app_context.hpp>

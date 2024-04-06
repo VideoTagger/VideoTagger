@@ -7,9 +7,12 @@
 #include <map>
 #include <unordered_map>
 
+#include <imgui.h>
+
 #include "project.hpp"
 #include "input.hpp"
 #include "keybind_storage.hpp"
+#include "theme.hpp"
 #include <video/video_stream.hpp>
 #include <widgets/project_selector.hpp>
 #include <widgets/video_timeline.hpp>
@@ -19,8 +22,6 @@
 #include <widgets/theme_customizer.hpp>
 #include <widgets/modal/options.hpp>
 #include "video_group_manager.hpp"
-
-#include <imgui.h>
 #include <utils/json.hpp>
 
 namespace vt
@@ -57,11 +58,14 @@ namespace vt
 		widgets::modal::options options;
 		widgets::color_picker color_picker;
 
-		std::filesystem::path projects_list_filepath;
-		std::filesystem::path app_settings_filepath;
+		std::filesystem::path projects_list_filepath = std::filesystem::path("projects").replace_extension("json");
+		std::filesystem::path app_settings_filepath = std::filesystem::path("settings").replace_extension("json");
+		std::filesystem::path theme_dir_filepath = "themes";
 		nlohmann::ordered_json settings;
 		window_config win_cfg;
 		std::unordered_map<std::string, ImFont*> fonts;
+		std::vector<std::filesystem::path> themes;
+		std::vector<std::future<void>> tasks;
 		keybind_storage keybinds;
 
 		std::optional<project> current_project;
@@ -70,6 +74,9 @@ namespace vt
 
 		std::optional<widgets::selected_segment_data> selected_segment_data;
 		std::optional<widgets::moving_segment_data> moving_segment_data;
+
+		SDL_Window* main_window{};
+		SDL_Renderer* renderer{};
 
 		bool is_project_dirty{};
 		bool first_launch = true;

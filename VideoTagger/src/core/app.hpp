@@ -17,8 +17,6 @@ namespace vt
 		int window_pos_x{};
 		int window_pos_y{};
 		std::string window_name;
-		std::filesystem::path projects_list_filepath = std::filesystem::path("projects").replace_extension("json");
-		std::filesystem::path app_settings_filepath = std::filesystem::path("settings").replace_extension("json");
 	};
 
 	enum class app_state
@@ -36,8 +34,6 @@ namespace vt
 
 	private:
 		app_state state_;
-		SDL_Window* main_window_;
-		SDL_Renderer* renderer_;
 
 	public:
 		bool init(const app_config& config);
@@ -46,6 +42,7 @@ namespace vt
 		void on_close_project(bool should_shutdown);
 		void on_save();
 		void on_save_as();
+		void on_import_videos();
 		void on_delete();
 
 		bool load_settings();
@@ -54,6 +51,7 @@ namespace vt
 		void save_project_as(const std::filesystem::path& filepath);
 		void close_project();
 
+		void fetch_themes();
 		void build_fonts(float size);
 		void init_keybinds();
 		void init_player();

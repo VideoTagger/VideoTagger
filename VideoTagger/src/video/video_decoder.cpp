@@ -1,6 +1,6 @@
+#include "pch.hpp"
 #include "video_decoder.hpp"
 
-#include <algorithm>
 #define CALC_FFMPEG_VERSION(a,b,c) ( a<<16 | b<<8 | c )
 
 namespace vt
@@ -447,7 +447,7 @@ namespace vt
 		}
 
 		format_context_ = avformat_alloc_context();
-		if (avformat_open_input(&format_context_, path.string().c_str(), NULL, NULL) < 0)
+		if (avformat_open_input(&format_context_, path.u8string().c_str(), NULL, NULL) < 0)
 		{
 			return false;
 		}

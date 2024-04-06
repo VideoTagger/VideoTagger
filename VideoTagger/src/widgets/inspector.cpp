@@ -1,7 +1,5 @@
+#include "pch.hpp"
 #include "inspector.hpp"
-#define IMGUI_DEFINE_MATH_OPERATORS
-#include <imgui.h>
-#include <imgui_internal.h>
 
 #include "time_input.hpp"
 #include "controls.hpp"

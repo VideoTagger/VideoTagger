@@ -1,3 +1,4 @@
+#include "pch.hpp"
 #include "theme.hpp"
 #include <utils/json.hpp>
 #include <utils/color.hpp>
@@ -48,8 +49,34 @@ namespace vt
 		{
 			auto it = color_names.find(static_cast<ImGuiCol_>(i));
 			if (it == color_names.end()) continue;
-			colors[it->second] = utils::color::to_string(ImGui::GetColorU32(style.Colors[i]));
+			colors[it->second] = utils::color::to_string(ImGui::GetColorU32(style.Colors[i]), false);
 		}
 		utils::json::write_to_file(json, filepath);
+	}
+
+	theme theme::load_from_file(const std::filesystem::path& filepath)
+	{
+		theme result;
+		auto json = utils::json::load_from_file(filepath);
+		if (json.contains("colors"))
+		{
+			//TODO: This is temporary and shouldnt be done in the future
+			result.style = ImGui::GetStyle();
+			const auto& colors = json["colors"];
+			for (size_t i = 0; i < ImGuiCol_COUNT; ++i)
+			{
+				auto it = color_names.find(static_cast<ImGuiCol_>(i));
+				if (it == color_names.end()) continue;
+				if (colors.contains(it->second))
+				{
+					uint32_t color{};
+					if (utils::color::parse_string(colors[it->second], color, false))
+					{
+						result.style.Colors[it->first] = ImGui::ColorConvertU32ToFloat4(color);
+					}
+				}
+			}
+		}
+		return result;
 	}
 }

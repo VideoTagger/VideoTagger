@@ -1,7 +1,5 @@
+#include "pch.hpp"
 #include "video_pool.hpp"
-#include <utility>
-#include <utils/hash.hpp>
-
 
 namespace vt
 {
@@ -87,18 +85,6 @@ namespace vt
 	video_group::const_iterator video_group::cend() const
 	{
 		return video_ids_.cend();
-	}
-
-	video_id_t video_pool::insert(const std::filesystem::path& video_path)
-	{
-		video_id_t video_id = utils::hash::fnv_hash(video_path); //utils::uuid::get()
-		
-		if (!insert(video_id, video_path))
-		{
-			return 0;
-		}
-
-		return video_id;
 	}
 
 	bool video_pool::insert(video_id_t video_id, const std::filesystem::path& video_path)

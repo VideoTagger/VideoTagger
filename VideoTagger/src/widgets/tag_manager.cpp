@@ -1,12 +1,5 @@
+#include "pch.hpp"
 #include "tag_manager.hpp"
-
-#include <algorithm>
-#include <string>
-#include <cmath>
-
-#define IMGUI_DEFINE_MATH_OPERATORS
-#include <imgui.h>
-#include <imgui_stdlib.h>
 
 #include <utils/random.hpp>
 #include "controls.hpp"

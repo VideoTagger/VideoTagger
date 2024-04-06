@@ -34,6 +34,9 @@ project "VideoTagger"
 		"vendor/nlohmann/single_include"
 	}
 
+	pchheader "pch.hpp"
+	pchsource "src/pch.cpp"
+
 	links
 	{
 		"nativefiledialog-extended",
@@ -42,6 +45,11 @@ project "VideoTagger"
 		"avcodec",
 		"avformat",
 		"avutil"
+	}
+
+	defines
+	{
+		"_CRT_SECURE_NO_WARNINGS"
 	}
 
 	flags
@@ -53,6 +61,11 @@ project "VideoTagger"
 	{
 		"{COPY} assets %{cfg.targetdir}/assets"
 	}
+
+	filter "files:vendor/ImGuizmo/**.cpp"
+		flags { "NoPCH" }
+	filter "files:vendor/ImGui/**.cpp"
+		flags { "NoPCH" }
 
 	filter "system:windows"
 		externalincludedirs

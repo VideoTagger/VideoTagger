@@ -1,3 +1,4 @@
+#include "pch.hpp"
 #include <core/app.hpp>
 #include <core/debug.hpp>
 

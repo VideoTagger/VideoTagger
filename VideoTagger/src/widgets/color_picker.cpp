@@ -1,3 +1,4 @@
+#include "pch.hpp"
 #include "color_picker.hpp"
 
 namespace vt::widgets

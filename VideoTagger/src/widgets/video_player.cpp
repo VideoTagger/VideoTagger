@@ -1,11 +1,5 @@
+#include "pch.hpp"
 #include "video_player.hpp"
-#include <imgui.h>
-#include <string>
-#include <sstream>
-#include <iomanip>
-#include <cmath>
-#include <vector>
-#include <chrono>
 #include <utils/timestamp.hpp>
 #include <core/debug.hpp>
 #include "slider.hpp"
@@ -14,7 +8,7 @@
 
 namespace vt::widgets
 {
-	video_player::video_player() : dock_window_count_{}, speed_ { 1.0f }, is_playing_{}, is_looping_{}
+	video_player::video_player() : dock_window_count_{}, speed_{ 1.0f }, is_visible_{}, is_playing_ {}, is_looping_{}
     {
 
     }
@@ -36,9 +30,9 @@ namespace vt::widgets
 		std::string title = "Video Player";
 
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, { 0, 0 });
-		bool is_open = ImGui::Begin(title.c_str(), nullptr, flags);
+		is_visible_ = ImGui::Begin(title.c_str(), nullptr, flags);
 
-		if (is_open)
+		if (is_visible_)
 		{
 			auto& imgui_style = ImGui::GetStyle();
 			auto image_avail_size = ImGui::GetContentRegionAvail();
@@ -227,5 +221,10 @@ namespace vt::widgets
 	const video_player_data& video_player::data() const
 	{
 		return data_;
+	}
+
+	bool video_player::is_visible() const
+	{
+		return is_visible_;
 	}
 }

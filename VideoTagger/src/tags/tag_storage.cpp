@@ -1,3 +1,4 @@
+#include "pch.hpp"
 #include "tag_storage.hpp"
 
 namespace vt

@@ -1,3 +1,4 @@
+#include "pch.hpp"
 #include "keybind_storage.hpp"
 
 namespace vt
