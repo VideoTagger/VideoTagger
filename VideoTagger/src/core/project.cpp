@@ -81,19 +81,24 @@ namespace vt
 		return result;
 	}
 
-	bool project::import_video(const std::filesystem::path& filepath)
+	bool project::import_video(const std::filesystem::path& filepath, video_id_t id, bool create_group)
 	{
-		video_id_t video_id = utils::hash::fnv_hash(filepath); //utils::uuid::get()
+		if (id == 0)
+		{
+			id = utils::hash::fnv_hash(filepath); //utils::uuid::get()
+		}
 		
-		if (!videos.insert(video_id, filepath)) return false;
+		if (!videos.insert(id, filepath)) return false;
 
-		video_group::video_info group_info{};
-		group_info.id = video_id;
+		if (create_group)
+		{
+			video_group::video_info group_info{};
+			group_info.id = id;
 
-		auto gid = (ctx_.current_video_group_id == 0) ? utils::uuid::get() : ctx_.current_video_group_id;
-		video_groups[gid].insert(group_info);
-		videos.get(video_id)->update_data(ctx_.renderer);
-
+			auto gid = (ctx_.current_video_group_id == 0) ? utils::uuid::get() : ctx_.current_video_group_id;
+			video_groups[gid].insert(group_info);
+			videos.get(id)->update_data(ctx_.renderer);
+		}
 		return true;
 	}
 	
@@ -224,7 +229,7 @@ namespace vt
 				//TODO: Run project updater/error
 			}
 
-			if (json.contains("tags"))
+			if (json.contains("tags") and json.at("tags").is_array())
 			{
 				for (auto& tag_data : json["tags"])
 				{
@@ -253,11 +258,30 @@ namespace vt
 				}
 			}
 
-			if (!json.contains("groups") or !json["groups"].is_array())
+			if (json.contains("videos") and json.at("videos").is_array())
 			{
-				debug::error("Project's video groups format was invalid");
+				const auto& videos = json["videos"];
+				for (const auto& video : videos)
+				{
+					if (!video.contains("id"))
+					{
+						debug::error("Project's video doesn't contain id, skipping...");
+						continue;
+					}
+
+					if (!video.contains("path"))
+					{
+						debug::error("Project's video doesn't contain a filepath, skipping...");
+						continue;
+					}
+
+					video_id_t id = video["id"];
+					std::filesystem::path path = video["path"];
+					result.import_video(path, id, false);
+				}
 			}
-			else
+
+			if (json.contains("groups") and json.at("groups").is_array())
 			{
 				const auto& json_groups = json["groups"];
 				for (auto& group : json_groups)

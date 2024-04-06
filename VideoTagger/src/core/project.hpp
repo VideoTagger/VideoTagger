@@ -45,7 +45,7 @@ namespace vt
 
 		//TODO: save tags displayed in the timeline in the project file
 
-		bool import_video(const std::filesystem::path& filepath);
+		bool import_video(const std::filesystem::path& filepath, video_id_t id = 0, bool create_group = true);
 
 		void save() const;
 		void save_as(const std::filesystem::path& filepath);
