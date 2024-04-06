@@ -20,7 +20,7 @@ namespace vt
 		static void init();
 		//Logs the message with an 'Info' flag
 		template<typename... args_t>
-		static void log(fmt::format_string<args_t...> format, args_t&&... args)
+		static void log(const fmt::format_string<args_t...> format, args_t&&... args)
 		{
 			constexpr auto flag = "[Info]";
 			std::string msg = ": " + fmt::vformat(format.get(), fmt::make_format_args(args...)) + '\n';
@@ -36,7 +36,7 @@ namespace vt
 		}
 		//Logs the message with an 'Error' flag
 		template<typename... args_t>
-		static void error(fmt::format_string<args_t...> format, args_t&&... args)
+		static void error(const fmt::format_string<args_t...> format, args_t&&... args)
 		{
 			constexpr auto flag = "[Error]";
 			std::string msg = ": " + fmt::vformat(format.get(), fmt::make_format_args(args...)) + '\n';
@@ -52,7 +52,7 @@ namespace vt
 		}
 		//Logs the message with a 'Panic!' flag and immediately shuts down the app
 		template<typename... args_t>
-		static void panic(fmt::format_string<args_t...> format, args_t&&... args)
+		static void panic(const fmt::format_string<args_t...> format, args_t&&... args)
 		{
 			constexpr auto flag = "[Panic!]";
 			std::string msg = ": " + fmt::vformat(format.get(), fmt::make_format_args(args...)) + '\n';
