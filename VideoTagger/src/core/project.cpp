@@ -81,25 +81,44 @@ namespace vt
 		return result;
 	}
 
-	bool project::import_video(const std::filesystem::path& filepath, video_id_t id, bool create_group)
+	std::future<project_import_video_result> project::import_video(const std::filesystem::path& filepath, video_id_t id, bool create_group)
 	{
-		if (id == 0)
+		static std::mutex pool_mutex;
+		auto task = [filepath, id, create_group, this]() mutable
 		{
-			id = utils::hash::fnv_hash(filepath); //utils::uuid::get()
-		}
+			if (id == 0)
+			{
+				id = utils::hash::fnv_hash(filepath); //utils::uuid::get()
+			}
+
+			{
+				std::scoped_lock lock(pool_mutex);
+				if (!videos.insert(id, filepath))
+				{
+					return project_import_video_result{ false, 0, filepath };
+				}
+			}
+
+			if (create_group)
+			{
+				video_group::video_info group_info{};
+				group_info.id = id;
+
+				auto gid = (ctx_.current_video_group_id == 0) ? utils::uuid::get() : ctx_.current_video_group_id;
+				std::scoped_lock lock(pool_mutex);
+				video_groups[gid].insert(group_info);
+			}
+
+			{
+				std::scoped_lock lock(pool_mutex);
+				videos.get(id)->update_data();
+			}
+
+			return project_import_video_result{ true, id, filepath };
+		};
+
 		
-		if (!videos.insert(id, filepath)) return false;
-
-		if (create_group)
-		{
-			video_group::video_info group_info{};
-			group_info.id = id;
-
-			auto gid = (ctx_.current_video_group_id == 0) ? utils::uuid::get() : ctx_.current_video_group_id;
-			video_groups[gid].insert(group_info);
-		}
-		videos.get(id)->update_data(ctx_.renderer);
-		return true;
+		return std::async(std::launch::async, task);
 	}
 	
 	void project::save() const
@@ -287,7 +306,14 @@ namespace vt
 
 					video_id_t id = video["id"];
 					std::filesystem::path path = video["path"];
+
+					//TODO: Can't be async because result is later moved
 					result.import_video(path, id, false);
+					auto pool_data = result.videos.get(id);
+					if (pool_data != nullptr)
+					{
+						pool_data->update_thumbnail(ctx_.renderer);
+					}
 				}
 			}
 
@@ -332,7 +358,8 @@ namespace vt
 			{
 				result.keybinds = json["keybinds"];
 			}
-		}			
+		}
+
 		return result;
 	}
 }

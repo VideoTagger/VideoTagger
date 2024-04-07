@@ -65,7 +65,6 @@ namespace vt
 		window_config win_cfg;
 		std::unordered_map<std::string, ImFont*> fonts;
 		std::vector<std::filesystem::path> themes;
-		std::vector<std::future<void>> tasks;
 		keybind_storage keybinds;
 
 		std::optional<project> current_project;

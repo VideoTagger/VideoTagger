@@ -1,13 +1,10 @@
 #include "pch.hpp"
 #include "video_stream.hpp"
+#include <core/debug.hpp>
 
 namespace vt
 {
-	video_stream::video_stream(const video_stream&) : video_stream()
-	{
-	}
-
-	bool video_stream::open_file(const std::filesystem::path& filepath, SDL_Renderer* renderer)
+	bool video_stream::open_file(const std::filesystem::path& filepath)
 	{
 		if (is_open())
 		{
@@ -25,8 +22,6 @@ namespace vt
 		fps_ = decoder_.fps();
 		duration_ = decoder_.duration();
 
-		texture_ = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_YV12, SDL_TEXTUREACCESS_STREAMING, decoder_.width(), decoder_.height());
-		clear_texture();
 		last_ts_ = std::chrono::nanoseconds{ 0 };
 
 		return true;
@@ -38,12 +33,6 @@ namespace vt
 
 		last_ts_ = std::chrono::nanoseconds(0);
 
-		if (texture_ != nullptr)
-		{
-			SDL_DestroyTexture(texture_);
-			texture_ = nullptr;
-		}
-
 		//width_ = 0;
 		//height_ = 0;
 		//fps_ = 0;
@@ -54,12 +43,6 @@ namespace vt
 	video_stream::~video_stream()
 	{
 		close();
-	}
-
-	video_stream& video_stream::operator=(const video_stream&)
-	{
-		*this = std::move(video_stream());
-		return *this;
 	}
 
 	void video_stream::set_playing(bool value)
@@ -125,10 +108,13 @@ namespace vt
 		}
 
 		auto decode_result = decoder_.decode_next_packet<stream_type::video>();
-		if (decode_result.has_value())
+		if (!decode_result.has_value())
 		{
-			update_texture(*decode_result);
+			return;
 		}
+
+		last_frame = std::move(decode_result);
+		last_ts_ = last_frame->timestamp();
 	}
 
 	void video_stream::seek(std::chrono::nanoseconds target_timestamp)
@@ -179,14 +165,29 @@ namespace vt
 				continue;
 			}
 
-			auto& frame = *decode_result;
-			update_texture(frame);
-			last_ts_ = frame.timestamp();
+			last_frame = std::move(decode_result);
+			last_ts_ = last_frame->timestamp();
 		}
 	}
-	SDL_Texture* video_stream::get_frame()
+
+	void video_stream::get_frame(SDL_Texture* texture)
 	{
-		return texture_;
+		if (!last_frame.has_value())
+		{
+			return;
+		}
+
+		auto& frame = *last_frame;
+
+		auto [yp, up, vp] = frame.get_planes();
+
+		SDL_UpdateYUVTexture
+		(
+			texture, nullptr,
+			yp.data(), yp.pitch(),
+			up.data(), up.pitch(),
+			vp.data(), vp.pitch()
+		);
 	}
 
 	bool video_stream::is_open() const
@@ -234,7 +235,7 @@ namespace vt
 		return std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::duration<double>(1.0 / fps()));;
 	}
 
-	void video_stream::get_thumbnail(SDL_Renderer* renderer, SDL_Texture* texture, std::optional<std::chrono::nanoseconds> timestamp)
+	void video_stream::get_thumbnail(SDL_Texture* texture, std::optional<std::chrono::nanoseconds> timestamp)
 	{
 		auto start_timestamp = current_timestamp();
 
@@ -244,35 +245,25 @@ namespace vt
 		}
 
 		seek(*timestamp);
-
-		SDL_Texture* target = SDL_GetRenderTarget(renderer);
-		SDL_SetRenderTarget(renderer, texture);
-		SDL_RenderCopy(renderer, texture_, NULL, NULL);
-		SDL_RenderPresent(renderer);
-		SDL_SetRenderTarget(renderer, target);
-
+		get_frame(texture);
 		seek(start_timestamp);
 	}
 
-	void video_stream::update_texture(const video_frame& frame_data)
+	void video_stream::clear_yuv_texture(SDL_Texture* texture)
 	{
-		auto [yp, up, vp] = frame_data.get_planes();
+		int w{}, h{};
+		if (SDL_QueryTexture(texture, NULL, NULL, &w, &h) < 0)
+		{
+			debug::error("SDL_QueryTexture failed: {}", SDL_GetError());
+			return;
+		}
 
-		SDL_UpdateYUVTexture
-		(
-			texture_, nullptr,
-			yp.data(), yp.pitch(),
-			up.data(), up.pitch(),
-			vp.data(), vp.pitch()
-		);
-
-		last_ts_ = frame_data.timestamp();
-	}
-
-	void video_stream::clear_texture()
-	{
-		std::vector<uint8_t> y_plane(width() * height(), 16);
-		std::vector<uint8_t> uv_plane((width() / 2) * (height() / 2), 128);
-		SDL_UpdateYUVTexture(texture_, NULL, y_plane.data(), width(), uv_plane.data(), width() / 2, uv_plane.data(), width() / 2);
+		std::vector<uint8_t> y_plane(w * h, 16);
+		std::vector<uint8_t> uv_plane((w / 2) * (h / 2), 128);
+		if (SDL_UpdateYUVTexture(texture, NULL, y_plane.data(), w, uv_plane.data(), w / 2, uv_plane.data(), w / 2) < 0)
+		{
+			debug::error("SDL_UpdateYUVTexture failed: {}", SDL_GetError());
+			return;
+		}
 	}
 }

@@ -2,25 +2,35 @@
 #include <chrono>
 #include <vector>
 
+#include <SDL.h>
+
 #include <video/video_pool.hpp>
 
 namespace vt
 {
-	struct video_group_data
+	struct displayed_video_data
 	{
-		video_id_t id;
-		video_stream* video;
-		std::chrono::nanoseconds offset;
+		displayed_video_data(video_id_t id, video_stream* video, std::chrono::nanoseconds offset, int video_width, int video_height, SDL_Renderer* renderer);
+		displayed_video_data(const displayed_video_data&) = delete;
+		displayed_video_data(displayed_video_data&&) noexcept;
+		~displayed_video_data();
+
+		displayed_video_data& operator=(const displayed_video_data&) = delete;
+		displayed_video_data& operator=(displayed_video_data&&) noexcept;
+
+		video_id_t id{};
+		video_stream* video{};
+		std::chrono::nanoseconds offset{};
+
+		SDL_Texture* display_texture{};
 	};
 
 	class displayed_videos_manager
 	{
 	public:
-		using container = std::vector<video_group_data>;
+		using container = std::vector<displayed_video_data>;
 		using iterator = container::iterator;
 		using const_iterator = container::const_iterator;
-
-		container videos;
 
 		void update();
 
@@ -29,6 +39,14 @@ namespace vt
 		void set_looping(bool value);
 		void seek(std::chrono::nanoseconds timestamp);
 
+		bool insert(video_id_t id, video_stream* video, std::chrono::nanoseconds offset, int video_width, int video_height, SDL_Renderer* renderer);
+		bool erase(video_id_t video_id);
+		void clear();
+
+		iterator find(video_id_t video_id);
+		const_iterator find(video_id_t video_id) const;
+
+		bool contains(video_id_t video_id) const;
 		bool is_playing() const;
 		bool is_looping() const;
 		float speed() const;
@@ -44,6 +62,8 @@ namespace vt
 		const_iterator cend() const;
 
 	private:
+		container videos_;
+		
 		bool is_playing_{};
 		bool is_looping_{};
 		float speed_{1};

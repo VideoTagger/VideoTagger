@@ -257,7 +257,7 @@ namespace vt
 			auto* vinfo = ctx_.current_project->videos.get(id);
 			vinfo->is_widget_open = true;
 			ctx_.reset_player_docking = true;
-			ctx_.current_project->videos.open_video(id, ctx_.renderer);
+			ctx_.current_project->videos.open_video(id);
 		};
 		init_options();
 	}
@@ -467,11 +467,7 @@ namespace vt
 				if (it == videos.end())
 				{
 					debug::log("Importing video {}", path.u8string());
-					//TODO: This should be done asynchronously
-					if (!ctx_.current_project->import_video(path))
-					{
-						debug::error("Failed to import {}", path.u8string());
-					}
+					ctx_.current_project->video_import_tasks.push_back(ctx_.current_project->import_video(path));
 				}
 				else
 				{
@@ -1369,16 +1365,34 @@ namespace vt
 
 	void app::draw_main_app()
 	{
+		if (!ctx_.current_project.has_value()) return;
 		draw_menubar();
-		for (auto it = ctx_.tasks.begin(); it != ctx_.tasks.end(); ++it)
 		{
-			auto status = it->wait_for(std::chrono::nanoseconds(0));
-			if (status == std::future_status::ready)
+			auto& tasks = ctx_.current_project->video_import_tasks;
+			for (auto it = tasks.begin(); it != tasks.end();)
 			{
-				it = ctx_.tasks.erase(it);
+				auto status = it->wait_for(std::chrono::nanoseconds(0));
+				if (status == std::future_status::ready)
+				{
+					auto result = it->get();
+					if (!result.success)
+					{
+						debug::error("Failed to import {}", result.video_path.u8string());
+					}
+					else
+					{
+						auto video_data = ctx_.current_project->videos.get(result.video_id);
+						video_data->update_thumbnail(ctx_.renderer);
+					}
+
+					it = tasks.erase(it);
+					continue;
+				}
+
+				++it;
 			}
 		}
-		if (!ctx_.current_project.has_value()) return;
+		
 
 		//TODO: probably should be done somewhere else
 		ctx_.update_active_video_group();
@@ -1418,7 +1432,7 @@ namespace vt
 			ctx_.player.render();
 		}
 
-		uint64_t vid_id{};
+		/*uint64_t vid_id{};
 		if (ctx_.player.is_visible())
 		{
 			for (auto& [id, vinfo] : ctx_.current_project->videos)
@@ -1428,7 +1442,20 @@ namespace vt
 
 				widgets::draw_video_widget(vid, vinfo.is_widget_open, vid_id++);
 			}
+		}*/
+
+		if (ctx_.player.is_visible())
+		{
+			uint64_t vid_id{};
+			for (auto& video_data : ctx_.videos_manager)
+			{
+				auto pool_data = ctx_.current_project->videos.get(video_data.id);
+				if (!pool_data->is_widget_open) continue;
+
+				widgets::draw_video_widget(*video_data.video, video_data.display_texture, pool_data->is_widget_open, vid_id++);
+			}
 		}
+
 
 		if (ctx_.reset_player_docking)
 		{

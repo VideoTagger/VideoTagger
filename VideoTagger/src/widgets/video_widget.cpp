@@ -11,7 +11,7 @@
 
 namespace vt::widgets
 {
-	void draw_video_widget(video_stream& video, bool& is_open, uint64_t id)
+	void draw_video_widget(video_stream& video, SDL_Texture* video_texture, bool& is_open, uint64_t id)
 	{
 		auto& io = ImGui::GetIO();
 		ImGuiWindowFlags flags = ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoSavedSettings;
@@ -48,8 +48,8 @@ namespace vt::widgets
 				image_avail_size.y -= button_size + 2 * imgui_style.ItemSpacing.y + ImGui::GetTextLineHeightWithSpacing() * io.FontGlobalScale;
 			}
 
-			SDL_Texture* texture = video.get_frame();
-			if (texture != nullptr)
+			video.get_frame(video_texture);
+			if (video_texture != nullptr)
 			{
 				int video_width = video.width();
 				int video_height = video.height();
@@ -68,7 +68,7 @@ namespace vt::widgets
 				}
 				ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, { 0, 0 });
 				ImGui::SetCursorPos({ (image_avail_size.x - image_size.x) / 2, (image_avail_size.y - image_size.y) / 2 });
-				ImGui::Image((ImTextureID)texture, image_size);
+				ImGui::Image((ImTextureID)video_texture, image_size);
 				ImGui::PopStyleVar();
 
 				auto video_ts = video.current_timestamp();

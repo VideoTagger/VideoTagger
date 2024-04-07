@@ -3,6 +3,45 @@
 
 namespace vt
 {
+	displayed_video_data::displayed_video_data(video_id_t id, video_stream* video, std::chrono::nanoseconds offset, int video_width, int video_height, SDL_Renderer* renderer)
+		: id{ id }, video{ video }, offset{ offset }, display_texture{}
+	{
+		display_texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_YV12, SDL_TEXTUREACCESS_STREAMING, video_width, video_height);
+		video_stream::clear_yuv_texture(display_texture);
+	}
+
+	displayed_video_data::displayed_video_data(displayed_video_data&& other) noexcept
+		: id{ other.id }, video{ other.video }, offset{ other.offset }, display_texture{ other.display_texture }
+	{
+		other.id = {};
+		other.video = {};
+		other.offset = {};
+		other.display_texture = {};
+	}
+
+	displayed_video_data::~displayed_video_data()
+	{
+		if (display_texture != nullptr)
+		{
+			SDL_DestroyTexture(display_texture);
+		}
+	}
+
+	displayed_video_data& displayed_video_data::operator=(displayed_video_data&& other) noexcept
+	{
+		id = other.id;
+		video = other.video;
+		offset = other.offset;
+		display_texture = other.display_texture;
+
+		other.id = {};
+		other.video = {};
+		other.offset = {};
+		other.display_texture = {};
+
+		return *this;
+	}
+
 	void displayed_videos_manager::update()
 	{
 		//TODO: maybe should do something to ensure that videos don't get desynchronized
@@ -12,7 +51,7 @@ namespace vt
 			return;
 		}
 
-		if (videos.size() == 0)
+		if (videos_.size() == 0)
 		{
 			set_playing(false);
 			seek(std::chrono::nanoseconds{ 0 });
@@ -23,7 +62,7 @@ namespace vt
 		current_timestamp_ += std::chrono::duration_cast<std::chrono::nanoseconds>((current_timepoint - last_timepoint_) * speed_);
 		last_timepoint_ = current_timepoint;
 
-		for (auto& video_data : videos)
+		for (auto& video_data : videos_)
 		{
 			if (video_data.video == nullptr)
 			{
@@ -31,6 +70,7 @@ namespace vt
 			}
 
 			video_data.video->update(current_timestamp_);
+			video_data.video->get_frame(video_data.display_texture);
 
 			//if (video_data.video->frame_buffer_.size() < 10)
 			//{
@@ -57,7 +97,7 @@ namespace vt
 
 	void displayed_videos_manager::set_playing(bool value)
 	{
-		for (auto& video_data : videos)
+		for (auto& video_data : videos_)
 		{
 			if (video_data.video == nullptr)
 			{
@@ -102,7 +142,7 @@ namespace vt
 
 	void displayed_videos_manager::seek(std::chrono::nanoseconds timestamp)
 	{
-		for (auto& video_data : videos)
+		for (auto& video_data : videos_)
 		{
 			if (video_data.video == nullptr)
 			{
@@ -131,6 +171,55 @@ namespace vt
 		}
 	}
 
+	bool displayed_videos_manager::insert(video_id_t id, video_stream* video, std::chrono::nanoseconds offset, int video_width, int video_height, SDL_Renderer* renderer)
+	{
+		if (auto it = find(id); it != end())
+		{
+			return false;
+		}
+
+		videos_.emplace_back(id, video, offset, video_width, video_height, renderer);
+		return true;
+	}
+
+	bool displayed_videos_manager::erase(video_id_t video_id)
+	{
+		auto it = find(video_id);
+		if (it == end())
+		{
+			return false;
+		}
+
+		videos_.erase(it);
+		return true;
+	}
+
+	void displayed_videos_manager::clear()
+	{
+		videos_.clear();
+	}
+
+	displayed_videos_manager::iterator displayed_videos_manager::find(video_id_t video_id)
+	{
+		return std::find_if(videos_.begin(), videos_.end(), [video_id](const displayed_video_data& object)
+		{
+			return object.id == video_id;
+		});
+	}
+
+	displayed_videos_manager::const_iterator displayed_videos_manager::find(video_id_t video_id) const
+	{
+		return std::find_if(videos_.cbegin(), videos_.cend(), [video_id](const displayed_video_data& object)
+		{
+			return object.id == video_id;
+		});
+	}
+
+	bool displayed_videos_manager::contains(video_id_t video_id) const
+	{
+		return find(video_id) != end();
+	}
+
 	bool displayed_videos_manager::is_playing() const
 	{
 		return is_playing_;
@@ -149,7 +238,7 @@ namespace vt
 	std::chrono::nanoseconds displayed_videos_manager::duration() const
 	{
 		std::chrono::nanoseconds group_duration{};
-		for (auto& video_data : videos)
+		for (auto& video_data : videos_)
 		{
 			if (video_data.video == nullptr)
 			{
@@ -173,36 +262,36 @@ namespace vt
 
 	size_t displayed_videos_manager::size() const
 	{
-		return videos.size();
+		return videos_.size();
 	}
 
 	displayed_videos_manager::iterator displayed_videos_manager::begin()
 	{
-		return videos.begin();
+		return videos_.begin();
 	}
 
 	displayed_videos_manager::const_iterator displayed_videos_manager::begin() const
 	{
-		return videos.begin();
+		return videos_.begin();
 	}
 
 	displayed_videos_manager::const_iterator displayed_videos_manager::cbegin() const
 	{
-		return videos.cbegin();
+		return videos_.cbegin();
 	}
 
 	displayed_videos_manager::iterator displayed_videos_manager::end()
 	{
-		return videos.end();
+		return videos_.end();
 	}
 
 	displayed_videos_manager::const_iterator displayed_videos_manager::end() const
 	{
-		return videos.end();
+		return videos_.end();
 	}
 
 	displayed_videos_manager::const_iterator displayed_videos_manager::cend() const
 	{
-		return videos.cend();
+		return videos_.cend();
 	}
 }
