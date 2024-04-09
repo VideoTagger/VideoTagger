@@ -36,6 +36,7 @@ namespace vt::widgets
 
 	struct tag_rename_data
 	{
+		bool ready = false;
 		std::string old_name;
 		std::string new_name;
 	};

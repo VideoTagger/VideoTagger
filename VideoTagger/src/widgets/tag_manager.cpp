@@ -98,6 +98,86 @@ namespace vt::widgets
 		return return_value;
 	}
 
+	bool rename_tag_popup(const std::string& id, const tag_rename_data& data, bool& pressed_button)
+	{
+		//TODO: improve layout
+
+		static constexpr ImVec2 button_size = { 55, 30 };
+
+		bool return_value = false;
+
+		auto& style = ImGui::GetStyle();
+		ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 7);
+		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, style.WindowPadding * 2);
+		ImGui::SetNextWindowPos(ImGui::GetMainViewport()->GetCenter(), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
+		auto flags = ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoMove;
+
+		if (ImGui::BeginPopupModal(id.c_str(), nullptr, flags))
+		{
+			ImGui::Text("Are you sure you want to rename the tag \"%s\" to \"%s\"?", data.old_name.c_str(), data.new_name.c_str());
+			//TODO: CHANGE THIS
+			ImGui::TextDisabled("ONE SHALL NOT PERFORM SUCH ACTION CARELESSLY FOR IT COULD BRING DIRE CONSEQUENCES");
+			ImGui::NewLine();
+			auto area_size = ImGui::GetWindowSize();
+
+			ImGui::SetCursorPosX(area_size.x / 2 - button_size.x - 20);
+			if (ImGui::Button("Yes", button_size))
+			{
+				pressed_button = true;
+				return_value = true;
+				ImGui::CloseCurrentPopup();
+			}
+			ImGui::SameLine();
+			ImGui::SetCursorPosX(area_size.x / 2 + 20);
+			if (ImGui::Button("No", button_size) or ImGui::IsKeyPressed(ImGuiKey_Escape))
+			{
+				pressed_button = false;
+				return_value = true;
+				ImGui::CloseCurrentPopup();
+			}
+
+			ImGui::EndPopup();
+		}
+
+		ImGui::PopStyleVar(2);
+
+		return return_value;
+	}
+
+	bool rename_failed_popup(const std::string& id, const tag_rename_data& data)
+	{
+		static constexpr ImVec2 button_size = { 55, 30 };
+
+		bool return_value = false;
+
+		auto& style = ImGui::GetStyle();
+		ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 7);
+		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, style.WindowPadding * 2);
+		ImGui::SetNextWindowPos(ImGui::GetMainViewport()->GetCenter(), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
+		auto flags = ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoMove;
+
+		if (ImGui::BeginPopupModal(id.c_str(), nullptr, flags))
+		{
+			ImGui::Text("Failed to rename tag \"%s\"", data.old_name.c_str());
+			//TODO: CHANGE THIS
+			ImGui::TextDisabled("Tag \"%s\" already exists", data.new_name.c_str());
+			ImGui::NewLine();
+			auto area_size = ImGui::GetWindowSize();
+
+			ImGui::SetCursorPosX(area_size.x / 2 - button_size.x / 2);
+			if (ImGui::Button("OK", button_size))
+			{
+				return_value = true;
+				ImGui::CloseCurrentPopup();
+			}
+			ImGui::EndPopup();
+		}
+
+		ImGui::PopStyleVar(2);
+
+		return return_value;
+	}
+
 	bool tag_manager(tag_storage& tags, std::optional<tag_rename_data>& tag_rename, bool& dirty_flag, tag_manager_flags flags)
 	{
 		//TODO: Maybe extract some stuff into separate functions for better readability
@@ -107,6 +187,7 @@ namespace vt::widgets
 		ImVec2 button_size = ImVec2{ ImGui::GetContentRegionAvail().x, ImGui::GetTextLineHeightWithSpacing() };
 
 		bool open_add_tag_popup = false;
+		bool open_rename_tag_popup = false;
 		bool update_all = false;
 		bool update_state = false;
 
@@ -216,7 +297,8 @@ namespace vt::widgets
 							tag_name = tag.name;
 							if (ImGui::InputText("##TagNameInput", &tag_name, ImGuiInputTextFlags_AutoSelectAll | ImGuiInputTextFlags_EnterReturnsTrue))
 							{
-								tag_rename = tag_rename_data{ tag.name, tag_name };
+								tag_rename = tag_rename_data{ false, tag.name, tag_name };
+								open_rename_tag_popup = true;
 							}
 							ImGui::NextColumn();
 							ImGui::Text("Color");
@@ -253,19 +335,6 @@ namespace vt::widgets
 					if (it != tags.end())
 					{
 						++it;
-					}
-				}
-
-				if (tag_rename.has_value())
-				{
-					auto [it, inserted] = tags.rename(tag_rename->old_name, tag_rename->new_name);
-					if (inserted)
-					{
-						ctx_.is_project_dirty = true;
-					}
-					else
-					{
-						tag_rename.reset();
 					}
 				}
 
@@ -386,10 +455,44 @@ namespace vt::widgets
 			ImGui::OpenPopup("Add New Tag");
 		}
 
+		if (open_rename_tag_popup)
+		{
+			ImGui::OpenPopup("Rename Tag");
+		}
+
 		tag_storage::iterator added_entry = tags.end();
 		if (add_tag_popup(tags, added_entry))
 		{
 			dirty_flag = true;
+		}
+
+		bool pressed_button{};
+
+		if (tag_rename.has_value() and rename_tag_popup("Rename Tag", *tag_rename, pressed_button))
+		{
+			if (pressed_button == true)
+			{
+				auto [it, inserted] = ctx_.current_project->tags.rename(tag_rename->old_name, tag_rename->new_name);
+				if (!inserted)
+				{
+					//TODO: Display popup
+					ImGui::OpenPopup("Rename Failed");
+				}
+				else
+				{
+					tag_rename->ready = true;
+					ctx_.is_project_dirty = true;
+				}
+			}
+			else
+			{
+				tag_rename.reset();
+			}
+		}
+
+		if (tag_rename.has_value() and rename_failed_popup("Rename Failed", *tag_rename))
+		{
+			tag_rename.reset();
 		}
 
 		return return_value;

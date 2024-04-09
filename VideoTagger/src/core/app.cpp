@@ -1484,10 +1484,12 @@ namespace vt
 
 		if (ctx_.win_cfg.show_tag_manager_window)
 		{
-			std::optional<widgets::tag_rename_data> tag_rename;
+			static std::optional<widgets::tag_rename_data> tag_rename;
 			widgets::draw_tag_manager_widget(ctx_.current_project->tags, tag_rename, ctx_.is_project_dirty);
-			if (tag_rename.has_value())
+			if (tag_rename.has_value() and tag_rename->ready)
 			{
+				ctx_.is_project_dirty = true;
+				
 				for (auto& tag_name : ctx_.timeline_state.displayed_tags)
 				{
 					if (tag_name == tag_rename->old_name)
@@ -1495,6 +1497,16 @@ namespace vt
 						tag_name = tag_rename->new_name;
 					}
 				}
+
+				auto node_handle = ctx_.current_project->segments.extract(tag_rename->old_name);
+				if (!node_handle.empty())
+				{
+					node_handle.key() = tag_rename->new_name;
+					ctx_.current_project->segments.insert(std::move(node_handle));
+				}
+
+				//TODO: consider renaming tags in keybinds
+
 				tag_rename.reset();
 			}
 		}
