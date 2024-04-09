@@ -143,7 +143,8 @@ namespace vt
 		colors[ImGuiCol_TableRowBg] = ImVec4(0.00f, 0.00f, 0.00f, 0.00f);
 		colors[ImGuiCol_TableRowBgAlt] = ImVec4(1.00f, 1.00f, 1.00f, 0.06f);
 		colors[ImGuiCol_TextSelectedBg] = ImVec4(0.32f, 0.34f, 0.35f, 1.00f);
-		colors[ImGuiCol_DragDropTarget] = ImVec4(0.33f, 0.67f, 0.86f, 1.00f);
+		//colors[ImGuiCol_DragDropTarget] = ImVec4(0.33f, 0.67f, 0.86f, 1.00f);
+		colors[ImGuiCol_DragDropTarget] = ImVec4(1.00f, 0.64f, 0.00f, 1.00f);
 		colors[ImGuiCol_NavHighlight] = ImVec4(1.00f, 0.00f, 0.00f, 1.00f);
 		colors[ImGuiCol_NavWindowingHighlight] = ImVec4(0.20f, 0.20f, 0.20f, 1.00f);
 		colors[ImGuiCol_NavWindowingDimBg] = ImVec4(1.00f, 0.00f, 0.00f, 0.20f);
@@ -252,7 +253,7 @@ namespace vt
 			debug::log("Saving projects list to {}", std::filesystem::relative(ctx_.projects_list_filepath).u8string());
 		};
 
-		ctx_.browser.on_open_video = [this](video_id_t id)
+		ctx_.group_browser.on_open_video = [this](video_id_t id)
 		{
 			auto* vinfo = ctx_.current_project->videos.get(id);
 			vinfo->is_widget_open = true;
@@ -271,12 +272,12 @@ namespace vt
 		SDL_SetHint(SDL_HINT_WINDOWS_NO_CLOSE_ON_ALT_F4, "1");
 		if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS) < 0)
 		{
-			debug::error("SDL failed to initialize");
+			debug::error("SDL failed to initialize with error: {}", SDL_GetError());
 			return false;
 		}
 		if (NFD::Init() != NFD_OKAY)
 		{
-			debug::error("NFD failed to initialize");
+			debug::error("NFD failed to initialize with error: {}", NFD::GetError());
 			return false;
 		}
 
@@ -511,6 +512,10 @@ namespace vt
 					SDL_SetWindowPosition(ctx_.main_window, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED);
 				}
 			}
+			if (ctx_.settings.contains("thumbnail-size"))
+			{
+				ctx_.app_settings.thumbnail_size = ctx_.settings["thumbnail-size"];
+			}
 			if (ctx_.settings.contains("window") and ctx_.settings["window"].contains("state"))
 			{
 				auto& window = ctx_.settings["window"];
@@ -540,8 +545,10 @@ namespace vt
 				auto& show_windows = ctx_.settings["show-windows"];
 				if (show_windows.contains("inspector")) ctx_.win_cfg.show_inspector_window = show_windows["inspector"];
 				if (show_windows.contains("tag-manager")) ctx_.win_cfg.show_tag_manager_window = show_windows["tag-manager"];
+				if (show_windows.contains("timeline")) ctx_.win_cfg.show_timeline_window = show_windows["timeline"];
 				if (show_windows.contains("video-player")) ctx_.win_cfg.show_video_player_window = show_windows["video-player"];
 				if (show_windows.contains("video-browser")) ctx_.win_cfg.show_video_browser_window = show_windows["video-browser"];
+				if (show_windows.contains("video-group-browser")) ctx_.win_cfg.show_video_group_browser_window = show_windows["video-group-browser"];
 			}
 		}
 		else
@@ -715,6 +722,14 @@ namespace vt
 			if (ImGui::IsPopupOpen(nullptr, ImGuiPopupFlags_AnyPopup)) return;
 			on_close_project(true);
 		})));
+
+		keybind_modifiers toggle_window_mod{ false, true };
+		ctx_.keybinds.insert("Toggle Video Player", keybind(SDLK_F1, toggle_window_mod, flags, toggle_window_action("video-player", ctx_.win_cfg.show_video_player_window)));
+		ctx_.keybinds.insert("Toggle Video Browser", keybind(SDLK_F2, toggle_window_mod, flags, toggle_window_action("video-browser", ctx_.win_cfg.show_video_browser_window)));
+		ctx_.keybinds.insert("Toggle Video Group Browser", keybind(SDLK_F3, toggle_window_mod, flags, toggle_window_action("video-group-browser", ctx_.win_cfg.show_video_group_browser_window)));
+		ctx_.keybinds.insert("Toggle Inspector", keybind(SDLK_F4, toggle_window_mod, flags, toggle_window_action("inspector", ctx_.win_cfg.show_inspector_window)));
+		ctx_.keybinds.insert("Toggle Tag Manager", keybind(SDLK_F5, toggle_window_mod, flags, toggle_window_action("tag-manager", ctx_.win_cfg.show_tag_manager_window)));
+		ctx_.keybinds.insert("Toggle Timeline", keybind(SDLK_F6, toggle_window_mod, flags, toggle_window_action("timeline", ctx_.win_cfg.show_timeline_window)));
 	}
 
 	void app::init_options()
@@ -949,6 +964,17 @@ namespace vt
 				ctx_.settings["window"]["font-size"] = font_size;
 			}
 
+			float text_height = ImGui::GetTextLineHeight();
+
+			ImGui::AlignTextToFramePadding();
+			ImGui::TextUnformatted("Thumbnail Size");
+			ImGui::SameLine();
+			ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x / 4);
+			if (ImGui::DragFloat("##ThumbnailSizeDrag", &ctx_.app_settings.thumbnail_size, 0.5f, 52.0f, 100.f, "%.1f", ImGuiSliderFlags_AlwaysClamp))
+			{
+				ctx_.settings["thumbnail-size"] = ctx_.app_settings.thumbnail_size;
+			}
+
 			//TODO: Add theme selection
 
 #ifdef _DEBUG
@@ -1126,12 +1152,14 @@ namespace vt
 			auto dockspace_id_copy = dockspace_id;
 			auto main_dock_right = ImGui::DockBuilderSplitNode(dockspace_id_copy, ImGuiDir_Right, 0.25f, nullptr, &dockspace_id_copy);
 			auto main_dock_up = ImGui::DockBuilderSplitNode(dockspace_id_copy, ImGuiDir_Up, 2 / 3.f, nullptr, &dockspace_id_copy);
+			auto main_dock_up_left = ImGui::DockBuilderSplitNode(main_dock_up, ImGuiDir_Left, 0.25f, nullptr, &main_dock_up);
 			auto dock_right_up = ImGui::DockBuilderSplitNode(main_dock_right, ImGuiDir_Up, 0.5f, nullptr, &main_dock_right);
 			ImGui::DockBuilderDockWindow("Inspector", dock_right_up);
 			ImGui::DockBuilderDockWindow("Tag Manager", main_dock_right);
 			ImGui::DockBuilderDockWindow("Video Player", main_dock_up);
+			ImGui::DockBuilderDockWindow("Video Browser", main_dock_up_left);
 			ImGui::DockBuilderDockWindow("Theme Customizer", main_dock_up);
-			ImGui::DockBuilderDockWindow("Video Browser", dockspace_id_copy);
+			ImGui::DockBuilderDockWindow("Video Group Browser", dockspace_id_copy);
 			/*for (size_t i = 0; i < 4; ++i)
 			{
 				auto video_id = "Video##" + std::to_string(i);
@@ -1167,7 +1195,7 @@ namespace vt
 				{
 					std::string key_name = "Save Project";
 					auto& kb = ctx_.keybinds.at(key_name);
-					std::string menu_item = std::string(icons::save) + ' ' + key_name;
+					std::string menu_item = fmt::format("{} {}", icons::save, key_name);
 					if (ImGui::MenuItem(menu_item.c_str(), kb.name().c_str()))
 					{
 						on_save();
@@ -1178,7 +1206,7 @@ namespace vt
 
 					std::string key_name = "Save Project As";
 					auto& kb = ctx_.keybinds.at(key_name);
-					std::string menu_item = std::string(icons::save_as) + ' ' + key_name;
+					std::string menu_item = fmt::format("{} {}", icons::save_as, key_name);
 					if (ImGui::MenuItem(menu_item.c_str(), kb.name().c_str()))
 					{
 						on_save_as();
@@ -1233,43 +1261,60 @@ namespace vt
 			}
 			if (ImGui::BeginMenu("Window"))
 			{
-				bool result = false;
-				if (ImGui::MenuItem("Show Video Player", nullptr, &ctx_.win_cfg.show_video_player_window))
+				auto& windows = ctx_.settings["show-windows"];
+
+				std::string key_name = "Save Project";
+				auto& kb = ctx_.keybinds.at(key_name);
+				std::string menu_item = fmt::format("{} {}", icons::save, key_name);
+
+				struct win_toggles
 				{
-					ctx_.settings["show-windows"]["video-player"] = ctx_.win_cfg.show_video_player_window;
-					result = true;
-				}
-				if (ImGui::MenuItem("Show Video Browser", nullptr, &ctx_.win_cfg.show_video_browser_window))
+					const char* name{};
+					const char* keybind_name{};
+					const char* settings_name{};
+					bool* value{};
+				};
+
+				//TODO: This could be done in a better way
+				for (auto& [name, keybind_name, settings_name, value] :
 				{
-					ctx_.settings["show-windows"]["video-browser"] = ctx_.win_cfg.show_video_browser_window;
-					result = true;
-				}
-				if (ImGui::MenuItem("Show Inspector", nullptr, &ctx_.win_cfg.show_inspector_window))
+					win_toggles{ "Show Video Player", "Toggle Video Player", "video-player", &ctx_.win_cfg.show_video_player_window },
+					win_toggles{ "Show Video Browser", "Toggle Video Browser", "video-browser", &ctx_.win_cfg.show_video_browser_window },
+					win_toggles{ "Show Video Group Browser", "Toggle Video Group Browser", "video-group-browser", &ctx_.win_cfg.show_video_group_browser_window },
+					win_toggles{},
+					win_toggles{ "Show Inspector", "Toggle Inspector", "inspector", &ctx_.win_cfg.show_inspector_window },
+					win_toggles{ "Show Tag Manager", "Toggle Tag Manager", "tag-manager", &ctx_.win_cfg.show_tag_manager_window },
+					win_toggles{ "Show Timeline", "Toggle Timeline", "timeline", &ctx_.win_cfg.show_timeline_window },
+
+				})
 				{
-					ctx_.settings["show-windows"]["inspector"] = ctx_.win_cfg.show_inspector_window;
-					result = true;
-				}
-				if (ImGui::MenuItem("Show Tag Manager", nullptr, &ctx_.win_cfg.show_tag_manager_window))
-				{
-					ctx_.settings["show-windows"]["tag-manager"] = ctx_.win_cfg.show_tag_manager_window;
-					result = true;
+					if (name == nullptr)
+					{
+						ImGui::Separator();
+						continue;
+					}
+
+					auto& kb = ctx_.keybinds.at(keybind_name);
+					std::string shortcut = kb.name();
+					if (ImGui::MenuItem(name, shortcut.c_str(), value))
+					{
+						windows[settings_name] = *value;
+					}
 				}
 #ifdef _DEBUG
 				ImGui::SeparatorText("Debug Only");
-				ImGui::MenuItem("Show Theme Customizer", nullptr, &ctx_.win_cfg.show_theme_customizer_window);
 				ImGui::MenuItem("Show Options", nullptr, &ctx_.win_cfg.show_options_window);
+				ImGui::MenuItem("Show Theme Customizer", nullptr, &ctx_.win_cfg.show_theme_customizer_window);
 #endif
 
-				if (result) save_settings();
-
 				ImGui::Separator();
+				if (ImGui::MenuItem("Re-dock Videos"))
+				{
+					ctx_.reset_player_docking = true;
+				}
 				if (ImGui::MenuItem("Reset Layout"))
 				{
 					ctx_.reset_layout = true;
-				}
-				if (ImGui::MenuItem("Reset Player Docking"))
-				{
-					ctx_.reset_player_docking = true;
 				}
 				ImGui::EndMenu();
 			}
@@ -1463,6 +1508,7 @@ namespace vt
 			ctx_.reset_player_docking = false;
 		}
 
+		if (ctx_.win_cfg.show_timeline_window)
 		{
 			auto group_duration = ctx_.videos_manager.duration();
 
@@ -1474,7 +1520,7 @@ namespace vt
 			ctx_.timeline_state.time_max = timestamp(std::chrono::duration_cast<std::chrono::seconds>(group_duration));
 			ctx_.timeline_state.current_time = timestamp{ std::chrono::duration_cast<std::chrono::seconds>(ctx_.videos_manager.current_timestamp()) };
 			
-			widgets::draw_timeline_widget(ctx_.timeline_state, ctx_.selected_segment_data, ctx_.moving_segment_data, ctx_.is_project_dirty, 0, ctx_.current_video_group_id != 0);
+			widgets::draw_timeline_widget(ctx_.timeline_state, ctx_.selected_segment_data, ctx_.moving_segment_data, ctx_.is_project_dirty, 0, ctx_.current_video_group_id != 0, ctx_.win_cfg.show_timeline_window);
 
 			if (ctx_.timeline_state.current_time.seconds_total != std::chrono::duration_cast<std::chrono::seconds>(ctx_.videos_manager.current_timestamp()))
 			{
@@ -1485,7 +1531,7 @@ namespace vt
 		if (ctx_.win_cfg.show_tag_manager_window)
 		{
 			static std::optional<widgets::tag_rename_data> tag_rename;
-			widgets::draw_tag_manager_widget(ctx_.current_project->tags, tag_rename, ctx_.is_project_dirty);
+			widgets::draw_tag_manager_widget(ctx_.current_project->tags, tag_rename, ctx_.is_project_dirty, ctx_.win_cfg.show_tag_manager_window);
 			if (tag_rename.has_value() and tag_rename->ready)
 			{
 				ctx_.is_project_dirty = true;
@@ -1518,14 +1564,17 @@ namespace vt
 
 		if (ctx_.win_cfg.show_inspector_window)
 		{
-			//TODO: No idea where to put this
-			static bool link_start_end = true;
-			widgets::inspector(ctx_.selected_segment_data, ctx_.moving_segment_data, link_start_end, ctx_.is_project_dirty, &ctx_.win_cfg.show_inspector_window);
+			widgets::inspector(ctx_.selected_segment_data, ctx_.moving_segment_data, ctx_.app_settings.link_start_end_segment, ctx_.is_project_dirty, &ctx_.win_cfg.show_inspector_window);
 		}
 
 		if (ctx_.win_cfg.show_video_browser_window)
 		{
 			ctx_.browser.render(ctx_.win_cfg.show_video_browser_window);
+		}
+
+		if (ctx_.win_cfg.show_video_group_browser_window)
+		{
+			ctx_.group_browser.render(ctx_.win_cfg.show_video_group_browser_window);
 		}
 
 		if (ctx_.win_cfg.show_theme_customizer_window)

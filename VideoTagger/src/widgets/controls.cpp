@@ -183,7 +183,7 @@ namespace vt::widgets
 		}
 	}
 	
-	bool show_timestamp_control(const std::string& name, timestamp& timestamp, uint64_t min_timestamp, uint64_t max_timestamp, bool* was_activated, bool* was_released, bool fill_area)
+	bool timestamp_control(const std::string& name, timestamp& timestamp, uint64_t min_timestamp, uint64_t max_timestamp, bool* was_activated, bool* was_released, bool fill_area)
 	{
 		bool result = false;
 		auto cstr = name.c_str();
@@ -216,6 +216,70 @@ namespace vt::widgets
 			}
 			ImGui::EndPopup();
 		}
+		return result;
+	}
+
+	bool tile(const std::string& label, ImVec2 tile_size, ImVec2 image_size, SDL_Texture* image, const std::function<void(const std::string&)> context_menu, const std::function<void(const std::string&)> drag_drop)
+	{
+		bool result{};
+		ImVec2 image_tile_size = ImVec2{ tile_size.x, tile_size.x } * 0.9f;
+
+		auto& style = ImGui::GetStyle();
+		ImGui::TableNextColumn();
+		ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2{});
+		ImTextureID imgui_tex = static_cast<ImTextureID>(image);
+		const char* id = label.c_str();
+		ImGui::PushID(id);
+		bool selected = false;
+		auto text_size = ImVec2{ 0, 2 * ImGui::GetTextLineHeight() };
+		auto selectable_size = tile_size + style.FramePadding + text_size;
+		ImVec2 cpos = ImGui::GetCursorPos() + (selectable_size - image_size - text_size) / 2;
+		
+		ImGui::BeginGroup();
+		ImGui::Selectable("##TileButton", &selected, ImGuiSelectableFlags_AllowOverlap | ImGuiSelectableFlags_AllowDoubleClick, selectable_size);
+		if (ImGui::IsItemHovered() and ImGui::IsMouseDoubleClicked(0))
+		{
+			result = true;
+		}
+		if (drag_drop != nullptr)
+		{
+			std::invoke(drag_drop, label);
+		}
+		auto char_size = ImGui::CalcTextSize("A");
+		auto max_chars = std::floor(text_size.y / char_size.y) * static_cast<size_t>(selectable_size.x / char_size.x);
+		bool is_shortened = strlen(id) > max_chars;
+		std::string short_label = is_shortened ? std::string(id, max_chars) + "..." : label;
+
+		if (is_shortened and ImGui::IsItemHovered(ImGuiHoveredFlags_ForTooltip | ImGuiHoveredFlags_DelayNormal) and ImGui::BeginTooltip())
+		{
+			ImGui::Text("%s", id);
+			ImGui::EndTooltip();
+		}
+
+		if (context_menu != nullptr and ImGui::BeginPopupContextItem("##TileCtxMenu"))
+		{
+			std::invoke(context_menu, label);
+			ImGui::EndPopup();
+		}
+
+		ImGui::SetCursorPos(std::exchange(cpos, ImGui::GetCursorPos()));
+		ImGui::Image(imgui_tex, image_size);
+		ImGui::Dummy({ 0, (image_tile_size.y - image_size.y) / 2.f });
+		//widgets::clipped_text(id, { tile_size.x, text_size.y });
+		//TODO: Text clipping, change widgets::clipped_text into this
+		if (ImGui::BeginTable("##TextContainer", 1, ImGuiTableFlags_NoSavedSettings, { selectable_size.x, 0 }, selectable_size.x))
+		{
+			ImGui::TableNextRow();
+			ImGui::TableNextColumn();
+			ImGui::TextWrapped(short_label.c_str());
+			ImGui::EndTable();
+		}
+		ImGui::EndGroup();
+
+		ImGui::SetCursorPos(cpos);
+		ImGui::PopID();
+		ImGui::PopStyleVar();
+
 		return result;
 	}
 }

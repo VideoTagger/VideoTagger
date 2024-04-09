@@ -19,6 +19,7 @@
 #include <widgets/video_player.hpp>
 #include <widgets/color_picker.hpp>
 #include <widgets/video_browser.hpp>
+#include <widgets/video_group_browser.hpp>
 #include <widgets/theme_customizer.hpp>
 #include <widgets/modal/options.hpp>
 #include "displayed_videos_manager.hpp"
@@ -33,14 +34,22 @@ namespace vt
 		maximized
 	};
 
+	struct app_settings
+	{
+		float thumbnail_size = 72.0f;
+		bool link_start_end_segment = true;
+	};
+
 	struct window_config
 	{
 		//serialized
 		window_state state = window_state::normal;
 		bool show_inspector_window = true;
 		bool show_tag_manager_window = true;
+		bool show_timeline_window = true;
 		bool show_video_player_window = true;
 		bool show_video_browser_window = true;
+		bool show_video_group_browser_window = true;
 
 		//not serialized
 		bool show_options_window = false;
@@ -54,6 +63,7 @@ namespace vt
 		widgets::project_selector project_selector;
 		widgets::video_player player;
 		widgets::video_browser browser;
+		widgets::video_group_browser group_browser;
 		widgets::theme_customizer theme_customizer;
 		widgets::modal::options options;
 		widgets::color_picker color_picker;
@@ -74,6 +84,7 @@ namespace vt
 		std::optional<widgets::selected_segment_data> selected_segment_data;
 		std::optional<widgets::moving_segment_data> moving_segment_data;
 
+		app_settings app_settings;
 		SDL_Window* main_window{};
 		SDL_Renderer* renderer{};
 

@@ -1,7 +1,8 @@
 #pragma once
-#define IMGUI_DEFINE_MATH_OPERATORS
 #include <string>
+#include <functional>
 
+#include <SDL.h>
 #include <imgui.h>
 #include <utils/timestamp.hpp>
 
@@ -21,5 +22,7 @@ namespace vt::widgets
 	extern void centered_text(const char* text, ImVec2 avail_area);
 	extern void clipped_text(const char* text, ImVec2 avail_area);
 
-	extern bool show_timestamp_control(const std::string& name, timestamp& timestamp, uint64_t min_timestamp, uint64_t max_timestamp, bool* was_activated, bool* was_released, bool fill_area = true);
+	extern bool timestamp_control(const std::string& name, timestamp& timestamp, uint64_t min_timestamp, uint64_t max_timestamp, bool* was_activated, bool* was_released, bool fill_area = true);
+	
+	extern bool tile(const std::string& label, ImVec2 tile_size, ImVec2 image_size, SDL_Texture* image, const std::function<void(const std::string&)> context_menu = nullptr, const std::function<void(const std::string&)> drag_drop = nullptr);
 }
