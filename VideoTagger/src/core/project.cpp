@@ -119,6 +119,7 @@ namespace vt
 				videos.get(id)->update_data();
 			}
 
+			ctx_.is_project_dirty = create_group;
 			return project_import_video_result{ true, id, filepath };
 		};
 
