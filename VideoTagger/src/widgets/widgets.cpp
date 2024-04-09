@@ -33,7 +33,7 @@ namespace vt::widgets
 			}
 			else
 			{
-				centered_text("Select a segment to display its properties...", ImGui::GetContentRegionMax());
+				centered_text("Open a video group to display its segments...", ImGui::GetContentRegionMax());
 			}
 			ImGui::PopStyleVar();
 			ImGui::PopID();

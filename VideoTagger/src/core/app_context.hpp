@@ -22,7 +22,7 @@
 #include <widgets/video_group_browser.hpp>
 #include <widgets/theme_customizer.hpp>
 #include <widgets/modal/options.hpp>
-#include "video_group_manager.hpp"
+#include "displayed_videos_manager.hpp"
 #include <utils/json.hpp>
 
 namespace vt
@@ -75,12 +75,12 @@ namespace vt
 		window_config win_cfg;
 		std::unordered_map<std::string, ImFont*> fonts;
 		std::vector<std::filesystem::path> themes;
-		std::vector<std::future<void>> tasks;
 		keybind_storage keybinds;
 
 		std::optional<project> current_project;
 		video_group_id_t current_video_group_id{};
-		video_group_manager group_manager;
+		displayed_videos_manager displayed_videos;
+
 		std::optional<widgets::selected_segment_data> selected_segment_data;
 		std::optional<widgets::moving_segment_data> moving_segment_data;
 

@@ -2,11 +2,12 @@
 #include <string>
 #include <filesystem>
 #include <unordered_map>
-#include <map>
 #include <optional>
+#include <mutex>
+#include <future>
+#include <memory>
 
 #include "keybind_storage.hpp"
-#include "input.hpp"
 #include <tags/tag_storage.hpp>
 #include <tags/tag_timeline.hpp>
 #include <video/video_pool.hpp>
@@ -34,6 +35,13 @@ namespace vt
 		static project_info load_from_file(const std::filesystem::path& filepath);
 	};
 
+	struct project_import_video_result
+	{
+		bool success{};
+		video_id_t video_id{};
+		std::filesystem::path video_path;
+	};
+
 	struct project : public project_info
 	{
 		tag_storage tags;
@@ -43,9 +51,19 @@ namespace vt
 		std::unordered_map<video_group_id_t, video_group> video_groups;
 		keybind_storage keybinds;
 
+		std::vector<std::future<project_import_video_result>> video_import_tasks;
+
+		project() = default;
+		project(const project&) = delete;
+		project(project&&) = default;
+
+		project& operator=(const project&) = delete;
+		project& operator=(project&&) = default;
+
+
 		//TODO: save tags displayed in the timeline in the project file
 
-		bool import_video(const std::filesystem::path& filepath, video_id_t id = 0, bool create_group = true);
+		std::future<project_import_video_result> import_video(const std::filesystem::path& filepath, video_id_t id = 0, bool create_group = true);
 
 		void save() const;
 		void save_as(const std::filesystem::path& filepath);

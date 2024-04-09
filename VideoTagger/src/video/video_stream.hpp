@@ -14,16 +14,14 @@ namespace vt
 	{
 	public:
 		video_stream() = default;
-		//DOESN'T ACTUALLY COPY ANYTHING
-		video_stream(const video_stream&);
+		video_stream(const video_stream&) = delete;
 		video_stream(video_stream&&) = default;
 		~video_stream();
 
-		//DOESN'T ACTUALLY COPY ANYTHING
-		video_stream& operator=(const video_stream&);
+		video_stream& operator=(const video_stream&) = delete;
 		video_stream& operator=(video_stream&&) = default;
 
-		bool open_file(const std::filesystem::path& filepath, SDL_Renderer* renderer);
+		bool open_file(const std::filesystem::path& filepath);
 		void close();
 
 		void set_playing(bool value);
@@ -31,7 +29,8 @@ namespace vt
 		void update(std::chrono::nanoseconds target_timestamp);
 		void seek(std::chrono::nanoseconds target_timestamp);
 
-		[[nodiscard]] SDL_Texture* get_frame();
+		//texture must be in yuv format, have streaming access and with and height the same as the video
+		[[nodiscard]] void get_frame(SDL_Texture* texture);
 
 		[[nodiscard]] bool is_open() const;
 
@@ -47,12 +46,17 @@ namespace vt
 		double fps() const;
 		std::chrono::nanoseconds frame_time() const;
 
-		void get_thumbnail(SDL_Renderer* renderer, SDL_Texture* texture, std::optional<std::chrono::nanoseconds> timestamp = std::nullopt);
+		//texture must be in yuv format, have streaming access and with and height the same as the video
+		void get_thumbnail(SDL_Texture* texture, std::optional<std::chrono::nanoseconds> timestamp = std::nullopt);
+
+		//TODO: should be somewhere in utils
+		static void clear_yuv_texture(SDL_Texture* texture);
 
 	private:
 		video_decoder decoder_;
 
-		SDL_Texture* texture_{};
+		std::optional<video_frame> last_frame;
+		//maybe this is not necessary
 		std::chrono::nanoseconds last_ts_{};
 
 		int width_{};
@@ -61,8 +65,5 @@ namespace vt
 		std::chrono::nanoseconds duration_{};
 
 		bool playing_{};
-
-		void update_texture(const video_frame& frame_data);
-		void clear_texture();
 	};
 }

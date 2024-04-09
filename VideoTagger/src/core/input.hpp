@@ -4,7 +4,6 @@
 #include <memory>
 #include <map>
 #include <SDL.h>
-
 #include "actions/no_action.hpp"
 
 namespace vt

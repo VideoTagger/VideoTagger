@@ -3,7 +3,9 @@
 
 namespace vt
 {
-	video_group::video_group(std::vector<video_info> video_ids) : video_ids_(video_ids) {}
+	video_group::video_group(std::string name, std::vector<video_info> video_ids)
+		: display_name{ std::move(name) }, video_ids_(video_ids)
+	{}
 
 	bool video_group::insert(video_info video_info)
 	{
@@ -18,7 +20,14 @@ namespace vt
 
 	bool video_group::erase(video_id_t video_id)
 	{
-		return false;
+		auto it = find(video_id);
+		if (it == end())
+		{
+			return false;
+		}
+
+		video_ids_.erase(it);
+		return true;
 	}
 
 	bool video_group::contains(video_id_t video_id) const
@@ -116,7 +125,7 @@ namespace vt
 		return true;
 	}
 
-	bool video_pool::open_video(video_id_t video_id, SDL_Renderer* renderer)
+	bool video_pool::open_video(video_id_t video_id)
 	{
 		auto it = videos_.find(video_id);
 		if (it == videos_.end())
@@ -125,7 +134,7 @@ namespace vt
 		}
 
 		video_metadata& video_info = it->second;
-		return video_info.open_video(renderer);
+		return video_info.open_video();
 	}
 
 	bool video_pool::close_video(video_id_t video_id)
@@ -141,13 +150,13 @@ namespace vt
 		return true;
 	}
 
-	std::vector<video_id_t> video_pool::open_group(const video_group& group, SDL_Renderer* renderer)
+	std::vector<video_id_t> video_pool::open_group(const video_group& group)
 	{
 		std::vector<video_id_t> result;
 
 		for (auto& vi : group)
 		{
-			if (!open_video(vi.id, renderer))
+			if (!open_video(vi.id))
 			{
 				result.push_back(vi.id);
 			}
@@ -274,12 +283,12 @@ namespace vt
 		}
 	}
 
-	bool video_pool::video_metadata::update_data(SDL_Renderer* renderer)
+	bool video_pool::video_metadata::update_data()
 	{
 		bool was_open = video.is_open();
 		if (!was_open)
 		{
-			if (!video.open_file(path, renderer))
+			if (!video.open_file(path))
 			{
 				return false;
 			}
@@ -289,7 +298,7 @@ namespace vt
 		height = video.height();
 		duration = video.duration();
 		fps = video.fps();
-		update_thumbnail(renderer);
+		//update_thumbnail(renderer);
 
 		if (!was_open)
 		{
@@ -304,7 +313,7 @@ namespace vt
 		bool was_open = video.is_open();
 		if (!was_open)
 		{
-			if (!video.open_file(path, renderer))
+			if (!video.open_file(path))
 			{
 				return false;
 			}
@@ -313,15 +322,32 @@ namespace vt
 		if (thumbnail != nullptr)
 		{
 			SDL_DestroyTexture(thumbnail);
+			thumbnail = nullptr;
 		}
 
-		thumbnail = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGB888, SDL_TEXTUREACCESS_TARGET, video.width() / 2, video.height() / 2);
-		if (thumbnail == nullptr)
+		SDL_Texture* tmp_texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_YV12, SDL_TEXTUREACCESS_STREAMING, video.width(), video.height());
+		if (tmp_texture == nullptr)
 		{
 			return false;
 		}
+		
+		//TODO: probably should have some max dimensions not just half of video
+		thumbnail = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGB888, SDL_TEXTUREACCESS_TARGET, video.width() / 2, video.height() / 2);
+		if (thumbnail == nullptr)
+		{
+			SDL_DestroyTexture(tmp_texture);
+			return false;
+		}
 
-		video.get_thumbnail(renderer, thumbnail);
+		video.get_thumbnail(tmp_texture);
+
+		SDL_Texture* target = SDL_GetRenderTarget(renderer);
+		SDL_SetRenderTarget(renderer, thumbnail);
+		SDL_RenderCopy(renderer, tmp_texture, NULL, NULL);
+		SDL_RenderPresent(renderer);
+		SDL_SetRenderTarget(renderer, target);
+
+		SDL_DestroyTexture(tmp_texture);
 
 		if (!was_open)
 		{
@@ -331,9 +357,9 @@ namespace vt
 		return true;
 	}
 
-	bool video_pool::video_metadata::open_video(SDL_Renderer* renderer)
+	bool video_pool::video_metadata::open_video()
 	{
-		return video.open_file(path, renderer);
+		return video.open_file(path);
 	}
 
 	void video_pool::video_metadata::close_video()

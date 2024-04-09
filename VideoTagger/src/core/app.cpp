@@ -258,7 +258,7 @@ namespace vt
 			auto* vinfo = ctx_.current_project->videos.get(id);
 			vinfo->is_widget_open = true;
 			ctx_.reset_player_docking = true;
-			ctx_.current_project->videos.open_video(id, ctx_.renderer);
+			ctx_.current_project->videos.open_video(id);
 		};
 		init_options();
 	}
@@ -468,11 +468,7 @@ namespace vt
 				if (it == videos.end())
 				{
 					debug::log("Importing video {}", path.u8string());
-					//TODO: This should be done asynchronously
-					if (!ctx_.current_project->import_video(path))
-					{
-						debug::error("Failed to import {}", path.u8string());
-					}
+					ctx_.current_project->video_import_tasks.push_back(ctx_.current_project->import_video(path));
 				}
 				else
 				{
@@ -1012,7 +1008,7 @@ namespace vt
 			{
 				return;
 			}
-			ctx_.group_manager.set_playing(is_playing);
+			ctx_.displayed_videos.set_playing(is_playing);
 		};
 
 		ctx_.player.callbacks.on_set_looping = [](bool is_looping)
@@ -1026,7 +1022,7 @@ namespace vt
 			{
 				return;
 			}
-			ctx_.group_manager.set_looping(is_looping);
+			ctx_.displayed_videos.set_looping(is_looping);
 		};
 
 		ctx_.player.callbacks.on_set_speed = [](float speed)
@@ -1041,7 +1037,7 @@ namespace vt
 			{
 				return;
 			}
-			ctx_.group_manager.set_speed(speed);
+			ctx_.displayed_videos.set_speed(speed);
 		};
 
 		ctx_.player.callbacks.on_skip = [](int dir)
@@ -1061,7 +1057,7 @@ namespace vt
 			{
 				return;
 			}
-			ctx_.group_manager.seek(ts);
+			ctx_.displayed_videos.seek(ts);
 		};
 
 	}
@@ -1414,16 +1410,36 @@ namespace vt
 
 	void app::draw_main_app()
 	{
+		if (!ctx_.current_project.has_value()) return;
 		draw_menubar();
-		for (auto it = ctx_.tasks.begin(); it != ctx_.tasks.end(); ++it)
+		if (!ctx_.current_project.has_value()) return;
+
 		{
-			auto status = it->wait_for(std::chrono::nanoseconds(0));
-			if (status == std::future_status::ready)
+			auto& tasks = ctx_.current_project->video_import_tasks;
+			for (auto it = tasks.begin(); it != tasks.end();)
 			{
-				it = ctx_.tasks.erase(it);
+				auto status = it->wait_for(std::chrono::nanoseconds(0));
+				if (status == std::future_status::ready)
+				{
+					auto result = it->get();
+					if (!result.success)
+					{
+						debug::error("Failed to import {}", result.video_path.u8string());
+					}
+					else
+					{
+						auto video_data = ctx_.current_project->videos.get(result.video_id);
+						video_data->update_thumbnail(ctx_.renderer);
+					}
+
+					it = tasks.erase(it);
+					continue;
+				}
+
+				++it;
 			}
 		}
-		if (!ctx_.current_project.has_value()) return;
+		
 
 		//TODO: probably should be done somewhere else
 		ctx_.update_active_video_group();
@@ -1454,16 +1470,16 @@ namespace vt
 			{
 				//TODO: probably could be done only when needed instead of on every frame.
 				// Video timeline does the same thing and group duration needs to be calculated
-				data.current_ts = ctx_.group_manager.current_timestamp();
+				data.current_ts = ctx_.displayed_videos.current_timestamp();
 				data.start_ts = std::chrono::nanoseconds{ 0 };
-				data.end_ts = ctx_.group_manager.duration();
-				ctx_.player.update_data(data, ctx_.group_manager.is_playing());
+				data.end_ts = ctx_.displayed_videos.duration();
+				ctx_.player.update_data(data, ctx_.displayed_videos.is_playing());
 			}
 
 			ctx_.player.render();
 		}
 
-		uint64_t vid_id{};
+		/*uint64_t vid_id{};
 		if (ctx_.player.is_visible())
 		{
 			for (auto& [id, vinfo] : ctx_.current_project->videos)
@@ -1473,7 +1489,21 @@ namespace vt
 
 				widgets::draw_video_widget(vid, vinfo.is_widget_open, vid_id++);
 			}
+		}*/
+
+		//TODO: This breaks when there are undocked videos
+		if (ctx_.player.is_visible())
+		{
+			uint64_t vid_id{};
+			for (auto& video_data : ctx_.displayed_videos)
+			{
+				auto pool_data = ctx_.current_project->videos.get(video_data.id);
+				if (!pool_data->is_widget_open) continue;
+
+				widgets::draw_video_widget(*video_data.video, video_data.display_texture, pool_data->is_widget_open, vid_id++);
+			}
 		}
+
 
 		if (ctx_.reset_player_docking)
 		{
@@ -1483,7 +1513,7 @@ namespace vt
 
 		if (ctx_.win_cfg.show_timeline_window)
 		{
-			auto group_duration = ctx_.group_manager.duration();
+			auto group_duration = ctx_.displayed_videos.duration();
 
 			//TODO: Definitely change this!
 			ctx_.timeline_state.tags = &ctx_.current_project->tags;
@@ -1491,22 +1521,24 @@ namespace vt
 			ctx_.timeline_state.sync_tags();
 			ctx_.timeline_state.time_min = timestamp{};
 			ctx_.timeline_state.time_max = timestamp(std::chrono::duration_cast<std::chrono::seconds>(group_duration));
-			ctx_.timeline_state.current_time = timestamp{ std::chrono::duration_cast<std::chrono::seconds>(ctx_.group_manager.current_timestamp()) };
+			ctx_.timeline_state.current_time = timestamp{ std::chrono::duration_cast<std::chrono::seconds>(ctx_.displayed_videos.current_timestamp()) };
 			
 			widgets::draw_timeline_widget(ctx_.timeline_state, ctx_.selected_segment_data, ctx_.moving_segment_data, ctx_.is_project_dirty, 0, ctx_.current_video_group_id != 0, ctx_.win_cfg.show_timeline_window);
 
-			if (ctx_.timeline_state.current_time.seconds_total != std::chrono::duration_cast<std::chrono::seconds>(ctx_.group_manager.current_timestamp()))
+			if (ctx_.timeline_state.current_time.seconds_total != std::chrono::duration_cast<std::chrono::seconds>(ctx_.displayed_videos.current_timestamp()))
 			{
-				ctx_.group_manager.seek(ctx_.timeline_state.current_time.seconds_total);
+				ctx_.displayed_videos.seek(ctx_.timeline_state.current_time.seconds_total);
 			}
 		}
 
 		if (ctx_.win_cfg.show_tag_manager_window)
 		{
-			std::optional<widgets::tag_rename_data> tag_rename;
+			static std::optional<widgets::tag_rename_data> tag_rename;
 			widgets::draw_tag_manager_widget(ctx_.current_project->tags, tag_rename, ctx_.is_project_dirty, ctx_.win_cfg.show_tag_manager_window);
-			if (tag_rename.has_value())
+			if (tag_rename.has_value() and tag_rename->ready)
 			{
+				ctx_.is_project_dirty = true;
+				
 				for (auto& tag_name : ctx_.timeline_state.displayed_tags)
 				{
 					if (tag_name == tag_rename->old_name)
@@ -1514,6 +1546,16 @@ namespace vt
 						tag_name = tag_rename->new_name;
 					}
 				}
+
+				auto node_handle = ctx_.current_project->segments.extract(tag_rename->old_name);
+				if (!node_handle.empty())
+				{
+					node_handle.key() = tag_rename->new_name;
+					ctx_.current_project->segments.insert(std::move(node_handle));
+				}
+
+				//TODO: consider renaming tags in keybinds
+
 				tag_rename.reset();
 			}
 		}

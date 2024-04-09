@@ -15,16 +15,18 @@ namespace vt
 	public:
 		struct video_info
 		{
-			video_id_t id;
-			std::chrono::nanoseconds offset;
+			video_id_t id{};
+			std::chrono::nanoseconds offset{};
 		};
 
 		using container = std::vector<video_info>;
 		using iterator = container::iterator;
 		using const_iterator = container::const_iterator;
 
+		std::string display_name = "#NO_NAME#";
+
 		video_group() = default;
-		explicit video_group(std::vector<video_info> video_infos);
+		video_group(std::string name, std::vector<video_info> video_infos);
 
 		bool insert(video_info video_info);
 		bool erase(video_id_t video_id);
@@ -51,7 +53,13 @@ namespace vt
 	public:
 		struct video_metadata
 		{
+			video_metadata() = default;
+			video_metadata(const video_metadata&) = delete;
+			video_metadata(video_metadata&&) = default;
 			~video_metadata();
+
+			video_metadata& operator=(const video_metadata&) = delete;
+			video_metadata& operator=(video_metadata&&) = default;
 
 			std::filesystem::path path;
 			video_stream video;
@@ -65,10 +73,10 @@ namespace vt
 
 			//TODO: Store video resolution, duration, etc.
 
-			bool update_data(SDL_Renderer* renderer);
+			bool update_data();
 			bool update_thumbnail(SDL_Renderer* renderer);
 
-			bool open_video(SDL_Renderer* renderer);
+			bool open_video();
 			void close_video();
 		};
 
@@ -76,13 +84,20 @@ namespace vt
 		using iterator = container::iterator;
 		using const_iterator = container::const_iterator;
 
+		video_pool() = default;
+		video_pool(const video_pool&) = delete;
+		video_pool(video_pool&&) = default;
+
+		video_pool& operator=(const video_pool&) = delete;
+		video_pool& operator=(video_pool&&) = default;
+
 		bool insert(video_id_t video_id, const std::filesystem::path& video_path);
 		bool erase(video_id_t video_id);
 
-		bool open_video(video_id_t video_id, SDL_Renderer* renderer);
+		bool open_video(video_id_t video_id);
 		bool close_video(video_id_t video_id);
 		//return ids which failed to open
-		std::vector<video_id_t> open_group(const video_group& group, SDL_Renderer* renderer);
+		std::vector<video_id_t> open_group(const video_group& group);
 		//return ids which failed to close (<- is this necessary???)
 		std::vector<video_id_t> close_group(const video_group& group);
 
