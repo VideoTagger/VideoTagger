@@ -1,4 +1,4 @@
-## Getting started
+# Getting started
 ## Downloading the repository
 To download the repository use `git clone --recursive https://github.com/Vexte/VideoTagger`.
 
@@ -6,6 +6,7 @@ If the repository was cloned non-recursively use `git submodule update --init` t
 
 ---
 
+## Setting up the project
 ### Visual Studio (Windows)
 Visual Studio 2019 or 2022 is recommended
 #### Generating project files
