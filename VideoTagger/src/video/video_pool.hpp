@@ -23,8 +23,10 @@ namespace vt
 		using iterator = container::iterator;
 		using const_iterator = container::const_iterator;
 
+		std::string display_name = "#NO_NAME#";
+
 		video_group() = default;
-		explicit video_group(std::vector<video_info> video_infos);
+		video_group(std::string name, std::vector<video_info> video_infos);
 
 		bool insert(video_info video_info);
 		bool erase(video_id_t video_id);

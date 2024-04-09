@@ -83,7 +83,9 @@ namespace vt
 
 	std::future<project_import_video_result> project::import_video(const std::filesystem::path& filepath, video_id_t id, bool create_group)
 	{
-		static std::mutex pool_mutex;
+		static std::mutex videos_mutex;
+		static std::mutex groups_mutex;
+
 		auto task = [filepath, id, create_group, this]() mutable
 		{
 			if (id == 0)
@@ -92,7 +94,7 @@ namespace vt
 			}
 
 			{
-				std::scoped_lock lock(pool_mutex);
+				std::scoped_lock lock(videos_mutex);
 				if (!videos.insert(id, filepath))
 				{
 					return project_import_video_result{ false, 0, filepath };
@@ -105,12 +107,15 @@ namespace vt
 				group_info.id = id;
 
 				auto gid = (ctx_.current_video_group_id == 0) ? utils::uuid::get() : ctx_.current_video_group_id;
-				std::scoped_lock lock(pool_mutex);
-				video_groups[gid].insert(group_info);
+				
+				std::scoped_lock lock(groups_mutex);
+				auto& group = video_groups[gid];
+				group.display_name = filepath.stem().u8string();
+				group.insert(group_info);
 			}
 
 			{
-				std::scoped_lock lock(pool_mutex);
+				std::scoped_lock lock(videos_mutex);
 				videos.get(id)->update_data();
 			}
 
