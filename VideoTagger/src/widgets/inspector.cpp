@@ -48,7 +48,7 @@ namespace vt::widgets
 					{
 						case tag_segment_type::point:
 						{
-							modified_timestamp = show_timestamp_control("Point", ts_start, min_timestamp, max_timestamp, &started_editing, &finished_editing);
+							modified_timestamp = timestamp_control("Point", ts_start, min_timestamp, max_timestamp, &started_editing, &finished_editing);
 							ts_end = ts_start;
 							grab_part = 0b11;
 							grab_position = ts_start;
@@ -62,11 +62,11 @@ namespace vt::widgets
 							//ImGui::Columns(2, nullptr, false);
 							bool start_activated = false;
 							bool start_released = false;
-							bool modified_start = show_timestamp_control("Start", ts_start, min_timestamp, std::max<uint64_t>(0, ts_end.seconds_total.count() - 1), &start_activated, &start_released);
+							bool modified_start = timestamp_control("Start", ts_start, min_timestamp, std::max<uint64_t>(0, ts_end.seconds_total.count() - 1), &start_activated, &start_released);
 							//ImGui::NextColumn();
 							bool end_activated = false;
 							bool end_released = false;
-							bool modified_end = show_timestamp_control("End", ts_end, ts_start.seconds_total.count() + 1, max_timestamp, &end_activated, &end_released);
+							bool modified_end = timestamp_control("End", ts_end, ts_start.seconds_total.count() + 1, max_timestamp, &end_activated, &end_released);
 							std::string name = icons::link + std::string("##LinkTimestamps");
 							if (icon_toggle_button(name.c_str(), link_start_end))
 							{

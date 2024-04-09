@@ -18,12 +18,12 @@ namespace vt::widgets
 		bool active{};
 	};
 	
-	void draw_timeline_widget(timeline_state& state, std::optional<selected_segment_data>& selected_timestamp, std::optional<moving_segment_data>& moving_timestamp, bool& dirty_flag, uint64_t id, bool is_group_open)
+	void draw_timeline_widget(timeline_state& state, std::optional<selected_segment_data>& selected_timestamp, std::optional<moving_segment_data>& moving_timestamp, bool& dirty_flag, uint64_t id, bool is_group_open, bool& open)
 	{
 		std::string title = "Timeline##" + std::to_string(id);
 		ImVec2 default_window_padding = ImGui::GetStyle().WindowPadding;
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2{});
-		if (ImGui::Begin(title.c_str()))
+		if (ImGui::Begin(title.c_str(), &open))
 		{
 			ImGui::PushID(title.c_str());
 			ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, default_window_padding);
@@ -42,9 +42,9 @@ namespace vt::widgets
 		ImGui::PopStyleVar();
 	}
 
-	void draw_tag_manager_widget(tag_storage& tags, std::optional<tag_rename_data>& tag_rename, bool& dirty_flag)
+	void draw_tag_manager_widget(tag_storage& tags, std::optional<tag_rename_data>& tag_rename, bool& dirty_flag, bool& open)
 	{
-		if (ImGui::Begin("Tag Manager", nullptr, ImGuiWindowFlags_NoScrollbar))
+		if (ImGui::Begin("Tag Manager", &open, ImGuiWindowFlags_NoScrollbar))
 		{
 			widgets::tag_manager(tags, tag_rename, dirty_flag);
 		}

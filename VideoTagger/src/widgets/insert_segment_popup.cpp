@@ -23,8 +23,8 @@ namespace vt::widgets
 
 			ImGui::Text("Tag");
 			ImGui::Combo("##TagName", &selected_tag, tags_cstr.data(), static_cast<int>(tags_cstr.size()));
-			widgets::show_timestamp_control("Start", start, min_timestamp, max_timestamp, nullptr, nullptr);
-			widgets::show_timestamp_control("End", end, min_timestamp, max_timestamp, nullptr, nullptr);
+			widgets::timestamp_control("Start", start, min_timestamp, max_timestamp, nullptr, nullptr);
+			widgets::timestamp_control("End", end, min_timestamp, max_timestamp, nullptr, nullptr);
 
 			if (start > end)
 			{
