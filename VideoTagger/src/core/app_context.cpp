@@ -7,7 +7,7 @@ namespace vt
 	{
 		if (!current_project.has_value() or current_video_group_id == 0)
 		{
-			videos_manager.clear();
+			displayed_videos.clear();
 			return;
 		}
 
@@ -26,14 +26,15 @@ namespace vt
 			auto* pool_video_info = video_pool.get(group_video_info.id);
 			if (pool_video_info == nullptr)
 			{
-				if (auto it = videos_manager.find(group_video_info.id); it != videos_manager.end())
+				if (auto it = displayed_videos.find(group_video_info.id); it != displayed_videos.end())
 				{
 					it->video = nullptr;
 				}
 				continue;
 			}
 
-			videos_manager.insert(
+			displayed_videos.insert
+			(
 				group_video_info.id,
 				&pool_video_info->video,
 				group_video_info.offset,
@@ -43,13 +44,13 @@ namespace vt
 			);
 		}
 		
-		videos_manager.update();
+		displayed_videos.update();
 	}
 
 	void app_context::reset_active_video_group()
 	{
-		videos_manager.clear();
-		videos_manager.update();
+		displayed_videos.clear();
+		displayed_videos.update();
 		current_video_group_id = 0;
 	}
 }

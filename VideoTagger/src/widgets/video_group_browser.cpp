@@ -30,7 +30,7 @@ namespace vt::widgets
 				image_size.y = scaled_height;
 			}
 
-			open = widgets::tile(label, tile_size, image_size, image,
+			open |= widgets::tile(label, tile_size, image_size, image,
 			[&](const std::string& label)
 			{
 				//TODO: Temporarily disabled, enable this later
@@ -49,7 +49,7 @@ namespace vt::widgets
 
 		static auto draw_group_tile = [this](video_group& vgroup, video_group_id_t gid, ImVec2 tile_size, bool& open, bool& remove, bool& play)
 		{
-			open = widgets::tile(std::to_string(gid), tile_size, tile_size, nullptr,
+			open |= widgets::tile(std::to_string(gid), tile_size, tile_size, nullptr,
 			[&](const std::string& label)
 			{
 				if (ImGui::MenuItem("Play"))
@@ -167,6 +167,7 @@ namespace vt::widgets
 								{
 									debug::log("Opening group {}", gid);
 									ctx_.current_video_group_id = gid;
+									ctx_.reset_player_docking = true;
 								}
 
 								if (play_group)
@@ -195,7 +196,7 @@ namespace vt::widgets
 						{
 							auto& pool = ctx_.current_project->videos;
 							auto& vgroup = ctx_.current_project->video_groups.at(ctx_.current_video_group_id);
-							for (auto& vinfo : ctx_.videos_manager)
+							for (auto& vinfo : vgroup)
 							{
 								auto metadata = pool.get(vinfo.id);
 								if (metadata == nullptr) continue;
@@ -208,6 +209,7 @@ namespace vt::widgets
 									auto& vgroup = ctx_.current_project->video_groups.at(ctx_.current_video_group_id);
 									vgroup.erase(vinfo.id);
 									ctx_.is_project_dirty = true;
+									break;
 								}
 
 								/*

@@ -15,8 +15,8 @@ namespace vt
 	public:
 		struct video_info
 		{
-			video_id_t id;
-			std::chrono::nanoseconds offset;
+			video_id_t id{};
+			std::chrono::nanoseconds offset{};
 		};
 
 		using container = std::vector<video_info>;
