@@ -20,7 +20,14 @@ namespace vt
 
 	bool video_group::erase(video_id_t video_id)
 	{
-		return false;
+		auto it = find(video_id);
+		if (it == end())
+		{
+			return false;
+		}
+
+		video_ids_.erase(it);
+		return true;
 	}
 
 	bool video_group::contains(video_id_t video_id) const
