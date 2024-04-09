@@ -95,11 +95,6 @@ namespace vt::widgets
 							}
 						}
 						*/
-
-						if (ImGui::IsWindowFocused() and ImGui::IsKeyPressed(ImGuiKey_Escape))
-						{
-							ctx_.current_video_group_id = 0;
-						}
 					}
 					ImGui::EndTable();
 				}
