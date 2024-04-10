@@ -15,6 +15,12 @@ namespace vt::widgets::modal
 		bool is_open = ImGui::BeginPopupModal(id.c_str(), nullptr, flags);
 		ImGui::PopStyleVar(2);
 
+		//TODO: This should be temporary, remove when this becomes a class
+		if (ImGui::IsWindowAppearing())
+		{
+			group_name.clear();
+		}
+
 		if (is_open)
 		{
 			std::string name_id = "##Input" + std::string(id);

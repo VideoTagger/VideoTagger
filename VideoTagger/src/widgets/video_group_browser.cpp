@@ -88,6 +88,9 @@ namespace vt::widgets
 		};
 
 		auto& style = ImGui::GetStyle();
+		bool open_create_group_popup{};
+		//TODO: This should be inside the payload, not here
+		static std::vector<video_id_t> dragged_videos;
 
 		if (ImGui::Begin("Video Group Browser", &is_open, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse))
 		{
@@ -118,7 +121,7 @@ namespace vt::widgets
 
 				if (ImGui::Button("Add New Group"))
 				{
-					ImGui::OpenPopup("Create New Group");
+					open_create_group_popup = true;
 				}
 				ImGui::SameLine();
 				widgets::help_marker("This is temporary");
@@ -229,16 +232,18 @@ namespace vt::widgets
 						}
 						ImGui::EndTable();
 					}
-					if (ctx_.current_video_group_id != 0)
+
+					ImRect inner_rect = ImGui::GetCurrentWindow()->InnerRect;
+					if (ImGui::BeginDragDropTargetCustom(inner_rect, ImGui::GetID("GroupDragDropPanel")))
 					{
-						ImRect inner_rect = ImGui::GetCurrentWindow()->InnerRect;
-						if (ImGui::BeginDragDropTargetCustom(inner_rect, ImGui::GetID("GroupDragDropPanel")))
+						auto payload = utils::drag_drop::get_payload<video_id_t>("Video");
+						if (payload.has_value())
 						{
-							auto payload = utils::drag_drop::get_payload<video_id_t>("Video");
-							if (payload.has_value())
+							video_group::video_info vinfo;
+							vinfo.id = *payload;
+
+							if (ctx_.current_video_group_id != 0)
 							{
-								video_group::video_info vinfo;
-								vinfo.id = *payload;
 								auto& vgroup = ctx_.current_project->video_groups.at(ctx_.current_video_group_id);
 								if (!vgroup.contains(vinfo.id))
 								{
@@ -247,8 +252,13 @@ namespace vt::widgets
 									debug::log("Added video with id: {} to group with id: {}", vinfo.id, ctx_.current_video_group_id);
 								}
 							}
-							ImGui::EndDragDropTarget();
+							else
+							{
+								dragged_videos.push_back(vinfo.id);
+								open_create_group_popup = true;
+							}
 						}
+						ImGui::EndDragDropTarget();
 					}
 					ImGui::EndTable();
 				}
@@ -259,6 +269,11 @@ namespace vt::widgets
 			}
 			
 			static std::string group_name;
+			if (open_create_group_popup)
+			{
+				ImGui::OpenPopup("Create New Group");
+			}
+
 			if (widgets::modal::create_group_popup("Create New Group", group_name))
 			{
 				auto id = utils::uuid::get();
@@ -266,9 +281,17 @@ namespace vt::widgets
 				auto [it, inserted] = ctx_.current_project->video_groups.insert({ id, video_group{} });
 				if (inserted)
 				{
-					it->second.display_name = group_name;
+					auto& group = it->second;
+					group.display_name = group_name;
+					for (auto& id : dragged_videos)
+					{
+						video_group::video_info vinfo;
+						vinfo.id = id;
+						group.insert(vinfo);
+					}
 					ctx_.is_project_dirty = true;
 				}
+				dragged_videos.clear();
 				group_name.clear();
 			}
 		}
