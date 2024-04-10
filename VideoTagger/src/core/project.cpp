@@ -197,6 +197,7 @@ namespace vt
 			{
 				nlohmann::ordered_json json_group;
 				json_group["id"] = id;
+				json_group["name"] = group.display_name;
 				auto& group_videos = json_group["videos"];
 				group_videos = nlohmann::json::array();
 				for (auto& video : group)
@@ -333,6 +334,11 @@ namespace vt
 					{
 						debug::error("Project's video group doesn't contain id, skipping...");
 						continue;
+					}
+
+					if (group.contains("name"))
+					{
+						vgroup.display_name = group["name"];
 					}
 
 					video_group_id_t id = group["id"];
