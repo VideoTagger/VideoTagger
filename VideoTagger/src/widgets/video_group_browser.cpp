@@ -4,6 +4,7 @@
 #include <core/debug.hpp>
 #include <core/app_context.hpp>
 #include <utils/drag_drop.hpp>
+#include "modal/create_group_popup.hpp"
 #include "controls.hpp"
 
 namespace vt::widgets
@@ -117,10 +118,7 @@ namespace vt::widgets
 
 				if (ImGui::Button("Add New Group"))
 				{
-					auto id = utils::uuid::get();
-					debug::log("Added empty vid group with id: {}", id);
-					ctx_.current_project->video_groups.insert({ id, video_group{} });
-					ctx_.is_project_dirty = true;
+					ImGui::OpenPopup("Create New Group");
 				}
 				ImGui::SameLine();
 				widgets::help_marker("This is temporary");
@@ -258,6 +256,20 @@ namespace vt::widgets
 			else
 			{
 				widgets::centered_text("Add groups to display them here...", ImGui::GetContentRegionMax());
+			}
+			
+			static std::string group_name;
+			if (widgets::modal::create_group_popup("Create New Group", group_name))
+			{
+				auto id = utils::uuid::get();
+				debug::log("Added empty vid group with id: {}", id);
+				auto [it, inserted] = ctx_.current_project->video_groups.insert({ id, video_group{} });
+				if (inserted)
+				{
+					it->second.display_name = group_name;
+					ctx_.is_project_dirty = true;
+				}
+				group_name.clear();
 			}
 		}
 		ImGui::End();

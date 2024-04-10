@@ -3,7 +3,7 @@
 
 namespace vt::widgets::modal
 {
-	bool create_group_popup(const std::string& id, std::string& group_name, int& selected_action)
+	bool create_group_popup(const std::string& id, std::string& group_name)
 	{
 		bool result{};
 
@@ -24,15 +24,12 @@ namespace vt::widgets::modal
 			ImGui::Dummy(style.ItemSpacing);
 			if (ImGui::Button("Create"))
 			{
-				selected_action = 0;
 				result = true;
 				ImGui::CloseCurrentPopup();
 			}
 			ImGui::SameLine();
 			if (ImGui::Button("Cancel") or ImGui::IsKeyPressed(ImGuiKey_Escape, false))
 			{
-				selected_action = 1;
-				result = true;
 				ImGui::CloseCurrentPopup();
 			}
 			ImGui::EndPopup();
