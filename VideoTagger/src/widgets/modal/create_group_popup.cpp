@@ -15,8 +15,10 @@ namespace vt::widgets::modal
 		bool is_open = ImGui::BeginPopupModal(id.c_str(), nullptr, flags);
 		ImGui::PopStyleVar(2);
 
+		bool is_appearing = ImGui::IsWindowAppearing();
+
 		//TODO: This should be temporary, remove when this becomes a class
-		if (ImGui::IsWindowAppearing())
+		if (is_appearing)
 		{
 			group_name.clear();
 		}
@@ -24,7 +26,13 @@ namespace vt::widgets::modal
 		if (is_open)
 		{
 			std::string name_id = "##Input" + std::string(id);
+			
 			ImGui::Text("Group Name");
+
+			if (is_appearing)
+			{
+				ImGui::SetKeyboardFocusHere();
+			}
 			ImGui::InputText(name_id.c_str(), &group_name);
 
 			ImGui::Dummy(style.ItemSpacing);
