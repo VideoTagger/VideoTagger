@@ -49,7 +49,7 @@ namespace vt::widgets
 
 		static auto draw_group_tile = [this](video_group& vgroup, video_group_id_t gid, ImVec2 tile_size, bool& open, bool& remove, bool& play)
 		{
-			open |= widgets::tile(std::to_string(gid), tile_size, tile_size, nullptr,
+			open |= widgets::tile(vgroup.display_name, tile_size, tile_size, nullptr,
 			[&](const std::string& label)
 			{
 				if (ImGui::MenuItem("Play"))
@@ -126,7 +126,7 @@ namespace vt::widgets
 				widgets::help_marker("This is temporary");
 				ImGui::Separator();
 
-				if (ImGui::BeginTable("##VideoBrowser", 2, ImGuiTableFlags_SizingStretchProp| ImGuiTableFlags_BordersInnerV))
+				if (ImGui::BeginTable("##VideoBrowser", 2, ImGuiTableFlags_SizingStretchProp| ImGuiTableFlags_BordersInnerV | ImGuiTableFlags_Resizable))
 				{
 					ImGui::TableSetupColumn(nullptr, 0, 0.20f);
 					ImGui::TableSetupColumn(nullptr, 0, 0.80f);
@@ -137,7 +137,7 @@ namespace vt::widgets
 						draw_group_tab("All Groups", 0);
 						for (const auto& [gid, group] : ctx_.current_project->video_groups)
 						{
-							std::string group_name = std::to_string(gid);
+							std::string group_name = group.display_name;
 							draw_group_tab(group_name, gid);
 						}
 						ImGui::EndChild();
