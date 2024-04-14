@@ -219,6 +219,33 @@ namespace vt::widgets
 		return result;
 	}
 
+	extern bool search_bar(const char* label, const char* hint, std::string& buffer, float width, bool enable_button, ImGuiInputTextFlags flags)
+	{
+		bool empty = buffer.empty();
+		bool result = !empty;
+		if (width == 0)
+		{
+			width = ImGui::GetContentRegionAvail().x;
+		}
+
+		ImGui::PushID(label);
+		float text_width = ImGui::GetTextLineHeight() + ImGui::GetStyle().FramePadding.x * 2;
+		ImGui::SetNextItemWidth(width - text_width);
+		ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2{});
+		ImGui::BeginGroup();
+		result &= ImGui::InputTextWithHint(label, hint, &buffer, flags);
+
+		ImGui::SameLine();
+		if (!enable_button or empty) ImGui::BeginDisabled();
+		result |= ImGui::Button(icons::search, { text_width, 0 });
+		if (!enable_button or empty) ImGui::EndDisabled();
+		ImGui::PopStyleVar();
+		ImGui::EndGroup();
+		ImGui::PopID();
+
+		return result;
+	}
+
 	bool tile(const std::string& label, ImVec2 tile_size, ImVec2 image_size, SDL_Texture* image, const std::function<void(const std::string&)> context_menu, const std::function<void(const std::string&)> drag_drop)
 	{
 		bool result{};

@@ -24,7 +24,7 @@ namespace vt
 		using iterator = container::iterator;
 		using const_iterator = container::const_iterator;
 
-		std::string display_name = "#NO_NAME#";
+		std::string display_name;
 
 		video_group() = default;
 		video_group(std::string name, std::vector<video_info> video_infos);

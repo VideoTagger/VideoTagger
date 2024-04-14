@@ -5,6 +5,7 @@
 #include "controls.hpp"
 #include "icons.hpp"
 #include <core/app_context.hpp>
+#include <utils/drag_drop.hpp>
 
 namespace vt::widgets
 {
@@ -198,18 +199,34 @@ namespace vt::widgets
 
 			//ImGui::TableSetupColumn(nullptr, ImGuiTableColumnFlags_WidthStretch);
 			//ImGui::TableSetupColumn(nullptr, ImGuiTableColumnFlags_WidthFixed);
-			if (ImGui::SmallButton("Expand All"))
+			static std::string filter;
+			if (ImGui::IsWindowAppearing())
+			{
+				filter.clear();
+			}
+
+			ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2{});
+			if (icon_button(icons::add))
+			{
+				open_add_tag_popup = true;
+			}
+			ImGui::SameLine();
+			search_bar("##VideoGroupBrowserSearch", "Search...", filter, ImGui::GetContentRegionAvail().x - 2 * (ImGui::CalcTextSize(icons::toggle_less).x + 2 * style.FramePadding.x));
+			ImGui::SameLine();
+			if (icon_button(icons::toggle_more))
 			{
 				update_state = true;
 				update_all = true;
 			}
 			ImGui::SameLine();
-			if (ImGui::SmallButton("Collapse All"))
+			ImGui::PopStyleVar();
+			if (icon_button(icons::toggle_less))
 			{
 				update_state = false;
 				update_all = true;
 			}
 			ImGui::Separator();
+
 			//ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2{});
 			bool is_scrollable_list_open = ImGui::BeginChild("##ScrollableTagList", ImGui::GetContentRegionAvail() - button_size - ImVec2{ 0, style.ItemSpacing.y + style.FramePadding.y });
 			
@@ -228,7 +245,6 @@ namespace vt::widgets
 
 					//ImGui::TableNextColumn();
 					ImGui::PushID(id++);
-					
 					/*
 					if (icon_button(icons::close))
 					{
@@ -241,6 +257,7 @@ namespace vt::widgets
 					*/
 					auto color = ImGui::ColorConvertU32ToFloat4(tag.color);
 					ImGui::SetCursorPosX(ImGui::GetCursorPosX() + style.ItemSpacing.x * 0.5f);
+					ImGui::AlignTextToFramePadding();
 					ImGui::TextColored(color, icons::label);
 					ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2{});
 					ImGui::SameLine();
@@ -257,6 +274,15 @@ namespace vt::widgets
 					bool node_open = ImGui::TreeNodeEx("##TagManagerNode", node_flags);
 					ImGui::PopStyleColor();
 					ImGui::PopStyleVar();
+
+					if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_SourceNoHoldToOpenOthers))
+					{
+						utils::drag_drop::set_payload("Tag", tag.name.c_str());
+						ImGui::TextColored(color, icons::label);
+						ImGui::SameLine();
+						ImGui::TextUnformatted(tag.name.c_str());
+						ImGui::EndDragDropSource();
+					}
 
 					bool delete_tag = false;
 					if (ImGui::BeginPopupContextItem("##TagCtxMenu"))
@@ -276,9 +302,9 @@ namespace vt::widgets
 					auto icon = node_open ? icons::expand_less : icons::expand_more;
 
 					ImGui::SameLine(ImGui::GetTreeNodeToLabelSpacing());
-					ImGui::Text(tag.name.c_str());
+					ImGui::TextUnformatted(tag.name.c_str());
 					ImGui::SameLine(ImGui::GetContentRegionMax().x - style.ItemSpacing.x - ImGui::CalcTextSize(icon).x);
-					ImGui::Text(icon);
+					ImGui::TextUnformatted(icon);
 
 					if (node_open)
 					{
@@ -347,10 +373,12 @@ namespace vt::widgets
 			ImGui::EndChild();
 
 			//ImGui::Dummy(ImGui::GetStyle().ItemSpacing);
+			/*
 			if (ImGui::Button("Add Tag", button_size))
 			{
 				open_add_tag_popup = true;
 			}
+			*/
 			
 			//ImGui::EndTable();
 		}

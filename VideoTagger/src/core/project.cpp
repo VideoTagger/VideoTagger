@@ -137,14 +137,7 @@ namespace vt
 		project["name"] = name;
 
 		auto& json_tags = json["tags"];
-		json_tags = nlohmann::json::array();
-		for (auto& tag : tags)
-		{
-			nlohmann::ordered_json json_tag_data;
-			json_tag_data["name"] = tag.name;
-			json_tag_data["color"] = utils::color::to_string(tag.color);
-			json_tags.push_back(json_tag_data);
-		}
+		json_tags = tags;
 
 		auto& json_segments = json["segments"];
 		json_segments = nlohmann::json::array();
@@ -278,16 +271,7 @@ namespace vt
 
 			if (json.contains("tags") and json.at("tags").is_array())
 			{
-				for (auto& tag_data : json["tags"])
-				{
-					auto [tag_it, success] = result.tags.insert(tag_data["name"]);
-					auto col_str = tag_data["color"].get<std::string>();
-					uint32_t color{};
-					if (utils::color::parse_string(col_str, color))
-					{
-						tag_it->color = color;
-					}
-				}
+				result.tags = json["tags"];
 			}
 
 			if (json.contains("segments") and json.at("segments").is_array())
@@ -382,16 +366,21 @@ namespace vt
 						continue;
 					}
 
-					if (group.contains("name"))
-					{
-						vgroup.display_name = group["name"];
-					}
 
 					video_group_id_t id = group["id"];
 					if (!group.contains("videos") or !json["videos"].is_array())
 					{
 						debug::error("Project's video group's videos format was invalid, skipping...");
 						continue;
+					}
+					
+					if (group.contains("name"))
+					{
+						vgroup.display_name = group["name"];
+					}
+					else
+					{
+						vgroup.display_name = std::to_string(id);
 					}
 
 					const auto& group_videos = group["videos"];

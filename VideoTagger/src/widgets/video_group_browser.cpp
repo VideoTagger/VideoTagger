@@ -5,6 +5,7 @@
 #include <core/app_context.hpp>
 #include <utils/drag_drop.hpp>
 #include "modal/create_group_popup.hpp"
+#include "icons.hpp"
 #include "controls.hpp"
 
 namespace vt::widgets
@@ -48,23 +49,29 @@ namespace vt::widgets
 			});
 		};
 
+		static auto group_ctx_menu = [](bool& open, bool& remove, bool& play)
+		{
+			if (ImGui::MenuItem("Play"))
+			{
+				play = true;
+			}
+			if (ImGui::MenuItem("Open"))
+			{
+				open = true;
+			}
+			if (ImGui::MenuItem("Remove"))
+			{
+				remove = true;
+			}
+		};
+
 		static auto draw_group_tile = [this](video_group& vgroup, video_group_id_t gid, ImVec2 tile_size, bool& open, bool& remove, bool& play)
 		{
+			ImGui::PushID((void*)gid);
 			open |= widgets::tile(vgroup.display_name, tile_size, tile_size, nullptr,
 			[&](const std::string& label)
 			{
-				if (ImGui::MenuItem("Play"))
-				{
-					play = true;
-				}
-				if (ImGui::MenuItem("Open"))
-				{
-					open = true;
-				}
-				if (ImGui::MenuItem("Remove"))
-				{
-					remove = true;
-				}
+				group_ctx_menu(open, remove, play);
 			},
 			[&](const std::string& label)
 			{
@@ -79,12 +86,13 @@ namespace vt::widgets
 						{
 							vgroup.insert(vinfo);
 							ctx_.is_project_dirty = true;
-							debug::log("Added video with id: {} to group with id: {}", vinfo.id, ctx_.current_video_group_id);
+							debug::log("Added video with id: {} to group with id: {}", vinfo.id, current_video_group);
 						}
 					}
 					ImGui::EndDragDropTarget();
 				}
 			});
+			ImGui::PopID();
 		};
 
 		auto& style = ImGui::GetStyle();
@@ -107,39 +115,156 @@ namespace vt::widgets
 					columns = 1;
 				}
 
-				static auto draw_group_tab = [&style](const std::string& group_name, video_group_id_t gid)
+				static auto draw_group_tab = [&style, this](const std::string& group_name, video_group_id_t gid, bool& open, bool& remove, bool& play)
 				{
-					bool inactive = ctx_.current_video_group_id != gid;
+					bool inactive = current_video_group != gid;
 
 					if (inactive) ImGui::PushStyleColor(ImGuiCol_Text, style.Colors[ImGuiCol_TextDisabled]);
 					if (ImGui::TreeNodeEx(group_name.c_str(), ImGuiTreeNodeFlags_SpanFullWidth | ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_NoTreePushOnOpen | ImGuiTreeNodeFlags_Leaf) and ImGui::IsItemClicked())
 					{
-						ctx_.current_video_group_id = gid;
+						current_video_group = gid;
 					}
 					if (inactive) ImGui::PopStyleColor();
+
+					if (gid != 0)
+					{
+						//TODO: This is duplicated in 2 places
+						if (ImGui::BeginDragDropTarget())
+						{
+							auto payload = utils::drag_drop::get_payload<video_id_t>("Video");
+							if (payload.has_value())
+							{
+								video_group::video_info vinfo;
+								vinfo.id = *payload;
+								auto& groups = ctx_.current_project->video_groups;
+								auto it = groups.find(gid);
+
+								if (it != groups.end() and !it->second.contains(vinfo.id))
+								{
+									it->second.insert(vinfo);
+									ctx_.is_project_dirty = true;
+									debug::log("Added video with id: {} to group with id: {}", vinfo.id, current_video_group);
+								}
+							}
+							ImGui::EndDragDropTarget();
+						}
+
+						if (ImGui::BeginPopupContextItem())
+						{
+							group_ctx_menu(open, remove, play);
+							ImGui::EndPopup();
+						}
+					}
 				};
 
-				if (ImGui::Button("Add New Group"))
-				{
-					open_create_group_popup = true;
-				}
-				ImGui::SameLine();
-				widgets::help_marker("This is temporary");
-				ImGui::Separator();
-
-				if (ImGui::BeginTable("##VideoBrowser", 2, ImGuiTableFlags_SizingStretchProp| ImGuiTableFlags_BordersInnerV | ImGuiTableFlags_Resizable))
+				if (ImGui::BeginTable("##VideoGroupBrowser", 2, ImGuiTableFlags_SizingStretchProp | ImGuiTableFlags_BordersInner | ImGuiTableFlags_Resizable))
 				{
 					ImGui::TableSetupColumn(nullptr, 0, 0.20f);
 					ImGui::TableSetupColumn(nullptr, 0, 0.80f);
 
 					ImGui::TableNextColumn();
+					
+					ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize(icons::add).x);
+					if (icon_button(icons::add))
+					{
+						open_create_group_popup = true;
+					}
+					ImGui::TableNextColumn();
+
+					static std::string filter;
+					if (ImGui::IsWindowAppearing())
+					{
+						filter.clear();
+					}
+
+					ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2{});
+					bool can_back_out = current_video_group != 0;
+					if (!can_back_out) ImGui::BeginDisabled();
+					if (icon_button(icons::back))
+					{
+						current_video_group = 0;
+					}
+					if (!can_back_out) ImGui::EndDisabled();
+					ImGui::SameLine();
+					search_bar("##VideoGroupBrowserSearch", "Search...", filter);
+					ImGui::PopStyleVar();
+
+					ImGui::TableNextRow();
+					ImGui::TableNextColumn();
+
+					bool open{};
+					bool remove{};
+					bool play{};
+
+					draw_group_tab("Show All Groups", 0, open, remove, play);
+					ImGui::Separator();
+
 					if (ImGui::BeginChild("##VideoBrowserGroupTabs"))
 					{
-						draw_group_tab("All Groups", 0);
 						for (const auto& [gid, group] : ctx_.current_project->video_groups)
 						{
+							open = false;
+							remove = false;
+							play = false;
+
 							std::string group_name = group.display_name;
-							draw_group_tab(group_name, gid);
+							draw_group_tab(group_name, gid, open, remove, play);
+
+							//TODO: Refactor this so this isn't duplicated in 2 places
+							if (remove)
+							{
+								ctx_.is_project_dirty = true;
+								ctx_.current_project->video_groups.erase(gid);
+								if (current_video_group = gid)
+								{
+									current_video_group = 0;
+								}
+								break;
+							}
+
+							if (open)
+							{
+								debug::log("Opening group {}", gid);
+								current_video_group = gid;
+								ctx_.reset_player_docking = true;
+							}
+
+							if (play)
+							{
+								auto& pool = ctx_.current_project->videos;
+								ctx_.current_video_group_id = gid;
+
+								for (auto& vinfo : group)
+								{
+									auto metadata = pool.get(vinfo.id);
+									if (metadata == nullptr) continue;
+
+									if (!metadata->is_widget_open)
+									{
+										debug::log("Opening video {}", metadata->path.u8string());
+										if (on_open_video != nullptr)
+										{
+											std::invoke(on_open_video, vinfo.id);
+										}
+									}
+								}
+							}
+						}
+
+						//TODO: This is also duplicated below
+						ImRect inner_rect = ImGui::GetCurrentWindow()->InnerRect;
+						if (ImGui::BeginDragDropTargetCustom(inner_rect, ImGui::GetID("TabsDragDropPanel")))
+						{
+							auto payload = utils::drag_drop::get_payload<video_id_t>("Video");
+							if (payload.has_value())
+							{
+								video_group::video_info vinfo;
+								vinfo.id = *payload;
+
+								dragged_videos.push_back(vinfo.id);
+								open_create_group_popup = true;
+							}
+							ImGui::EndDragDropTarget();
 						}
 						ImGui::EndChild();
 					}
@@ -148,7 +273,7 @@ namespace vt::widgets
 					if (ImGui::BeginTable("##VideoBrowserBody", columns, ImGuiTableFlags_ScrollY | ImGuiTableFlags_SizingFixedSame, ImGui::GetContentRegionMax()))
 					{
 						ImGui::TableNextRow();
-						if (ctx_.current_video_group_id == 0)
+						if (current_video_group == 0)
 						{
 							for (auto& [gid, group] : ctx_.current_project->video_groups)
 							{
@@ -161,13 +286,17 @@ namespace vt::widgets
 								{
 									ctx_.is_project_dirty = true;
 									ctx_.current_project->video_groups.erase(gid);
+									if (current_video_group = gid)
+									{
+										current_video_group = 0;
+									}
 									break;
 								}
 
 								if (open_group)
 								{
 									debug::log("Opening group {}", gid);
-									ctx_.current_video_group_id = gid;
+									current_video_group = gid;
 									ctx_.reset_player_docking = true;
 								}
 
@@ -196,7 +325,7 @@ namespace vt::widgets
 						else
 						{
 							auto& pool = ctx_.current_project->videos;
-							auto& vgroup = ctx_.current_project->video_groups.at(ctx_.current_video_group_id);
+							auto& vgroup = ctx_.current_project->video_groups.at(current_video_group);
 							for (auto& vinfo : vgroup)
 							{
 								auto metadata = pool.get(vinfo.id);
@@ -207,7 +336,7 @@ namespace vt::widgets
 								draw_video_tile(*metadata, tile_size, open_video, remove_video, metadata->thumbnail);
 								if (remove_video)
 								{
-									auto& vgroup = ctx_.current_project->video_groups.at(ctx_.current_video_group_id);
+									auto& vgroup = ctx_.current_project->video_groups.at(current_video_group);
 									vgroup.erase(vinfo.id);
 									ctx_.is_project_dirty = true;
 									break;
@@ -224,16 +353,16 @@ namespace vt::widgets
 								}
 								*/
 
-								if (ImGui::IsWindowFocused() and ImGui::IsKeyPressed(ImGuiKey_Escape))
+								if (ImGui::IsWindowHovered() and ImGui::IsKeyPressed(ImGuiKey_Escape))
 								{
-									ctx_.current_video_group_id = 0;
+									current_video_group = 0;
 								}
 							}
 						}
 						ImGui::EndTable();
 					}
 
-					ImRect inner_rect = ImGui::GetCurrentWindow()->InnerRect;
+					ImRect inner_rect = ImGui::TableGetCellBgRect(ImGui::GetCurrentTable(), ImGui::TableGetColumnIndex());
 					if (ImGui::BeginDragDropTargetCustom(inner_rect, ImGui::GetID("GroupDragDropPanel")))
 					{
 						auto payload = utils::drag_drop::get_payload<video_id_t>("Video");
@@ -242,14 +371,14 @@ namespace vt::widgets
 							video_group::video_info vinfo;
 							vinfo.id = *payload;
 
-							if (ctx_.current_video_group_id != 0)
+							if (current_video_group != 0)
 							{
-								auto& vgroup = ctx_.current_project->video_groups.at(ctx_.current_video_group_id);
+								auto& vgroup = ctx_.current_project->video_groups.at(current_video_group);
 								if (!vgroup.contains(vinfo.id))
 								{
 									vgroup.insert(vinfo);
 									ctx_.is_project_dirty = true;
-									debug::log("Added video with id: {} to group with id: {}", vinfo.id, ctx_.current_video_group_id);
+									debug::log("Added video with id: {} to group with id: {}", vinfo.id, current_video_group);
 								}
 							}
 							else
@@ -277,7 +406,7 @@ namespace vt::widgets
 			if (widgets::modal::create_group_popup("Create New Group", group_name))
 			{
 				auto id = utils::uuid::get();
-				debug::log("Added empty vid group with id: {}", id);
+				debug::log("Added video group with id: {}", id);
 				auto [it, inserted] = ctx_.current_project->video_groups.insert({ id, video_group{} });
 				if (inserted)
 				{

@@ -50,5 +50,7 @@ namespace vt::utils
 		static dialog_results get_files(const std::filesystem::path& start_dir = {}, const dialog_filters& filters = {});
 
 		static std::string normalize(const std::filesystem::path& filepath);
+
+		static void open_in_explorer(const std::filesystem::path& path);
 	};
 }

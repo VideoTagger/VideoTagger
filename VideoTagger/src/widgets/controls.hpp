@@ -24,5 +24,6 @@ namespace vt::widgets
 
 	extern bool timestamp_control(const std::string& name, timestamp& timestamp, uint64_t min_timestamp, uint64_t max_timestamp, bool* was_activated, bool* was_released, bool fill_area = true);
 	
+	extern bool search_bar(const char* label, const char* hint, std::string& buffer, float width = 0.0f, bool enable_button = true, ImGuiInputTextFlags flags = ImGuiInputTextFlags_AutoSelectAll | ImGuiInputTextFlags_EscapeClearsAll | ImGuiInputTextFlags_EnterReturnsTrue);
 	extern bool tile(const std::string& label, ImVec2 tile_size, ImVec2 image_size, SDL_Texture* image, const std::function<void(const std::string&)> context_menu = nullptr, const std::function<void(const std::string&)> drag_drop = nullptr);
 }

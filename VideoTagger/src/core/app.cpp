@@ -1214,14 +1214,41 @@ namespace vt
 				}
 				ImGui::Separator();
 				{
-					std::string menu_name = fmt::format("{} Show In Explorer", icons::folder);
-					if (ImGui::MenuItem(menu_name.c_str()))
 					{
-						auto path = std::filesystem::absolute(ctx_.current_project->path.parent_path()).u8string();
-						if (!path.empty())
+						std::string menu_name = fmt::format("{} Show In Explorer", icons::folder);
+						if (ImGui::MenuItem(menu_name.c_str()))
 						{
-							std::string uri = fmt::format("file://{}", path);
-							SDL_OpenURL(uri.c_str());
+							auto path = std::filesystem::absolute(ctx_.current_project->path.parent_path()).u8string();
+							if (!path.empty())
+							{
+								utils::filesystem::open_in_explorer(path);
+							}
+						}
+					}
+
+					{
+						std::string menu_name = fmt::format("{} Import / Export", icons::import_export);
+						if (ImGui::BeginMenu(menu_name.c_str()))
+						{
+							if (ImGui::MenuItem("Import Tags", nullptr, nullptr, false))
+							{
+								//TODO: Add import tags popup which shows an option whether to merge or replace tags
+							}
+
+							ImGui::Separator();
+							if (ImGui::MenuItem("Export Tags"))
+							{
+								utils::dialog_filter filter{ "VideoTagger Tags", "vttags"};
+								auto result = utils::filesystem::save_file({}, { filter }, ctx_.current_project->name);
+								if (result)
+								{
+									nlohmann::ordered_json json;
+									json["version"] = ctx_.current_project->version;
+									json["tags"] = ctx_.current_project->tags;
+									utils::json::write_to_file(json, result.path);
+								}
+							}
+							ImGui::EndMenu();
 						}
 					}
 				}

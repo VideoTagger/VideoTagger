@@ -97,4 +97,14 @@ namespace vt::utils
 #endif
 		return result;
 	}
+
+	void filesystem::open_in_explorer(const std::filesystem::path& path)
+	{
+		std::string uri = fmt::format("file://{}", path.u8string());
+		std::thread thread([uri]()
+		{
+			SDL_OpenURL(uri.c_str());
+		});
+		thread.detach();
+	}
 }

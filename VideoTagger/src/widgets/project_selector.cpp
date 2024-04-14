@@ -191,21 +191,20 @@ namespace vt::widgets
 		{
 			if (is_valid)
 			{
-				std::string menu_name = std::string(icons::folder) + " Open Containing Folder";
+				std::string menu_name = fmt::format("{} Show In Explorer", icons::folder);
 				if (ImGui::MenuItem(menu_name.c_str()))
 				{
 					auto path = std::filesystem::absolute(project.path.parent_path()).u8string();
 					if (!path.empty())
 					{
-						std::string uri = fmt::format("file://{}", path);
-						SDL_OpenURL(uri.c_str());
+						utils::filesystem::open_in_explorer(path);
 					}
 				}
 			}
 
 			ImGui::Separator();
 			{
-				std::string menu_name = std::string(icons::visibility_off) + " Remove From List";
+				std::string menu_name = fmt::format("{} Remove From List", icons::visibility_off);
 				if (ImGui::MenuItem(menu_name.c_str()))
 				{
 					projects_.erase(std::find(projects_.begin(), projects_.end(), project));
@@ -213,7 +212,7 @@ namespace vt::widgets
 				}
 			}
 			{
-				std::string menu_name = std::string(icons::delete_) + " Delete";
+				std::string menu_name = fmt::format("{} Delete", icons::delete_);
 				if (std::filesystem::is_regular_file(project.path) and project.path.extension() == std::string(".") + project::extension and ImGui::MenuItem(menu_name.c_str()))
 				{
 					const SDL_MessageBoxButtonData buttons[] = {
@@ -346,9 +345,7 @@ namespace vt::widgets
 			ImGui::PopFont();
 			ImGui::Dummy(ImGui::GetStyle().ItemSpacing);
 
-			auto max_content_size = ImGui::GetContentRegionAvail();
-			ImGui::SetNextItemWidth(max_content_size.x);
-			ImGui::InputTextWithHint("##ProjectSelectorSearch", "Search...", &filter, ImGuiInputTextFlags_AutoSelectAll | ImGuiInputTextFlags_EscapeClearsAll);
+			search_bar("##ProjectSelectorSearch", "Search...", filter);
 						
 			const auto& style = ImGui::GetStyle();
 			auto panels_area = ImGui::GetContentRegionAvail() - style.WindowPadding;
