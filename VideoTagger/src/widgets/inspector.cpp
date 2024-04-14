@@ -46,7 +46,7 @@ namespace vt::widgets
 					ImGui::NextColumn();
 					switch (ts->type())
 					{
-						case tag_segment_type::point:
+						case tag_segment_type::timestamp:
 						{
 							modified_timestamp = timestamp_control("Point", ts_start, min_timestamp, max_timestamp, &started_editing, &finished_editing);
 							ts_end = ts_start;

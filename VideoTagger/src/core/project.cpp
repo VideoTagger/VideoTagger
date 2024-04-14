@@ -143,37 +143,48 @@ namespace vt
 			nlohmann::ordered_json json_tag_data;
 			json_tag_data["name"] = tag.name;
 			json_tag_data["color"] = utils::color::to_string(tag.color);
+			json_tags.push_back(json_tag_data);
+		}
 
-			auto segments_it = segments.find(tag.name);
-			if (segments_it != segments.end())
+		auto& json_segments = json["segments"];
+		json_segments = nlohmann::json::array();
+		for (auto& [group_id, group_segments] : segments)
+		{
+			nlohmann::ordered_json json_group_segments_data;
+			json_group_segments_data["group-id"] = group_id;
+			auto& json_group_segments = json_group_segments_data["group-segments"];
+			json_group_segments = nlohmann::json::array();
+			for (auto& [tag_name, tag_segments] : group_segments)
 			{
-				auto& tag_segments = segments_it->second;
-				auto& json_segments = json_tag_data["timestamps"];
-				json_segments = nlohmann::json::array();
-				for (const auto& segment : tag_segments)
+				nlohmann::ordered_json json_tag_segments_data;
+				json_tag_segments_data["tag"] = tag_name;
+				auto& json_tag_segments = json_tag_segments_data["tag-segments"];
+				json_tag_segments = nlohmann::json::array();
+				for (auto& segment : tag_segments)
 				{
-					auto segment_json = nlohmann::ordered_json::object();
+					nlohmann::ordered_json segment_json;
 					switch (segment.type())
 					{
-					case tag_segment_type::point:
+					case tag_segment_type::timestamp:
 					{
-						segment_json["point"] = utils::time::time_to_string(segment.start.seconds_total.count());
+						segment_json["timestamp"] = utils::time::time_to_string(segment.start.seconds_total.count());
 					}
 					break;
-					default:
+					case tag_segment_type::segment:
 					{
 						segment_json["start"] = utils::time::time_to_string(segment.start.seconds_total.count());
 						segment_json["end"] = utils::time::time_to_string(segment.end.seconds_total.count());
 					}
 					break;
 					}
-					json_segments.push_back(segment_json);
+					json_tag_segments.push_back(segment_json);
 				}
+				json_group_segments.push_back(json_tag_segments_data);
 			}
-			json_tags.push_back(json_tag_data);
+			json_segments.push_back(json_group_segments_data);
 		}
 
-		if (videos.size() != 0)
+		if (!videos.empty())
 		{
 			auto& json_videos = json["videos"];
 			json_videos = nlohmann::json::array();
@@ -189,7 +200,7 @@ namespace vt
 			}
 		}
 
-		if (video_groups.size() != 0)
+		if (!video_groups.empty())
 		{
 			auto& json_groups = json["groups"];
 			json_groups = nlohmann::json::array();
@@ -276,19 +287,54 @@ namespace vt
 					{
 						tag_it->color = color;
 					}
+				}
+			}
 
-					for (auto& segment : tag_data["timestamps"])
+			if (json.contains("segments") and json.at("segments").is_array())
+			{
+				for (auto& json_segments : json["segments"])
+				{
+					if (!json_segments.contains("group-id"))
 					{
-						if (segment.contains("point"))
+						debug::error("Missing group id");
+						continue;
+					}
+					if (!json_segments.contains("group-segments"))
+					{
+						debug::error("Missing group segments");
+						continue;
+					}
+
+					video_group_id_t group_id = json_segments["group-id"];
+					auto& group_segments = result.segments[group_id];
+					for (auto& json_group_segments : json["group-segments"])
+					{
+						if (!json_group_segments.contains("tag"))
 						{
-							auto point = utils::time::parse_time_to_sec(segment["point"]);
-							result.segments[tag_it->name].insert(vt::timestamp{ point }, vt::timestamp{ point });
+							debug::error("Missing tag name");
+							continue;
 						}
-						else if (segment.contains("start") and segment.contains("end"))
+						if (!json_group_segments.contains("tag-segments"))
 						{
-							auto start = utils::time::parse_time_to_sec(segment["start"]);
-							auto end = utils::time::parse_time_to_sec(segment["end"]);
-							result.segments[tag_it->name].insert(vt::timestamp{ start }, vt::timestamp{ end });
+							debug::error("Missing tag segments");
+							continue;
+						}
+
+						std::string tag_name = json_group_segments["tag"];
+						auto& tag_segments = group_segments[tag_name];
+						for (auto& json_tag_segments : json_group_segments["tag-segments"])
+						{
+							if (json_tag_segments.contains("timestamp"))
+							{
+								auto ts = utils::time::parse_time_to_sec(json_tag_segments["timestamp"]);
+								tag_segments.insert(vt::timestamp{ ts });
+							}
+							else if (json_tag_segments.contains("start") and json_tag_segments.contains("end"))
+							{
+								auto start = utils::time::parse_time_to_sec(json_tag_segments["start"]);
+								auto end = utils::time::parse_time_to_sec(json_tag_segments["end"]);
+								tag_segments.insert(vt::timestamp{ start }, vt::timestamp{ end });
+							}
 						}
 					}
 				}

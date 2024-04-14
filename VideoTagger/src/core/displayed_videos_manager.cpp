@@ -142,11 +142,11 @@ namespace vt
 
 	void displayed_videos_manager::seek(std::chrono::nanoseconds timestamp)
 	{
-		for (auto& video_data : videos_)
+		std::for_each(std::execution::par, videos_.begin(), videos_.end(), [timestamp, this](displayed_video_data& video_data)
 		{
 			if (video_data.video == nullptr)
 			{
-				continue;
+				return;
 			}
 
 			std::chrono::nanoseconds video_ts = timestamp - video_data.offset;
@@ -161,7 +161,7 @@ namespace vt
 			{
 				video_data.video->set_playing(true);
 			}
-		}
+		});
 
 		auto group_duration = duration();
 		current_timestamp_ = std::clamp(timestamp, std::chrono::nanoseconds{ 0 }, group_duration);
@@ -171,15 +171,27 @@ namespace vt
 		}
 	}
 
-	bool displayed_videos_manager::insert(video_id_t id, video_stream* video, std::chrono::nanoseconds offset, int video_width, int video_height, SDL_Renderer* renderer)
+	std::pair<displayed_videos_manager::iterator, bool> displayed_videos_manager::insert(video_id_t id, video_stream* video, std::chrono::nanoseconds offset, int video_width, int video_height, SDL_Renderer* renderer, bool update)
 	{
 		if (auto it = find(id); it != end())
 		{
-			return false;
+			if (update)
+			{
+				if (it->video != video)
+				{
+					*it = displayed_video_data(id, video, offset, video_width, video_height, renderer);
+				}
+				else
+				{
+					it->offset = offset;
+				}
+			}
+			
+			return std::make_pair(it, false);
 		}
 
 		videos_.emplace_back(id, video, offset, video_width, video_height, renderer);
-		return true;
+		return std::make_pair(videos_.end() - 1, false);
 	}
 
 	bool displayed_videos_manager::erase(video_id_t video_id)
@@ -192,6 +204,11 @@ namespace vt
 
 		videos_.erase(it);
 		return true;
+	}
+
+	displayed_videos_manager::iterator displayed_videos_manager::erase(const_iterator it)
+	{
+		return videos_.erase(it);
 	}
 
 	void displayed_videos_manager::clear()

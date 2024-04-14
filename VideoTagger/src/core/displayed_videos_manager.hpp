@@ -39,8 +39,10 @@ namespace vt
 		void set_looping(bool value);
 		void seek(std::chrono::nanoseconds timestamp);
 
-		bool insert(video_id_t id, video_stream* video, std::chrono::nanoseconds offset, int video_width, int video_height, SDL_Renderer* renderer);
+		//if update is true and a video with id is already present the video data will be updated
+		std::pair<iterator, bool> insert(video_id_t id, video_stream* video, std::chrono::nanoseconds offset, int video_width, int video_height, SDL_Renderer* renderer, bool update = true);
 		bool erase(video_id_t video_id);
+		iterator erase(const_iterator it);
 		void clear();
 
 		iterator find(video_id_t video_id);

@@ -15,8 +15,6 @@
 
 namespace vt
 {
-	using video_group_id_t = uint64_t;
-
 	struct project_info
 	{
 		static constexpr uint16_t current_version = 1;
@@ -45,8 +43,7 @@ namespace vt
 	struct project : public project_info
 	{
 		tag_storage tags;
-		//TODO: associate segments with video groups
-		segment_storage segments;
+		std::unordered_map<video_group_id_t, segment_storage> segments;
 		video_pool videos;
 		std::unordered_map<video_group_id_t, video_group> video_groups;
 		keybind_storage keybinds;

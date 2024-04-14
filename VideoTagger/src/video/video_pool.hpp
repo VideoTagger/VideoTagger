@@ -9,6 +9,7 @@
 namespace vt
 {
 	using video_id_t = uint64_t;
+	using video_group_id_t = uint64_t;
 
 	class video_group
 	{
@@ -112,6 +113,7 @@ namespace vt
 		bool is_open(video_id_t video_id) const;
 		bool exists(video_id_t video_id) const;
 		size_t size() const;
+		bool empty() const;
 
 		iterator begin();
 		const_iterator begin() const;

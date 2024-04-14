@@ -8,10 +8,15 @@ namespace vt
 	add_timestamp_action::add_timestamp_action() : keybind_action("Insert Timestamp") {}
 	void add_timestamp_action::invoke() const
 	{
+		if (!ctx_.current_project.has_value() or ctx_.current_video_group_id == 0)
+		{
+			return;
+		}
+
 		if (!tag_.empty())
 		{
 			auto& tag = ctx_.current_project->tags[tag_];
-			auto& segments = ctx_.current_project->segments[tag.name];
+			auto& segments = ctx_.get_current_segment_storage()[tag.name];
 			segments.insert(ctx_.timeline_state.current_time);
 		}
 		else

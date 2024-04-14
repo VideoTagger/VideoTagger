@@ -1,9 +1,10 @@
 #include "pch.hpp"
 #include "app_context.hpp"
+#include <core/debug.hpp>
 
 namespace vt
 {
-	void app_context::update_active_video_group()
+	void app_context::update_current_video_group()
 	{
 		if (!current_project.has_value() or current_video_group_id == 0)
 		{
@@ -20,6 +21,17 @@ namespace vt
 
 		auto& active_group = group_it->second;
 		auto& video_pool = current_project->videos;
+
+		for (auto it = displayed_videos.begin(); it != displayed_videos.end();)
+		{
+			if (active_group.contains(it->id))
+			{
+				it++;
+				continue;
+			}
+
+			it = displayed_videos.erase(it);
+		}
 
 		for (auto& group_video_info : active_group)
 		{
@@ -47,10 +59,25 @@ namespace vt
 		displayed_videos.update();
 	}
 
-	void app_context::reset_active_video_group()
+	void app_context::reset_current_video_group()
 	{
 		displayed_videos.clear();
 		displayed_videos.update();
 		current_video_group_id = 0;
+	}
+
+	segment_storage& app_context::get_current_segment_storage()
+	{
+		//TODO: maybe do something else
+		if (!current_project.has_value())
+		{
+			debug::panic("No open project");
+		}
+		if (current_video_group_id == 0)
+		{
+			debug::panic("No current video group");
+		}
+
+		return current_project->segments[current_video_group_id];
 	}
 }

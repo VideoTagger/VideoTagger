@@ -14,7 +14,7 @@ namespace vt
 	//TODO: maybe think of something better than "timestamp" for this
 	enum class tag_segment_type
 	{
-		point,
+		timestamp,
 		segment
 	};
 

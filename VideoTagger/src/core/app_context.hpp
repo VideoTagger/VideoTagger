@@ -93,8 +93,10 @@ namespace vt
 		bool reset_layout{};
 		bool reset_player_docking{};
 
-		void update_active_video_group();
-		void reset_active_video_group();
+		void update_current_video_group();
+		void reset_current_video_group();
+
+		segment_storage& get_current_segment_storage();
 	};
 
 	inline app_context ctx_;

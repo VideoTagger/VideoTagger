@@ -21,6 +21,7 @@
 #include <thread>
 #include <utility>
 #include <vector>
+#include <execution>
 
 #include <SDL.h>
 #define IMGUI_DEFINE_MATH_OPERATORS

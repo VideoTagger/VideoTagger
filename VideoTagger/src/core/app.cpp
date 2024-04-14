@@ -600,7 +600,7 @@ namespace vt
 		on_close_project(false);
 		ctx_.current_project = std::nullopt;
 		ctx_.selected_segment_data = std::nullopt;
-		ctx_.reset_active_video_group();
+		ctx_.reset_current_video_group();
 		set_subtitle();
 	}
 	
@@ -1442,7 +1442,7 @@ namespace vt
 		
 
 		//TODO: probably should be done somewhere else
-		ctx_.update_active_video_group();
+		ctx_.update_current_video_group();
 
 		if (ctx_.win_cfg.show_video_player_window)
 		{
@@ -1511,13 +1511,13 @@ namespace vt
 			ctx_.reset_player_docking = false;
 		}
 
-		if (ctx_.win_cfg.show_timeline_window)
+		if (ctx_.win_cfg.show_timeline_window and ctx_.current_video_group_id != 0)
 		{
 			auto group_duration = ctx_.displayed_videos.duration();
 
 			//TODO: Definitely change this!
 			ctx_.timeline_state.tags = &ctx_.current_project->tags;
-			ctx_.timeline_state.segments = &ctx_.current_project->segments;
+			ctx_.timeline_state.segments = &ctx_.get_current_segment_storage();
 			ctx_.timeline_state.sync_tags();
 			ctx_.timeline_state.time_min = timestamp{};
 			ctx_.timeline_state.time_max = timestamp(std::chrono::duration_cast<std::chrono::seconds>(group_duration));
@@ -1546,12 +1546,15 @@ namespace vt
 						tag_name = tag_rename->new_name;
 					}
 				}
-
-				auto node_handle = ctx_.current_project->segments.extract(tag_rename->old_name);
-				if (!node_handle.empty())
+				
+				for (auto& [group_id, segments] : ctx_.current_project->segments)
 				{
-					node_handle.key() = tag_rename->new_name;
-					ctx_.current_project->segments.insert(std::move(node_handle));
+					auto node_handle = segments.extract(tag_rename->old_name);
+					if (!node_handle.empty())
+					{
+						node_handle.key() = tag_rename->new_name;
+						segments.insert(std::move(node_handle));
+					}
 				}
 
 				//TODO: consider renaming tags in keybinds

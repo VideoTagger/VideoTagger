@@ -457,7 +457,7 @@ namespace vt::widgets
 								draw_list->AddRect(slot_p1, slot_p2, selection_color, 2, 0, selection_thickness);
 							}
 						}
-						else if (tag_segment.type() == tag_segment_type::point)
+						else if (tag_segment.type() == tag_segment_type::timestamp)
 						{
 							ImVec2 pos = { (slot_p2.x + slot_p1.x) / 2, slot_p1.y + ItemHeight / 2 - 2 };
 							ImVec2 p1 = { pos.x, pos.y - ItemHeight / 2 + 1 };
@@ -514,7 +514,7 @@ namespace vt::widgets
 							if (!rc.Contains(io.MousePos))
 								continue;
 							ImGuiMouseCursor cursor = ImGui::GetMouseCursor();
-							if ((j == 0 or j == 1) and segment_it->type() != tag_segment_type::point)
+							if ((j == 0 or j == 1) and segment_it->type() != tag_segment_type::timestamp)
 							{
 								cursor = ImGuiMouseCursor_ResizeEW;
 							}
@@ -532,7 +532,7 @@ namespace vt::widgets
 								continue;
 							if (!ImRect(childFramePos, childFramePos + childFrameSize).Contains(io.MousePos))
 								continue;
-							if (ImGui::IsMouseClicked(0) and !moving_scroll_bar and !moving_time_marker and (segment_it->type() != tag_segment_type::point or j == 2))
+							if (ImGui::IsMouseClicked(0) and !moving_scroll_bar and !moving_time_marker and (segment_it->type() != tag_segment_type::timestamp or j == 2))
 							{
 								moving_segment = moving_segment_data{
 									&tag_info,
@@ -584,7 +584,7 @@ namespace vt::widgets
 							draw_list->AddRectFilled(slot_p1, slot_p2, timestamp_color, 2);
 							draw_list->AddRect(slot_p1, slot_p2, selection_color, 2, 0, selection_thickness);
 						}
-						else if (tag_segment.type() == tag_segment_type::point)
+						else if (tag_segment.type() == tag_segment_type::timestamp)
 						{
 							ImVec2 pos = { (slot_p2.x + slot_p1.x) / 2, slot_p1.y + ItemHeight / 2 - 2 };
 							ImVec2 p1 = { pos.x, pos.y - ItemHeight / 2 + 1 };
@@ -672,7 +672,7 @@ namespace vt::widgets
 						{
 							//TODO: should draw a line or something so you know where you clicked
 							inserted_segment_start = state.current_time;
-							inserted_segment_start = state.current_time + timestamp(1);
+							inserted_segment_end = state.current_time + timestamp(1);
 							insert_segment_with_popup = true;
 						}
 						if (ImGui::MenuItem("Start segment at marker"))
@@ -689,7 +689,7 @@ namespace vt::widgets
 					}
 					else
 					{
-						if (ImGui::MenuItem((*segment_it)->type() == tag_segment_type::point ? "Delete timestamp" : "Delete segment"))
+						if (ImGui::MenuItem((*segment_it)->type() == tag_segment_type::timestamp ? "Delete timestamp" : "Delete segment"))
 						{
 							segments->erase(*segment_it);
 							if (selected_segment.has_value() and selected_segment->segments == segments and selected_segment->segment_it == *segment_it)
@@ -786,7 +786,7 @@ namespace vt::widgets
 						moving_segment->end = moving_segment->start;
 
 					auto segment_size = std::abs((moving_segment->end - moving_segment->start).seconds_total.count());
-					if (segment_size < min_segment_size.count() and moving_segment->segment_it->type() != tag_segment_type::point)
+					if (segment_size < min_segment_size.count() and moving_segment->segment_it->type() != tag_segment_type::timestamp)
 					{
 						if (moving_segment->grab_part & 1)
 						{

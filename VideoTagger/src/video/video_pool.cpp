@@ -244,6 +244,11 @@ namespace vt
 		return videos_.size();
 	}
 
+	bool video_pool::empty() const
+	{
+		return videos_.empty();
+	}
+
 	video_pool::iterator video_pool::begin()
 	{
 		return videos_.begin();
