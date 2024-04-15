@@ -14,7 +14,7 @@ namespace vt::widgets
 
 		static auto draw_video_tile = [this](video_id_t id, const video_pool::video_metadata& vmeta, ImVec2 tile_size, bool& open, bool& remove, SDL_Texture* image = nullptr)
 		{
-			std::string label = vmeta.path.stem().u8string();
+			std::string label = vmeta.path.filename().u8string();
 			ImVec2 image_tile_size{ tile_size.x * 0.9f, tile_size.x * 0.9f };
 
 			float scaled_width = vmeta.width * image_tile_size.y / vmeta.height;

@@ -185,7 +185,6 @@ namespace vt::widgets
 
 		bool return_value = false;
 		auto& style = ImGui::GetStyle();
-		ImVec2 button_size = ImVec2{ ImGui::GetContentRegionAvail().x, ImGui::GetTextLineHeightWithSpacing() };
 
 		bool open_add_tag_popup = false;
 		bool open_rename_tag_popup = false;
@@ -195,7 +194,6 @@ namespace vt::widgets
 		if (true /*ImGui::BeginTable("##TagManager", 2)*/)
 		{
 			static constexpr float tag_column_width = 100;
-			float button_region_width = button_size.x + style.CellPadding.x;
 
 			//ImGui::TableSetupColumn(nullptr, ImGuiTableColumnFlags_WidthStretch);
 			//ImGui::TableSetupColumn(nullptr, ImGuiTableColumnFlags_WidthFixed);
@@ -228,7 +226,7 @@ namespace vt::widgets
 			ImGui::Separator();
 
 			//ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2{});
-			bool is_scrollable_list_open = ImGui::BeginChild("##ScrollableTagList", ImGui::GetContentRegionAvail() - button_size - ImVec2{ 0, style.ItemSpacing.y + style.FramePadding.y });
+			bool is_scrollable_list_open = ImGui::BeginChild("##ScrollableTagList", ImGui::GetContentRegionAvail());
 			
 			//ImGui::PopStyleVar();
 			if (is_scrollable_list_open)

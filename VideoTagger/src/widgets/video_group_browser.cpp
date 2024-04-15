@@ -14,9 +14,9 @@ namespace vt::widgets
 	{
 		if (!ctx_.current_project.has_value()) return;
 
-		static auto draw_video_tile = [this](const video_pool::video_metadata& vmeta, ImVec2 tile_size, bool& open, bool& remove, SDL_Texture* image = nullptr)
+		static auto draw_video_tile = [this](const video_pool::video_metadata& vmeta, ImVec2 tile_size, bool& open, bool& remove, bool& properties, SDL_Texture* image = nullptr)
 		{
-			std::string label = vmeta.path.stem().u8string();
+			std::string label = vmeta.path.filename().u8string();
 			ImVec2 image_tile_size{ tile_size.x * 0.9f, tile_size.x * 0.9f };
 
 			float scaled_width = vmeta.width * image_tile_size.y / vmeta.height;
@@ -45,6 +45,10 @@ namespace vt::widgets
 				if (ImGui::MenuItem("Remove"))
 				{
 					remove = true;
+				}
+				if (ImGui::MenuItem("Properties"))
+				{
+					properties = true;
 				}
 			});
 		};
@@ -333,7 +337,8 @@ namespace vt::widgets
 
 								bool open_video{};
 								bool remove_video{};
-								draw_video_tile(*metadata, tile_size, open_video, remove_video, metadata->thumbnail);
+								bool open_video_properties{};
+								draw_video_tile(*metadata, tile_size, open_video, remove_video, open_video_properties, metadata->thumbnail);
 								if (remove_video)
 								{
 									auto& vgroup = ctx_.current_project->video_groups.at(current_video_group);
