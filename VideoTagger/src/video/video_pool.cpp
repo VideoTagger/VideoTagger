@@ -66,6 +66,26 @@ namespace vt
 		return end();
 	}
 
+	video_group::video_info& video_group::at(size_t index)
+	{
+		return video_ids_.at(index);
+	}
+
+	const video_group::video_info& video_group::at(size_t index) const
+	{
+		return video_ids_.at(index);
+	}
+
+	video_group::video_info& video_group::operator[](size_t index)
+	{
+		return video_ids_[index];
+	}
+
+	const video_group::video_info& video_group::operator[](size_t index) const
+	{
+		return video_ids_[index];
+	}
+
 	video_group::iterator video_group::begin()
 	{
 		return video_ids_.begin();

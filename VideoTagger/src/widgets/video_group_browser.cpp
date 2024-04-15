@@ -5,6 +5,7 @@
 #include <core/app_context.hpp>
 #include <utils/drag_drop.hpp>
 #include "modal/create_group_popup.hpp"
+#include "modal/video_properties_popup.hpp"
 #include "icons.hpp"
 #include "controls.hpp"
 
@@ -346,6 +347,20 @@ namespace vt::widgets
 									ctx_.is_project_dirty = true;
 									break;
 								}
+
+								static std::chrono::nanoseconds offset;
+								ImGui::PushID(vinfo.id);
+								if (open_video_properties)
+								{
+									offset = vinfo.offset;
+									ImGui::OpenPopup("Video Properties");
+								}
+
+								if (video_properties_popup("Video Properties", offset))
+								{
+									vinfo.offset = offset;
+								}
+								ImGui::PopID();
 
 								/*
 								if (open_video and !metadata->is_widget_open)

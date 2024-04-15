@@ -3,5 +3,5 @@
 
 namespace vt::widgets::modal
 {
-	bool create_group_popup(const std::string& id, std::string& group_name);
+	bool create_group_popup(const char* id, std::string& group_name);
 }

@@ -38,6 +38,12 @@ namespace vt
 		iterator find(video_id_t video_id);
 		const_iterator find(video_id_t video_id) const;
 
+		video_info& at(size_t index);
+		const video_info& at(size_t index) const;
+
+		video_info& operator[](size_t index);
+		const video_info& operator[](size_t index) const;
+
 		iterator begin();
 		const_iterator begin() const;
 		const_iterator cbegin() const;

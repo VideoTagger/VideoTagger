@@ -42,6 +42,11 @@ namespace vt
 		return *this;
 	}
 
+	bool displayed_video_data::is_timestamp_in_range(std::chrono::nanoseconds timestamp) const
+	{
+		return offset <= timestamp and timestamp <= offset + video->duration();
+	}
+
 	void displayed_videos_manager::update()
 	{
 		//TODO: maybe should do something to ensure that videos don't get desynchronized
@@ -68,8 +73,10 @@ namespace vt
 			{
 				continue;
 			}
-
-			video_data.video->update(current_timestamp_);
+			
+			bool is_playing = video_data.is_timestamp_in_range(current_timestamp_);
+			video_data.video->set_playing(is_playing);
+			video_data.video->update(current_timestamp_ - video_data.offset);
 			video_data.video->get_frame(video_data.display_texture);
 
 			//if (video_data.video->frame_buffer_.size() < 10)
@@ -104,7 +111,7 @@ namespace vt
 				continue;
 			}
 
-			if (current_timestamp_ < video_data.offset or (video_data.offset + video_data.video->duration()) < current_timestamp_)
+			if (!video_data.is_timestamp_in_range(current_timestamp_))
 			{
 				continue;
 			}
@@ -183,7 +190,12 @@ namespace vt
 				}
 				else
 				{
-					it->offset = offset;
+					if (it->offset != offset)
+					{
+						it->offset = offset;
+						it->video->seek(current_timestamp_ - offset);
+						it->video->get_frame(it->display_texture);
+					}
 				}
 			}
 			

@@ -23,6 +23,8 @@ namespace vt
 		std::chrono::nanoseconds offset{};
 
 		SDL_Texture* display_texture{};
+
+		bool is_timestamp_in_range(std::chrono::nanoseconds timestamp) const;
 	};
 
 	class displayed_videos_manager
