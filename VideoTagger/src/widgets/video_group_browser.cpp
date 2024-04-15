@@ -96,6 +96,13 @@ namespace vt::widgets
 					}
 					ImGui::EndDragDropTarget();
 				}
+
+				if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_SourceNoHoldToOpenOthers))
+				{
+					utils::drag_drop::set_payload("Group", gid);
+					ImGui::TextUnformatted(vgroup.display_name.c_str());
+					ImGui::EndDragDropSource();
+				}
 			});
 			ImGui::PopID();
 		};
@@ -349,7 +356,7 @@ namespace vt::widgets
 								}
 
 								static std::chrono::nanoseconds offset;
-								ImGui::PushID(vinfo.id);
+								ImGui::PushID((void*)vinfo.id);
 								if (open_video_properties)
 								{
 									offset = vinfo.offset;

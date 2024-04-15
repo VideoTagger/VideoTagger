@@ -1590,6 +1590,8 @@ namespace vt
 			}
 		}
 
+		//TODO: Add base virtual class that has render(bool&) method instead of this
+
 		if (ctx_.win_cfg.show_options_window)
 		{
 			ctx_.options.render(&ctx_.win_cfg.show_options_window);
@@ -1608,6 +1610,12 @@ namespace vt
 		if (ctx_.win_cfg.show_video_group_browser_window)
 		{
 			ctx_.group_browser.render(ctx_.win_cfg.show_video_group_browser_window);
+		}
+
+		//TODO: Serialize this setting
+		if (ctx_.win_cfg.show_video_group_queue_window)
+		{
+			ctx_.group_queue.render(ctx_.win_cfg.show_video_group_queue_window);
 		}
 
 		if (ctx_.win_cfg.show_theme_customizer_window)

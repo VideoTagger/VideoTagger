@@ -3,8 +3,10 @@
 
 namespace vt
 {
-	video_group_playlist::video_group_playlist()
-		: shuffled_{ false }, current_element_{ end() }, random_engine_{ std::random_device{}() }
+	//TODO: Use random from uuid/make a "random" class
+	static std::mt19937_64 random_engine(std::random_device{}());
+
+	video_group_playlist::video_group_playlist() : shuffled_{ false }, current_element_{ end() }
 	{
 	}
 
@@ -40,8 +42,7 @@ namespace vt
 		}
 
 		std::uniform_int_distribution<size_t> distribution(0, item_pool.size() - 1);
-		current_element_ = begin() + distribution(random_engine_);
-
+		current_element_ = begin() + distribution(random_engine);
 		return current_element_;
 	}
 

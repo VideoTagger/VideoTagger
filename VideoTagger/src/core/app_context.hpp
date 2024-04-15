@@ -20,6 +20,7 @@
 #include <widgets/color_picker.hpp>
 #include <widgets/video_browser.hpp>
 #include <widgets/video_group_browser.hpp>
+#include <widgets/video_group_queue.hpp>
 #include <widgets/theme_customizer.hpp>
 #include <widgets/modal/options.hpp>
 #include "displayed_videos_manager.hpp"
@@ -50,6 +51,7 @@ namespace vt
 		bool show_video_player_window = true;
 		bool show_video_browser_window = true;
 		bool show_video_group_browser_window = true;
+		bool show_video_group_queue_window = true;
 
 		//not serialized
 		bool show_options_window = false;
@@ -64,6 +66,7 @@ namespace vt
 		widgets::video_player player;
 		widgets::video_browser browser;
 		widgets::video_group_browser group_browser;
+		widgets::video_group_queue group_queue;
 		widgets::theme_customizer theme_customizer;
 		widgets::modal::options options;
 		widgets::color_picker color_picker;

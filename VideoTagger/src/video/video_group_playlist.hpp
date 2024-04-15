@@ -70,6 +70,5 @@ namespace vt
 		iterator current_element_;
 
 		bool shuffled_;
-		std::mt19937_64 random_engine_;
 	};
 }

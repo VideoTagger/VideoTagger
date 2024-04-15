@@ -11,6 +11,7 @@
 #include <tags/tag_storage.hpp>
 #include <tags/tag_timeline.hpp>
 #include <video/video_pool.hpp>
+#include <video/video_group_playlist.hpp>
 #include <core/input.hpp>
 
 namespace vt
@@ -42,13 +43,14 @@ namespace vt
 
 	struct project : public project_info
 	{
-		tag_storage tags;
+		video_group_playlist video_group_playlist;
 		std::unordered_map<video_group_id_t, segment_storage> segments;
-		video_pool videos;
 		std::unordered_map<video_group_id_t, video_group> video_groups;
+		std::vector<std::future<project_import_video_result>> video_import_tasks;
+		video_pool videos;
+		tag_storage tags;
 		keybind_storage keybinds;
 
-		std::vector<std::future<project_import_video_result>> video_import_tasks;
 
 		project() = default;
 		project(const project&) = delete;
@@ -57,11 +59,9 @@ namespace vt
 		project& operator=(const project&) = delete;
 		project& operator=(project&&) = default;
 
-
-		//TODO: save tags displayed in the timeline in the project file
-
 		std::future<project_import_video_result> import_video(const std::filesystem::path& filepath, video_id_t id = 0, bool create_group = true);
 
+		//TODO: save tags displayed on the timeline in the project file
 		void save() const;
 		void save_as(const std::filesystem::path& filepath);
 
