@@ -80,7 +80,6 @@ namespace vt::widgets
 						auto glyph = utils::thumbnail::find_glyph(utils::thumbnail::video_group_icon);
 
 						size_t playlist_size = playlist.size();
-						size_t i{};
 						auto it = playlist.begin();
 
 						//TODO: Inserting here puts value at the 2nd element, not 1st
@@ -140,11 +139,16 @@ namespace vt::widgets
 
 				ImGui::TableNextColumn();
 				{
+					bool is_empty = playlist.empty();
 					auto cpos = ImGui::GetCursorPosX() + style.CellPadding.x;
 					ImGui::SetCursorPosX(cpos);
+					if (is_empty) ImGui::BeginDisabled();
 					if (icon_button(icons::play))
 					{
-						
+						auto it = playlist.set_current(playlist.begin());
+						ctx_.current_video_group_id = it->group_id;
+
+						auto& pool = ctx_.current_project->videos;
 					}
 					icon_tooltip("Play");
 
@@ -154,6 +158,7 @@ namespace vt::widgets
 						playlist.clear();
 					}
 					icon_tooltip("Clear queue");
+					if (is_empty) ImGui::EndDisabled();
 
 					ImGui::SetCursorPosX(cpos);
 					if (icon_toggle_button(icons::shuffle, is_shuffled))

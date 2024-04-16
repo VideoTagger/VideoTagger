@@ -20,6 +20,7 @@ namespace vt
 		std::function<void(float)> on_set_speed = [](float){};
 		std::function<void(int)> on_skip = [](int){};
 		std::function<void(std::chrono::nanoseconds)> on_seek = [](std::chrono::nanoseconds){};
+		std::function<void(int)> on_finish = [](bool is_looping){};
 	};
 }
 
@@ -43,6 +44,7 @@ namespace vt::widgets
 
 	public:
 		void update_data(video_player_data data, bool is_playing);
+		void reset_data();
 		void render();
 		void dock_windows(size_t count);
 		const video_player_data& data() const;

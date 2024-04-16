@@ -17,6 +17,19 @@ namespace vt::widgets
 	{
 		data_ = data;
 		is_playing_ = is_playing;
+
+		if (data.current_ts == data.end_ts and callbacks.on_finish)
+		{
+			callbacks.on_finish(is_looping_);
+		}
+	}
+
+	void video_player::reset_data()
+	{
+		data_.current_ts = {};
+		data_.start_ts = {};
+		data_.end_ts = {};
+		is_playing_ = false;
 	}
 
 	void video_player::render()
@@ -120,7 +133,10 @@ namespace vt::widgets
 				auto button_pos_x = avail_size.x / 2 - (button_size + imgui_style.ItemSpacing.x) * 5.f / 2;
 
 				ImGui::SetCursorPosX(cursor_pos.x + button_pos_x);
-				if (icon_button(icons::skip_prev, { button_size, button_size })) {}
+				if (icon_button(icons::skip_prev, { button_size, button_size })) 
+				{
+					std::invoke(callbacks.on_skip, -1);
+				}
 				ImGui::SameLine();
 				if (icon_button(icons::fast_back, { button_size, button_size }))
 				{
@@ -142,7 +158,10 @@ namespace vt::widgets
 					std::invoke(callbacks.on_seek, std::chrono::nanoseconds(data_.end_ts));
 				}
 				ImGui::SameLine();
-				if (icon_button(icons::skip_next, { button_size, button_size })) {}
+				if (icon_button(icons::skip_next, { button_size, button_size }))
+				{
+					std::invoke(callbacks.on_skip, 1);
+				}
 			}
 
 			ImGui::NextColumn();

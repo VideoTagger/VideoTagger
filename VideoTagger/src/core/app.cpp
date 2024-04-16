@@ -1033,7 +1033,6 @@ namespace vt
 			{
 				return;
 			}
-			ctx_.displayed_videos.set_looping(is_looping);
 		};
 
 		ctx_.player.callbacks.on_set_speed = [](float speed)
@@ -1053,7 +1052,22 @@ namespace vt
 
 		ctx_.player.callbacks.on_skip = [](int dir)
 		{
-			//TODO: Implement
+			auto& playlist = ctx_.current_project->video_group_playlist;
+
+			video_group_playlist::iterator it;
+			if (dir > 0)
+			{
+				if (playlist.current() == playlist.end() - 1) return;
+				it = playlist.next();
+			}
+			else if (dir < 0)
+			{
+				if (playlist.current() == playlist.begin()) return;
+				it = playlist.previous();
+			}
+
+			ctx_.reset_current_video_group();
+			ctx_.current_video_group_id = it->group_id;
 		};
 
 		ctx_.player.callbacks.on_seek = [](std::chrono::nanoseconds ts)
@@ -1071,6 +1085,28 @@ namespace vt
 			ctx_.displayed_videos.seek(ts);
 		};
 
+		ctx_.player.callbacks.on_finish = [](bool is_looping)
+		{
+			auto& playlist = ctx_.current_project->video_group_playlist;
+
+			if (is_looping)
+			{
+				ctx_.displayed_videos.seek(std::chrono::nanoseconds{ 0 });
+				ctx_.displayed_videos.set_playing(true);
+			}
+
+			if (ctx_.app_settings.next_video_on_end)
+			{
+				ctx_.player.reset_data();
+				
+				auto it = playlist.next();
+				ctx_.reset_current_video_group();
+				if (it != playlist.end())
+				{
+					ctx_.current_video_group_id = it->group_id;
+				}
+			}
+		};
 	}
 
 	void app::handle_events()
