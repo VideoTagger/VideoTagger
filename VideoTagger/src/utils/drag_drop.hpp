@@ -12,6 +12,13 @@ namespace vt::utils
 {
 	struct drag_drop
 	{
+		template<typename type>
+		struct payload
+		{
+			std::optional<type> data;
+			const ImGuiPayload* imgui_payload{};
+		};
+
 		drag_drop() = delete;
 
 		template<typename type>
@@ -22,17 +29,18 @@ namespace vt::utils
 		}
 
 		template<typename type>
-		static std::optional<type> get_payload(const std::string& name, ImGuiDragDropFlags flags = 0)
+		static payload<type> get_payload(const std::string& name, ImGuiDragDropFlags flags = 0)
 		{
-			auto payload = ImGui::AcceptDragDropPayload(name.c_str(), flags);
-			if (payload == nullptr) return std::nullopt;
+			auto imgui_payload = ImGui::AcceptDragDropPayload(name.c_str(), flags);
+			if (imgui_payload == nullptr) return {};
 
-			if (payload->DataSize != sizeof(type))
+			if (imgui_payload->DataSize != sizeof(type))
 			{
-				debug::error("Paylod size mismatch, expected {} but got {} for type: {}", payload->DataSize, sizeof(type), typeid(type).name());
-				return std::nullopt;
+				debug::error("Paylod size mismatch, expected {} but got {} for type: {}", imgui_payload->DataSize, sizeof(type), typeid(type).name());
+				return {};
 			}
-			return *reinterpret_cast<type*>(payload->Data);
+
+			return { *reinterpret_cast<type*>(imgui_payload->Data), imgui_payload };
 		}
 	};
 }

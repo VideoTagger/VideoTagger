@@ -77,6 +77,7 @@ namespace vt::widgets
 						bool open_video{};
 						bool remove_video{};
 
+						ImGui::TableNextColumn();
 						draw_video_tile(id, metadata, tile_size, open_video, remove_video, metadata.thumbnail);
 						if (remove_video)
 						{

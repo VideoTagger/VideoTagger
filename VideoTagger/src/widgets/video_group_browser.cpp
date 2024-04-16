@@ -55,11 +55,11 @@ namespace vt::widgets
 			});
 		};
 
-		static auto group_ctx_menu = [](bool& open, bool& remove, bool& play)
+		static auto group_ctx_menu = [](bool& open, bool& remove, bool& enqueue, bool can_enqueue)
 		{
-			if (ImGui::MenuItem("Play"))
+			if (ImGui::MenuItem("Add to queue", nullptr, nullptr, can_enqueue))
 			{
-				play = true;
+				enqueue = true;
 			}
 			if (ImGui::MenuItem("Open"))
 			{
@@ -71,7 +71,7 @@ namespace vt::widgets
 			}
 		};
 
-		static auto draw_group_tile = [this](video_group& vgroup, video_group_id_t gid, ImVec2 tile_size, bool& open, bool& remove, bool& play)
+		static auto draw_group_tile = [this](video_group& vgroup, video_group_id_t gid, ImVec2 tile_size, bool& open, bool& remove, bool& enqueue, bool can_enqueue)
 		{
 			ImGui::PushID((void*)gid);
 
@@ -81,18 +81,27 @@ namespace vt::widgets
 			open |= widgets::tile(vgroup.display_name, tile_size, tile_size, image,
 			[&](const std::string& label)
 			{
-				group_ctx_menu(open, remove, play);
+				group_ctx_menu(open, remove, enqueue, can_enqueue);
 			},
 			[&](const std::string& label)
 			{
 				if (ImGui::BeginDragDropTarget())
 				{
-					auto payload = utils::drag_drop::get_payload<video_id_t>("Video");
-					if (payload.has_value())
+					auto payload = utils::drag_drop::get_payload<video_id_t>("Video", ImGuiDragDropFlags_AcceptBeforeDelivery);
+					if (payload.data.has_value())
 					{
+						auto is_delivery = payload.imgui_payload->IsDelivery();
+
 						video_group::video_info vinfo;
-						vinfo.id = *payload;
-						if (!vgroup.contains(vinfo.id))
+						vinfo.id = *payload.data;
+
+						bool already_contains = vgroup.contains(vinfo.id);
+
+						if (!is_delivery and already_contains)
+						{
+							ImGui::SetMouseCursor(ImGuiMouseCursor_NotAllowed);
+						}
+						else if (is_delivery and !already_contains)
 						{
 							vgroup.insert(vinfo);
 							ctx_.is_project_dirty = true;
@@ -134,7 +143,7 @@ namespace vt::widgets
 					columns = 1;
 				}
 
-				static auto draw_group_tab = [&style, this](const std::string& group_name, video_group_id_t gid, bool& open, bool& remove, bool& play)
+				static auto draw_group_tab = [&style, this](const std::string& group_name, video_group_id_t gid, bool& open, bool& remove, bool& enqueue, bool can_enqueue)
 				{
 					bool inactive = current_video_group != gid;
 
@@ -150,15 +159,22 @@ namespace vt::widgets
 						//TODO: This is duplicated in 2 places
 						if (ImGui::BeginDragDropTarget())
 						{
-							auto payload = utils::drag_drop::get_payload<video_id_t>("Video");
-							if (payload.has_value())
+							auto payload = utils::drag_drop::get_payload<video_id_t>("Video", ImGuiDragDropFlags_AcceptBeforeDelivery);
+							if (payload.data.has_value())
 							{
+								bool is_delivery = payload.imgui_payload->IsDelivery();
+
 								video_group::video_info vinfo;
-								vinfo.id = *payload;
+								vinfo.id = *payload.data;
 								auto& groups = ctx_.current_project->video_groups;
 								auto it = groups.find(gid);
 
-								if (it != groups.end() and !it->second.contains(vinfo.id))
+								bool is_valid = it != groups.end() and !it->second.contains(vinfo.id);
+								if (!is_delivery and !is_valid)
+								{
+									ImGui::SetMouseCursor(ImGuiMouseCursor_NotAllowed);
+								}
+								else if (is_delivery and is_valid)
 								{
 									it->second.insert(vinfo);
 									ctx_.is_project_dirty = true;
@@ -170,7 +186,7 @@ namespace vt::widgets
 
 						if (ImGui::BeginPopupContextItem())
 						{
-							group_ctx_menu(open, remove, play);
+							group_ctx_menu(open, remove, enqueue, can_enqueue);
 							ImGui::EndPopup();
 						}
 					}
@@ -213,21 +229,24 @@ namespace vt::widgets
 
 					bool open{};
 					bool remove{};
-					bool play{};
+					bool enqueue{};
 
-					draw_group_tab("Show All Groups", 0, open, remove, play);
+					draw_group_tab("Show All Groups", 0, open, remove, enqueue, false);
 					ImGui::Separator();
 
 					if (ImGui::BeginChild("##VideoBrowserGroupTabs"))
 					{
+						auto& playlist = ctx_.current_project->video_group_playlist;
+
 						for (const auto& [gid, group] : ctx_.current_project->video_groups)
 						{
 							open = false;
 							remove = false;
-							play = false;
+							enqueue = false;
+							bool can_enqueue = !playlist.contains(gid);
 
 							std::string group_name = group.display_name;
-							draw_group_tab(group_name, gid, open, remove, play);
+							draw_group_tab(group_name, gid, open, remove, enqueue, can_enqueue);
 
 							//TODO: Refactor this so this isn't duplicated in 2 places
 							if (remove)
@@ -248,9 +267,12 @@ namespace vt::widgets
 								ctx_.reset_player_docking = true;
 							}
 
-							if (play)
+							if (enqueue)
 							{
-								auto& pool = ctx_.current_project->videos;
+								playlist.push_back(gid);
+
+								//TODO: Remove when queue gets fully implemented
+								/*auto& pool = ctx_.current_project->videos;
 								ctx_.current_video_group_id = gid;
 
 								for (auto& vinfo : group)
@@ -266,7 +288,7 @@ namespace vt::widgets
 											std::invoke(on_open_video, vinfo.id);
 										}
 									}
-								}
+								}*/
 							}
 						}
 
@@ -275,10 +297,10 @@ namespace vt::widgets
 						if (ImGui::BeginDragDropTargetCustom(inner_rect, ImGui::GetID("TabsDragDropPanel")))
 						{
 							auto payload = utils::drag_drop::get_payload<video_id_t>("Video");
-							if (payload.has_value())
+							if (payload.data.has_value())
 							{
 								video_group::video_info vinfo;
-								vinfo.id = *payload;
+								vinfo.id = *payload.data;
 
 								dragged_videos.push_back(vinfo.id);
 								open_create_group_popup = true;
@@ -294,13 +316,17 @@ namespace vt::widgets
 						ImGui::TableNextRow();
 						if (current_video_group == 0)
 						{
+							auto& playlist = ctx_.current_project->video_group_playlist;
+
 							for (auto& [gid, group] : ctx_.current_project->video_groups)
 							{
 								bool open_group = false;
 								bool remove_group = false;
-								bool play_group = false;
+								bool enqueue_group = false;
+								bool can_enqueue = !playlist.contains(gid);
 
-								draw_group_tile(group, gid, tile_size, open_group, remove_group, play_group);
+								ImGui::TableNextColumn();
+								draw_group_tile(group, gid, tile_size, open_group, remove_group, enqueue_group, can_enqueue);
 								if (remove_group)
 								{
 									ctx_.is_project_dirty = true;
@@ -319,8 +345,12 @@ namespace vt::widgets
 									ctx_.reset_player_docking = true;
 								}
 
-								if (play_group)
+								if (enqueue_group)
 								{
+									playlist.push_back(gid);
+
+									//TODO: This plays the group, remove when queue gets fully implemented
+									/*
 									auto& pool = ctx_.current_project->videos;
 									ctx_.current_video_group_id = gid;
 
@@ -338,6 +368,7 @@ namespace vt::widgets
 											}
 										}
 									}
+									*/
 								}
 							}
 						}
@@ -353,6 +384,8 @@ namespace vt::widgets
 								bool open_video{};
 								bool remove_video{};
 								bool open_video_properties{};
+
+								ImGui::TableNextColumn();
 								draw_video_tile(*metadata, tile_size, open_video, remove_video, open_video_properties, metadata->thumbnail);
 								if (remove_video)
 								{
@@ -399,23 +432,31 @@ namespace vt::widgets
 					ImRect inner_rect = ImGui::TableGetCellBgRect(ImGui::GetCurrentTable(), ImGui::TableGetColumnIndex());
 					if (ImGui::BeginDragDropTargetCustom(inner_rect, ImGui::GetID("GroupDragDropPanel")))
 					{
-						auto payload = utils::drag_drop::get_payload<video_id_t>("Video");
-						if (payload.has_value())
+						auto payload = utils::drag_drop::get_payload<video_id_t>("Video", ImGuiDragDropFlags_AcceptBeforeDelivery);
+						if (payload.data.has_value())
 						{
+							bool is_delivery = payload.imgui_payload->IsDelivery();
+
 							video_group::video_info vinfo;
-							vinfo.id = *payload;
+							vinfo.id = *payload.data;
 
 							if (current_video_group != 0)
 							{
 								auto& vgroup = ctx_.current_project->video_groups.at(current_video_group);
-								if (!vgroup.contains(vinfo.id))
+
+								bool already_contains = vgroup.contains(vinfo.id);
+								if (!is_delivery and already_contains)
+								{
+									ImGui::SetMouseCursor(ImGuiMouseCursor_NotAllowed);
+								}
+								else if (is_delivery and !already_contains)
 								{
 									vgroup.insert(vinfo);
 									ctx_.is_project_dirty = true;
 									debug::log("Added video with id: {} to group with id: {}", vinfo.id, current_video_group);
 								}
 							}
-							else
+							else if (is_delivery)
 							{
 								dragged_videos.push_back(vinfo.id);
 								open_create_group_popup = true;

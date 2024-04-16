@@ -24,6 +24,15 @@ namespace vt::widgets
 		return result;
 	}
 
+	void icon_tooltip(const char* text)
+	{
+		if (ImGui::IsItemHovered(ImGuiHoveredFlags_ForTooltip | ImGuiHoveredFlags_DelayNormal) and ImGui::BeginTooltip())
+		{
+			ImGui::TextUnformatted(text);
+			ImGui::EndTooltip();
+		}
+	}
+
 	bool icon_toggle_button(const char* label, bool is_toggled, const ImVec2& size)
 	{
 		if (!is_toggled) ImGui::PushStyleColor(ImGuiCol_Text, ImGui::GetStyleColorVec4(ImGuiCol_TextDisabled));
@@ -246,13 +255,21 @@ namespace vt::widgets
 		return result;
 	}
 
+	ImVec2 calc_selectable_tile_size(ImVec2 tile_size)
+	{
+		ImVec2 image_tile_size = ImVec2{ tile_size.x, tile_size.x } *0.9f;
+
+		auto& style = ImGui::GetStyle();
+		auto text_size = ImVec2{ 0, 2 * ImGui::GetTextLineHeight() };
+		return tile_size + style.FramePadding + text_size;
+	}
+
 	bool tile(const std::string& label, ImVec2 tile_size, ImVec2 image_size, SDL_Texture* image, const std::function<void(const std::string&)> context_menu, const std::function<void(const std::string&)> drag_drop, ImVec2 uv0, ImVec2 uv1)
 	{
 		bool result{};
 		ImVec2 image_tile_size = ImVec2{ tile_size.x, tile_size.x } * 0.9f;
 
 		auto& style = ImGui::GetStyle();
-		ImGui::TableNextColumn();
 		ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2{});
 		ImTextureID imgui_tex = static_cast<ImTextureID>(image);
 		const char* id = label.c_str();

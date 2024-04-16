@@ -10,6 +10,7 @@ namespace vt::icons
 	inline constexpr auto play = "\xee\x80\xb7";
 	inline constexpr auto pause = "\xee\x80\xb4";
 	inline constexpr auto repeat = "\xee\x81\x80";
+	inline constexpr auto shuffle = "\xee\x81\x83";
 	inline constexpr auto skip_next = "\xee\x81\x84";
 	inline constexpr auto skip_prev = "\xee\x81\x85";
 	inline constexpr auto fast_back = "\xee\x80\xa0";
@@ -40,7 +41,7 @@ namespace vt::icons
 
 	inline std::vector<std::string> all
 	({
-		dots_hor, play, pause, repeat, skip_next, skip_prev, fast_back, fast_fwd,
+		dots_hor, play, pause, repeat, shuffle, skip_next, skip_prev, fast_back, fast_fwd,
 		save, save_as, import_, import_export, exit, close, back, visibility_on, visibility_off, add, delete_, folder, label, expand_less, expand_more,
 		toggle_less, toggle_more, link, edit, help, video_group, video, search
 	});

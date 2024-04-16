@@ -37,7 +37,7 @@ namespace vt
 
 	struct app_settings
 	{
-		float thumbnail_size = 72.0f;
+		float thumbnail_size = 45.0f;
 		bool link_start_end_segment = true;
 	};
 
