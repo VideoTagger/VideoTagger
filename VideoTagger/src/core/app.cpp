@@ -661,13 +661,20 @@ namespace vt
 				0,
 			};
 			default_font_builder.AddRanges(latin_extended);
-
 			default_font_builder.BuildRanges(&default_ranges);
 
+			ImVector<ImWchar> thumbnail_ranges;
+			ImFontGlyphRangesBuilder thumbnail_font_builder;
+			thumbnail_font_builder.AddText(icons::video_group);
+			thumbnail_font_builder.AddText(icons::video);
+			thumbnail_font_builder.BuildRanges(&thumbnail_ranges);
+
 			builder.BuildRanges(&ranges);
-			ctx_.fonts["default"] = io.Fonts->AddFontFromFileTTF(font_path.string().c_str(), size, nullptr, default_ranges.Data);
+			ctx_.fonts["default"] = io.Fonts->AddFontFromFileTTF(font_path.u8string().c_str(), size, nullptr, default_ranges.Data);
 			io.Fonts->AddFontFromFileTTF(ico_font_path.string().c_str(), size, &config, ranges.Data);
-			ctx_.fonts["title"] = io.Fonts->AddFontFromFileTTF(font_path.string().c_str(), size * 1.25f, nullptr, default_ranges.Data);
+			ctx_.fonts["title"] = io.Fonts->AddFontFromFileTTF(font_path.u8string().c_str(), size * 1.25f, nullptr, default_ranges.Data);
+
+			ctx_.fonts["thumbnail"] = io.Fonts->AddFontFromFileTTF(ico_font_path.u8string().c_str(), 256, nullptr, thumbnail_ranges.Data);
 			io.Fonts->Build();
 		}
 		else

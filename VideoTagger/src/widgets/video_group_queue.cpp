@@ -5,6 +5,7 @@
 #include <core/debug.hpp>
 #include <utils/drag_drop.hpp>
 #include "controls.hpp"
+#include <utils/thumbnail.hpp>
 #include "icons.hpp"
 
 namespace vt::widgets
@@ -41,6 +42,9 @@ namespace vt::widgets
 					}
 				};
 
+				SDL_Texture* image = utils::thumbnail::font_texture();
+				auto glyph = utils::thumbnail::find_glyph(utils::thumbnail::video_group_icon);
+
 				size_t playlist_size = playlist.size();
 				size_t i{};
 				auto it = playlist.begin();
@@ -57,13 +61,13 @@ namespace vt::widgets
 					std::string label = group.display_name;
 					
 					ImGui::SameLine();
-					tile(label, tile_size, image_tile_size, nullptr, [&remove_group](const std::string& label)
+					tile(label, tile_size, image_tile_size, image, [&remove_group](const std::string& label)
 					{
 						if (ImGui::MenuItem("Remove"))
 						{
 							remove_group = true;
 						}
-					});
+					}, nullptr, glyph.uv0, glyph.uv1);
 					ImGui::SameLine();
 					draw_spacer(spacer_size, it);
 					

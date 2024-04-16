@@ -34,13 +34,14 @@ namespace vt::icons
 	inline constexpr auto link = "\xee\x85\x97";
 	inline constexpr auto edit = "\xee\x8f\x89";
 	inline constexpr auto help = "\xee\xa3\xbd";
-	inline constexpr auto video_library = "\xee\x81\x8a";
+	inline constexpr auto video_group = "\xee\x81\x8a";
+	inline constexpr auto video = "\xEE\x80\xAC";
 	inline constexpr auto search = "\xee\xa2\xb6";
 
 	inline std::vector<std::string> all
 	({
 		dots_hor, play, pause, repeat, skip_next, skip_prev, fast_back, fast_fwd,
 		save, save_as, import_, import_export, exit, close, back, visibility_on, visibility_off, add, delete_, folder, label, expand_less, expand_more,
-		toggle_less, toggle_more, link, edit, help, search
+		toggle_less, toggle_more, link, edit, help, video_group, video, search
 	});
 }

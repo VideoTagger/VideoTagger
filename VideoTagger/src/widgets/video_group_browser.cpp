@@ -4,6 +4,7 @@
 #include <core/debug.hpp>
 #include <core/app_context.hpp>
 #include <utils/drag_drop.hpp>
+#include <utils/thumbnail.hpp>
 #include "modal/create_group_popup.hpp"
 #include "modal/video_properties_popup.hpp"
 #include "icons.hpp"
@@ -73,7 +74,11 @@ namespace vt::widgets
 		static auto draw_group_tile = [this](video_group& vgroup, video_group_id_t gid, ImVec2 tile_size, bool& open, bool& remove, bool& play)
 		{
 			ImGui::PushID((void*)gid);
-			open |= widgets::tile(vgroup.display_name, tile_size, tile_size, nullptr,
+
+			SDL_Texture* image = utils::thumbnail::font_texture();
+			auto glyph = utils::thumbnail::find_glyph(utils::thumbnail::video_group_icon);
+
+			open |= widgets::tile(vgroup.display_name, tile_size, tile_size, image,
 			[&](const std::string& label)
 			{
 				group_ctx_menu(open, remove, play);
@@ -100,10 +105,12 @@ namespace vt::widgets
 				if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_SourceNoHoldToOpenOthers))
 				{
 					utils::drag_drop::set_payload("Group", gid);
-					ImGui::TextUnformatted(vgroup.display_name.c_str());
+					std::string str = fmt::format("{} {}", icons::video_group, vgroup.display_name);
+					ImGui::TextUnformatted(str.c_str());
 					ImGui::EndDragDropSource();
 				}
-			});
+			},
+			glyph.uv0, glyph.uv1);
 			ImGui::PopID();
 		};
 

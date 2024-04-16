@@ -246,7 +246,7 @@ namespace vt::widgets
 		return result;
 	}
 
-	bool tile(const std::string& label, ImVec2 tile_size, ImVec2 image_size, SDL_Texture* image, const std::function<void(const std::string&)> context_menu, const std::function<void(const std::string&)> drag_drop)
+	bool tile(const std::string& label, ImVec2 tile_size, ImVec2 image_size, SDL_Texture* image, const std::function<void(const std::string&)> context_menu, const std::function<void(const std::string&)> drag_drop, ImVec2 uv0, ImVec2 uv1)
 	{
 		bool result{};
 		ImVec2 image_tile_size = ImVec2{ tile_size.x, tile_size.x } * 0.9f;
@@ -290,7 +290,7 @@ namespace vt::widgets
 		}
 
 		ImGui::SetCursorPos(std::exchange(cpos, ImGui::GetCursorPos()));
-		ImGui::Image(imgui_tex, image_size);
+		ImGui::Image(imgui_tex, image_size, uv0, uv1);
 		ImGui::Dummy({ 0, (image_tile_size.y - image_size.y) / 2.f });
 		//widgets::clipped_text(id, { tile_size.x, text_size.y });
 		//TODO: Text clipping, change widgets::clipped_text into this
