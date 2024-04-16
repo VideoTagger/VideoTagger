@@ -57,6 +57,7 @@ namespace vt
 
 		size_t size() const;
 		bool empty() const;
+		bool contains(video_group_id_t group_id) const;
 
 		iterator begin();
 		const_iterator begin() const;

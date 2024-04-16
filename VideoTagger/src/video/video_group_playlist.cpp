@@ -204,6 +204,14 @@ namespace vt
 		return queue_.empty();
 	}
 
+	bool video_group_playlist::contains(video_group_id_t group_id) const
+	{
+		return std::find_if(queue_.begin(), queue_.end(), [group_id](const video_group_playlist_element& item)
+		{
+			return item.group_id == group_id;
+		}) != end();
+	}
+
 	video_group_playlist::iterator video_group_playlist::begin()
 	{
 		return queue_.begin();

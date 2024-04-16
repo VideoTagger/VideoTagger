@@ -36,7 +36,10 @@ namespace vt::widgets
 						auto payload = utils::drag_drop::get_payload<video_group_id_t>("Group");
 						if (payload.has_value())
 						{
-							it = playlist.insert(it != playlist.end() ? it + 1 : it, payload.value());
+							if (!playlist.contains(payload.value()))
+							{
+								it = playlist.insert(it, payload.value());
+							}
 						}
 						ImGui::EndDragDropTarget();
 					}
@@ -50,9 +53,8 @@ namespace vt::widgets
 				auto it = playlist.begin();
 
 				//TODO: Inserting here puts value at the 2nd element, not 1st
-				draw_spacer(spacer_size, it);
 
-				for (; it != playlist.end(); ++it)
+				for (; it != playlist.end();)
 				{
 					bool remove_group{};
 					const auto& pinfo = *it;
@@ -60,6 +62,8 @@ namespace vt::widgets
 					auto& group = groups.at(pinfo.group_id);
 					std::string label = group.display_name;
 					
+					draw_spacer(spacer_size, it);
+
 					ImGui::SameLine();
 					tile(label, tile_size, image_tile_size, image, [&remove_group](const std::string& label)
 					{
@@ -68,19 +72,20 @@ namespace vt::widgets
 							remove_group = true;
 						}
 					}, nullptr, glyph.uv0, glyph.uv1);
-					ImGui::SameLine();
-					draw_spacer(spacer_size, it);
 					
-					if (++i < playlist_size)
-					{
-						ImGui::SameLine();
-					}
-
+					ImGui::SameLine();
+					
 					if (remove_group)
 					{
 						it = playlist.erase(it);
 					}
+					else
+					{
+						++it;
+					}
 				}
+
+				draw_spacer(spacer_size, it);
 			}
 			ImGui::EndChild();
 		}
