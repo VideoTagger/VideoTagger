@@ -53,7 +53,6 @@ namespace vt
 
 		if (!is_playing())
 		{
-			current_timestamp_ = {};
 			return;
 		}
 
@@ -208,11 +207,20 @@ namespace vt
 
 	displayed_videos_manager::iterator displayed_videos_manager::erase(const_iterator it)
 	{
-		return videos_.erase(it);
+		auto result = videos_.erase(it);
+		if (empty())
+		{
+			current_timestamp_ = {};
+			is_playing_ = false;
+		}
+
+		return result;
 	}
 
 	void displayed_videos_manager::clear()
 	{
+		current_timestamp_ = {};
+		is_playing_ = false;
 		videos_.clear();
 	}
 
@@ -275,6 +283,11 @@ namespace vt
 	size_t displayed_videos_manager::size() const
 	{
 		return videos_.size();
+	}
+
+	bool displayed_videos_manager::empty() const
+	{
+		return videos_.empty();
 	}
 
 	displayed_videos_manager::iterator displayed_videos_manager::begin()
