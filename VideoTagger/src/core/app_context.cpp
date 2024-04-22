@@ -6,6 +6,8 @@ namespace vt
 {
 	void app_context::update_current_video_group()
 	{
+		//TODO: needs a refactor
+
 		auto group_it = current_project->video_groups.find(current_video_group_id);
 		if (!current_project.has_value() or current_video_group_id == 0 or group_it == current_project->video_groups.end())
 		{
@@ -88,9 +90,8 @@ namespace vt
 
 	void app_context::reset_current_video_group()
 	{
-		displayed_videos.clear();
-		displayed_videos.update();
 		current_video_group_id = 0;
+		displayed_videos.update();
 	}
 
 	segment_storage& app_context::get_current_segment_storage()

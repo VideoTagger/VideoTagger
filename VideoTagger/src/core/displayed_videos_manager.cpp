@@ -63,6 +63,7 @@ namespace vt
 			return;
 		}
 
+		//TODO: maybe take delta time as argument
 		auto current_timepoint = std::chrono::steady_clock::now();
 		current_timestamp_ += std::chrono::duration_cast<std::chrono::nanoseconds>((current_timepoint - last_timepoint_) * speed_);
 		last_timepoint_ = current_timepoint;
@@ -78,11 +79,6 @@ namespace vt
 			video_data.video->set_playing(is_playing);
 			video_data.video->update(current_timestamp_ - video_data.offset);
 			video_data.video->get_frame(video_data.display_texture);
-
-			//if (video_data.video->frame_buffer_.size() < 10)
-			//{
-			//	video_data.video->buffer_frames(10 - video_data.video->frame_buffer_.size());
-			//}
 		}
 
 		auto group_duration = duration();
