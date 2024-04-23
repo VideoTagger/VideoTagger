@@ -1,4 +1,5 @@
 #pragma once
+#include <video/video_pool.hpp>
 
 namespace vt::widgets
 {
@@ -8,7 +9,7 @@ namespace vt::widgets
 		video_group_queue() = default;
 
 	public:
-
+		video_group_id_t current_group_id{};
 
 	public:
 		void render(bool& is_open);

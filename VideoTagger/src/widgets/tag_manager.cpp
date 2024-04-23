@@ -208,6 +208,7 @@ namespace vt::widgets
 			{
 				open_add_tag_popup = true;
 			}
+			icon_tooltip("Add Tag");
 			ImGui::SameLine();
 			search_bar("##VideoGroupBrowserSearch", "Search...", filter, ImGui::GetContentRegionAvail().x - 2 * (ImGui::CalcTextSize(icons::toggle_less).x + 2 * style.FramePadding.x));
 			ImGui::SameLine();
@@ -216,6 +217,7 @@ namespace vt::widgets
 				update_state = true;
 				update_all = true;
 			}
+			icon_tooltip("Expand All");
 			ImGui::SameLine();
 			ImGui::PopStyleVar();
 			if (icon_button(icons::toggle_less))
@@ -223,6 +225,7 @@ namespace vt::widgets
 				update_state = false;
 				update_all = true;
 			}
+			icon_tooltip("Collapse All");
 			ImGui::Separator();
 
 			//ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2{});

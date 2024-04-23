@@ -264,7 +264,7 @@ namespace vt::widgets
 		return tile_size + style.FramePadding + text_size;
 	}
 
-	bool tile(const std::string& label, ImVec2 tile_size, ImVec2 image_size, SDL_Texture* image, const std::function<void(const std::string&)> context_menu, const std::function<void(const std::string&)> drag_drop, ImVec2 uv0, ImVec2 uv1)
+	bool tile(const std::string& label, ImVec2 tile_size, ImVec2 image_size, SDL_Texture* image, const std::function<void(const std::string&)> context_menu, const std::function<void(const std::string&)> drag_drop, ImVec2 uv0, ImVec2 uv1, bool is_selected)
 	{
 		bool result{};
 		ImVec2 image_tile_size = ImVec2{ tile_size.x, tile_size.x } * 0.9f;
@@ -274,13 +274,12 @@ namespace vt::widgets
 		ImTextureID imgui_tex = static_cast<ImTextureID>(image);
 		const char* id = label.c_str();
 		ImGui::PushID(id);
-		bool selected = false;
 		auto text_size = ImVec2{ 0, 2 * ImGui::GetTextLineHeight() };
 		auto selectable_size = tile_size + style.FramePadding + text_size;
 		ImVec2 cpos = ImGui::GetCursorPos() + (selectable_size - image_size - text_size) / 2;
 		
 		ImGui::BeginGroup();
-		ImGui::Selectable("##TileButton", &selected, ImGuiSelectableFlags_AllowOverlap | ImGuiSelectableFlags_AllowDoubleClick, selectable_size);
+		ImGui::Selectable("##TileButton", &is_selected, ImGuiSelectableFlags_AllowOverlap | ImGuiSelectableFlags_AllowDoubleClick, selectable_size);
 		if (ImGui::IsItemHovered() and ImGui::IsMouseDoubleClicked(0))
 		{
 			result = true;

@@ -81,8 +81,7 @@ namespace vt::widgets
 
 						size_t playlist_size = playlist.size();
 						auto it = playlist.begin();
-
-						//TODO: Inserting here puts value at the 2nd element, not 1st
+						auto full_avail_area = ImGui::GetContentRegionAvail();
 
 						for (; it != playlist.end();)
 						{
@@ -96,6 +95,8 @@ namespace vt::widgets
 							draw_spacer(spacer_size, it);
 
 							ImGui::SameLine();
+							bool is_selected = current_group_id != 0 and current_group_id == pinfo.group_id;
+
 							tile(label, tile_size, image_tile_size, image, [&remove_group](const std::string& label)
 							{
 								if (ImGui::MenuItem("Remove"))
@@ -118,7 +119,7 @@ namespace vt::widgets
 									ImGui::TextUnformatted(str.c_str());
 									ImGui::EndDragDropSource();
 								}
-							}, glyph.uv0, glyph.uv1);
+							}, glyph.uv0, glyph.uv1, is_selected);
 
 							ImGui::SameLine();
 
@@ -132,7 +133,38 @@ namespace vt::widgets
 							}
 						}
 
-						draw_spacer(spacer_size, it);
+						if (false and !playlist.empty())
+						{
+							draw_spacer(spacer_size, it);
+						}
+						else
+						{
+							auto win_rect = ImGui::GetCurrentWindow()->InnerRect;
+							auto avail_area = ImGui::GetContentRegionAvail();
+							auto offset = ImGui::GetContentRegionMax() - avail_area;
+							ImRect inner_rect = { win_rect.GetTL() + offset, win_rect.GetTL() + full_avail_area };
+							if (ImGui::BeginDragDropTargetCustom(inner_rect, ImGui::GetID("GroupQueueDragDropPanel")))
+							{
+								auto payload = utils::drag_drop::get_payload<video_group_id_t>("Group", ImGuiDragDropFlags_AcceptBeforeDelivery);
+
+								if (payload.data.has_value())
+								{
+									bool is_delivery = payload.imgui_payload->IsDelivery();
+
+									bool already_contains = playlist.contains(payload.data.value());
+									if (!is_delivery and already_contains)
+									{
+										ImGui::SetMouseCursor(ImGuiMouseCursor_NotAllowed);
+									}
+									else if (is_delivery and !already_contains)
+									{
+										it = playlist.insert(it, payload.data.value());
+									}
+								}
+
+								ImGui::EndDragDropTarget();
+							}
+						}
 					}
 					ImGui::EndChild();
 				}

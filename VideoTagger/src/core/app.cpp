@@ -1581,7 +1581,6 @@ namespace vt
 			}
 		}
 
-
 		if (ctx_.reset_player_docking)
 		{
 			ctx_.player.dock_windows(4);
@@ -1664,6 +1663,7 @@ namespace vt
 
 		if (ctx_.win_cfg.show_video_group_queue_window)
 		{
+			ctx_.group_queue.current_group_id = ctx_.current_video_group_id;
 			ctx_.group_queue.render(ctx_.win_cfg.show_video_group_queue_window);
 		}
 
