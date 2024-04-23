@@ -1,5 +1,6 @@
 #include "pch.hpp"
 #include "builtin_action.hpp"
+#include <core/debug.hpp>
 
 namespace vt
 {
@@ -13,8 +14,15 @@ namespace vt
 		}
 	}
 
-	void builtin_action::render_properties()
+	void builtin_action::to_json(nlohmann::ordered_json& json) const
 	{
-		
+		debug::error("Builtin actions cannot be serialized");
 	}
+
+	void builtin_action::from_json(const nlohmann::ordered_json& json)
+	{
+		debug::error("Builtin actions cannot be deserialized");
+	}
+
+	void builtin_action::render_properties() {}
 }

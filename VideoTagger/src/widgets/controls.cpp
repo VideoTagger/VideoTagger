@@ -257,8 +257,6 @@ namespace vt::widgets
 
 	ImVec2 calc_selectable_tile_size(ImVec2 tile_size)
 	{
-		ImVec2 image_tile_size = ImVec2{ tile_size.x, tile_size.x } *0.9f;
-
 		auto& style = ImGui::GetStyle();
 		auto text_size = ImVec2{ 0, 2 * ImGui::GetTextLineHeight() };
 		return tile_size + style.FramePadding + text_size;

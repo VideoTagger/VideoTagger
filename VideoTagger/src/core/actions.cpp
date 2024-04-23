@@ -7,7 +7,7 @@ namespace vt
 	{
 		std::vector<std::shared_ptr<keybind_action>> actions;
 		actions.push_back(std::make_shared<no_action>());
-		actions.push_back(std::make_shared<add_timestamp_action>());
+		actions.push_back(std::make_shared<timestamp_action>());
 		actions.push_back(std::make_shared<segment_action>());
 		return actions;
 	}

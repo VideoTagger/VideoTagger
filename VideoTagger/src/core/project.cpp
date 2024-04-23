@@ -291,7 +291,7 @@ namespace vt
 
 					video_group_id_t group_id = json_segments["group-id"];
 					auto& group_segments = result.segments[group_id];
-					for (auto& json_group_segments : json["group-segments"])
+					for (auto& json_group_segments : json_segments["group-segments"])
 					{
 						if (!json_group_segments.contains("tag"))
 						{

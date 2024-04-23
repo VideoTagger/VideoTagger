@@ -5,8 +5,9 @@
 
 namespace vt
 {
-	add_timestamp_action::add_timestamp_action() : keybind_action("Insert Timestamp") {}
-	void add_timestamp_action::invoke() const
+	timestamp_action::timestamp_action() : keybind_action(action_name) {}
+
+	void timestamp_action::invoke() const
 	{
 		if (!ctx_.current_project.has_value() or ctx_.current_video_group_id == 0)
 		{
@@ -25,7 +26,32 @@ namespace vt
 		}
 	}
 
-	void add_timestamp_action::render_properties()
+	void timestamp_action::to_json(nlohmann::ordered_json& json) const
+	{
+		auto& tag_name = json["tag-name"];
+		if (tag_.empty())
+		{
+			tag_name = nullptr;
+		}
+		else
+		{
+			tag_name = tag_;
+		}
+	}
+
+	void timestamp_action::from_json(const nlohmann::ordered_json& json)
+	{
+		if (json.contains("tag-name"))
+		{
+			const auto& tag_name = json.at("tag-name");
+			if (!tag_name.is_null())
+			{
+				tag_ = json.at("tag-name");
+			}
+		}
+	}
+
+	void timestamp_action::render_properties()
 	{
 		ImGui::TableNextColumn();
 		ImGui::Text("Tag Name");
@@ -62,10 +88,42 @@ namespace vt
 		widgets::help_marker("Choosing \"Ask Later\" will display a window, where you will have to select the tag");
 	}
 
-	segment_action::segment_action() : keybind_action("Start/End Segment"), type_{ segment_action_type::auto_ } {}
+	segment_action::segment_action() : keybind_action(action_name), type_{ segment_action_type::auto_ } {}
+
 	void segment_action::invoke() const
 	{
 
+	}
+
+	void segment_action::to_json(nlohmann::ordered_json& json) const
+	{
+		auto& tag_name = json["tag-name"];
+		if (tag_.empty())
+		{
+			tag_name = nullptr;
+		}
+		else
+		{
+			tag_name = tag_;
+		}
+		json["type"] = type_;
+	}
+
+	void segment_action::from_json(const nlohmann::ordered_json& json)
+	{
+		if (json.contains("tag-name"))
+		{
+			const auto& tag_name = json.at("tag-name");
+			if (!tag_name.is_null())
+			{
+				tag_ = tag_name;
+			}
+		}
+
+		if (json.contains("type"))
+		{
+			type_ = json.at("type");
+		}
 	}
 
 	void segment_action::render_properties()

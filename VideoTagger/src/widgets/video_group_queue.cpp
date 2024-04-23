@@ -133,16 +133,13 @@ namespace vt::widgets
 							}
 						}
 
-						if (false and !playlist.empty())
-						{
-							draw_spacer(spacer_size, it);
-						}
-						else
+						//draw_spacer(spacer_size, it);
 						{
 							auto win_rect = ImGui::GetCurrentWindow()->InnerRect;
 							auto avail_area = ImGui::GetContentRegionAvail();
 							auto offset = ImGui::GetContentRegionMax() - avail_area;
-							ImRect inner_rect = { win_rect.GetTL() + offset, win_rect.GetTL() + full_avail_area };
+							auto rect_size = win_rect.GetTL() + ImVec2{ full_avail_area.x, spacer_size.y };
+							ImRect inner_rect = { win_rect.GetTL() + offset, rect_size };
 							if (ImGui::BeginDragDropTargetCustom(inner_rect, ImGui::GetID("GroupQueueDragDropPanel")))
 							{
 								auto payload = utils::drag_drop::get_payload<video_group_id_t>("Group", ImGuiDragDropFlags_AcceptBeforeDelivery);

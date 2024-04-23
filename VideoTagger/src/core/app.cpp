@@ -845,7 +845,7 @@ namespace vt
 						ImGui::SameLine();
 						if (keybind.flags.rebindable and is_row_selected and ImGui::TableGetColumnIndex() == ImGui::TableGetHoveredColumn())
 						{
-							ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, style.FramePadding * 0.5f);
+							ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, { style.FramePadding.x * 0.5f, style.FramePadding.y });
 							if (widgets::icon_button(edit_id.c_str()))
 							{
 								new_kb_name = name;
@@ -875,13 +875,13 @@ namespace vt
 					if (keybind.flags.rebindable)
 					{
 						ImGui::PushID(id);
-						std::string edit_combination_id = std::string(icons::edit) + "##EditCombination";
+						std::string edit_combination_id = fmt::format("{}{}", icons::edit, "##EditCombination");
 						is_row_selected |= (ImGui::GetHoveredID() == ImGui::GetID(edit_combination_id.c_str()));
 
 						ImGui::SameLine();
 						if (is_row_selected and ImGui::TableGetColumnIndex() == ImGui::TableGetHoveredColumn())
 						{
-							ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, style.FramePadding * 0.5f);
+							ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, { style.FramePadding.x * 0.5f, style.FramePadding.y });
 							if (widgets::icon_button(edit_combination_id.c_str()))
 							{
 								//resets the last keybind
@@ -918,7 +918,7 @@ namespace vt
 							ImGui::SameLine();
 							if (is_row_selected and ImGui::TableGetColumnIndex() == ImGui::TableGetHoveredColumn())
 							{
-								ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, style.FramePadding * 0.5f);
+								ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, { style.FramePadding.x * 0.5f, style.FramePadding.y });
 								if (widgets::icon_button(edit_kb_id.c_str()))
 								{
 									actions = get_all_keybind_actions();
