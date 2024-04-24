@@ -6,7 +6,8 @@ namespace vt
 	//TODO: Use random from uuid/make a "random" class
 	static std::mt19937_64 random_engine(std::random_device{}());
 
-	video_group_playlist::video_group_playlist() : shuffled_{ false }, current_element_{ end() }
+	video_group_playlist::video_group_playlist() 
+		: shuffled_{ false }, current_element_{ end() }
 	{
 	}
 
@@ -17,33 +18,35 @@ namespace vt
 			return current_element_;
 		}
 
+		iterator next_element = end();
+
 		if (!shuffled_)
 		{
-			return ++current_element_;
+			next_element = current_element_ + 1;
 		}
-
-		std::vector<size_t> item_pool;
-		item_pool.reserve(size());
-
-		for (size_t i = 0; i < size(); i++)
+		else
 		{
-			if (queue_[i].was_played)
+			std::vector<size_t> item_pool;
+			item_pool.reserve(size());
+
+			for (size_t i = 0; i < size(); i++)
 			{
-				continue;
+				if (queue_[i].was_played)
+				{
+					continue;
+				}
+
+				item_pool.push_back(i);
 			}
 
-			item_pool.push_back(i);
+			if (!item_pool.empty())
+			{
+				std::uniform_int_distribution<size_t> distribution(0, item_pool.size() - 1);
+				next_element = begin() + item_pool[distribution(random_engine)];
+			}
 		}
 
-		if (item_pool.empty())
-		{
-			current_element_ = end();
-			return current_element_;
-		}
-
-		std::uniform_int_distribution<size_t> distribution(0, item_pool.size() - 1);
-		current_element_ = begin() + distribution(random_engine);
-		return current_element_;
+		return set_current(next_element);
 	}
 
 	video_group_playlist::iterator video_group_playlist::previous()
@@ -53,12 +56,18 @@ namespace vt
 			return current_element_;
 		}
 
-		return --current_element_;
+		return set_current(current_element_ - 1);
 	}
 
 	video_group_playlist::iterator video_group_playlist::set_current(const_iterator where)
 	{
-		return current_element_ = begin() + (where - begin());
+		current_element_ = begin() + (where - begin());
+		if (current_element_ != end())
+		{
+			current_element_->was_played = true;
+		}
+
+		return current_element_;
 	}
 
 	video_group_playlist::iterator video_group_playlist::current()
