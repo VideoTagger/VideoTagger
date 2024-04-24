@@ -15,12 +15,13 @@ namespace vt
 	class video_group_playlist
 	{
 	public:
-		//TODO: maybe just use vector
 		using container = std::deque<video_group_playlist_element>;
 		using iterator = container::iterator;
 		using const_iterator = container::const_iterator;
 
 		video_group_playlist();
+
+		//TODO: peek next/previous
 
 		iterator next();
 		iterator previous();

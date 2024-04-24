@@ -1057,6 +1057,7 @@ namespace vt
 			video_group_playlist::iterator it;
 			if (dir > 0)
 			{
+				//TODO: should be different when shuffle is enabled
 				if (playlist.current() == playlist.end() - 1) return;
 				it = playlist.next();
 			}
