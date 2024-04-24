@@ -146,7 +146,7 @@ namespace vt
 		current_element_ = end();
 	}
 
-	void video_group_playlist::clear_played_flags()
+	void video_group_playlist::clear_flags()
 	{
 		for (auto& item : queue_)
 		{

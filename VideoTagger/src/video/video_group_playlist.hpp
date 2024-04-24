@@ -43,7 +43,7 @@ namespace vt
 		iterator erase(const_iterator where);
 
 		void clear();
-		void clear_played_flags();
+		void clear_flags();
 
 		video_group_playlist_element& front();
 		const video_group_playlist_element& front() const;

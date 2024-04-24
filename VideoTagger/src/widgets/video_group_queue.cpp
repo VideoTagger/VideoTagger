@@ -169,19 +169,23 @@ namespace vt::widgets
 				ImGui::TableNextColumn();
 				{
 					bool is_empty = playlist.empty();
+					bool can_play = !is_empty and ctx_.current_video_group_id == 0;
 					auto cpos = ImGui::GetCursorPosX() + style.CellPadding.x;
 					ImGui::SetCursorPosX(cpos);
-					if (is_empty) ImGui::BeginDisabled();
+					if (!can_play) ImGui::BeginDisabled();
 					if (icon_button(icons::play))
 					{
+						playlist.clear_flags();
 						auto it = playlist.set_current(playlist.begin());
 						ctx_.current_video_group_id = it->group_id;
 
 						auto& pool = ctx_.current_project->videos;
 					}
 					icon_tooltip("Play");
+					if (!can_play) ImGui::EndDisabled();
 
 					ImGui::SetCursorPosX(cpos);
+					if (is_empty) ImGui::BeginDisabled();
 					if (icon_button(icons::delete_))
 					{
 						playlist.clear();
