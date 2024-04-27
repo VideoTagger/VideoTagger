@@ -553,6 +553,10 @@ namespace vt
 				if (show_windows.contains("video-group-browser")) ctx_.win_cfg.show_video_group_browser_window = show_windows["video-group-browser"];
 				if (show_windows.contains("video-group-queue")) ctx_.win_cfg.show_video_group_queue_window = show_windows["video-group-queue"];
 			}
+			if (ctx_.settings.contains("load-thumbnails"))
+			{
+				ctx_.app_settings.load_thumbnails = ctx_.settings.at("load-thumbnails");
+			}
 		}
 		else
 		{
@@ -984,6 +988,14 @@ namespace vt
 			if (ImGui::DragFloat("##ThumbnailSizeDrag", &ctx_.app_settings.thumbnail_size, 0.5f, 45.0f, 100.f, "%.1f", ImGuiSliderFlags_AlwaysClamp))
 			{
 				ctx_.settings["thumbnail-size"] = ctx_.app_settings.thumbnail_size;
+			}
+
+			ImGui::AlignTextToFramePadding();
+			ImGui::TextUnformatted("Load Thumbnails");
+			ImGui::SameLine();
+			if (ImGui::Checkbox("##LoadThumbnailsCheckbox", &ctx_.app_settings.load_thumbnails))
+			{
+				ctx_.settings["load-thumbnails"] = ctx_.app_settings.load_thumbnails;
 			}
 
 			//TODO: Add theme selection
@@ -1504,14 +1516,15 @@ namespace vt
 					{
 						debug::error("Failed to import {}", result.video_path.u8string());
 					}
-					else
+					else if (ctx_.app_settings.load_thumbnails)
 					{
 						auto video_data = ctx_.current_project->videos.get(result.video_id);
 						video_data->update_thumbnail(ctx_.renderer);
 					}
 
 					it = tasks.erase(it);
-					continue;
+					break;
+					//continue;
 				}
 
 				++it;

@@ -347,7 +347,7 @@ namespace vt
 					//TODO: Can't be async because result is later moved
 					result.import_video(path, id, false);
 					auto pool_data = result.videos.get(id);
-					if (pool_data != nullptr)
+					if (pool_data != nullptr and ctx_.app_settings.load_thumbnails)
 					{
 						pool_data->update_thumbnail(ctx_.renderer);
 					}
