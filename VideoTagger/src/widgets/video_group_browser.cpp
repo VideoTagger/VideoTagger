@@ -21,19 +21,30 @@ namespace vt::widgets
 			std::string label = vmeta.path.filename().u8string();
 			ImVec2 image_tile_size{ tile_size.x * 0.9f, tile_size.x * 0.9f };
 
-			float scaled_width = vmeta.width * image_tile_size.y / vmeta.height;
-			float scaled_height = image_tile_size.x * vmeta.height / vmeta.width;
-
 			ImVec2 image_size = image_tile_size;
-			if (scaled_width < image_tile_size.x)
+			ImVec2 uv0{ 0, 0 };
+			ImVec2 uv1{ 1, 1 };
+			if (image == nullptr)
 			{
-				image_size.x = scaled_width;
+				image = utils::thumbnail::font_texture();
+				auto glyph = utils::thumbnail::find_glyph(utils::thumbnail::video_icon);
+				uv0 = glyph.uv0;
+				uv1 = glyph.uv1;
 			}
-			else if (scaled_height < image_tile_size.y)
+			else
 			{
-				image_size.y = scaled_height;
-			}
+				float scaled_width = vmeta.width * image_tile_size.y / vmeta.height;
+				float scaled_height = image_tile_size.x * vmeta.height / vmeta.width;
 
+				if (scaled_width < image_tile_size.x)
+				{
+					image_size.x = scaled_width;
+				}
+				else if (scaled_height < image_tile_size.y)
+				{
+					image_size.y = scaled_height;
+				}
+			}
 			open |= widgets::tile(label, tile_size, image_size, image,
 			[&](const std::string& label)
 			{
@@ -52,7 +63,7 @@ namespace vt::widgets
 				{
 					properties = true;
 				}
-			});
+			}, nullptr, uv0, uv1);
 		};
 
 		static auto group_ctx_menu = [](bool& open, bool& remove, bool& enqueue, bool can_enqueue)
