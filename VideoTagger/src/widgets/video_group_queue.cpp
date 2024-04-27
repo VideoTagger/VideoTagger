@@ -169,7 +169,7 @@ namespace vt::widgets
 				ImGui::TableNextColumn();
 				{
 					bool is_empty = playlist.empty();
-					bool can_play = !is_empty and ctx_.current_video_group_id == 0;
+					bool can_play = !is_empty and ctx_.current_video_group_id == invalid_video_group_id;
 					auto cpos = ImGui::GetCursorPosX() + style.CellPadding.x;
 					ImGui::SetCursorPosX(cpos);
 					if (!can_play) ImGui::BeginDisabled();

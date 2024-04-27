@@ -31,10 +31,12 @@
 #include <string>
 #include <vector>
 #include <optional>
+#include <unordered_map>
 
 #include <utils/timestamp.hpp>
 #include <tags/tag_storage.hpp>
 #include <tags/tag_timeline.hpp>
+#include <video/video_pool.hpp>
 
 namespace vt::widgets
 {
@@ -60,11 +62,18 @@ namespace vt::widgets
 
 	struct timeline_state
 	{
+
+		static constexpr timestamp disabled_time_min = timestamp::zero();
+		static constexpr timestamp disabled_time_max = timestamp{ 3600 };
+
 		bool focused = false;
+		bool enabled = true;
 
 		tag_storage* tags{};
 		segment_storage* segments{};
-		std::vector<std::string> displayed_tags;
+
+		video_group_id_t current_video_group_id = invalid_video_group_id;
+		std::unordered_map<video_group_id_t, std::vector<std::string>> displayed_tags;
 
 		timestamp time_min{};
 		timestamp time_max{};
@@ -83,7 +92,6 @@ namespace vt::widgets
 	//Inspector needs this
 	extern bool merge_timestamps_popup(const std::string& id, bool& pressed_button);
 
-	// return true if selection is made
 	bool video_timeline(timeline_state& state, std::optional<selected_segment_data>& selected_timestamp, std::optional<moving_segment_data>& moving_timestamp, bool& dirty_flag);
 
 }

@@ -11,6 +11,9 @@ namespace vt
 	using video_id_t = uint64_t;
 	using video_group_id_t = uint64_t;
 
+	//TODO: use this instead of just 0
+	inline constexpr auto invalid_video_group_id = video_group_id_t{ 0 };
+
 	class video_group
 	{
 	public:

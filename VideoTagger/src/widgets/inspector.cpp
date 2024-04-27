@@ -90,7 +90,7 @@ namespace vt::widgets
 								std::swap(ts_start, ts_end);
 							}
 							
-							if (ts_start < timestamp(0))
+							if (ts_start < timestamp::zero())
 							{
 								timestamp move_value = timestamp(std::abs(ts_start.seconds_total.count()));
 								ts_start += move_value;
