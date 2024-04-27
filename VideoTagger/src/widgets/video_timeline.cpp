@@ -124,7 +124,7 @@ namespace vt::widgets
 		return clickedBtn;
 	}
 
-	bool merge_timestamps_popup(const std::string& id, bool& pressed_button)
+	bool merge_timestamps_popup(const std::string& id, bool& pressed_button, bool display_dragged_segment_text)
 	{
 		//TODO: improve layout
 
@@ -141,7 +141,7 @@ namespace vt::widgets
 		if (ImGui::BeginPopupModal(id.c_str(), nullptr, flags))
 		{
 			ImGui::Text("Do you want to merge the overlapping segments?");
-			ImGui::TextDisabled("(Pressing \"No\" will move the currently dragged segment back to its original position)");
+			if (display_dragged_segment_text) ImGui::TextDisabled("(Pressing \"No\" will move the currently dragged segment back to its original position)");
 			ImGui::NewLine();
 			auto area_size = ImGui::GetWindowSize();
 
@@ -628,7 +628,7 @@ namespace vt::widgets
 					segments = &state.segments->at(tag_info->name);
 				}
 
-				bool insert_segment = false;
+				//bool insert_segment = false;
 				bool insert_segment_with_popup = false;
 
 				static timestamp mouse_timestamp;
@@ -708,15 +708,15 @@ namespace vt::widgets
 					ImGui::EndPopup();
 				}
 
-				if (insert_segment)
-				{
-					//TODO: this doesn't display the merge popup
-
-					segments->insert(timestamp{ inserted_segment_start }, timestamp{ inserted_segment_end });
-					inserted_segment_start = timestamp::zero();
-					inserted_segment_end = timestamp::zero();
-					dirty_flag = true;
-				}
+				//if (insert_segment)
+				//{
+				//	//TODO: this doesn't display the merge popup
+				//
+				//	segments->insert(timestamp{ inserted_segment_start }, timestamp{ inserted_segment_end });
+				//	inserted_segment_start = timestamp::zero();
+				//	inserted_segment_end = timestamp::zero();
+				//	dirty_flag = true;
+				//}
 
 				if (insert_segment_with_popup)
 				{
@@ -736,10 +736,33 @@ namespace vt::widgets
 					//TODO: this doesn't display the merge popup
 
 					auto& segments = state.segments->at(displayed_tags[selected_tag]);
-					segments.insert(timestamp{ inserted_segment_start }, timestamp{ inserted_segment_end });
+
+					auto overlapping = segments.find_range(inserted_segment_start, inserted_segment_end);
+					if (!overlapping.empty())
+					{
+						ImGui::OpenPopup("##MergePopupContextMenu");
+					}
+					else
+					{
+						segments.insert(timestamp{ inserted_segment_start }, timestamp{ inserted_segment_end });
+						inserted_segment_start = timestamp::zero();
+						inserted_segment_end = timestamp::zero();
+						dirty_flag = true;
+					}
+				}
+
+				bool presed_yes{};
+				if (merge_timestamps_popup("##MergePopupContextMenu", presed_yes, false))
+				{
+					if (presed_yes)
+					{
+						auto& segments = state.segments->at(displayed_tags[selected_tag]);
+						segments.insert(timestamp{ inserted_segment_start }, timestamp{ inserted_segment_end });
+						dirty_flag = true;
+					}
+
 					inserted_segment_start = timestamp::zero();
 					inserted_segment_end = timestamp::zero();
-					dirty_flag = true;
 				}
 			}
 
@@ -849,7 +872,7 @@ namespace vt::widgets
 			draw_list->PopClipRect();
 
 			bool pressed_yes{};
-			if (merge_timestamps_popup("##MergeSegments", pressed_yes))
+			if (merge_timestamps_popup("##MergeSegments", pressed_yes, true))
 			{
 				if (pressed_yes and moving_segment.has_value())
 				{
@@ -863,7 +886,6 @@ namespace vt::widgets
 
 					dirty_flag = true;
 				}
-				
 				moving_segment.reset();
 			}
 			

@@ -59,14 +59,18 @@ namespace vt::widgets
 							timestamp prev_ts_start = ts_start;
 							timestamp prev_ts_end = ts_end;
 
+							uint64_t start_max = link_start_end ? max_timestamp : std::max<uint64_t>(0, ts_end.seconds_total.count() - 1);
+							uint64_t end_min = link_start_end ? min_timestamp : ts_start.seconds_total.count() + 1;
+
 							//ImGui::Columns(2, nullptr, false);
 							bool start_activated = false;
 							bool start_released = false;
-							bool modified_start = timestamp_control("Start", ts_start, min_timestamp, std::max<uint64_t>(0, ts_end.seconds_total.count() - 1), &start_activated, &start_released);
+							bool modified_start = timestamp_control("Start", ts_start, min_timestamp, start_max, &start_activated, &start_released);
 							//ImGui::NextColumn();
 							bool end_activated = false;
 							bool end_released = false;
-							bool modified_end = timestamp_control("End", ts_end, ts_start.seconds_total.count() + 1, max_timestamp, &end_activated, &end_released);
+							bool modified_end = timestamp_control("End", ts_end, end_min, max_timestamp, &end_activated, &end_released);
+							
 							std::string name = icons::link + std::string("##LinkTimestamps");
 							if (icon_toggle_button(name.c_str(), link_start_end))
 							{
@@ -163,14 +167,14 @@ namespace vt::widgets
 					}
 					else
 					{
-						ImGui::OpenPopup("Merge Overlapping");
+						ImGui::OpenPopup("##MergeSegments");
 						popup_ts_start = ts_start;
 						popup_ts_end = ts_end;
 					}
 				}
 
 				bool pressed_yes{};
-				if (merge_timestamps_popup("##MergeSegments", pressed_yes))
+				if (merge_timestamps_popup("##MergeSegments", pressed_yes, true))
 				{
 					if (pressed_yes)
 					{
