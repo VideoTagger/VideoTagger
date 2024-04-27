@@ -44,6 +44,7 @@ namespace vt::widgets
 
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, { 0, 0 });
 		is_visible_ = ImGui::Begin(title.c_str(), nullptr, flags);
+		ImGui::PopStyleVar();
 
 		if (is_visible_)
 		{
@@ -176,13 +177,31 @@ namespace vt::widgets
 				auto avail_size = ImGui::GetContentRegionAvail();
 				auto speed_control_size = ImVec2{ avail_size.x * 0.5f, ImGui::GetTextLineHeight() * io.FontGlobalScale + style.FramePadding.y * 2.f};
 
-				static constexpr float min_speed = 0.25f;
+				static constexpr float speed_step = 0.25f;
+				static constexpr float min_speed = speed_step;
 				static constexpr float max_speed = 8.0f;
 
 				ImGui::SetNextItemWidth(speed_control_size.x);
 				if (ImGui::DragFloat("##VideoPlayerSpeed", &speed_, 0.1f, min_speed, max_speed, "%.2fx", ImGuiSliderFlags_AlwaysClamp) and callbacks.on_set_speed != nullptr)
 				{
 					std::invoke(callbacks.on_set_speed, speed_);
+				}
+				
+				if (ImGui::IsItemHovered() and io.MouseWheel != 0)
+				{
+					auto scroll_dir = !std::signbit(io.MouseWheel) * 2 - 1;
+					speed_ = std::clamp(speed_ + scroll_dir * speed_step, min_speed, max_speed);
+					if (callbacks.on_set_speed != nullptr) std::invoke(callbacks.on_set_speed, speed_);
+				}
+
+				if (ImGui::BeginPopupContextItem("##VideoPlayerSpeedCtx"))
+				{
+					if (ImGui::MenuItem("Reset"))
+					{
+						speed_ = 1.0f;
+						if (callbacks.on_set_speed != nullptr) std::invoke(callbacks.on_set_speed, speed_);
+					}
+					ImGui::EndPopup();
 				}
 
 				//TODO: Maybe expose number of speeds in options
@@ -193,7 +212,7 @@ namespace vt::widgets
 					ImGui::PushStyleColor(ImGuiCol_Button, ImVec4{});
 					for (size_t i = 0; i < speed_option_count; ++i)
 					{
-						float new_speed = 0.25f * (i + 1);
+						float new_speed = speed_step * (i + 1);
 						std::stringstream ss;
 						ss << std::setprecision(3) << new_speed << 'x';
 						std::string speed_str = (i + 1 == speed_option_count / 2) ? "Normal" : ss.str();
@@ -202,10 +221,7 @@ namespace vt::widgets
 						if (ImGui::Button(speed_str.c_str(), speed_control_size))
 						{
 							speed_ = new_speed;
-							if (callbacks.on_set_speed != nullptr)
-							{
-								std::invoke(callbacks.on_set_speed, speed_);
-							}
+							if (callbacks.on_set_speed != nullptr) std::invoke(callbacks.on_set_speed, speed_);
 							ImGui::CloseCurrentPopup();
 						}
 						if (disabled) ImGui::EndDisabled();
@@ -213,22 +229,11 @@ namespace vt::widgets
 					ImGui::PopStyleColor();
 					widgets::end_button_dropdown();
 				}
-
-				if (ImGui::BeginPopupContextItem("##VideoPlayerSpeedCtx"))
-				{
-					if (ImGui::MenuItem("Reset"))
-					{
-						speed_ = 1.0f;
-						std::invoke(callbacks.on_set_speed, speed_);
-					}
-					ImGui::EndPopup();
-				}
 			}
 			if (!has_child_videos) ImGui::EndDisabled();
 			ImGui::EndGroup();
 			ImGui::Columns();
 		}
-		ImGui::PopStyleVar();
 		ImGui::End();
 	}
 

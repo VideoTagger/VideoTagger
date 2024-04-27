@@ -141,40 +141,17 @@ namespace vt
 
 		auto& json_segments = json["segments"];
 		json_segments = nlohmann::json::array();
-		for (auto& [group_id, group_segments] : segments)
+
+		if (!segments.empty())
 		{
-			nlohmann::ordered_json json_group_segments_data;
-			json_group_segments_data["group-id"] = group_id;
-			auto& json_group_segments = json_group_segments_data["group-segments"];
-			json_group_segments = nlohmann::json::array();
-			for (auto& [tag_name, tag_segments] : group_segments)
+			for (auto& [group_id, group_segments] : segments)
 			{
-				nlohmann::ordered_json json_tag_segments_data;
-				json_tag_segments_data["tag"] = tag_name;
-				auto& json_tag_segments = json_tag_segments_data["tag-segments"];
-				json_tag_segments = nlohmann::json::array();
-				for (auto& segment : tag_segments)
-				{
-					nlohmann::ordered_json segment_json;
-					switch (segment.type())
-					{
-					case tag_segment_type::timestamp:
-					{
-						segment_json["timestamp"] = utils::time::time_to_string(segment.start.seconds_total.count());
-					}
-					break;
-					case tag_segment_type::segment:
-					{
-						segment_json["start"] = utils::time::time_to_string(segment.start.seconds_total.count());
-						segment_json["end"] = utils::time::time_to_string(segment.end.seconds_total.count());
-					}
-					break;
-					}
-					json_tag_segments.push_back(segment_json);
-				}
-				json_group_segments.push_back(json_tag_segments_data);
+				nlohmann::ordered_json json_group_segments_data;
+				json_group_segments_data["group-id"] = group_id;
+				auto& json_group_segments = json_group_segments_data["group-segments"];
+				json_group_segments = group_segments;
+				json_segments.push_back(json_group_segments_data);
 			}
-			json_segments.push_back(json_group_segments_data);
 		}
 
 		if (!videos.empty())
@@ -215,6 +192,11 @@ namespace vt
 			}
 		}
 
+		if (!video_group_playlist.empty())
+		{
+			json["group-queue"] = video_group_playlist;
+		}
+
 		if (!keybinds.empty())
 		{
 			json["keybinds"] = keybinds;
@@ -250,7 +232,7 @@ namespace vt
 			auto json = utils::json::load_from_file(filepath);
 			if (!json.contains("project"))
 			{
-				debug::error("Project forrmat is invalid");
+				debug::error("Project format is invalid");
 				return {};
 			}
 
@@ -291,36 +273,7 @@ namespace vt
 
 					video_group_id_t group_id = json_segments["group-id"];
 					auto& group_segments = result.segments[group_id];
-					for (auto& json_group_segments : json_segments["group-segments"])
-					{
-						if (!json_group_segments.contains("tag"))
-						{
-							debug::error("Missing tag name");
-							continue;
-						}
-						if (!json_group_segments.contains("tag-segments"))
-						{
-							debug::error("Missing tag segments");
-							continue;
-						}
-
-						std::string tag_name = json_group_segments["tag"];
-						auto& tag_segments = group_segments[tag_name];
-						for (auto& json_tag_segments : json_group_segments["tag-segments"])
-						{
-							if (json_tag_segments.contains("timestamp"))
-							{
-								auto ts = utils::time::parse_time_to_sec(json_tag_segments["timestamp"]);
-								tag_segments.insert(vt::timestamp{ ts });
-							}
-							else if (json_tag_segments.contains("start") and json_tag_segments.contains("end"))
-							{
-								auto start = utils::time::parse_time_to_sec(json_tag_segments["start"]);
-								auto end = utils::time::parse_time_to_sec(json_tag_segments["end"]);
-								tag_segments.insert(vt::timestamp{ start }, vt::timestamp{ end });
-							}
-						}
-					}
+					group_segments = json_segments["group-segments"];
 				}
 			}
 
@@ -399,6 +352,11 @@ namespace vt
 					}
 					result.video_groups.insert({ id, vgroup });
 				}
+			}
+
+			if (json.contains("group-queue") and json.at("group-queue").is_array())
+			{
+				result.video_group_playlist = json.at("group-queue");
 			}
 
 			if (json.contains("keybinds"))

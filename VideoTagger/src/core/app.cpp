@@ -770,6 +770,7 @@ namespace vt
 					auto kb = keybind(input::last_keybind.key_code, input::last_keybind.modifiers, flags, input::last_keybind.action);
 
 					keybinds.insert(keybind_name, kb);
+					ctx_.is_project_dirty = true;
 					input::last_keybind.action = nullptr;
 				}
 				ImGui::Separator();
@@ -825,12 +826,13 @@ namespace vt
 						if (widgets::checkbox(("##KeybindEnabled" + name).c_str(), &enabled))
 						{
 							keybind.flags.enabled = enabled;
+							ctx_.is_project_dirty = true;
 						}
 
 						ImGui::SameLine();
 						ImGui::PushID(id);
 						if (!is_row_selected) ImGui::BeginDisabled();
-						std::string delete_kb_id = std::string(icons::delete_) + "##DeleteKb" + name;
+						std::string delete_kb_id = fmt::format("{}##DeleteKb{}", icons::delete_, name);
 						if (widgets::icon_button(delete_kb_id.c_str()))
 						{
 							delete_kb_name = name;
@@ -943,9 +945,10 @@ namespace vt
 
 							int selected_action = (it != actions.end() ? static_cast<int>(std::distance(actions.begin(), it)) : 0);
 							std::string dummy;
+							//FIXME: Putting 'keybind' applies the changes immediately and it should be applied only after save
 							if (widgets::modal::keybind_options_popup("##KeybindOptionsPopup", dummy, keybind, actions, selected_action, keybind_options_config::show_action_field | keybind_options_config::show_save_button))
 							{
-								
+								ctx_.is_project_dirty = true;
 							}
 							ImGui::PopID();
 						}
@@ -958,11 +961,13 @@ namespace vt
 			if (rename_kb_name.has_value())
 			{
 				keybinds.rename(rename_kb_name.value(), new_kb_name);
+				ctx_.is_project_dirty = true;
 			}
 
 			if (delete_kb_name.has_value())
 			{
 				keybinds.erase(delete_kb_name.value());
+				ctx_.is_project_dirty = true;
 			}
 		};
 
@@ -1307,6 +1312,30 @@ namespace vt
 									nlohmann::ordered_json json;
 									json["version"] = ctx_.current_project->version;
 									json["tags"] = ctx_.current_project->tags;
+									utils::json::write_to_file(json, result.path);
+								}
+							}
+							if (ImGui::MenuItem("Export Segments"))
+							{
+								utils::dialog_filter filter{ "VideoTagger Segments", "vtss" };
+								auto result = utils::filesystem::save_file({}, { filter }, ctx_.current_project->name);
+								if (result)
+								{
+									const auto& segments = ctx_.current_project->segments;
+									nlohmann::ordered_json json;
+									json["version"] = ctx_.current_project->version;
+									auto& json_segments = json["segments"];
+									if (!segments.empty())
+									{
+										for (auto& [group_id, group_segments] : segments)
+										{
+											nlohmann::ordered_json json_group_segments_data;
+											json_group_segments_data["group-id"] = group_id;
+											auto& json_group_segments = json_group_segments_data["group-segments"];
+											json_group_segments = group_segments;
+											json_segments.push_back(json_group_segments_data);
+										}
+									}
 									utils::json::write_to_file(json, result.path);
 								}
 							}
