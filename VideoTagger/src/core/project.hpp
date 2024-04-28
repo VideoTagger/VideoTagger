@@ -23,7 +23,7 @@ namespace vt
 
 		uint16_t version = current_version;
 		std::string name = "New Project";
-		std::filesystem::path path = std::filesystem::current_path();
+		std::filesystem::path path = (std::filesystem::current_path() / name).replace_extension(extension);
 
 		bool is_valid() const;
 		std::optional<std::tm> modification_time() const;
