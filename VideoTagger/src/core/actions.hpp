@@ -6,6 +6,7 @@
 #include "actions/no_action.hpp"
 #include "actions/timeline_actions.hpp"
 #include "actions/toggle_window_action.hpp"
+#include "actions/player_actions.hpp"
 
 namespace vt
 {

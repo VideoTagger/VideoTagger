@@ -745,6 +745,16 @@ namespace vt
 		ctx_.keybinds.insert("Toggle Inspector", keybind(SDLK_F5, toggle_window_mod, flags, toggle_window_action("inspector", ctx_.win_cfg.show_inspector_window)));
 		ctx_.keybinds.insert("Toggle Tag Manager", keybind(SDLK_F6, toggle_window_mod, flags, toggle_window_action("tag-manager", ctx_.win_cfg.show_tag_manager_window)));
 		ctx_.keybinds.insert("Toggle Timeline", keybind(SDLK_F7, toggle_window_mod, flags, toggle_window_action("timeline", ctx_.win_cfg.show_timeline_window)));
+
+		keybind_modifiers player_mod{};
+		ctx_.keybinds.insert("Play/Pause", keybind(SDLK_SPACE, player_mod, flags, player_action(player_action_type::play_pause)));
+
+		keybind_modifiers player_secondary_mod{ false, true };
+		ctx_.keybinds.insert("Seek Forwards", keybind(SDLK_RIGHT, player_mod, flags, player_action(player_action_type::forwards)));
+		ctx_.keybinds.insert("Seek Backwards", keybind(SDLK_LEFT, player_mod, flags, player_action(player_action_type::backwards)));
+		ctx_.keybinds.insert("Skip To Next", keybind(SDLK_RIGHT, player_secondary_mod, flags, player_action(player_action_type::skip_next)));
+		ctx_.keybinds.insert("Skip To Previous", keybind(SDLK_LEFT, player_secondary_mod, flags, player_action(player_action_type::skip_previous)));
+		ctx_.keybinds.insert("Toggle Looping", keybind(SDLK_l, keybind_modifiers{ true }, flags, player_action(player_action_type::toggle_looping)));
 	}
 
 	void app::init_options()
@@ -1729,7 +1739,7 @@ namespace vt
 		std::string new_title = "VideoTagger";
 		if (!title.empty())
 		{
-			new_title = title + std::string(" - ") + new_title;
+			new_title = fmt::format("{} - {}", title, new_title);
 		}
 		SDL_SetWindowTitle(ctx_.main_window, new_title.c_str());
 	}

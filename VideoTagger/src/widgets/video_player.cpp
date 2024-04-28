@@ -256,8 +256,23 @@ namespace vt::widgets
 		return data_;
 	}
 
+	void video_player::set_looping(bool enabled)
+	{
+		is_looping_ = enabled;
+	}
+
 	bool video_player::is_visible() const
 	{
 		return is_visible_;
+	}
+
+	bool video_player::is_looping() const
+	{
+		return is_looping_;
+	}
+
+	bool video_player::is_playing() const
+	{
+		return is_playing_;
 	}
 }

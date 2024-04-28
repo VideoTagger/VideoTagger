@@ -49,6 +49,10 @@ namespace vt::widgets
 		void dock_windows(size_t count);
 		const video_player_data& data() const;
 
+		void set_looping(bool enabled);
+
 		bool is_visible() const;
+		bool is_looping() const;
+		bool is_playing() const;
 	};
 }
