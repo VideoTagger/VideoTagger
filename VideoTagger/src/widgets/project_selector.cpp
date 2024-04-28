@@ -51,8 +51,6 @@ namespace vt::widgets
 			int input_flags = ImGuiInputTextFlags_AutoSelectAll;
 			if (path_from_name)
 			{
-				input_flags |= ImGuiInputTextFlags_ReadOnly;
-				ImGui::PushStyleColor(ImGuiCol_Text, style.Colors[ImGuiCol_TextDisabled]);
 				temp_project.path.replace_filename(temp_project.name);
 			}
 
@@ -63,11 +61,7 @@ namespace vt::widgets
 				temp_project.path = std::filesystem::absolute(path);
 				temp_project.path.make_preferred();
 			}
-			if (path_from_name)
-			{
-				ImGui::PopStyleColor();
-				ImGui::BeginDisabled();
-			}
+
 			ImGui::SameLine();
 			auto path_sel = fmt::format("{}##ProjectCfgPathSelector", icons::dots_hor);
 			if (ImGui::Button(path_sel.c_str()))
@@ -76,13 +70,13 @@ namespace vt::widgets
 				auto result = utils::filesystem::save_file({}, filters, temp_project.name);
 				if (result)
 				{
+					if (path_from_name)
+					{
+						result.path = result.path.replace_filename(temp_project.name);
+					}
 					temp_project.path = result.path;
 					temp_project.path.make_preferred();
 				}
-			}
-			if (path_from_name)
-			{
-				ImGui::EndDisabled();
 			}
 			ImGui::Checkbox("Derive filename from project name", &path_from_name);
 
