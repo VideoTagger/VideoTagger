@@ -5,6 +5,7 @@
 #include "slider.hpp"
 #include "controls.hpp"
 #include "icons.hpp"
+#include "time_input.hpp"
 
 namespace vt::widgets
 {
@@ -118,11 +119,19 @@ namespace vt::widgets
 			ImGui::Columns(3);
 			{
 				auto avail_size = ImGui::GetContentRegionAvail();
-				auto text_size = ImGui::CalcTextSize("00:00:00 | 00:00:00");
+				auto time_size = ImGui::CalcTextSize("00:00:00");
+				auto total_size = ImGui::CalcTextSize("00:00:00 | 00:00:00");
 
-				ImGui::SetCursorPos({ avail_size.x - text_size.x, ImGui::GetCursorPosY() + text_size.y / 4 });
-				ImGui::Text("%02d:%02d:%02d | %02d:%02d:%02d",
-					current_time.hours(), current_time.minutes(), current_time.seconds(),
+				ImGui::SetCursorPos({ avail_size.x - total_size.x, ImGui::GetCursorPosY() + total_size.y / 4 });
+				ImGui::SetNextItemWidth(time_size.x);
+				ImGui::PushStyleColor(ImGuiCol_FrameBg, { 0, 0, 0, 0 });
+				if (widgets::time_input("##TimeInput", &current_time, 1, 0, duration.seconds_total.count()))
+				{
+					callbacks.on_seek(current_time.seconds_total);
+				}
+				ImGui::PopStyleColor();
+				ImGui::SameLine();
+				ImGui::Text("| %02d:%02d:%02d",
 					duration.hours(), duration.minutes(), duration.seconds()
 				);
 			}

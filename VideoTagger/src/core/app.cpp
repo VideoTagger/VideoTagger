@@ -1111,6 +1111,7 @@ namespace vt
 			{
 				ctx_.displayed_videos.seek(std::chrono::nanoseconds{ 0 });
 				ctx_.displayed_videos.set_playing(true);
+				return;
 			}
 
 			if (ctx_.app_settings.next_video_on_end)
