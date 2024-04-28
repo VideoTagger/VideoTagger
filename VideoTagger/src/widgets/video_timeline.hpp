@@ -63,8 +63,8 @@ namespace vt::widgets
 	struct insert_segment_data
 	{
 		std::string tag;
-		timestamp start{};
-		timestamp end{};
+		std::optional<timestamp> start{};
+		std::optional<timestamp> end{};
 		bool ready{};
 		bool show_insert_popup{};
 		bool show_merge_popup = true;

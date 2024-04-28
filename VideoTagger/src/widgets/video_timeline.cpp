@@ -683,6 +683,10 @@ namespace vt::widgets
 						if (ImGui::MenuItem("Start segment at marker"))
 						{
 							//TODO: should draw a line or something so you know where you clicked
+							
+							//***********
+							//TODO: THIS SHOULD INSERT INTO insert_segment_container BUT WITH ready = false
+							// ***********
 							inserted_segment_start = state.current_time;
 						}
 						//TODO: probably should only be displayed after start was pressed
