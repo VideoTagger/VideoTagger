@@ -30,4 +30,6 @@ namespace vt::widgets
 	extern ImVec2 calc_selectable_tile_size(ImVec2 tile_size);
 	//TODO: Consider moving these parameters into a struct
 	extern bool tile(const std::string& label, ImVec2 tile_size, ImVec2 image_size, SDL_Texture* image, const std::function<void(const std::string&)> context_menu = nullptr, const std::function<void(const std::string&)> drag_drop = nullptr, ImVec2 uv0 = { 0, 0 }, ImVec2 uv1 = { 1, 1 }, bool is_selected = false);
+
+	extern bool selection_area(ImVec2& start_pos, ImVec2& end_pos, ImGuiMouseButton mouse_button = ImGuiMouseButton_Left);
 }

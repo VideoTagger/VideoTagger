@@ -258,7 +258,7 @@ namespace vt::widgets
 			ImVec2 childFramePos = ImGui::GetCursorScreenPos();
 			ImVec2 childFrameSize(canvas_size.x, canvas_size.y - 8.f - headerSize.y - (hasScrollBar ? scrollBarSize.y : 0));
 			//ImGui::PushStyleColor(ImGuiCol_FrameBg, 0);
-			ImGui::BeginChildFrame(889, childFrameSize);
+			ImGui::BeginChild("##Frame", childFrameSize, ImGuiChildFlags_FrameStyle);
 			state.focused = ImGui::IsWindowFocused();
 			ImGui::InvisibleButton("##ContentBar", ImVec2(canvas_size.x, float(controlHeight)), ImGuiButtonFlags_AllowOverlap);
 			const ImVec2 contentMin = ImGui::GetItemRectMin();

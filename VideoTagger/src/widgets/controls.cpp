@@ -323,4 +323,34 @@ namespace vt::widgets
 
 		return result;
 	}
+
+	bool selection_area(ImVec2& start_pos, ImVec2& end_pos, ImGuiMouseButton mouse_button)
+	{
+		const auto& clip_rect = ImGui::GetCurrentWindow()->ClipRect;
+		if (ImGui::IsMouseClicked(mouse_button))
+		{
+			start_pos = ImGui::GetMousePos();
+		}
+		
+		bool valid
+		{
+			start_pos != end_pos and
+			start_pos.x >= clip_rect.Min.x and start_pos.x <= clip_rect.Max.x and
+			start_pos.y >= clip_rect.Min.y and start_pos.y <= clip_rect.Max.y
+		};
+		if (ImGui::IsMouseDown(mouse_button))
+		{
+			end_pos = ImGui::GetMousePos();
+			end_pos.x = std::clamp(end_pos.x, clip_rect.Min.x, clip_rect.Max.x);
+			end_pos.y = std::clamp(end_pos.y, clip_rect.Min.y, clip_rect.Max.y);
+
+			if (valid)
+			{
+				ImDrawList* draw_list = ImGui::GetForegroundDrawList(); //ImGui::GetWindowDrawList();
+				draw_list->AddRect(start_pos, end_pos, ImGui::GetColorU32(IM_COL32(0, 130, 216, 255)));   // Border
+				draw_list->AddRectFilled(start_pos, end_pos, ImGui::GetColorU32(IM_COL32(0, 130, 216, 50)));    // Background
+			}
+		}
+		return ImGui::IsMouseReleased(mouse_button) and valid;
+	}
 }

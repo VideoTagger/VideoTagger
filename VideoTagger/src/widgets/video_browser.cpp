@@ -72,7 +72,7 @@ namespace vt::widgets
 		auto& style = ImGui::GetStyle();
 
 		if (ImGui::Begin("Video Browser", &is_open, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse))
-		{			
+		{
 			if (ctx_.current_project->videos.size() > 0)
 			{
 				ImVec2 img_tile_size{ ctx_.app_settings.thumbnail_size, ctx_.app_settings.thumbnail_size };

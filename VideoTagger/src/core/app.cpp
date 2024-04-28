@@ -1718,6 +1718,7 @@ namespace vt
 		{
 			ctx_.theme_customizer.render(ctx_.win_cfg.show_theme_customizer_window);
 		}
+		
 		//ImGui::ShowDemoWindow();
 	}
 

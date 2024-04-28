@@ -181,8 +181,8 @@ namespace vt::widgets
 
 						auto& pool = ctx_.current_project->videos;
 					}
-					icon_tooltip("Play");
 					if (!can_play) ImGui::EndDisabled();
+					icon_tooltip("Play");
 
 					ImGui::SetCursorPosX(cpos);
 					if (is_empty) ImGui::BeginDisabled();
@@ -190,8 +190,8 @@ namespace vt::widgets
 					{
 						playlist.clear();
 					}
-					icon_tooltip("Clear queue");
 					if (is_empty) ImGui::EndDisabled();
+					icon_tooltip("Clear queue");
 
 					ImGui::SetCursorPosX(cpos);
 					if (icon_toggle_button(icons::shuffle, is_shuffled))
