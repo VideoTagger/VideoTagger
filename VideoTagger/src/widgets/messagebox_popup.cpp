@@ -23,7 +23,7 @@ namespace vt::widgets
 			size_t button_count = buttons.size();
 			if (button_count > 0)
 			{
-				float buttons_row_width = 2 * style.ItemSpacing.x * (button_count - 1);
+				float buttons_row_width = style.ItemSpacing.x * (button_count - 1);
 
 				for (size_t i = 0; i < button_count; ++i)
 				{
