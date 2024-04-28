@@ -1550,7 +1550,7 @@ namespace vt
 
 			if (insert_data.show_insert_popup)
 			{
-				ImGui::OpenPopup("Insert Segment##App");
+				ImGui::OpenPopup("###AppInsertSegment");
 				insert_key = it->first;
 				break;
 			}
@@ -1599,8 +1599,11 @@ namespace vt
 		//should it be this or all tags?
 		auto& tags = ctx_.timeline_state.displayed_tags.at(ctx_.current_video_group_id());
 
+		auto segment_type = *insert_data.start == *insert_data.end ? tag_segment_type::timestamp : tag_segment_type::segment;
+		const char* insert_segment_popup_id = segment_type == tag_segment_type::timestamp ? "Insert Timestamp###AppInsertSegment" : "Insert Segment###AppInsertSegment";
+
 		bool presed_ok{};
-		if (widgets::insert_segment_popup("Insert Segment##App", *insert_data.start, *insert_data.end, min_ts, max_ts, tags, insert_data.name_index, presed_ok))
+		if (widgets::insert_segment_popup(insert_segment_popup_id, *insert_data.start, *insert_data.end, segment_type, min_ts, max_ts, tags, insert_data.name_index, presed_ok))
 		{
 			if (presed_ok)
 			{
