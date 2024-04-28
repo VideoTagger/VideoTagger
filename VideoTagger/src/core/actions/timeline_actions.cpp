@@ -9,21 +9,14 @@ namespace vt
 
 	void timestamp_action::invoke() const
 	{
-		if (!ctx_.current_project.has_value() or ctx_.current_video_group_id() == invalid_video_group_id)
-		{
-			return;
-		}
+		if (!ctx_.current_project.has_value() or ctx_.current_video_group_id() == invalid_video_group_id) return;
 
-		if (!tag_.empty())
-		{
-			auto& tag = ctx_.current_project->tags[tag_];
-			auto& segments = ctx_.get_current_segment_storage()[tag.name];
-			segments.insert(ctx_.timeline_state.current_time);
-		}
-		else
-		{
-			//TODO: Show tag selector window
-		}
+		auto& data = ctx_.insert_segment_data[tag_];
+		data.start = ctx_.timeline_state.current_time;
+		data.end = ctx_.timeline_state.current_time;
+		data.tag = tag_;
+		data.ready = true;
+		data.show_insert_popup = tag_.empty();
 	}
 
 	void timestamp_action::to_json(nlohmann::ordered_json& json) const
@@ -92,6 +85,31 @@ namespace vt
 
 	void segment_action::invoke() const
 	{
+		if (!ctx_.current_project.has_value() or ctx_.current_video_group_id() == invalid_video_group_id) return;
+
+		auto& data = ctx_.insert_segment_data[tag_];
+		data.tag = tag_;
+		if (type_ == segment_action_type::auto_)
+		{
+			//TODO: Implement this when inserting segments gets reworked fully
+		}
+
+		switch (type_)
+		{
+			case vt::segment_action_type::start:
+			{
+				data.start = ctx_.timeline_state.current_time;
+			}
+			break;
+			case vt::segment_action_type::end:
+			{
+				data.end = ctx_.timeline_state.current_time;
+				data.ready = true;
+				data.show_insert_popup = tag_.empty();
+			}
+			break;
+			default: debug::panic("Not implemented");
+		}
 
 	}
 

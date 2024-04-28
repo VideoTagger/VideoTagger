@@ -106,7 +106,6 @@ namespace vt::widgets
 	//Inspector needs this
 	extern bool merge_segments_popup(const std::string& id, bool& pressed_button, bool display_dragged_segment_text);
 
-	bool video_timeline(timeline_state& state, std::optional<selected_segment_data>& selected_timestamp,
-		std::optional<moving_segment_data>& moving_timestamp, insert_segment_data_container& insert_segment_container, bool& dirty_flag);
+	bool video_timeline(timeline_state& state, std::optional<selected_segment_data>& selected_timestamp, std::optional<moving_segment_data>& moving_timestamp, insert_segment_data_container& insert_segment_container, bool& dirty_flag);
 
 }

@@ -174,8 +174,7 @@ namespace vt::widgets
 	// Maybe more accurracy than a second.
 	// Display time in 10 second intervals instead of 20
 
-	bool video_timeline(timeline_state& state, std::optional<selected_segment_data>& selected_segment,
-		std::optional<moving_segment_data>& moving_segment, insert_segment_data_container& insert_segment_container, bool& dirty_flag)
+	bool video_timeline(timeline_state& state, std::optional<selected_segment_data>& selected_segment, std::optional<moving_segment_data>& moving_segment, insert_segment_data_container& insert_segment_container, bool& dirty_flag)
 	{
 		bool return_value = false;
 		ImGuiIO& io = ImGui::GetIO();
