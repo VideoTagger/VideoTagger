@@ -32,7 +32,7 @@ namespace vt::widgets
 				std::swap(start, end);
 			}
 
-			if (ImGui::Button("OK"))
+			if (ImGui::Button("OK") or ImGui::IsKeyPressed(ImGuiKey_Enter))
 			{
 				selected_ok = true;
 				result = true;
