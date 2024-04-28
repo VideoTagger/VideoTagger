@@ -89,28 +89,38 @@ namespace vt
 
 		auto& data = ctx_.insert_segment_data[tag_];
 		data.tag = tag_;
+		auto type = type_;
 		if (type_ == segment_action_type::auto_)
 		{
-			//TODO: Implement this when inserting segments gets reworked fully
+			if (data.start == std::nullopt)
+			{
+				type = segment_action_type::start;
+			}
+			else if (data.end == std::nullopt)
+			{
+				type = segment_action_type::end;
+			}
 		}
 
-		switch (type_)
+		switch (type)
 		{
-			case vt::segment_action_type::start:
+			case segment_action_type::start:
 			{
 				data.start = ctx_.timeline_state.current_time;
 			}
 			break;
-			case vt::segment_action_type::end:
+			case segment_action_type::end:
 			{
 				data.end = ctx_.timeline_state.current_time;
-				data.ready = true;
-				data.show_insert_popup = tag_.empty();
 			}
 			break;
-			default: debug::panic("Not implemented");
 		}
 
+		if (data.start != std::nullopt and data.end != std::nullopt)
+		{
+			data.ready = true;
+			data.show_insert_popup = tag_.empty();
+		}
 	}
 
 	void segment_action::to_json(nlohmann::ordered_json& json) const
