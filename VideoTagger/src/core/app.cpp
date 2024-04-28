@@ -1540,6 +1540,8 @@ namespace vt
 
 	static void handle_insert_segment()
 	{
+		//TODO: check if start and end have value
+
 		static std::optional<std::string> insert_key;
 
 		for (auto it = ctx_.insert_segment_data.begin(); it != ctx_.insert_segment_data.end() and !insert_key.has_value();)
@@ -1563,7 +1565,7 @@ namespace vt
 
 			if (insert_data.show_merge_popup)
 			{
-				auto overlapping = segments.find_range(insert_data.start, insert_data.end);
+				auto overlapping = segments.find_range(*insert_data.start, *insert_data.end);
 				if (!overlapping.empty())
 				{
 					ImGui::OpenPopup("##MergePopupApp");
@@ -1572,7 +1574,7 @@ namespace vt
 				}
 			}
 
-			segments.insert(insert_data.start, insert_data.end);
+			segments.insert(*insert_data.start, *insert_data.end);
 			it = ctx_.insert_segment_data.erase(it);
 			insert_key.reset();
 		}
@@ -1598,7 +1600,7 @@ namespace vt
 		auto& tags = ctx_.timeline_state.displayed_tags.at(ctx_.current_video_group_id());
 
 		bool presed_ok{};
-		if (widgets::insert_segment_popup("Insert Segment##App", insert_data.start, insert_data.end, min_ts, max_ts, tags, insert_data.name_index, presed_ok))
+		if (widgets::insert_segment_popup("Insert Segment##App", *insert_data.start, *insert_data.end, min_ts, max_ts, tags, insert_data.name_index, presed_ok))
 		{
 			if (presed_ok)
 			{
