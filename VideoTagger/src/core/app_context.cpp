@@ -119,7 +119,7 @@ namespace vt
 		current_video_group_id_ = id;
 		moving_segment_data.reset();
 		selected_segment_data.reset();
-		//insert_segment_data.clear();
+		insert_segment_data.clear();
 	}
 
 	video_group_id_t app_context::current_video_group_id() const

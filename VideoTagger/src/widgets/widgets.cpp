@@ -18,7 +18,8 @@ namespace vt::widgets
 		bool active{};
 	};
 	
-	void draw_timeline_widget(const char* id, timeline_state& state, std::optional<selected_segment_data>& selected_timestamp, std::optional<moving_segment_data>& moving_timestamp, bool& dirty_flag, bool& open)
+	void draw_timeline_widget(const char* id, timeline_state& state, std::optional<selected_segment_data>& selected_timestamp,
+		std::optional<moving_segment_data>& moving_timestamp, insert_segment_data_container& insert_segment_container, bool& dirty_flag, bool& open)
 	{
 		ImVec2 default_window_padding = ImGui::GetStyle().WindowPadding;
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2{});
@@ -29,7 +30,7 @@ namespace vt::widgets
 			ImGui::PushID(id);
 			ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, default_window_padding);
 			
-			video_timeline(state, selected_timestamp, moving_timestamp, dirty_flag);
+			video_timeline(state, selected_timestamp, moving_timestamp, insert_segment_container, dirty_flag);
 			
 			ImGui::PopStyleVar();
 			ImGui::PopID();

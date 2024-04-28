@@ -1528,6 +1528,100 @@ namespace vt
 		}
 	}
 
+	static void handle_insert_segment()
+	{
+		static std::optional<std::string> insert_key;
+
+		for (auto it = ctx_.insert_segment_data.begin(); it != ctx_.insert_segment_data.end() and !insert_key.has_value();)
+		{
+			auto& insert_data = it->second;
+
+			if (insert_data.show_insert_popup)
+			{
+				ImGui::OpenPopup("Insert Segment##App");
+				insert_key = it->first;
+				break;
+			}
+
+			if (!insert_data.ready)
+			{
+				it++;
+				continue;
+			}
+
+			auto& segments = ctx_.get_current_segment_storage().at(insert_data.tag);
+
+			if (insert_data.show_merge_popup)
+			{
+				auto overlapping = segments.find_range(insert_data.start, insert_data.end);
+				if (!overlapping.empty())
+				{
+					ImGui::OpenPopup("##MergePopupApp");
+					insert_key = it->first;
+					break;
+				}
+			}
+
+			segments.insert(insert_data.start, insert_data.end);
+			it = ctx_.insert_segment_data.erase(it);
+			insert_key.reset();
+		}
+
+		if (!insert_key.has_value())
+		{
+			return;
+		}
+
+		auto insert_data_it = ctx_.insert_segment_data.find(*insert_key);
+		if (insert_data_it == ctx_.insert_segment_data.end())
+		{
+			insert_key.reset();
+			ctx_.insert_segment_data.erase(insert_data_it);
+			return;
+		}
+
+		auto& insert_data = insert_data_it->second;
+
+		auto min_ts = ctx_.timeline_state.time_min.seconds_total.count();
+		auto max_ts = ctx_.timeline_state.time_max.seconds_total.count();
+		//should it be this or all tags?
+		auto& tags = ctx_.timeline_state.displayed_tags.at(ctx_.current_video_group_id());
+
+		bool presed_ok{};
+		if (widgets::insert_segment_popup("Insert Segment##App", insert_data.start, insert_data.end, min_ts, max_ts, tags, insert_data.name_index, presed_ok))
+		{
+			if (presed_ok)
+			{
+				insert_data.tag = tags.at(insert_data.name_index);
+				insert_data.show_insert_popup = false;
+				insert_data.ready = true;
+			}
+			else
+			{
+				ctx_.insert_segment_data.erase(insert_data_it);
+			}
+
+			insert_key.reset();
+			return;
+		}
+
+		bool pressed_ok{};
+		if (widgets::merge_segments_popup("##MergePopupApp", presed_ok, false))
+		{
+			if (presed_ok)
+			{
+				insert_data.show_merge_popup = false;
+			}
+			else
+			{
+				ctx_.insert_segment_data.erase(insert_data_it);
+			}
+
+			insert_key.reset();
+			return;
+		}
+	}
+
 	void app::draw_main_app()
 	{
 		if (!ctx_.current_project.has_value()) return;
@@ -1560,6 +1654,8 @@ namespace vt
 				++it;
 			}
 		}
+
+		handle_insert_segment();
 
 		//TODO: probably should be done somewhere else
 		ctx_.update_current_video_group();
@@ -1644,7 +1740,7 @@ namespace vt
 			ctx_.timeline_state.current_time = timestamp{ std::chrono::duration_cast<std::chrono::seconds>(ctx_.displayed_videos.current_timestamp()) };
 			
 			widgets::draw_timeline_widget("Timeline", ctx_.timeline_state, ctx_.selected_segment_data, ctx_.moving_segment_data,
-				ctx_.is_project_dirty, ctx_.win_cfg.show_timeline_window);
+				ctx_.insert_segment_data, ctx_.is_project_dirty, ctx_.win_cfg.show_timeline_window);
 
 			if (ctx_.timeline_state.current_time.seconds_total != std::chrono::duration_cast<std::chrono::seconds>(ctx_.displayed_videos.current_timestamp()))
 			{

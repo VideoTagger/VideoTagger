@@ -174,7 +174,7 @@ namespace vt::widgets
 				}
 
 				bool pressed_yes{};
-				if (merge_timestamps_popup("##MergeSegments", pressed_yes, true))
+				if (merge_segments_popup("##MergeSegments", pressed_yes, true))
 				{
 					if (pressed_yes)
 					{

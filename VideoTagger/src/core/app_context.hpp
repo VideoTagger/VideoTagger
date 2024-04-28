@@ -87,6 +87,7 @@ namespace vt
 
 		std::optional<widgets::selected_segment_data> selected_segment_data;
 		std::optional<widgets::moving_segment_data> moving_segment_data;
+		widgets::insert_segment_data_container insert_segment_data;
 
 		app_settings app_settings;
 		SDL_Window* main_window{};
