@@ -124,7 +124,7 @@ namespace vt::widgets
 		return clickedBtn;
 	}
 
-	bool merge_timestamps_popup(const std::string& id, bool& pressed_button, bool display_dragged_segment_text)
+	bool merge_segments_popup(const std::string& id, bool& pressed_button, bool display_dragged_segment_text)
 	{
 		//TODO: improve layout
 
@@ -174,7 +174,8 @@ namespace vt::widgets
 	// Maybe more accurracy than a second.
 	// Display time in 10 second intervals instead of 20
 
-	bool video_timeline(timeline_state& state, std::optional<selected_segment_data>& selected_segment, std::optional<moving_segment_data>& moving_segment, bool& dirty_flag)
+	bool video_timeline(timeline_state& state, std::optional<selected_segment_data>& selected_segment,
+		std::optional<moving_segment_data>& moving_segment, insert_segment_data_container& insert_segment_container, bool& dirty_flag)
 	{
 		bool return_value = false;
 		ImGuiIO& io = ImGui::GetIO();
@@ -628,8 +629,7 @@ namespace vt::widgets
 					segments = &state.segments->at(tag_info->name);
 				}
 
-				//bool insert_segment = false;
-				bool insert_segment_with_popup = false;
+				bool ready_to_insert = false;
 
 				static timestamp mouse_timestamp;
 
@@ -658,13 +658,13 @@ namespace vt::widgets
 						{
 							inserted_segment_start = mouse_timestamp;
 							inserted_segment_end = inserted_segment_start;
-							insert_segment_with_popup = true;
+							ready_to_insert = true;
 						}
 						if (ImGui::MenuItem("Add segment"))
 						{
 							inserted_segment_start = mouse_timestamp;
 							inserted_segment_end = inserted_segment_start + timestamp(1);
-							insert_segment_with_popup = true;
+							ready_to_insert = true;
 						}
 						ImGui::SeparatorText("Marker");
 						//TODO: maybe could use the moving timestamp
@@ -672,14 +672,14 @@ namespace vt::widgets
 						{
 							inserted_segment_start = state.current_time;
 							inserted_segment_end = inserted_segment_start;
-							insert_segment_with_popup = true;
+							ready_to_insert = true;
 						}
 						if (ImGui::MenuItem("Add segment at marker"))
 						{
 							//TODO: should draw a line or something so you know where you clicked
 							inserted_segment_start = state.current_time;
 							inserted_segment_end = state.current_time + timestamp(1);
-							insert_segment_with_popup = true;
+							ready_to_insert = true;
 						}
 						if (ImGui::MenuItem("Start segment at marker"))
 						{
@@ -690,7 +690,7 @@ namespace vt::widgets
 						if (ImGui::MenuItem("End segment at marker"))
 						{
 							inserted_segment_end = state.current_time;
-							insert_segment_with_popup = true;
+							ready_to_insert = true;
 						}
 					}
 					else
@@ -708,61 +708,22 @@ namespace vt::widgets
 					ImGui::EndPopup();
 				}
 
-				//if (insert_segment)
-				//{
-				//	//TODO: this doesn't display the merge popup
-				//
-				//	segments->insert(timestamp{ inserted_segment_start }, timestamp{ inserted_segment_end });
-				//	inserted_segment_start = timestamp::zero();
-				//	inserted_segment_end = timestamp::zero();
-				//	dirty_flag = true;
-				//}
-
-				if (insert_segment_with_popup)
+				if (ready_to_insert)
 				{
 					if (segments != nullptr)
 					{
 						auto it = std::find(displayed_tags.begin(), displayed_tags.end(), tag_info->name);
 						selected_tag = (it != displayed_tags.end()) ? it - displayed_tags.begin() : 0;
 					}
-					ImGui::OpenPopup("Add Segment");
-				}
-				
-				
-				
-				if (insert_segment_popup("Add Segment", inserted_segment_start, inserted_segment_end,
-					state.time_min.seconds_total.count(), state.time_max.seconds_total.count(), displayed_tags, selected_tag))
-				{
-					//TODO: this doesn't display the merge popup
 
-					auto& segments = state.segments->at(displayed_tags[selected_tag]);
-
-					auto overlapping = segments.find_range(inserted_segment_start, inserted_segment_end);
-					if (!overlapping.empty())
-					{
-						ImGui::OpenPopup("##MergePopupContextMenu");
-					}
-					else
-					{
-						segments.insert(timestamp{ inserted_segment_start }, timestamp{ inserted_segment_end });
-						inserted_segment_start = timestamp::zero();
-						inserted_segment_end = timestamp::zero();
-						dirty_flag = true;
-					}
-				}
-
-				bool presed_yes{};
-				if (merge_timestamps_popup("##MergePopupContextMenu", presed_yes, false))
-				{
-					if (presed_yes)
-					{
-						auto& segments = state.segments->at(displayed_tags[selected_tag]);
-						segments.insert(timestamp{ inserted_segment_start }, timestamp{ inserted_segment_end });
-						dirty_flag = true;
-					}
-
-					inserted_segment_start = timestamp::zero();
-					inserted_segment_end = timestamp::zero();
+					insert_segment_data insert_data;
+					insert_data.show_insert_popup = true;
+					insert_data.start = inserted_segment_start;
+					insert_data.end = inserted_segment_end;
+					insert_data.name_index = selected_tag;
+					
+					//TODO: maybe use something more descriptive than an empty string
+					insert_segment_container[""] = insert_data;
 				}
 			}
 
@@ -872,7 +833,7 @@ namespace vt::widgets
 			draw_list->PopClipRect();
 
 			bool pressed_yes{};
-			if (merge_timestamps_popup("##MergeSegments", pressed_yes, true))
+			if (merge_segments_popup("##MergeSegments", pressed_yes, true))
 			{
 				if (pressed_yes and moving_segment.has_value())
 				{
