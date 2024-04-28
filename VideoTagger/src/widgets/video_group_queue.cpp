@@ -169,7 +169,7 @@ namespace vt::widgets
 				ImGui::TableNextColumn();
 				{
 					bool is_empty = playlist.empty();
-					bool can_play = !is_empty and ctx_.current_video_group_id == invalid_video_group_id;
+					bool can_play = !is_empty and ctx_.current_video_group_id() == invalid_video_group_id;
 					auto cpos = ImGui::GetCursorPosX() + style.CellPadding.x;
 					ImGui::SetCursorPosX(cpos);
 					if (!can_play) ImGui::BeginDisabled();
@@ -177,7 +177,7 @@ namespace vt::widgets
 					{
 						playlist.clear_flags();
 						auto it = playlist.set_current(playlist.begin());
-						ctx_.current_video_group_id = it->group_id;
+						ctx_.set_current_video_group_id(it->group_id);
 
 						auto& pool = ctx_.current_project->videos;
 					}

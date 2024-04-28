@@ -9,7 +9,7 @@ namespace vt
 
 	void timestamp_action::invoke() const
 	{
-		if (!ctx_.current_project.has_value() or ctx_.current_video_group_id == invalid_video_group_id)
+		if (!ctx_.current_project.has_value() or ctx_.current_video_group_id() == invalid_video_group_id)
 		{
 			return;
 		}

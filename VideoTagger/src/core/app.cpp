@@ -1032,7 +1032,7 @@ namespace vt
 			//	if (!vinfo.is_widget_open) continue;
 			//	vinfo.video.set_playing(is_playing);
 			//}
-			if (ctx_.current_video_group_id == invalid_video_group_id)
+			if (ctx_.current_video_group_id() == invalid_video_group_id)
 			{
 				return;
 			}
@@ -1046,7 +1046,7 @@ namespace vt
 			//	if (!vinfo.is_widget_open) continue;
 			//	vinfo.video.set_looping(is_looping);
 			//}
-			if (ctx_.current_video_group_id == invalid_video_group_id)
+			if (ctx_.current_video_group_id() == invalid_video_group_id)
 			{
 				return;
 			}
@@ -1060,7 +1060,7 @@ namespace vt
 			//	vinfo.video.set_speed(speed);
 			//}
 
-			if (ctx_.current_video_group_id == invalid_video_group_id)
+			if (ctx_.current_video_group_id() == invalid_video_group_id)
 			{
 				return;
 			}
@@ -1085,7 +1085,7 @@ namespace vt
 			}
 
 			ctx_.reset_current_video_group();
-			ctx_.current_video_group_id = it->group_id;
+			ctx_.set_current_video_group_id(it->group_id);
 		};
 
 		ctx_.player.callbacks.on_seek = [](std::chrono::nanoseconds ts)
@@ -1096,7 +1096,7 @@ namespace vt
 			//	vinfo.video.seek(ts);
 			//}
 
-			if (ctx_.current_video_group_id == invalid_video_group_id)
+			if (ctx_.current_video_group_id() == invalid_video_group_id)
 			{
 				return;
 			}
@@ -1122,7 +1122,7 @@ namespace vt
 				ctx_.reset_current_video_group();
 				if (it != playlist.end())
 				{
-					ctx_.current_video_group_id = it->group_id;
+					ctx_.set_current_video_group_id(it->group_id);
 				}
 			}
 		};
@@ -1560,7 +1560,6 @@ namespace vt
 				++it;
 			}
 		}
-		
 
 		//TODO: probably should be done somewhere else
 		ctx_.update_current_video_group();
@@ -1587,7 +1586,7 @@ namespace vt
 			//	}
 			//}
 
-			if (ctx_.current_video_group_id != invalid_video_group_id)
+			if (ctx_.current_video_group_id() != invalid_video_group_id)
 			{
 				//TODO: probably could be done only when needed instead of on every frame.
 				// Video timeline does the same thing and group duration needs to be calculated
@@ -1636,15 +1635,16 @@ namespace vt
 			auto group_duration = ctx_.displayed_videos.duration();
 
 			//TODO: Definitely change this!
-			ctx_.timeline_state.current_video_group_id = ctx_.current_video_group_id;
+			ctx_.timeline_state.current_video_group_id = ctx_.current_video_group_id();
 			ctx_.timeline_state.tags = &ctx_.current_project->tags;
-			ctx_.timeline_state.segments = ctx_.current_video_group_id != invalid_video_group_id ? &ctx_.get_current_segment_storage() : nullptr;
+			ctx_.timeline_state.segments = ctx_.current_video_group_id() != invalid_video_group_id ? &ctx_.get_current_segment_storage() : nullptr;
 			ctx_.timeline_state.sync_tags();
 			ctx_.timeline_state.time_min = timestamp::zero();
 			ctx_.timeline_state.time_max = timestamp(std::chrono::duration_cast<std::chrono::seconds>(group_duration));
 			ctx_.timeline_state.current_time = timestamp{ std::chrono::duration_cast<std::chrono::seconds>(ctx_.displayed_videos.current_timestamp()) };
 			
-			widgets::draw_timeline_widget("Timeline", ctx_.timeline_state, ctx_.selected_segment_data, ctx_.moving_segment_data, ctx_.is_project_dirty, ctx_.win_cfg.show_timeline_window);
+			widgets::draw_timeline_widget("Timeline", ctx_.timeline_state, ctx_.selected_segment_data, ctx_.moving_segment_data,
+				ctx_.is_project_dirty, ctx_.win_cfg.show_timeline_window);
 
 			if (ctx_.timeline_state.current_time.seconds_total != std::chrono::duration_cast<std::chrono::seconds>(ctx_.displayed_videos.current_timestamp()))
 			{
@@ -1711,7 +1711,7 @@ namespace vt
 
 		if (ctx_.win_cfg.show_video_group_queue_window)
 		{
-			ctx_.group_queue.current_group_id = ctx_.current_video_group_id;
+			ctx_.group_queue.current_group_id = ctx_.current_video_group_id();
 			ctx_.group_queue.render(ctx_.win_cfg.show_video_group_queue_window);
 		}
 

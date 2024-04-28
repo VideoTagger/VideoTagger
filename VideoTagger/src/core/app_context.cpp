@@ -8,10 +8,10 @@ namespace vt
 	{
 		//TODO: needs a refactor
 
-		auto group_it = current_project->video_groups.find(current_video_group_id);
-		if (!current_project.has_value() or current_video_group_id == invalid_video_group_id or group_it == current_project->video_groups.end())
+		auto group_it = current_project->video_groups.find(current_video_group_id_);
+		if (!current_project.has_value() or current_video_group_id_ == invalid_video_group_id or group_it == current_project->video_groups.end())
 		{
-			current_video_group_id = invalid_video_group_id;
+			set_current_video_group_id(invalid_video_group_id);
 			auto& video_pool = current_project->videos;
 
 			for (auto it = displayed_videos.begin(); it != displayed_videos.end();)
@@ -90,7 +90,7 @@ namespace vt
 
 	void app_context::reset_current_video_group()
 	{
-		current_video_group_id = invalid_video_group_id;
+		set_current_video_group_id(invalid_video_group_id);
 		displayed_videos.update();
 	}
 
@@ -101,11 +101,29 @@ namespace vt
 		{
 			debug::panic("No open project");
 		}
-		if (current_video_group_id == invalid_video_group_id)
+		if (current_video_group_id_ == invalid_video_group_id)
 		{
 			debug::panic("No current video group");
 		}
 
-		return current_project->segments[current_video_group_id];
+		return current_project->segments[current_video_group_id_];
+	}
+
+	void app_context::set_current_video_group_id(video_group_id_t id)
+	{
+		if (id == current_video_group_id_)
+		{
+			return;
+		}
+
+		current_video_group_id_ = id;
+		moving_segment_data.reset();
+		selected_segment_data.reset();
+		//insert_segment_data.clear();
+	}
+
+	video_group_id_t app_context::current_video_group_id() const
+	{
+		return current_video_group_id_;
 	}
 }

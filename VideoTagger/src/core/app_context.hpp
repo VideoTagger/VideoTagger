@@ -83,7 +83,6 @@ namespace vt
 		keybind_storage keybinds;
 
 		std::optional<project> current_project;
-		video_group_id_t current_video_group_id{};
 		displayed_videos_manager displayed_videos;
 
 		std::optional<widgets::selected_segment_data> selected_segment_data;
@@ -102,6 +101,12 @@ namespace vt
 		void reset_current_video_group();
 
 		segment_storage& get_current_segment_storage();
+	
+		void set_current_video_group_id(video_group_id_t id);
+		video_group_id_t current_video_group_id() const;
+
+	private:
+		video_group_id_t current_video_group_id_{};
 	};
 
 	inline app_context ctx_;

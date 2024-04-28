@@ -106,7 +106,7 @@ namespace vt
 				video_group::video_info group_info{};
 				group_info.id = id;
 
-				auto gid = (ctx_.current_video_group_id == invalid_video_group_id) ? utils::uuid::get() : ctx_.current_video_group_id;
+				auto gid = (ctx_.current_video_group_id() == invalid_video_group_id) ? utils::uuid::get() : ctx_.current_video_group_id();
 				
 				std::scoped_lock lock(groups_mutex);
 				auto& group = video_groups[gid];
