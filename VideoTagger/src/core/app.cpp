@@ -1642,6 +1642,29 @@ namespace vt
 		if (!ctx_.current_project.has_value()) return;
 		draw_menubar();
 		if (!ctx_.current_project.has_value()) return;
+		
+		{
+			static bool was_popup_opened = false;
+			static bool resume_video = false;
+			if (ImGui::IsPopupOpen(nullptr, ImGuiPopupFlags_AnyPopup))
+			{
+				if (!was_popup_opened)
+				{
+					was_popup_opened = true;
+					resume_video = ctx_.displayed_videos.is_playing();
+					ctx_.displayed_videos.set_playing(false);
+				}
+			}
+			else
+			{
+				if (was_popup_opened)
+				{
+					was_popup_opened = false;
+					ctx_.displayed_videos.set_playing(resume_video);
+					resume_video = false;
+				}
+			}
+		}
 
 		{
 			auto& tasks = ctx_.current_project->video_import_tasks;
