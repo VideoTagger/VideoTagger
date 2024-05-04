@@ -54,7 +54,7 @@ namespace vt
 	}
 
 	video_frame::video_frame(video_frame&& other) noexcept
-		: frame_{ other.frame_ }
+		: frame_{other.frame_}
 	{
 		other.frame_ = nullptr;
 	}
@@ -69,8 +69,11 @@ namespace vt
 
 	video_frame& video_frame::operator=(video_frame&& rhs) noexcept
 	{
+		if (frame_ != nullptr)
+		{
+			av_frame_free(&frame_);
+		}
 		frame_ = rhs.frame_;
-
 		rhs.frame_ = nullptr;
 
 		return *this;
@@ -165,7 +168,7 @@ namespace vt
 	}
 
 	packet_wrapper::packet_wrapper(packet_wrapper&& other) noexcept
-		: packet_{other.packet_}, type_{other.type_}
+		: packet_{ other.packet_ }, type_{other.type_}
 	{
 		other.packet_ = nullptr;
 		other.type_ = stream_type::unknown;
@@ -186,6 +189,10 @@ namespace vt
 
 	packet_wrapper& packet_wrapper::operator=(packet_wrapper&& rhs) noexcept
 	{
+		if (packet_ != nullptr)
+		{
+			av_packet_free(&packet_);
+		}
 		packet_ = rhs.packet_;
 		type_ = rhs.type_;
 
