@@ -1352,7 +1352,7 @@ namespace vt
 									const auto& segments = ctx_.current_project->segments;
 									nlohmann::ordered_json json;
 									json["version"] = ctx_.current_project->version;
-									auto& json_segments = json["segments"];
+									auto& json_segments = json["groups"];
 									if (!segments.empty())
 									{
 										for (auto& [group_id, group_segments] : segments)
@@ -1361,6 +1361,22 @@ namespace vt
 											json_group_segments_data["group-id"] = group_id;
 											auto& json_group_segments = json_group_segments_data["group-segments"];
 											json_group_segments = group_segments;
+											auto& json_videos = json_group_segments_data["videos"];
+											json_videos = nlohmann::ordered_json::array();
+
+											const auto& video_group = ctx_.current_project->video_groups.at(group_id);
+											for (const auto& vinfo : video_group)
+											{
+												nlohmann::ordered_json json_video;
+												auto vmeta = ctx_.current_project->videos.get(vinfo.id);
+												if (vmeta != nullptr)
+												{
+													json_video["video-name"] = vmeta->path.filename();
+												}
+												json_video["video-id"] = vinfo.id;
+												json_video["offset"] = utils::time::time_to_string(std::chrono::duration_cast<std::chrono::seconds>(vinfo.offset).count());
+												json_videos.push_back(json_video);
+											}
 											json_segments.push_back(json_group_segments_data);
 										}
 									}
