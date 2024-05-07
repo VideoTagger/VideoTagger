@@ -1050,7 +1050,7 @@ namespace vt
 			ctx_.displayed_videos.set_playing(is_playing);
 		};
 
-		ctx_.player.callbacks.on_set_looping = [](bool is_looping)
+		ctx_.player.callbacks.on_set_looping = [](loop_mode mode)
 		{
 			//for (auto& [id, vinfo] : ctx_.current_project->videos)
 			//{
@@ -1078,7 +1078,7 @@ namespace vt
 			ctx_.displayed_videos.set_speed(speed);
 		};
 
-		ctx_.player.callbacks.on_skip = [](int dir)
+		ctx_.player.callbacks.on_skip = [](int dir, loop_mode mode, bool is_playing)
 		{
 			auto& playlist = ctx_.current_project->video_group_playlist;
 
@@ -1086,7 +1086,7 @@ namespace vt
 			if (dir > 0)
 			{
 				//TODO: should be different when shuffle is enabled
-				if (playlist.current() == playlist.end() - 1) return;
+				//if (playlist.current() == playlist.end() - 1) return;
 				it = playlist.next();
 			}
 			else if (dir < 0)
@@ -1096,7 +1096,16 @@ namespace vt
 			}
 
 			ctx_.reset_current_video_group();
-			ctx_.set_current_video_group_id(it->group_id);
+			if (mode == loop_mode::all and it == playlist.end())
+			{
+				it = playlist.set_current(playlist.begin());
+			}
+
+			if (it != playlist.end())
+			{
+				ctx_.set_current_video_group_id(it->group_id);
+				ctx_.displayed_videos.set_playing(is_playing);
+			}
 		};
 
 		ctx_.player.callbacks.on_seek = [](std::chrono::nanoseconds ts)
@@ -1114,11 +1123,11 @@ namespace vt
 			ctx_.displayed_videos.seek(ts);
 		};
 
-		ctx_.player.callbacks.on_finish = [](bool is_looping)
+		ctx_.player.callbacks.on_finish = [](loop_mode mode, bool is_playing)
 		{
 			auto& playlist = ctx_.current_project->video_group_playlist;
 
-			if (is_looping)
+			if (mode == loop_mode::one)
 			{
 				ctx_.displayed_videos.seek(std::chrono::nanoseconds{ 0 });
 				ctx_.displayed_videos.set_playing(true);
@@ -1131,10 +1140,17 @@ namespace vt
 				
 				auto it = playlist.next();
 				ctx_.reset_current_video_group();
+				if (mode == loop_mode::all and it == playlist.end())
+				{
+					it = playlist.set_current(playlist.begin());
+				}
+
 				if (it != playlist.end())
 				{
 					ctx_.set_current_video_group_id(it->group_id);
 				}
+
+				ctx_.displayed_videos.set_playing(true);
 			}
 		};
 	}

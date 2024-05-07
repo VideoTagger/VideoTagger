@@ -91,7 +91,7 @@ namespace vt
 	void app_context::reset_current_video_group()
 	{
 		set_current_video_group_id(invalid_video_group_id);
-		displayed_videos.update();
+		update_current_video_group();
 	}
 
 	segment_storage& app_context::get_current_segment_storage()

@@ -35,21 +35,33 @@ namespace vt
 			case player_action_type::skip_next:
 			{
 				if (callbacks.on_skip == nullptr) break;
-				callbacks.on_skip(1);
+				callbacks.on_skip(1, player.loop_mode(), player.is_playing());
 			}
 			break;
 			case player_action_type::skip_previous:
 			{
 				if (callbacks.on_skip == nullptr) break;
-				callbacks.on_skip(-1);
+				callbacks.on_skip(-1, player.loop_mode(), player.is_playing());
 			}
 			break;
 			case player_action_type::toggle_looping:
 			{
 				if (callbacks.on_set_looping == nullptr) break;
-				bool looping = !player.is_looping();
-				player.set_looping(looping);
-				callbacks.on_set_looping(looping);
+
+				switch (player.loop_mode())
+				{
+				case loop_mode::off:
+					player.set_loop_mode(loop_mode::all);
+					break;
+				case loop_mode::all:
+					player.set_loop_mode(loop_mode::one);
+					break;
+				case loop_mode::one:
+					player.set_loop_mode(loop_mode::off);
+					break;
+				}
+
+				callbacks.on_set_looping(player.loop_mode());
 			}
 			break;
 		}

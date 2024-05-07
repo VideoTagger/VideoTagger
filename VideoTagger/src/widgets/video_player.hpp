@@ -5,6 +5,13 @@
 
 namespace vt
 {
+	enum class loop_mode
+	{
+		off,
+		all,
+		one
+	};
+
 	struct video_player_data
 	{
 		std::chrono::nanoseconds current_ts{};
@@ -16,11 +23,11 @@ namespace vt
 	struct video_player_callbacks
 	{
 		std::function<void(bool)> on_set_playing = [](bool){};
-		std::function<void(bool)> on_set_looping = [](bool){};
+		std::function<void(loop_mode)> on_set_looping = [](loop_mode){};
 		std::function<void(float)> on_set_speed = [](float){};
-		std::function<void(int)> on_skip = [](int){};
+		std::function<void(int, loop_mode, bool)> on_skip = [](int, loop_mode, bool){};
 		std::function<void(std::chrono::nanoseconds)> on_seek = [](std::chrono::nanoseconds){};
-		std::function<void(int)> on_finish = [](bool is_looping){};
+		std::function<void(loop_mode, bool)> on_finish = [](loop_mode, bool){};
 	};
 }
 
@@ -37,7 +44,7 @@ namespace vt::widgets
 		float speed_;
 		bool is_visible_;
 		bool is_playing_;
-		bool is_looping_;
+		loop_mode loop_mode_;
 
 	public:
 		video_player_callbacks callbacks;
@@ -49,10 +56,10 @@ namespace vt::widgets
 		void dock_windows(size_t count);
 		const video_player_data& data() const;
 
-		void set_looping(bool enabled);
+		void set_loop_mode(loop_mode value);
 
 		bool is_visible() const;
-		bool is_looping() const;
 		bool is_playing() const;
+		loop_mode loop_mode() const;
 	};
 }

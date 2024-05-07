@@ -9,7 +9,7 @@
 
 namespace vt::widgets
 {
-	video_player::video_player() : dock_window_count_{}, speed_{ 1.0f }, is_visible_{}, is_playing_ {}, is_looping_{}
+	video_player::video_player() : dock_window_count_{}, speed_{ 1.0f }, is_visible_{}, is_playing_ {}, loop_mode_{}
     {
 
     }
@@ -21,7 +21,7 @@ namespace vt::widgets
 
 		if (data.current_ts == data.end_ts and callbacks.on_finish)
 		{
-			callbacks.on_finish(is_looping_);
+			callbacks.on_finish(loop_mode_, is_playing_);
 		}
 	}
 
@@ -145,7 +145,7 @@ namespace vt::widgets
 				ImGui::SetCursorPosX(cursor_pos.x + button_pos_x);
 				if (icon_button(icons::skip_prev, { button_size, button_size })) 
 				{
-					std::invoke(callbacks.on_skip, -1);
+					std::invoke(callbacks.on_skip, -1, loop_mode_, is_playing_);
 				}
 				ImGui::SameLine();
 				if (icon_button(icons::fast_back, { button_size, button_size }))
@@ -170,16 +170,31 @@ namespace vt::widgets
 				ImGui::SameLine();
 				if (icon_button(icons::skip_next, { button_size, button_size }))
 				{
-					std::invoke(callbacks.on_skip, 1);
+					std::invoke(callbacks.on_skip, 1, loop_mode_, is_playing_);
 				}
 			}
 
 			ImGui::NextColumn();
 			{
-				if (icon_toggle_button(icons::repeat, is_looping_, { button_size, button_size }))
+				//TODO: CHANGE WHEN THE LOOP BUTTON SUPPORTS 3 STATES
+				bool looping = loop_mode_ != loop_mode::off;
+
+				if (icon_toggle_button(icons::repeat, looping, { button_size, button_size }))
 				{
-					is_looping_ = !is_looping_;
-					std::invoke(callbacks.on_set_looping, is_looping_);
+					switch (loop_mode_)
+					{
+					case loop_mode::off:
+						loop_mode_ = loop_mode::all;
+						break;
+					case loop_mode::all:
+						loop_mode_ = loop_mode::one;
+						break;
+					case loop_mode::one:
+						loop_mode_ = loop_mode::off;
+						break;
+					}
+
+					std::invoke(callbacks.on_set_looping, loop_mode_);
 				}
 				ImGui::SameLine();
 
@@ -256,9 +271,9 @@ namespace vt::widgets
 		return data_;
 	}
 
-	void video_player::set_looping(bool enabled)
+	void video_player::set_loop_mode(vt::loop_mode value)
 	{
-		is_looping_ = enabled;
+		loop_mode_ = value;
 	}
 
 	bool video_player::is_visible() const
@@ -266,9 +281,9 @@ namespace vt::widgets
 		return is_visible_;
 	}
 
-	bool video_player::is_looping() const
+	loop_mode video_player::loop_mode() const
 	{
-		return is_looping_;
+		return loop_mode_;
 	}
 
 	bool video_player::is_playing() const
