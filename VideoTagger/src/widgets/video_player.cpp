@@ -176,22 +176,16 @@ namespace vt::widgets
 
 			ImGui::NextColumn();
 			{
-				//TODO: CHANGE WHEN THE LOOP BUTTON SUPPORTS 3 STATES
 				bool looping = loop_mode_ != loop_mode::off;
 
-				if (icon_toggle_button(icons::repeat, looping, { button_size, button_size }))
+				auto loop_icon = loop_mode_ != loop_mode::one ? icons::repeat : icons::repeat_one;
+				if (icon_toggle_button(loop_icon, looping, { button_size, button_size }))
 				{
 					switch (loop_mode_)
 					{
-					case loop_mode::off:
-						loop_mode_ = loop_mode::all;
-						break;
-					case loop_mode::all:
-						loop_mode_ = loop_mode::one;
-						break;
-					case loop_mode::one:
-						loop_mode_ = loop_mode::off;
-						break;
+					case loop_mode::off: loop_mode_ = loop_mode::all; break;
+					case loop_mode::all: loop_mode_ = loop_mode::one; break;
+					case loop_mode::one: loop_mode_ = loop_mode::off; break;
 					}
 
 					std::invoke(callbacks.on_set_looping, loop_mode_);
