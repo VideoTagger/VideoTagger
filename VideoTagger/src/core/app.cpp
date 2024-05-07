@@ -915,6 +915,7 @@ namespace vt
 						if (widgets::modal::keybind_popup("##KeybindPopup", keybind, input::last_keybind))
 						{
 							keybind.rebind(input::last_keybind);
+							ctx_.is_project_dirty = true;
 						}
 						ImGui::PopID();
 					}
