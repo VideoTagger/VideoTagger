@@ -77,6 +77,24 @@ namespace vt
 	//key: tag name
 	using segment_storage = std::unordered_map<std::string, tag_timeline>;
 
+	inline void to_json(nlohmann::ordered_json& json, const tag_segment& segment)
+	{
+		switch (segment.type())
+		{
+		case tag_segment_type::timestamp:
+		{
+			json["timestamp"] = utils::time::time_to_string(segment.start.seconds_total.count());
+		}
+		break;
+		case tag_segment_type::segment:
+		{
+			json["start"] = utils::time::time_to_string(segment.start.seconds_total.count());
+			json["end"] = utils::time::time_to_string(segment.end.seconds_total.count());
+		}
+		break;
+		}
+	}
+
 	inline void to_json(nlohmann::ordered_json& json, const segment_storage& ss)
 	{
 		json = nlohmann::json::array();
@@ -88,22 +106,7 @@ namespace vt
 			json_tag_segments = nlohmann::json::array();
 			for (auto& segment : tag_segments)
 			{
-				nlohmann::ordered_json segment_json;
-				switch (segment.type())
-				{
-					case tag_segment_type::timestamp:
-					{
-						segment_json["timestamp"] = utils::time::time_to_string(segment.start.seconds_total.count());
-					}
-					break;
-					case tag_segment_type::segment:
-					{
-						segment_json["start"] = utils::time::time_to_string(segment.start.seconds_total.count());
-						segment_json["end"] = utils::time::time_to_string(segment.end.seconds_total.count());
-					}
-					break;
-				}
-				json_tag_segments.push_back(segment_json);
+				json_tag_segments.push_back(segment);
 			}
 			json.push_back(json_tag_segments_data);
 		}
