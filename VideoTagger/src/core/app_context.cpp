@@ -8,8 +8,14 @@ namespace vt
 	{
 		//TODO: needs a refactor
 
+		if (!current_project.has_value())
+		{
+			displayed_videos.clear();
+			return;
+		}
+
 		auto group_it = current_project->video_groups.find(current_video_group_id_);
-		if (!current_project.has_value() or current_video_group_id_ == invalid_video_group_id or group_it == current_project->video_groups.end())
+		if (current_video_group_id_ == invalid_video_group_id or group_it == current_project->video_groups.end())
 		{
 			set_current_video_group_id(invalid_video_group_id);
 			auto& video_pool = current_project->videos;

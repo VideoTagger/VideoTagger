@@ -605,9 +605,9 @@ namespace vt
 	void app::close_project()
 	{
 		on_close_project(false);
+		ctx_.reset_current_video_group();
 		ctx_.current_project = std::nullopt;
 		ctx_.selected_segment_data = std::nullopt;
-		ctx_.reset_current_video_group();
 		set_subtitle();
 	}
 	
@@ -1359,11 +1359,9 @@ namespace vt
 										{
 											nlohmann::ordered_json json_group_segments_data;
 											json_group_segments_data["group-id"] = group_id;
-											auto& json_group_segments = json_group_segments_data["group-segments"];
-											json_group_segments = group_segments;
+											json_group_segments_data["group-name"] = ctx_.current_project->video_groups.at(group_id).display_name;
 											auto& json_videos = json_group_segments_data["videos"];
 											json_videos = nlohmann::ordered_json::array();
-
 											const auto& video_group = ctx_.current_project->video_groups.at(group_id);
 											for (const auto& vinfo : video_group)
 											{
@@ -1377,6 +1375,9 @@ namespace vt
 												json_video["offset"] = utils::time::time_to_string(std::chrono::duration_cast<std::chrono::seconds>(vinfo.offset).count());
 												json_videos.push_back(json_video);
 											}
+											auto& json_group_segments = json_group_segments_data["group-segments"];
+											json_group_segments = group_segments;
+
 											json_segments.push_back(json_group_segments_data);
 										}
 									}
