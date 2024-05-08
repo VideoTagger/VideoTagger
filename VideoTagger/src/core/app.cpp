@@ -1753,8 +1753,14 @@ namespace vt
 			//		ctx_.player.update_data(data);
 			//	}
 			//}
-
-			if (ctx_.current_video_group_id() != invalid_video_group_id)
+			if (ctx_.current_video_group_id() == invalid_video_group_id)
+			{
+				data.current_ts = std::chrono::nanoseconds{ 0 };
+				data.start_ts = std::chrono::nanoseconds{ 0 };
+				data.end_ts = std::chrono::nanoseconds{ 0 };
+				ctx_.player.update_data(data, false);
+			}
+			else
 			{
 				//TODO: probably could be done only when needed instead of on every frame.
 				// Video timeline does the same thing and group duration needs to be calculated
