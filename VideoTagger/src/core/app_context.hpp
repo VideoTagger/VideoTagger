@@ -13,6 +13,7 @@
 #include "input.hpp"
 #include "keybind_storage.hpp"
 #include "theme.hpp"
+#include "eng_lang_pack.hpp"
 #include <video/video_stream.hpp>
 #include <widgets/project_selector.hpp>
 #include <widgets/video_timeline.hpp>
@@ -90,6 +91,7 @@ namespace vt
 		widgets::insert_segment_data_container insert_segment_data;
 
 		app_settings app_settings;
+		lang_pack<lang_pack_id> lang{ eng_lang_data };
 		SDL_Window* main_window{};
 		SDL_Renderer* renderer{};
 
