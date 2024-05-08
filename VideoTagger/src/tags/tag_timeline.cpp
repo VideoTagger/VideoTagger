@@ -32,7 +32,7 @@ namespace vt
 
 	tag_segment_type tag_segment::type() const
 	{
-		return start == end ? tag_segment_type::point : tag_segment_type::segment;
+		return start == end ? tag_segment_type::timestamp : tag_segment_type::segment;
 	}
 
 	std::pair<tag_timeline::iterator, bool> tag_timeline::insert(timestamp time_start, timestamp time_end)

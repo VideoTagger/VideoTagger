@@ -46,25 +46,39 @@ namespace vt::widgets
 			ImGui::InputTextWithHint("##ProjectCfgName", "Project Name...", &temp_project.name, ImGuiInputTextFlags_AutoSelectAll);
 
 			ImGui::TextDisabled("Location");
-			std::string path = std::filesystem::absolute(temp_project.path).string();
+			std::string path = std::filesystem::absolute(temp_project.path).replace_extension().u8string();
+
+			int input_flags = ImGuiInputTextFlags_AutoSelectAll;
+			if (path_from_name)
+			{
+				temp_project.path.replace_filename(temp_project.name);
+			}
 
 			ImGui::SetNextItemWidth(input_width);
-			if (ImGui::InputTextWithHint("##ProjectCfgPath", "Project Path...", &path, ImGuiInputTextFlags_AutoSelectAll))
+
+			if (ImGui::InputTextWithHint("##ProjectCfgPath", "Project Path...", &path, input_flags))
 			{
 				temp_project.path = std::filesystem::absolute(path);
 				temp_project.path.make_preferred();
 			}
+
 			ImGui::SameLine();
-			auto path_sel = std::string(icons::dots_hor) + "##ProjectCfgPathSelector";
+			auto path_sel = fmt::format("{}##ProjectCfgPathSelector", icons::dots_hor);
 			if (ImGui::Button(path_sel.c_str()))
 			{
-				auto result = utils::filesystem::get_folder();
+				utils::dialog_filters filters{ { "VideoTagger Project", project_info::extension } };
+				auto result = utils::filesystem::save_file({}, filters, temp_project.name);
 				if (result)
 				{
+					if (path_from_name)
+					{
+						result.path = result.path.replace_filename(temp_project.name);
+					}
 					temp_project.path = result.path;
 					temp_project.path.make_preferred();
 				}
 			}
+			ImGui::Checkbox("Derive filename from project name", &path_from_name);
 
 			auto button_size = ImGui::CalcTextSize("Cancel") + style.ItemInnerSpacing * 2;
 			button_size *= 1.15f;
@@ -73,10 +87,11 @@ namespace vt::widgets
 
 			bool valid = !temp_project.name.empty() and !temp_project.path.empty();
 
-			valid &= std::filesystem::is_directory(temp_project.path) and std::filesystem::exists(temp_project.path);
+			auto parent_path = temp_project.path.parent_path();
+			valid &= std::filesystem::is_directory(parent_path) and std::filesystem::exists(parent_path);
 
 			project_info temp_project_copy = temp_project;
-			temp_project_copy.path = (temp_project.path / temp_project.name).replace_extension(project::extension);
+			temp_project_copy.path = temp_project.path.replace_extension(project::extension);
 
 			auto it = std::find(projects_.begin(), projects_.end(), temp_project_copy);
 			valid &= (it == projects_.end());
@@ -191,21 +206,20 @@ namespace vt::widgets
 		{
 			if (is_valid)
 			{
-				std::string menu_name = std::string(icons::folder) + " Open Containing Folder";
+				std::string menu_name = fmt::format("{} Show In Explorer", icons::folder);
 				if (ImGui::MenuItem(menu_name.c_str()))
 				{
 					auto path = std::filesystem::absolute(project.path.parent_path()).u8string();
 					if (!path.empty())
 					{
-						std::string uri = fmt::format("file://{}", path);
-						SDL_OpenURL(uri.c_str());
+						utils::filesystem::open_in_explorer(path);
 					}
 				}
 			}
 
 			ImGui::Separator();
 			{
-				std::string menu_name = std::string(icons::visibility_off) + " Remove From List";
+				std::string menu_name = fmt::format("{} Remove From List", icons::visibility_off);
 				if (ImGui::MenuItem(menu_name.c_str()))
 				{
 					projects_.erase(std::find(projects_.begin(), projects_.end(), project));
@@ -213,7 +227,7 @@ namespace vt::widgets
 				}
 			}
 			{
-				std::string menu_name = std::string(icons::delete_) + " Delete";
+				std::string menu_name = fmt::format("{} Delete", icons::delete_);
 				if (std::filesystem::is_regular_file(project.path) and project.path.extension() == std::string(".") + project::extension and ImGui::MenuItem(menu_name.c_str()))
 				{
 					const SDL_MessageBoxButtonData buttons[] = {
@@ -346,9 +360,7 @@ namespace vt::widgets
 			ImGui::PopFont();
 			ImGui::Dummy(ImGui::GetStyle().ItemSpacing);
 
-			auto max_content_size = ImGui::GetContentRegionAvail();
-			ImGui::SetNextItemWidth(max_content_size.x);
-			ImGui::InputTextWithHint("##ProjectSelectorSearch", "Search...", &filter, ImGuiInputTextFlags_AutoSelectAll | ImGuiInputTextFlags_EscapeClearsAll);
+			search_bar("##ProjectSelectorSearch", "Search...", filter);
 						
 			const auto& style = ImGui::GetStyle();
 			auto panels_area = ImGui::GetContentRegionAvail() - style.WindowPadding;
@@ -479,6 +491,7 @@ namespace vt::widgets
 		if (open_project_config)
 		{
 			temp_project = project_info{};
+			path_from_name = true;
 			ImGui::OpenPopup("Project Configuration", ImGuiPopupFlags_NoOpenOverExistingPopup);
 		}
 	}

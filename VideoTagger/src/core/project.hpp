@@ -11,12 +11,11 @@
 #include <tags/tag_storage.hpp>
 #include <tags/tag_timeline.hpp>
 #include <video/video_pool.hpp>
+#include <video/video_group_playlist.hpp>
 #include <core/input.hpp>
 
 namespace vt
 {
-	using video_group_id_t = uint64_t;
-
 	struct project_info
 	{
 		static constexpr uint16_t current_version = 1;
@@ -24,7 +23,7 @@ namespace vt
 
 		uint16_t version = current_version;
 		std::string name = "New Project";
-		std::filesystem::path path = std::filesystem::current_path();
+		std::filesystem::path path = (std::filesystem::current_path() / name).replace_extension(extension);
 
 		bool is_valid() const;
 		std::optional<std::tm> modification_time() const;
@@ -44,14 +43,14 @@ namespace vt
 
 	struct project : public project_info
 	{
-		tag_storage tags;
-		//TODO: associate segments with video groups
-		segment_storage segments;
-		video_pool videos;
+		video_group_playlist video_group_playlist;
+		std::unordered_map<video_group_id_t, segment_storage> segments;
 		std::unordered_map<video_group_id_t, video_group> video_groups;
+		std::vector<std::future<project_import_video_result>> video_import_tasks;
+		video_pool videos;
+		tag_storage tags;
 		keybind_storage keybinds;
 
-		std::vector<std::future<project_import_video_result>> video_import_tasks;
 
 		project() = default;
 		project(const project&) = delete;
@@ -60,11 +59,9 @@ namespace vt
 		project& operator=(const project&) = delete;
 		project& operator=(project&&) = default;
 
-
-		//TODO: save tags displayed in the timeline in the project file
-
 		std::future<project_import_video_result> import_video(const std::filesystem::path& filepath, video_id_t id = 0, bool create_group = true);
 
+		//TODO: save tags displayed on the timeline in the project file
 		void save() const;
 		void save_as(const std::filesystem::path& filepath);
 

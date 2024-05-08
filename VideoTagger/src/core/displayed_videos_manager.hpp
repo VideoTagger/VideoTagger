@@ -23,6 +23,8 @@ namespace vt
 		std::chrono::nanoseconds offset{};
 
 		SDL_Texture* display_texture{};
+
+		bool is_timestamp_in_range(std::chrono::nanoseconds timestamp) const;
 	};
 
 	class displayed_videos_manager
@@ -36,11 +38,12 @@ namespace vt
 
 		void set_playing(bool value);
 		void set_speed(float value);
-		void set_looping(bool value);
 		void seek(std::chrono::nanoseconds timestamp);
 
-		bool insert(video_id_t id, video_stream* video, std::chrono::nanoseconds offset, int video_width, int video_height, SDL_Renderer* renderer);
+		//if update is true and a video with id is already present the video data will be updated
+		std::pair<iterator, bool> insert(video_id_t id, video_stream* video, std::chrono::nanoseconds offset, int video_width, int video_height, SDL_Renderer* renderer, bool update = true);
 		bool erase(video_id_t video_id);
+		iterator erase(const_iterator it);
 		void clear();
 
 		iterator find(video_id_t video_id);
@@ -48,11 +51,11 @@ namespace vt
 
 		bool contains(video_id_t video_id) const;
 		bool is_playing() const;
-		bool is_looping() const;
 		float speed() const;
 		std::chrono::nanoseconds duration() const;
 		std::chrono::nanoseconds current_timestamp() const;
 		size_t size() const;
+		bool empty() const;
 	
 		iterator begin();
 		const_iterator begin() const;
@@ -65,7 +68,6 @@ namespace vt
 		container videos_;
 		
 		bool is_playing_{};
-		bool is_looping_{};
 		float speed_{1};
 
 		std::chrono::nanoseconds current_timestamp_{};

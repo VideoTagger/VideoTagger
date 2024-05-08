@@ -6,6 +6,9 @@
 #include <chrono>
 #include <unordered_map>
 
+#include <core/debug.hpp>
+#include <utils/json.hpp>
+#include <utils/time.hpp>
 #include <utils/timestamp.hpp>
 #include <utils/iterator_range.hpp>
 
@@ -14,7 +17,7 @@ namespace vt
 	//TODO: maybe think of something better than "timestamp" for this
 	enum class tag_segment_type
 	{
-		point,
+		timestamp,
 		segment
 	};
 
@@ -22,7 +25,7 @@ namespace vt
 	{
 		timestamp start{};
 		timestamp end{};
-		
+
 		tag_segment(timestamp time_start, timestamp time_end);
 		tag_segment(timestamp time_point);
 
@@ -73,4 +76,73 @@ namespace vt
 
 	//key: tag name
 	using segment_storage = std::unordered_map<std::string, tag_timeline>;
+
+	inline void to_json(nlohmann::ordered_json& json, const tag_segment& segment)
+	{
+		switch (segment.type())
+		{
+		case tag_segment_type::timestamp:
+		{
+			json["timestamp"] = utils::time::time_to_string(segment.start.seconds_total.count());
+		}
+		break;
+		case tag_segment_type::segment:
+		{
+			json["start"] = utils::time::time_to_string(segment.start.seconds_total.count());
+			json["end"] = utils::time::time_to_string(segment.end.seconds_total.count());
+		}
+		break;
+		}
+	}
+
+	inline void to_json(nlohmann::ordered_json& json, const segment_storage& ss)
+	{
+		json = nlohmann::json::array();
+		for (auto& [tag_name, tag_segments] : ss)
+		{
+			nlohmann::ordered_json json_tag_segments_data;
+			json_tag_segments_data["tag"] = tag_name;
+			auto& json_tag_segments = json_tag_segments_data["tag-segments"];
+			json_tag_segments = nlohmann::json::array();
+			for (auto& segment : tag_segments)
+			{
+				json_tag_segments.push_back(segment);
+			}
+			json.push_back(json_tag_segments_data);
+		}
+	}
+
+	inline void from_json(const nlohmann::ordered_json& json, segment_storage& ss)
+	{
+		for (const auto& json_group_segments : json)
+		{
+			if (!json_group_segments.contains("tag"))
+			{
+				debug::error("Missing tag name");
+				continue;
+			}
+			if (!json_group_segments.contains("tag-segments"))
+			{
+				debug::error("Missing tag segments");
+				continue;
+			}
+
+			std::string tag_name = json_group_segments["tag"];
+			auto& tag_segments = ss[tag_name];
+			for (auto& json_tag_segments : json_group_segments["tag-segments"])
+			{
+				if (json_tag_segments.contains("timestamp"))
+				{
+					auto ts = utils::time::parse_time_to_sec(json_tag_segments["timestamp"]);
+					tag_segments.insert(vt::timestamp{ ts });
+				}
+				else if (json_tag_segments.contains("start") and json_tag_segments.contains("end"))
+				{
+					auto start = utils::time::parse_time_to_sec(json_tag_segments["start"]);
+					auto end = utils::time::parse_time_to_sec(json_tag_segments["end"]);
+					tag_segments.insert(vt::timestamp{ start }, vt::timestamp{ end });
+				}
+			}
+		}
+	}
 }

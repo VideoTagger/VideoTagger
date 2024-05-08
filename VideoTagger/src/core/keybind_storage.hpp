@@ -1,9 +1,12 @@
 #pragma once
 #include <map>
+#include <unordered_set>
 #include <string>
 #include <SDL.h>
 
 #include "input.hpp"
+#include "actions.hpp"
+#include "debug.hpp"
 #include <utils/json.hpp>
 
 namespace vt
@@ -62,8 +65,7 @@ namespace vt
 			if (keybind.action != nullptr)
 			{
 				auto& action = json["action"];
-				action["name"] = keybind.action->name();
-				//TODO: Store action data
+				action = keybind.action;
 			}
 			return json;
 		};
@@ -76,19 +78,40 @@ namespace vt
 
 	inline void from_json(const nlohmann::ordered_json& json, keybind_storage& ks)
 	{
+		static auto validate_mod = [](size_t count, const char* name) -> bool
+		{
+			bool result = count > 1;
+			if (result)
+			{
+				debug::error("Keybind modifiers format is invalid, expected 0 or 1 instances of '{}' but got {} of the same modifiers, skipping...", name, count);
+			}
+			return result;
+		};
+
 		for (const auto& kb : json)
 		{
-			auto name = kb.at("name").get<std::string>();
-			auto enabled = kb.at("enabled").get<bool>();
+			if (!(kb.contains("name") and kb.contains("enabled") and kb.contains("keycode") and kb.contains("modifiers") and kb.contains("action")))
+			{
+				debug::error("Serialized keybind's format is invalid, skipping...");
+				continue;
+			}
+
+			std::string name = kb.at("name");
+			bool enabled = kb.at("enabled");
 			int keycode = SDL_GetKeyFromName(kb.at("keycode").get<std::string>().c_str());
-			const auto& mods = kb.at("modifiers");
+			const std::unordered_multiset<std::string> mods = kb.at("modifiers");
 
 			keybind_flags flags(enabled, true, true);
-			keybind_modifiers modifiers;
-			modifiers.ctrl = mods.contains("ctrl");
-			modifiers.shift = mods.contains("shift");
-			modifiers.alt = mods.contains("alt");
-			keybind new_keybind(keycode, modifiers, flags, no_action());
+			size_t ctrl_count = mods.count("ctrl");
+			validate_mod(ctrl_count, "ctrl");
+			size_t shift_count = mods.count("shift");
+			validate_mod(shift_count, "shift");
+			size_t alt_count = mods.count("alt");
+			validate_mod(alt_count, "alt");
+
+			keybind_modifiers modifiers(ctrl_count, shift_count, alt_count);
+			std::shared_ptr<keybind_action> action = kb.at("action");
+			keybind new_keybind(keycode, modifiers, flags, action);
 			ks.insert(name, new_keybind);
 		}
 	}

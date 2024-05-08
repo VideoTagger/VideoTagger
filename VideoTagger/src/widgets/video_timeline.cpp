@@ -47,71 +47,84 @@ namespace vt::widgets
 {
 	tag& timeline_state::get(size_t index)
 	{
-		return tags->at(displayed_tags.at(index));
+		return tags->at(displayed_tags[current_video_group_id].at(index));
 	}
 
 	void timeline_state::add(const std::string& name)
 	{
+		if (current_video_group_id == invalid_video_group_id)
+		{
+			return;
+		}
+
 		if (!tags->contains(name))
 		{
 			return;
 		}
 
-		if (std::find(displayed_tags.begin(), displayed_tags.end(), name) != displayed_tags.end())
+		auto& displayed_tags_vec = displayed_tags[current_video_group_id];
+
+		if (std::find(displayed_tags_vec.begin(), displayed_tags_vec.end(), name) != displayed_tags_vec.end())
 		{
 			return;
 		}
 
-		displayed_tags.push_back(name);
+		displayed_tags_vec.push_back(name);
 	}
 
 	void timeline_state::del(size_t index)
 	{
-		displayed_tags.erase(displayed_tags.begin() + index);
+		auto& displayed_tags_vec = displayed_tags[current_video_group_id];
+
+		displayed_tags_vec.erase(displayed_tags_vec.begin() + index);
 	}
 
 	void timeline_state::sync_tags()
 	{
-		for (auto it = displayed_tags.begin(); it != displayed_tags.end(); ++it)
+		for (auto& [_, displayed_tags_vec] : displayed_tags)
 		{
-			if (!tags->contains(*it))
+			for (auto it = displayed_tags_vec.begin(); it != displayed_tags_vec.end(); ++it)
 			{
-				it = displayed_tags.erase(it);
-			}
+				if (!tags->contains(*it))
+				{
+					it = displayed_tags_vec.erase(it);
+				}
 
-			if (it == displayed_tags.end())
-			{
-				break;
+				if (it == displayed_tags_vec.end())
+				{
+					break;
+				}
 			}
 		}
 	}
 
 	
-	static bool SequencerAddDelButton(ImDrawList* draw_list, ImVec2 pos, bool add = true)
+	static bool timeline_add_button(ImDrawList* draw_list, ImVec2 pos, bool enabled)
 	{
+		//TODO: Use a regular imgui button
+
 		ImGuiIO& io = ImGui::GetIO();
 		const float font_scale = io.FontGlobalScale;
 		const float button_size = 16.0f * font_scale;
 		const ImGuiStyle& style = ImGui::GetStyle();
 		ImRect btnRect(pos, ImVec2(pos.x + button_size, pos.y + button_size));
-		bool overBtn = btnRect.Contains(io.MousePos);
+		bool overBtn = btnRect.Contains(io.MousePos) and enabled;
 		bool containedClick = overBtn and btnRect.Contains(io.MouseClickedPos[0]);
 		bool clickedBtn = containedClick and io.MouseReleased[0];
 		//int btnColor = overBtn ? 0xAAEAFFAA : 0x77A3B2AA;
 		ImU32 button_color = ImGui::ColorConvertFloat4ToU32(style.Colors[overBtn ? ImGuiCol_Text : ImGuiCol_TextDisabled]);
 		if (containedClick and io.MouseDownDuration[0] > 0)
 			btnRect.Expand(2.0f);
-
+		
 		float midy = pos.y + button_size / 2 - 0.5f;
 		float midx = pos.x + button_size / 2 - 0.5f;
 		draw_list->AddRect(btnRect.Min, btnRect.Max, button_color, 4);
 		draw_list->AddLine(ImVec2(btnRect.Min.x + 3, midy), ImVec2(btnRect.Max.x - 3, midy), button_color, 2);
-		if (add)
-			draw_list->AddLine(ImVec2(midx, btnRect.Min.y + 3), ImVec2(midx, btnRect.Max.y - 3), button_color, 2);
+		draw_list->AddLine(ImVec2(midx, btnRect.Min.y + 3), ImVec2(midx, btnRect.Max.y - 3), button_color, 2);
 		return clickedBtn;
 	}
 
-	bool merge_timestamps_popup(const std::string& id, bool& pressed_button)
+	bool merge_segments_popup(const std::string& id, bool& pressed_button, bool display_dragged_segment_text)
 	{
 		//TODO: improve layout
 
@@ -128,7 +141,7 @@ namespace vt::widgets
 		if (ImGui::BeginPopupModal(id.c_str(), nullptr, flags))
 		{
 			ImGui::Text("Do you want to merge the overlapping segments?");
-			ImGui::TextDisabled("(Pressing \"No\" will move the currently dragged segment back to its original position)");
+			if (display_dragged_segment_text) ImGui::TextDisabled("(Pressing \"No\" will move the currently dragged segment back to its original position)");
 			ImGui::NewLine();
 			auto area_size = ImGui::GetWindowSize();
 
@@ -161,7 +174,7 @@ namespace vt::widgets
 	// Maybe more accurracy than a second.
 	// Display time in 10 second intervals instead of 20
 
-	bool video_timeline(timeline_state& state, std::optional<selected_segment_data>& selected_segment, std::optional<moving_segment_data>& moving_segment, bool& dirty_flag)
+	bool video_timeline(timeline_state& state, std::optional<selected_segment_data>& selected_segment, std::optional<moving_segment_data>& moving_segment, insert_segment_data_container& insert_segment_container, bool& dirty_flag)
 	{
 		bool return_value = false;
 		ImGuiIO& io = ImGui::GetIO();
@@ -175,8 +188,8 @@ namespace vt::widgets
 
 		float ItemHeight = 20 * font_scale;
 
-		const int64_t time_min = state.time_min.seconds_total.count();
-		const int64_t time_max = state.time_max.seconds_total.count();
+		const int64_t time_min = state.enabled ? state.time_min.seconds_total.count() : state.disabled_time_min.seconds_total.count();
+		const int64_t time_max = state.enabled ? state.time_max.seconds_total.count() : state.disabled_time_max.seconds_total.count();
 
 		ImGui::BeginGroup();
 
@@ -188,19 +201,13 @@ namespace vt::widgets
 		ImVec2 scrollBarSize(canvas_size.x, 14.f);
 		bool hasScrollBar(true);
 
-		float controlHeight = std::max(std::max(state.displayed_tags.size(), size_t{1}) * ItemHeight, ImGui::GetWindowSize().y - (hasScrollBar ? scrollBarSize.y : 0));
+		auto& displayed_tags = state.displayed_tags[state.current_video_group_id];
+
+		float controlHeight = std::max(std::max(displayed_tags.size(), size_t{1}) * ItemHeight, ImGui::GetWindowSize().y - (hasScrollBar ? scrollBarSize.y : 0));
 		int64_t frameCount = std::max<int64_t>(time_max - time_min, 1);
 
 		static bool moving_scroll_bar = false;
 		static bool moving_time_marker = false;
-		struct CustomDraw
-		{
-			int index;
-			ImRect customRect;
-			ImRect legendRect;
-			ImRect clippingRect;
-			ImRect legendClippingRect;
-		};
 
 		// zoom in/out
 		const int64_t visibleFrameCount = (int64_t)floorf((canvas_size.x - legendWidth) / framePixelWidth);
@@ -212,7 +219,7 @@ namespace vt::widgets
 		static bool panningView = false;
 		static ImVec2 panningViewSource;
 		static int64_t panningViewFrame;
-		if (ImGui::IsWindowFocused() and io.KeyAlt and io.MouseDown[2])
+		if (state.enabled and ImGui::IsWindowFocused() and io.KeyAlt and io.MouseDown[2])
 		{
 			if (!panningView)
 			{
@@ -236,16 +243,7 @@ namespace vt::widgets
 			state.first_frame = time_min;
 
 
-		// --
-		/*if (expanded and !*expanded)
-		{
-			ImGui::InvisibleButton("canvas", ImVec2(canvas_size.x - canvas_pos.x, (float)ItemHeight));
-			draw_list->AddRectFilled(canvas_pos, ImVec2(canvas_size.x + canvas_pos.x, canvas_pos.y + ItemHeight), 0xFF3D3837, 0);
-			char tmps[512];
-			ImFormatString(tmps, IM_ARRAYSIZE(tmps), state->get_collapse_fmt(), frameCount, sequenceCount);
-			draw_list->AddText(ImVec2(canvas_pos.x + 26, canvas_pos.y + 2), 0xFFFFFFFF, tmps);
-		}
-		else*/
+		
 		{
 			/*
 			int framesPixelWidth = int(frameCount * framePixelWidth);
@@ -260,7 +258,7 @@ namespace vt::widgets
 			ImVec2 childFramePos = ImGui::GetCursorScreenPos();
 			ImVec2 childFrameSize(canvas_size.x, canvas_size.y - 8.f - headerSize.y - (hasScrollBar ? scrollBarSize.y : 0));
 			//ImGui::PushStyleColor(ImGuiCol_FrameBg, 0);
-			ImGui::BeginChildFrame(889, childFrameSize);
+			ImGui::BeginChild("##Frame", childFrameSize, ImGuiChildFlags_FrameStyle);
 			state.focused = ImGui::IsWindowFocused();
 			ImGui::InvisibleButton("##ContentBar", ImVec2(canvas_size.x, float(controlHeight)), ImGuiButtonFlags_AllowOverlap);
 			const ImVec2 contentMin = ImGui::GetItemRectMin();
@@ -282,7 +280,7 @@ namespace vt::widgets
 			// current frame top
 			ImRect topRect(ImVec2(canvas_pos.x + legendWidth, canvas_pos.y), ImVec2(canvas_pos.x + canvas_size.x, canvas_pos.y + ItemHeight));
 
-			if (!moving_time_marker and !moving_scroll_bar and !moving_segment.has_value() and state.current_time.seconds_total.count() >= 0 and topRect.Contains(io.MousePos) and io.MouseDown[0] and !ImGui::IsPopupOpen(nullptr, ImGuiPopupFlags_AnyPopup | ImGuiPopupFlags_AnyPopupId))
+			if (state.enabled and !moving_time_marker and !moving_scroll_bar and !moving_segment.has_value() and state.current_time.seconds_total.count() >= 0 and topRect.Contains(io.MousePos) and io.MouseDown[0] and !ImGui::IsPopupOpen(nullptr, ImGuiPopupFlags_AnyPopup | ImGuiPopupFlags_AnyPopupId))
 			{
 				moving_time_marker = true;
 			}
@@ -306,16 +304,22 @@ namespace vt::widgets
 			
 			//if (sequence_options & ImSequencer::SEQUENCER_ADD)
 			{
-				if (SequencerAddDelButton(draw_list, ImVec2(canvas_pos.x + legendWidth - ItemHeight, canvas_pos.y + 2), true))
+				if (timeline_add_button(draw_list, ImVec2(canvas_pos.x + legendWidth - ItemHeight, canvas_pos.y + 2), state.enabled))
 					ImGui::OpenPopup("##AddEntry");
 
 				if (ImGui::BeginPopup("##AddEntry", ImGuiWindowFlags_NoMove))
 				{
+					//TODO: temporary. the add button should just be disable
+					if (state.current_video_group_id == invalid_video_group_id)
+					{
+						ImGui::CloseCurrentPopup();
+					}
+
 					auto selected_tag = state.tags->end();
 
 					//TODO: This should already be sorted, not sorted every frame
-					std::sort(state.displayed_tags.begin(), state.displayed_tags.end());
-					if (tag_menu(*state.tags, state.displayed_tags))
+					std::sort(displayed_tags.begin(), displayed_tags.end());
+					if (tag_menu(*state.tags, displayed_tags))
 					{
 						ImGui::CloseCurrentPopup();
 					}
@@ -389,11 +393,11 @@ namespace vt::widgets
 			draw_list->PushClipRect(childFramePos, childFramePos + childFrameSize, true);
 
 			// draw item names in the legend rect on the left
-			for (size_t i = 0; i < state.displayed_tags.size(); i++)
+			for (size_t i = 0; i < displayed_tags.size(); i++)
 			{
 				ImVec2 tpos(contentMin.x + 3, contentMin.y + i * ItemHeight + 2);
 				ImU32 text_color = ImGui::ColorConvertFloat4ToU32(style.Colors[ImGuiCol_Text]); //0xFFFFFFFF
-				draw_list->AddText(tpos, text_color, state.displayed_tags.at(i).c_str());
+				draw_list->AddText(tpos, text_color, displayed_tags.at(i).c_str());
 			}
 
 			draw_list->PushClipRect(childFramePos + ImVec2(float(legendWidth), 0.f), childFramePos + childFrameSize, true);
@@ -414,7 +418,8 @@ namespace vt::widgets
 				mouse_tag_line_index.reset();
 			}
 
-			for (size_t i = 0; i < state.displayed_tags.size(); i++)
+			if (state.segments != nullptr)
+			for (size_t i = 0; i < displayed_tags.size(); i++)
 			{
 				tag& tag_info = state.get(i);
 				//TODO: consider using at() instead but then an entry would need to be created somewhere first
@@ -457,7 +462,7 @@ namespace vt::widgets
 								draw_list->AddRect(slot_p1, slot_p2, selection_color, 2, 0, selection_thickness);
 							}
 						}
-						else if (tag_segment.type() == tag_segment_type::point)
+						else if (tag_segment.type() == tag_segment_type::timestamp)
 						{
 							ImVec2 pos = { (slot_p2.x + slot_p1.x) / 2, slot_p1.y + ItemHeight / 2 - 2 };
 							ImVec2 p1 = { pos.x, pos.y - ItemHeight / 2 + 1 };
@@ -514,7 +519,7 @@ namespace vt::widgets
 							if (!rc.Contains(io.MousePos))
 								continue;
 							ImGuiMouseCursor cursor = ImGui::GetMouseCursor();
-							if ((j == 0 or j == 1) and segment_it->type() != tag_segment_type::point)
+							if ((j == 0 or j == 1) and segment_it->type() != tag_segment_type::timestamp)
 							{
 								cursor = ImGuiMouseCursor_ResizeEW;
 							}
@@ -532,7 +537,7 @@ namespace vt::widgets
 								continue;
 							if (!ImRect(childFramePos, childFramePos + childFrameSize).Contains(io.MousePos))
 								continue;
-							if (ImGui::IsMouseClicked(0) and !moving_scroll_bar and !moving_time_marker and (segment_it->type() != tag_segment_type::point or j == 2))
+							if (ImGui::IsMouseClicked(0) and !moving_scroll_bar and !moving_time_marker and (segment_it->type() != tag_segment_type::timestamp or j == 2))
 							{
 								moving_segment = moving_segment_data{
 									&tag_info,
@@ -584,7 +589,7 @@ namespace vt::widgets
 							draw_list->AddRectFilled(slot_p1, slot_p2, timestamp_color, 2);
 							draw_list->AddRect(slot_p1, slot_p2, selection_color, 2, 0, selection_thickness);
 						}
-						else if (tag_segment.type() == tag_segment_type::point)
+						else if (tag_segment.type() == tag_segment_type::timestamp)
 						{
 							ImVec2 pos = { (slot_p2.x + slot_p1.x) / 2, slot_p1.y + ItemHeight / 2 - 2 };
 							ImVec2 p1 = { pos.x, pos.y - ItemHeight / 2 + 1 };
@@ -609,6 +614,7 @@ namespace vt::widgets
 
 			//TODO: improve
 			// Segment context menu
+			if (state.enabled)
 			{
 				static timestamp inserted_segment_start{};
 				static timestamp inserted_segment_end{};
@@ -622,8 +628,7 @@ namespace vt::widgets
 					segments = &state.segments->at(tag_info->name);
 				}
 
-				bool insert_segment = false;
-				bool insert_segment_with_popup = false;
+				bool ready_to_insert = false;
 
 				static timestamp mouse_timestamp;
 
@@ -652,13 +657,13 @@ namespace vt::widgets
 						{
 							inserted_segment_start = mouse_timestamp;
 							inserted_segment_end = inserted_segment_start;
-							insert_segment_with_popup = true;
+							ready_to_insert = true;
 						}
 						if (ImGui::MenuItem("Add segment"))
 						{
 							inserted_segment_start = mouse_timestamp;
 							inserted_segment_end = inserted_segment_start + timestamp(1);
-							insert_segment_with_popup = true;
+							ready_to_insert = true;
 						}
 						ImGui::SeparatorText("Marker");
 						//TODO: maybe could use the moving timestamp
@@ -666,30 +671,34 @@ namespace vt::widgets
 						{
 							inserted_segment_start = state.current_time;
 							inserted_segment_end = inserted_segment_start;
-							insert_segment_with_popup = true;
+							ready_to_insert = true;
 						}
 						if (ImGui::MenuItem("Add segment at marker"))
 						{
 							//TODO: should draw a line or something so you know where you clicked
 							inserted_segment_start = state.current_time;
-							inserted_segment_start = state.current_time + timestamp(1);
-							insert_segment_with_popup = true;
+							inserted_segment_end = state.current_time + timestamp(1);
+							ready_to_insert = true;
 						}
 						if (ImGui::MenuItem("Start segment at marker"))
 						{
 							//TODO: should draw a line or something so you know where you clicked
+							
+							//***********
+							//TODO: THIS SHOULD INSERT INTO insert_segment_container BUT WITH ready = false
+							// ***********
 							inserted_segment_start = state.current_time;
 						}
 						//TODO: probably should only be displayed after start was pressed
 						if (ImGui::MenuItem("End segment at marker"))
 						{
 							inserted_segment_end = state.current_time;
-							insert_segment_with_popup = true;
+							ready_to_insert = true;
 						}
 					}
 					else
 					{
-						if (ImGui::MenuItem((*segment_it)->type() == tag_segment_type::point ? "Delete timestamp" : "Delete segment"))
+						if (ImGui::MenuItem((*segment_it)->type() == tag_segment_type::timestamp ? "Delete timestamp" : "Delete segment"))
 						{
 							segments->erase(*segment_it);
 							if (selected_segment.has_value() and selected_segment->segments == segments and selected_segment->segment_it == *segment_it)
@@ -702,38 +711,22 @@ namespace vt::widgets
 					ImGui::EndPopup();
 				}
 
-				if (insert_segment)
-				{
-					//TODO: this doesn't display the merge popup
-
-					segments->insert(timestamp{ inserted_segment_start }, timestamp{ inserted_segment_end });
-					inserted_segment_start = timestamp{};
-					inserted_segment_end = timestamp{};
-					dirty_flag = true;
-				}
-
-				if (insert_segment_with_popup)
+				if (ready_to_insert)
 				{
 					if (segments != nullptr)
 					{
-						auto it = std::find(state.displayed_tags.begin(), state.displayed_tags.end(), tag_info->name);
-						selected_tag = (it != state.displayed_tags.end()) ? it - state.displayed_tags.begin() : 0;
+						auto it = std::find(displayed_tags.begin(), displayed_tags.end(), tag_info->name);
+						selected_tag = (it != displayed_tags.end()) ? it - displayed_tags.begin() : 0;
 					}
-					ImGui::OpenPopup("Add Segment");
-				}
-				
-				
-				
-				if (insert_segment_popup("Add Segment", inserted_segment_start, inserted_segment_end,
-					state.time_min.seconds_total.count(), state.time_max.seconds_total.count(), state.displayed_tags, selected_tag))
-				{
-					//TODO: this doesn't display the merge popup
 
-					auto& segments = state.segments->at(state.displayed_tags[selected_tag]);
-					segments.insert(timestamp{ inserted_segment_start }, timestamp{ inserted_segment_end });
-					inserted_segment_start = timestamp{};
-					inserted_segment_end = timestamp{};
-					dirty_flag = true;
+					insert_segment_data insert_data;
+					insert_data.show_insert_popup = true;
+					insert_data.start = inserted_segment_start;
+					insert_data.end = inserted_segment_end;
+					insert_data.name_index = selected_tag;
+					
+					//TODO: maybe use something more descriptive than an empty string
+					insert_segment_container[""] = insert_data;
 				}
 			}
 
@@ -751,10 +744,8 @@ namespace vt::widgets
 				}
 			}
 
-			//debug::log(std::to_string(ImGui::IsPopupOpen("Merge Overlapping", ImGuiPopupFlags_AnyPopupLevel | ImGuiPopupFlags_)));
-
 			// moving
-			if (/*region_rect.Contains(io.MousePos) and*/ moving_segment.has_value() and !ImGui::IsPopupOpen(nullptr, ImGuiPopupFlags_AnyPopup))
+			if (state.enabled and /*region_rect.Contains(io.MousePos) and*/ moving_segment.has_value() and !ImGui::IsPopupOpen(nullptr, ImGuiPopupFlags_AnyPopup))
 			{
 				ImGui::SetNextFrameWantCaptureMouse(true);
 				auto mouse_timestamp = mouse_pos_to_timestamp(io.MousePos.x);
@@ -774,11 +765,11 @@ namespace vt::widgets
 						moving_segment->start += move_delta;
 					if (moving_segment->grab_part & 2)
 						moving_segment->end += move_delta;
-					if (moving_segment->start < timestamp{0})
+					if (moving_segment->start < timestamp::zero())
 					{
 						if (moving_segment->grab_part & 2)
 							moving_segment->end -= moving_segment->start;
-						moving_segment->start = timestamp{0};
+						moving_segment->start = timestamp::zero();
 					}
 					if (moving_segment->grab_part & 1 and moving_segment->start > moving_segment->end)
 						moving_segment->start = moving_segment->end;
@@ -786,7 +777,7 @@ namespace vt::widgets
 						moving_segment->end = moving_segment->start;
 
 					auto segment_size = std::abs((moving_segment->end - moving_segment->start).seconds_total.count());
-					if (segment_size < min_segment_size.count() and moving_segment->segment_it->type() != tag_segment_type::point)
+					if (segment_size < min_segment_size.count() and moving_segment->segment_it->type() != tag_segment_type::timestamp)
 					{
 						if (moving_segment->grab_part & 1)
 						{
@@ -845,7 +836,7 @@ namespace vt::widgets
 			draw_list->PopClipRect();
 
 			bool pressed_yes{};
-			if (merge_timestamps_popup("##MergeSegments", pressed_yes))
+			if (merge_segments_popup("##MergeSegments", pressed_yes, true))
 			{
 				if (pressed_yes and moving_segment.has_value())
 				{
@@ -859,7 +850,6 @@ namespace vt::widgets
 
 					dirty_flag = true;
 				}
-				
 				moving_segment.reset();
 			}
 			
@@ -869,7 +859,7 @@ namespace vt::widgets
 				static constexpr float cursorWidth = 4.f;
 				static constexpr float triangle_span = cursorWidth * 2;
 				float cursorOffset = contentMin.x + legendWidth + (state.current_time.seconds_total.count() - firstFrameUsed) * framePixelWidth + framePixelWidth / 2 - cursorWidth * 0.5f;
-				ImU32 cursor_color = 0xE33E36FF; //0xA02A2AFF
+				ImU32 cursor_color = state.enabled ? 0xFF3E36FF : 0xFF3E3E3E; //0xA02A2AFF
 				draw_list->AddLine(ImVec2(cursorOffset, canvas_pos.y), ImVec2(cursorOffset, contentMax.y), cursor_color, cursorWidth);
 				draw_list->AddTriangleFilled(
 					ImVec2(cursorOffset - triangle_span, canvas_pos.y),
@@ -880,7 +870,7 @@ namespace vt::widgets
 
 			ImGui::EndChildFrame();
 			//ImGui::PopStyleColor();
-			if (hasScrollBar)
+			if (state.enabled and hasScrollBar)
 			{
 				ImU32 scroll_bg_color = ImGui::ColorConvertFloat4ToU32(style.Colors[ImGuiCol_ScrollbarBg]);
 				ImU32 scroll_bg_alt_color = ImGui::ColorConvertFloat4ToU32(style.Colors[ImGuiCol_MenuBarBg]);

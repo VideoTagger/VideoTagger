@@ -10,7 +10,7 @@ namespace vt
 
 		constexpr timestamp() : seconds_total{} {}
 		constexpr explicit timestamp(std::chrono::seconds seconds_total) : seconds_total{ seconds_total } {}
-		constexpr explicit timestamp(uint64_t seconds) : timestamp(static_cast<std::chrono::seconds>(seconds)) {}
+		constexpr explicit timestamp(uint64_t seconds) : timestamp(std::chrono::seconds(seconds)) {}
 
 		constexpr timestamp(uint32_t hours, uint16_t minutes, uint16_t seconds) : seconds_total{ std::chrono::seconds(seconds) + std::chrono::minutes(minutes) + std::chrono::hours(hours) } {}
 
@@ -51,6 +51,11 @@ namespace vt
 		[[nodiscard]] constexpr uint64_t seconds() const
 		{
 			return seconds_total.count() % 60;
+		}
+
+		static constexpr timestamp zero()
+		{
+			return timestamp(0);
 		}
 
 		constexpr timestamp operator+(const timestamp& other) const

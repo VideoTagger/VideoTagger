@@ -42,6 +42,11 @@ namespace vt
 		return *this;
 	}
 
+	bool displayed_video_data::is_timestamp_in_range(std::chrono::nanoseconds timestamp) const
+	{
+		return offset <= timestamp and timestamp <= offset + video->duration();
+	}
+
 	void displayed_videos_manager::update()
 	{
 		//TODO: maybe should do something to ensure that videos don't get desynchronized
@@ -58,6 +63,7 @@ namespace vt
 			return;
 		}
 
+		//TODO: maybe take delta time as argument
 		auto current_timepoint = std::chrono::steady_clock::now();
 		current_timestamp_ += std::chrono::duration_cast<std::chrono::nanoseconds>((current_timepoint - last_timepoint_) * speed_);
 		last_timepoint_ = current_timepoint;
@@ -68,30 +74,19 @@ namespace vt
 			{
 				continue;
 			}
-
-			video_data.video->update(current_timestamp_);
+			
+			bool is_playing = video_data.is_timestamp_in_range(current_timestamp_);
+			video_data.video->set_playing(is_playing);
+			video_data.video->update(current_timestamp_ - video_data.offset);
 			video_data.video->get_frame(video_data.display_texture);
-
-			//if (video_data.video->frame_buffer_.size() < 10)
-			//{
-			//	video_data.video->buffer_frames(10 - video_data.video->frame_buffer_.size());
-			//}
 		}
 
 		auto group_duration = duration();
 		if (current_timestamp_ > group_duration)
 		{
-			if (is_looping())
-			{
-				seek(std::chrono::nanoseconds{ 0 });
-				set_playing(true);
-			}
-			else
-			{
-				//seek(group_duration);
-				current_timestamp_ = group_duration;
-				set_playing(false);
-			}
+			//seek(group_duration);
+			current_timestamp_ = group_duration;
+			set_playing(false);
 		}
 	}
 
@@ -104,7 +99,7 @@ namespace vt
 				continue;
 			}
 
-			if (current_timestamp_ < video_data.offset or (video_data.offset + video_data.video->duration()) < current_timestamp_)
+			if (!video_data.is_timestamp_in_range(current_timestamp_))
 			{
 				continue;
 			}
@@ -135,18 +130,13 @@ namespace vt
 		speed_ = value;
 	}
 
-	void displayed_videos_manager::set_looping(bool value)
-	{
-		is_looping_ = value;
-	}
-
 	void displayed_videos_manager::seek(std::chrono::nanoseconds timestamp)
 	{
-		for (auto& video_data : videos_)
+		std::for_each(std::execution::par, videos_.begin(), videos_.end(), [timestamp, this](displayed_video_data& video_data)
 		{
 			if (video_data.video == nullptr)
 			{
-				continue;
+				return;
 			}
 
 			std::chrono::nanoseconds video_ts = timestamp - video_data.offset;
@@ -161,25 +151,42 @@ namespace vt
 			{
 				video_data.video->set_playing(true);
 			}
-		}
+		});
 
 		auto group_duration = duration();
 		current_timestamp_ = std::clamp(timestamp, std::chrono::nanoseconds{ 0 }, group_duration);
-		if (current_timestamp_ == group_duration and !is_looping())
+		if (current_timestamp_ == group_duration)
 		{
 			is_playing_ = false;
 		}
 	}
 
-	bool displayed_videos_manager::insert(video_id_t id, video_stream* video, std::chrono::nanoseconds offset, int video_width, int video_height, SDL_Renderer* renderer)
+	std::pair<displayed_videos_manager::iterator, bool> displayed_videos_manager::insert(video_id_t id, video_stream* video, std::chrono::nanoseconds offset, int video_width, int video_height, SDL_Renderer* renderer, bool update)
 	{
 		if (auto it = find(id); it != end())
 		{
-			return false;
+			if (update)
+			{
+				if (it->video != video)
+				{
+					*it = displayed_video_data(id, video, offset, video_width, video_height, renderer);
+				}
+				else
+				{
+					if (it->offset != offset)
+					{
+						it->offset = offset;
+						it->video->seek(current_timestamp_ - offset);
+						it->video->get_frame(it->display_texture);
+					}
+				}
+			}
+			
+			return std::make_pair(it, false);
 		}
 
 		videos_.emplace_back(id, video, offset, video_width, video_height, renderer);
-		return true;
+		return std::make_pair(videos_.end() - 1, true);
 	}
 
 	bool displayed_videos_manager::erase(video_id_t video_id)
@@ -194,8 +201,22 @@ namespace vt
 		return true;
 	}
 
+	displayed_videos_manager::iterator displayed_videos_manager::erase(const_iterator it)
+	{
+		auto result = videos_.erase(it);
+		if (empty())
+		{
+			current_timestamp_ = {};
+			is_playing_ = false;
+		}
+
+		return result;
+	}
+
 	void displayed_videos_manager::clear()
 	{
+		current_timestamp_ = {};
+		is_playing_ = false;
 		videos_.clear();
 	}
 
@@ -223,11 +244,6 @@ namespace vt
 	bool displayed_videos_manager::is_playing() const
 	{
 		return is_playing_;
-	}
-
-	bool displayed_videos_manager::is_looping() const
-	{
-		return is_looping_;
 	}
 
 	float displayed_videos_manager::speed() const
@@ -263,6 +279,11 @@ namespace vt
 	size_t displayed_videos_manager::size() const
 	{
 		return videos_.size();
+	}
+
+	bool displayed_videos_manager::empty() const
+	{
+		return videos_.empty();
 	}
 
 	displayed_videos_manager::iterator displayed_videos_manager::begin()

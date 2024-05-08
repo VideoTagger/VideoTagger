@@ -4,6 +4,10 @@
 #include <core/debug.hpp>
 #include <core/app_context.hpp>
 #include <utils/drag_drop.hpp>
+#include <utils/thumbnail.hpp>
+#include "modal/create_group_popup.hpp"
+#include "modal/video_properties_popup.hpp"
+#include "icons.hpp"
 #include "controls.hpp"
 
 namespace vt::widgets
@@ -12,24 +16,35 @@ namespace vt::widgets
 	{
 		if (!ctx_.current_project.has_value()) return;
 
-		static auto draw_video_tile = [this](const video_pool::video_metadata& vmeta, ImVec2 tile_size, bool& open, bool& remove, SDL_Texture* image = nullptr)
+		static auto draw_video_tile = [this](const video_pool::video_metadata& vmeta, ImVec2 tile_size, bool& open, bool& remove, bool& properties, SDL_Texture* image = nullptr)
 		{
-			std::string label = vmeta.path.stem().u8string();
+			std::string label = vmeta.path.filename().u8string();
 			ImVec2 image_tile_size{ tile_size.x * 0.9f, tile_size.x * 0.9f };
 
-			float scaled_width = vmeta.width * image_tile_size.y / vmeta.height;
-			float scaled_height = image_tile_size.x * vmeta.height / vmeta.width;
-
 			ImVec2 image_size = image_tile_size;
-			if (scaled_width < image_tile_size.x)
+			ImVec2 uv0{ 0, 0 };
+			ImVec2 uv1{ 1, 1 };
+			if (image == nullptr)
 			{
-				image_size.x = scaled_width;
+				image = utils::thumbnail::font_texture();
+				auto glyph = utils::thumbnail::find_glyph(utils::thumbnail::video_icon);
+				uv0 = glyph.uv0;
+				uv1 = glyph.uv1;
 			}
-			else if (scaled_height < image_tile_size.y)
+			else
 			{
-				image_size.y = scaled_height;
-			}
+				float scaled_width = vmeta.width * image_tile_size.y / vmeta.height;
+				float scaled_height = image_tile_size.x * vmeta.height / vmeta.width;
 
+				if (scaled_width < image_tile_size.x)
+				{
+					image_size.x = scaled_width;
+				}
+				else if (scaled_height < image_tile_size.y)
+				{
+					image_size.y = scaled_height;
+				}
+			}
 			open |= widgets::tile(label, tile_size, image_size, image,
 			[&](const std::string& label)
 			{
@@ -44,49 +59,85 @@ namespace vt::widgets
 				{
 					remove = true;
 				}
-			});
+				if (ImGui::MenuItem("Properties"))
+				{
+					properties = true;
+				}
+			}, nullptr, uv0, uv1);
 		};
 
-		static auto draw_group_tile = [this](video_group& vgroup, video_group_id_t gid, ImVec2 tile_size, bool& open, bool& remove, bool& play)
+		static auto group_ctx_menu = [](bool& open, bool& remove, bool& enqueue, bool can_enqueue)
 		{
-			open |= widgets::tile(std::to_string(gid), tile_size, tile_size, nullptr,
+			if (ImGui::MenuItem("Add to queue", nullptr, nullptr, can_enqueue))
+			{
+				enqueue = true;
+			}
+			if (ImGui::MenuItem("Open"))
+			{
+				open = true;
+			}
+			if (ImGui::MenuItem("Remove"))
+			{
+				remove = true;
+			}
+		};
+
+		static auto draw_group_tile = [this](video_group& vgroup, video_group_id_t gid, ImVec2 tile_size, bool& open, bool& remove, bool& enqueue, bool can_enqueue)
+		{
+			ImGui::PushID((void*)gid);
+
+			SDL_Texture* image = utils::thumbnail::font_texture();
+			auto glyph = utils::thumbnail::find_glyph(utils::thumbnail::video_group_icon);
+
+			open |= widgets::tile(vgroup.display_name, tile_size, tile_size, image,
 			[&](const std::string& label)
 			{
-				if (ImGui::MenuItem("Play"))
-				{
-					play = true;
-				}
-				if (ImGui::MenuItem("Open"))
-				{
-					open = true;
-				}
-				if (ImGui::MenuItem("Remove"))
-				{
-					remove = true;
-				}
+				group_ctx_menu(open, remove, enqueue, can_enqueue);
 			},
 			[&](const std::string& label)
 			{
 				if (ImGui::BeginDragDropTarget())
 				{
-					auto payload = utils::drag_drop::get_payload<video_id_t>("Video");
-					if (payload.has_value())
+					auto payload = utils::drag_drop::get_payload<video_id_t>("Video", ImGuiDragDropFlags_AcceptBeforeDelivery);
+					if (payload.data.has_value())
 					{
+						auto is_delivery = payload.imgui_payload->IsDelivery();
+
 						video_group::video_info vinfo;
-						vinfo.id = *payload;
-						if (!vgroup.contains(vinfo.id))
+						vinfo.id = *payload.data;
+
+						bool already_contains = vgroup.contains(vinfo.id);
+
+						if (!is_delivery and already_contains)
+						{
+							ImGui::SetMouseCursor(ImGuiMouseCursor_NotAllowed);
+						}
+						else if (is_delivery and !already_contains)
 						{
 							vgroup.insert(vinfo);
 							ctx_.is_project_dirty = true;
-							debug::log("Added video with id: {} to group with id: {}", vinfo.id, ctx_.current_video_group_id);
+							debug::log("Added video with id: {} to group with id: {}", vinfo.id, current_video_group);
 						}
 					}
 					ImGui::EndDragDropTarget();
 				}
-			});
+
+				if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_SourceNoHoldToOpenOthers))
+				{
+					utils::drag_drop::set_payload("Group", gid);
+					std::string str = fmt::format("{} {}", icons::video_group, vgroup.display_name);
+					ImGui::TextUnformatted(str.c_str());
+					ImGui::EndDragDropSource();
+				}
+			},
+			glyph.uv0, glyph.uv1);
+			ImGui::PopID();
 		};
 
 		auto& style = ImGui::GetStyle();
+		bool open_create_group_popup{};
+		//TODO: This should be inside the payload, not here
+		static std::vector<video_id_t> dragged_videos;
 
 		if (ImGui::Begin("Video Group Browser", &is_open, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse))
 		{
@@ -103,42 +154,169 @@ namespace vt::widgets
 					columns = 1;
 				}
 
-				static auto draw_group_tab = [&style](const std::string& group_name, video_group_id_t gid)
+				static auto draw_group_tab = [&style, this](const std::string& group_name, video_group_id_t gid, bool& open, bool& remove, bool& enqueue, bool can_enqueue)
 				{
-					bool inactive = ctx_.current_video_group_id != gid;
+					bool inactive = current_video_group != gid;
 
 					if (inactive) ImGui::PushStyleColor(ImGuiCol_Text, style.Colors[ImGuiCol_TextDisabled]);
 					if (ImGui::TreeNodeEx(group_name.c_str(), ImGuiTreeNodeFlags_SpanFullWidth | ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_NoTreePushOnOpen | ImGuiTreeNodeFlags_Leaf) and ImGui::IsItemClicked())
 					{
-						ctx_.current_video_group_id = gid;
+						current_video_group = gid;
 					}
 					if (inactive) ImGui::PopStyleColor();
+
+					if (gid != 0)
+					{
+						//TODO: This is duplicated in 2 places
+						if (ImGui::BeginDragDropTarget())
+						{
+							auto payload = utils::drag_drop::get_payload<video_id_t>("Video", ImGuiDragDropFlags_AcceptBeforeDelivery);
+							if (payload.data.has_value())
+							{
+								bool is_delivery = payload.imgui_payload->IsDelivery();
+
+								video_group::video_info vinfo;
+								vinfo.id = *payload.data;
+								auto& groups = ctx_.current_project->video_groups;
+								auto it = groups.find(gid);
+
+								bool is_valid = it != groups.end() and !it->second.contains(vinfo.id);
+								if (!is_delivery and !is_valid)
+								{
+									ImGui::SetMouseCursor(ImGuiMouseCursor_NotAllowed);
+								}
+								else if (is_delivery and is_valid)
+								{
+									it->second.insert(vinfo);
+									ctx_.is_project_dirty = true;
+									debug::log("Added video with id: {} to group with id: {}", vinfo.id, current_video_group);
+								}
+							}
+							ImGui::EndDragDropTarget();
+						}
+
+						if (ImGui::BeginPopupContextItem())
+						{
+							group_ctx_menu(open, remove, enqueue, can_enqueue);
+							ImGui::EndPopup();
+						}
+					}
 				};
 
-				if (ImGui::Button("Add New Group"))
-				{
-					auto id = utils::uuid::get();
-					debug::log("Added empty vid group with id: {}", id);
-					ctx_.current_project->video_groups.insert({ id, video_group{} });
-					ctx_.is_project_dirty = true;
-				}
-				ImGui::SameLine();
-				widgets::help_marker("This is temporary");
-				ImGui::Separator();
-
-				if (ImGui::BeginTable("##VideoBrowser", 2, ImGuiTableFlags_SizingStretchProp| ImGuiTableFlags_BordersInnerV))
+				if (ImGui::BeginTable("##VideoGroupBrowser", 2, ImGuiTableFlags_SizingStretchProp | ImGuiTableFlags_BordersInner | ImGuiTableFlags_Resizable))
 				{
 					ImGui::TableSetupColumn(nullptr, 0, 0.20f);
 					ImGui::TableSetupColumn(nullptr, 0, 0.80f);
 
 					ImGui::TableNextColumn();
+					
+					ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize(icons::add).x);
+					if (icon_button(icons::add))
+					{
+						open_create_group_popup = true;
+					}
+					ImGui::TableNextColumn();
+
+					static std::string filter;
+					if (ImGui::IsWindowAppearing())
+					{
+						filter.clear();
+					}
+
+					ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2{});
+					bool can_back_out = current_video_group != 0;
+					if (!can_back_out) ImGui::BeginDisabled();
+					if (icon_button(icons::back))
+					{
+						current_video_group = 0;
+					}
+					if (!can_back_out) ImGui::EndDisabled();
+					ImGui::SameLine();
+					search_bar("##VideoGroupBrowserSearch", "Search...", filter);
+					ImGui::PopStyleVar();
+
+					ImGui::TableNextRow();
+					ImGui::TableNextColumn();
+
+					bool open{};
+					bool remove{};
+					bool enqueue{};
+
+					draw_group_tab("Show All Groups", 0, open, remove, enqueue, false);
+					ImGui::Separator();
+
 					if (ImGui::BeginChild("##VideoBrowserGroupTabs"))
 					{
-						draw_group_tab("All Groups", 0);
+						auto& playlist = ctx_.current_project->video_group_playlist;
+
 						for (const auto& [gid, group] : ctx_.current_project->video_groups)
 						{
-							std::string group_name = std::to_string(gid);
-							draw_group_tab(group_name, gid);
+							open = false;
+							remove = false;
+							enqueue = false;
+							bool can_enqueue = !playlist.contains(gid);
+
+							std::string group_name = group.display_name;
+							draw_group_tab(group_name, gid, open, remove, enqueue, can_enqueue);
+
+							//TODO: Refactor this so this isn't duplicated in 2 places
+							if (remove)
+							{
+								ctx_.is_project_dirty = true;
+								ctx_.current_project->video_groups.erase(gid);
+								if (current_video_group = gid)
+								{
+									current_video_group = 0;
+								}
+								break;
+							}
+
+							if (open)
+							{
+								debug::log("Opening group {}", gid);
+								current_video_group = gid;
+								ctx_.reset_player_docking = true;
+							}
+
+							if (enqueue)
+							{
+								playlist.push_back(gid);
+
+								//TODO: Remove when queue gets fully implemented
+								/*auto& pool = ctx_.current_project->videos;
+								ctx_.current_video_group_id = gid;
+
+								for (auto& vinfo : group)
+								{
+									auto metadata = pool.get(vinfo.id);
+									if (metadata == nullptr) continue;
+
+									if (!metadata->is_widget_open)
+									{
+										debug::log("Opening video {}", metadata->path.u8string());
+										if (on_open_video != nullptr)
+										{
+											std::invoke(on_open_video, vinfo.id);
+										}
+									}
+								}*/
+							}
+						}
+
+						//TODO: This is also duplicated below
+						ImRect inner_rect = ImGui::GetCurrentWindow()->InnerRect;
+						if (ImGui::BeginDragDropTargetCustom(inner_rect, ImGui::GetID("TabsDragDropPanel")))
+						{
+							auto payload = utils::drag_drop::get_payload<video_id_t>("Video");
+							if (payload.data.has_value())
+							{
+								video_group::video_info vinfo;
+								vinfo.id = *payload.data;
+
+								dragged_videos.push_back(vinfo.id);
+								open_create_group_popup = true;
+							}
+							ImGui::EndDragDropTarget();
 						}
 						ImGui::EndChild();
 					}
@@ -147,31 +325,43 @@ namespace vt::widgets
 					if (ImGui::BeginTable("##VideoBrowserBody", columns, ImGuiTableFlags_ScrollY | ImGuiTableFlags_SizingFixedSame, ImGui::GetContentRegionMax()))
 					{
 						ImGui::TableNextRow();
-						if (ctx_.current_video_group_id == 0)
+						if (current_video_group == 0)
 						{
+							auto& playlist = ctx_.current_project->video_group_playlist;
+
 							for (auto& [gid, group] : ctx_.current_project->video_groups)
 							{
 								bool open_group = false;
 								bool remove_group = false;
-								bool play_group = false;
+								bool enqueue_group = false;
+								bool can_enqueue = !playlist.contains(gid);
 
-								draw_group_tile(group, gid, tile_size, open_group, remove_group, play_group);
+								ImGui::TableNextColumn();
+								draw_group_tile(group, gid, tile_size, open_group, remove_group, enqueue_group, can_enqueue);
 								if (remove_group)
 								{
 									ctx_.is_project_dirty = true;
 									ctx_.current_project->video_groups.erase(gid);
+									if (current_video_group = gid)
+									{
+										current_video_group = 0;
+									}
 									break;
 								}
 
 								if (open_group)
 								{
 									debug::log("Opening group {}", gid);
-									ctx_.current_video_group_id = gid;
+									current_video_group = gid;
 									ctx_.reset_player_docking = true;
 								}
 
-								if (play_group)
+								if (enqueue_group)
 								{
+									playlist.push_back(gid);
+
+									//TODO: This plays the group, remove when queue gets fully implemented
+									/*
 									auto& pool = ctx_.current_project->videos;
 									ctx_.current_video_group_id = gid;
 
@@ -189,13 +379,14 @@ namespace vt::widgets
 											}
 										}
 									}
+									*/
 								}
 							}
 						}
 						else
 						{
 							auto& pool = ctx_.current_project->videos;
-							auto& vgroup = ctx_.current_project->video_groups.at(ctx_.current_video_group_id);
+							auto& vgroup = ctx_.current_project->video_groups.at(current_video_group);
 							for (auto& vinfo : vgroup)
 							{
 								auto metadata = pool.get(vinfo.id);
@@ -203,14 +394,31 @@ namespace vt::widgets
 
 								bool open_video{};
 								bool remove_video{};
-								draw_video_tile(*metadata, tile_size, open_video, remove_video, metadata->thumbnail);
+								bool open_video_properties{};
+
+								ImGui::TableNextColumn();
+								draw_video_tile(*metadata, tile_size, open_video, remove_video, open_video_properties, metadata->thumbnail);
 								if (remove_video)
 								{
-									auto& vgroup = ctx_.current_project->video_groups.at(ctx_.current_video_group_id);
+									auto& vgroup = ctx_.current_project->video_groups.at(current_video_group);
 									vgroup.erase(vinfo.id);
 									ctx_.is_project_dirty = true;
 									break;
 								}
+
+								static std::chrono::nanoseconds offset;
+								ImGui::PushID((void*)vinfo.id);
+								if (open_video_properties)
+								{
+									offset = vinfo.offset;
+									ImGui::OpenPopup("Video Properties");
+								}
+
+								if (video_properties_popup("Video Properties", offset))
+								{
+									vinfo.offset = offset;
+								}
+								ImGui::PopID();
 
 								/*
 								if (open_video and !metadata->is_widget_open)
@@ -223,34 +431,49 @@ namespace vt::widgets
 								}
 								*/
 
-								if (ImGui::IsWindowFocused() and ImGui::IsKeyPressed(ImGuiKey_Escape))
+								if (ImGui::IsWindowHovered() and ImGui::IsKeyPressed(ImGuiKey_Escape))
 								{
-									ctx_.current_video_group_id = 0;
+									current_video_group = 0;
 								}
 							}
 						}
 						ImGui::EndTable();
 					}
-					if (ctx_.current_video_group_id != 0)
+
+					ImRect inner_rect = ImGui::TableGetCellBgRect(ImGui::GetCurrentTable(), ImGui::TableGetColumnIndex());
+					if (ImGui::BeginDragDropTargetCustom(inner_rect, ImGui::GetID("GroupDragDropPanel")))
 					{
-						ImRect inner_rect = ImGui::GetCurrentWindow()->InnerRect;
-						if (ImGui::BeginDragDropTargetCustom(inner_rect, ImGui::GetID("GroupDragDropPanel")))
+						auto payload = utils::drag_drop::get_payload<video_id_t>("Video", ImGuiDragDropFlags_AcceptBeforeDelivery);
+						if (payload.data.has_value())
 						{
-							auto payload = utils::drag_drop::get_payload<video_id_t>("Video");
-							if (payload.has_value())
+							bool is_delivery = payload.imgui_payload->IsDelivery();
+
+							video_group::video_info vinfo;
+							vinfo.id = *payload.data;
+
+							if (current_video_group != 0)
 							{
-								video_group::video_info vinfo;
-								vinfo.id = *payload;
-								auto& vgroup = ctx_.current_project->video_groups.at(ctx_.current_video_group_id);
-								if (!vgroup.contains(vinfo.id))
+								auto& vgroup = ctx_.current_project->video_groups.at(current_video_group);
+
+								bool already_contains = vgroup.contains(vinfo.id);
+								if (!is_delivery and already_contains)
+								{
+									ImGui::SetMouseCursor(ImGuiMouseCursor_NotAllowed);
+								}
+								else if (is_delivery and !already_contains)
 								{
 									vgroup.insert(vinfo);
 									ctx_.is_project_dirty = true;
-									debug::log("Added video with id: {} to group with id: {}", vinfo.id, ctx_.current_video_group_id);
+									debug::log("Added video with id: {} to group with id: {}", vinfo.id, current_video_group);
 								}
 							}
-							ImGui::EndDragDropTarget();
+							else if (is_delivery)
+							{
+								dragged_videos.push_back(vinfo.id);
+								open_create_group_popup = true;
+							}
 						}
+						ImGui::EndDragDropTarget();
 					}
 					ImGui::EndTable();
 				}
@@ -258,6 +481,33 @@ namespace vt::widgets
 			else
 			{
 				widgets::centered_text("Add groups to display them here...", ImGui::GetContentRegionMax());
+			}
+			
+			static std::string group_name;
+			if (open_create_group_popup)
+			{
+				ImGui::OpenPopup("Create New Group");
+			}
+
+			if (widgets::modal::create_group_popup("Create New Group", group_name))
+			{
+				auto id = utils::uuid::get();
+				debug::log("Added video group with id: {}", id);
+				auto [it, inserted] = ctx_.current_project->video_groups.insert({ id, video_group{} });
+				if (inserted)
+				{
+					auto& group = it->second;
+					group.display_name = group_name;
+					for (auto& id : dragged_videos)
+					{
+						video_group::video_info vinfo;
+						vinfo.id = id;
+						group.insert(vinfo);
+					}
+					ctx_.is_project_dirty = true;
+				}
+				dragged_videos.clear();
+				group_name.clear();
 			}
 		}
 		ImGui::End();

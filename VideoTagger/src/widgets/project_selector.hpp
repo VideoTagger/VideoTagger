@@ -15,6 +15,7 @@ namespace vt::widgets
 		std::function<void()> on_project_list_update;
 	private:
 		std::string filter;
+		bool path_from_name = true;
 		std::vector<project_info> projects_;
 		project_info temp_project;
 

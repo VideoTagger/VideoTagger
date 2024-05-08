@@ -193,6 +193,8 @@ namespace vt
 		style.AntiAliasedFill = true;
 		style.AntiAliasedLines = true;
 		style.AntiAliasedLinesUseTex = true;
+
+		style.HoverDelayNormal = 0.75f;
 	}
 
 	app::app() : state_{ app_state::uninitialized }
@@ -549,6 +551,11 @@ namespace vt
 				if (show_windows.contains("video-player")) ctx_.win_cfg.show_video_player_window = show_windows["video-player"];
 				if (show_windows.contains("video-browser")) ctx_.win_cfg.show_video_browser_window = show_windows["video-browser"];
 				if (show_windows.contains("video-group-browser")) ctx_.win_cfg.show_video_group_browser_window = show_windows["video-group-browser"];
+				if (show_windows.contains("video-group-queue")) ctx_.win_cfg.show_video_group_queue_window = show_windows["video-group-queue"];
+			}
+			if (ctx_.settings.contains("load-thumbnails"))
+			{
+				ctx_.app_settings.load_thumbnails = ctx_.settings.at("load-thumbnails");
 			}
 		}
 		else
@@ -598,9 +605,9 @@ namespace vt
 	void app::close_project()
 	{
 		on_close_project(false);
+		ctx_.reset_current_video_group();
 		ctx_.current_project = std::nullopt;
 		ctx_.selected_segment_data = std::nullopt;
-		ctx_.reset_active_video_group();
 		set_subtitle();
 	}
 	
@@ -661,13 +668,20 @@ namespace vt
 				0,
 			};
 			default_font_builder.AddRanges(latin_extended);
-
 			default_font_builder.BuildRanges(&default_ranges);
 
+			ImVector<ImWchar> thumbnail_ranges;
+			ImFontGlyphRangesBuilder thumbnail_font_builder;
+			thumbnail_font_builder.AddText(icons::video_group);
+			thumbnail_font_builder.AddText(icons::video);
+			thumbnail_font_builder.BuildRanges(&thumbnail_ranges);
+
 			builder.BuildRanges(&ranges);
-			ctx_.fonts["default"] = io.Fonts->AddFontFromFileTTF(font_path.string().c_str(), size, nullptr, default_ranges.Data);
+			ctx_.fonts["default"] = io.Fonts->AddFontFromFileTTF(font_path.u8string().c_str(), size, nullptr, default_ranges.Data);
 			io.Fonts->AddFontFromFileTTF(ico_font_path.string().c_str(), size, &config, ranges.Data);
-			ctx_.fonts["title"] = io.Fonts->AddFontFromFileTTF(font_path.string().c_str(), size * 1.25f, nullptr, default_ranges.Data);
+			ctx_.fonts["title"] = io.Fonts->AddFontFromFileTTF(font_path.u8string().c_str(), size * 1.25f, nullptr, default_ranges.Data);
+
+			ctx_.fonts["thumbnail"] = io.Fonts->AddFontFromFileTTF(ico_font_path.u8string().c_str(), 256, nullptr, thumbnail_ranges.Data);
 			io.Fonts->Build();
 		}
 		else
@@ -727,9 +741,20 @@ namespace vt
 		ctx_.keybinds.insert("Toggle Video Player", keybind(SDLK_F1, toggle_window_mod, flags, toggle_window_action("video-player", ctx_.win_cfg.show_video_player_window)));
 		ctx_.keybinds.insert("Toggle Video Browser", keybind(SDLK_F2, toggle_window_mod, flags, toggle_window_action("video-browser", ctx_.win_cfg.show_video_browser_window)));
 		ctx_.keybinds.insert("Toggle Video Group Browser", keybind(SDLK_F3, toggle_window_mod, flags, toggle_window_action("video-group-browser", ctx_.win_cfg.show_video_group_browser_window)));
-		ctx_.keybinds.insert("Toggle Inspector", keybind(SDLK_F4, toggle_window_mod, flags, toggle_window_action("inspector", ctx_.win_cfg.show_inspector_window)));
-		ctx_.keybinds.insert("Toggle Tag Manager", keybind(SDLK_F5, toggle_window_mod, flags, toggle_window_action("tag-manager", ctx_.win_cfg.show_tag_manager_window)));
-		ctx_.keybinds.insert("Toggle Timeline", keybind(SDLK_F6, toggle_window_mod, flags, toggle_window_action("timeline", ctx_.win_cfg.show_timeline_window)));
+		ctx_.keybinds.insert("Toggle Video Group Queue", keybind(SDLK_F4, toggle_window_mod, flags, toggle_window_action("video-group-queue", ctx_.win_cfg.show_video_group_queue_window)));
+		ctx_.keybinds.insert("Toggle Inspector", keybind(SDLK_F5, toggle_window_mod, flags, toggle_window_action("inspector", ctx_.win_cfg.show_inspector_window)));
+		ctx_.keybinds.insert("Toggle Tag Manager", keybind(SDLK_F6, toggle_window_mod, flags, toggle_window_action("tag-manager", ctx_.win_cfg.show_tag_manager_window)));
+		ctx_.keybinds.insert("Toggle Timeline", keybind(SDLK_F7, toggle_window_mod, flags, toggle_window_action("timeline", ctx_.win_cfg.show_timeline_window)));
+
+		keybind_modifiers player_mod{};
+		ctx_.keybinds.insert("Play/Pause", keybind(SDLK_SPACE, player_mod, flags, player_action(player_action_type::play_pause)));
+
+		keybind_modifiers player_secondary_mod{ false, true };
+		ctx_.keybinds.insert("Seek Forwards", keybind(SDLK_RIGHT, player_mod, flags, player_action(player_action_type::forwards)));
+		ctx_.keybinds.insert("Seek Backwards", keybind(SDLK_LEFT, player_mod, flags, player_action(player_action_type::backwards)));
+		ctx_.keybinds.insert("Skip To Next", keybind(SDLK_RIGHT, player_secondary_mod, flags, player_action(player_action_type::skip_next)));
+		ctx_.keybinds.insert("Skip To Previous", keybind(SDLK_LEFT, player_secondary_mod, flags, player_action(player_action_type::skip_previous)));
+		ctx_.keybinds.insert("Toggle Looping", keybind(SDLK_l, keybind_modifiers{ true }, flags, player_action(player_action_type::toggle_looping)));
 	}
 
 	void app::init_options()
@@ -755,6 +780,7 @@ namespace vt
 					auto kb = keybind(input::last_keybind.key_code, input::last_keybind.modifiers, flags, input::last_keybind.action);
 
 					keybinds.insert(keybind_name, kb);
+					ctx_.is_project_dirty = true;
 					input::last_keybind.action = nullptr;
 				}
 				ImGui::Separator();
@@ -810,12 +836,13 @@ namespace vt
 						if (widgets::checkbox(("##KeybindEnabled" + name).c_str(), &enabled))
 						{
 							keybind.flags.enabled = enabled;
+							ctx_.is_project_dirty = true;
 						}
 
 						ImGui::SameLine();
 						ImGui::PushID(id);
 						if (!is_row_selected) ImGui::BeginDisabled();
-						std::string delete_kb_id = std::string(icons::delete_) + "##DeleteKb" + name;
+						std::string delete_kb_id = fmt::format("{}##DeleteKb{}", icons::delete_, name);
 						if (widgets::icon_button(delete_kb_id.c_str()))
 						{
 							delete_kb_name = name;
@@ -834,7 +861,7 @@ namespace vt
 						ImGui::SameLine();
 						if (keybind.flags.rebindable and is_row_selected and ImGui::TableGetColumnIndex() == ImGui::TableGetHoveredColumn())
 						{
-							ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, style.FramePadding * 0.5f);
+							ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, { style.FramePadding.x * 0.5f, style.FramePadding.y });
 							if (widgets::icon_button(edit_id.c_str()))
 							{
 								new_kb_name = name;
@@ -864,13 +891,13 @@ namespace vt
 					if (keybind.flags.rebindable)
 					{
 						ImGui::PushID(id);
-						std::string edit_combination_id = std::string(icons::edit) + "##EditCombination";
+						std::string edit_combination_id = fmt::format("{}{}", icons::edit, "##EditCombination");
 						is_row_selected |= (ImGui::GetHoveredID() == ImGui::GetID(edit_combination_id.c_str()));
 
 						ImGui::SameLine();
 						if (is_row_selected and ImGui::TableGetColumnIndex() == ImGui::TableGetHoveredColumn())
 						{
-							ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, style.FramePadding * 0.5f);
+							ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, { style.FramePadding.x * 0.5f, style.FramePadding.y });
 							if (widgets::icon_button(edit_combination_id.c_str()))
 							{
 								//resets the last keybind
@@ -888,6 +915,7 @@ namespace vt
 						if (widgets::modal::keybind_popup("##KeybindPopup", keybind, input::last_keybind))
 						{
 							keybind.rebind(input::last_keybind);
+							ctx_.is_project_dirty = true;
 						}
 						ImGui::PopID();
 					}
@@ -907,7 +935,7 @@ namespace vt
 							ImGui::SameLine();
 							if (is_row_selected and ImGui::TableGetColumnIndex() == ImGui::TableGetHoveredColumn())
 							{
-								ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, style.FramePadding * 0.5f);
+								ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, { style.FramePadding.x * 0.5f, style.FramePadding.y });
 								if (widgets::icon_button(edit_kb_id.c_str()))
 								{
 									actions = get_all_keybind_actions();
@@ -928,9 +956,10 @@ namespace vt
 
 							int selected_action = (it != actions.end() ? static_cast<int>(std::distance(actions.begin(), it)) : 0);
 							std::string dummy;
+							//FIXME: Putting 'keybind' applies the changes immediately and it should be applied only after save
 							if (widgets::modal::keybind_options_popup("##KeybindOptionsPopup", dummy, keybind, actions, selected_action, keybind_options_config::show_action_field | keybind_options_config::show_save_button))
 							{
-								
+								ctx_.is_project_dirty = true;
 							}
 							ImGui::PopID();
 						}
@@ -943,11 +972,13 @@ namespace vt
 			if (rename_kb_name.has_value())
 			{
 				keybinds.rename(rename_kb_name.value(), new_kb_name);
+				ctx_.is_project_dirty = true;
 			}
 
 			if (delete_kb_name.has_value())
 			{
 				keybinds.erase(delete_kb_name.value());
+				ctx_.is_project_dirty = true;
 			}
 		};
 
@@ -970,9 +1001,17 @@ namespace vt
 			ImGui::TextUnformatted("Thumbnail Size");
 			ImGui::SameLine();
 			ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x / 4);
-			if (ImGui::DragFloat("##ThumbnailSizeDrag", &ctx_.app_settings.thumbnail_size, 0.5f, 52.0f, 100.f, "%.1f", ImGuiSliderFlags_AlwaysClamp))
+			if (ImGui::DragFloat("##ThumbnailSizeDrag", &ctx_.app_settings.thumbnail_size, 0.5f, 45.0f, 100.f, "%.1f", ImGuiSliderFlags_AlwaysClamp))
 			{
 				ctx_.settings["thumbnail-size"] = ctx_.app_settings.thumbnail_size;
+			}
+
+			ImGui::AlignTextToFramePadding();
+			ImGui::TextUnformatted("Load Thumbnails");
+			ImGui::SameLine();
+			if (ImGui::Checkbox("##LoadThumbnailsCheckbox", &ctx_.app_settings.load_thumbnails))
+			{
+				ctx_.settings["load-thumbnails"] = ctx_.app_settings.load_thumbnails;
 			}
 
 			//TODO: Add theme selection
@@ -1004,25 +1043,24 @@ namespace vt
 			//	if (!vinfo.is_widget_open) continue;
 			//	vinfo.video.set_playing(is_playing);
 			//}
-			if (ctx_.current_video_group_id == 0)
+			if (ctx_.current_video_group_id() == invalid_video_group_id)
 			{
 				return;
 			}
 			ctx_.displayed_videos.set_playing(is_playing);
 		};
 
-		ctx_.player.callbacks.on_set_looping = [](bool is_looping)
+		ctx_.player.callbacks.on_set_looping = [](loop_mode mode)
 		{
 			//for (auto& [id, vinfo] : ctx_.current_project->videos)
 			//{
 			//	if (!vinfo.is_widget_open) continue;
 			//	vinfo.video.set_looping(is_looping);
 			//}
-			if (ctx_.current_video_group_id == 0)
+			if (ctx_.current_video_group_id() == invalid_video_group_id)
 			{
 				return;
 			}
-			ctx_.displayed_videos.set_looping(is_looping);
 		};
 
 		ctx_.player.callbacks.on_set_speed = [](float speed)
@@ -1033,16 +1071,41 @@ namespace vt
 			//	vinfo.video.set_speed(speed);
 			//}
 
-			if (ctx_.current_video_group_id == 0)
+			if (ctx_.current_video_group_id() == invalid_video_group_id)
 			{
 				return;
 			}
 			ctx_.displayed_videos.set_speed(speed);
 		};
 
-		ctx_.player.callbacks.on_skip = [](int dir)
+		ctx_.player.callbacks.on_skip = [](int dir, loop_mode mode, bool is_playing)
 		{
-			//TODO: Implement
+			auto& playlist = ctx_.current_project->video_group_playlist;
+
+			video_group_playlist::iterator it;
+			if (dir > 0)
+			{
+				//TODO: should be different when shuffle is enabled
+				//if (playlist.current() == playlist.end() - 1) return;
+				it = playlist.next();
+			}
+			else if (dir < 0)
+			{
+				if (playlist.current() == playlist.begin()) return;
+				it = playlist.previous();
+			}
+
+			ctx_.reset_current_video_group();
+			if (mode == loop_mode::all and it == playlist.end())
+			{
+				it = playlist.set_current(playlist.begin());
+			}
+
+			if (it != playlist.end())
+			{
+				ctx_.set_current_video_group_id(it->group_id);
+				ctx_.displayed_videos.set_playing(is_playing);
+			}
 		};
 
 		ctx_.player.callbacks.on_seek = [](std::chrono::nanoseconds ts)
@@ -1053,13 +1116,43 @@ namespace vt
 			//	vinfo.video.seek(ts);
 			//}
 
-			if (ctx_.current_video_group_id == 0)
+			if (ctx_.current_video_group_id() == invalid_video_group_id)
 			{
 				return;
 			}
 			ctx_.displayed_videos.seek(ts);
 		};
 
+		ctx_.player.callbacks.on_finish = [](loop_mode mode, bool is_playing)
+		{
+			auto& playlist = ctx_.current_project->video_group_playlist;
+
+			if (mode == loop_mode::one)
+			{
+				ctx_.displayed_videos.seek(std::chrono::nanoseconds{ 0 });
+				ctx_.displayed_videos.set_playing(true);
+				return;
+			}
+
+			if (ctx_.app_settings.next_video_on_end)
+			{
+				ctx_.player.reset_data();
+				
+				auto it = playlist.next();
+				ctx_.reset_current_video_group();
+				if (mode == loop_mode::all and it == playlist.end())
+				{
+					it = playlist.set_current(playlist.begin());
+				}
+
+				if (it != playlist.end())
+				{
+					ctx_.set_current_video_group_id(it->group_id);
+				}
+
+				ctx_.displayed_videos.set_playing(true);
+			}
+		};
 	}
 
 	void app::handle_events()
@@ -1151,11 +1244,13 @@ namespace vt
 
 			auto dockspace_id_copy = dockspace_id;
 			auto main_dock_right = ImGui::DockBuilderSplitNode(dockspace_id_copy, ImGuiDir_Right, 0.25f, nullptr, &dockspace_id_copy);
-			auto main_dock_up = ImGui::DockBuilderSplitNode(dockspace_id_copy, ImGuiDir_Up, 2 / 3.f, nullptr, &dockspace_id_copy);
+			auto main_dock_up = ImGui::DockBuilderSplitNode(dockspace_id_copy, ImGuiDir_Up, 0.7f, nullptr, &dockspace_id_copy);
 			auto main_dock_up_left = ImGui::DockBuilderSplitNode(main_dock_up, ImGuiDir_Left, 0.25f, nullptr, &main_dock_up);
+			auto main_dock_down = ImGui::DockBuilderSplitNode(main_dock_up, ImGuiDir_Down, 0.25f, nullptr, &main_dock_up);
 			auto dock_right_up = ImGui::DockBuilderSplitNode(main_dock_right, ImGuiDir_Up, 0.5f, nullptr, &main_dock_right);
 			ImGui::DockBuilderDockWindow("Inspector", dock_right_up);
 			ImGui::DockBuilderDockWindow("Tag Manager", main_dock_right);
+			ImGui::DockBuilderDockWindow("Group Queue", main_dock_down);
 			ImGui::DockBuilderDockWindow("Video Player", main_dock_up);
 			ImGui::DockBuilderDockWindow("Video Browser", main_dock_up_left);
 			ImGui::DockBuilderDockWindow("Theme Customizer", main_dock_up);
@@ -1165,7 +1260,7 @@ namespace vt
 				auto video_id = "Video##" + std::to_string(i);
 				ImGui::DockBuilderDockWindow(video_id.c_str(), main_dock_up);
 			}*/
-			ImGui::DockBuilderDockWindow("Timeline##0", dockspace_id_copy);
+			ImGui::DockBuilderDockWindow("Timeline", dockspace_id_copy);
 			
 			ImGui::DockBuilderFinish(dockspace_id);
 			ctx_.reset_layout = false;
@@ -1214,14 +1309,82 @@ namespace vt
 				}
 				ImGui::Separator();
 				{
-					std::string menu_name = fmt::format("{} Show In Explorer", icons::folder);
-					if (ImGui::MenuItem(menu_name.c_str()))
 					{
-						auto path = std::filesystem::absolute(ctx_.current_project->path.parent_path()).u8string();
-						if (!path.empty())
+						std::string menu_name = fmt::format("{} Show In Explorer", icons::folder);
+						if (ImGui::MenuItem(menu_name.c_str()))
 						{
-							std::string uri = fmt::format("file://{}", path);
-							SDL_OpenURL(uri.c_str());
+							auto path = std::filesystem::absolute(ctx_.current_project->path.parent_path()).u8string();
+							if (!path.empty())
+							{
+								utils::filesystem::open_in_explorer(path);
+							}
+						}
+					}
+
+					{
+						std::string menu_name = fmt::format("{} Import / Export", icons::import_export);
+						if (ImGui::BeginMenu(menu_name.c_str()))
+						{
+							if (ImGui::MenuItem("Import Tags", nullptr, nullptr, false))
+							{
+								//TODO: Add import tags popup which shows an option whether to merge or replace tags
+							}
+
+							ImGui::Separator();
+							if (ImGui::MenuItem("Export Tags"))
+							{
+								utils::dialog_filter filter{ "VideoTagger Tags", "vttags"};
+								auto result = utils::filesystem::save_file({}, { filter }, ctx_.current_project->name);
+								if (result)
+								{
+									nlohmann::ordered_json json;
+									json["version"] = ctx_.current_project->version;
+									json["tags"] = ctx_.current_project->tags;
+									utils::json::write_to_file(json, result.path);
+								}
+							}
+							if (ImGui::MenuItem("Export Segments"))
+							{
+								utils::dialog_filter filter{ "VideoTagger Segments", "vtss" };
+								auto result = utils::filesystem::save_file({}, { filter }, ctx_.current_project->name);
+								if (result)
+								{
+									const auto& segments = ctx_.current_project->segments;
+									nlohmann::ordered_json json;
+									json["version"] = ctx_.current_project->version;
+									auto& json_segments = json["groups"];
+									if (!segments.empty())
+									{
+										for (auto& [group_id, group_segments] : segments)
+										{
+											nlohmann::ordered_json json_group_segments_data;
+											json_group_segments_data["group-id"] = group_id;
+											json_group_segments_data["group-name"] = ctx_.current_project->video_groups.at(group_id).display_name;
+											auto& json_videos = json_group_segments_data["videos"];
+											json_videos = nlohmann::ordered_json::array();
+											const auto& video_group = ctx_.current_project->video_groups.at(group_id);
+											for (const auto& vinfo : video_group)
+											{
+												nlohmann::ordered_json json_video;
+												auto vmeta = ctx_.current_project->videos.get(vinfo.id);
+												if (vmeta != nullptr)
+												{
+													json_video["video-name"] = vmeta->path.filename();
+												}
+												json_video["video-id"] = vinfo.id;
+												json_video["offset"] = utils::time::time_to_string(std::chrono::duration_cast<std::chrono::seconds>(vinfo.offset).count());
+												json_videos.push_back(json_video);
+											}
+											auto& json_group_segments = json_group_segments_data["group-segments"];
+											json_group_segments = group_segments;
+
+											json_segments.push_back(json_group_segments_data);
+										}
+									}
+									utils::json::write_to_file(json, result.path);
+								}
+							}
+							ImGui::EndMenu();
 						}
 					}
 				}
@@ -1281,6 +1444,7 @@ namespace vt
 					win_toggles{ "Show Video Player", "Toggle Video Player", "video-player", &ctx_.win_cfg.show_video_player_window },
 					win_toggles{ "Show Video Browser", "Toggle Video Browser", "video-browser", &ctx_.win_cfg.show_video_browser_window },
 					win_toggles{ "Show Video Group Browser", "Toggle Video Group Browser", "video-group-browser", &ctx_.win_cfg.show_video_group_browser_window },
+					win_toggles{ "Show Video Group Queue", "Toggle Video Group Queue", "video-group-queue", &ctx_.win_cfg.show_video_group_queue_window },
 					win_toggles{},
 					win_toggles{ "Show Inspector", "Toggle Inspector", "inspector", &ctx_.win_cfg.show_inspector_window },
 					win_toggles{ "Show Tag Manager", "Toggle Tag Manager", "tag-manager", &ctx_.win_cfg.show_tag_manager_window },
@@ -1408,11 +1572,133 @@ namespace vt
 		}
 	}
 
+	static void handle_insert_segment()
+	{
+		//TODO: check if start and end have value
+
+		static std::optional<std::string> insert_key;
+
+		for (auto it = ctx_.insert_segment_data.begin(); it != ctx_.insert_segment_data.end() and !insert_key.has_value();)
+		{
+			auto& insert_data = it->second;
+
+			if (insert_data.show_insert_popup)
+			{
+				ImGui::OpenPopup("###AppInsertSegment");
+				insert_key = it->first;
+				break;
+			}
+
+			if (!insert_data.ready)
+			{
+				it++;
+				continue;
+			}
+
+			auto& segments = ctx_.get_current_segment_storage().at(insert_data.tag);
+
+			if (insert_data.show_merge_popup)
+			{
+				auto overlapping = segments.find_range(*insert_data.start, *insert_data.end);
+				if (!overlapping.empty())
+				{
+					ImGui::OpenPopup("##MergePopupApp");
+					insert_key = it->first;
+					break;
+				}
+			}
+
+			segments.insert(*insert_data.start, *insert_data.end);
+			it = ctx_.insert_segment_data.erase(it);
+			insert_key.reset();
+		}
+
+		if (!insert_key.has_value())
+		{
+			return;
+		}
+
+		auto insert_data_it = ctx_.insert_segment_data.find(*insert_key);
+		if (insert_data_it == ctx_.insert_segment_data.end())
+		{
+			insert_key.reset();
+			ctx_.insert_segment_data.erase(insert_data_it);
+			return;
+		}
+
+		auto& insert_data = insert_data_it->second;
+
+		auto min_ts = ctx_.timeline_state.time_min.seconds_total.count();
+		auto max_ts = ctx_.timeline_state.time_max.seconds_total.count();
+		//should it be this or all tags?
+		auto& tags = ctx_.timeline_state.displayed_tags.at(ctx_.current_video_group_id());
+
+		auto segment_type = *insert_data.start == *insert_data.end ? tag_segment_type::timestamp : tag_segment_type::segment;
+		const char* insert_segment_popup_id = segment_type == tag_segment_type::timestamp ? "Insert Timestamp###AppInsertSegment" : "Insert Segment###AppInsertSegment";
+
+		bool presed_ok{};
+		if (widgets::insert_segment_popup(insert_segment_popup_id, *insert_data.start, *insert_data.end, segment_type, min_ts, max_ts, tags, insert_data.name_index, presed_ok))
+		{
+			if (presed_ok)
+			{
+				insert_data.tag = tags.at(insert_data.name_index);
+				insert_data.show_insert_popup = false;
+				insert_data.ready = true;
+			}
+			else
+			{
+				ctx_.insert_segment_data.erase(insert_data_it);
+			}
+
+			insert_key.reset();
+			return;
+		}
+
+		bool pressed_ok{};
+		if (widgets::merge_segments_popup("##MergePopupApp", presed_ok, false))
+		{
+			if (presed_ok)
+			{
+				insert_data.show_merge_popup = false;
+			}
+			else
+			{
+				ctx_.insert_segment_data.erase(insert_data_it);
+			}
+
+			insert_key.reset();
+			return;
+		}
+	}
+
 	void app::draw_main_app()
 	{
 		if (!ctx_.current_project.has_value()) return;
 		draw_menubar();
 		if (!ctx_.current_project.has_value()) return;
+		
+		{
+			static bool was_popup_opened = false;
+			static bool resume_video = false;
+			if (ImGui::IsPopupOpen(nullptr, ImGuiPopupFlags_AnyPopup))
+			{
+				if (!was_popup_opened)
+				{
+					was_popup_opened = true;
+					resume_video = ctx_.displayed_videos.is_playing();
+					ctx_.displayed_videos.set_playing(false);
+				}
+			}
+			else
+			{
+				if (was_popup_opened)
+				{
+					was_popup_opened = false;
+					ctx_.displayed_videos.set_playing(resume_video);
+					resume_video = false;
+				}
+			}
+		}
 
 		{
 			auto& tasks = ctx_.current_project->video_import_tasks;
@@ -1426,23 +1712,25 @@ namespace vt
 					{
 						debug::error("Failed to import {}", result.video_path.u8string());
 					}
-					else
+					else if (ctx_.app_settings.load_thumbnails)
 					{
 						auto video_data = ctx_.current_project->videos.get(result.video_id);
 						video_data->update_thumbnail(ctx_.renderer);
 					}
 
 					it = tasks.erase(it);
-					continue;
+					break;
+					//continue;
 				}
 
 				++it;
 			}
 		}
-		
+
+		handle_insert_segment();
 
 		//TODO: probably should be done somewhere else
-		ctx_.update_active_video_group();
+		ctx_.update_current_video_group();
 
 		if (ctx_.win_cfg.show_video_player_window)
 		{
@@ -1466,7 +1754,7 @@ namespace vt
 			//	}
 			//}
 
-			if (ctx_.current_video_group_id != 0)
+			if (ctx_.current_video_group_id() != invalid_video_group_id)
 			{
 				//TODO: probably could be done only when needed instead of on every frame.
 				// Video timeline does the same thing and group duration needs to be calculated
@@ -1504,26 +1792,27 @@ namespace vt
 			}
 		}
 
-
 		if (ctx_.reset_player_docking)
 		{
 			ctx_.player.dock_windows(4);
 			ctx_.reset_player_docking = false;
 		}
 
-		if (ctx_.win_cfg.show_timeline_window)
+		if (ctx_.win_cfg.show_timeline_window/* and ctx_.current_video_group_id != 0*/)
 		{
 			auto group_duration = ctx_.displayed_videos.duration();
 
 			//TODO: Definitely change this!
+			ctx_.timeline_state.current_video_group_id = ctx_.current_video_group_id();
 			ctx_.timeline_state.tags = &ctx_.current_project->tags;
-			ctx_.timeline_state.segments = &ctx_.current_project->segments;
+			ctx_.timeline_state.segments = ctx_.current_video_group_id() != invalid_video_group_id ? &ctx_.get_current_segment_storage() : nullptr;
 			ctx_.timeline_state.sync_tags();
-			ctx_.timeline_state.time_min = timestamp{};
+			ctx_.timeline_state.time_min = timestamp::zero();
 			ctx_.timeline_state.time_max = timestamp(std::chrono::duration_cast<std::chrono::seconds>(group_duration));
 			ctx_.timeline_state.current_time = timestamp{ std::chrono::duration_cast<std::chrono::seconds>(ctx_.displayed_videos.current_timestamp()) };
 			
-			widgets::draw_timeline_widget(ctx_.timeline_state, ctx_.selected_segment_data, ctx_.moving_segment_data, ctx_.is_project_dirty, 0, ctx_.current_video_group_id != 0, ctx_.win_cfg.show_timeline_window);
+			widgets::draw_timeline_widget("Timeline", ctx_.timeline_state, ctx_.selected_segment_data, ctx_.moving_segment_data,
+				ctx_.insert_segment_data, ctx_.is_project_dirty, ctx_.win_cfg.show_timeline_window);
 
 			if (ctx_.timeline_state.current_time.seconds_total != std::chrono::duration_cast<std::chrono::seconds>(ctx_.displayed_videos.current_timestamp()))
 			{
@@ -1539,19 +1828,25 @@ namespace vt
 			{
 				ctx_.is_project_dirty = true;
 				
-				for (auto& tag_name : ctx_.timeline_state.displayed_tags)
+				for (auto& [_, displayed_tags] : ctx_.timeline_state.displayed_tags)
 				{
-					if (tag_name == tag_rename->old_name)
+					for (auto& tag_name : displayed_tags)
 					{
-						tag_name = tag_rename->new_name;
+						if (tag_name == tag_rename->old_name)
+						{
+							tag_name = tag_rename->new_name;
+						}
 					}
 				}
-
-				auto node_handle = ctx_.current_project->segments.extract(tag_rename->old_name);
-				if (!node_handle.empty())
+				
+				for (auto& [group_id, segments] : ctx_.current_project->segments)
 				{
-					node_handle.key() = tag_rename->new_name;
-					ctx_.current_project->segments.insert(std::move(node_handle));
+					auto node_handle = segments.extract(tag_rename->old_name);
+					if (!node_handle.empty())
+					{
+						node_handle.key() = tag_rename->new_name;
+						segments.insert(std::move(node_handle));
+					}
 				}
 
 				//TODO: consider renaming tags in keybinds
@@ -1559,6 +1854,8 @@ namespace vt
 				tag_rename.reset();
 			}
 		}
+
+		//TODO: Add base virtual class that has render(bool&) method instead of this
 
 		if (ctx_.win_cfg.show_options_window)
 		{
@@ -1580,10 +1877,17 @@ namespace vt
 			ctx_.group_browser.render(ctx_.win_cfg.show_video_group_browser_window);
 		}
 
+		if (ctx_.win_cfg.show_video_group_queue_window)
+		{
+			ctx_.group_queue.current_group_id = ctx_.current_video_group_id();
+			ctx_.group_queue.render(ctx_.win_cfg.show_video_group_queue_window);
+		}
+
 		if (ctx_.win_cfg.show_theme_customizer_window)
 		{
 			ctx_.theme_customizer.render(ctx_.win_cfg.show_theme_customizer_window);
 		}
+		
 		//ImGui::ShowDemoWindow();
 	}
 
@@ -1593,7 +1897,7 @@ namespace vt
 		std::string new_title = "VideoTagger";
 		if (!title.empty())
 		{
-			new_title = title + std::string(" - ") + new_title;
+			new_title = fmt::format("{} - {}", title, new_title);
 		}
 		SDL_SetWindowTitle(ctx_.main_window, new_title.c_str());
 	}

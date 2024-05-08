@@ -5,22 +5,46 @@
 
 namespace vt
 {
-	add_timestamp_action::add_timestamp_action() : keybind_action("Insert Timestamp") {}
-	void add_timestamp_action::invoke() const
+	timestamp_action::timestamp_action() : keybind_action(action_name) {}
+
+	void timestamp_action::invoke() const
 	{
-		if (!tag_.empty())
+		if (!ctx_.current_project.has_value() or ctx_.current_video_group_id() == invalid_video_group_id) return;
+
+		auto& data = ctx_.insert_segment_data[tag_];
+		data.start = ctx_.timeline_state.current_time;
+		data.end = ctx_.timeline_state.current_time;
+		data.tag = tag_;
+		data.ready = true;
+		data.show_insert_popup = tag_.empty();
+	}
+
+	void timestamp_action::to_json(nlohmann::ordered_json& json) const
+	{
+		auto& tag_name = json["tag-name"];
+		if (tag_.empty())
 		{
-			auto& tag = ctx_.current_project->tags[tag_];
-			auto& segments = ctx_.current_project->segments[tag.name];
-			segments.insert(ctx_.timeline_state.current_time);
+			tag_name = nullptr;
 		}
 		else
 		{
-			//TODO: Show tag selector window
+			tag_name = tag_;
 		}
 	}
 
-	void add_timestamp_action::render_properties()
+	void timestamp_action::from_json(const nlohmann::ordered_json& json)
+	{
+		if (json.contains("tag-name"))
+		{
+			const auto& tag_name = json.at("tag-name");
+			if (!tag_name.is_null())
+			{
+				tag_ = json.at("tag-name");
+			}
+		}
+	}
+
+	void timestamp_action::render_properties()
 	{
 		ImGui::TableNextColumn();
 		ImGui::Text("Tag Name");
@@ -57,10 +81,77 @@ namespace vt
 		widgets::help_marker("Choosing \"Ask Later\" will display a window, where you will have to select the tag");
 	}
 
-	segment_action::segment_action() : keybind_action("Start/End Segment"), type_{ segment_action_type::auto_ } {}
+	segment_action::segment_action() : keybind_action(action_name), type_{ segment_action_type::auto_ } {}
+
 	void segment_action::invoke() const
 	{
+		if (!ctx_.current_project.has_value() or ctx_.current_video_group_id() == invalid_video_group_id) return;
 
+		auto& data = ctx_.insert_segment_data[tag_];
+		data.tag = tag_;
+		auto type = type_;
+		if (type_ == segment_action_type::auto_)
+		{
+			if (data.start == std::nullopt)
+			{
+				type = segment_action_type::start;
+			}
+			else if (data.end == std::nullopt)
+			{
+				type = segment_action_type::end;
+			}
+		}
+
+		switch (type)
+		{
+			case segment_action_type::start:
+			{
+				data.start = ctx_.timeline_state.current_time;
+			}
+			break;
+			case segment_action_type::end:
+			{
+				data.end = ctx_.timeline_state.current_time;
+			}
+			break;
+		}
+
+		if (data.start != std::nullopt and data.end != std::nullopt)
+		{
+			data.ready = true;
+			data.show_insert_popup = tag_.empty();
+		}
+	}
+
+	void segment_action::to_json(nlohmann::ordered_json& json) const
+	{
+		auto& tag_name = json["tag-name"];
+		if (tag_.empty())
+		{
+			tag_name = nullptr;
+		}
+		else
+		{
+			tag_name = tag_;
+		}
+		json["type"] = type_;
+	}
+
+	void segment_action::from_json(const nlohmann::ordered_json& json)
+	{
+		if (json.contains("tag-name"))
+		{
+			const auto& tag_name = json.at("tag-name");
+			if (!tag_name.is_null())
+			{
+				tag_ = tag_name;
+			}
+		}
+
+		if (json.contains("type"))
+		{
+			type_ = json.at("type");
+		}
 	}
 
 	void segment_action::render_properties()

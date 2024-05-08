@@ -12,6 +12,7 @@ namespace vt::widgets
 
 	public:
 		std::function<void(video_id_t)> on_open_video;
+		video_group_id_t current_video_group{};
 
 	public:
 		void render(bool& is_open);

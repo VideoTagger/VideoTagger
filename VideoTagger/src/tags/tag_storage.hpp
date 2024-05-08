@@ -3,6 +3,8 @@
 #include <utility>
 #include <string>
 #include <iterator>
+#include <utils/json.hpp>
+#include <utils/color.hpp>
 
 #include "tag.hpp"
 
@@ -123,4 +125,32 @@ namespace vt
 	private:
 		unwrapped_it it;
 	};
+
+	inline void to_json(nlohmann::ordered_json& json, const tag_storage& ts)
+	{
+		json = nlohmann::json::array();
+		for (auto& tag : ts)
+		{
+			nlohmann::ordered_json json_tag_data;
+			json_tag_data["name"] = tag.name;
+			json_tag_data["color"] = utils::color::to_string(tag.color);
+			json.push_back(json_tag_data);
+		}
+	}
+
+	inline void from_json(const nlohmann::ordered_json& json, tag_storage& ts)
+	{
+		for (const auto& tag_data : json)
+		{
+			if (!tag_data.contains("name") or !tag_data.contains("color")) continue;
+
+			auto [tag_it, success] = ts.insert(tag_data["name"]);
+			auto col_str = tag_data["color"].get<std::string>();
+			uint32_t color{};
+			if (utils::color::parse_string(col_str, color))
+			{
+				tag_it->color = color;
+			}
+		}
+	}
 }

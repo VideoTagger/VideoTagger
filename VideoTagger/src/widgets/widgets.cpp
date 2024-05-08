@@ -18,23 +18,20 @@ namespace vt::widgets
 		bool active{};
 	};
 	
-	void draw_timeline_widget(timeline_state& state, std::optional<selected_segment_data>& selected_timestamp, std::optional<moving_segment_data>& moving_timestamp, bool& dirty_flag, uint64_t id, bool is_group_open, bool& open)
+	void draw_timeline_widget(const char* id, timeline_state& state, std::optional<selected_segment_data>& selected_timestamp,
+		std::optional<moving_segment_data>& moving_timestamp, insert_segment_data_container& insert_segment_container, bool& dirty_flag, bool& open)
 	{
-		std::string title = "Timeline##" + std::to_string(id);
 		ImVec2 default_window_padding = ImGui::GetStyle().WindowPadding;
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2{});
-		if (ImGui::Begin(title.c_str(), &open))
+		if (ImGui::Begin(id, &open))
 		{
-			ImGui::PushID(title.c_str());
+			state.enabled = state.current_video_group_id != 0;
+			
+			ImGui::PushID(id);
 			ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, default_window_padding);
-			if (is_group_open)
-			{
-				video_timeline(state, selected_timestamp, moving_timestamp, dirty_flag);
-			}
-			else
-			{
-				centered_text("Open a video group to display its segments...", ImGui::GetContentRegionMax());
-			}
+			
+			video_timeline(state, selected_timestamp, moving_timestamp, insert_segment_container, dirty_flag);
+			
 			ImGui::PopStyleVar();
 			ImGui::PopID();
 		}

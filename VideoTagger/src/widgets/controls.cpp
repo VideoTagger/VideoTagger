@@ -24,6 +24,15 @@ namespace vt::widgets
 		return result;
 	}
 
+	void icon_tooltip(const char* text)
+	{
+		if (ImGui::IsItemHovered(ImGuiHoveredFlags_ForTooltip | ImGuiHoveredFlags_DelayNormal) and ImGui::BeginTooltip())
+		{
+			ImGui::TextUnformatted(text);
+			ImGui::EndTooltip();
+		}
+	}
+
 	bool icon_toggle_button(const char* label, bool is_toggled, const ImVec2& size)
 	{
 		if (!is_toggled) ImGui::PushStyleColor(ImGuiCol_Text, ImGui::GetStyleColorVec4(ImGuiCol_TextDisabled));
@@ -219,24 +228,56 @@ namespace vt::widgets
 		return result;
 	}
 
-	bool tile(const std::string& label, ImVec2 tile_size, ImVec2 image_size, SDL_Texture* image, const std::function<void(const std::string&)> context_menu, const std::function<void(const std::string&)> drag_drop)
+	extern bool search_bar(const char* label, const char* hint, std::string& buffer, float width, bool enable_button, ImGuiInputTextFlags flags)
+	{
+		bool empty = buffer.empty();
+		bool result = !empty;
+		if (width == 0)
+		{
+			width = ImGui::GetContentRegionAvail().x;
+		}
+
+		ImGui::PushID(label);
+		float text_width = ImGui::GetTextLineHeight() + ImGui::GetStyle().FramePadding.x * 2;
+		ImGui::SetNextItemWidth(width - text_width);
+		ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2{});
+		ImGui::BeginGroup();
+		result &= ImGui::InputTextWithHint(label, hint, &buffer, flags);
+
+		ImGui::SameLine();
+		if (!enable_button or empty) ImGui::BeginDisabled();
+		result |= ImGui::Button(icons::search, { text_width, 0 });
+		if (!enable_button or empty) ImGui::EndDisabled();
+		ImGui::PopStyleVar();
+		ImGui::EndGroup();
+		ImGui::PopID();
+
+		return result;
+	}
+
+	ImVec2 calc_selectable_tile_size(ImVec2 tile_size)
+	{
+		auto& style = ImGui::GetStyle();
+		auto text_size = ImVec2{ 0, 2 * ImGui::GetTextLineHeight() };
+		return tile_size + style.FramePadding + text_size;
+	}
+
+	bool tile(const std::string& label, ImVec2 tile_size, ImVec2 image_size, SDL_Texture* image, const std::function<void(const std::string&)> context_menu, const std::function<void(const std::string&)> drag_drop, ImVec2 uv0, ImVec2 uv1, bool is_selected)
 	{
 		bool result{};
 		ImVec2 image_tile_size = ImVec2{ tile_size.x, tile_size.x } * 0.9f;
 
 		auto& style = ImGui::GetStyle();
-		ImGui::TableNextColumn();
 		ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2{});
 		ImTextureID imgui_tex = static_cast<ImTextureID>(image);
 		const char* id = label.c_str();
 		ImGui::PushID(id);
-		bool selected = false;
 		auto text_size = ImVec2{ 0, 2 * ImGui::GetTextLineHeight() };
 		auto selectable_size = tile_size + style.FramePadding + text_size;
 		ImVec2 cpos = ImGui::GetCursorPos() + (selectable_size - image_size - text_size) / 2;
 		
 		ImGui::BeginGroup();
-		ImGui::Selectable("##TileButton", &selected, ImGuiSelectableFlags_AllowOverlap | ImGuiSelectableFlags_AllowDoubleClick, selectable_size);
+		ImGui::Selectable("##TileButton", &is_selected, ImGuiSelectableFlags_AllowOverlap | ImGuiSelectableFlags_AllowDoubleClick, selectable_size);
 		if (ImGui::IsItemHovered() and ImGui::IsMouseDoubleClicked(0))
 		{
 			result = true;
@@ -263,7 +304,7 @@ namespace vt::widgets
 		}
 
 		ImGui::SetCursorPos(std::exchange(cpos, ImGui::GetCursorPos()));
-		ImGui::Image(imgui_tex, image_size);
+		ImGui::Image(imgui_tex, image_size, uv0, uv1);
 		ImGui::Dummy({ 0, (image_tile_size.y - image_size.y) / 2.f });
 		//widgets::clipped_text(id, { tile_size.x, text_size.y });
 		//TODO: Text clipping, change widgets::clipped_text into this
@@ -281,5 +322,35 @@ namespace vt::widgets
 		ImGui::PopStyleVar();
 
 		return result;
+	}
+
+	bool selection_area(ImVec2& start_pos, ImVec2& end_pos, ImGuiMouseButton mouse_button)
+	{
+		const auto& clip_rect = ImGui::GetCurrentWindow()->ClipRect;
+		if (ImGui::IsMouseClicked(mouse_button))
+		{
+			start_pos = ImGui::GetMousePos();
+		}
+		
+		bool valid
+		{
+			start_pos != end_pos and
+			start_pos.x >= clip_rect.Min.x and start_pos.x <= clip_rect.Max.x and
+			start_pos.y >= clip_rect.Min.y and start_pos.y <= clip_rect.Max.y
+		};
+		if (ImGui::IsMouseDown(mouse_button))
+		{
+			end_pos = ImGui::GetMousePos();
+			end_pos.x = std::clamp(end_pos.x, clip_rect.Min.x, clip_rect.Max.x);
+			end_pos.y = std::clamp(end_pos.y, clip_rect.Min.y, clip_rect.Max.y);
+
+			if (valid)
+			{
+				ImDrawList* draw_list = ImGui::GetForegroundDrawList(); //ImGui::GetWindowDrawList();
+				draw_list->AddRect(start_pos, end_pos, ImGui::GetColorU32(IM_COL32(0, 130, 216, 255)));   // Border
+				draw_list->AddRectFilled(start_pos, end_pos, ImGui::GetColorU32(IM_COL32(0, 130, 216, 50)));    // Background
+			}
+		}
+		return ImGui::IsMouseReleased(mouse_button) and valid;
 	}
 }

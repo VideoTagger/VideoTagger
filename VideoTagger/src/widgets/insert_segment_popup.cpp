@@ -1,10 +1,12 @@
 #include "pch.hpp"
 #include "insert_segment_popup.hpp"
 #include "controls.hpp"
+#include <tags/tag_timeline.hpp>
 
 namespace vt::widgets
 {
-	bool insert_segment_popup(const char* id, timestamp& start, timestamp& end, uint64_t min_timestamp, uint64_t max_timestamp, const std::vector<std::string>& tags, int& selected_tag)
+	bool insert_segment_popup(const char* id, timestamp& start, timestamp& end, tag_segment_type segment_type,
+		uint64_t min_timestamp, uint64_t max_timestamp, const std::vector<std::string>& tags, int& selected_tag, bool& selected_ok)
 	{
 		bool result = false;
 		auto& style = ImGui::GetStyle();
@@ -23,22 +25,33 @@ namespace vt::widgets
 
 			ImGui::Text("Tag");
 			ImGui::Combo("##TagName", &selected_tag, tags_cstr.data(), static_cast<int>(tags_cstr.size()));
-			widgets::timestamp_control("Start", start, min_timestamp, max_timestamp, nullptr, nullptr);
-			widgets::timestamp_control("End", end, min_timestamp, max_timestamp, nullptr, nullptr);
+			if (segment_type == tag_segment_type::timestamp)
+			{
+				widgets::timestamp_control("Timestamp", start, min_timestamp, max_timestamp, nullptr, nullptr);
+				end = start;
+			}
+			else
+			{
+				widgets::timestamp_control("Start", start, min_timestamp, max_timestamp, nullptr, nullptr);
+				widgets::timestamp_control("End", end, min_timestamp, max_timestamp, nullptr, nullptr);
+			}
 
 			if (start > end)
 			{
 				std::swap(start, end);
 			}
 
-			if (ImGui::Button("OK"))
+			if (ImGui::Button("OK") or ImGui::IsKeyPressed(ImGuiKey_Enter))
 			{
+				selected_ok = true;
 				result = true;
 				ImGui::CloseCurrentPopup();
 			}
 			ImGui::SameLine();
 			if (ImGui::Button("Cancel") or ImGui::IsKeyPressed(ImGuiKey_Escape))
 			{
+				selected_ok = false;
+				result = true;
 				ImGui::CloseCurrentPopup();
 			}
 

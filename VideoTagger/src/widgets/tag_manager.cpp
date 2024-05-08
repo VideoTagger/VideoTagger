@@ -5,6 +5,7 @@
 #include "controls.hpp"
 #include "icons.hpp"
 #include <core/app_context.hpp>
+#include <utils/drag_drop.hpp>
 
 namespace vt::widgets
 {
@@ -184,7 +185,6 @@ namespace vt::widgets
 
 		bool return_value = false;
 		auto& style = ImGui::GetStyle();
-		ImVec2 button_size = ImVec2{ ImGui::GetContentRegionAvail().x, ImGui::GetTextLineHeightWithSpacing() };
 
 		bool open_add_tag_popup = false;
 		bool open_rename_tag_popup = false;
@@ -194,24 +194,42 @@ namespace vt::widgets
 		if (true /*ImGui::BeginTable("##TagManager", 2)*/)
 		{
 			static constexpr float tag_column_width = 100;
-			float button_region_width = button_size.x + style.CellPadding.x;
 
 			//ImGui::TableSetupColumn(nullptr, ImGuiTableColumnFlags_WidthStretch);
 			//ImGui::TableSetupColumn(nullptr, ImGuiTableColumnFlags_WidthFixed);
-			if (ImGui::SmallButton("Expand All"))
+			static std::string filter;
+			if (ImGui::IsWindowAppearing())
+			{
+				filter.clear();
+			}
+
+			ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2{});
+			if (icon_button(icons::add))
+			{
+				open_add_tag_popup = true;
+			}
+			icon_tooltip("Add Tag");
+			ImGui::SameLine();
+			search_bar("##VideoGroupBrowserSearch", "Search...", filter, ImGui::GetContentRegionAvail().x - 2 * (ImGui::CalcTextSize(icons::toggle_less).x + 2 * style.FramePadding.x));
+			ImGui::SameLine();
+			if (icon_button(icons::toggle_more))
 			{
 				update_state = true;
 				update_all = true;
 			}
+			icon_tooltip("Expand All");
 			ImGui::SameLine();
-			if (ImGui::SmallButton("Collapse All"))
+			ImGui::PopStyleVar();
+			if (icon_button(icons::toggle_less))
 			{
 				update_state = false;
 				update_all = true;
 			}
+			icon_tooltip("Collapse All");
 			ImGui::Separator();
+
 			//ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2{});
-			bool is_scrollable_list_open = ImGui::BeginChild("##ScrollableTagList", ImGui::GetContentRegionAvail() - button_size - ImVec2{ 0, style.ItemSpacing.y + style.FramePadding.y });
+			bool is_scrollable_list_open = ImGui::BeginChild("##ScrollableTagList", ImGui::GetContentRegionAvail());
 			
 			//ImGui::PopStyleVar();
 			if (is_scrollable_list_open)
@@ -228,7 +246,6 @@ namespace vt::widgets
 
 					//ImGui::TableNextColumn();
 					ImGui::PushID(id++);
-					
 					/*
 					if (icon_button(icons::close))
 					{
@@ -241,6 +258,7 @@ namespace vt::widgets
 					*/
 					auto color = ImGui::ColorConvertU32ToFloat4(tag.color);
 					ImGui::SetCursorPosX(ImGui::GetCursorPosX() + style.ItemSpacing.x * 0.5f);
+					ImGui::AlignTextToFramePadding();
 					ImGui::TextColored(color, icons::label);
 					ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2{});
 					ImGui::SameLine();
@@ -257,6 +275,15 @@ namespace vt::widgets
 					bool node_open = ImGui::TreeNodeEx("##TagManagerNode", node_flags);
 					ImGui::PopStyleColor();
 					ImGui::PopStyleVar();
+
+					if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_SourceNoHoldToOpenOthers))
+					{
+						utils::drag_drop::set_payload("Tag", tag.name.c_str());
+						ImGui::TextColored(color, icons::label);
+						ImGui::SameLine();
+						ImGui::TextUnformatted(tag.name.c_str());
+						ImGui::EndDragDropSource();
+					}
 
 					bool delete_tag = false;
 					if (ImGui::BeginPopupContextItem("##TagCtxMenu"))
@@ -276,9 +303,9 @@ namespace vt::widgets
 					auto icon = node_open ? icons::expand_less : icons::expand_more;
 
 					ImGui::SameLine(ImGui::GetTreeNodeToLabelSpacing());
-					ImGui::Text(tag.name.c_str());
+					ImGui::TextUnformatted(tag.name.c_str());
 					ImGui::SameLine(ImGui::GetContentRegionMax().x - style.ItemSpacing.x - ImGui::CalcTextSize(icon).x);
-					ImGui::Text(icon);
+					ImGui::TextUnformatted(icon);
 
 					if (node_open)
 					{
@@ -347,10 +374,12 @@ namespace vt::widgets
 			ImGui::EndChild();
 
 			//ImGui::Dummy(ImGui::GetStyle().ItemSpacing);
+			/*
 			if (ImGui::Button("Add Tag", button_size))
 			{
 				open_add_tag_popup = true;
 			}
+			*/
 			
 			//ImGui::EndTable();
 		}

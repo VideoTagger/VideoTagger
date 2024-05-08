@@ -106,7 +106,7 @@ namespace vt
 				video_group::video_info group_info{};
 				group_info.id = id;
 
-				auto gid = (ctx_.current_video_group_id == 0) ? utils::uuid::get() : ctx_.current_video_group_id;
+				auto gid = (ctx_.current_video_group_id() == invalid_video_group_id) ? utils::uuid::get() : ctx_.current_video_group_id();
 				
 				std::scoped_lock lock(groups_mutex);
 				auto& group = video_groups[gid];
@@ -137,43 +137,24 @@ namespace vt
 		project["name"] = name;
 
 		auto& json_tags = json["tags"];
-		json_tags = nlohmann::json::array();
-		for (auto& tag : tags)
-		{
-			nlohmann::ordered_json json_tag_data;
-			json_tag_data["name"] = tag.name;
-			json_tag_data["color"] = utils::color::to_string(tag.color);
+		json_tags = tags;
 
-			auto segments_it = segments.find(tag.name);
-			if (segments_it != segments.end())
+		auto& json_segments = json["segments"];
+		json_segments = nlohmann::json::array();
+
+		if (!segments.empty())
+		{
+			for (auto& [group_id, group_segments] : segments)
 			{
-				auto& tag_segments = segments_it->second;
-				auto& json_segments = json_tag_data["timestamps"];
-				json_segments = nlohmann::json::array();
-				for (const auto& segment : tag_segments)
-				{
-					auto segment_json = nlohmann::ordered_json::object();
-					switch (segment.type())
-					{
-					case tag_segment_type::point:
-					{
-						segment_json["point"] = utils::time::time_to_string(segment.start.seconds_total.count());
-					}
-					break;
-					default:
-					{
-						segment_json["start"] = utils::time::time_to_string(segment.start.seconds_total.count());
-						segment_json["end"] = utils::time::time_to_string(segment.end.seconds_total.count());
-					}
-					break;
-					}
-					json_segments.push_back(segment_json);
-				}
+				nlohmann::ordered_json json_group_segments_data;
+				json_group_segments_data["group-id"] = group_id;
+				auto& json_group_segments = json_group_segments_data["group-segments"];
+				json_group_segments = group_segments;
+				json_segments.push_back(json_group_segments_data);
 			}
-			json_tags.push_back(json_tag_data);
 		}
 
-		if (videos.size() != 0)
+		if (!videos.empty())
 		{
 			auto& json_videos = json["videos"];
 			json_videos = nlohmann::json::array();
@@ -189,7 +170,7 @@ namespace vt
 			}
 		}
 
-		if (video_groups.size() != 0)
+		if (!video_groups.empty())
 		{
 			auto& json_groups = json["groups"];
 			json_groups = nlohmann::json::array();
@@ -197,6 +178,7 @@ namespace vt
 			{
 				nlohmann::ordered_json json_group;
 				json_group["id"] = id;
+				json_group["name"] = group.display_name;
 				auto& group_videos = json_group["videos"];
 				group_videos = nlohmann::json::array();
 				for (auto& video : group)
@@ -208,6 +190,11 @@ namespace vt
 				}
 				json_groups.push_back(json_group);
 			}
+		}
+
+		if (!video_group_playlist.empty())
+		{
+			json["group-queue"] = video_group_playlist;
 		}
 
 		if (!keybinds.empty())
@@ -245,7 +232,7 @@ namespace vt
 			auto json = utils::json::load_from_file(filepath);
 			if (!json.contains("project"))
 			{
-				debug::error("Project forrmat is invalid");
+				debug::error("Project format is invalid");
 				return {};
 			}
 
@@ -266,30 +253,27 @@ namespace vt
 
 			if (json.contains("tags") and json.at("tags").is_array())
 			{
-				for (auto& tag_data : json["tags"])
+				result.tags = json["tags"];
+			}
+
+			if (json.contains("segments") and json.at("segments").is_array())
+			{
+				for (auto& json_segments : json["segments"])
 				{
-					auto [tag_it, success] = result.tags.insert(tag_data["name"]);
-					auto col_str = tag_data["color"].get<std::string>();
-					uint32_t color{};
-					if (utils::color::parse_string(col_str, color))
+					if (!json_segments.contains("group-id"))
 					{
-						tag_it->color = color;
+						debug::error("Missing group id");
+						continue;
+					}
+					if (!json_segments.contains("group-segments"))
+					{
+						debug::error("Missing group segments");
+						continue;
 					}
 
-					for (auto& segment : tag_data["timestamps"])
-					{
-						if (segment.contains("point"))
-						{
-							auto point = utils::time::parse_time_to_sec(segment["point"]);
-							result.segments[tag_it->name].insert(vt::timestamp{ point }, vt::timestamp{ point });
-						}
-						else if (segment.contains("start") and segment.contains("end"))
-						{
-							auto start = utils::time::parse_time_to_sec(segment["start"]);
-							auto end = utils::time::parse_time_to_sec(segment["end"]);
-							result.segments[tag_it->name].insert(vt::timestamp{ start }, vt::timestamp{ end });
-						}
-					}
+					video_group_id_t group_id = json_segments["group-id"];
+					auto& group_segments = result.segments[group_id];
+					group_segments = json_segments["group-segments"];
 				}
 			}
 
@@ -316,7 +300,7 @@ namespace vt
 					//TODO: Can't be async because result is later moved
 					result.import_video(path, id, false);
 					auto pool_data = result.videos.get(id);
-					if (pool_data != nullptr)
+					if (pool_data != nullptr and ctx_.app_settings.load_thumbnails)
 					{
 						pool_data->update_thumbnail(ctx_.renderer);
 					}
@@ -335,11 +319,21 @@ namespace vt
 						continue;
 					}
 
+
 					video_group_id_t id = group["id"];
 					if (!group.contains("videos") or !json["videos"].is_array())
 					{
 						debug::error("Project's video group's videos format was invalid, skipping...");
 						continue;
+					}
+					
+					if (group.contains("name"))
+					{
+						vgroup.display_name = group["name"];
+					}
+					else
+					{
+						vgroup.display_name = std::to_string(id);
 					}
 
 					const auto& group_videos = group["videos"];
@@ -358,6 +352,11 @@ namespace vt
 					}
 					result.video_groups.insert({ id, vgroup });
 				}
+			}
+
+			if (json.contains("group-queue") and json.at("group-queue").is_array())
+			{
+				result.video_group_playlist = json.at("group-queue");
 			}
 
 			if (json.contains("keybinds"))

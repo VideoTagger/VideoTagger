@@ -42,6 +42,7 @@ namespace vt::utils
 
 	using dialog_filters = std::vector<dialog_filter>;
 
+	//TODO: Why isn't this a namespace???
 	struct filesystem
 	{
 		static dialog_result get_file(const std::filesystem::path& start_dir = {}, const dialog_filters& filters = {});
@@ -50,5 +51,7 @@ namespace vt::utils
 		static dialog_results get_files(const std::filesystem::path& start_dir = {}, const dialog_filters& filters = {});
 
 		static std::string normalize(const std::filesystem::path& filepath);
+
+		static void open_in_explorer(const std::filesystem::path& path);
 	};
 }

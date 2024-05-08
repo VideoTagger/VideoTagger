@@ -9,6 +9,10 @@
 namespace vt
 {
 	using video_id_t = uint64_t;
+	using video_group_id_t = uint64_t;
+
+	//TODO: use this instead of just 0
+	inline constexpr auto invalid_video_group_id = video_group_id_t{ 0 };
 
 	class video_group
 	{
@@ -23,7 +27,7 @@ namespace vt
 		using iterator = container::iterator;
 		using const_iterator = container::const_iterator;
 
-		std::string display_name = "#NO_NAME#";
+		std::string display_name;
 
 		video_group() = default;
 		video_group(std::string name, std::vector<video_info> video_infos);
@@ -36,6 +40,12 @@ namespace vt
 
 		iterator find(video_id_t video_id);
 		const_iterator find(video_id_t video_id) const;
+
+		video_info& at(size_t index);
+		const video_info& at(size_t index) const;
+
+		video_info& operator[](size_t index);
+		const video_info& operator[](size_t index) const;
 
 		iterator begin();
 		const_iterator begin() const;
@@ -112,6 +122,7 @@ namespace vt
 		bool is_open(video_id_t video_id) const;
 		bool exists(video_id_t video_id) const;
 		size_t size() const;
+		bool empty() const;
 
 		iterator begin();
 		const_iterator begin() const;
