@@ -1660,7 +1660,7 @@ namespace vt
 		{
 			static bool was_popup_opened = false;
 			static bool resume_video = false;
-			if (ImGui::IsPopupOpen(nullptr, ImGuiPopupFlags_AnyPopup))
+			if (ctx_.pause_player)
 			{
 				if (!was_popup_opened)
 				{
@@ -1678,6 +1678,8 @@ namespace vt
 					resume_video = false;
 				}
 			}
+
+			ctx_.pause_player = false;
 		}
 
 		{

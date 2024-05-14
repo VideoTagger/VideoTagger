@@ -14,8 +14,11 @@ namespace vt
 	{
 		ok,
 		already_exists,
-		invalid_name
+		invalid_name,
+		too_long
 	};
+
+	struct tag_rename_result;
 
 	class tag_storage_iterator;
 	class tag_storage_const_iterator;
@@ -29,6 +32,9 @@ namespace vt
 		using container = std::map<std::string, tag>;
 
 		static constexpr uint32_t default_tag_color = 0xFFFFFFFF;
+		static constexpr size_t max_tag_name_length = 20; // not equivalent to the max size in bytes
+		static constexpr std::string_view forbidden_characters = "\t\n\r\a\b\v\f\"\'\\/<>|:?*";
+		static constexpr std::string_view forbidden_edge_characters = " "; // tag name can't contain these characters at the very start or end
 
 		std::pair<iterator, bool> insert(const std::string& name, uint32_t color);
 		std::pair<iterator, bool> insert(const std::string& name);
@@ -39,7 +45,7 @@ namespace vt
 		//	if current_name doesn't exist: { end, false }
 		//	if new_name already exists: { iterator-to-new_name, false }
 		//	otherwise: { iterator-to-inserted, true }
-		std::pair<iterator, bool> rename(const std::string& current_name, const std::string& new_name);
+		tag_rename_result rename(const std::string& current_name, const std::string& new_name);
 
 		tag& at(const std::string& name);
 		const tag& at(const std::string& name) const;
@@ -124,6 +130,13 @@ namespace vt
 
 	private:
 		unwrapped_it it;
+	};
+
+	struct tag_rename_result
+	{
+		tag_storage::iterator iterator;
+		bool inserted;
+		tag_validate_result validation_result;
 	};
 
 	inline void to_json(nlohmann::ordered_json& json, const tag_storage& ts)

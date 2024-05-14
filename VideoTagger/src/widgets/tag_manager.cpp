@@ -20,10 +20,10 @@ namespace vt::widgets
 		auto& style = ImGui::GetStyle();
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 7);
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, style.WindowPadding * 2);
-		auto flags = ImGuiWindowFlags_AlwaysAutoResize;
+		auto flags = ImGuiWindowFlags_NoResize; //ImGuiWindowFlags_AlwaysAutoResize;
 		auto& io = ImGui::GetIO();
 		ImGui::SetNextWindowPos(ImGui::GetMainViewport()->GetCenter(), ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
-		auto win_size = ImVec2{ 290, 110 };
+		auto win_size = ImVec2{ 390, 110 };
 		ImGui::SetNextWindowSize(win_size, ImGuiCond_Appearing);
 
 		if (ImGui::BeginPopupModal("Add New Tag", nullptr, flags))
@@ -41,7 +41,7 @@ namespace vt::widgets
 			ImGui::Text("Tag Name");
 			ImGui::SameLine();
 
-			ImGui::SetNextItemWidth(100);
+			ImGui::SetNextItemWidth(200);
 			ImGui::InputText("##TagName", &tag_name);
 
 			tag_validate_result valid_tag_name = tags.validate_tag_name(tag_name);
@@ -50,8 +50,10 @@ namespace vt::widgets
 			{
 				switch (valid_tag_name)
 				{
-				case vt::tag_validate_result::already_exists: error_text = "Already exists"; break;
-				case vt::tag_validate_result::invalid_name: error_text = "Invalid name"; break;
+					case vt::tag_validate_result::already_exists: error_text = "Already exists"; break;
+					case vt::tag_validate_result::invalid_name: error_text = "Invalid name"; break;
+					case vt::tag_validate_result::too_long: error_text = fmt::format("Name can be at most {} characters long", tag_storage::max_tag_name_length); break;
+					default: error_text = "Invalid name"; break;
 				}
 			}
 
@@ -145,7 +147,7 @@ namespace vt::widgets
 		return return_value;
 	}
 
-	bool rename_failed_popup(const std::string& id, const tag_rename_data& data)
+	bool rename_failed_popup(const std::string& id, const tag_rename_data& data, tag_validate_result fail_reason)
 	{
 		static constexpr ImVec2 button_size = { 55, 30 };
 
@@ -159,9 +161,17 @@ namespace vt::widgets
 
 		if (ImGui::BeginPopupModal(id.c_str(), nullptr, flags))
 		{
-			ImGui::Text("Failed to rename tag \"%s\"", data.old_name.c_str());
-			//TODO: CHANGE THIS
-			ImGui::TextDisabled("Tag \"%s\" already exists", data.new_name.c_str());
+			ImGui::Text("Failed to rename tag \"%s\" to \"%s\"", data.old_name.c_str(), data.new_name.c_str());
+
+			std::string error_text;
+			switch (fail_reason)
+			{
+			case vt::tag_validate_result::already_exists: error_text = fmt::format("Tag \"{}\" already exists", data.new_name); break;
+			case vt::tag_validate_result::invalid_name: error_text = "Invalid name"; break;
+			case vt::tag_validate_result::too_long: error_text = fmt::format("Name can be at most {} characters long", tag_storage::max_tag_name_length); break;
+			default: error_text = "Invalid name"; break;
+			}
+			ImGui::TextDisabled(error_text.c_str());
 			ImGui::NewLine();
 			auto area_size = ImGui::GetWindowSize();
 
@@ -495,17 +505,19 @@ namespace vt::widgets
 			dirty_flag = true;
 		}
 
+		//TODO: do this in app.cpp
 		bool pressed_button{};
-
+		static tag_validate_result fail_reason{};
 		if (tag_rename.has_value() and rename_tag_popup("Rename Tag", *tag_rename, pressed_button))
 		{
 			if (pressed_button == true)
 			{
-				auto [it, inserted] = ctx_.current_project->tags.rename(tag_rename->old_name, tag_rename->new_name);
+				auto [it, inserted, validate_result] = ctx_.current_project->tags.rename(tag_rename->old_name, tag_rename->new_name);
 				if (!inserted)
 				{
 					//TODO: Display popup
 					ImGui::OpenPopup("Rename Failed");
+					fail_reason = validate_result;
 				}
 				else
 				{
@@ -519,7 +531,7 @@ namespace vt::widgets
 			}
 		}
 
-		if (tag_rename.has_value() and rename_failed_popup("Rename Failed", *tag_rename))
+		if (tag_rename.has_value() and rename_failed_popup("Rename Failed", *tag_rename, fail_reason))
 		{
 			tag_rename.reset();
 		}

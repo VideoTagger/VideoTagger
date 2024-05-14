@@ -34,17 +34,22 @@ namespace vt
 		return iterator{ tags_.erase(it.unwrapped()) };
 	}
 
-	std::pair<tag_storage::iterator, bool> tag_storage::rename(const std::string& current_name, const std::string& new_name)
+	tag_rename_result tag_storage::rename(const std::string& current_name, const std::string& new_name)
 	{
 		auto current_it = tags_.find(current_name);
 		if (current_it == tags_.end())
 		{
-			return { tags_.end(), false };
+			return { tags_.end(), false, tag_validate_result{} };
 		}
 
-		if (auto it = tags_.find(new_name); it != tags_.end())
+		//if (auto it = tags_.find(new_name); it != tags_.end())
+		//{
+		//	return { it, false };
+		//}
+
+		if (auto validate_result = validate_tag_name(new_name); validate_result != tag_validate_result::ok)
 		{
-			return { it, false };
+			return { tags_.end(), false, validate_result };
 		}
 		
 		auto node_handle = tags_.extract(current_name);
@@ -52,7 +57,7 @@ namespace vt
 		node_handle.mapped().name = new_name;
 		auto insert_return = tags_.insert(std::move(node_handle));
 
-		return { iterator{ insert_return.position }, true };
+		return { iterator{ insert_return.position }, true, tag_validate_result::ok };
 	}
 
 	tag& tag_storage::at(const std::string& name)
@@ -95,6 +100,22 @@ namespace vt
 		if (contains(name))
 		{
 			return tag_validate_result::already_exists;
+		}
+
+		auto string_length = utf8nlen(name.c_str(), name.size());
+		if (string_length > max_tag_name_length)
+		{
+			return tag_validate_result::too_long;
+		}
+		
+		if (auto pos = name.find_first_of(forbidden_edge_characters); pos == 0 or pos == name.size() - 1)
+		{
+			return tag_validate_result::invalid_name;
+		}
+
+		if (name.find_first_of(forbidden_characters) != std::string::npos)
+		{
+			return tag_validate_result::invalid_name;
 		}
 
 		return tag_validate_result::ok;

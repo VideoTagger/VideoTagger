@@ -43,6 +43,8 @@
 #include <core/debug.hpp>
 #include "insert_segment_popup.hpp"
 
+#include <core/app_context.hpp>
+
 namespace vt::widgets
 {
 	tag& timeline_state::get(size_t index)
@@ -140,6 +142,8 @@ namespace vt::widgets
 
 		if (ImGui::BeginPopupModal(id.c_str(), nullptr, flags))
 		{
+			ctx_.pause_player = true;
+
 			ImGui::Text("Do you want to merge the overlapping segments?");
 			if (display_dragged_segment_text) ImGui::TextDisabled("(Pressing \"No\" will move the currently dragged segment back to its original position)");
 			ImGui::NewLine();
@@ -632,13 +636,13 @@ namespace vt::widgets
 
 				static timestamp mouse_timestamp;
 
-				if (ImGui::IsMouseReleased(ImGuiMouseButton_Right))
-				{
-					mouse_timestamp = mouse_pos_to_timestamp(io.MousePos.x);
-				}
-
 				if (ImGui::BeginPopupContextItem("##SegmentContextMenu"))
 				{
+					if (ImGui::IsWindowAppearing())
+					{
+						mouse_timestamp = mouse_pos_to_timestamp(io.MousePos.x);
+					}
+
 					auto selected_timepoint = mouse_timestamp;
 					
 					std::optional<tag_timeline::iterator> segment_it;

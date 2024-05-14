@@ -100,6 +100,8 @@ namespace vt
 		bool reset_layout{};
 		bool reset_player_docking{};
 
+		bool pause_player = false;
+
 		void update_current_video_group();
 		void reset_current_video_group();
 
