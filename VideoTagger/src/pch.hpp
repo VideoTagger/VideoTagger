@@ -24,6 +24,7 @@
 #include <execution>
 
 #include <SDL.h>
+
 #define IMGUI_DEFINE_MATH_OPERATORS
 #include <imgui.h>
 #include <imgui_internal.h>
@@ -35,3 +36,5 @@
 #include <fmt/core.h>
 
 #include <nfd.hpp>
+
+#include <utf8.h>
