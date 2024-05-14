@@ -46,12 +46,12 @@ if __name__ == "__main__":
         if not os.path.exists(tool_path):
             tool_urls = tools[tool_name]
             
-            if platform == "linux" or platform == "linux2":
+            if platform == "win32":
+                tool_url = tool_urls[0]
+            elif platform == "linux" or platform == "linux2":
                 tool_url = tool_urls[1]
             elif platform == "darwin":
                 tool_url = tool_urls[2]
-            elif platform == "win32":
-                tool_url = tool_urls[0]
             
             if not tool_url:
                 eprint("Tool not available for current platform")
