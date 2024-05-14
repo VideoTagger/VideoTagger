@@ -20,16 +20,18 @@ namespace vt::utils::json
 		return result;
 	}
 
-	void write_to_file(const nlohmann::ordered_json& data, const std::filesystem::path& filepath, bool compact)
+	bool write_to_file(const nlohmann::ordered_json& data, const std::filesystem::path& filepath, bool compact)
 	{
 		std::ofstream file(filepath);
 		if (file.is_open())
 		{
 			file << data.dump(compact ? -1 : 1, '\t') << '\n';
+			return true;
 		}
 		else
 		{
 			debug::error("Couldn't write to Json file: " + filepath.string());
+			return false;
 		}
 	}
 }

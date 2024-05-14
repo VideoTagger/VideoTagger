@@ -31,7 +31,8 @@ project "VideoTagger"
 		"vendor/ImGuizmo",
 		"vendor/nativefiledialog-extended/src/include",
 		"vendor/fmt/include",
-		"vendor/nlohmann/single_include"
+		"vendor/nlohmann/single_include",
+		"vendor/utf8"
 	}
 
 	pchheader "pch.hpp"

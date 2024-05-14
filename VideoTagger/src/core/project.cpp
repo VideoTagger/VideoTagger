@@ -126,6 +126,117 @@ namespace vt
 		
 		return std::async(std::launch::async, task);
 	}
+
+	bool project::export_segments(const std::filesystem::path& filepath, std::vector<video_group_id_t> group_ids) const
+	{
+		if (group_ids.empty())
+		{
+			return false;
+		}
+
+		nlohmann::ordered_json json;
+		json["version"] = version;
+		auto& json_groups = json["groups"];
+		json_groups = nlohmann::ordered_json::array();
+
+		for (const auto& group_id : group_ids)
+		{
+			auto group_it = video_groups.find(group_id);
+			auto segments_it = segments.find(group_id);
+			if (group_it == video_groups.end() or segments_it == segments.end())
+			{
+				//TODO: Should this do something?
+				continue;
+			}
+
+			auto& group = group_it->second;
+			auto& group_segments = segments_it->second;
+
+			nlohmann::ordered_json json_group;
+
+			json_group["name"] = group.display_name;
+			json_group["id"] = std::to_string(group_id);
+			
+			{
+				auto& json_group_videos = json_group["videos"];
+				json_group_videos = nlohmann::ordered_json::array();
+				for (auto& group_video_info : group)
+				{
+					auto* video_metadata = videos.get(group_video_info.id);
+					if (video_metadata == nullptr)
+					{
+						//TODO: Should this do something?
+						continue;
+					}
+
+					auto json_video = nlohmann::ordered_json::object();
+					json_video["name"] = video_metadata->path.filename().u8string(); //TODO: Should this be the filename
+					json_video["id"] = std::to_string(group_video_info.id);
+					json_group_videos.push_back(json_video);
+				}
+			}
+
+			{
+				auto& json_tags = json_group["tags"];
+				json_tags = nlohmann::ordered_json::array();
+				for (auto& [tag_name, _] : group_segments)
+				{
+					json_tags.push_back(tag_name);
+				}
+			}
+			
+			{
+				auto& json_group_segments = json_group["segments"];
+
+				for (auto& group_video_info : group)
+				{
+					auto& json_video_segments = json_group_segments[std::to_string(group_video_info.id)];
+					json_video_segments = nlohmann::ordered_json::array();
+					for (auto& [tag_name, tag_segments] : group_segments)
+					{
+						auto json_tag_data = nlohmann::ordered_json::object();
+						json_tag_data["tag"] = tag_name;
+
+						auto& json_tag_segments = json_tag_data["segments"];
+						json_tag_segments = nlohmann::ordered_json::array();
+						for (tag_segment segment : tag_segments) //copy is intended
+						{
+							segment.start -= timestamp{ std::chrono::duration_cast<std::chrono::seconds>(group_video_info.offset) };
+							segment.end -= timestamp{ std::chrono::duration_cast<std::chrono::seconds>(group_video_info.offset) };
+
+							bool clipped_start = false;
+							bool clipped_end = false;
+
+							if (segment.start < timestamp::zero())
+							{
+								segment.start = timestamp::zero();
+								clipped_start = true;
+							}
+
+							if (segment.end < timestamp::zero())
+							{
+								segment.end = timestamp::zero();
+								clipped_end = true;
+							}
+
+							if (clipped_start and clipped_end)
+							{
+								continue;
+							}
+
+							json_tag_segments.push_back(segment);
+						}
+
+						json_video_segments.push_back(json_tag_data);
+					}
+				}
+			}
+
+			json_groups.push_back(json_group);
+		}
+
+		return utils::json::write_to_file(json, filepath);
+	}
 	
 	void project::save() const
 	{
