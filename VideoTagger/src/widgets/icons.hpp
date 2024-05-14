@@ -11,7 +11,7 @@ namespace vt::icons
 	inline constexpr auto pause = "\xee\x80\xb4";
 	inline constexpr auto repeat = "\xee\x81\x80";
 	inline constexpr auto repeat_one = "\xee\x81\x81";
-	inline constexpr auto shuffle = "\xee\x81\x81";
+	inline constexpr auto shuffle = "\xee\x81\x83";
 	inline constexpr auto skip_next = "\xee\x81\x84";
 	inline constexpr auto skip_prev = "\xee\x81\x85";
 	inline constexpr auto fast_back = "\xee\x80\xa0";

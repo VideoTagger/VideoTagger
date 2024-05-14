@@ -43,9 +43,12 @@ namespace vt
 
 	struct project : public project_info
 	{
+		using segment_storage_map = std::unordered_map<video_group_id_t, segment_storage>;
+		using video_group_map = std::unordered_map<video_group_id_t, video_group>;
+
 		video_group_playlist video_group_playlist;
-		std::unordered_map<video_group_id_t, segment_storage> segments;
-		std::unordered_map<video_group_id_t, video_group> video_groups;
+		segment_storage_map segments;
+		video_group_map video_groups;
 		std::vector<std::future<project_import_video_result>> video_import_tasks;
 		video_pool videos;
 		tag_storage tags;
@@ -60,6 +63,7 @@ namespace vt
 		project& operator=(project&&) = default;
 
 		std::future<project_import_video_result> import_video(const std::filesystem::path& filepath, video_id_t id = 0, bool create_group = true);
+		bool export_segments(const std::filesystem::path& filepath, std::vector<video_group_id_t> group_ids) const;
 
 		//TODO: save tags displayed on the timeline in the project file
 		void save() const;

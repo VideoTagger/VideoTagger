@@ -1345,43 +1345,19 @@ namespace vt
 							}
 							if (ImGui::MenuItem("Export Segments"))
 							{
-								utils::dialog_filter filter{ "VideoTagger Segments", "vtss" };
-								auto result = utils::filesystem::save_file({}, { filter }, ctx_.current_project->name);
-								if (result)
+								if (ctx_.current_video_group_id() != invalid_video_group_id)
 								{
-									const auto& segments = ctx_.current_project->segments;
-									nlohmann::ordered_json json;
-									json["version"] = ctx_.current_project->version;
-									auto& json_segments = json["groups"];
-									if (!segments.empty())
-									{
-										for (auto& [group_id, group_segments] : segments)
-										{
-											nlohmann::ordered_json json_group_segments_data;
-											json_group_segments_data["group-id"] = group_id;
-											json_group_segments_data["group-name"] = ctx_.current_project->video_groups.at(group_id).display_name;
-											auto& json_videos = json_group_segments_data["videos"];
-											json_videos = nlohmann::ordered_json::array();
-											const auto& video_group = ctx_.current_project->video_groups.at(group_id);
-											for (const auto& vinfo : video_group)
-											{
-												nlohmann::ordered_json json_video;
-												auto vmeta = ctx_.current_project->videos.get(vinfo.id);
-												if (vmeta != nullptr)
-												{
-													json_video["video-name"] = vmeta->path.filename();
-												}
-												json_video["video-id"] = vinfo.id;
-												json_video["offset"] = utils::time::time_to_string(std::chrono::duration_cast<std::chrono::seconds>(vinfo.offset).count());
-												json_videos.push_back(json_video);
-											}
-											auto& json_group_segments = json_group_segments_data["group-segments"];
-											json_group_segments = group_segments;
+									const auto& group_name = ctx_.current_project->video_groups.at(ctx_.current_video_group_id()).display_name;
 
-											json_segments.push_back(json_group_segments_data);
-										}
+									utils::dialog_filter filter{ "VideoTagger Segments", "vtss" };
+									auto result = utils::filesystem::save_file({}, { filter }, group_name);
+									if (result)
+									{
+										//TODO: ability to choose which groups to export
+
+										ctx_.current_project->export_segments(result.path, { ctx_.current_video_group_id() });
+
 									}
-									utils::json::write_to_file(json, result.path);
 								}
 							}
 							ImGui::EndMenu();
