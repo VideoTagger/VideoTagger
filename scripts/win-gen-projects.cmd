@@ -2,6 +2,12 @@
 setlocal enabledelayedexpansion
 pushd %~dp0\..\
 
+call python scripts\setup.py
+if %errorlevel% neq 0 (
+	echo Error: Setup failed
+	goto :error
+)
+
 if exist win-projects.buildcfg (
 	set cfg_loaded=1
 	set /p vs_ver=<win-projects.buildcfg
@@ -21,7 +27,7 @@ if %vs_ver% gtr 2022 (
 	goto :error
 )
 
-call tools\premake\windows\premake5.exe vs%vs_ver%
+call tools\bin\premake5.exe vs%vs_ver%
 if %errorlevel% neq 0 (
 	echo Error: Premake failed to generate project files
 	goto :error
