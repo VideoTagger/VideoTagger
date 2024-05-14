@@ -2,6 +2,7 @@
 #include "insert_segment_popup.hpp"
 #include "controls.hpp"
 #include <tags/tag_timeline.hpp>
+#include <core/app_context.hpp>
 
 namespace vt::widgets
 {
@@ -17,6 +18,8 @@ namespace vt::widgets
 
 		if (ImGui::BeginPopupModal(id, nullptr, flags))
 		{
+			ctx_.pause_player = true;
+
 			std::vector<const char*> tags_cstr(tags.size());
 			for (size_t i = 0; i < tags.size(); i++)
 			{
