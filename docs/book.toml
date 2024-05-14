@@ -1,0 +1,10 @@
+[book]
+authors = ["ScriptExec"]
+language = "en"
+multilingual = false
+src = "src"
+title = "VideoTagger Documentation"
+
+[build]
+create-missing = false
+build-dir = "build"
