@@ -33,19 +33,20 @@ namespace vt::widgets
 		if (ImGui::BeginPopupModal("Project Configuration", nullptr, flags))
 		{
 			ImGui::PushFont(ctx_.fonts["title"]);
-			ImGui::LabelText("##ProjectCfgTitle", "Project Configuration");
+			ImGui::LabelText("##ProjectCfgTitle", ctx_.lang.get(lang_pack_id::project_configuration));
 			ImGui::Separator();
 			ImGui::Dummy(style.ItemSpacing);
 			ImGui::PopFont();
-			ImGui::TextDisabled("Name");
+			ImGui::TextDisabled(ctx_.lang.get(lang_pack_id::name));
 
 			auto avail_size = ImGui::GetContentRegionAvail();
 			auto input_width = avail_size.x * 0.9f;
 			
 			ImGui::SetNextItemWidth(input_width);
-			ImGui::InputTextWithHint("##ProjectCfgName", "Project Name...", &temp_project.name, ImGuiInputTextFlags_AutoSelectAll);
+			std::string proj_name_hint = fmt::format("{}...", ctx_.lang.get(lang_pack_id::project_name));
+			ImGui::InputTextWithHint("##ProjectCfgName", proj_name_hint.c_str(), &temp_project.name, ImGuiInputTextFlags_AutoSelectAll);
 
-			ImGui::TextDisabled("Location");
+			ImGui::TextDisabled(ctx_.lang.get(lang_pack_id::location));
 			std::string path = std::filesystem::absolute(temp_project.path).replace_extension().u8string();
 
 			int input_flags = ImGuiInputTextFlags_AutoSelectAll;
@@ -78,9 +79,9 @@ namespace vt::widgets
 					temp_project.path.make_preferred();
 				}
 			}
-			ImGui::Checkbox("Derive filename from project name", &path_from_name);
+			ImGui::Checkbox(ctx_.lang.get(lang_pack_id::derive_filename_from_proj_name), &path_from_name);
 
-			auto button_size = ImGui::CalcTextSize("Cancel") + style.ItemInnerSpacing * 2;
+			auto button_size = ImGui::CalcTextSize(ctx_.lang.get(lang_pack_id::cancel)) + style.ItemInnerSpacing * 2;
 			button_size *= 1.15f;
 
 			ImGui::SetCursorPosY(win_size.y - style.WindowPadding.y - button_size.y);
@@ -97,11 +98,11 @@ namespace vt::widgets
 			valid &= (it == projects_.end());
 
 			if (!valid) ImGui::BeginDisabled();
-			bool pressed = ImGui::Button("Create##ProjectCfg", button_size) || ImGui::IsKeyPressed(ImGuiKey_Enter);
+			bool pressed = ImGui::Button(ctx_.lang.get(lang_pack_id::create), button_size) || ImGui::IsKeyPressed(ImGuiKey_Enter);
 			if (!valid) ImGui::EndDisabled();
 
 			ImGui::SameLine();
-			if (ImGui::Button("Cancel##ProjectCfg", button_size))
+			if (ImGui::Button(ctx_.lang.get(lang_pack_id::cancel), button_size))
 			{
 				ImGui::CloseCurrentPopup();
 			}			
@@ -130,8 +131,8 @@ namespace vt::widgets
 
 		if (id == 0)
 		{
-			ImGui::TableSetupColumn("Project Name", ImGuiTableColumnFlags_WidthStretch);
-			ImGui::TableSetupColumn("Modification Time", ImGuiTableColumnFlags_WidthStretch | ImGuiTableColumnFlags_NoResize);
+			ImGui::TableSetupColumn(ctx_.lang.get(lang_pack_id::project_name), ImGuiTableColumnFlags_WidthStretch);
+			ImGui::TableSetupColumn(ctx_.lang.get(lang_pack_id::modification_time), ImGuiTableColumnFlags_WidthStretch | ImGuiTableColumnFlags_NoResize);
 			ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed | ImGuiTableColumnFlags_NoHeaderLabel);
 			ImGui::TableHeadersRow();
 		}
@@ -161,7 +162,7 @@ namespace vt::widgets
 		ImGui::SameLine();
 
 		ImGui::BeginGroup();
-		std::string name = !project.name.empty() ? project.name : "- Invalid Project! -";
+		std::string name = !project.name.empty() ? project.name : fmt::format("- {}! -", ctx_.lang.get(lang_pack_id::invalid_project));
 		ImGui::Text(name.c_str());
 		auto path = project.path;
 		std::optional<tm> mod_time = project.modification_time();
@@ -206,7 +207,7 @@ namespace vt::widgets
 		{
 			if (is_valid)
 			{
-				std::string menu_name = fmt::format("{} Show In Explorer", icons::folder);
+				std::string menu_name = fmt::format("{} {}", icons::folder, ctx_.lang.get(lang_pack_id::show_in_explorer));
 				if (ImGui::MenuItem(menu_name.c_str()))
 				{
 					auto path = std::filesystem::absolute(project.path.parent_path()).u8string();
@@ -232,7 +233,7 @@ namespace vt::widgets
 				{
 					const SDL_MessageBoxButtonData buttons[] = {
 						// flags, buttonid, text
-						{ SDL_MESSAGEBOX_BUTTON_ESCAPEKEY_DEFAULT, 0, "Cancel" },
+						{ SDL_MESSAGEBOX_BUTTON_ESCAPEKEY_DEFAULT, 0, ctx_.lang.get(lang_pack_id::cancel) },
 						{ SDL_MESSAGEBOX_BUTTON_RETURNKEY_DEFAULT, 1, "Delete" }
 					};
 
@@ -356,11 +357,11 @@ namespace vt::widgets
 				sort();
 			}
 			ImGui::PushFont(ctx_.fonts["title"]);
-			ImGui::LabelText("##ProjectSelectorTitle", "Projects");
+			ImGui::LabelText("##ProjectSelectorTitle", ctx_.lang.get(lang_pack_id::projects));
 			ImGui::PopFont();
 			ImGui::Dummy(ImGui::GetStyle().ItemSpacing);
 
-			search_bar("##ProjectSelectorSearch", "Search...", filter);
+			search_bar("##ProjectSelectorSearch", ctx_.lang.get(lang_pack_id::search_hint), filter);
 						
 			const auto& style = ImGui::GetStyle();
 			auto panels_area = ImGui::GetContentRegionAvail() - style.WindowPadding;
@@ -437,7 +438,7 @@ namespace vt::widgets
 					{
 						ImGui::Dummy(style.ItemSpacing);
 						ImGui::BeginGroup();
-						if (ImGui::Button("New Project", button_size))
+						if (ImGui::Button(ctx_.lang.get(lang_pack_id::new_project), button_size))
 						{
 							open_project_config = true;
 							ImGui::CloseCurrentPopup();
@@ -446,7 +447,7 @@ namespace vt::widgets
 						if (widgets::begin_button_dropdown("##ProjectDropdown", button_size))
 						{
 							ImGui::PushStyleColor(ImGuiCol_Button, ImVec4{});
-							if (ImGui::Button("Add Existing Project", button_size))
+							if (ImGui::Button(ctx_.lang.get(lang_pack_id::add_existing_project), button_size))
 							{
 								utils::dialog_filter filter{ "VideoTagger Project", project_info::extension };
 								auto result = utils::filesystem::get_file({}, { filter });

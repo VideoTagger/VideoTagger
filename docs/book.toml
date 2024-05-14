@@ -8,3 +8,7 @@ title = "VideoTagger Documentation"
 [build]
 create-missing = false
 build-dir = "build"
+
+[output.html]
+default-theme = "light"
+preferred-dark-theme = "ayu"
