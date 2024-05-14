@@ -32,5 +32,12 @@ namespace vt
 		{
 			data_ = data;
 		}
+
+		const char* get(lang_pack_id_t id) const
+		{
+			auto it = data_.find(id);
+			if (it != data_.end()) return it->second.c_str();
+			return "<Missing>";
+		}
 	};
 }

@@ -695,21 +695,21 @@ namespace vt
 		ctx_.keybinds.clear();
 
 		keybind_flags flags(true, false, false);
-		ctx_.keybinds.insert("Save Project", keybind(SDLK_s, keybind_modifiers{ true }, flags,
+		ctx_.keybinds.insert(ctx_.lang.get(lang_pack_id::save_project), keybind(SDLK_s, keybind_modifiers{ true }, flags,
 		builtin_action([this]()
 		{
 			if (ImGui::IsPopupOpen(nullptr, ImGuiPopupFlags_AnyPopup)) return;
 			on_save();
 		})));
 
-		ctx_.keybinds.insert("Save Project As", keybind(SDLK_s, keybind_modifiers{ true, true }, flags,
+		ctx_.keybinds.insert(ctx_.lang.get(lang_pack_id::save_project_as), keybind(SDLK_s, keybind_modifiers{ true, true }, flags,
 		builtin_action([this]()
 		{
 			if (ImGui::IsPopupOpen(nullptr, ImGuiPopupFlags_AnyPopup)) return;
 			on_save_as();
 		})));
 
-		ctx_.keybinds.insert("Import Videos", keybind(SDLK_i, keybind_modifiers{ true }, flags,
+		ctx_.keybinds.insert(ctx_.lang.get(lang_pack_id::import_videos), keybind(SDLK_i, keybind_modifiers{ true }, flags,
 		builtin_action([this]()
 		{
 			if (ImGui::IsPopupOpen(nullptr, ImGuiPopupFlags_AnyPopup)) return;
@@ -723,14 +723,14 @@ namespace vt
 			on_delete();
 		})));
 
-		ctx_.keybinds.insert("Close Project", keybind(SDLK_F4, keybind_modifiers{ true }, flags,
+		ctx_.keybinds.insert(ctx_.lang.get(lang_pack_id::close_project), keybind(SDLK_F4, keybind_modifiers{ true }, flags,
 		builtin_action([this]()
 		{
 			if (ImGui::IsPopupOpen(nullptr, ImGuiPopupFlags_AnyPopup)) return;
 			close_project();
 		})));
 
-		ctx_.keybinds.insert("Exit", keybind(SDLK_F4, keybind_modifiers{ false, false, true }, flags,
+		ctx_.keybinds.insert(ctx_.lang.get(lang_pack_id::exit), keybind(SDLK_F4, keybind_modifiers{ false, false, true }, flags,
 		builtin_action([this]()
 		{
 			if (ImGui::IsPopupOpen(nullptr, ImGuiPopupFlags_AnyPopup)) return;
@@ -1277,9 +1277,9 @@ namespace vt
 	{
 		if (ImGui::BeginMainMenuBar())
 		{
-			if (ImGui::BeginMenu("File"))
+			if (ImGui::BeginMenu(ctx_.lang.get(lang_pack_id::file)))
 			{
-				std::string key_name = "Import Videos";
+				std::string key_name = ctx_.lang.get(lang_pack_id::import_videos);
 				auto& kb = ctx_.keybinds.at(key_name);
 				std::string menu_name = fmt::format("{} {}", icons::import_, key_name);
 				if (ImGui::MenuItem(menu_name.c_str(), kb.name().c_str()))
@@ -1288,7 +1288,7 @@ namespace vt
 				}
 				ImGui::Separator();
 				{
-					std::string key_name = "Save Project";
+					std::string key_name = ctx_.lang.get(lang_pack_id::save_project);
 					auto& kb = ctx_.keybinds.at(key_name);
 					std::string menu_item = fmt::format("{} {}", icons::save, key_name);
 					if (ImGui::MenuItem(menu_item.c_str(), kb.name().c_str()))
@@ -1299,7 +1299,7 @@ namespace vt
 
 				{
 
-					std::string key_name = "Save Project As";
+					std::string key_name = ctx_.lang.get(lang_pack_id::save_project_as);
 					auto& kb = ctx_.keybinds.at(key_name);
 					std::string menu_item = fmt::format("{} {}", icons::save_as, key_name);
 					if (ImGui::MenuItem(menu_item.c_str(), kb.name().c_str()))
@@ -1310,7 +1310,7 @@ namespace vt
 				ImGui::Separator();
 				{
 					{
-						std::string menu_name = fmt::format("{} Show In Explorer", icons::folder);
+						std::string menu_name = fmt::format("{} {}", icons::folder, ctx_.lang.get(lang_pack_id::show_in_explorer));
 						if (ImGui::MenuItem(menu_name.c_str()))
 						{
 							auto path = std::filesystem::absolute(ctx_.current_project->path.parent_path()).u8string();
@@ -1322,7 +1322,7 @@ namespace vt
 					}
 
 					{
-						std::string menu_name = fmt::format("{} Import / Export", icons::import_export);
+						std::string menu_name = fmt::format("{} {}", icons::import_export, ctx_.lang.get(lang_pack_id::import_export));
 						if (ImGui::BeginMenu(menu_name.c_str()))
 						{
 							if (ImGui::MenuItem("Import Tags", nullptr, nullptr, false))
@@ -1368,7 +1368,7 @@ namespace vt
 				{
 					std::string key_name = "Close Project";
 					auto& kb = ctx_.keybinds.at(key_name);
-					std::string menu_item = std::string(icons::close) + ' ' + key_name;
+					std::string menu_item = std::string(icons::close) + ' ' + ctx_.lang.get(lang_pack_id::close_project);
 					if (ImGui::MenuItem(menu_item.c_str(), kb.name().c_str()))
 					{
 						close_project();
@@ -1378,7 +1378,7 @@ namespace vt
 				{
 					std::string key_name = "Exit";
 					auto& kb = ctx_.keybinds.at(key_name);
-					std::string menu_item = std::string(icons::exit) + ' ' + key_name;
+					std::string menu_item = std::string(icons::exit) + ' ' + ctx_.lang.get(lang_pack_id::exit);
 					if (ImGui::MenuItem(menu_item.c_str(), kb.name().c_str()))
 					{
 						on_close_project(true);
@@ -1386,19 +1386,22 @@ namespace vt
 				}
 				ImGui::EndMenu();
 			}
-			if (ImGui::BeginMenu("Edit"))
+
+			if (ImGui::BeginMenu(ctx_.lang.get(lang_pack_id::edit)))
 			{
-				if (ImGui::MenuItem("Undo", nullptr, nullptr, false))
+				if (ImGui::MenuItem(ctx_.lang.get(lang_pack_id::undo), nullptr, nullptr, false))
 				{
 
 				}
-				if (ImGui::MenuItem("Redo", nullptr, nullptr, false))
+
+				if (ImGui::MenuItem(ctx_.lang.get(lang_pack_id::redo), nullptr, nullptr, false))
 				{
 
 				}
 				ImGui::EndMenu();
 			}
-			if (ImGui::BeginMenu("Window"))
+
+			if (ImGui::BeginMenu(ctx_.lang.get(lang_pack_id::window)))
 			{
 				auto& windows = ctx_.settings["show-windows"];
 
@@ -1448,17 +1451,18 @@ namespace vt
 #endif
 
 				ImGui::Separator();
-				if (ImGui::MenuItem("Re-dock Videos"))
+				if (ImGui::MenuItem(ctx_.lang.get(lang_pack_id::redock_videos)))
 				{
 					ctx_.reset_player_docking = true;
 				}
-				if (ImGui::MenuItem("Reset Layout"))
+				if (ImGui::MenuItem(ctx_.lang.get(lang_pack_id::reset_layout)))
 				{
 					ctx_.reset_layout = true;
 				}
 				ImGui::EndMenu();
 			}
-			if (ImGui::BeginMenu("Tools"))
+
+			if (ImGui::BeginMenu(ctx_.lang.get(lang_pack_id::tools)))
 			{
 				if (ImGui::BeginMenu("Themes"))
 				{
@@ -1482,15 +1486,15 @@ namespace vt
 				}
 				ImGui::MenuItem("Theme Customizer", nullptr, &ctx_.win_cfg.show_theme_customizer_window);
 				ImGui::Separator();
-				if (ImGui::MenuItem("Options"))
+				if (ImGui::MenuItem(ctx_.lang.get(lang_pack_id::options)))
 				{
 					ctx_.win_cfg.show_options_window = true;
 				}
 				ImGui::EndMenu();
 			}
-			if (ImGui::BeginMenu("Help"))
+			if (ImGui::BeginMenu(ctx_.lang.get(lang_pack_id::help)))
 			{
-				if (ImGui::MenuItem("About"))
+				if (ImGui::MenuItem(ctx_.lang.get(lang_pack_id::about)))
 				{
 					ctx_.win_cfg.show_about_window = true;
 				}

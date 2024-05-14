@@ -38,4 +38,5 @@ To build the projects, open the Xcode file and build the projects with chosen co
 - [Native File Dialog Extended](https://github.com/btzy/nativefiledialog-extended/tree/master)
 - [fmt](https://github.com/fmtlib/fmt)
 - [Nlohmann Json](https://github.com/nlohmann/json)
+- [utf8.h](https://github.com/sheredom/utf8.h)
 - [ffmpeg](https://ffmpeg.org/)
