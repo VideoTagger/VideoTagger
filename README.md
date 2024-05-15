@@ -1,3 +1,5 @@
+# VideoTagger
+![VideoTagger Preview](./resources/images/preview.png?raw=true)
 
 ## Getting started
 To download the repository use `git clone --recursive https://github.com/Vexte/VideoTagger`.
