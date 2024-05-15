@@ -484,14 +484,14 @@ namespace vt
 	{
 		//TODO: This should be implemented as a function in timeline
 		//also segments dont get deselected when windows other than Inspector are active, which should probably be changed
-		if (!ctx_.selected_segment_data.has_value()) return;
+		if (!ctx_.video_timeline.selected_segment.has_value()) return;
 
 		ctx_.is_project_dirty = true;
-		auto it = ctx_.selected_segment_data->segments->find(ctx_.selected_segment_data->segment_it->start);
-		if (it != ctx_.selected_segment_data->segments->end())
+		auto it = ctx_.video_timeline.selected_segment->segments->find(ctx_.video_timeline.selected_segment->segment_it->start);
+		if (it != ctx_.video_timeline.selected_segment->segments->end())
 		{
-			ctx_.selected_segment_data->segments->erase(it);
-			ctx_.selected_segment_data.reset();
+			ctx_.video_timeline.selected_segment->segments->erase(it);
+			ctx_.video_timeline.selected_segment.reset();
 		}
 	}
 
@@ -607,7 +607,7 @@ namespace vt
 		on_close_project(false);
 		ctx_.reset_current_video_group();
 		ctx_.current_project = std::nullopt;
-		ctx_.selected_segment_data = std::nullopt;
+		ctx_.video_timeline.selected_segment = std::nullopt;
 		set_subtitle();
 	}
 	
@@ -1608,10 +1608,10 @@ namespace vt
 
 		auto& insert_data = insert_data_it->second;
 
-		auto min_ts = ctx_.timeline_state.time_min.seconds_total.count();
-		auto max_ts = ctx_.timeline_state.time_max.seconds_total.count();
+		auto min_ts = ctx_.video_timeline.time_min_.seconds_total.count();
+		auto max_ts = ctx_.video_timeline.time_max_.seconds_total.count();
 		//should it be this or all tags?
-		auto& tags = ctx_.timeline_state.displayed_tags.at(ctx_.current_video_group_id());
+		auto& tags = ctx_.video_timeline.displayed_tags_.at(ctx_.current_video_group_id());
 
 		auto segment_type = *insert_data.start == *insert_data.end ? tag_segment_type::timestamp : tag_segment_type::segment;
 		const char* insert_segment_popup_id = segment_type == tag_segment_type::timestamp ? "Insert Timestamp###AppInsertSegment" : "Insert Segment###AppInsertSegment";
@@ -1791,20 +1791,20 @@ namespace vt
 			auto group_duration = ctx_.displayed_videos.duration();
 
 			//TODO: Definitely change this!
-			ctx_.timeline_state.current_video_group_id = ctx_.current_video_group_id();
-			ctx_.timeline_state.tags = &ctx_.current_project->tags;
-			ctx_.timeline_state.segments = ctx_.current_video_group_id() != invalid_video_group_id ? &ctx_.get_current_segment_storage() : nullptr;
-			ctx_.timeline_state.sync_tags();
-			ctx_.timeline_state.time_min = timestamp::zero();
-			ctx_.timeline_state.time_max = timestamp(std::chrono::duration_cast<std::chrono::seconds>(group_duration));
-			ctx_.timeline_state.current_time = timestamp{ std::chrono::duration_cast<std::chrono::seconds>(ctx_.displayed_videos.current_timestamp()) };
+			ctx_.video_timeline.current_video_group_id_ = ctx_.current_video_group_id();
+			ctx_.video_timeline.tags_ = &ctx_.current_project->tags;
+			ctx_.video_timeline.segments_ = ctx_.current_video_group_id() != invalid_video_group_id ? &ctx_.get_current_segment_storage() : nullptr;
+			ctx_.video_timeline.sync_tags();
+			ctx_.video_timeline.time_min_ = timestamp::zero();
+			ctx_.video_timeline.time_max_ = timestamp(std::chrono::duration_cast<std::chrono::seconds>(group_duration));
+			ctx_.video_timeline.current_time_ = timestamp{ std::chrono::duration_cast<std::chrono::seconds>(ctx_.displayed_videos.current_timestamp()) };
+			ctx_.video_timeline.insert_segment_container = &ctx_.insert_segment_data;
 			
-			widgets::draw_timeline_widget("Timeline", ctx_.timeline_state, ctx_.selected_segment_data, ctx_.moving_segment_data,
-				ctx_.insert_segment_data, ctx_.is_project_dirty, ctx_.win_cfg.show_timeline_window);
+			ctx_.video_timeline.render(ctx_.win_cfg.show_timeline_window);
 
-			if (ctx_.timeline_state.current_time.seconds_total != std::chrono::duration_cast<std::chrono::seconds>(ctx_.displayed_videos.current_timestamp()))
+			if (ctx_.video_timeline.current_time_.seconds_total != std::chrono::duration_cast<std::chrono::seconds>(ctx_.displayed_videos.current_timestamp()))
 			{
-				ctx_.displayed_videos.seek(ctx_.timeline_state.current_time.seconds_total);
+				ctx_.displayed_videos.seek(ctx_.video_timeline.current_time_.seconds_total);
 			}
 		}
 
@@ -1816,7 +1816,7 @@ namespace vt
 			{
 				ctx_.is_project_dirty = true;
 				
-				for (auto& [_, displayed_tags] : ctx_.timeline_state.displayed_tags)
+				for (auto& [_, displayed_tags] : ctx_.video_timeline.displayed_tags_)
 				{
 					for (auto& tag_name : displayed_tags)
 					{
@@ -1852,7 +1852,7 @@ namespace vt
 
 		if (ctx_.win_cfg.show_inspector_window)
 		{
-			widgets::inspector(ctx_.selected_segment_data, ctx_.moving_segment_data, ctx_.app_settings.link_start_end_segment, ctx_.is_project_dirty, &ctx_.win_cfg.show_inspector_window);
+			widgets::inspector(ctx_.video_timeline.selected_segment, ctx_.video_timeline.moving_segment, ctx_.app_settings.link_start_end_segment, ctx_.is_project_dirty, &ctx_.win_cfg.show_inspector_window);
 		}
 
 		if (ctx_.win_cfg.show_video_browser_window)

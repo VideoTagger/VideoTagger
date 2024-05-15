@@ -18,26 +18,6 @@ namespace vt::widgets
 		bool active{};
 	};
 	
-	void draw_timeline_widget(const char* id, timeline_state& state, std::optional<selected_segment_data>& selected_timestamp,
-		std::optional<moving_segment_data>& moving_timestamp, insert_segment_data_container& insert_segment_container, bool& dirty_flag, bool& open)
-	{
-		ImVec2 default_window_padding = ImGui::GetStyle().WindowPadding;
-		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2{});
-		if (ImGui::Begin(id, &open))
-		{
-			state.enabled = state.current_video_group_id != 0;
-			
-			ImGui::PushID(id);
-			ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, default_window_padding);
-			
-			video_timeline(state, selected_timestamp, moving_timestamp, insert_segment_container, dirty_flag);
-			
-			ImGui::PopStyleVar();
-			ImGui::PopID();
-		}
-		ImGui::End();
-		ImGui::PopStyleVar();
-	}
 
 	void draw_tag_manager_widget(tag_storage& tags, std::optional<tag_rename_data>& tag_rename, bool& dirty_flag, bool& open)
 	{

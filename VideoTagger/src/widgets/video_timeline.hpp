@@ -75,37 +75,49 @@ namespace vt::widgets
 
 	using insert_segment_data_container = std::unordered_map<std::string, insert_segment_data>;
 
-	struct timeline_state
+	class video_timeline
 	{
+	public:
 		static constexpr timestamp disabled_time_min = timestamp::zero();
 		static constexpr timestamp disabled_time_max = timestamp{ 3600 };
+	
+		std::optional<selected_segment_data> selected_segment;
+		std::optional<moving_segment_data> moving_segment;
+		insert_segment_data_container* insert_segment_container;
 
-		bool focused = false;
-		bool enabled = true;
+		tag_storage* tags_{};
+		segment_storage* segments_{};
+		std::unordered_map<video_group_id_t, std::vector<std::string>> displayed_tags_;
 
-		tag_storage* tags{};
-		segment_storage* segments{};
+		bool enabled_ = true;
 
-		video_group_id_t current_video_group_id = invalid_video_group_id;
-		std::unordered_map<video_group_id_t, std::vector<std::string>> displayed_tags;
+		timestamp time_min_{};
+		timestamp time_max_{};
 
-		timestamp time_min{};
-		timestamp time_max{};
+		int64_t first_frame_{};
 
-		int64_t first_frame{};
-
-		timestamp current_time{};
+		timestamp current_time_{};
+		video_group_id_t current_video_group_id_ = invalid_video_group_id;
 
 		tag& get(size_t index);
 		void add(const std::string& name);
 		void del(size_t index);
 
 		void sync_tags();
+
+		void render(bool& open);
+
+	private:
+		bool focused_ = false;
+
+	};
+
+	struct timeline_state
+	{
+		
 	};
 
 	//Inspector needs this
 	extern bool merge_segments_popup(const std::string& id, bool& pressed_button, bool display_dragged_segment_text);
-
-	bool video_timeline(timeline_state& state, std::optional<selected_segment_data>& selected_timestamp, std::optional<moving_segment_data>& moving_timestamp, insert_segment_data_container& insert_segment_container, bool& dirty_flag);
 
 }

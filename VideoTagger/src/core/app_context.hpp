@@ -64,7 +64,7 @@ namespace vt
 
 	struct app_context
 	{
-		widgets::timeline_state timeline_state;
+		widgets::video_timeline video_timeline;
 		widgets::project_selector project_selector;
 		widgets::video_player player;
 		widgets::video_browser browser;
@@ -86,8 +86,6 @@ namespace vt
 		std::optional<project> current_project;
 		displayed_videos_manager displayed_videos;
 
-		std::optional<widgets::selected_segment_data> selected_segment_data;
-		std::optional<widgets::moving_segment_data> moving_segment_data;
 		widgets::insert_segment_data_container insert_segment_data;
 
 		app_settings app_settings;

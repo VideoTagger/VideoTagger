@@ -123,8 +123,8 @@ namespace vt
 		}
 
 		current_video_group_id_ = id;
-		moving_segment_data.reset();
-		selected_segment_data.reset();
+		video_timeline.moving_segment.reset();
+		video_timeline.selected_segment.reset();
 		insert_segment_data.clear();
 	}
 
