@@ -10,13 +10,10 @@
 # Tagging
 - [Tag Management](./tagging/tag-management.md)
 - [Tagging Basics](./tagging/basics.md)
+	- [Video Timeline](./tagging/timeline.md)
 	- [Multi-Video Tagging](./tagging/multi-video-tagging.md)
 
 # Keybinds
 - [Keybind Categories](./keybinds/categories.md)
 - [First Keybind](./keybinds/first-keybind.md)
 	- [Keybind Actions](./keybinds/actions.md)
-
----
-
-[Similiar Apps]()

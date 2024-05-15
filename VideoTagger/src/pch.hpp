@@ -34,7 +34,5 @@
 
 #define FMT_HEADER_ONLY
 #include <fmt/core.h>
-
 #include <nfd.hpp>
-
 #include <utf8.h>
