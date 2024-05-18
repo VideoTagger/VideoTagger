@@ -12,8 +12,8 @@ namespace vt
 		if (!ctx_.current_project.has_value() or ctx_.current_video_group_id() == invalid_video_group_id) return;
 
 		auto& data = ctx_.insert_segment_data[tag_];
-		data.start = ctx_.video_timeline.current_time_;
-		data.end = ctx_.video_timeline.current_time_;
+		data.start = ctx_.video_timeline.current_timestamp();
+		data.end = ctx_.video_timeline.current_timestamp();
 		data.tag = tag_;
 		data.ready = true;
 		data.show_insert_popup = tag_.empty();
@@ -106,12 +106,12 @@ namespace vt
 		{
 			case segment_action_type::start:
 			{
-				data.start = ctx_.video_timeline.current_time_;
+				data.start = ctx_.video_timeline.current_timestamp();
 			}
 			break;
 			case segment_action_type::end:
 			{
-				data.end = ctx_.video_timeline.current_time_;
+				data.end = ctx_.video_timeline.current_timestamp();
 			}
 			break;
 		}

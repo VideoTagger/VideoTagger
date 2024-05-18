@@ -83,21 +83,7 @@ namespace vt::widgets
 	
 		std::optional<selected_segment_data> selected_segment;
 		std::optional<moving_segment_data> moving_segment;
-		insert_segment_data_container* insert_segment_container;
-
-		tag_storage* tags_{};
-		segment_storage* segments_{};
-		std::unordered_map<video_group_id_t, std::vector<std::string>> displayed_tags_;
-
-		bool enabled_ = true;
-
-		timestamp time_min_{};
-		timestamp time_max_{};
-
-		int64_t first_frame_{};
-
-		timestamp current_time_{};
-		video_group_id_t current_video_group_id_ = invalid_video_group_id;
+		insert_segment_data_container* insert_segment_container{};
 
 		tag& get(size_t index);
 		void add(const std::string& name);
@@ -105,16 +91,51 @@ namespace vt::widgets
 
 		void sync_tags();
 
+		void set_video_group_id(video_group_id_t id);
+		video_group_id_t video_group_id() const;
+
+		void set_tag_storage(tag_storage* tags);
+		tag_storage* tag_storage() const;
+
+		void set_segment_storage(segment_storage* segments);
+		segment_storage* segment_storage() const;
+
+		void set_enabled(bool value);
+		bool is_enabled() const;
+
+		void set_start_timestamp(timestamp ts);
+		timestamp start_timestamp() const;
+
+		void set_end_timestamp(timestamp ts);
+		timestamp end_timestamp() const;
+
+		void set_current_timestamp(timestamp ts);
+		timestamp current_timestamp() const;
+
+		std::vector<std::string>& displayed_tags();
+		const std::vector<std::string>& displayed_tags() const;
+
+		std::unordered_map<video_group_id_t, std::vector<std::string>>& displayed_tags_per_group();
+		const std::unordered_map<video_group_id_t, std::vector<std::string>>& displayed_tags_per_group() const;
+
 		void render(bool& open);
 
 	private:
 		bool focused_ = false;
-
-	};
-
-	struct timeline_state
-	{
+		bool enabled_ = true;
 		
+		vt::tag_storage* tags_{};
+		vt::segment_storage* segments_{};
+
+		std::unordered_map<video_group_id_t, std::vector<std::string>> displayed_tags_;
+
+		int64_t first_frame_{};
+
+		timestamp time_min_{};
+		timestamp time_max_{};
+		timestamp current_time_{};
+
+		video_group_id_t current_video_group_id_ = invalid_video_group_id;
 	};
 
 	//Inspector needs this

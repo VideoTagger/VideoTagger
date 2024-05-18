@@ -100,6 +100,96 @@ namespace vt::widgets
 		}
 	}
 
+	void video_timeline::set_video_group_id(video_group_id_t id)
+	{
+		current_video_group_id_ = id;
+	}
+
+	video_group_id_t video_timeline::video_group_id() const
+	{
+		return current_video_group_id_;
+	}
+
+	void video_timeline::set_tag_storage(vt::tag_storage* tags)
+	{
+		tags_ = tags;
+	}
+
+	tag_storage* video_timeline::tag_storage() const
+	{
+		return tags_;
+	}
+
+	void video_timeline::set_segment_storage(vt::segment_storage* segments)
+	{
+		segments_ = segments;
+	}
+
+	segment_storage* video_timeline::segment_storage() const
+	{
+		return segments_;
+	}
+
+	void video_timeline::set_enabled(bool value)
+	{
+		enabled_ = value;
+	}
+
+	bool video_timeline::is_enabled() const
+	{
+		return enabled_;
+	}
+
+	void video_timeline::set_start_timestamp(timestamp ts)
+	{
+		time_min_ = ts;
+	}
+
+	timestamp video_timeline::start_timestamp() const
+	{
+		return time_min_;
+	}
+
+	void video_timeline::set_end_timestamp(timestamp ts)
+	{
+		time_max_ = ts;
+	}
+
+	timestamp video_timeline::end_timestamp() const
+	{
+		return time_max_;
+	}
+
+	void video_timeline::set_current_timestamp(timestamp ts)
+	{
+		current_time_ = ts;
+	}
+
+	timestamp video_timeline::current_timestamp() const
+	{
+		return current_time_;
+	}
+
+	std::vector<std::string>& video_timeline::displayed_tags()
+	{
+		return displayed_tags_[current_video_group_id_];
+	}
+
+	const std::vector<std::string>& video_timeline::displayed_tags() const
+	{
+		return displayed_tags_.at(current_video_group_id_);
+	}
+
+	std::unordered_map<video_group_id_t, std::vector<std::string>>& video_timeline::displayed_tags_per_group()
+	{
+		return displayed_tags_;
+	}
+
+	const std::unordered_map<video_group_id_t, std::vector<std::string>>& video_timeline::displayed_tags_per_group() const
+	{
+		return displayed_tags_;
+	}
+
 
 	static bool timeline_add_button(ImDrawList* draw_list, ImVec2 pos, bool enabled)
 	{
