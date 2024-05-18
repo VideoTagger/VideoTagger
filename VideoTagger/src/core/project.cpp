@@ -313,6 +313,17 @@ namespace vt
 			json["keybinds"] = keybinds;
 		}
 
+		auto& json_video_timeline = json["video-timeline"];
+		auto& json_displayed_tags = json_video_timeline["displayed-tags"];
+		json_displayed_tags = nlohmann::ordered_json::array();
+		for (auto& [group_id, displayed_tags] : ctx_.video_timeline.displayed_tags_per_group())
+		{
+			auto json_group_tags = nlohmann::ordered_json::object();
+			json_group_tags["group-id"] = group_id;
+			json_group_tags["tags"] = displayed_tags;
+			json_displayed_tags.push_back(json_group_tags);
+		}
+
 		//TODO: This probably shouldnt be done
 		/*
 		auto parent = path.parent_path();
@@ -473,6 +484,22 @@ namespace vt
 			if (json.contains("keybinds"))
 			{
 				result.keybinds = json["keybinds"];
+			}
+
+			if (json.contains("video-timeline"))
+			{
+				auto& json_video_timeline = json.at("video-timeline");
+				if (json_video_timeline.contains("displayed-tags"))
+				{
+					for (auto& json_group_tags : json_video_timeline.at("displayed-tags"))
+					{
+						auto& timeline_displayed_tags = ctx_.video_timeline.displayed_tags_per_group();
+						if (json_group_tags.contains("group-id") and json_group_tags.contains("tags"))
+						{
+							timeline_displayed_tags[json_group_tags.at("group-id")] = json_group_tags.at("tags");
+						}
+					}
+				}
 			}
 		}
 

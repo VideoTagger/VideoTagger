@@ -2,25 +2,38 @@
 #include "tag_menu.hpp"
 
 #include "icons.hpp"
+#include <core/app_context.hpp>
 
 namespace vt::widgets
 {
-	bool tag_menu(tag_storage& tags, std::vector<std::string>& visible_tags)
+	bool tag_menu(tag_storage& tags, std::vector<std::string>& visible_tags, bool& tags_modifed)
 	{
 		bool result{};
 		bool hide_popup = false;
 		if (ImGui::SmallButton("Show All"))
 		{
+			size_t tags_size = visible_tags.size();
+
 			visible_tags.clear();
 			for (const auto& tag : tags)
 			{
 				visible_tags.push_back(tag.name);
 			}
 			result = true;
+
+			if (visible_tags.size() != tags_size)
+			{
+				tags_modifed = true;
+			}
 		}
 		ImGui::SameLine();
 		if (ImGui::SmallButton("Hide All"))
 		{
+			if (!visible_tags.empty())
+			{
+				tags_modifed = true;
+			}
+
 			visible_tags.clear();
 			result = true;
 		}
@@ -32,6 +45,7 @@ namespace vt::widgets
 			{
 				if (std::find(visible_tags.begin(), visible_tags.end(), tag.name) != visible_tags.end()) continue;
 				new_tags.push_back(tag.name);
+				tags_modifed = true;
 			}
 			visible_tags = new_tags;
 			result = true;
@@ -55,17 +69,18 @@ namespace vt::widgets
 						if (visible)
 						{
 							visible_tags.erase(it);
+							tags_modifed = true;
 						}
 						else
 						{
 							visible_tags.push_back(tag.name);
+							tags_modifed = true;
 						}
 					}
 					if (!visible) ImGui::PopStyleColor();
 				}
 				ImGui::EndTable();
 			}
-			
 		}
 		ImGui::EndChild();
 		return result;

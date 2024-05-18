@@ -47,12 +47,12 @@
 
 namespace vt::widgets
 {
-	tag& video_timeline::get(size_t index)
+	tag& video_timeline::get_displayed_tag(size_t index)
 	{
 		return tags_->at(displayed_tags_[current_video_group_id_].at(index));
 	}
 
-	void video_timeline::add(const std::string& name)
+	void video_timeline::add_displayed_tag(const std::string& name)
 	{
 		if (current_video_group_id_ == invalid_video_group_id)
 		{
@@ -72,13 +72,15 @@ namespace vt::widgets
 		}
 
 		displayed_tags_vec.push_back(name);
+		ctx_.is_project_dirty = true;
 	}
 
-	void video_timeline::del(size_t index)
+	void video_timeline::remove_displayed_tag(size_t index)
 	{
 		auto& displayed_tags_vec = displayed_tags_[current_video_group_id_];
 
 		displayed_tags_vec.erase(displayed_tags_vec.begin() + index);
+		ctx_.is_project_dirty = true;
 	}
 
 	void video_timeline::sync_tags()
@@ -90,6 +92,7 @@ namespace vt::widgets
 				if (!tags_->contains(*it))
 				{
 					it = displayed_tags_vec.erase(it);
+					ctx_.is_project_dirty = true;
 				}
 
 				if (it == displayed_tags_vec.end())
@@ -433,10 +436,17 @@ namespace vt::widgets
 
 						//TODO: This should already be sorted, not sorted every frame
 						std::sort(displayed_tags.begin(), displayed_tags.end());
-						if (tag_menu(*tags_, displayed_tags))
+						bool tags_modifed = false;
+						if (tag_menu(*tags_, displayed_tags, tags_modifed))
 						{
 							ImGui::CloseCurrentPopup();
 						}
+
+						if (tags_modifed)
+						{
+							ctx_.is_project_dirty = true;
+						}
+
 						ImGui::EndPopup();
 					}
 				}
@@ -535,7 +545,7 @@ namespace vt::widgets
 				if (segments_ != nullptr)
 					for (size_t i = 0; i < displayed_tags.size(); i++)
 					{
-						tag& tag_info = get(i);
+						tag& tag_info = get_displayed_tag(i);
 						//TODO: consider using at() instead but then an entry would need to be created somewhere first
 						tag_timeline& segments = (*segments_)[tag_info.name];
 
@@ -738,7 +748,7 @@ namespace vt::widgets
 					tag_timeline* segments{};
 					if (mouse_tag_line_index.has_value())
 					{
-						tag_info = &get(*mouse_tag_line_index);
+						tag_info = &get_displayed_tag(*mouse_tag_line_index);
 						segments = &segments_->at(tag_info->name);
 					}
 

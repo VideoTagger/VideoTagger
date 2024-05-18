@@ -85,9 +85,9 @@ namespace vt::widgets
 		std::optional<moving_segment_data> moving_segment;
 		insert_segment_data_container* insert_segment_container{};
 
-		tag& get(size_t index);
-		void add(const std::string& name);
-		void del(size_t index);
+		tag& get_displayed_tag(size_t index);
+		void add_displayed_tag(const std::string& name);
+		void remove_displayed_tag(size_t index);
 
 		void sync_tags();
 

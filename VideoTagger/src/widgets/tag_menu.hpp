@@ -6,5 +6,5 @@
 
 namespace vt::widgets
 {
-	extern bool tag_menu(tag_storage& tags, std::vector<std::string>& visible_tags);
+	extern bool tag_menu(tag_storage& tags, std::vector<std::string>& visible_tags, bool& tags_modifed);
 }
