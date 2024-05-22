@@ -22,6 +22,25 @@ namespace vt::utils::string
 		return distances[size_b];
 	}
 
+	std::string replace_all(const std::string& input, const std::string& from, const std::string& to)
+	{
+		std::string result;
+		result.reserve(input.size());
+
+		size_t last_pos{};
+		size_t find_pos{};
+
+		while ((find_pos = input.find(from, last_pos)) != std::string::npos)
+		{
+			result.append(input, last_pos, find_pos - last_pos);
+			result += to;
+			last_pos = find_pos + from.length();
+		}
+
+		result += input.substr(last_pos);
+		return result;
+	}
+
 	std::string to_lowercase(const std::string& input)
 	{
 		std::string result = input;

@@ -6,6 +6,7 @@
 namespace vt::utils::string
 {
 	uint64_t levenshtein_dist(const std::string& left, const std::string& right);
+	std::string replace_all(const std::string& input, const std::string& from, const std::string& to);
 	
 	std::string to_lowercase(const std::string& input);
 	std::string to_uppercase(const std::string& input);
