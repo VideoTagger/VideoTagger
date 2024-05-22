@@ -1343,21 +1343,18 @@ namespace vt
 									utils::json::write_to_file(json, result.path);
 								}
 							}
-							if (ImGui::MenuItem("Export Segments"))
+							if (ImGui::MenuItem("Export Segments", nullptr, nullptr, ctx_.current_video_group_id() != invalid_video_group_id))
 							{
-								if (ctx_.current_video_group_id() != invalid_video_group_id)
+								const auto& group_name = ctx_.current_project->video_groups.at(ctx_.current_video_group_id()).display_name;
+
+								utils::dialog_filter filter{ "VideoTagger Segments", "vtss" };
+								auto result = utils::filesystem::save_file({}, { filter }, group_name);
+								if (result)
 								{
-									const auto& group_name = ctx_.current_project->video_groups.at(ctx_.current_video_group_id()).display_name;
+									//TODO: ability to choose which groups to export
 
-									utils::dialog_filter filter{ "VideoTagger Segments", "vtss" };
-									auto result = utils::filesystem::save_file({}, { filter }, group_name);
-									if (result)
-									{
-										//TODO: ability to choose which groups to export
+									ctx_.current_project->export_segments(result.path, { ctx_.current_video_group_id() });
 
-										ctx_.current_project->export_segments(result.path, { ctx_.current_video_group_id() });
-
-									}
 								}
 							}
 							ImGui::EndMenu();
