@@ -1,12 +1,18 @@
 #include "pch.hpp"
 #include "keybind_options_popup.hpp"
 #include "keybind_popup.hpp"
+#include <core/debug.hpp>
 #include <core/actions.hpp>
 
 namespace vt::widgets::modal
 {
-	bool keybind_options_popup(const char* id, std::string& keybind_name, keybind& keybind, std::vector<std::shared_ptr<keybind_action>>& actions, int& selected_action, keybind_options_config config)
+	bool keybind_options_popup(const char* id, std::string& keybind_name, keybind& keybind, std::vector<std::shared_ptr<keybind_action>>& actions, int& selected_action, keybind_options_config config, const std::function<bool(const std::string&, const vt::keybind&, keybind_validator_mode)>& validator, keybind_validator_mode validator_mode)
 	{
+		if (validator == nullptr)
+		{
+			debug::panic("Keybind validator was nullptr");
+			return false;
+		}
 		bool result{};
 
 		auto& style = ImGui::GetStyle();
@@ -79,11 +85,14 @@ namespace vt::widgets::modal
 				ImGui::PopStyleColor();
 			}
 			ImGui::Dummy(style.ItemSpacing);
+			bool is_valid = std::invoke(validator, keybind_name, keybind, validator_mode);
+			if (!is_valid) ImGui::BeginDisabled();
 			if (ImGui::Button(!show_save_button ? "Add" : "Save"))
 			{
 				result = (keybind.key_code != -1);
 				ImGui::CloseCurrentPopup();
 			}
+			if (!is_valid) ImGui::EndDisabled();
 			ImGui::SameLine();
 			if (ImGui::Button("Cancel") or ImGui::IsKeyPressed(ImGuiKey_Escape, false))
 			{

@@ -48,6 +48,20 @@ namespace vt
 		keybinds_.clear();
 	}
 
+	bool keybind_storage::contains(const std::string& name) const
+	{
+		return keybinds_.find(name) != keybinds_.end();
+	}
+
+	bool keybind_storage::is_valid(const std::string& name, const keybind& keybind) const
+	{
+		auto it = std::find_if(keybinds_.begin(), keybinds_.end(), [&](const std::pair<std::string, vt::keybind>& kb)
+		{
+			return kb.first == name or kb.second == keybind;
+		});
+		return it == keybinds_.end() and keybind.key_code >= 0;
+	}
+
 	size_t keybind_storage::size() const
 	{
 		return keybinds_.size();

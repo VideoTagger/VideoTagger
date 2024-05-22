@@ -762,6 +762,25 @@ namespace vt
 		auto& options = ctx_.options;
 		static auto display_keybinds_panel = [&](keybind_storage& keybinds, bool toggleable = true, bool show_actions = true, bool can_add_new = true)
 		{
+			static auto validator = [&keybinds](const std::string& name, const vt::keybind& kb, keybind_validator_mode mode) -> bool
+			{
+				if (mode == keybind_validator_mode::validate_keybind_and_name) return keybinds.is_valid(name, kb);
+				switch (mode)
+				{
+					case keybind_validator_mode::validate_keybind:
+					{
+						auto it = std::find_if(keybinds.begin(), keybinds.end(), [&](const std::pair<std::string, vt::keybind>& kb_)
+						{
+							return kb_.second == kb;
+						});
+						return it == keybinds.end() and kb.key_code >= 0;
+					}
+					case keybind_validator_mode::validate_name: return !keybinds.contains(name);
+				}
+				debug::panic("Unreachable validator code path");
+				return false;
+			};
+
 			if (can_add_new)
 			{
 				auto& io = ImGui::GetIO();
@@ -774,7 +793,8 @@ namespace vt
 				static std::string keybind_name;
 				static int selected_action{};
 				
-				if (widgets::modal::keybind_options_popup("##KeybindCreationPopup", keybind_name, input::last_keybind, actions, selected_action, keybind_options_config::show_name_field | keybind_options_config::show_keybind_field | keybind_options_config::show_action_field | keybind_options_config::creation_mode))
+
+				if (widgets::modal::keybind_options_popup("##KeybindCreationPopup", keybind_name, input::last_keybind, actions, selected_action, keybind_options_config::show_name_field | keybind_options_config::show_keybind_field | keybind_options_config::show_action_field | keybind_options_config::creation_mode, validator, keybind_validator_mode::validate_keybind_and_name))
 				{
 					keybind_flags flags(true, true, true);
 					auto kb = keybind(input::last_keybind.key_code, input::last_keybind.modifiers, flags, input::last_keybind.action);
@@ -877,7 +897,7 @@ namespace vt
 						}
 
 						int dummy{};
-						if (widgets::modal::keybind_options_popup("##KeybindNamePopup", new_kb_name, keybind, actions, dummy, keybind_options_config::show_name_field | keybind_options_config::show_save_button))
+						if (widgets::modal::keybind_options_popup("##KeybindNamePopup", new_kb_name, keybind, actions, dummy, keybind_options_config::show_name_field | keybind_options_config::show_save_button, validator, keybind_validator_mode::validate_name))
 						{
 							rename_kb_name = name;
 						}
@@ -912,7 +932,7 @@ namespace vt
 							ImGui::Dummy(style.ItemSpacing);
 						}
 
-						if (widgets::modal::keybind_popup("##KeybindPopup", keybind, input::last_keybind))
+						if (widgets::modal::keybind_popup("##KeybindPopup", keybind, input::last_keybind, validator))
 						{
 							keybind.rebind(input::last_keybind);
 							ctx_.is_project_dirty = true;
@@ -930,7 +950,7 @@ namespace vt
 							static std::vector<std::shared_ptr<keybind_action>> actions;
 
 							ImGui::PushID(id);
-							std::string edit_kb_id = std::string(icons::edit) + "##EditKb";
+							std::string edit_kb_id = fmt::format("{}##EditKb", icons::edit);
 							is_row_selected = ImGui::TableGetHoveredRow() - 1 == row or (ImGui::GetHoveredID() == ImGui::GetID(edit_kb_id.c_str()));
 							ImGui::SameLine();
 							if (is_row_selected and ImGui::TableGetColumnIndex() == ImGui::TableGetHoveredColumn())
@@ -957,7 +977,7 @@ namespace vt
 							int selected_action = (it != actions.end() ? static_cast<int>(std::distance(actions.begin(), it)) : 0);
 							std::string dummy;
 							//FIXME: Putting 'keybind' applies the changes immediately and it should be applied only after save
-							if (widgets::modal::keybind_options_popup("##KeybindOptionsPopup", dummy, keybind, actions, selected_action, keybind_options_config::show_action_field | keybind_options_config::show_save_button))
+							if (widgets::modal::keybind_options_popup("##KeybindOptionsPopup", dummy, keybind, actions, selected_action, keybind_options_config::show_action_field | keybind_options_config::show_save_button, validator, keybind_validator_mode::validate_keybind))
 							{
 								ctx_.is_project_dirty = true;
 							}

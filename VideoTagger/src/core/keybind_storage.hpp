@@ -32,6 +32,8 @@ namespace vt
 		
 		void clear();
 
+		bool contains(const std::string& name) const;
+		bool is_valid(const std::string& name, const keybind& keybind) const;
 		size_t size() const;
 		bool empty() const;
 
@@ -112,6 +114,11 @@ namespace vt
 			keybind_modifiers modifiers(ctrl_count, shift_count, alt_count);
 			std::shared_ptr<keybind_action> action = kb.at("action");
 			keybind new_keybind(keycode, modifiers, flags, action);
+			if (!ks.is_valid(name, new_keybind))
+			{
+				debug::error("Keybind with name \"{}\" and key combination {} is invalid", name, new_keybind.name());
+				continue;
+			}
 			ks.insert(name, new_keybind);
 		}
 	}

@@ -10,6 +10,13 @@ namespace vt
 {
 	class keybind_storage;
 
+	enum class keybind_validator_mode : uint8_t
+	{
+		validate_name,
+		validate_keybind,
+		validate_keybind_and_name = validate_name | validate_keybind
+	};
+
 	union keybind_modifiers
 	{
 	public:

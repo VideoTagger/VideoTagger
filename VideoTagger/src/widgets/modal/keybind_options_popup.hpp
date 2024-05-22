@@ -23,5 +23,5 @@ namespace vt
 
 namespace vt::widgets::modal
 {
-	extern bool keybind_options_popup(const char* id, std::string& keybind_name, keybind& keybind, std::vector<std::shared_ptr<keybind_action>>& actions, int& selected_action, keybind_options_config config);
+	extern bool keybind_options_popup(const char* id, std::string& keybind_name, keybind& keybind, std::vector<std::shared_ptr<keybind_action>>& actions, int& selected_action, keybind_options_config config, const std::function<bool(const std::string&, const vt::keybind&, keybind_validator_mode)>& validator, keybind_validator_mode validator_mode);
 }

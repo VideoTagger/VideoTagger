@@ -1,10 +1,13 @@
 #include "pch.hpp"
 #include "keybind_popup.hpp"
+#include <core/debug.hpp>
 
 namespace vt::widgets::modal
 {
-	bool keybind_popup(const char* id, const keybind& keybind, const vt::keybind& last_keybind)
+	bool keybind_popup(const char* id, const keybind& keybind, const vt::keybind& last_keybind, const std::function<bool(const std::string&, const vt::keybind&, keybind_validator_mode)>& validator)
 	{
+		if (validator == nullptr) debug::panic("Keybind validator was nullptr");
+
 		bool result{};
 
 		auto& style = ImGui::GetStyle();
@@ -27,7 +30,7 @@ namespace vt::widgets::modal
 			}
 			else if (ImGui::IsKeyPressed(ImGuiKey_Enter))
 			{
-				result = (last_keybind.key_code != -1);
+				result = std::invoke(validator, "", last_keybind, keybind_validator_mode::validate_keybind) and (last_keybind.key_code != -1);
 				ImGui::CloseCurrentPopup();
 			}
 			ImGui::EndPopup();
