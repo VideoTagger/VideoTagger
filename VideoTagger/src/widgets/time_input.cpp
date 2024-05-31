@@ -107,7 +107,7 @@ namespace vt::widgets
 		if (!temp_input_is_active)
 		{
 			// Tabbing or CTRL-clicking on Drag turns it into an InputText
-			const bool clicked = hovered && ImGui::IsMouseClicked(0, id);
+			const bool clicked = hovered && ImGui::IsMouseClicked(0, ImGuiInputFlags_None, id);
 			const bool double_clicked = (hovered && g.IO.MouseClickedCount[0] == 2 && ImGui::TestKeyOwner(ImGuiKey_MouseLeft, id));
 			const bool make_active = (clicked || double_clicked || g.NavActivateId == id);
 			if (make_active && (clicked || double_clicked))

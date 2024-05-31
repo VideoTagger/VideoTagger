@@ -1,5 +1,7 @@
 include "tools/premake/solution_items.lua"
-OutputDir = "vendor/%{cfg.system}-%{cfg.architecture}/%{cfg.buildcfg}"
+OutputDir = "%{cfg.system}-%{cfg.architecture}/%{cfg.buildcfg}"
+ProjectTargetDir = "%{wks.location}/build/" .. OutputDir .. "/%{prj.name}"
+ProjectObjDir = "%{wks.location}/build/temp/" .. OutputDir .. "/%{prj.name}"
 
 workspace "VideoTagger"
 	platforms

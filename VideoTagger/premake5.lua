@@ -1,7 +1,7 @@
 project "VideoTagger"
 	language "C++"
-	targetdir "%{wks.location}/.build/%{prj.name}/%{cfg.system}-%{cfg.architecture}/%{cfg.buildcfg}"
-	objdir "%{wks.location}/.build/temp/%{prj.name}/%{cfg.system}-%{cfg.architecture}/%{cfg.buildcfg}"
+	targetdir (ProjectTargetDir)
+	objdir (ProjectObjDir)
 	debugdir "%{cfg.targetdir}"
 	targetname "%{prj.name}-%{cfg.buildcfg}"
 	cppdialect "C++17"
@@ -87,6 +87,11 @@ project "VideoTagger"
 		{
 			"{COPYFILE} vendor/SDL2/lib/%{cfg.architecture}/*.dll %{cfg.targetdir}",
 			"{COPYFILE} vendor/ffmpeg/lib/%{cfg.architecture}/*.dll %{cfg.targetdir}"
+		}
+
+		buildoptions
+		{
+			"/utf-8"
 		}
 
 	filter "system:linux"

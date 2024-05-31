@@ -36,7 +36,7 @@ namespace vt::widgets
 		if (!temp_input_is_active)
 		{
 			// Tabbing or CTRL-clicking on Slider turns it into an input box
-			const bool clicked = hovered && ImGui::IsMouseClicked(0, id);
+			const bool clicked = hovered && ImGui::IsMouseClicked(0, ImGuiInputFlags_None, id);
 			const bool make_active = (clicked || g.NavActivateId == id);
 			if (make_active && clicked)
 				ImGui::SetKeyOwner(ImGuiKey_MouseLeft, id);

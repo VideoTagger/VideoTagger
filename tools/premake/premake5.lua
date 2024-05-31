@@ -1,8 +1,8 @@
 project "Premake - Regenerate project"
 	kind "Utility"
 
-	targetdir "%{wks.location}/.build/premake"
-	objdir "%{wks.location}/.build/temp/premake"
+	targetdir "%{wks.location}/build/premake"
+	objdir "%{wks.location}/build/temp/premake"
 
 	files
 	{

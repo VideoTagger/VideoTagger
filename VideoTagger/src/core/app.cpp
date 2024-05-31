@@ -1230,7 +1230,7 @@ namespace vt
 		SDL_SetRenderDrawColor(ctx_.renderer, 24, 24, 24, 0xFF);
 		SDL_RenderClear(ctx_.renderer);
 		ImGui::Render();
-		ImGui_ImplSDLRenderer2_RenderDrawData(ImGui::GetDrawData());
+		ImGui_ImplSDLRenderer2_RenderDrawData(ImGui::GetDrawData(), ctx_.renderer);
 		SDL_RenderPresent(ctx_.renderer);
 	}
 	
