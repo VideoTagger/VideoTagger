@@ -1105,13 +1105,10 @@ namespace vt
 			video_group_playlist::iterator it;
 			if (dir > 0)
 			{
-				//TODO: should be different when shuffle is enabled
-				//if (playlist.current() == playlist.end() - 1) return;
 				it = playlist.next();
 			}
 			else if (dir < 0)
 			{
-				if (playlist.current() == playlist.begin()) return;
 				it = playlist.previous();
 			}
 
@@ -1123,7 +1120,7 @@ namespace vt
 
 			if (it != playlist.end())
 			{
-				ctx_.set_current_video_group_id(it->group_id);
+				ctx_.set_current_video_group_id(*it);
 				ctx_.displayed_videos.set_playing(is_playing);
 			}
 		};
@@ -1167,7 +1164,7 @@ namespace vt
 
 				if (it != playlist.end())
 				{
-					ctx_.set_current_video_group_id(it->group_id);
+					ctx_.set_current_video_group_id(*it);
 				}
 
 				ctx_.displayed_videos.set_playing(true);
@@ -1752,12 +1749,18 @@ namespace vt
 			//		ctx_.player.update_data(data);
 			//	}
 			//}
+			static bool reset_player_when_group_is_invalid = false;
 			if (ctx_.current_video_group_id() == invalid_video_group_id)
 			{
-				data.current_ts = std::chrono::nanoseconds{ 0 };
-				data.start_ts = std::chrono::nanoseconds{ 0 };
-				data.end_ts = std::chrono::nanoseconds{ 0 };
-				ctx_.player.update_data(data, false);
+				if (reset_player_when_group_is_invalid)
+				{
+					data.current_ts = std::chrono::nanoseconds{ 0 };
+					data.start_ts = std::chrono::nanoseconds{ 0 };
+					data.end_ts = std::chrono::nanoseconds{ 0 };
+					ctx_.player.update_data(data, false);
+
+					reset_player_when_group_is_invalid = false;
+				}
 			}
 			else
 			{
@@ -1767,6 +1770,8 @@ namespace vt
 				data.start_ts = std::chrono::nanoseconds{ 0 };
 				data.end_ts = ctx_.displayed_videos.duration();
 				ctx_.player.update_data(data, ctx_.displayed_videos.is_playing());
+
+				reset_player_when_group_is_invalid = true;
 			}
 
 			ctx_.player.render();

@@ -254,7 +254,7 @@ namespace vt::widgets
 							open = false;
 							remove = false;
 							enqueue = false;
-							bool can_enqueue = !playlist.contains(gid);
+							bool can_enqueue = std::find(playlist.begin(), playlist.end(), gid) == playlist.end();
 
 							std::string group_name = group.display_name;
 							draw_group_tab(group_name, gid, open, remove, enqueue, can_enqueue);
@@ -334,7 +334,7 @@ namespace vt::widgets
 								bool open_group = false;
 								bool remove_group = false;
 								bool enqueue_group = false;
-								bool can_enqueue = !playlist.contains(gid);
+								bool can_enqueue = std::find(playlist.begin(), playlist.end(), gid) == playlist.end();
 
 								ImGui::TableNextColumn();
 								draw_group_tile(group, gid, tile_size, open_group, remove_group, enqueue_group, can_enqueue);

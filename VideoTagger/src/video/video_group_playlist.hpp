@@ -1,28 +1,25 @@
 #pragma once
-#include <deque>
-#include <random>
+#include <stack>
 
 #include <utils/json.hpp>
 #include "video_pool.hpp"
 
 namespace vt
 {
-	struct video_group_playlist_element
-	{
-		bool was_played{};
-		video_group_id_t group_id;
-	};
-
 	class video_group_playlist
 	{
 	public:
-		using container = std::deque<video_group_playlist_element>;
-		using iterator = container::iterator;
-		using const_iterator = container::const_iterator;
+		using iterator = std::vector<video_group_id_t>::iterator;
+		using const_iterator = std::vector<video_group_id_t>::const_iterator;
 
 		video_group_playlist();
 
 		//TODO: peek next/previous
+
+		iterator peek_next();
+		const_iterator peek_next() const;
+		iterator peek_previous();
+		const_iterator peek_previous() const;
 
 		iterator next();
 		iterator previous();
@@ -45,21 +42,20 @@ namespace vt
 		iterator erase(const_iterator where);
 
 		void clear();
-		void clear_flags();
+		void reshuffle();
 
-		video_group_playlist_element& front();
-		const video_group_playlist_element& front() const;
-		video_group_playlist_element& back();
-		const video_group_playlist_element& back() const;
-		video_group_playlist_element& at(size_t position);
-		const video_group_playlist_element& at(size_t position) const;
+		video_group_id_t& front();
+		const video_group_id_t& front() const;
+		video_group_id_t& back();
+		const video_group_id_t& back() const;
+		video_group_id_t& at(size_t position);
+		const video_group_id_t& at(size_t position) const;
 
-		video_group_playlist_element& operator[](size_t position);
-		const video_group_playlist_element& operator[](size_t position) const;
+		video_group_id_t& operator[](size_t position);
+		const video_group_id_t& operator[](size_t position) const;
 
 		size_t size() const;
 		bool empty() const;
-		bool contains(video_group_id_t group_id) const;
 
 		iterator begin();
 		const_iterator begin() const;
@@ -69,7 +65,11 @@ namespace vt
 		const_iterator cend() const;
 
 	private:
-		container queue_;
+		std::vector<video_group_id_t> videos_;
+		std::vector<size_t> shuffled_indices_;
+		std::stack<size_t> shuffled_history_next;
+		std::stack<size_t> shuffled_history_previous;
+
 		iterator current_element_;
 
 		bool shuffled_;
@@ -80,7 +80,7 @@ namespace vt
 		json = nlohmann::json::array();
 		for (const auto& e : vp)
 		{
-			json.push_back(e.group_id);
+			json.push_back(e);
 		}
 	}
 

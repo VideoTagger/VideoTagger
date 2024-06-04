@@ -61,7 +61,7 @@ namespace vt::widgets
 								{
 									bool is_delivery = payload.imgui_payload->IsDelivery();
 
-									bool already_contains = playlist.contains(payload.data.value());
+									bool already_contains = std::find(playlist.begin(), playlist.end(), payload.data.value()) != playlist.end();
 									if (!is_delivery and already_contains)
 									{
 										ImGui::SetMouseCursor(ImGuiMouseCursor_NotAllowed);
@@ -86,16 +86,16 @@ namespace vt::widgets
 						for (; it != playlist.end();)
 						{
 							bool remove_group{};
-							const auto& pinfo = *it;
+							const auto& group_id = *it;
 
-							auto& group = groups.at(pinfo.group_id);
+							auto& group = groups.at(group_id);
 							std::string label = group.display_name;
 
 							ImGui::SameLine();
 							draw_spacer(spacer_size, it);
 
 							ImGui::SameLine();
-							bool is_selected = current_group_id != 0 and current_group_id == pinfo.group_id;
+							bool is_selected = current_group_id != 0 and current_group_id == group_id;
 
 							tile(label, tile_size, image_tile_size, image, [&remove_group](const std::string& label)
 							{
@@ -104,7 +104,7 @@ namespace vt::widgets
 									remove_group = true;
 								}
 							},
-							[&remove_group, gid = pinfo.group_id, label](const std::string& label)
+							[&remove_group, gid = group_id, label](const std::string& label)
 							{
 								//TODO: This will display "..." when it gets removed, try to fix that
 								if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_SourceNoHoldToOpenOthers))
@@ -148,7 +148,7 @@ namespace vt::widgets
 								{
 									bool is_delivery = payload.imgui_payload->IsDelivery();
 
-									bool already_contains = playlist.contains(payload.data.value());
+									bool already_contains = std::find(playlist.begin(), playlist.end(), payload.data.value()) != playlist.end();
 									if (!is_delivery and already_contains)
 									{
 										ImGui::SetMouseCursor(ImGuiMouseCursor_NotAllowed);
@@ -175,9 +175,8 @@ namespace vt::widgets
 					if (!can_play) ImGui::BeginDisabled();
 					if (icon_button(icons::play))
 					{
-						playlist.clear_flags();
 						auto it = playlist.set_current(playlist.begin());
-						ctx_.set_current_video_group_id(it->group_id);
+						ctx_.set_current_video_group_id(*it);
 
 						auto& pool = ctx_.current_project->videos;
 					}

@@ -11,61 +11,130 @@ namespace vt
 	{
 	}
 
-	video_group_playlist::iterator video_group_playlist::next()
+	video_group_playlist::iterator video_group_playlist::peek_next()
 	{
-		if (current_element_ == end())
-		{
-			return current_element_;
-		}
+		iterator next_element = current_element_;
 
-		iterator next_element = end();
+		if (next_element == end())
+		{
+			return end();
+		}
 
 		if (!shuffled_)
 		{
-			next_element = current_element_ + 1;
+			next_element++;
 		}
 		else
 		{
-			std::vector<size_t> item_pool;
-			item_pool.reserve(size());
-
-			for (size_t i = 0; i < size(); i++)
+			if (!shuffled_history_next.empty())
 			{
-				if (queue_[i].was_played)
+				next_element = begin() + shuffled_history_next.top();
+			}
+			else
+			{
+				auto shuffled_it = std::find_if(
+					shuffled_indices_.begin(), shuffled_indices_.end(),
+					[current_element_index = next_element - begin()](size_t index)
+					{
+						return index == current_element_index;
+					}
+				);
+
+				if (shuffled_it == shuffled_indices_.end())
 				{
-					continue;
+					return end();
 				}
 
-				item_pool.push_back(i);
-			}
-
-			if (!item_pool.empty())
-			{
-				std::uniform_int_distribution<size_t> distribution(0, item_pool.size() - 1);
-				next_element = begin() + item_pool[distribution(random_engine)];
+				shuffled_it++;
+				if (shuffled_it == shuffled_indices_.end())
+				{
+					next_element = end();
+				}
+				else
+				{
+					next_element = begin() + *shuffled_it;
+				}
 			}
 		}
 
-		return set_current(next_element);
+		return next_element;
+	}
+
+	video_group_playlist::const_iterator video_group_playlist::peek_next() const
+	{
+		return const_cast<video_group_playlist&>(*this).peek_next();
+	}
+
+	video_group_playlist::iterator video_group_playlist::peek_previous()
+	{
+		iterator previous_element = current_element_;
+
+		if (!shuffled_ and previous_element != begin())
+		{
+			previous_element--;
+		}
+		else
+		{
+			if (!shuffled_history_previous.empty())
+			{
+				previous_element = begin() + shuffled_history_previous.top();
+			}
+		}
+
+		return previous_element;
+	}
+
+	video_group_playlist::const_iterator video_group_playlist::peek_previous() const
+	{
+		return const_cast<video_group_playlist&>(*this).peek_previous();
+	}
+
+	video_group_playlist::iterator video_group_playlist::next()
+	{
+		size_t current_index = current_element_ - begin();
+
+		current_element_ = peek_next();
+
+		if (!shuffled_)
+		{
+			reshuffle();
+		}
+		else
+		{
+			shuffled_history_previous.push(current_index);
+
+			if (!shuffled_history_next.empty())
+			{
+				shuffled_history_next.pop();
+			}
+		}
+
+		return current_element_;
 	}
 
 	video_group_playlist::iterator video_group_playlist::previous()
 	{
-		if (current_element_ == begin())
-		{
-			return current_element_;
-		}
+		size_t current_index = current_element_ - begin();
 
-		return set_current(current_element_ - 1);
+		current_element_ = peek_previous();
+		if (!shuffled_)
+		{
+			reshuffle();
+		}
+		else if (!shuffled_history_previous.empty())
+		{
+			shuffled_history_next.push(current_index);
+			shuffled_history_previous.pop();
+		}
+		
+		return current_element_;
 	}
 
 	video_group_playlist::iterator video_group_playlist::set_current(const_iterator where)
 	{
 		current_element_ = begin() + (where - begin());
-		if (current_element_ != end())
-		{
-			current_element_->was_played = true;
-		}
+
+		reshuffle();
 
 		return current_element_;
 	}
@@ -98,12 +167,10 @@ namespace vt
 			current_index += 1;
 		}
 
-		video_group_playlist_element item;
-		item.group_id = group_id;
-		item.was_played = false;
-		auto result = queue_.insert(where, item);
-
+		auto result = videos_.insert(where, group_id);
 		current_element_ = begin() + current_index;
+
+		reshuffle();
 
 		return result;
 	}
@@ -137,117 +204,142 @@ namespace vt
 		}
 
 		bool erased_current = where == current_element_;
-		auto result = queue_.erase(where);
+		auto result = videos_.erase(where);
 
 		current_element_ = begin() + current_index;
 
-		if (erased_current and current_element_ != end())
-		{
-			current_element_->was_played = true;
-		}
+		reshuffle();
 
 		return result;
 	}
 
 	void video_group_playlist::clear()
 	{
-		queue_.clear();
+		videos_.clear();
+		shuffled_indices_.clear();
 		current_element_ = end();
+		shuffled_history_next = {};
+		shuffled_history_previous = {};
 	}
 
-	void video_group_playlist::clear_flags()
+	void video_group_playlist::reshuffle()
 	{
-		for (auto& item : queue_)
+		if (videos_.empty())
 		{
-			item.was_played = false;
+			return;
+		}
+
+		shuffled_history_next = {};
+		shuffled_history_previous = {};
+
+		shuffled_indices_.clear();
+		shuffled_indices_.reserve(videos_.size());
+
+		if (current_element_ != end())
+		{
+			size_t current_index = current_element_ - begin();
+
+			shuffled_indices_.push_back(current_index);
+			for (size_t i = 0; i < videos_.size(); i++)
+			{
+				if (i == current_index)
+				{
+					continue;
+				}
+
+				shuffled_indices_.push_back(i);
+			}
+
+			std::shuffle(shuffled_indices_.begin() + 1, shuffled_indices_.end(), random_engine);
+		}
+		else
+		{
+			for (size_t i = 0; i < videos_.size(); i++)
+			{
+				shuffled_indices_.push_back(i);
+			}
+
+			std::shuffle(shuffled_indices_.begin(), shuffled_indices_.end(), random_engine);
 		}
 	}
 
-	video_group_playlist_element& video_group_playlist::front()
+	video_group_id_t& video_group_playlist::front()
 	{
-		return queue_.front();
+		return videos_.front();
 	}
 
-	const video_group_playlist_element& video_group_playlist::front() const
+	const video_group_id_t& video_group_playlist::front() const
 	{
-		return queue_.front();
+		return videos_.front();
 	}
 
-	video_group_playlist_element& video_group_playlist::back()
+	video_group_id_t& video_group_playlist::back()
 	{
-		return queue_.back();
+		return videos_.back();
 	}
 
-	const video_group_playlist_element& video_group_playlist::back() const
+	const video_group_id_t& video_group_playlist::back() const
 	{
-		return queue_.back();
+		return videos_.back();
 	}
 
-	video_group_playlist_element& video_group_playlist::at(size_t position)
+	video_group_id_t& video_group_playlist::at(size_t position)
 	{
-		return queue_.at(position);
+		return videos_.at(position);
 	}
 
-	const video_group_playlist_element& video_group_playlist::at(size_t position) const
+	const video_group_id_t& video_group_playlist::at(size_t position) const
 	{
-		return queue_.at(position);
+		return videos_.at(position);
 	}
 
-	video_group_playlist_element& video_group_playlist::operator[](size_t position)
+	video_group_id_t& video_group_playlist::operator[](size_t position)
 	{
-		return queue_.operator[](position);
+		return videos_.operator[](position);
 	}
 
-	const video_group_playlist_element& video_group_playlist::operator[](size_t position) const
+	const video_group_id_t& video_group_playlist::operator[](size_t position) const
 	{
-		return queue_.operator[](position);
+		return videos_.operator[](position);
 	}
 
 	size_t video_group_playlist::size() const
 	{
-		return queue_.size();
+		return videos_.size();
 	}
 
 	bool video_group_playlist::empty() const
 	{
-		return queue_.empty();
-	}
-
-	bool video_group_playlist::contains(video_group_id_t group_id) const
-	{
-		return std::find_if(queue_.begin(), queue_.end(), [group_id](const video_group_playlist_element& item)
-		{
-			return item.group_id == group_id;
-		}) != end();
+		return videos_.empty();
 	}
 
 	video_group_playlist::iterator video_group_playlist::begin()
 	{
-		return queue_.begin();
+		return videos_.begin();
 	}
 
 	video_group_playlist::const_iterator video_group_playlist::begin() const
 	{
-		return queue_.cbegin();
+		return videos_.cbegin();
 	}
 
 	video_group_playlist::const_iterator video_group_playlist::cbegin() const
 	{
-		return queue_.cbegin();
+		return videos_.cbegin();
 	}
 
 	video_group_playlist::iterator video_group_playlist::end()
 	{
-		return queue_.end();
+		return videos_.end();
 	}
 
 	video_group_playlist::const_iterator video_group_playlist::end() const
 	{
-		return queue_.cend();
+		return videos_.cend();
 	}
 
 	video_group_playlist::const_iterator video_group_playlist::cend() const
 	{
-		return queue_.cend();
+		return videos_.cend();
 	}
 }
