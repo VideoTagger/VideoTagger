@@ -21,13 +21,12 @@ DOXYGEN_VER = "1.10.0"
 DOXYGEN_SAFE_VER = DOXYGEN_VER.replace(".", "_")
 DOXYGEN_WIN_URL = f"https://github.com/doxygen/doxygen/releases/download/Release_{DOXYGEN_SAFE_VER}/doxygen-{DOXYGEN_VER}.windows.x64.bin.zip"
 DOXYGEN_LINUX_URL = f"https://github.com/doxygen/doxygen/releases/download/Release_{DOXYGEN_SAFE_VER}/doxygen-{DOXYGEN_VER}.linux.bin.tar.gz"
-DOXYGEN_MAC_URL = f"https://github.com/doxygen/doxygen/releases/download/Release_{DOXYGEN_SAFE_VER}/doxygen-{DOXYGEN_VER}.dmg"
 
 
 tools = {
 	"mdbook": [MDBOOK_WIN_URL, MDBOOK_LINUX_URL, ""],
 	"premake5": [PREMAKE_WIN_URL, PREMAKE_LINUX_URL, PREMAKE_MAC_URL],
-    "doxygen": [DOXYGEN_WIN_URL, DOXYGEN_LINUX_URL, DOXYGEN_MAC_URL]
+    "doxygen": [DOXYGEN_WIN_URL, DOXYGEN_LINUX_URL, ""]
 }
 
 def eprint(*args, **kwargs):
