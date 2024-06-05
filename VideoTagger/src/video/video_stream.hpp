@@ -50,7 +50,7 @@ namespace vt
 		void get_thumbnail(SDL_Texture* texture, std::optional<std::chrono::nanoseconds> timestamp = std::nullopt);
 
 		//TODO: should be somewhere in utils
-		static void clear_yuv_texture(SDL_Texture* texture);
+		static void clear_yuv_texture(SDL_Texture* texture, uint8_t r, uint8_t g, uint8_t b);
 
 	private:
 		video_decoder decoder_;

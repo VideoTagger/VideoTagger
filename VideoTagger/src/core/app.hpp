@@ -1,12 +1,9 @@
 #pragma once
 #include <string>
-#include <memory>
+#include <filesystem>
 
 #include <video/video_stream.hpp>
 #include "app_context.hpp"
-
-struct SDL_Window;
-struct SDL_Renderer;
 
 namespace vt
 {

@@ -249,8 +249,12 @@ namespace vt
 		seek(start_timestamp);
 	}
 
-	void video_stream::clear_yuv_texture(SDL_Texture* texture)
+	void video_stream::clear_yuv_texture(SDL_Texture* texture, uint8_t r, uint8_t g, uint8_t b)
 	{
+		thread_local std::vector<uint8_t> y_plane;
+		thread_local std::vector<uint8_t> u_plane;
+		thread_local std::vector<uint8_t> v_plane;
+
 		int w{}, h{};
 		if (SDL_QueryTexture(texture, NULL, NULL, &w, &h) < 0)
 		{
@@ -258,9 +262,31 @@ namespace vt
 			return;
 		}
 
-		std::vector<uint8_t> y_plane(w * h, 16);
-		std::vector<uint8_t> uv_plane((w / 2) * (h / 2), 128);
-		if (SDL_UpdateYUVTexture(texture, NULL, y_plane.data(), w, uv_plane.data(), w / 2, uv_plane.data(), w / 2) < 0)
+		size_t y_size = w * h;
+		size_t uv_size = (w / 2) * (h / 2);
+
+		if (y_plane.size() != y_size)
+		{
+			y_plane.resize(y_size);
+		}
+		if (u_plane.size() != uv_size)
+		{
+			u_plane.resize(uv_size);
+		}
+		if (v_plane.size() != uv_size)
+		{
+			v_plane.resize(uv_size);
+		}
+
+		uint8_t y = 0.257 * r + 0.504 * g + 0.098 * b + 16;
+		uint8_t u = -0.148 * r - 0.291 * g + 0.439 * b + 128;
+		uint8_t v = 0.439 * r - 0.368 * g - 0.071 * b + 128;
+		
+		std::memset(y_plane.data(), y, y_size);
+		std::memset(u_plane.data(), u, uv_size);
+		std::memset(v_plane.data(), v, uv_size);
+
+		if (SDL_UpdateYUVTexture(texture, NULL, y_plane.data(), w, u_plane.data(), w / 2, v_plane.data(), w / 2) < 0)
 		{
 			debug::error("SDL_UpdateYUVTexture failed: {}", SDL_GetError());
 			return;

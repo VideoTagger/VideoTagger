@@ -7,7 +7,7 @@ namespace vt
 		: id{ id }, video{ video }, offset{ offset }, display_texture{}
 	{
 		display_texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_YV12, SDL_TEXTUREACCESS_STREAMING, video_width, video_height);
-		video_stream::clear_yuv_texture(display_texture);
+		video_stream::clear_yuv_texture(display_texture, 0, 0, 0);
 	}
 
 	displayed_video_data::displayed_video_data(displayed_video_data&& other) noexcept
@@ -32,6 +32,10 @@ namespace vt
 		id = other.id;
 		video = other.video;
 		offset = other.offset;
+		if (display_texture != nullptr)
+		{
+			SDL_DestroyTexture(display_texture);
+		}
 		display_texture = other.display_texture;
 
 		other.id = {};
@@ -75,10 +79,19 @@ namespace vt
 				continue;
 			}
 			
-			bool is_playing = video_data.is_timestamp_in_range(current_timestamp_);
-			video_data.video->set_playing(is_playing);
+			bool timestamp_in_range = video_data.is_timestamp_in_range(current_timestamp_);
+			video_data.video->set_playing(timestamp_in_range);
 			video_data.video->update(current_timestamp_ - video_data.offset);
-			video_data.video->get_frame(video_data.display_texture);
+
+			if (timestamp_in_range)
+			{
+				video_data.video->get_frame(video_data.display_texture);
+			}
+			else
+			{
+				//TODO: Maybe should draw some icon or something, but then some other texture would need to be displayed since this texture can't be a render target
+				video_stream::clear_yuv_texture(video_data.display_texture, 0, 0, 0);
+			}
 		}
 
 		auto group_duration = duration();
@@ -117,16 +130,6 @@ namespace vt
 
 	void displayed_videos_manager::set_speed(float value)
 	{
-		//for (auto& video_data : videos)
-		//{
-		//	if (video_data.video == nullptr)
-		//	{
-		//		continue;
-		//	}
-		//
-		//	video_data.video->set_speed(value);
-		//}
-
 		speed_ = value;
 	}
 
@@ -171,15 +174,15 @@ namespace vt
 				{
 					*it = displayed_video_data(id, video, offset, video_width, video_height, renderer);
 				}
-				else
-				{
-					if (it->offset != offset)
-					{
-						it->offset = offset;
-						it->video->seek(current_timestamp_ - offset);
-						it->video->get_frame(it->display_texture);
-					}
-				}
+				//else
+				//{
+				//	if (it->offset != offset)
+				//	{
+				//		it->offset = offset;
+				//		it->video->seek(current_timestamp_ - offset);
+				//		it->video->get_frame(it->display_texture);
+				//	}
+				//}
 			}
 			
 			return std::make_pair(it, false);

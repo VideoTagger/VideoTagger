@@ -48,7 +48,6 @@ namespace vt::widgets
 				image_avail_size.y -= button_size + 2 * imgui_style.ItemSpacing.y + ImGui::GetTextLineHeightWithSpacing() * io.FontGlobalScale;
 			}
 
-			video.get_frame(video_texture);
 			if (video_texture != nullptr)
 			{
 				int video_width = video.width();

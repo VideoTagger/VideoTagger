@@ -80,6 +80,7 @@ namespace vt
 				pool_video_metadata->open_video();
 			}
 
+			//TODO: This definitely should be changed because it's really confusing
 			displayed_videos.insert
 			(
 				group_video_info.id,
