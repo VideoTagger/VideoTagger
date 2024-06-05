@@ -11,7 +11,7 @@ Some keybind actions have additional attributes, to learn more about them head o
 
 <div class="warning">
 
-There is no difference between `LeftAlt` and `RightAlt`, both are treated as a single `Alt` key - the same rule applies to `Ctrl` and `Shift` keys.
+There is no difference between `LeftAlt` and `RightAlt`, both are treated as a single `Alt` key - the same rule applies to `Ctrl` and `Shift`.
 
 </div>
 
