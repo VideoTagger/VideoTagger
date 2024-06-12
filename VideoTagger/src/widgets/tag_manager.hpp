@@ -27,13 +27,6 @@ namespace vt::widgets
 		return static_cast<bool>(static_cast<uint64_t>(lhs) & static_cast<uint64_t>(rhs));
 	}
 	
-	//struct tag_manager_state
-	//{
-	//	tag_storage* tags;
-	//
-	//};
-	//
-
 	struct tag_rename_data
 	{
 		bool ready = false;

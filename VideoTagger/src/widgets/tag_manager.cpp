@@ -30,14 +30,21 @@ namespace vt::widgets
 		{
 			std::string error_text;
 			static ImVec4 color{ 0, 0, 0, 1 };
-			if (ImGui::IsWindowAppearing())
+			bool is_appearing = ImGui::IsWindowAppearing();
+
+			if (is_appearing)
 			{
 				auto hue = utils::random::get<float>();
 				auto value = utils::random::get<float>(0.5f, 1.0f);
 				ImGui::ColorConvertHSVtoRGB(hue, 0.75f, value, color.x, color.y, color.z);
 			}
+
 			//I don't know if it's safe for this to be static
 			static std::string tag_name;
+			if (is_appearing)
+			{
+				ImGui::SetKeyboardFocusHere();
+			}
 			ImGui::Text("Tag Name");
 			ImGui::SameLine();
 

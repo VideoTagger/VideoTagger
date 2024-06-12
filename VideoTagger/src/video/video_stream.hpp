@@ -30,7 +30,7 @@ namespace vt
 		void seek(std::chrono::nanoseconds target_timestamp);
 
 		//texture must be in yuv format, have streaming access and with and height the same as the video
-		[[nodiscard]] void get_frame(SDL_Texture* texture);
+		void get_frame(SDL_Texture* texture);
 
 		[[nodiscard]] bool is_open() const;
 

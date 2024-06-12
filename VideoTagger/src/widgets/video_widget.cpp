@@ -11,7 +11,7 @@
 
 namespace vt::widgets
 {
-	void draw_video_widget(video_stream& video, SDL_Texture* video_texture, bool& is_open, uint64_t id)
+	void draw_video_widget(video_stream& video, SDL_Texture* video_texture, bool is_video_active, bool& is_open, uint64_t id)
 	{
 		auto& io = ImGui::GetIO();
 		ImGuiWindowFlags flags = ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoSavedSettings;
@@ -65,9 +65,35 @@ namespace vt::widgets
 				{
 					image_size.y = scaled_height;
 				}
+
+				ImVec2 video_cursor_pos = { (image_avail_size.x - image_size.x) / 2, (image_avail_size.y - image_size.y) / 2 };
+
 				ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, { 0, 0 });
-				ImGui::SetCursorPos({ (image_avail_size.x - image_size.x) / 2, (image_avail_size.y - image_size.y) / 2 });
+				ImGui::SetCursorPos({ video_cursor_pos });
+
+				auto video_screen_pos = ImGui::GetCursorScreenPos();
+
 				ImGui::Image((ImTextureID)video_texture, image_size);
+
+				if (!is_video_active)
+				{
+					//TODO: tweak colors
+					auto border_color = ImGui::ColorConvertFloat4ToU32({ 0.2, 0.2, 0.2, 1 });
+					auto overlay_color = ImGui::ColorConvertFloat4ToU32({ 0.3, 0.3, 0.3, 0.8 });
+					float border_thickness = 2.0f;
+
+					ImVec2 top_left = { video_screen_pos.x, video_screen_pos.y };
+					ImVec2 top_right = { video_screen_pos.x + image_size.x, video_screen_pos.y };
+					ImVec2 bottom_left = { video_screen_pos.x, video_screen_pos.y + image_size.y };
+					ImVec2 bottom_right = { video_screen_pos.x + image_size.x, video_screen_pos.y + image_size.y };
+
+					auto draw_list = ImGui::GetWindowDrawList();
+					draw_list->AddRectFilled(top_left, bottom_right, overlay_color);
+					draw_list->AddRect(top_left, bottom_right, border_color, 0, 0, border_thickness);
+					draw_list->AddLine(top_left, bottom_right, border_color, border_thickness);
+					draw_list->AddLine(top_right, bottom_left, border_color, border_thickness);
+				}
+
 				ImGui::PopStyleVar();
 
 				auto video_ts = video.current_timestamp();

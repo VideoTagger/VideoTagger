@@ -1798,7 +1798,9 @@ namespace vt
 				auto pool_data = ctx_.current_project->videos.get(video_data.id);
 				if (!pool_data->is_widget_open) continue;
 
-				widgets::draw_video_widget(*video_data.video, video_data.display_texture, pool_data->is_widget_open, vid_id++);
+				bool timestamp_in_range = video_data.is_timestamp_in_range(ctx_.displayed_videos.current_timestamp());
+
+				widgets::draw_video_widget(*video_data.video, video_data.display_texture, timestamp_in_range, pool_data->is_widget_open, vid_id++);
 			}
 		}
 

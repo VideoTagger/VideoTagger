@@ -87,11 +87,11 @@ namespace vt
 			{
 				video_data.video->get_frame(video_data.display_texture);
 			}
-			else
-			{
-				//TODO: Maybe should draw some icon or something, but then some other texture would need to be displayed since this texture can't be a render target
-				video_stream::clear_yuv_texture(video_data.display_texture, 0, 0, 0);
-			}
+			//else
+			//{
+			//	//TODO: Maybe should draw some icon or something, but then some other texture would need to be displayed since this texture can't be a render target
+			//	video_stream::clear_yuv_texture(video_data.display_texture, 0, 0, 0);
+			//}
 		}
 
 		auto group_duration = duration();
