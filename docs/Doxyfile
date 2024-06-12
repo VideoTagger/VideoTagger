@@ -990,20 +990,9 @@ INPUT_FILE_ENCODING    =
 # be provided as doxygen C comment), *.py, *.pyw, *.f90, *.f95, *.f03, *.f08,
 # *.f18, *.f, *.for, *.vhd, *.vhdl, *.ucf, *.qsf and *.ice.
 
-FILE_PATTERNS          = *.c \
-                         *.cc \
-                         *.cxx \
-                         *.cxxm \
-                         *.cpp \
-                         *.cppm \
-                         *.ccm \
-                         *.c++ \
-                         *.c++m \
-                         *.md \
-                         *.markdown \
-                         *.m \
-                         *.py \
-                         *.pyw
+FILE_PATTERNS          = *.cpp \
+                         *.hpp \
+                         *.md
 
 # The RECURSIVE tag can be used to specify whether or not subdirectories should
 # be searched for input files as well.
@@ -1252,7 +1241,7 @@ CLANG_ADD_INC_PATHS    = YES
 # specified with INPUT and INCLUDE_PATH.
 # This tag requires that the tag CLANG_ASSISTED_PARSING is set to YES.
 
-CLANG_OPTIONS          =
+CLANG_OPTIONS          = "-std=c++17"
 
 # If clang assisted parsing is enabled you can provide the clang parser with the
 # path to the directory containing a file called compile_commands.json. This
@@ -1329,7 +1318,7 @@ HTML_FILE_EXTENSION    = .html
 # of the possible markers and block names see the documentation.
 # This tag requires that the tag GENERATE_HTML is set to YES.
 
-HTML_HEADER            =
+HTML_HEADER            = "doxygen-header.html"
 
 # The HTML_FOOTER tag can be used to specify a user-defined HTML footer for each
 # generated HTML page. If the tag is left blank doxygen will generate a standard
@@ -1369,7 +1358,7 @@ HTML_STYLESHEET        =
 # documentation.
 # This tag requires that the tag GENERATE_HTML is set to YES.
 
-HTML_EXTRA_STYLESHEET  =
+HTML_EXTRA_STYLESHEET  = "vendor/doxygen-awesome-css/doxygen-awesome.css"
 
 # The HTML_EXTRA_FILES tag can be used to specify one or more extra images or
 # other source files which should be copied to the HTML output directory. Note
@@ -1379,7 +1368,10 @@ HTML_EXTRA_STYLESHEET  =
 # files will be copied as-is; there are no commands or markers available.
 # This tag requires that the tag GENERATE_HTML is set to YES.
 
-HTML_EXTRA_FILES       =
+HTML_EXTRA_FILES       = "vendor/doxygen-awesome-css/doxygen-awesome-darkmode-toggle.js" \
+                         "vendor/doxygen-awesome-css/doxygen-awesome-fragment-copy-button.js" \
+                         "vendor/doxygen-awesome-css/doxygen-awesome-paragraph-link.js" \
+                         "vendor/doxygen-awesome-css/doxygen-awesome-interactive-toc.js"
 
 # The HTML_COLORSTYLE tag can be used to specify if the generated HTML output
 # should be rendered with a dark or light theme.
@@ -1720,7 +1712,7 @@ DISABLE_INDEX          = NO
 # The default value is: NO.
 # This tag requires that the tag GENERATE_HTML is set to YES.
 
-GENERATE_TREEVIEW      = NO
+GENERATE_TREEVIEW      = YES
 
 # When both GENERATE_TREEVIEW and DISABLE_INDEX are set to YES, then the
 # FULL_SIDEBAR option determines if the side bar is limited to only the treeview
@@ -2404,7 +2396,16 @@ SEARCH_INCLUDES        = YES
 # RECURSIVE has no effect here.
 # This tag requires that the tag SEARCH_INCLUDES is set to YES.
 
-INCLUDE_PATH           =
+INCLUDE_PATH           = "../VideoTagger/vendor/ffmpeg/include" \
+                         "../VideoTagger/vendor/fmt/include" \
+                         "../VideoTagger/vendor/ImGui" \
+                         "../VideoTagger/vendor/ImGui/misc/cpp" \
+                         "../VideoTagger/vendor/ImGuizmo" \
+                         "../VideoTagger/vendor/nativefiledialog-extended/src/include" \
+                         "../VideoTagger/vendor/ffmpeg/include" \
+                         "../VideoTagger/vendor/nlohmann/include" \
+                         "../VideoTagger/vendor/SDL2/include" \
+                         "../VideoTagger/vendor/utf8"
 
 # You can use the INCLUDE_FILE_PATTERNS tag to specify one or more wildcard
 # patterns (like *.h and *.hpp) to filter out the header-files in the
