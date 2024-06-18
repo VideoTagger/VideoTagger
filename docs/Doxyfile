@@ -951,7 +951,6 @@ WARN_LOGFILE           =
 
 INPUT                  = "../VideoTagger/src"\
                          "../README.md"\
-                         "../resources/images/preview.png"\
 
 # This tag can be used to specify the character encoding of the source files
 # that doxygen parses. Internally doxygen uses the UTF-8 encoding. Doxygen uses
@@ -1385,7 +1384,7 @@ HTML_EXTRA_FILES       = "vendor/doxygen-awesome-css/doxygen-awesome-darkmode-to
 # The default value is: AUTO_LIGHT.
 # This tag requires that the tag GENERATE_HTML is set to YES.
 
-HTML_COLORSTYLE        = AUTO_LIGHT
+HTML_COLORSTYLE        = LIGHT
 
 # The HTML_COLORSTYLE_HUE tag controls the color of the HTML output. Doxygen
 # will adjust the colors in the style sheet and background images according to

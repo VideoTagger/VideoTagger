@@ -5,3 +5,5 @@ To create a new project you will need to press the `New Project` button while in
 - Project file location
 
 After confirming the project creation with `Create` button, your newly created project will be automatically opened.
+
+![New Project](/images/preview6.png)

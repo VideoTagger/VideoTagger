@@ -1,17 +1,18 @@
 # Summary
 
 [Getting Started](./getting-started.md)
+[Similiar Apps](./similiar-apps.md)
 
 # Projects
 - [First Project](./projects/first-project.md)
 	- [Importing Videos](./projects/importing-videos.md)
 - [Importing Projects](./projects/importing-projects.md)
+- [Video Management](./projects/video-management.md)
 
 # Tagging
 - [Tag Management](./tagging/tag-management.md)
 - [Tagging Basics](./tagging/basics.md)
 	- [Video Timeline](./tagging/timeline.md)
-	- [Multi-Video Tagging](./tagging/multi-video-tagging.md)
 
 # Keybinds
 - [Keybind Categories](./keybinds/categories.md)
