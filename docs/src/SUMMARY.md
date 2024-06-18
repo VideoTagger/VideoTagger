@@ -17,3 +17,6 @@
 - [Keybind Categories](./keybinds/categories.md)
 - [First Keybind](./keybinds/first-keybind.md)
 	- [Keybind Actions](./keybinds/actions.md)
+
+# For developers
+- [Auto Generated Docs](./auto-generated/html/index.html)

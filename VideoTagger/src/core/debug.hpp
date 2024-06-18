@@ -1,6 +1,11 @@
 #pragma once
+#include <iostream>
+#include <fstream>
 #include <string>
 #include <filesystem>
+
+#define FMT_HEADER_ONLY
+#include <fmt/core.h>
 
 namespace vt
 {
