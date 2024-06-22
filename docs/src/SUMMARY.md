@@ -13,6 +13,7 @@
 - [Tag Management](./tagging/tag-management.md)
 - [Tagging Basics](./tagging/basics.md)
 	- [Video Timeline](./tagging/timeline.md)
+- [Exporting Tagging Data](./tagging/exporting-tagging-data.md)
 
 # Keybinds
 - [Keybind Categories](./keybinds/categories.md)
