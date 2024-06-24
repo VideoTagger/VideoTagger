@@ -16,11 +16,11 @@ The tagging data in saved in a JSON file with the following structure:
             "id": "string",
 
             "videos": [
-                "video-obj" // see 'Object definitions', one or more
+                "video-obj" // one or more
             ],
 
             "tags": [
-                "string" //tag name, one or more
+                "string" // tag name, one or more
             ],
 
             "segments": {
@@ -28,8 +28,8 @@ The tagging data in saved in a JSON file with the following structure:
                     {
                         "tag": "tag-name", // 'tag-name' is one of the tags from the tags list
                         "segments": [
-                            "segment-obj", // see 'Object definitions', zero or more
-                            "timestamp-obj"  // see 'Object definitions', zero or more
+                            "segment-obj", // zero or more
+                            "timestamp-obj"  // zero or more
                         ]
                     }
                 ]
