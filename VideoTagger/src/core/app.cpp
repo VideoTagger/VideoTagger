@@ -24,6 +24,9 @@
 #include <core/debug.hpp>
 #include <core/actions.hpp>
 
+#include <utils/string.hpp>
+#include <pybind11/embed.h>
+
 #ifdef _WIN32
 	#include <SDL_syswm.h>
 	#include <dwmapi.h>
@@ -336,12 +339,42 @@ namespace vt
 		return true;
 	}
 	
+	PYBIND11_EMBEDDED_MODULE(vt, this_module)
+	{
+		this_module.attr("test_string") = "Hello Scripting from Python!";
+		this_module.def("calc", [](int x, int y)
+		{
+			return x + y;
+		});
+	}
+
+	static void test_python()
+	{
+		namespace py = pybind11;
+		
+		py::scoped_interpreter interp_lock{};
+		try
+		{
+			auto sys_module = py::module_::import("sys");
+			py::list module_paths = sys_module.attr("path");
+			module_paths.append((std::filesystem::absolute(std::filesystem::current_path()) / "assets" / "scripts").string());
+
+			auto script = py::module_::import("hello_scripting");
+			script.attr("main")();
+		}
+		catch (const std::exception& ex)
+		{
+			debug::error("{}", ex.what());
+		}
+	}
+
 	bool app::run()
 	{
 		if (state_ != app_state::initialized) return false;
 
 		state_ = app_state::running;
 		ctx_.project_selector.load_projects_file(ctx_.projects_list_filepath);
+		test_python();
 
 		while (state_ == app_state::running)
 		{
