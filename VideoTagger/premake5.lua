@@ -1,3 +1,5 @@
+include "setup-python"
+
 project "VideoTagger"
 	language "C++"
 	targetdir (ProjectTargetDir)
@@ -32,7 +34,14 @@ project "VideoTagger"
 		"vendor/nativefiledialog-extended/src/include",
 		"vendor/fmt/include",
 		"vendor/nlohmann/single_include",
-		"vendor/utf8"
+		"vendor/utf8",
+		"vendor/pybind11/include",
+		PythonIncludePath
+	}
+
+	libdirs
+	{
+		PythonLibPath
 	}
 
 	pchheader "pch.hpp"
@@ -45,7 +54,8 @@ project "VideoTagger"
 		"SDL2main",
 		"avcodec",
 		"avformat",
-		"avutil"
+		"avutil",
+		PythonLibName
 	}
 
 	defines
