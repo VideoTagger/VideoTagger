@@ -78,8 +78,8 @@ namespace vt::widgets
 				if (!is_video_active)
 				{
 					//TODO: tweak colors
-					auto border_color = ImGui::ColorConvertFloat4ToU32({ 0.2, 0.2, 0.2, 1 });
-					auto overlay_color = ImGui::ColorConvertFloat4ToU32({ 0.3, 0.3, 0.3, 0.8 });
+					auto border_color = ImGui::ColorConvertFloat4ToU32({ 0.2f, 0.2f, 0.2f, 1.0f });
+					auto overlay_color = ImGui::ColorConvertFloat4ToU32({ 0.3f, 0.3f, 0.3f, 0.8f });
 					float border_thickness = 2.0f;
 
 					ImVec2 top_left = { video_screen_pos.x, video_screen_pos.y };

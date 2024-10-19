@@ -287,7 +287,7 @@ namespace vt::widgets
 			std::invoke(drag_drop, label);
 		}
 		auto char_size = ImGui::CalcTextSize("A");
-		auto max_chars = std::floor(text_size.y / char_size.y) * static_cast<size_t>(selectable_size.x / char_size.x);
+		size_t max_chars = static_cast<size_t>(std::floor(text_size.y / char_size.y) * static_cast<size_t>(selectable_size.x / char_size.x));
 		bool is_shortened = strlen(id) > max_chars;
 		std::string short_label = is_shortened ? std::string(id, max_chars) + "..." : label;
 
