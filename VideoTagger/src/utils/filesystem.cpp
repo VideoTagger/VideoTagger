@@ -107,4 +107,18 @@ namespace vt::utils
 		});
 		thread.detach();
 	}
+
+	std::string filesystem::concat_extensions(const std::vector<std::string>& extensions)
+	{
+		std::string result;
+		for (size_t i = 0; i < extensions.size(); ++i)
+		{
+			result += extensions[i];
+			if (i + 1 < extensions.size())
+			{
+				result += ',';
+			}
+		}
+		return result;
+	}
 }
