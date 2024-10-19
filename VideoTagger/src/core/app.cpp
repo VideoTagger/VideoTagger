@@ -667,9 +667,6 @@ namespace vt
 	{
 		auto& io = ImGui::GetIO();
 
-		std::filesystem::path font_path = std::filesystem::path("assets") / "fonts" / "NotoSans-Regular.ttf";
-		std::filesystem::path ico_font_path = std::filesystem::path("assets") / "fonts" / "MaterialIconsSharp-Regular.otf";
-
 		ImVector<ImWchar> ranges;
 		ImFontGlyphRangesBuilder builder;
 		ImFontConfig ico_config{};
@@ -691,11 +688,11 @@ namespace vt
 		ImFontGlyphRangesBuilder default_font_builder;
 
 		for (const auto& range :
-			{
-				io.Fonts->GetGlyphRangesDefault(),
-				io.Fonts->GetGlyphRangesGreek(),
-				io.Fonts->GetGlyphRangesCyrillic()
-			})
+		{
+			io.Fonts->GetGlyphRangesDefault(),
+			io.Fonts->GetGlyphRangesGreek(),
+			io.Fonts->GetGlyphRangesCyrillic()
+		})
 		{
 			default_font_builder.AddRanges(range);
 		}
@@ -1625,7 +1622,7 @@ namespace vt
 				auto it = std::find(tags.begin(), tags.end(), insert_data.tag);
 				if (it != tags.end())
 				{
-					insert_data.name_index = it - tags.begin();
+					insert_data.name_index = static_cast<int>(it - tags.begin());
 				}
 			}
 
