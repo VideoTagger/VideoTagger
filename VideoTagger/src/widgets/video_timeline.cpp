@@ -655,8 +655,9 @@ namespace vt::widgets
 							};
 
 							bool mouse_on_segment = rects[2].Contains(io.MousePos);
+
 							// Timestamp selection
-							if (ImGui::IsMouseClicked(ImGuiMouseButton_Left) or ImGui::IsMouseClicked(ImGuiMouseButton_Right))
+							if (ImGui::IsWindowHovered(ImGuiHoveredFlags_AllowWhenBlockedByActiveItem) and (ImGui::IsMouseClicked(ImGuiMouseButton_Left) or ImGui::IsMouseClicked(ImGuiMouseButton_Right)))
 							{
 								if (mouse_on_segment)
 								{
@@ -673,7 +674,7 @@ namespace vt::widgets
 							}
 
 							const unsigned int quadColor[] = { 0xFFFFFFFF, 0xFFFFFFFF, timestamp_color/* + (selected ? 0 : 0x202020)*/ };
-							if (!moving_segment.has_value())// TODOFOCUS and backgroundRect.Contains(io.MousePos))
+							if (ImGui::IsWindowHovered(ImGuiHoveredFlags_AllowWhenBlockedByActiveItem) and !moving_segment.has_value())// TODOFOCUS and backgroundRect.Contains(io.MousePos))
 							{
 								for (int j = 2; j >= 0; j--)
 								{
