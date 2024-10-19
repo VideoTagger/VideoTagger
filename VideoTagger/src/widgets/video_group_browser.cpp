@@ -142,7 +142,8 @@ namespace vt::widgets
 
 		if (ImGui::Begin("Video Group Browser", &is_open, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse))
 		{
-			if (ctx_.current_project->videos.size() > 0)
+			//TODO: remove this if
+			if (true or ctx_.current_project->videos.size() > 0)
 			{
 				ImVec2 img_tile_size{ ctx_.app_settings.thumbnail_size, ctx_.app_settings.thumbnail_size };
 				ImVec2 tile_size = img_tile_size + style.ItemSpacing + style.CellPadding / 2;
@@ -336,7 +337,7 @@ namespace vt::widgets
 						}
 
 						ImGui::TableNextRow();
-						if (current_video_group == 0)
+						if (current_video_group == invalid_video_group_id)
 						{
 							auto& playlist = ctx_.current_project->video_group_playlist;
 
@@ -365,8 +366,7 @@ namespace vt::widgets
 								draw_group_tile(group, gid, tile_size, open_group, remove_group, enqueue_group, can_enqueue);
 								if (remove_group)
 								{
-									ctx_.is_project_dirty = true;
-									ctx_.current_project->video_groups.erase(gid);
+									ctx_.current_project->remove_video_group(gid);
 									if (current_video_group = gid)
 									{
 										current_video_group = 0;
@@ -485,7 +485,7 @@ namespace vt::widgets
 						ImRect inner_rect = ImGui::TableGetCellBgRect(table, table->CurrentColumn);
 						if (filter_passes == 0)
 						{
-							bool is_group_view = (current_video_group == 0);
+							bool is_group_view = (current_video_group == invalid_video_group_id);
 
 							centered_text(is_group_view ? "No matching groups found..." : "No matching videos found...", inner_rect.GetSize(), table_start_cpos);
 						}
