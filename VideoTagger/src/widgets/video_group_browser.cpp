@@ -242,7 +242,7 @@ namespace vt::widgets
 					bool remove{};
 					bool enqueue{};
 
-					draw_group_tab("Show All Groups", 0, open, remove, enqueue, false);
+					draw_group_tab("All Groups", 0, open, remove, enqueue, false);
 					ImGui::Separator();
 
 					if (ImGui::BeginChild("##VideoBrowserGroupTabs"))

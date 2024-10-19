@@ -452,6 +452,15 @@ namespace vt
 		}
 	}
 
+	void app::on_show_in_explorer()
+	{
+		auto path = std::filesystem::absolute(ctx_.current_project->path.parent_path()).u8string();
+		if (!path.empty())
+		{
+			utils::filesystem::open_in_explorer(path);
+		}
+	}
+
 	void app::on_import_videos()
 	{
 		if (!ctx_.current_project.has_value()) return;
@@ -709,6 +718,13 @@ namespace vt
 			on_save_as();
 		})));
 
+		ctx_.keybinds.insert(ctx_.lang.get(lang_pack_id::show_in_explorer), keybind(SDLK_o, keybind_modifiers{ true, false, true }, flags,
+		builtin_action([this]()
+		{
+			if (ImGui::IsPopupOpen(nullptr, ImGuiPopupFlags_AnyPopup)) return;
+			on_show_in_explorer();
+		})));
+		
 		ctx_.keybinds.insert(ctx_.lang.get(lang_pack_id::import_videos), keybind(SDLK_i, keybind_modifiers{ true }, flags,
 		builtin_action([this]()
 		{
@@ -1271,13 +1287,13 @@ namespace vt
 			ImGui::DockBuilderDockWindow("Video Player", main_dock_up);
 			ImGui::DockBuilderDockWindow("Video Browser", main_dock_up_left);
 			ImGui::DockBuilderDockWindow("Theme Customizer", main_dock_up);
+			ImGui::DockBuilderDockWindow("Timeline", dockspace_id_copy);
 			ImGui::DockBuilderDockWindow("Video Group Browser", dockspace_id_copy);
 			/*for (size_t i = 0; i < 4; ++i)
 			{
 				auto video_id = "Video##" + std::to_string(i);
 				ImGui::DockBuilderDockWindow(video_id.c_str(), main_dock_up);
 			}*/
-			ImGui::DockBuilderDockWindow("Timeline", dockspace_id_copy);
 			
 			ImGui::DockBuilderFinish(dockspace_id);
 			ctx_.reset_layout = false;
@@ -1327,14 +1343,12 @@ namespace vt
 				ImGui::Separator();
 				{
 					{
+						std::string key_name = ctx_.lang.get(lang_pack_id::show_in_explorer);
+						auto& kb = ctx_.keybinds.at(key_name);
 						std::string menu_name = fmt::format("{} {}", icons::folder, ctx_.lang.get(lang_pack_id::show_in_explorer));
-						if (ImGui::MenuItem(menu_name.c_str()))
+						if (ImGui::MenuItem(menu_name.c_str(), kb.name().c_str()))
 						{
-							auto path = std::filesystem::absolute(ctx_.current_project->path.parent_path()).u8string();
-							if (!path.empty())
-							{
-								utils::filesystem::open_in_explorer(path);
-							}
+							on_show_in_explorer();
 						}
 					}
 
