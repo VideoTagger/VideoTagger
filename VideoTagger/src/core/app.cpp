@@ -461,29 +461,56 @@ namespace vt
 		}
 	}
 
+	static std::vector<std::string> valid_video_extensions()
+	{
+		return { "mp4", "mkv", "avi", "mov", "flv", "wmv", "webm", "m4v", "mpg", "mpeg", "3gp", "ogv", "vob", "mts", "m2ts", "mxf", "f4v", "divx", "rmvb", "asf", "swf" };
+	}
+
 	void app::on_import_videos()
 	{
 		if (!ctx_.current_project.has_value()) return;
 
-		auto result = utils::filesystem::get_files();
+		static std::vector<std::string> vid_exts = valid_video_extensions();
+
+		static utils::dialog_filters filters
+		{
+			{ "Video", utils::filesystem::concat_extensions(vid_exts) },
+		};
+
+		auto result = utils::filesystem::get_files({}, filters);
 		if (result)
 		{
 			for (const auto& path : result.paths)
 			{
-				const auto& videos = ctx_.current_project->videos;
-				auto it = std::find_if(videos.begin(), videos.end(), [path](const video_pool::iterator::value_type& video_data)
 				{
-					return video_data.second.path == path;
-				});
+					auto it = std::find_if(vid_exts.begin(), vid_exts.end(), [&path](const std::string& ext)
+					{
+						return path.extension() == ext;
+					});
 
-				if (it == videos.end())
-				{
-					debug::log("Importing video {}", path.u8string());
-					ctx_.current_project->video_import_tasks.push_back(ctx_.current_project->import_video(path));
+					if (it == vid_exts.end())
+					{
+						debug::error("Failed to import file {} - its not a valid video type", path.u8string());
+						continue;
+					}
 				}
-				else
+
+				const auto& videos = ctx_.current_project->videos;
 				{
-					//TODO: Display message box
+					auto it = std::find_if(videos.begin(), videos.end(), [path](const video_pool::iterator::value_type& video_data)
+					{
+						return video_data.second.path == path;
+					});
+
+					if (it == videos.end())
+					{
+						debug::log("Importing video {}", path.u8string());
+						ctx_.current_project->video_import_tasks.push_back(ctx_.current_project->import_video(path));
+					}
+					else
+					{
+						//TODO: Display message box
+					}
 				}
 			}
 		}
