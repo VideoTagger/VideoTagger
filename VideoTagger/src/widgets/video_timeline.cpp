@@ -44,6 +44,7 @@
 #include "insert_segment_popup.hpp"
 
 #include <core/app_context.hpp>
+#include <utils/drag_drop.hpp>
 
 namespace vt::widgets
 {
@@ -349,6 +350,7 @@ namespace vt::widgets
 				ImVec2 childFrameSize(canvas_size.x, canvas_size.y - 8.f - header_size.y - (has_scroll_bar ? scroll_bar_size.y : 0));
 				//ImGui::PushStyleColor(ImGuiCol_FrameBg, 0);
 				ImGui::BeginChild("##Frame", childFrameSize, ImGuiChildFlags_FrameStyle);
+
 				focused_ = ImGui::IsWindowFocused();
 				ImGui::InvisibleButton("##ContentBar", ImVec2(canvas_size.x, float(control_height)), ImGuiButtonFlags_AllowOverlap);
 				const ImVec2 contentMin = ImGui::GetItemRectMin();
@@ -361,6 +363,23 @@ namespace vt::widgets
 				static bool panning_view = false;
 				static ImVec2 panning_view_source;
 				static int64_t panning_view_frame;
+
+				if (enabled_ and ImGui::BeginDragDropTargetCustom(timeline_rect, ImGui::GetID(window_id.c_str())))
+				{
+					auto payload = utils::drag_drop::get_payload<const char*>("Tag");
+					if (payload.data.has_value())
+					{
+						auto is_delivery = payload.imgui_payload->IsDelivery();
+						auto tag_name = std::string(*payload.data);
+
+						if (is_delivery)
+						{
+							debug::log("TODO: Open add tag on timeline popup");
+							ImGui::SetMouseCursor(ImGuiMouseCursor_NotAllowed);
+						}
+					}
+					ImGui::EndDragDropTarget();
+				}
 
 				if (enabled_ and ImGui::IsMouseHoveringRect(timeline_rect.Min, timeline_rect.Max) and io.KeyAlt and io.MouseDown[2])
 				{
