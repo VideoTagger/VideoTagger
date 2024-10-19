@@ -63,6 +63,8 @@ project "VideoTagger"
 		"{COPY} assets %{cfg.targetdir}/assets"
 	}
 
+	filter "files:src/embeds/**.cpp"
+		flags { "NoPCH" }
 	filter "files:vendor/ImGuizmo/**.cpp"
 		flags { "NoPCH" }
 	filter "files:vendor/ImGui/**.cpp"
