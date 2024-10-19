@@ -23,6 +23,8 @@
 #include "project.hpp"
 #include <core/debug.hpp>
 #include <core/actions.hpp>
+#include <embeds/MaterialIconsSharp_Regular.hpp>
+#include <embeds/NotoSans_Regular.hpp>
 
 #ifdef _WIN32
 	#include <SDL_syswm.h>
@@ -668,62 +670,61 @@ namespace vt
 		std::filesystem::path font_path = std::filesystem::path("assets") / "fonts" / "NotoSans-Regular.ttf";
 		std::filesystem::path ico_font_path = std::filesystem::path("assets") / "fonts" / "MaterialIconsSharp-Regular.otf";
 
-		if (std::filesystem::exists(font_path))
+		ImVector<ImWchar> ranges;
+		ImFontGlyphRangesBuilder builder;
+		ImFontConfig ico_config{};
+		ico_config.MergeMode = true;
+		ico_config.GlyphOffset = { 0.f, 4.f };
+		ico_config.GlyphMinAdvanceX = size;
+		ico_config.FontDataOwnedByAtlas = false;
+		
+		ImFontConfig def_config{};
+		def_config.FontDataOwnedByAtlas = false;
+
+
+		for (const auto& icon : icons::all)
 		{
-			ImVector<ImWchar> ranges;
-			ImFontGlyphRangesBuilder builder;
-			ImFontConfig config{};
-			config.MergeMode = true;
-			config.GlyphOffset = { 0.f, 4.f };
-			config.GlyphMinAdvanceX = size;
+			builder.AddText(icon.c_str());
+		}
 
-			for (const auto& icon : icons::all)
-			{
-				builder.AddText(icon.c_str());
-			}
+		ImVector<ImWchar> default_ranges;
+		ImFontGlyphRangesBuilder default_font_builder;
 
-			ImVector<ImWchar> default_ranges;
-			ImFontGlyphRangesBuilder default_font_builder;
-
-			for (const auto& range :
+		for (const auto& range :
 			{
 				io.Fonts->GetGlyphRangesDefault(),
 				io.Fonts->GetGlyphRangesGreek(),
 				io.Fonts->GetGlyphRangesCyrillic()
 			})
-			{
-				default_font_builder.AddRanges(range);
-			}
-
-			static const ImWchar latin_extended[] =
-			{
-				0x0020, 0x00FF, // Basic Latin + Latin Supplement
-				0x0100, 0x017F, // Latin Extended-A
-				0x0180, 0x024F, // Latin Extended-B
-				//0x1E00, 0x1EFF, // Latin Extended Additional
-				0,
-			};
-			default_font_builder.AddRanges(latin_extended);
-			default_font_builder.BuildRanges(&default_ranges);
-
-			ImVector<ImWchar> thumbnail_ranges;
-			ImFontGlyphRangesBuilder thumbnail_font_builder;
-			thumbnail_font_builder.AddText(icons::video_group);
-			thumbnail_font_builder.AddText(icons::video);
-			thumbnail_font_builder.BuildRanges(&thumbnail_ranges);
-
-			builder.BuildRanges(&ranges);
-			ctx_.fonts["default"] = io.Fonts->AddFontFromFileTTF(font_path.u8string().c_str(), size, nullptr, default_ranges.Data);
-			io.Fonts->AddFontFromFileTTF(ico_font_path.string().c_str(), size, &config, ranges.Data);
-			ctx_.fonts["title"] = io.Fonts->AddFontFromFileTTF(font_path.u8string().c_str(), size * 1.25f, nullptr, default_ranges.Data);
-
-			ctx_.fonts["thumbnail"] = io.Fonts->AddFontFromFileTTF(ico_font_path.u8string().c_str(), 256, nullptr, thumbnail_ranges.Data);
-			io.Fonts->Build();
-		}
-		else
 		{
-			debug::log("Not loading a custom font, since the file doesn't exist");
+			default_font_builder.AddRanges(range);
 		}
+
+		static const ImWchar latin_extended[] =
+		{
+			0x0020, 0x00FF, // Basic Latin + Latin Supplement
+			0x0100, 0x017F, // Latin Extended-A
+			0x0180, 0x024F, // Latin Extended-B
+			//0x1E00, 0x1EFF, // Latin Extended Additional
+			0,
+		};
+		default_font_builder.AddRanges(latin_extended);
+		default_font_builder.BuildRanges(&default_ranges);
+
+		ImVector<ImWchar> thumbnail_ranges;
+		ImFontGlyphRangesBuilder thumbnail_font_builder;
+		thumbnail_font_builder.AddText(icons::video_group);
+		thumbnail_font_builder.AddText(icons::video);
+		thumbnail_font_builder.BuildRanges(&thumbnail_ranges);
+
+		builder.BuildRanges(&ranges);
+		ctx_.fonts["default"] = io.Fonts->AddFontFromMemoryTTF((void*)embed::NotoSans_Regular, static_cast<int>(embed::NotoSans_Regular_size), size, &def_config, default_ranges.Data);
+		io.Fonts->AddFontFromMemoryTTF((void*)embed::MaterialIconsSharp_Regular, static_cast<int>(embed::MaterialIconsSharp_Regular_size), size, &ico_config, ranges.Data);
+
+		ico_config.MergeMode = false;
+		ctx_.fonts["title"] = io.Fonts->AddFontFromMemoryTTF((void*)embed::NotoSans_Regular, static_cast<int>(embed::NotoSans_Regular_size), size * 1.25f, &def_config, default_ranges.Data);
+		ctx_.fonts["thumbnail"] = io.Fonts->AddFontFromMemoryTTF((void*)embed::MaterialIconsSharp_Regular, static_cast<int>(embed::MaterialIconsSharp_Regular_size), 256, &ico_config, thumbnail_ranges.Data);
+		io.Fonts->Build();
 	}
 
 	void app::init_keybinds()
