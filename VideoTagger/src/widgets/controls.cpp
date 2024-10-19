@@ -24,7 +24,7 @@ namespace vt::widgets
 		return result;
 	}
 
-	void icon_tooltip(const char* text)
+	void tooltip(const char* text)
 	{
 		if (ImGui::IsItemHovered(ImGuiHoveredFlags_ForTooltip | ImGuiHoveredFlags_DelayNormal) and ImGui::BeginTooltip())
 		{
@@ -150,11 +150,11 @@ namespace vt::widgets
 		ImGui::PopStyleVar();
 	}
 	
-	void centered_text(const char* text, ImVec2 avail_area)
+	void centered_text(const char* text, ImVec2 avail_area, ImVec2 offset)
 	{
 		auto half_text_size = ImGui::CalcTextSize(text, nullptr, false, 3 * avail_area.x / 4) / 2;
 		auto cpos = ImGui::GetCursorPos();
-		ImGui::SetCursorPos(avail_area / 2 - half_text_size);
+		ImGui::SetCursorPos(offset + avail_area / 2 - half_text_size);
 		ImGui::BeginDisabled();
 		ImGui::TextWrapped(text);
 		ImGui::EndDisabled();

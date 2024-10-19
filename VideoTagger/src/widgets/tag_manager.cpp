@@ -6,6 +6,7 @@
 #include "icons.hpp"
 #include <core/app_context.hpp>
 #include <utils/drag_drop.hpp>
+#include <utils/string.hpp>
 
 namespace vt::widgets
 {
@@ -225,7 +226,7 @@ namespace vt::widgets
 			{
 				open_add_tag_popup = true;
 			}
-			icon_tooltip("Add Tag");
+			tooltip("Add Tag");
 			ImGui::SameLine();
 			search_bar("##VideoGroupBrowserSearch", "Search...", filter, ImGui::GetContentRegionAvail().x - 2 * (ImGui::CalcTextSize(icons::toggle_less).x + 2 * style.FramePadding.x));
 			ImGui::SameLine();
@@ -234,7 +235,7 @@ namespace vt::widgets
 				update_state = true;
 				update_all = true;
 			}
-			icon_tooltip("Expand All");
+			tooltip("Expand All");
 			ImGui::SameLine();
 			ImGui::PopStyleVar();
 			if (icon_button(icons::toggle_less))
@@ -242,8 +243,14 @@ namespace vt::widgets
 				update_state = false;
 				update_all = true;
 			}
-			icon_tooltip("Collapse All");
+			tooltip("Collapse All");
 			ImGui::Separator();
+
+			std::vector<std::string> tokens;
+			if (!filter.empty())
+			{
+				tokens = utils::string::split(utils::string::to_lowercase(utils::string::trim_whitespace(filter)), ' ');
+			}
 
 			//ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2{});
 			bool is_scrollable_list_open = ImGui::BeginChild("##ScrollableTagList", ImGui::GetContentRegionAvail());
@@ -251,15 +258,33 @@ namespace vt::widgets
 			//ImGui::PopStyleVar();
 			if (is_scrollable_list_open)
 			{
+				size_t filter_passes{};
 				static auto color_ref = tags.end();
 				int id{};
 
 				auto node_flags = ImGuiTreeNodeFlags_Framed | ImGuiTreeNodeFlags_SpanFullWidth;
 				
 				static std::string tag_name;
+
 				for (auto it = tags.begin(); it != tags.end();)
 				{
 					auto& tag = *it;
+
+					bool passes_filter = true;
+					for (const auto& token : tokens)
+					{
+						auto ttoken = utils::string::trim_whitespace(token);
+						std::string name = utils::string::to_lowercase(tag.name);
+						passes_filter &= name.find(ttoken) != std::string::npos;
+					}
+
+					if (!passes_filter)
+					{
+						++it;
+						continue;
+					}
+					++filter_passes;
+
 
 					//ImGui::TableNextColumn();
 					ImGui::PushID(id++);
@@ -305,7 +330,7 @@ namespace vt::widgets
 					bool delete_tag = false;
 					if (ImGui::BeginPopupContextItem("##TagCtxMenu"))
 					{
-						std::string menu_name = std::string(icons::delete_) + " Delete";
+						std::string menu_name = fmt::format("{} Delete", icons::delete_);
 						if (ImGui::MenuItem(menu_name.c_str()))
 						{
 							delete_tag = true;
@@ -380,6 +405,11 @@ namespace vt::widgets
 					{
 						++it;
 					}
+				}
+
+				if (filter_passes == 0)
+				{
+					centered_text("No matching tags found...", ImGui::GetContentRegionAvail());
 				}
 
 				if (ctx_.color_picker.render("##TagColorPicker") and color_ref != tags.end())

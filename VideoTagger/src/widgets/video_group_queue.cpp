@@ -181,7 +181,7 @@ namespace vt::widgets
 						auto& pool = ctx_.current_project->videos;
 					}
 					if (!can_play) ImGui::EndDisabled();
-					icon_tooltip("Play");
+					tooltip("Play");
 
 					ImGui::SetCursorPosX(cpos);
 					if (is_empty) ImGui::BeginDisabled();
@@ -190,14 +190,14 @@ namespace vt::widgets
 						playlist.clear();
 					}
 					if (is_empty) ImGui::EndDisabled();
-					icon_tooltip("Clear queue");
+					tooltip("Clear queue");
 
 					ImGui::SetCursorPosX(cpos);
 					if (icon_toggle_button(icons::shuffle, is_shuffled))
 					{
 						playlist.set_shuffle(!is_shuffled);
 					}
-					icon_tooltip(is_shuffled ? "Disable shuffling" : "Enable shuffling");
+					tooltip(is_shuffled ? "Disable shuffling" : "Enable shuffling");
 				}
 				ImGui::EndTable();
 			}

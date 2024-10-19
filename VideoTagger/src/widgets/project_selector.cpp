@@ -168,9 +168,10 @@ namespace vt::widgets
 		std::optional<tm> mod_time = project.modification_time();
 		if (!path.empty() and std::filesystem::exists(path))
 		{
-			path = std::filesystem::relative(path);
+			path = std::filesystem::absolute(path);
 		}
 		ImGui::TextDisabled(path.string().c_str());
+		tooltip(path.string().c_str());
 		ImGui::EndGroup();
 
 		ImGui::TableNextColumn();
