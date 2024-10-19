@@ -364,23 +364,6 @@ namespace vt::widgets
 				static ImVec2 panning_view_source;
 				static int64_t panning_view_frame;
 
-				if (enabled_ and ImGui::BeginDragDropTargetCustom(timeline_rect, ImGui::GetID(window_id.c_str())))
-				{
-					auto payload = utils::drag_drop::get_payload<const char*>("Tag");
-					if (payload.data.has_value())
-					{
-						auto is_delivery = payload.imgui_payload->IsDelivery();
-						auto tag_name = std::string(*payload.data);
-
-						if (is_delivery)
-						{
-							debug::log("TODO: Open add tag on timeline popup");
-							ImGui::SetMouseCursor(ImGuiMouseCursor_NotAllowed);
-						}
-					}
-					ImGui::EndDragDropTarget();
-				}
-
 				if (enabled_ and ImGui::IsMouseHoveringRect(timeline_rect.Min, timeline_rect.Max) and io.KeyAlt and io.MouseDown[2])
 				{
 					if (!panning_view)
@@ -411,6 +394,31 @@ namespace vt::widgets
 					return timestamp{ std::chrono::seconds{ static_cast<int64_t>((mouse_pos_x - (contentMin.x + legend_width - first_frame_used * frame_pixel_width)) / frame_pixel_width) } };
 				};
 
+				if (enabled_ and ImGui::BeginDragDropTargetCustom(timeline_rect, ImGui::GetID(window_id.c_str())))
+				{
+					auto payload = utils::drag_drop::get_payload<const char*>("Tag");
+					if (payload.data.has_value())
+					{
+						auto is_delivery = payload.imgui_payload->IsDelivery();
+						auto tag_name = std::string(*payload.data);
+
+						if (is_delivery)
+						{
+							add_displayed_tag(tag_name);
+
+							insert_segment_data insert_data;
+							insert_data.show_insert_popup = true;
+							insert_data.start = mouse_pos_to_timestamp(io.MousePos.x);
+							insert_data.end = *insert_data.start + timestamp(1);
+							insert_data.tag = tag_name;
+
+							//TODO: maybe use something more descriptive than an empty string
+							(*insert_segment_container)[""] = insert_data;
+						}
+					}
+					ImGui::EndDragDropTarget();
+				}
+
 				// full background
 
 				ImU32 bg_color = ImGui::ColorConvertFloat4ToU32(style.Colors[ImGuiCol_MenuBarBg]); //0xFF242424
@@ -419,7 +427,7 @@ namespace vt::widgets
 				// current frame top
 				ImRect topRect(ImVec2(canvas_pos.x + legend_width, canvas_pos.y), ImVec2(canvas_pos.x + canvas_size.x, canvas_pos.y + item_height));
 
-				if (enabled_ and !moving_time_marker and !moving_scroll_bar and !moving_segment.has_value() and current_time_.seconds_total.count() >= 0 and topRect.Contains(io.MousePos) and io.MouseDown[0] and !ImGui::IsPopupOpen(nullptr, ImGuiPopupFlags_AnyPopup | ImGuiPopupFlags_AnyPopupId))
+				if (enabled_ and !moving_time_marker and !moving_scroll_bar and !moving_segment.has_value() and current_time_.seconds_total.count() >= 0 and topRect.Contains(io.MousePos) and io.MouseClicked[0] and !ImGui::IsPopupOpen(nullptr, ImGuiPopupFlags_AnyPopup | ImGuiPopupFlags_AnyPopupId))
 				{
 					moving_time_marker = true;
 				}
@@ -883,7 +891,7 @@ namespace vt::widgets
 						insert_data.show_insert_popup = true;
 						insert_data.start = inserted_segment_start;
 						insert_data.end = inserted_segment_end;
-						insert_data.name_index = selected_tag;
+						insert_data.tag = displayed_tags[selected_tag];
 
 						//TODO: maybe use something more descriptive than an empty string
 						(*insert_segment_container)[""] = insert_data;

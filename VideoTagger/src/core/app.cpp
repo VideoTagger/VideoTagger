@@ -1590,6 +1590,17 @@ namespace vt
 		{
 			auto& insert_data = it->second;
 
+			if (!insert_data.tag.empty() and insert_data.name_index < 0)
+			{
+				auto& tags = ctx_.video_timeline.displayed_tags();
+
+				auto it = std::find(tags.begin(), tags.end(), insert_data.tag);
+				if (it != tags.end())
+				{
+					insert_data.name_index = it - tags.begin();
+				}
+			}
+
 			if (insert_data.show_insert_popup)
 			{
 				ImGui::OpenPopup("###AppInsertSegment");
@@ -1643,6 +1654,8 @@ namespace vt
 
 		auto segment_type = *insert_data.start == *insert_data.end ? tag_segment_type::timestamp : tag_segment_type::segment;
 		const char* insert_segment_popup_id = segment_type == tag_segment_type::timestamp ? "Insert Timestamp###AppInsertSegment" : "Insert Segment###AppInsertSegment";
+
+		static int selected_tag_index{};
 
 		bool presed_ok{};
 		if (widgets::insert_segment_popup(insert_segment_popup_id, *insert_data.start, *insert_data.end, segment_type, min_ts, max_ts, tags, insert_data.name_index, presed_ok))

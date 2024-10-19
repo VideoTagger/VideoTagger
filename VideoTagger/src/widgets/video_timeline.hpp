@@ -70,7 +70,7 @@ namespace vt::widgets
 		bool show_merge_popup = true;
 
 		//used in insert popup
-		int name_index{};
+		int name_index = -1;
 	};
 
 	using insert_segment_data_container = std::unordered_map<std::string, insert_segment_data>;
