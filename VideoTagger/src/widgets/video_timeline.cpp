@@ -885,7 +885,7 @@ namespace vt::widgets
 						if (segments != nullptr)
 						{
 							auto it = std::find(displayed_tags.begin(), displayed_tags.end(), tag_info->name);
-							selected_tag = (it != displayed_tags.end()) ? it - displayed_tags.begin() : 0;
+							selected_tag = (it != displayed_tags.end()) ? static_cast<int>(it - displayed_tags.begin()) : 0;
 						}
 
 						insert_segment_data insert_data;
