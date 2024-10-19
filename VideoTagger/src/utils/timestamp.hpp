@@ -38,17 +38,17 @@ namespace vt
 			seconds_total = seconds_total - std::chrono::seconds(seconds()) + std::chrono::seconds(value);
 		}
 
-		[[nodiscard]] constexpr uint64_t hours() const
+		[[nodiscard]] constexpr int64_t hours() const
 		{
 			return std::chrono::duration_cast<std::chrono::hours>(seconds_total).count();
 		}
 
-		[[nodiscard]] constexpr uint64_t minutes() const
+		[[nodiscard]] constexpr int64_t minutes() const
 		{
 			return std::chrono::duration_cast<std::chrono::minutes>(seconds_total).count() % 60;
 		}
 
-		[[nodiscard]] constexpr uint64_t seconds() const
+		[[nodiscard]] constexpr int64_t seconds() const
 		{
 			return seconds_total.count() % 60;
 		}

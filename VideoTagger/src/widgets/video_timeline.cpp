@@ -324,24 +324,6 @@ namespace vt::widgets
 
 			ImRect region_rect(canvas_pos, canvas_pos + canvas_size);
 
-			static bool panning_view = false;
-			static ImVec2 panning_view_source;
-			static int64_t panning_view_frame;
-			if (enabled_ and ImGui::IsWindowFocused() and io.KeyAlt and io.MouseDown[2])
-			{
-				if (!panning_view)
-				{
-					panning_view_source = io.MousePos;
-					panning_view = true;
-					panning_view_frame = first_frame_;
-				}
-				first_frame_ = panning_view_frame - int64_t((io.MousePos.x - panning_view_source.x) / frame_pixel_width);
-				first_frame_ = std::clamp(first_frame_, time_min, time_max - visibleFrameCount);
-			}
-			if (panning_view and !io.MouseDown[2])
-			{
-				panning_view = false;
-			}
 			frame_pixel_width_target = std::clamp(frame_pixel_width_target, 0.1f, 50.f);
 
 			frame_pixel_width = ImLerp(frame_pixel_width, frame_pixel_width_target, 0.33f);
@@ -351,7 +333,6 @@ namespace vt::widgets
 			{
 				first_frame_ = time_min;
 			}
-
 
 			{
 				/*
@@ -374,6 +355,36 @@ namespace vt::widgets
 				const ImVec2 contentMax = ImGui::GetItemRectMax();
 				const ImRect contentRect(contentMin, contentMax);
 				const float contentHeight = contentMax.y - contentMin.y;
+
+				const ImRect timeline_rect = { {contentMin.x + legend_width, contentMin.y}, contentMax };
+
+				static bool panning_view = false;
+				static ImVec2 panning_view_source;
+				static int64_t panning_view_frame;
+
+				if (enabled_ and ImGui::IsMouseHoveringRect(timeline_rect.Min, timeline_rect.Max) and io.KeyAlt and io.MouseDown[2])
+				{
+					if (!panning_view)
+					{
+						panning_view_source = io.MousePos;
+						panning_view = true;
+						panning_view_frame = first_frame_;
+					}
+					first_frame_ = panning_view_frame - int64_t((io.MousePos.x - panning_view_source.x) / frame_pixel_width);
+					first_frame_ = std::clamp(first_frame_, time_min, time_max - visibleFrameCount);
+				}
+				if (panning_view and !io.MouseDown[2])
+				{
+					panning_view = false;
+				}
+
+				if (ctx_.displayed_videos.is_playing() and !moving_scroll_bar and !panning_view)
+				{
+					if (current_time_.seconds_total.count() < first_frame_ or (first_frame_ + visibleFrameCount) <= current_time_.seconds_total.count())
+					{
+						first_frame_ = std::clamp(current_time_.seconds_total.count() - visibleFrameCount / 2, int64_t{ 0 }, frame_count - visibleFrameCount);
+					}
+				}
 
 
 				auto mouse_pos_to_timestamp = [contentMin, legend_width, first_frame_used](float mouse_pos_x)
@@ -756,10 +767,16 @@ namespace vt::widgets
 
 					static timestamp mouse_timestamp;
 
+					bool mouse_on_timeline = ImGui::IsMouseHoveringRect(timeline_rect.Min, timeline_rect.Max);
 					if (ImGui::BeginPopupContextItem("##SegmentContextMenu"))
 					{
 						if (ImGui::IsWindowAppearing())
 						{
+							if (!mouse_on_timeline)
+							{
+								ImGui::CloseCurrentPopup();
+							}
+
 							mouse_timestamp = mouse_pos_to_timestamp(io.MousePos.x);
 						}
 
