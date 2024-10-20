@@ -127,7 +127,7 @@ namespace vt::widgets
 		{
 			ImGui::Text("Are you sure you want to rename the tag \"%s\" to \"%s\"?", data.old_name.c_str(), data.new_name.c_str());
 			//TODO: CHANGE THIS
-			ImGui::TextDisabled("ONE SHALL NOT PERFORM SUCH ACTION CARELESSLY FOR IT COULD BRING DIRE CONSEQUENCES");
+			//ImGui::TextDisabled("ONE SHALL NOT PERFORM SUCH ACTION CARELESSLY FOR IT COULD BRING DIRE CONSEQUENCES");
 			ImGui::NewLine();
 			auto area_size = ImGui::GetWindowSize();
 
@@ -213,11 +213,11 @@ namespace vt::widgets
 		{
 			ImGui::Text("Are you sure you want to delete tag \"%s\"", tag_name.c_str());
 
-			ImGui::TextDisabled("All segments associated with this tag will be deleted as well");
+			ImGui::TextColored({ 1.f, 170.f / 255.f, 50.f / 255.f, 1.f }, "All segments associated with this tag will be deleted as well!");
 			ImGui::NewLine();
 			auto area_size = ImGui::GetWindowSize();
 
-			ImGui::SetCursorPosX(area_size.x / 2 - button_size.x / 2);
+			ImGui::SetCursorPosX(area_size.x / 2 - button_size.x - style.ItemSpacing.x);
 			if (ImGui::Button("Yes", button_size))
 			{
 				return_value = true;
