@@ -463,6 +463,7 @@ namespace vt
 		}
 	}
 
+	//TODO: Shouldn't this be a static array somewhere or at least constexpr?
 	static std::vector<std::string> valid_video_extensions()
 	{
 		return { "mp4", "mkv", "avi", "mov", "flv", "wmv", "webm", "m4v", "mpg", "mpeg", "3gp", "ogv", "vob", "mts", "m2ts", "mxf", "f4v", "divx", "rmvb", "asf", "swf" };
@@ -487,11 +488,12 @@ namespace vt
 				{
 					auto it = std::find_if(vid_exts.begin(), vid_exts.end(), [&path](const std::string& ext)
 					{
-						return path.extension() == ext;
+						return path.extension() == "." + ext;
 					});
 
 					if (it == vid_exts.end())
 					{
+						//TODO: Should probably display a popup
 						debug::error("Failed to import file {} - its not a valid video type", path.u8string());
 						continue;
 					}
