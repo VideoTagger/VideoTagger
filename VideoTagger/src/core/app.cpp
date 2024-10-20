@@ -1383,10 +1383,7 @@ namespace vt
 						std::string menu_name = fmt::format("{} {}", icons::import_export, ctx_.lang.get(lang_pack_id::import_export));
 						if (ImGui::BeginMenu(menu_name.c_str()))
 						{
-							if (ImGui::MenuItem("Import Tags", nullptr, nullptr, false))
-							{
-								//TODO: Add import tags popup which shows an option whether to merge or replace tags
-							}
+							ImGui::MenuItem("Import Tags", nullptr, &ctx_.win_cfg.show_tag_importer_window, true);
 
 							ImGui::Separator();
 							if (ImGui::MenuItem("Export Tags"))
@@ -1565,6 +1562,10 @@ namespace vt
 		if (ctx_.win_cfg.show_options_window)
 		{
 			ImGui::OpenPopup("Options");
+		}
+		if (ctx_.win_cfg.show_tag_importer_window)
+		{
+			ctx_.tag_importer.open();
 		}
 
 		{
@@ -1959,6 +1960,8 @@ namespace vt
 		}
 
 		//TODO: Add base virtual class that has render(bool&) method instead of this
+
+		ctx_.tag_importer.render(ctx_.win_cfg.show_tag_importer_window);
 
 		if (ctx_.win_cfg.show_options_window)
 		{
