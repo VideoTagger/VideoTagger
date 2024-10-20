@@ -1889,9 +1889,14 @@ namespace vt
 		if (ctx_.win_cfg.show_tag_manager_window)
 		{
 			static std::optional<widgets::tag_rename_data> tag_rename;
-			widgets::draw_tag_manager_widget(ctx_.current_project->tags, tag_rename, ctx_.is_project_dirty, ctx_.win_cfg.show_tag_manager_window);
+			static std::optional<widgets::tag_delete_data> tag_delete;
+			widgets::draw_tag_manager_widget(ctx_.current_project->tags, tag_rename, tag_delete, ctx_.is_project_dirty, ctx_.win_cfg.show_tag_manager_window);
+			
+			//TODO: Should this be done in the widget or outside?
 			if (tag_rename.has_value() and tag_rename->ready)
 			{
+				//TODO: maybe make this a function in the project class
+
 				ctx_.is_project_dirty = true;
 				
 				for (auto& [_, displayed_tags] : ctx_.video_timeline.displayed_tags_per_group())
@@ -1918,6 +1923,38 @@ namespace vt
 				//TODO: consider renaming tags in keybinds
 
 				tag_rename.reset();
+			}
+			if (tag_delete.has_value() and tag_delete->ready)
+			{
+				ctx_.is_project_dirty = true;
+
+				auto& selected_segment = ctx_.video_timeline.selected_segment;
+				if (selected_segment.has_value() and selected_segment->tag->name == tag_delete->tag)
+				{
+					selected_segment.reset();
+				}
+
+				auto& moving_segment = ctx_.video_timeline.moving_segment;
+				if (moving_segment.has_value() and moving_segment->tag->name == tag_delete->tag)
+				{
+					moving_segment.reset();
+				}
+
+				auto& segments = ctx_.current_project->segments;
+
+				for (auto it = segments.begin(); it != segments.end(); ++it)
+				{
+					auto& group_segments = it->second;
+					auto group_segments_it = group_segments.find(tag_delete->tag);
+					if (group_segments_it != group_segments.end())
+					{
+						group_segments.erase(group_segments_it);
+					}
+				}
+
+				ctx_.current_project->tags.erase(tag_delete->tag);
+
+				tag_delete.reset();
 			}
 		}
 
