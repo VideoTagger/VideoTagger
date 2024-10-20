@@ -265,9 +265,8 @@ namespace vt::widgets
 							//TODO: Refactor this so this isn't duplicated in 2 places
 							if (remove)
 							{
-								ctx_.is_project_dirty = true;
-								ctx_.current_project->video_groups.erase(gid);
-								if (current_video_group = gid)
+								ctx_.current_project->remove_video_group(gid);
+								if (current_video_group == gid)
 								{
 									current_video_group = 0;
 								}
