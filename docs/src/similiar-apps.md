@@ -9,4 +9,4 @@
 | Customizable keybinds               | ✅           | ❌                  | ✅    | ❌      | ✅       |
 | Annotation of an object in a video  | ❌           | ✅                  | ✅    | ✅      | ❌       |
 | Theme customization                 | ✅           | ✅                  | ✅    | ❌      | ✅       |
-| Live colaboration                   | ❌           | ✅                  | ✅    | ❌      | ✅       |
+| Live collaboration                  | ❌           | ✅                  | ✅    | ❌      | ✅       |

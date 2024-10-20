@@ -92,7 +92,7 @@ namespace vt::widgets::modal
 
 			int input_flags = ImGuiInputTextFlags_AutoSelectAll;
 
-			if (ImGui::InputTextWithHint("##ImportPath", "Tags Path...", &path, input_flags))
+			if (ImGui::InputTextWithHint("##ImportPath", "Tag File Location...", &path, input_flags))
 			{
 				tags_path = std::filesystem::absolute(path);
 				tags_path.make_preferred();

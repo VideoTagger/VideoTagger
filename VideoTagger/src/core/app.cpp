@@ -345,6 +345,10 @@ namespace vt
 		state_ = app_state::running;
 		ctx_.project_selector.load_projects_file(ctx_.projects_list_filepath);
 
+#ifndef _DEBUG
+		try
+		{
+#endif
 		while (state_ == app_state::running)
 		{
 			ImGui_ImplSDLRenderer2_NewFrame();
@@ -358,6 +362,14 @@ namespace vt
 				render();
 			}
 		}
+#ifndef _DEBUG
+		}
+		catch (const std::exception& ex)
+		{
+			std::string msg = "Message:\n" + std::string{ ex.what() };
+			SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "VideoTagger - Unexpected Error", msg.c_str(), nullptr);
+		}
+#endif
 
 		state_ = app_state::shutdown;
 		shutdown();
