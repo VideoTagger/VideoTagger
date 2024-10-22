@@ -278,9 +278,9 @@ namespace vt
 			v_plane.resize(uv_size);
 		}
 
-		uint8_t y = 0.257 * r + 0.504 * g + 0.098 * b + 16;
-		uint8_t u = -0.148 * r - 0.291 * g + 0.439 * b + 128;
-		uint8_t v = 0.439 * r - 0.368 * g - 0.071 * b + 128;
+		uint8_t y = static_cast<uint8_t>(0.257 * r + 0.504 * g + 0.098 * b + 16);
+		uint8_t u = static_cast<uint8_t>(-0.148 * r - 0.291 * g + 0.439 * b + 128);
+		uint8_t v = static_cast<uint8_t>(0.439 * r - 0.368 * g - 0.071 * b + 128);
 		
 		std::memset(y_plane.data(), y, y_size);
 		std::memset(u_plane.data(), u, uv_size);

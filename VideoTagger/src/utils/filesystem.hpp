@@ -53,5 +53,7 @@ namespace vt::utils
 		static std::string normalize(const std::filesystem::path& filepath);
 
 		static void open_in_explorer(const std::filesystem::path& path);
+
+		static std::string concat_extensions(const std::vector<std::string>& extensions);
 	};
 }

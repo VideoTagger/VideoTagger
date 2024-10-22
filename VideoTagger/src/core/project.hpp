@@ -69,6 +69,8 @@ namespace vt
 		void save() const;
 		void save_as(const std::filesystem::path& filepath);
 
+		void remove_video_group(video_group_id_t id);
+
 		static project load_from_file(const std::filesystem::path& filepath);
 	};
 }

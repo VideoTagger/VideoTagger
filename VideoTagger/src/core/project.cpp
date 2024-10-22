@@ -340,6 +340,24 @@ namespace vt
 		path = filepath;
 		save();
 	}
+
+	void project::remove_video_group(video_group_id_t id)
+	{
+		if (ctx_.current_video_group_id() == id)
+		{
+			ctx_.set_current_video_group_id(invalid_video_group_id);
+		}
+
+		auto playlist_it = std::find(video_group_playlist.begin(), video_group_playlist.end(), id);
+		if (playlist_it != video_group_playlist.end())
+		{
+			video_group_playlist.erase(playlist_it);
+		}
+
+		video_groups.erase(id);
+
+		ctx_.is_project_dirty = true;
+	}
 	
 	project project::load_from_file(const std::filesystem::path& filepath)
 	{

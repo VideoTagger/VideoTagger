@@ -24,6 +24,7 @@
 #include <widgets/video_group_queue.hpp>
 #include <widgets/theme_customizer.hpp>
 #include <widgets/modal/options.hpp>
+#include <widgets/modal/tag_importer.hpp>
 #include "displayed_videos_manager.hpp"
 #include <utils/json.hpp>
 
@@ -60,6 +61,7 @@ namespace vt
 		bool show_options_window = false;
 		bool show_theme_customizer_window = false;
 		bool show_about_window = false;
+		bool show_tag_importer_window = false;
 	};
 
 	struct app_context
@@ -73,6 +75,7 @@ namespace vt
 		widgets::theme_customizer theme_customizer;
 		widgets::modal::options options;
 		widgets::color_picker color_picker;
+		widgets::modal::tag_importer tag_importer;
 
 		std::filesystem::path projects_list_filepath = std::filesystem::path("projects").replace_extension("json");
 		std::filesystem::path app_settings_filepath = std::filesystem::path("settings").replace_extension("json");

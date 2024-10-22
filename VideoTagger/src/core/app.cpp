@@ -23,6 +23,8 @@
 #include "project.hpp"
 #include <core/debug.hpp>
 #include <core/actions.hpp>
+#include <embeds/MaterialIconsSharp_Regular.hpp>
+#include <embeds/NotoSans_Regular.hpp>
 
 #include <utils/string.hpp>
 #include <pybind11/embed.h>
@@ -376,6 +378,10 @@ namespace vt
 		ctx_.project_selector.load_projects_file(ctx_.projects_list_filepath);
 		test_python();
 
+#ifndef _DEBUG
+		try
+		{
+#endif
 		while (state_ == app_state::running)
 		{
 			ImGui_ImplSDLRenderer2_NewFrame();
@@ -389,6 +395,14 @@ namespace vt
 				render();
 			}
 		}
+#ifndef _DEBUG
+		}
+		catch (const std::exception& ex)
+		{
+			std::string msg = "Message:\n" + std::string{ ex.what() };
+			SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "VideoTagger - Unexpected Error", msg.c_str(), nullptr);
+		}
+#endif
 
 		state_ = app_state::shutdown;
 		shutdown();
@@ -485,29 +499,67 @@ namespace vt
 		}
 	}
 
+	void app::on_show_in_explorer()
+	{
+		auto path = std::filesystem::absolute(ctx_.current_project->path.parent_path()).u8string();
+		if (!path.empty())
+		{
+			utils::filesystem::open_in_explorer(path);
+		}
+	}
+
+	//TODO: Shouldn't this be a static array somewhere or at least constexpr?
+	static std::vector<std::string> valid_video_extensions()
+	{
+		return { "mp4", "mkv", "avi", "mov", "flv", "wmv", "webm", "m4v", "mpg", "mpeg", "3gp", "ogv", "vob", "mts", "m2ts", "mxf", "f4v", "divx", "rmvb", "asf", "swf" };
+	}
+
 	void app::on_import_videos()
 	{
 		if (!ctx_.current_project.has_value()) return;
 
-		auto result = utils::filesystem::get_files();
+		static std::vector<std::string> vid_exts = valid_video_extensions();
+
+		static utils::dialog_filters filters
+		{
+			{ "Video", utils::filesystem::concat_extensions(vid_exts) },
+		};
+
+		auto result = utils::filesystem::get_files({}, filters);
 		if (result)
 		{
 			for (const auto& path : result.paths)
 			{
-				const auto& videos = ctx_.current_project->videos;
-				auto it = std::find_if(videos.begin(), videos.end(), [path](const video_pool::iterator::value_type& video_data)
 				{
-					return video_data.second.path == path;
-				});
+					auto it = std::find_if(vid_exts.begin(), vid_exts.end(), [&path](const std::string& ext)
+					{
+						return path.extension() == "." + ext;
+					});
 
-				if (it == videos.end())
-				{
-					debug::log("Importing video {}", path.u8string());
-					ctx_.current_project->video_import_tasks.push_back(ctx_.current_project->import_video(path));
+					if (it == vid_exts.end())
+					{
+						//TODO: Should probably display a popup
+						debug::error("Failed to import file {} - its not a valid video type", path.u8string());
+						continue;
+					}
 				}
-				else
+
+				const auto& videos = ctx_.current_project->videos;
 				{
-					//TODO: Display message box
+					auto it = std::find_if(videos.begin(), videos.end(), [path](const video_pool::iterator::value_type& video_data)
+					{
+						return video_data.second.path == path;
+					});
+
+					if (it == videos.end())
+					{
+						debug::log("Importing video {}", path.u8string());
+						ctx_.current_project->video_import_tasks.push_back(ctx_.current_project->import_video(path));
+					}
+					else
+					{
+						//TODO: Display message box
+					}
 				}
 			}
 		}
@@ -662,65 +714,61 @@ namespace vt
 	{
 		auto& io = ImGui::GetIO();
 
-		std::filesystem::path font_path = std::filesystem::path("assets") / "fonts" / "NotoSans-Regular.ttf";
-		std::filesystem::path ico_font_path = std::filesystem::path("assets") / "fonts" / "MaterialIconsSharp-Regular.otf";
+		ImVector<ImWchar> ranges;
+		ImFontGlyphRangesBuilder builder;
+		ImFontConfig ico_config{};
+		ico_config.MergeMode = true;
+		ico_config.GlyphOffset = { 0.f, 4.f };
+		ico_config.GlyphMinAdvanceX = size;
+		ico_config.FontDataOwnedByAtlas = false;
+		
+		ImFontConfig def_config{};
+		def_config.FontDataOwnedByAtlas = false;
 
-		if (std::filesystem::exists(font_path))
+
+		for (const auto& icon : icons::all)
 		{
-			ImVector<ImWchar> ranges;
-			ImFontGlyphRangesBuilder builder;
-			ImFontConfig config{};
-			config.MergeMode = true;
-			config.GlyphOffset = { 0.f, 4.f };
-			config.GlyphMinAdvanceX = size;
-
-			for (const auto& icon : icons::all)
-			{
-				builder.AddText(icon.c_str());
-			}
-
-			ImVector<ImWchar> default_ranges;
-			ImFontGlyphRangesBuilder default_font_builder;
-
-			for (const auto& range :
-			{
-				io.Fonts->GetGlyphRangesDefault(),
-				io.Fonts->GetGlyphRangesGreek(),
-				io.Fonts->GetGlyphRangesCyrillic()
-			})
-			{
-				default_font_builder.AddRanges(range);
-			}
-
-			static const ImWchar latin_extended[] =
-			{
-				0x0020, 0x00FF, // Basic Latin + Latin Supplement
-				0x0100, 0x017F, // Latin Extended-A
-				0x0180, 0x024F, // Latin Extended-B
-				//0x1E00, 0x1EFF, // Latin Extended Additional
-				0,
-			};
-			default_font_builder.AddRanges(latin_extended);
-			default_font_builder.BuildRanges(&default_ranges);
-
-			ImVector<ImWchar> thumbnail_ranges;
-			ImFontGlyphRangesBuilder thumbnail_font_builder;
-			thumbnail_font_builder.AddText(icons::video_group);
-			thumbnail_font_builder.AddText(icons::video);
-			thumbnail_font_builder.BuildRanges(&thumbnail_ranges);
-
-			builder.BuildRanges(&ranges);
-			ctx_.fonts["default"] = io.Fonts->AddFontFromFileTTF(font_path.u8string().c_str(), size, nullptr, default_ranges.Data);
-			io.Fonts->AddFontFromFileTTF(ico_font_path.string().c_str(), size, &config, ranges.Data);
-			ctx_.fonts["title"] = io.Fonts->AddFontFromFileTTF(font_path.u8string().c_str(), size * 1.25f, nullptr, default_ranges.Data);
-
-			ctx_.fonts["thumbnail"] = io.Fonts->AddFontFromFileTTF(ico_font_path.u8string().c_str(), 256, nullptr, thumbnail_ranges.Data);
-			io.Fonts->Build();
+			builder.AddText(icon.c_str());
 		}
-		else
+
+		ImVector<ImWchar> default_ranges;
+		ImFontGlyphRangesBuilder default_font_builder;
+
+		for (const auto& range :
 		{
-			debug::log("Not loading a custom font, since the file doesn't exist");
+			io.Fonts->GetGlyphRangesDefault(),
+			io.Fonts->GetGlyphRangesGreek(),
+			io.Fonts->GetGlyphRangesCyrillic()
+		})
+		{
+			default_font_builder.AddRanges(range);
 		}
+
+		static const ImWchar latin_extended[] =
+		{
+			0x0020, 0x00FF, // Basic Latin + Latin Supplement
+			0x0100, 0x017F, // Latin Extended-A
+			0x0180, 0x024F, // Latin Extended-B
+			//0x1E00, 0x1EFF, // Latin Extended Additional
+			0,
+		};
+		default_font_builder.AddRanges(latin_extended);
+		default_font_builder.BuildRanges(&default_ranges);
+
+		ImVector<ImWchar> thumbnail_ranges;
+		ImFontGlyphRangesBuilder thumbnail_font_builder;
+		thumbnail_font_builder.AddText(icons::video_group);
+		thumbnail_font_builder.AddText(icons::video);
+		thumbnail_font_builder.BuildRanges(&thumbnail_ranges);
+
+		builder.BuildRanges(&ranges);
+		ctx_.fonts["default"] = io.Fonts->AddFontFromMemoryTTF((void*)embed::NotoSans_Regular, static_cast<int>(embed::NotoSans_Regular_size), size, &def_config, default_ranges.Data);
+		io.Fonts->AddFontFromMemoryTTF((void*)embed::MaterialIconsSharp_Regular, static_cast<int>(embed::MaterialIconsSharp_Regular_size), size, &ico_config, ranges.Data);
+
+		ico_config.MergeMode = false;
+		ctx_.fonts["title"] = io.Fonts->AddFontFromMemoryTTF((void*)embed::NotoSans_Regular, static_cast<int>(embed::NotoSans_Regular_size), size * 1.25f, &def_config, default_ranges.Data);
+		ctx_.fonts["thumbnail"] = io.Fonts->AddFontFromMemoryTTF((void*)embed::MaterialIconsSharp_Regular, static_cast<int>(embed::MaterialIconsSharp_Regular_size), 256, &ico_config, thumbnail_ranges.Data);
+		io.Fonts->Build();
 	}
 
 	void app::init_keybinds()
@@ -742,6 +790,13 @@ namespace vt
 			on_save_as();
 		})));
 
+		ctx_.keybinds.insert(ctx_.lang.get(lang_pack_id::show_in_explorer), keybind(SDLK_o, keybind_modifiers{ true, false, true }, flags,
+		builtin_action([this]()
+		{
+			if (ImGui::IsPopupOpen(nullptr, ImGuiPopupFlags_AnyPopup)) return;
+			on_show_in_explorer();
+		})));
+		
 		ctx_.keybinds.insert(ctx_.lang.get(lang_pack_id::import_videos), keybind(SDLK_i, keybind_modifiers{ true }, flags,
 		builtin_action([this]()
 		{
@@ -1304,13 +1359,13 @@ namespace vt
 			ImGui::DockBuilderDockWindow("Video Player", main_dock_up);
 			ImGui::DockBuilderDockWindow("Video Browser", main_dock_up_left);
 			ImGui::DockBuilderDockWindow("Theme Customizer", main_dock_up);
+			ImGui::DockBuilderDockWindow("Timeline", dockspace_id_copy);
 			ImGui::DockBuilderDockWindow("Video Group Browser", dockspace_id_copy);
 			/*for (size_t i = 0; i < 4; ++i)
 			{
 				auto video_id = "Video##" + std::to_string(i);
 				ImGui::DockBuilderDockWindow(video_id.c_str(), main_dock_up);
 			}*/
-			ImGui::DockBuilderDockWindow("Timeline", dockspace_id_copy);
 			
 			ImGui::DockBuilderFinish(dockspace_id);
 			ctx_.reset_layout = false;
@@ -1360,14 +1415,12 @@ namespace vt
 				ImGui::Separator();
 				{
 					{
+						std::string key_name = ctx_.lang.get(lang_pack_id::show_in_explorer);
+						auto& kb = ctx_.keybinds.at(key_name);
 						std::string menu_name = fmt::format("{} {}", icons::folder, ctx_.lang.get(lang_pack_id::show_in_explorer));
-						if (ImGui::MenuItem(menu_name.c_str()))
+						if (ImGui::MenuItem(menu_name.c_str(), kb.name().c_str()))
 						{
-							auto path = std::filesystem::absolute(ctx_.current_project->path.parent_path()).u8string();
-							if (!path.empty())
-							{
-								utils::filesystem::open_in_explorer(path);
-							}
+							on_show_in_explorer();
 						}
 					}
 
@@ -1375,10 +1428,7 @@ namespace vt
 						std::string menu_name = fmt::format("{} {}", icons::import_export, ctx_.lang.get(lang_pack_id::import_export));
 						if (ImGui::BeginMenu(menu_name.c_str()))
 						{
-							if (ImGui::MenuItem("Import Tags", nullptr, nullptr, false))
-							{
-								//TODO: Add import tags popup which shows an option whether to merge or replace tags
-							}
+							ImGui::MenuItem("Import Tags", nullptr, &ctx_.win_cfg.show_tag_importer_window, true);
 
 							ImGui::Separator();
 							if (ImGui::MenuItem("Export Tags"))
@@ -1558,6 +1608,10 @@ namespace vt
 		{
 			ImGui::OpenPopup("Options");
 		}
+		if (ctx_.win_cfg.show_tag_importer_window)
+		{
+			ctx_.tag_importer.open();
+		}
 
 		{
 			ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 7.0f);
@@ -1608,6 +1662,17 @@ namespace vt
 		for (auto it = ctx_.insert_segment_data.begin(); it != ctx_.insert_segment_data.end() and !insert_key.has_value();)
 		{
 			auto& insert_data = it->second;
+
+			if (!insert_data.tag.empty() and insert_data.name_index < 0)
+			{
+				auto& tags = ctx_.video_timeline.displayed_tags();
+
+				auto it = std::find(tags.begin(), tags.end(), insert_data.tag);
+				if (it != tags.end())
+				{
+					insert_data.name_index = static_cast<int>(it - tags.begin());
+				}
+			}
 
 			if (insert_data.show_insert_popup)
 			{
@@ -1662,6 +1727,8 @@ namespace vt
 
 		auto segment_type = *insert_data.start == *insert_data.end ? tag_segment_type::timestamp : tag_segment_type::segment;
 		const char* insert_segment_popup_id = segment_type == tag_segment_type::timestamp ? "Insert Timestamp###AppInsertSegment" : "Insert Segment###AppInsertSegment";
+
+		static int selected_tag_index{};
 
 		bool presed_ok{};
 		if (widgets::insert_segment_popup(insert_segment_popup_id, *insert_data.start, *insert_data.end, segment_type, min_ts, max_ts, tags, insert_data.name_index, presed_ok))
@@ -1868,9 +1935,14 @@ namespace vt
 		if (ctx_.win_cfg.show_tag_manager_window)
 		{
 			static std::optional<widgets::tag_rename_data> tag_rename;
-			widgets::draw_tag_manager_widget(ctx_.current_project->tags, tag_rename, ctx_.is_project_dirty, ctx_.win_cfg.show_tag_manager_window);
+			static std::optional<widgets::tag_delete_data> tag_delete;
+			widgets::draw_tag_manager_widget(ctx_.current_project->tags, tag_rename, tag_delete, ctx_.is_project_dirty, ctx_.win_cfg.show_tag_manager_window);
+			
+			//TODO: Should this be done in the widget or outside?
 			if (tag_rename.has_value() and tag_rename->ready)
 			{
+				//TODO: maybe make this a function in the project class
+
 				ctx_.is_project_dirty = true;
 				
 				for (auto& [_, displayed_tags] : ctx_.video_timeline.displayed_tags_per_group())
@@ -1898,9 +1970,43 @@ namespace vt
 
 				tag_rename.reset();
 			}
+			if (tag_delete.has_value() and tag_delete->ready)
+			{
+				ctx_.is_project_dirty = true;
+
+				auto& selected_segment = ctx_.video_timeline.selected_segment;
+				if (selected_segment.has_value() and selected_segment->tag->name == tag_delete->tag)
+				{
+					selected_segment.reset();
+				}
+
+				auto& moving_segment = ctx_.video_timeline.moving_segment;
+				if (moving_segment.has_value() and moving_segment->tag->name == tag_delete->tag)
+				{
+					moving_segment.reset();
+				}
+
+				auto& segments = ctx_.current_project->segments;
+
+				for (auto it = segments.begin(); it != segments.end(); ++it)
+				{
+					auto& group_segments = it->second;
+					auto group_segments_it = group_segments.find(tag_delete->tag);
+					if (group_segments_it != group_segments.end())
+					{
+						group_segments.erase(group_segments_it);
+					}
+				}
+
+				ctx_.current_project->tags.erase(tag_delete->tag);
+
+				tag_delete.reset();
+			}
 		}
 
 		//TODO: Add base virtual class that has render(bool&) method instead of this
+
+		ctx_.tag_importer.render(ctx_.win_cfg.show_tag_importer_window);
 
 		if (ctx_.win_cfg.show_options_window)
 		{
