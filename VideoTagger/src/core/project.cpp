@@ -442,7 +442,7 @@ namespace vt
 					auto pool_data = result.videos.get(id);
 					if (pool_data != nullptr and ctx_.app_settings.load_thumbnails)
 					{
-						pool_data->update_thumbnail(ctx_.renderer);
+						pool_data->update_thumbnail(ctx_.main_window->renderer);
 					}
 				}
 			}

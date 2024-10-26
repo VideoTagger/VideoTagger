@@ -70,7 +70,7 @@ namespace vt
 				std::ofstream log(log_filepath, std::ios::app);
 				if (log.is_open()) log << flag << msg;
 			}
-			std::abort();
+			throw std::runtime_error(msg);
 		}
 	};
 }

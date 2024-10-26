@@ -14,6 +14,10 @@
 #include "keybind_storage.hpp"
 #include "theme.hpp"
 #include "eng_lang_pack.hpp"
+
+#include "main_window.hpp"
+#include "tool_window.hpp"
+
 #include <video/video_stream.hpp>
 #include <widgets/project_selector.hpp>
 #include <widgets/video_timeline.hpp>
@@ -36,6 +40,15 @@ namespace vt
 		normal,
 		minimized, //not serialized
 		maximized
+	};
+
+	enum class app_state
+	{
+		uninitialized,
+		initialized,
+		running,
+		script_running,
+		shutdown
 	};
 
 	struct app_settings
@@ -96,8 +109,10 @@ namespace vt
 
 		app_settings app_settings;
 		lang_pack<lang_pack_id> lang{ eng_lang_data };
-		SDL_Window* main_window{};
-		SDL_Renderer* renderer{};
+		std::unique_ptr<main_window> main_window{};
+		std::unique_ptr<tool_window> tool_window{};
+
+		app_state state_ = app_state::uninitialized;
 
 		bool is_project_dirty{};
 		bool first_launch = true;

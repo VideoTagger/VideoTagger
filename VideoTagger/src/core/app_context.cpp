@@ -88,7 +88,7 @@ namespace vt
 				group_video_info.offset,
 				pool_video_metadata->width,
 				pool_video_metadata->height,
-				renderer
+				ctx_.main_window->renderer
 			);
 		}
 		
