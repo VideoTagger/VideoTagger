@@ -25,8 +25,6 @@ namespace vt
 {
 	main_window::main_window(const app_window_config& cfg) : app_window{ cfg }
 	{
-		set_current();
-
 		ctx_.project_selector.on_click_project = [&](project_info& project_info)
 		{
 			debug::log("Clicked project: {}, Filepath: {}", project_info.name, project_info.path.u8string());
@@ -91,13 +89,6 @@ namespace vt
 			ctx_.current_project->videos.open_video(id);
 		};
 		init_options();
-
-		ImGuiIO& io = ImGui::GetIO();
-		ImGuiStyle& style = ImGui::GetStyle();
-		io.IniFilename = "layout.ini";
-		io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
-		io.ConfigWindowsMoveFromTitleBarOnly = true;
-
 		load_settings();
 		init_keybinds();
 		init_player();
@@ -1359,7 +1350,7 @@ namespace vt
 					else if (ctx_.app_settings.load_thumbnails)
 					{
 						auto video_data = ctx_.current_project->videos.get(result.video_id);
-						video_data->update_thumbnail(renderer);
+						video_data->update_thumbnail();
 					}
 
 					it = tasks.erase(it);
@@ -1653,7 +1644,6 @@ namespace vt
 		}
 
 		ImGui::DockSpace(dockspace_id, ImVec2{}, dockspace_flags);
-
 		ctx_.current_project.has_value() ? draw_main_app() : draw_project_selector();
 
 		ImGui::End();
@@ -1674,7 +1664,7 @@ namespace vt
 		{
 			case SDL_WINDOWEVENT:
 			{
-				if (event.window.windowID != 0) return;
+				if (event.window.windowID != SDL_GetWindowID(window)) return;
 
 				switch (event.window.event)
 				{
@@ -1693,12 +1683,12 @@ namespace vt
 						ctx_.win_cfg.state = window_state::normal;
 					}
 					break;
+					case SDL_WINDOWEVENT_CLOSE:
+					{
+						on_close_project(true);
+					}
+					break;
 				}
-			}
-			break;
-			case SDL_QUIT:
-			{
-				on_close_project(true);
 			}
 			break;
 		}

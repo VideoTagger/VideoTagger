@@ -302,9 +302,9 @@ namespace vt
 
 	video_pool::video_metadata::~video_metadata()
 	{
-		if (thumbnail != nullptr)
+		if (thumbnail != 0)
 		{
-			SDL_DestroyTexture(thumbnail);
+			glDeleteTextures(1, &thumbnail);
 		}
 	}
 
@@ -323,7 +323,7 @@ namespace vt
 		height = video.height();
 		duration = video.duration();
 		fps = video.fps();
-		//update_thumbnail(renderer);
+		//update_thumbnail(gl_ctx);
 
 		if (!was_open)
 		{
@@ -333,7 +333,7 @@ namespace vt
 		return true;
 	}
 
-	bool video_pool::video_metadata::update_thumbnail(SDL_Renderer* renderer)
+	bool video_pool::video_metadata::update_thumbnail()
 	{
 		bool was_open = video.is_open();
 		if (!was_open)
@@ -344,12 +344,13 @@ namespace vt
 			}
 		}
 
-		if (thumbnail != nullptr)
+		if (thumbnail != 0)
 		{
-			SDL_DestroyTexture(thumbnail);
-			thumbnail = nullptr;
+			glDeleteTextures(1, &thumbnail);
+			thumbnail = 0;
 		}
 
+		/*
 		SDL_Texture* tmp_texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_YV12, SDL_TEXTUREACCESS_STREAMING, video.width(), video.height());
 		if (tmp_texture == nullptr)
 		{
@@ -363,16 +364,31 @@ namespace vt
 			SDL_DestroyTexture(tmp_texture);
 			return false;
 		}
+		*/
+
+		//TODO: Finish implementing OpenGL code!!!
+		GLuint tmp_texture{};
+		glGenTextures(1, &tmp_texture);
+		glBindTexture(GL_TEXTURE_2D, tmp_texture);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, video.width(), video.height(), 0, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
+
+		if (tmp_texture == 0) return false;
 
 		video.get_thumbnail(tmp_texture);
 
-		SDL_Texture* target = SDL_GetRenderTarget(renderer);
+		
+		//TODO: Implement OpenGL code!!!
+		/*SDL_Texture* target = SDL_GetRenderTarget(renderer);
 		SDL_SetRenderTarget(renderer, thumbnail);
 		SDL_RenderCopy(renderer, tmp_texture, NULL, NULL);
 		SDL_RenderPresent(renderer);
 		SDL_SetRenderTarget(renderer, target);
 
-		SDL_DestroyTexture(tmp_texture);
+		SDL_DestroyTexture(tmp_texture);*/
 
 		if (!was_open)
 		{

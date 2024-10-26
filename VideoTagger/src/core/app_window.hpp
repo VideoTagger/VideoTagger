@@ -1,5 +1,6 @@
 #pragma once
 #include <SDL.h>
+#include <SDL_opengl.h>
 #include <imgui.h>
 
 namespace vt
@@ -18,14 +19,14 @@ namespace vt
 	{
 	public:
 		app_window(const app_window_config& cfg);
+		~app_window();
 
 	public:
 		SDL_Window* window{};
-		SDL_Renderer* renderer{};
+		SDL_GLContext gl_ctx{};
 
 	private:
 		std::string name_;
-		ImGuiContext* imgui_ctx{};
 
 	public:
 		void show(bool value = true);
@@ -36,7 +37,6 @@ namespace vt
 		void build_fonts(float size);
 		void render();
 		virtual void draw() = 0;
-		void pre_handle_event();
 		virtual void handle_event(const SDL_Event& event);
 	};
 }

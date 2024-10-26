@@ -11,7 +11,7 @@
 
 namespace vt::widgets
 {
-	void draw_video_widget(video_stream& video, SDL_Texture* video_texture, bool is_video_active, bool& is_open, uint64_t id)
+	void draw_video_widget(video_stream& video, GLuint video_texture, bool is_video_active, bool& is_open, uint64_t id)
 	{
 		auto& io = ImGui::GetIO();
 		ImGuiWindowFlags flags = ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoSavedSettings;
@@ -48,7 +48,7 @@ namespace vt::widgets
 				image_avail_size.y -= button_size + 2 * imgui_style.ItemSpacing.y + ImGui::GetTextLineHeightWithSpacing() * io.FontGlobalScale;
 			}
 
-			if (video_texture != nullptr)
+			if (video_texture != 0)
 			{
 				int video_width = video.width();
 				int video_height = video.height();

@@ -3,10 +3,11 @@
 
 namespace vt
 {
-	displayed_video_data::displayed_video_data(video_id_t id, video_stream* video, std::chrono::nanoseconds offset, int video_width, int video_height, SDL_Renderer* renderer)
+	displayed_video_data::displayed_video_data(video_id_t id, video_stream* video, std::chrono::nanoseconds offset, int video_width, int video_height)
 		: id{ id }, video{ video }, offset{ offset }, display_texture{}
 	{
-		display_texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_YV12, SDL_TEXTUREACCESS_STREAMING, video_width, video_height);
+		//TODO: Implement OpenGL code!!!
+		//display_texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_YV12, SDL_TEXTUREACCESS_STREAMING, video_width, video_height);
 		video_stream::clear_yuv_texture(display_texture, 0, 0, 0);
 	}
 
@@ -21,9 +22,9 @@ namespace vt
 
 	displayed_video_data::~displayed_video_data()
 	{
-		if (display_texture != nullptr)
+		if (display_texture != 0)
 		{
-			SDL_DestroyTexture(display_texture);
+			glDeleteTextures(1, &display_texture);
 		}
 	}
 
@@ -32,9 +33,9 @@ namespace vt
 		id = other.id;
 		video = other.video;
 		offset = other.offset;
-		if (display_texture != nullptr)
+		if (display_texture != 0)
 		{
-			SDL_DestroyTexture(display_texture);
+			glDeleteTextures(1, &display_texture);
 		}
 		display_texture = other.display_texture;
 
@@ -164,7 +165,7 @@ namespace vt
 		}
 	}
 
-	std::pair<displayed_videos_manager::iterator, bool> displayed_videos_manager::insert(video_id_t id, video_stream* video, std::chrono::nanoseconds offset, int video_width, int video_height, SDL_Renderer* renderer, bool update)
+	std::pair<displayed_videos_manager::iterator, bool> displayed_videos_manager::insert(video_id_t id, video_stream* video, std::chrono::nanoseconds offset, int video_width, int video_height, bool update)
 	{
 		if (auto it = find(id); it != end())
 		{
@@ -172,7 +173,7 @@ namespace vt
 			{
 				if (it->video != video)
 				{
-					*it = displayed_video_data(id, video, offset, video_width, video_height, renderer);
+					*it = displayed_video_data(id, video, offset, video_width, video_height);
 				}
 				//else
 				//{
@@ -188,7 +189,7 @@ namespace vt
 			return std::make_pair(it, false);
 		}
 
-		videos_.emplace_back(id, video, offset, video_width, video_height, renderer);
+		videos_.emplace_back(id, video, offset, video_width, video_height);
 		return std::make_pair(videos_.end() - 1, true);
 	}
 

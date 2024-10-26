@@ -3,5 +3,5 @@
 
 namespace vt::widgets
 {
-	extern void draw_video_widget(video_stream& video, SDL_Texture* video_texture, bool is_video_active, bool& is_open, uint64_t id);
+	extern void draw_video_widget(video_stream& video, GLuint video_texture, bool is_video_active, bool& is_open, uint64_t id);
 }

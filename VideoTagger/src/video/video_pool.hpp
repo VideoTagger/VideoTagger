@@ -2,6 +2,7 @@
 #include <unordered_map>
 
 #include <SDL.h>
+#include <SDL_opengl.h>
 
 #include "video_stream.hpp"
 #include <utils/uuid.hpp>
@@ -74,7 +75,7 @@ namespace vt
 			std::filesystem::path path;
 			video_stream video;
 			bool is_widget_open{};
-			SDL_Texture* thumbnail{};
+			GLuint thumbnail{};
 
 			int width{};
 			int height{};
@@ -84,7 +85,7 @@ namespace vt
 			//TODO: Store video resolution, duration, etc.
 
 			bool update_data();
-			bool update_thumbnail(SDL_Renderer* renderer);
+			bool update_thumbnail();
 
 			bool open_video();
 			void close_video();

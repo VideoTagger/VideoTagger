@@ -24,13 +24,14 @@
 #include <execution>
 
 #include <SDL.h>
+#include <SDL_opengl.h>
 
 #define IMGUI_DEFINE_MATH_OPERATORS
 #include <imgui.h>
 #include <imgui_internal.h>
 #include <imgui_stdlib.h>
 #include <backends/imgui_impl_sdl2.h>
-#include <backends/imgui_impl_sdlrenderer2.h>
+#include <backends/imgui_impl_opengl3.h>
 
 #define FMT_HEADER_ONLY
 #include <fmt/core.h>

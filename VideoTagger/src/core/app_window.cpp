@@ -136,7 +136,7 @@ namespace vt
 		int width = cfg.window_width != 0 ? cfg.window_width : (display_mode.w / 2);
 		int height = cfg.window_height != 0 ? cfg.window_height : (display_mode.h / 2);
 
-		auto flags = SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE;
+		auto flags = SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE | SDL_WINDOW_OPENGL | SDL_WINDOW_ALLOW_HIGHDPI;
 		if (cfg.is_tool)
 		{
 			flags |= SDL_WINDOW_UTILITY;
@@ -148,22 +148,21 @@ namespace vt
 			debug::panic("Couldn't create the window");
 		}
 
-		renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
-		if (renderer == nullptr)
+		gl_ctx = SDL_GL_CreateContext(window);
+		if (gl_ctx == nullptr)
 		{
 			SDL_free(window);
 			debug::panic("Couldn't create the renderer");
 		}
-
-		imgui_ctx = ImGui::CreateContext();
-		if (!cfg.is_tool)
-		{
-			ImGui_ImplSDL2_InitForSDLRenderer(window, renderer);
-		}
-		ImGui_ImplSDLRenderer2_Init(renderer);
+		
 		set_default_theme(false);
 		set_darkmode(true);
     }
+
+	app_window::~app_window()
+	{
+		SDL_GL_DeleteContext(gl_ctx);
+	}
 
 	void app_window::show(bool value)
 	{
@@ -208,7 +207,7 @@ namespace vt
 
 	void app_window::set_current()
 	{
-		ImGui::SetCurrentContext(imgui_ctx);
+		SDL_GL_MakeCurrent(window, gl_ctx);
 	}
 
 	void app_window::set_subtitle(const std::string& subtitle)
@@ -284,25 +283,12 @@ namespace vt
 
 	void app_window::render()
 	{
-		draw();
-		SDL_SetRenderDrawColor(renderer, 24, 24, 24, 0xFF);
-		SDL_RenderClear(renderer);
-		ImGui::Render();
-		ImGui_ImplSDLRenderer2_RenderDrawData(ImGui::GetDrawData(), renderer);
-		SDL_RenderPresent(renderer);
-	}
-
-	void app_window::pre_handle_event()
-	{
 		set_current();
-		ImGui_ImplSDLRenderer2_NewFrame();
-		ImGui_ImplSDL2_NewFrame();
-		ImGui::NewFrame();
+		draw();
 	}
 
 	void app_window::handle_event(const SDL_Event& event)
 	{
-		set_current();
 		ImGui_ImplSDL2_ProcessEvent(&event);
 	}
 

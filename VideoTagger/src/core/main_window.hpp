@@ -33,7 +33,6 @@ namespace vt
 		void draw_main_app();
 
 		virtual void draw() override;
-
 		virtual void handle_event(const SDL_Event& event) override;
 	};
 }

@@ -17,7 +17,7 @@ namespace vt::widgets
 	{
 		if (!ctx_.current_project.has_value()) return;
 
-		static auto draw_video_tile = [this](const video_pool::video_metadata& vmeta, ImVec2 tile_size, bool& open, bool& remove, bool& properties, SDL_Texture* image = nullptr)
+		static auto draw_video_tile = [this](const video_pool::video_metadata& vmeta, ImVec2 tile_size, bool& open, bool& remove, bool& properties, GLuint image = 0)
 		{
 			std::string label = vmeta.path.filename().u8string();
 			ImVec2 image_tile_size{ tile_size.x * 0.9f, tile_size.x * 0.9f };
@@ -25,7 +25,7 @@ namespace vt::widgets
 			ImVec2 image_size = image_tile_size;
 			ImVec2 uv0{ 0, 0 };
 			ImVec2 uv1{ 1, 1 };
-			if (image == nullptr)
+			if (image == 0)
 			{
 				image = utils::thumbnail::font_texture();
 				auto glyph = utils::thumbnail::find_glyph(utils::thumbnail::video_icon);
@@ -87,7 +87,7 @@ namespace vt::widgets
 		{
 			ImGui::PushID((void*)gid);
 
-			SDL_Texture* image = utils::thumbnail::font_texture();
+			auto image = utils::thumbnail::font_texture();
 			auto glyph = utils::thumbnail::find_glyph(utils::thumbnail::video_group_icon);
 
 			open |= widgets::tile(vgroup.display_name, tile_size, tile_size, image,

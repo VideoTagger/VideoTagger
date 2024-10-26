@@ -48,6 +48,7 @@ namespace vt
 		if (debug::log_filepath != "") std::ofstream{ debug::log_filepath };
 
 		SDL_SetHint(SDL_HINT_WINDOWS_NO_CLOSE_ON_ALT_F4, "1");
+		SDL_SetHint(SDL_HINT_IME_SHOW_UI, "1");
 		if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS) < 0)
 		{
 			debug::error("SDL failed to initialize with error: {}", SDL_GetError());
@@ -59,11 +60,52 @@ namespace vt
 			return false;
 		}
 
-		av_log_set_callback(ffmpeg_callback);
-		IMGUI_CHECKVERSION();
+#if defined(IMGUI_IMPL_OPENGL_ES2)
+		// GL ES 2.0 + GLSL 100
+		const char* glsl_version = "#version 100";
+		SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, 0);
+		SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_ES);
+		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
+		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
+#elif defined(__APPLE__)
+		// GL 3.2 Core + GLSL 150
+		const char* glsl_version = "#version 150";
+		SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_FORWARD_COMPATIBLE_FLAG); // Always required on Mac
+		SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
+		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
+		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 2);
+#else
+		// GL 3.0 + GLSL 130
+		const char* glsl_version = "#version 130";
+		SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, 0);
+		SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
+		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
+		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
+#endif
+
+		SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
+		SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
+		SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
 		
+		av_log_set_callback(ffmpeg_callback);
+
+		IMGUI_CHECKVERSION();
+		ImGui::CreateContext();
+		
+		ImGuiIO& io = ImGui::GetIO();
+		ImGuiStyle& style = ImGui::GetStyle();
+		io.IniFilename = "layout.ini";
+		io.ConfigFlags |= ImGuiConfigFlags_DockingEnable | ImGuiConfigFlags_ViewportsEnable;
+		io.ConfigWindowsMoveFromTitleBarOnly = true;
+
 		ctx_.tool_window = std::make_unique<tool_window>(tool_config);
 		ctx_.main_window = std::make_unique<main_window>(main_config);
+
+		ImGui_ImplSDL2_InitForOpenGL(ctx_.main_window->window, ctx_.main_window->gl_ctx);
+		ImGui_ImplOpenGL3_Init(glsl_version);
+		ctx_.main_window->set_current();
+		SDL_GL_SetSwapInterval(1); //VSync
+
 
 		ctx_.state_ = app_state::initialized;
 		return true;
@@ -81,12 +123,32 @@ namespace vt
 #endif
 		while (ctx_.state_ == app_state::running)
 		{
-			ctx_.main_window->pre_handle_event();
-			ctx_.tool_window->pre_handle_event();
+			ImGui_ImplOpenGL3_NewFrame();
+			ImGui_ImplSDL2_NewFrame();
+			ImGui::NewFrame();
+
 			handle_events();
 
 			ctx_.main_window->render();
-			ctx_.tool_window->render();
+			//ctx_.tool_window->render();
+
+
+			auto& io = ImGui::GetIO();
+			glViewport(0, 0, (int)io.DisplaySize.x, (int)io.DisplaySize.y);
+			glClearColor(24 / 255.f, 24 / 255.f, 24 / 255.f, 1.0f);
+			glClear(GL_COLOR_BUFFER_BIT);
+			ImGui::Render();
+			ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
+			if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
+			{
+				SDL_Window* backup_current_window = SDL_GL_GetCurrentWindow();
+				SDL_GLContext backup_current_context = SDL_GL_GetCurrentContext();
+				ImGui::UpdatePlatformWindows();
+				ImGui::RenderPlatformWindowsDefault();
+				SDL_GL_MakeCurrent(backup_current_window, backup_current_context);
+			}
+			SDL_GL_SwapWindow(ctx_.main_window->window);
 		}
 #ifndef _DEBUG
 		}
@@ -107,7 +169,7 @@ namespace vt
 	{
 		if (ctx_.state_ != app_state::shutdown) return;
 
-		ImGui_ImplSDLRenderer2_Shutdown();
+		ImGui_ImplOpenGL3_Shutdown();
 		ImGui_ImplSDL2_Shutdown();
 		ImGui::DestroyContext();
 

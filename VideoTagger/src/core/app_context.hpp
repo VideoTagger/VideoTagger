@@ -47,7 +47,6 @@ namespace vt
 		uninitialized,
 		initialized,
 		running,
-		script_running,
 		shutdown
 	};
 

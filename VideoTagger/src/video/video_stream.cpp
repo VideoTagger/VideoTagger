@@ -170,7 +170,7 @@ namespace vt
 		}
 	}
 
-	void video_stream::get_frame(SDL_Texture* texture)
+	void video_stream::get_frame(GLuint texture)
 	{
 		if (!last_frame.has_value())
 		{
@@ -181,13 +181,13 @@ namespace vt
 
 		auto [yp, up, vp] = frame.get_planes();
 
-		SDL_UpdateYUVTexture
+		/*SDL_UpdateYUVTexture
 		(
 			texture, nullptr,
 			yp.data(), yp.pitch(),
 			up.data(), up.pitch(),
 			vp.data(), vp.pitch()
-		);
+		);*/
 	}
 
 	bool video_stream::is_open() const
@@ -235,7 +235,7 @@ namespace vt
 		return std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::duration<double>(1.0 / fps()));;
 	}
 
-	void video_stream::get_thumbnail(SDL_Texture* texture, std::optional<std::chrono::nanoseconds> timestamp)
+	void video_stream::get_thumbnail(GLuint texture, std::optional<std::chrono::nanoseconds> timestamp)
 	{
 		auto start_timestamp = current_timestamp();
 
@@ -249,18 +249,19 @@ namespace vt
 		seek(start_timestamp);
 	}
 
-	void video_stream::clear_yuv_texture(SDL_Texture* texture, uint8_t r, uint8_t g, uint8_t b)
+	void video_stream::clear_yuv_texture(GLuint texture, uint8_t r, uint8_t g, uint8_t b)
 	{
 		thread_local std::vector<uint8_t> y_plane;
 		thread_local std::vector<uint8_t> u_plane;
 		thread_local std::vector<uint8_t> v_plane;
 
 		int w{}, h{};
-		if (SDL_QueryTexture(texture, NULL, NULL, &w, &h) < 0)
+		//TODO: Implement OpenGL code!!!
+		/*if (SDL_QueryTexture(texture, NULL, NULL, &w, &h) < 0)
 		{
 			debug::error("SDL_QueryTexture failed: {}", SDL_GetError());
 			return;
-		}
+		}*/
 
 		size_t y_size = w * h;
 		size_t uv_size = (w / 2) * (h / 2);
@@ -286,10 +287,11 @@ namespace vt
 		std::memset(u_plane.data(), u, uv_size);
 		std::memset(v_plane.data(), v, uv_size);
 
-		if (SDL_UpdateYUVTexture(texture, NULL, y_plane.data(), w, u_plane.data(), w / 2, v_plane.data(), w / 2) < 0)
+		//TODO: Implement OpenGL code!!!
+		/*if (SDL_UpdateYUVTexture(texture, NULL, y_plane.data(), w, u_plane.data(), w / 2, v_plane.data(), w / 2) < 0)
 		{
 			debug::error("SDL_UpdateYUVTexture failed: {}", SDL_GetError());
 			return;
-		}
+		}*/
 	}
 }

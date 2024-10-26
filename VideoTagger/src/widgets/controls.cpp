@@ -262,14 +262,14 @@ namespace vt::widgets
 		return tile_size + style.FramePadding + text_size;
 	}
 
-	bool tile(const std::string& label, ImVec2 tile_size, ImVec2 image_size, SDL_Texture* image, const std::function<void(const std::string&)> context_menu, const std::function<void(const std::string&)> drag_drop, ImVec2 uv0, ImVec2 uv1, bool is_selected)
+	bool tile(const std::string& label, ImVec2 tile_size, ImVec2 image_size, GLuint image, const std::function<void(const std::string&)> context_menu, const std::function<void(const std::string&)> drag_drop, ImVec2 uv0, ImVec2 uv1, bool is_selected)
 	{
 		bool result{};
 		ImVec2 image_tile_size = ImVec2{ tile_size.x, tile_size.x } * 0.9f;
 
 		auto& style = ImGui::GetStyle();
 		ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2{});
-		ImTextureID imgui_tex = static_cast<ImTextureID>(image);
+		auto imgui_tex = reinterpret_cast<ImTextureID>(image);
 		const char* id = label.c_str();
 		ImGui::PushID(id);
 		auto text_size = ImVec2{ 0, 2 * ImGui::GetTextLineHeight() };

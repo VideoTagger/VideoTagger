@@ -19,8 +19,8 @@ project "VideoTagger"
 		"vendor/ImGui/misc/cpp/*.cpp",
 		"vendor/ImGui/backends/imgui_impl_sdl2.h",
 		"vendor/ImGui/backends/imgui_impl_sdl2.cpp",
-		"vendor/ImGui/backends/imgui_impl_sdlrenderer2.h",
-		"vendor/ImGui/backends/imgui_impl_sdlrenderer2.cpp",
+		"vendor/ImGui/backends/imgui_impl_opengl3.h",
+		"vendor/ImGui/backends/imgui_impl_opengl3.cpp",
 		"vendor/ImGuizmo/ImSequencer.h",
 		"vendor/ImGuizmo/ImSequencer.cpp",
 		"assets/scripts/**.py",
@@ -57,6 +57,7 @@ project "VideoTagger"
 		"avcodec",
 		"avformat",
 		"avutil",
+		"opengl32",
 		PythonLibName
 	}
 

@@ -17,7 +17,7 @@ namespace vt
 		{
 			case SDL_WINDOWEVENT:
 			{
-				if (event.window.windowID != 1) return;
+				if (event.window.windowID != SDL_GetWindowID(window)) return;
 
 				switch (event.window.type)
 				{
