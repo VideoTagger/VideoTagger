@@ -27,6 +27,7 @@
 #include <widgets/modal/tag_importer.hpp>
 #include "displayed_videos_manager.hpp"
 #include <utils/json.hpp>
+#include <scripts/scripting_engine.hpp>
 
 namespace vt
 {
@@ -66,6 +67,7 @@ namespace vt
 
 	struct app_context
 	{
+		std::optional<project> current_project;
 		widgets::video_timeline video_timeline;
 		widgets::project_selector project_selector;
 		widgets::video_player player;
@@ -79,14 +81,15 @@ namespace vt
 
 		std::filesystem::path projects_list_filepath = std::filesystem::path("projects").replace_extension("json");
 		std::filesystem::path app_settings_filepath = std::filesystem::path("settings").replace_extension("json");
+		std::filesystem::path scripts_filepath = std::filesystem::path("assets") / "scripts";
 		std::filesystem::path theme_dir_filepath = "themes";
 		nlohmann::ordered_json settings;
 		window_config win_cfg;
 		std::unordered_map<std::string, ImFont*> fonts;
 		std::vector<std::filesystem::path> themes;
 		keybind_storage keybinds;
+		scripting_engine script_eng;
 
-		std::optional<project> current_project;
 		displayed_videos_manager displayed_videos;
 
 		widgets::insert_segment_data_container insert_segment_data;

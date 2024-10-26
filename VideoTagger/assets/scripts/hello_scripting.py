@@ -1,5 +1,14 @@
 import vt
+import time
 
-def main():
-	print(vt.test_string)
-	print(vt.calc(2, 3))
+
+def on_run():
+    print(type(vt.timeline.segment_count))
+    print(vt.timeline)
+
+    project = vt.current_project()
+    if project is not None:
+        print(project.name)
+
+    time.sleep(5)
+    help(vt)

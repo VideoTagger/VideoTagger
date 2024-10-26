@@ -3,7 +3,12 @@
 
 namespace vt
 {
-	std::pair<tag_storage::iterator, bool> tag_storage::insert(const std::string& name, uint32_t color)
+    std::pair<tag_storage::iterator, bool> tag_storage::insert(const tag& tag)
+    {
+		return insert(tag.name, tag.color);
+    }
+
+    std::pair<tag_storage::iterator, bool> tag_storage::insert(const std::string& name, uint32_t color)
 	{
 		if (name.empty())
 		{
