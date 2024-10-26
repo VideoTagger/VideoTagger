@@ -22,7 +22,9 @@ project "VideoTagger"
 		"vendor/ImGui/backends/imgui_impl_sdlrenderer2.h",
 		"vendor/ImGui/backends/imgui_impl_sdlrenderer2.cpp",
 		"vendor/ImGuizmo/ImSequencer.h",
-		"vendor/ImGuizmo/ImSequencer.cpp"
+		"vendor/ImGuizmo/ImSequencer.cpp",
+		"assets/scripts/**.py",
+		"assets/scripts/**.pyi",
 	}
 
 	includedirs
@@ -73,6 +75,16 @@ project "VideoTagger"
 		"{COPY} assets %{cfg.targetdir}/assets"
 	}
 
+	filter 'files:**.py or **.pyi'
+   		buildmessage 'Copying Python file: %{file.relpath}'
+
+		buildcommands
+		{
+			"{COPYFILE} %{file.relpath} %{cfg.targetdir}/assets/scripts/%{file.name}",
+		}
+		buildoutputs { "%{cfg.targetdir}/assets/scripts/%{file.name}" }
+
+	filter {}
 	filter "files:src/embeds/**.cpp"
 		flags { "NoPCH" }
 	filter "files:vendor/ImGuizmo/**.cpp"
@@ -127,10 +139,10 @@ project "VideoTagger"
 			"`pkg-config --libs libavcodec libavformat sdl2`"
 		}
 
-        links
+        buildoptions
 		{
-            "AppKit.framework",
-            "UniformTypeIdentifiers.framework"
+            "-framework AppKit",
+            "-framework UniformTypeIdentifiers"
         }
 	
 	filter "configurations:Debug"

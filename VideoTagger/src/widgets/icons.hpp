@@ -28,6 +28,7 @@ namespace vt::icons
 	inline constexpr auto add = "\xee\x85\x85";
 	inline constexpr auto delete_ = "\xee\xa1\xb2";
 	inline constexpr auto folder = "\xee\x8b\x87";
+	inline constexpr auto folder_code = "\xef\x8f\x88";
 	inline constexpr auto label = "\xee\xa2\x92";
 	inline constexpr auto expand_less = "\xee\x97\x8e";
 	inline constexpr auto expand_more = "\xee\x97\x8f";
@@ -37,13 +38,14 @@ namespace vt::icons
 	inline constexpr auto edit = "\xee\x8f\x89";
 	inline constexpr auto help = "\xee\xa3\xbd";
 	inline constexpr auto video_group = "\xee\x81\x8a";
-	inline constexpr auto video = "\xEE\x80\xAC";
+	inline constexpr auto video = "\xee\x80\xac";
 	inline constexpr auto search = "\xee\xa2\xb6";
+	inline constexpr auto terminal = "\xee\xae\x8e";
 
 	inline std::vector<std::string> all
 	({
 		dots_hor, play, pause, repeat, repeat_one, shuffle, skip_next, skip_prev, fast_back, fast_fwd,
-		save, save_as, import_, import_export, exit, close, back, visibility_on, visibility_off, add, delete_, folder, label, expand_less, expand_more,
-		toggle_less, toggle_more, link, edit, help, video_group, video, search
+		save, save_as, import_, import_export, exit, close, back, visibility_on, visibility_off, add, delete_, folder, folder_code, label, expand_less, expand_more,
+		toggle_less, toggle_more, link, edit, help, video_group, video, search, terminal
 	});
 }

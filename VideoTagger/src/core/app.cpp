@@ -23,11 +23,11 @@
 #include "project.hpp"
 #include <core/debug.hpp>
 #include <core/actions.hpp>
-#include <embeds/MaterialIconsSharp_Regular.hpp>
+#include <embeds/MaterialSymbolsSharp_Filled_Regular.hpp>
 #include <embeds/NotoSans_Regular.hpp>
 
 #include <utils/string.hpp>
-#include <pybind11/embed.h>
+#include <scripts/scripting_engine.hpp>
 
 #ifdef _WIN32
 	#include <SDL_syswm.h>
@@ -340,35 +340,6 @@ namespace vt
 		fetch_themes();
 		return true;
 	}
-	
-	PYBIND11_EMBEDDED_MODULE(vt, this_module)
-	{
-		this_module.attr("test_string") = "Hello Scripting from Python!";
-		this_module.def("calc", [](int x, int y)
-		{
-			return x + y;
-		});
-	}
-
-	static void test_python()
-	{
-		namespace py = pybind11;
-		
-		py::scoped_interpreter interp_lock{};
-		try
-		{
-			auto sys_module = py::module_::import("sys");
-			py::list module_paths = sys_module.attr("path");
-			module_paths.append((std::filesystem::absolute(std::filesystem::current_path()) / "assets" / "scripts").string());
-
-			auto script = py::module_::import("hello_scripting");
-			script.attr("main")();
-		}
-		catch (const std::exception& ex)
-		{
-			debug::error("{}", ex.what());
-		}
-	}
 
 	bool app::run()
 	{
@@ -376,7 +347,6 @@ namespace vt
 
 		state_ = app_state::running;
 		ctx_.project_selector.load_projects_file(ctx_.projects_list_filepath);
-		test_python();
 
 #ifndef _DEBUG
 		try
@@ -763,11 +733,11 @@ namespace vt
 
 		builder.BuildRanges(&ranges);
 		ctx_.fonts["default"] = io.Fonts->AddFontFromMemoryTTF((void*)embed::NotoSans_Regular, static_cast<int>(embed::NotoSans_Regular_size), size, &def_config, default_ranges.Data);
-		io.Fonts->AddFontFromMemoryTTF((void*)embed::MaterialIconsSharp_Regular, static_cast<int>(embed::MaterialIconsSharp_Regular_size), size, &ico_config, ranges.Data);
+		io.Fonts->AddFontFromMemoryTTF((void*)embed::MaterialSymbolsSharp_Filled_Regular, static_cast<int>(embed::MaterialSymbolsSharp_Filled_Regular_size), size, &ico_config, ranges.Data);
 
 		ico_config.MergeMode = false;
 		ctx_.fonts["title"] = io.Fonts->AddFontFromMemoryTTF((void*)embed::NotoSans_Regular, static_cast<int>(embed::NotoSans_Regular_size), size * 1.25f, &def_config, default_ranges.Data);
-		ctx_.fonts["thumbnail"] = io.Fonts->AddFontFromMemoryTTF((void*)embed::MaterialIconsSharp_Regular, static_cast<int>(embed::MaterialIconsSharp_Regular_size), 256, &ico_config, thumbnail_ranges.Data);
+		ctx_.fonts["thumbnail"] = io.Fonts->AddFontFromMemoryTTF((void*)embed::MaterialSymbolsSharp_Filled_Regular, static_cast<int>(embed::MaterialSymbolsSharp_Filled_Regular_size), 256, &ico_config, thumbnail_ranges.Data);
 		io.Fonts->Build();
 	}
 
@@ -1555,6 +1525,60 @@ namespace vt
 				if (ImGui::MenuItem(ctx_.lang.get(lang_pack_id::reset_layout)))
 				{
 					ctx_.reset_layout = true;
+				}
+				ImGui::EndMenu();
+			}
+
+			if (ImGui::BeginMenu(ctx_.lang.get(lang_pack_id::run)))
+			{
+				std::function<bool(const std::filesystem::path&)> has_scripts = [&has_scripts](const std::filesystem::path& path)
+				{
+					if (!std::filesystem::is_directory(path)) return false;
+					for (const auto& dir_entry : std::filesystem::directory_iterator(path))
+					{
+						if (dir_entry.is_directory() and has_scripts(dir_entry))
+						{
+							return true;
+						}
+						else if (dir_entry.is_regular_file() and dir_entry.path().extension() == ".py")
+						{
+							return true;
+						}
+					}
+					return false;
+				};
+
+				auto menu_name = fmt::format("{} {}", icons::folder_code, "Scripts");
+				if (ImGui::BeginMenu(menu_name.c_str(), has_scripts(ctx_.scripts_filepath)))
+				{
+					std::function<void(const std::filesystem::path&)> draw_folder = [&draw_folder, &has_scripts](const std::filesystem::path& path)
+					{
+						for (const auto& dir_entry : std::filesystem::directory_iterator(path))
+						{
+							auto entry_path = dir_entry.path();
+							if (dir_entry.is_regular_file() and entry_path.extension() == ".py")
+							{
+								std::string script_name = entry_path.stem().string();
+								std::string script_menu_name = fmt::format("{} {}", icons::terminal, script_name);
+								if (ImGui::MenuItem(script_menu_name.c_str()))
+								{
+									ctx_.script_eng.run(script_name, "on_run");
+								}
+							}
+							else if (dir_entry.is_directory() and !std::filesystem::is_empty(dir_entry))
+							{
+								auto dir_name = fmt::format("{} {}", icons::folder_code, entry_path.stem().string());
+								if (has_scripts(entry_path) and ImGui::BeginMenu(dir_name.c_str()))
+								{
+									draw_folder(entry_path);
+									ImGui::EndMenu();
+								}
+							}
+						}
+					};
+
+					draw_folder(ctx_.scripts_filepath);
+					ImGui::EndMenu();
 				}
 				ImGui::EndMenu();
 			}

@@ -32,6 +32,7 @@ namespace vt
 		//TODO: Add show <window>
 		redock_videos,
 		reset_layout,
+		run,
 		tools,
 		options,
 		help,
