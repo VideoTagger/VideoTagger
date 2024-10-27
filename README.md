@@ -41,4 +41,5 @@ To build the projects, open the Xcode file and build the projects with chosen co
 - [fmt](https://github.com/fmtlib/fmt)
 - [Nlohmann Json](https://github.com/nlohmann/json)
 - [utf8.h](https://github.com/sheredom/utf8.h)
+- [pybind11](https://github.com/pybind/pybind11)
 - [ffmpeg](https://ffmpeg.org/)

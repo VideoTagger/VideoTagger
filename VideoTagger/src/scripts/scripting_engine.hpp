@@ -21,6 +21,6 @@ namespace vt
 		void reset_script_io();
 
 	public:
-		void run(const std::string& script_name, const std::string& entrypoint);
+		bool run(const std::string& script_name, const std::string& entrypoint);
 	};
 }

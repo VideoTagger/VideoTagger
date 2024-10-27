@@ -1327,8 +1327,8 @@ namespace vt
 
 			auto width = ImGui::GetContentRegionAvail().x;
 
-			static size_t dot_count = 0;
-			constexpr size_t max_dots = 3;
+			static uint8_t dot_count = 0;
+			static constexpr uint8_t max_dots = 3;
 			static float elapsed_acc{};
 
 			auto elapsed_time = ImGui::GetIO().DeltaTime;
@@ -1342,7 +1342,7 @@ namespace vt
 
 			std::string suffix = std::string(dot_count, '.');
 			ImGui::Text("Script Progress%s", suffix.c_str());
-			ImGui::ProgressBar(0.5f, ImVec2{ width, ImGui::GetTextLineHeight() / 2 }, "");
+			ImGui::ProgressBar(0.5f, ImVec2{ width, ImGui::GetTextLineHeight() / 2.5f }, "");
 			ImGui::EndPopup();
 		}
 
@@ -1619,7 +1619,7 @@ namespace vt
 		}
 
 		//ImGui::ShowDemoWindow();
-		ImGui::OpenPopup("Script Progress");
+		//ImGui::OpenPopup("Script Progress");
 	}
 
 	void main_window::draw_project_selector()
