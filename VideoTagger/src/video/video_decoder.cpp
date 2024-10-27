@@ -579,6 +579,10 @@ namespace vt
 			{
 				continue;
 			}
+			else if (read_frame_result == AVERROR(EAGAIN))
+			{
+				continue;
+			}
 			else if (read_frame_result != 0)
 			{
 				//TODO: Do something
@@ -688,6 +692,8 @@ namespace vt
 
 	void video_decoder::seek_keyframe(std::chrono::nanoseconds timestamp)
 	{
+		//TODO https://github.com/bmewj/video-app/blob/master/src/video_reader.cpp write this like here
+
 		//TODO: handle invalid timestamp
 
 		auto video_stream_index = stream_indices_[static_cast<size_t>(stream_type::video)];
@@ -788,9 +794,15 @@ namespace vt
 	{
 		return packet_queues_.at(static_cast<size_t>(type));
 	}
+
 	const packet_queue& video_decoder::get_packet_queue(stream_type type) const
 	{
 		return packet_queues_.at(static_cast<size_t>(type));
+	}
+
+	AVPixelFormat video_decoder::pixel_format() const
+	{
+		return static_cast<AVPixelFormat>(format_context_->streams[stream_indices_[static_cast<size_t>(stream_type::video)]]->codecpar->format);
 	}
 
 	AVFormatContext* video_decoder::av_format_context()

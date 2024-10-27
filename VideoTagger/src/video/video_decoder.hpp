@@ -44,6 +44,7 @@ namespace vt
 		v
 	};
 
+	//TODO: maybe make this more generic (not only yuv)
 	class video_frame
 	{
 	public:
@@ -251,10 +252,13 @@ namespace vt
 		[[nodiscard]] packet_queue& get_packet_queue(stream_type type);
 		[[nodiscard]] const packet_queue& get_packet_queue(stream_type type) const;
 
+		[[nodiscard]] AVPixelFormat pixel_format() const;
+
 		[[nodiscard]] AVFormatContext* av_format_context();
 
 	private:
 		AVFormatContext* format_context_;
+		AVPixelFormat pixel_format_;
 
 		std::array<int, static_cast<size_t>(stream_type::size)> stream_indices_;
 		std::array<AVCodecContext*, static_cast<size_t>(stream_type::size)> codec_contexts_;

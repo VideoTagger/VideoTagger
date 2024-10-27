@@ -57,6 +57,7 @@ project "VideoTagger"
 		"avcodec",
 		"avformat",
 		"avutil",
+		"swscale",
 		"opengl32",
 		PythonLibName
 	}
@@ -99,6 +100,7 @@ project "VideoTagger"
 			"vendor/SDL2/include",
 			"vendor/ffmpeg/include/libavcodec",
 			"vendor/ffmpeg/include/libavformat",
+			"vendor/ffmpeg/include/libswscale",
 			"vendor/ffmpeg/include"
 		}
 
@@ -122,22 +124,22 @@ project "VideoTagger"
 	filter "system:linux"
 		buildoptions
 		{
-			"`pkg-config --cflags libavcodec libavformat sdl2 gtk+-3.0 glib-2.0`"
+			"`pkg-config --cflags libavcodec libavformat libswscale sdl2 gtk+-3.0 glib-2.0`"
 		}
 
 		linkoptions
 		{
-			"`pkg-config --libs libavcodec libavformat sdl2 gtk+-3.0 glib-2.0`"
+			"`pkg-config --libs libavcodec libavformat libswscale sdl2 gtk+-3.0 glib-2.0`"
 		}
 	filter "system:macosx"
 		buildoptions
 		{
-			"`pkg-config --cflags libavcodec libavformat sdl2`"
+			"`pkg-config --cflags libavcodec libavformat libswscale sdl2`"
 		}
 
 		linkoptions
 		{
-			"`pkg-config --libs libavcodec libavformat sdl2`"
+			"`pkg-config --libs libavcodec libavformat libswscale sdl2`"
 		}
 
         buildoptions

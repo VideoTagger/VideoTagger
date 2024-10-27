@@ -366,19 +366,9 @@ namespace vt
 		}
 		*/
 
-		//TODO: Finish implementing OpenGL code!!!
-		GLuint tmp_texture{};
-		glGenTextures(1, &tmp_texture);
-		glBindTexture(GL_TEXTURE_2D, tmp_texture);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, video.width(), video.height(), 0, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
-
-		if (tmp_texture == 0) return false;
-
-		video.get_thumbnail(tmp_texture);
+		//if (tmp_texture == 0) return false;
+		//
+		//video.get_thumbnail(tmp_texture);
 
 		
 		//TODO: Implement OpenGL code!!!

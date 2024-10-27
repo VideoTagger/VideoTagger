@@ -22,6 +22,8 @@ namespace vt
 		fps_ = decoder_.fps();
 		duration_ = decoder_.duration();
 
+		frame_converter_ = frame_converter(width_, height_, decoder_.pixel_format(), AV_PIX_FMT_RGB24);
+
 		last_ts_ = std::chrono::nanoseconds{ 0 };
 
 		return true;
@@ -31,6 +33,7 @@ namespace vt
 	{
 		set_playing(false);
 
+		frame_converter_.reset();
 		last_ts_ = std::chrono::nanoseconds(0);
 
 		//width_ = 0;
@@ -170,7 +173,7 @@ namespace vt
 		}
 	}
 
-	void video_stream::get_frame(GLuint texture)
+	void video_stream::get_frame(gl_texture& texture)
 	{
 		if (!last_frame.has_value())
 		{
@@ -179,15 +182,9 @@ namespace vt
 
 		auto& frame = *last_frame;
 
-		auto [yp, up, vp] = frame.get_planes();
+		frame_converter_->convert_frame(frame, conversion_buffer);
 
-		/*SDL_UpdateYUVTexture
-		(
-			texture, nullptr,
-			yp.data(), yp.pitch(),
-			up.data(), up.pitch(),
-			vp.data(), vp.pitch()
-		);*/
+		texture.set_pixels(conversion_buffer.data());
 	}
 
 	bool video_stream::is_open() const
@@ -235,7 +232,7 @@ namespace vt
 		return std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::duration<double>(1.0 / fps()));;
 	}
 
-	void video_stream::get_thumbnail(GLuint texture, std::optional<std::chrono::nanoseconds> timestamp)
+	void video_stream::get_thumbnail(gl_texture& texture, std::optional<std::chrono::nanoseconds> timestamp)
 	{
 		auto start_timestamp = current_timestamp();
 

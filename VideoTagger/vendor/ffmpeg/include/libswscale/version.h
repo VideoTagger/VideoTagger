@@ -16,30 +16,29 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
-#ifndef AVCODEC_VERSION_H
-#define AVCODEC_VERSION_H
+#ifndef SWSCALE_VERSION_H
+#define SWSCALE_VERSION_H
 
 /**
  * @file
- * @ingroup libavc
- * Libavcodec version macros.
+ * swscale version macros
  */
 
 #include "libavutil/version.h"
 
 #include "version_major.h"
 
-#define LIBAVCODEC_VERSION_MINOR  19
-#define LIBAVCODEC_VERSION_MICRO 100
+#define LIBSWSCALE_VERSION_MINOR   3
+#define LIBSWSCALE_VERSION_MICRO 100
 
-#define LIBAVCODEC_VERSION_INT  AV_VERSION_INT(LIBAVCODEC_VERSION_MAJOR, \
-                                               LIBAVCODEC_VERSION_MINOR, \
-                                               LIBAVCODEC_VERSION_MICRO)
-#define LIBAVCODEC_VERSION      AV_VERSION(LIBAVCODEC_VERSION_MAJOR,    \
-                                           LIBAVCODEC_VERSION_MINOR,    \
-                                           LIBAVCODEC_VERSION_MICRO)
-#define LIBAVCODEC_BUILD        LIBAVCODEC_VERSION_INT
+#define LIBSWSCALE_VERSION_INT  AV_VERSION_INT(LIBSWSCALE_VERSION_MAJOR, \
+                                               LIBSWSCALE_VERSION_MINOR, \
+                                               LIBSWSCALE_VERSION_MICRO)
+#define LIBSWSCALE_VERSION      AV_VERSION(LIBSWSCALE_VERSION_MAJOR, \
+                                           LIBSWSCALE_VERSION_MINOR, \
+                                           LIBSWSCALE_VERSION_MICRO)
+#define LIBSWSCALE_BUILD        LIBSWSCALE_VERSION_INT
 
-#define LIBAVCODEC_IDENT        "Lavc" AV_STRINGIFY(LIBAVCODEC_VERSION)
+#define LIBSWSCALE_IDENT        "SwS" AV_STRINGIFY(LIBSWSCALE_VERSION)
 
-#endif /* AVCODEC_VERSION_H */
+#endif /* SWSCALE_VERSION_H */

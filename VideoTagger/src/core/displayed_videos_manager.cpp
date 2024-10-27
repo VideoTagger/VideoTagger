@@ -4,28 +4,20 @@
 namespace vt
 {
 	displayed_video_data::displayed_video_data(video_id_t id, video_stream* video, std::chrono::nanoseconds offset, int video_width, int video_height)
-		: id{ id }, video{ video }, offset{ offset }, display_texture{}
+		: id{ id }, video{ video }, offset{ offset }, display_texture(video_width, video_height, GL_RGB)
 	{
-		//TODO: Implement OpenGL code!!!
-		//display_texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_YV12, SDL_TEXTUREACCESS_STREAMING, video_width, video_height);
-		video_stream::clear_yuv_texture(display_texture, 0, 0, 0);
 	}
 
 	displayed_video_data::displayed_video_data(displayed_video_data&& other) noexcept
-		: id{ other.id }, video{ other.video }, offset{ other.offset }, display_texture{ other.display_texture }
+		: id{ other.id }, video{ other.video }, offset{ other.offset }, display_texture{ std::move(other.display_texture) }
 	{
 		other.id = {};
 		other.video = {};
 		other.offset = {};
-		other.display_texture = {};
 	}
 
 	displayed_video_data::~displayed_video_data()
 	{
-		if (display_texture != 0)
-		{
-			glDeleteTextures(1, &display_texture);
-		}
 	}
 
 	displayed_video_data& displayed_video_data::operator=(displayed_video_data&& other) noexcept
@@ -33,16 +25,11 @@ namespace vt
 		id = other.id;
 		video = other.video;
 		offset = other.offset;
-		if (display_texture != 0)
-		{
-			glDeleteTextures(1, &display_texture);
-		}
-		display_texture = other.display_texture;
+		display_texture = std::move(other.display_texture);
 
 		other.id = {};
 		other.video = {};
 		other.offset = {};
-		other.display_texture = {};
 
 		return *this;
 	}
