@@ -285,6 +285,24 @@ namespace vt
 	{
 		set_current();
 		draw();
+
+		auto& io = ImGui::GetIO();
+		glViewport(0, 0, (int)io.DisplaySize.x, (int)io.DisplaySize.y);
+		glClearColor(24 / 255.f, 24 / 255.f, 24 / 255.f, 1.0f);
+		glClear(GL_COLOR_BUFFER_BIT);
+
+		ImGui::Render();
+		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
+		if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
+		{
+			SDL_Window* backup_current_window = SDL_GL_GetCurrentWindow();
+			SDL_GLContext backup_current_context = SDL_GL_GetCurrentContext();
+			ImGui::UpdatePlatformWindows();
+			ImGui::RenderPlatformWindowsDefault();
+			SDL_GL_MakeCurrent(backup_current_window, backup_current_context);
+		}
+		SDL_GL_SwapWindow(ctx_.main_window->window);
 	}
 
 	void app_window::handle_event(const SDL_Event& event)

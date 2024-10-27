@@ -1306,6 +1306,46 @@ namespace vt
 
 	void main_window::draw_main_app()
 	{
+		ImGuiWindowClass window_class{};
+		window_class.ViewportFlagsOverrideSet = ImGuiViewportFlags_NoAutoMerge | ImGuiViewportFlags_TopMost;
+		ImGui::SetNextWindowClass(&window_class);
+
+		auto& style = ImGui::GetStyle();
+		ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 7);
+		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, style.WindowPadding * 2);
+		ImGui::SetNextWindowPos(ImGui::GetMainViewport()->GetCenter(), ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
+		auto flags = ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoMove;
+
+		auto win_open = ImGui::BeginPopupModal("Script Progress", nullptr, ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_AlwaysAutoResize);
+		ImGui::PopStyleVar(2);
+
+		if (win_open)
+		{
+			ImGuiWindow* win = ImGui::GetCurrentWindow();
+			ImGuiPlatformIO& platform_io = ImGui::GetPlatformIO();
+			auto wind = (SDL_Window*)ImGui::GetCurrentWindow()->Viewport->PlatformHandle;
+
+			auto width = ImGui::GetContentRegionAvail().x;
+
+			static size_t dot_count = 0;
+			constexpr size_t max_dots = 3;
+			static float elapsed_acc{};
+
+			auto elapsed_time = ImGui::GetIO().DeltaTime;
+
+			if (elapsed_acc >= 0.75)
+			{
+				elapsed_acc = 0;
+				dot_count = (dot_count + 1) % (max_dots + 1);
+			}
+			elapsed_acc += elapsed_time;
+
+			std::string suffix = std::string(dot_count, '.');
+			ImGui::Text("Script Progress%s", suffix.c_str());
+			ImGui::ProgressBar(0.5f, ImVec2{ width, ImGui::GetTextLineHeight() / 2 }, "");
+			ImGui::EndPopup();
+		}
+
 		if (!ctx_.current_project.has_value()) return;
 		draw_menubar();
 		if (!ctx_.current_project.has_value()) return;
@@ -1579,6 +1619,7 @@ namespace vt
 		}
 
 		//ImGui::ShowDemoWindow();
+		ImGui::OpenPopup("Script Progress");
 	}
 
 	void main_window::draw_project_selector()

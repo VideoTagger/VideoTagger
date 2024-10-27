@@ -14,7 +14,7 @@ namespace vt
 		app() = default;
 
 	public:
-		bool init(const app_window_config& main_config, const app_window_config& tool_config);
+		bool init(const app_window_config& main_config);
 		bool run();
 		void shutdown();
 

@@ -41,7 +41,7 @@ namespace vt
 		}
 	}
 
-	bool app::init(const app_window_config& main_config, const app_window_config& tool_config)
+	bool app::init(const app_window_config& main_config)
 	{
 		debug::init();
 		//Clears the log file
@@ -98,11 +98,10 @@ namespace vt
 		io.ConfigFlags |= ImGuiConfigFlags_DockingEnable | ImGuiConfigFlags_ViewportsEnable;
 		io.ConfigWindowsMoveFromTitleBarOnly = true;
 
-		ctx_.tool_window = std::make_unique<tool_window>(tool_config);
 		ctx_.main_window = std::make_unique<main_window>(main_config);
-
 		ImGui_ImplSDL2_InitForOpenGL(ctx_.main_window->window, ctx_.main_window->gl_ctx);
 		ImGui_ImplOpenGL3_Init(glsl_version);
+
 		ctx_.main_window->set_current();
 		SDL_GL_SetSwapInterval(1); //VSync
 
@@ -128,27 +127,7 @@ namespace vt
 			ImGui::NewFrame();
 
 			handle_events();
-
 			ctx_.main_window->render();
-			//ctx_.tool_window->render();
-
-
-			auto& io = ImGui::GetIO();
-			glViewport(0, 0, (int)io.DisplaySize.x, (int)io.DisplaySize.y);
-			glClearColor(24 / 255.f, 24 / 255.f, 24 / 255.f, 1.0f);
-			glClear(GL_COLOR_BUFFER_BIT);
-			ImGui::Render();
-			ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-
-			if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
-			{
-				SDL_Window* backup_current_window = SDL_GL_GetCurrentWindow();
-				SDL_GLContext backup_current_context = SDL_GL_GetCurrentContext();
-				ImGui::UpdatePlatformWindows();
-				ImGui::RenderPlatformWindowsDefault();
-				SDL_GL_MakeCurrent(backup_current_window, backup_current_context);
-			}
-			SDL_GL_SwapWindow(ctx_.main_window->window);
 		}
 #ifndef _DEBUG
 		}
@@ -184,7 +163,6 @@ namespace vt
 		while (SDL_PollEvent(&event))
 		{
 			ctx_.main_window->handle_event(event);
-			ctx_.tool_window->handle_event(event);
 		}
 	}
 }
