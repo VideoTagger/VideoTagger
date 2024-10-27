@@ -167,6 +167,14 @@ namespace vt::widgets
 					}
 					if (inactive) ImGui::PopStyleColor();
 
+					if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_SourceNoHoldToOpenOthers))
+					{
+						utils::drag_drop::set_payload("Group", gid);
+						std::string str = fmt::format("{} {}", icons::video_group, group_name);
+						ImGui::TextUnformatted(str.c_str());
+						ImGui::EndDragDropSource();
+					}
+
 					if (gid != 0)
 					{
 						//TODO: This is duplicated in 2 places
