@@ -435,7 +435,7 @@ namespace vt::widgets
 								}
 
 								ImGui::TableNextColumn();
-								draw_video_tile(*metadata, tile_size, open_video, remove_video, open_video_properties, metadata->thumbnail);
+								draw_video_tile(*metadata, tile_size, open_video, remove_video, open_video_properties, metadata->thumbnail ? metadata->thumbnail->id() : 0);
 								if (remove_video)
 								{
 									auto& vgroup = ctx_.current_project->video_groups.at(current_video_group);

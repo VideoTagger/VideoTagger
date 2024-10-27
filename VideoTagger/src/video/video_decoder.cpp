@@ -739,7 +739,7 @@ namespace vt
 #if LIBAVCODEC_BUILD >= CALC_FFMPEG_VERSION(54, 1, 0) or LIBAVFORMAT_BUILD >= CALC_FFMPEG_VERSION(52, 111, 0)
 			fps = av_q2d(video_stream->avg_frame_rate);
 #else
-			metadata.fps = av_q2d(video_stream->r_frame_rate);
+			fps = av_q2d(video_stream->r_frame_rate);
 #endif
 
 #if LIBAVFORMAT_BUILD >= CALC_FFMPEG_VERSION(55, 1, 100) and LIBAVFORMAT_VERSION_MICRO >= 100

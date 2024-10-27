@@ -28,6 +28,13 @@ namespace vt
 		//TODO: when video_frame is more generic make this return video_frame
 		void convert_frame(const video_frame& frame, std::vector<uint8_t>& data);
 
+		int source_width() const;
+		int source_height() const;
+		AVPixelFormat source_format() const;
+		int destination_width() const;
+		int destination_height() const;
+		AVPixelFormat destination_format() const;
+
 	private:
 		SwsContext* context_;
 		int source_width_, source_height_;

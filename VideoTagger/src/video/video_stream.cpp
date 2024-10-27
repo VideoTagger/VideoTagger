@@ -22,8 +22,6 @@ namespace vt
 		fps_ = decoder_.fps();
 		duration_ = decoder_.duration();
 
-		frame_converter_ = frame_converter(width_, height_, decoder_.pixel_format(), AV_PIX_FMT_RGB24);
-
 		last_ts_ = std::chrono::nanoseconds{ 0 };
 
 		return true;
@@ -35,7 +33,7 @@ namespace vt
 
 		frame_converter_.reset();
 		last_ts_ = std::chrono::nanoseconds(0);
-
+		
 		//width_ = 0;
 		//height_ = 0;
 		//fps_ = 0;
@@ -181,6 +179,11 @@ namespace vt
 		}
 
 		auto& frame = *last_frame;
+
+		if (frame_converter_ == std::nullopt or frame_converter_->destination_width() != texture.width() or frame_converter_->destination_height() != texture.height())
+		{
+			frame_converter_ = frame_converter(width_, height_, decoder_.pixel_format(), texture.width(), texture.height(), AV_PIX_FMT_RGB24);
+		}
 
 		frame_converter_->convert_frame(frame, conversion_buffer);
 

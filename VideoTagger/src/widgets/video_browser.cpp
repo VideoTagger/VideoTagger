@@ -94,7 +94,7 @@ namespace vt::widgets
 						bool remove_video{};
 
 						ImGui::TableNextColumn();
-						draw_video_tile(id, metadata, tile_size, open_video, remove_video, metadata.thumbnail);
+						draw_video_tile(id, metadata, tile_size, open_video, remove_video, metadata.thumbnail ? metadata.thumbnail->id() : 0);
 						if (remove_video)
 						{
 							debug::log("Removing video with id: {}", id);

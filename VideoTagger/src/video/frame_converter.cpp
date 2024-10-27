@@ -1,4 +1,4 @@
-#include "pch.hpp"
+#include <pch.hpp>
 #include "frame_converter.hpp"
 
 namespace vt
@@ -18,6 +18,7 @@ namespace vt
 		destination_width_{ destination_width }, destination_height_{ destination_height }, destination_format_{ destination_format }
 	{
 		context_ = sws_getContext(frame_width, frame_height, frame_format, destination_width, destination_height, destination_format, SWS_BILINEAR, nullptr, nullptr, nullptr);
+
 		//TODO: probably should throw if context_ is nullptr
 	}
 
@@ -58,5 +59,35 @@ namespace vt
 		int strides[AV_NUM_DATA_POINTERS] = { destination_width_ * 3 };
 
 		sws_scale(context_, av_frame->data, av_frame->linesize, 0, source_height_, result, strides);
+	}
+
+	int frame_converter::source_width() const
+	{
+		return source_width_;
+	}
+
+	int frame_converter::source_height() const
+	{
+		return source_height_;
+	}
+
+	AVPixelFormat frame_converter::source_format() const
+	{
+		return source_format_;
+	}
+
+	int frame_converter::destination_width() const
+	{
+		return destination_width_;
+	}
+
+	int frame_converter::destination_height() const
+	{
+		return destination_height_;
+	}
+
+	AVPixelFormat frame_converter::destination_format() const
+	{
+		return destination_format_;
 	}
 }

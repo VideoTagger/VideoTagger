@@ -75,7 +75,7 @@ namespace vt
 			std::filesystem::path path;
 			video_stream video;
 			bool is_widget_open{};
-			GLuint thumbnail{};
+			std::optional<gl_texture> thumbnail;
 
 			int width{};
 			int height{};

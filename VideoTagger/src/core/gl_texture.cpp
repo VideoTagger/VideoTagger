@@ -15,7 +15,7 @@ namespace vt
 		glBindTexture(GL_TEXTURE_2D, 0);
 	}
 
-	gl_texture::gl_texture(gl_texture&& other) noexcept : width_{ other.width_ }, height_{ other.height_ }, id_{ other.id_ }
+	gl_texture::gl_texture(gl_texture&& other) noexcept : width_{ other.width_ }, height_{ other.height_ }, id_{ other.id_ }, format_{ other.format_ }
 	{
 		other.id_ = 0;
 	}

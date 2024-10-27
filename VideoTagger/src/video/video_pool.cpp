@@ -1,5 +1,6 @@
 #include "pch.hpp"
 #include "video_pool.hpp"
+#include <core/debug.hpp>
 
 namespace vt
 {
@@ -302,10 +303,6 @@ namespace vt
 
 	video_pool::video_metadata::~video_metadata()
 	{
-		if (thumbnail != 0)
-		{
-			glDeleteTextures(1, &thumbnail);
-		}
 	}
 
 	bool video_pool::video_metadata::update_data()
@@ -344,41 +341,10 @@ namespace vt
 			}
 		}
 
-		if (thumbnail != 0)
-		{
-			glDeleteTextures(1, &thumbnail);
-			thumbnail = 0;
-		}
-
-		/*
-		SDL_Texture* tmp_texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_YV12, SDL_TEXTUREACCESS_STREAMING, video.width(), video.height());
-		if (tmp_texture == nullptr)
-		{
-			return false;
-		}
 		
-		//TODO: probably should have some max dimensions not just half of video
-		thumbnail = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGB888, SDL_TEXTUREACCESS_TARGET, video.width() / 2, video.height() / 2);
-		if (thumbnail == nullptr)
-		{
-			SDL_DestroyTexture(tmp_texture);
-			return false;
-		}
-		*/
 
-		//if (tmp_texture == 0) return false;
-		//
-		//video.get_thumbnail(tmp_texture);
-
-		
-		//TODO: Implement OpenGL code!!!
-		/*SDL_Texture* target = SDL_GetRenderTarget(renderer);
-		SDL_SetRenderTarget(renderer, thumbnail);
-		SDL_RenderCopy(renderer, tmp_texture, NULL, NULL);
-		SDL_RenderPresent(renderer);
-		SDL_SetRenderTarget(renderer, target);
-
-		SDL_DestroyTexture(tmp_texture);*/
+		thumbnail = gl_texture(video.width() / 2, video.height() / 2, GL_RGB);
+		video.get_thumbnail(*thumbnail);
 
 		if (!was_open)
 		{
