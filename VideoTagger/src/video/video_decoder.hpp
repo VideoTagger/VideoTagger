@@ -14,6 +14,8 @@ extern "C"
 
 namespace vt
 {
+	//TODO: own pixel format enum
+
 	class video_plane
 	{
 	public:
@@ -30,21 +32,6 @@ namespace vt
 		size_t size_;
 	};
 
-	struct video_planes
-	{
-		video_plane y;
-		video_plane u;
-		video_plane v;
-	};
-
-	enum class video_plane_channel
-	{
-		y,
-		u,
-		v
-	};
-
-	//TODO: maybe make this more generic (not only yuv)
 	class video_frame
 	{
 	public:
@@ -56,14 +43,17 @@ namespace vt
 		video_frame& operator=(const video_frame&) = delete;
 		video_frame& operator=(video_frame&& rhs) noexcept;
 
-		[[nodiscard]] video_plane get_plane(video_plane_channel channel) const;
-		[[nodiscard]] video_planes get_planes() const;
+		[[nodiscard]] video_plane get_plane(size_t plane_index) const;
 
 		[[nodiscard]] int width() const;
 		[[nodiscard]] int height() const;
 
 		[[nodiscard]] std::chrono::nanoseconds timestamp() const;
 		[[nodiscard]] std::chrono::nanoseconds duration() const;
+
+		[[nodiscard]] size_t planes_count() const;
+
+		[[nodiscard]] AVPixelFormat pixel_format() const;
 
 		[[nodiscard]] bool is_keyframe() const;
 

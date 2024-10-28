@@ -182,10 +182,15 @@ namespace vt
 
 		if (frame_converter_ == std::nullopt or frame_converter_->destination_width() != texture.width() or frame_converter_->destination_height() != texture.height())
 		{
-			frame_converter_ = frame_converter(width_, height_, decoder_.pixel_format(), texture.width(), texture.height(), AV_PIX_FMT_RGB24);
+			frame_converter_ = frame_converter(width_, height_, frame.pixel_format(), texture.width(), texture.height(), AV_PIX_FMT_RGB24);
 		}
 
-		frame_converter_->convert_frame(frame, conversion_buffer);
+		int pitch;
+		frame_converter_->convert_frame(frame, conversion_buffer, pitch);
+
+		auto* surf = SDL_CreateRGBSurfaceWithFormatFrom(conversion_buffer.data(), texture.width(), texture.height(), 24, pitch, SDL_PIXELFORMAT_RGB24);
+		SDL_SaveBMP(surf, "frame.bmp");
+		SDL_FreeSurface(surf);
 
 		texture.set_pixels(conversion_buffer.data());
 	}

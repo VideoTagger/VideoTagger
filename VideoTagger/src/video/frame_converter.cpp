@@ -44,21 +44,27 @@ namespace vt
 		return *this;
 	}
 
-	void frame_converter::convert_frame(const video_frame& frame, std::vector<uint8_t>& data)
+	void frame_converter::convert_frame(const video_frame& frame, std::vector<uint8_t>& data, int& pitch)
 	{
 		//TODO: handle other formats
 
-		if (data.size() != destination_width_ * destination_height_ * 3)
+		int linesizes[AV_NUM_DATA_POINTERS];
+		av_image_fill_linesizes(linesizes, destination_format_, destination_width_);
+
+		size_t destination_size = linesizes[0] * destination_height_;
+
+		pitch = linesizes[0];
+
+		if (data.size() != destination_size)
 		{
-			data.resize(destination_width_ * destination_height_ * 3);
+			data.resize(destination_size);
 		}
 
 		const AVFrame* av_frame = frame.unwrapped();
 		
 		uint8_t* result[AV_NUM_DATA_POINTERS] = { data.data() };
-		int strides[AV_NUM_DATA_POINTERS] = { destination_width_ * 3 };
-
-		sws_scale(context_, av_frame->data, av_frame->linesize, 0, source_height_, result, strides);
+		
+		sws_scale(context_, av_frame->data, av_frame->linesize, 0, source_height_, result, linesizes);
 	}
 
 	int frame_converter::source_width() const

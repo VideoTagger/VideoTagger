@@ -1,6 +1,11 @@
 #include "pch.hpp"
 #include "video_decoder.hpp"
 
+extern "C"
+{
+	#include <libavutil/pixdesc.h>
+}
+
 #define CALC_FFMPEG_VERSION(a,b,c) ( a<<16 | b<<8 | c )
 
 namespace vt
@@ -79,23 +84,9 @@ namespace vt
 		return *this;
 	}
 
-	video_plane video_frame::get_plane(video_plane_channel channel) const
+	video_plane video_frame::get_plane(size_t plane_index) const
 	{
-		size_t plane_index = static_cast<size_t>(channel);
-
-		//"frame_->linesize[plane_index] * frame_->height" This works but I'm not sure if it's how it should be done or whether it will work in every case.
-		//May not work with different pixel formats
 		return video_plane(frame_->data[plane_index], int64_t(frame_->linesize[plane_index]) * frame_->height, frame_->linesize[plane_index]);
-	}
-
-	video_planes video_frame::get_planes() const
-	{
-		return video_planes
-		{
-			get_plane(vt::video_plane_channel::y),
-			get_plane(vt::video_plane_channel::u),
-			get_plane(vt::video_plane_channel::v)
-		};
 	}
 
 	int video_frame::width() const
@@ -126,6 +117,16 @@ namespace vt
 	std::chrono::nanoseconds video_frame::duration() const
 	{
 		return std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::duration<double>(frame_->duration * av_q2d(frame_->time_base)));
+	}
+
+	size_t video_frame::planes_count() const
+	{
+		return av_pix_fmt_count_planes(pixel_format());
+	}
+
+	AVPixelFormat video_frame::pixel_format() const
+	{
+		return static_cast<AVPixelFormat>(frame_->format);
 	}
 
 	bool video_frame::is_keyframe() const

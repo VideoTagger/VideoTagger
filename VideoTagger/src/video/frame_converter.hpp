@@ -26,7 +26,7 @@ namespace vt
 		frame_converter& operator=(frame_converter&& other) noexcept;
 
 		//TODO: when video_frame is more generic make this return video_frame
-		void convert_frame(const video_frame& frame, std::vector<uint8_t>& data);
+		void convert_frame(const video_frame& frame, std::vector<uint8_t>& data, int& pitch);
 
 		int source_width() const;
 		int source_height() const;
