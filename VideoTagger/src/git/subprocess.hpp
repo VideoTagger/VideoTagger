@@ -7,10 +7,6 @@
 #include <stdio.h>
 #include <string.h>
 
-#if defined(_MSC_VER)
-#pragma warning(pop)
-#endif
-
 #if defined(__TINYC__)
 #define SUBPROCESS_ATTRIBUTE(a) __attribute((a))
 #else
