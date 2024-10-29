@@ -26,7 +26,8 @@ namespace vt
 		frame_converter& operator=(frame_converter&& other) noexcept;
 
 		//TODO: when video_frame is more generic make this return video_frame
-		void convert_frame(const video_frame& frame, std::vector<uint8_t>& data, int& pitch);
+		// for now only works for converting to rgb24
+		void convert_frame(const video_frame& frame, std::vector<uint8_t>& data);
 
 		int source_width() const;
 		int source_height() const;

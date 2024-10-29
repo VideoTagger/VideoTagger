@@ -185,12 +185,7 @@ namespace vt
 			frame_converter_ = frame_converter(width_, height_, frame.pixel_format(), texture.width(), texture.height(), AV_PIX_FMT_RGB24);
 		}
 
-		int pitch;
-		frame_converter_->convert_frame(frame, conversion_buffer, pitch);
-
-		//auto* surf = SDL_CreateRGBSurfaceWithFormatFrom(conversion_buffer.data(), texture.width(), texture.height(), 24, pitch, SDL_PIXELFORMAT_RGB24);
-		//SDL_SaveBMP(surf, "frame.bmp");
-		//SDL_FreeSurface(surf);
+		frame_converter_->convert_frame(frame, conversion_buffer);
 
 		texture.set_pixels(conversion_buffer.data());
 	}

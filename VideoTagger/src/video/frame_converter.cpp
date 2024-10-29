@@ -44,16 +44,17 @@ namespace vt
 		return *this;
 	}
 
-	void frame_converter::convert_frame(const video_frame& frame, std::vector<uint8_t>& data, int& pitch)
+	void frame_converter::convert_frame(const video_frame& frame, std::vector<uint8_t>& data)
 	{
 		//TODO: handle other formats
 
-		int linesizes[AV_NUM_DATA_POINTERS];
-		av_image_fill_linesizes(linesizes, destination_format_, destination_width_);
+		int original_linesizes[AV_NUM_DATA_POINTERS];
+		av_image_fill_linesizes(original_linesizes, destination_format_, destination_width_);
 
-		size_t destination_size = linesizes[0] * destination_height_;
-
-		pitch = linesizes[0];
+		int strides[AV_NUM_DATA_POINTERS];
+		// stride must be multiple of 8 otherwise the image is cut off
+		strides[0] = ((original_linesizes[0] - 1) | 7) + 1;
+		size_t destination_size = strides[0] * destination_height_;
 
 		if (data.size() != destination_size)
 		{
@@ -62,9 +63,19 @@ namespace vt
 
 		const AVFrame* av_frame = frame.unwrapped();
 		
+		std::fill(data.begin(), data.end(), 0xaa);
 		uint8_t* result[AV_NUM_DATA_POINTERS] = { data.data() };
 		
-		sws_scale(context_, av_frame->data, av_frame->linesize, 0, source_height_, result, linesizes);
+		sws_scale(context_, av_frame->data, av_frame->linesize, 0, source_height_, result, strides);
+
+		// move the pixels to remove the padding
+		if (strides[0] != original_linesizes[0])
+		{
+			for (size_t h = 0; h < destination_height_; h++)
+			{
+				std::memmove(result[0] + h * original_linesizes[0], result[0] + h * strides[0], original_linesizes[0]);
+			}
+		}
 	}
 
 	int frame_converter::source_width() const
