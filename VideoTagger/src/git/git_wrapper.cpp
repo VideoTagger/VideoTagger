@@ -146,7 +146,7 @@ namespace vt::git
 		process_args.push_back(nullptr);
 
 		subprocess_s process_handle{};
-		if (subprocess_create(process_args.data(), subprocess_option_no_window, &process_handle) != 0)
+		if (subprocess_create(process_args.data(), subprocess_option_no_window | subprocess_option_inherit_environment, &process_handle) != 0)
 		{
 			return command_result(command_result_failed_construct);
 		}
