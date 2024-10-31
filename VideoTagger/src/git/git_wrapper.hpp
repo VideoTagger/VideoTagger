@@ -33,6 +33,8 @@ namespace vt::git
 		~command_result();
 
 		command_result_status status();
+		std::string read_stdout();
+		std::string read_stderr();
 
 		std::optional<int> return_value();
 

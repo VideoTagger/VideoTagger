@@ -41,6 +41,41 @@ namespace vt::git
 		return command_result_status::finished;
 	}
 
+	static std::string read_FILE(FILE* file)
+	{
+		std::array<char, 4096> read_buffer{};
+
+		std::string result;
+
+		size_t bytes_read{};
+		while (bytes_read = fread(read_buffer.data(), 1, read_buffer.size(), file))
+		{
+			result.insert(result.end(), read_buffer.begin(), read_buffer.begin() + bytes_read);
+		}
+
+		return result;
+	}
+
+	std::string command_result::read_stdout()
+	{
+		if (status() != command_result_status::finished)
+		{
+			return std::string();
+		}
+
+		return read_FILE(subprocess_stdout(process_handle_.get()));
+	}
+
+	std::string command_result::read_stderr()
+	{
+		if (status() != command_result_status::finished)
+		{
+			return std::string();
+		}
+
+		return read_FILE(subprocess_stderr(process_handle_.get()));
+	}
+
 	std::optional<int> command_result::return_value()
 	{
 		if (!return_value_.has_value())
