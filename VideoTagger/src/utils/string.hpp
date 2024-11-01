@@ -1,7 +1,9 @@
 #pragma once
 #include <filesystem>
 #include <string>
+#include <string_view>
 #include <vector>
+
 
 namespace vt::utils::string
 {
@@ -12,6 +14,12 @@ namespace vt::utils::string
 	std::string to_uppercase(const std::string& input);
 	std::string trim_whitespace(const std::string& input);
 	std::vector<std::string> split(const std::string& input, char delimiter);
+	
+	// The signature of the function must be equivalent to: void f(std::string_view);
+	// If the input string doesn't contain *delimiter*, *func* will be called once with the whole string as the argument
+	// The std::string_view passed to *func* doesn't contain *delimiter*
+	template<typename Function>
+	void for_each_line(std::string_view input, Function func, char delimiter = '\n');
 
 	template <typename type> std::string to_hex(type input, size_t hex_length = sizeof(type) << 1)
 	{
@@ -22,5 +30,22 @@ namespace vt::utils::string
 			result[i] = digits[(input >> j) & 0x0F];
 		}
 		return result;
+	}
+
+	template<typename Function>
+	void for_each_line(std::string_view input, Function func, char delimiter)
+	{
+		while (!input.empty())
+		{
+			size_t separator_index = input.find(delimiter);
+			if (separator_index == input.npos)
+			{
+				separator_index = input.size();
+			}
+
+			func(input.substr(0, separator_index));
+
+			input.remove_prefix(std::min(separator_index + 1, input.size()));
+		}
 	}
 }
