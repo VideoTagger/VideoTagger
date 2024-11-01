@@ -2,23 +2,25 @@
 #include <cstdlib>
 #include "git_wrapper.hpp"
 #include <core/debug.hpp>
+#include <utils/string.hpp>
 
 #include "subprocess.hpp"
 
 namespace vt::git
 {
-	command_result::command_result(subprocess_s&& process_handle)
+	file_list_item::file_list_item(std::filesystem::path name, file_status status, bool staged)
+		: name{ name }, status{ status }, staged{ staged }
+	{
+	}
+
+	execute_command_result::execute_command_result(subprocess_s&& process_handle)
 		: process_handle_{ std::make_unique<subprocess_s>() }
 	{
 		*process_handle_ = process_handle;
 		std::memset(&process_handle, 0, sizeof(subprocess_s));
 	}
 
-	command_result::command_result(command_result_failed_construct_t)
-	{
-	}
-
-	command_result::~command_result()
+	execute_command_result::~execute_command_result()
 	{
 		if (process_handle_ != nullptr)
 		{
@@ -26,19 +28,14 @@ namespace vt::git
 		}
 	}
 
-	command_result_status command_result::status()
+	command_status execute_command_result::status()
 	{
-		if (process_handle_ == nullptr)
-		{
-			return command_result_status::start_failed;
-		}
-
 		if (subprocess_alive(process_handle_.get()))
 		{
-			return command_result_status::running;
+			return command_status::running;
 		}
 
-		return command_result_status::finished;
+		return command_status::finished;
 	}
 
 	static std::string read_FILE(FILE* file)
@@ -56,9 +53,9 @@ namespace vt::git
 		return result;
 	}
 
-	std::string command_result::read_stdout()
+	std::string execute_command_result::read_stdout()
 	{
-		if (status() != command_result_status::finished)
+		if (status() != command_status::finished)
 		{
 			return std::string();
 		}
@@ -66,9 +63,9 @@ namespace vt::git
 		return read_FILE(subprocess_stdout(process_handle_.get()));
 	}
 
-	std::string command_result::read_stderr()
+	std::string execute_command_result::read_stderr()
 	{
-		if (status() != command_result_status::finished)
+		if (status() != command_status::finished)
 		{
 			return std::string();
 		}
@@ -76,7 +73,7 @@ namespace vt::git
 		return read_FILE(subprocess_stderr(process_handle_.get()));
 	}
 
-	std::optional<int> command_result::return_value()
+	std::optional<int> execute_command_result::return_value()
 	{
 		if (!return_value_.has_value())
 		{
@@ -90,9 +87,9 @@ namespace vt::git
 		return return_value_;
 	}
 
-	bool command_result::terminate()
+	bool execute_command_result::terminate()
 	{
-		if (status() != command_result_status::running)
+		if (status() != command_status::running)
 		{
 			return true;
 		}
@@ -100,14 +97,136 @@ namespace vt::git
 		return subprocess_terminate(process_handle_.get());
 	}
 
-	subprocess_s& command_result::process_handle()
+	subprocess_s& execute_command_result::process_handle()
 	{
 		return *process_handle_;
 	}
 
-	const subprocess_s& command_result::process_handle() const
+	const subprocess_s& execute_command_result::process_handle() const
 	{
 		return *process_handle_;
+	}
+
+	basic_result::basic_result(execute_command_result& command_result)
+	{
+		command_return_value_ = *command_result.return_value();
+		error_string_ = command_result.read_stderr();
+	}
+
+	int basic_result::command_return_value() const
+	{
+		return command_return_value_;
+	}
+
+	bool basic_result::succeeded() const
+	{
+		return command_return_value_ == 0;
+	}
+
+	const std::string& basic_result::error_string()
+	{
+		return error_string_;
+	}
+
+	commit_result::commit_result(execute_command_result& command_result)
+		: basic_result(command_result)
+	{
+	}
+
+	list_modified_files_result::list_modified_files_result(execute_command_result& command_result)
+		: basic_result(command_result)
+	{
+
+		std::string command_output = command_result.read_stdout();
+
+		auto func = [this](std::string_view line)
+		{
+			//TODO: handle other cases, like during merge or something https://git-scm.com/docs/git-status#:~:text=config%20option%20below.-,Short%20Format,-In%20the%20short
+			char status_char{};
+
+			file_status status{};
+			bool staged{};
+
+			if (line[0] != ' ')
+			{
+				staged = true;
+				status_char = line[0];
+			}
+			else
+			{
+				staged = false;
+				status_char = line[1];
+			}
+
+			switch (status_char)
+			{
+			case 'M':
+				status = file_status::modified;
+				break;
+			case 'A':
+				status = file_status::added;
+				break;
+			case 'D':
+				status = file_status::deleted;
+				break;
+			case 'R':
+				status = file_status::renamed;
+				break;
+			default:
+				status = file_status::unmodified;
+				break;
+			}
+
+			line.remove_prefix(3);
+			files_.emplace_back(std::filesystem::path(line), status, staged);
+		};
+
+		vt::utils::string::for_each_line(command_output, func);
+	}
+
+	file_list_item& list_modified_files_result::at(size_t index)
+	{
+		return files_.at(index);
+	}
+
+	const file_list_item& list_modified_files_result::at(size_t index) const
+	{
+		return files_.at(index);
+	}
+
+	size_t list_modified_files_result::size() const
+	{
+		return files_.size();
+	}
+
+	list_modified_files_result::iterator list_modified_files_result::begin()
+	{
+		return files_.begin();
+	}
+
+	list_modified_files_result::const_iterator list_modified_files_result::begin() const
+	{
+		return files_.begin();
+	}
+
+	list_modified_files_result::const_iterator list_modified_files_result::cbegin() const
+	{
+		return files_.cbegin();
+	}
+
+	list_modified_files_result::iterator list_modified_files_result::end()
+	{
+		return files_.end();
+	}
+
+	list_modified_files_result::const_iterator list_modified_files_result::end() const
+	{
+		return files_.end();
+	}
+
+	list_modified_files_result::const_iterator list_modified_files_result::cend() const
+	{
+		return files_.cend();
 	}
 
 	git_wrapper::git_wrapper(std::filesystem::path git_path, std::filesystem::path repository_path)
@@ -159,7 +278,27 @@ namespace vt::git
 		return repository_path_;
 	}
 
-	command_result git_wrapper::execute_command(const std::string& command, const std::vector<std::string>& arguments) const
+	promise<list_modified_files_result> git_wrapper::list_modified_files()
+	{
+		std::vector<std::string> command_arguments{
+			"--porcelain",
+			"-uall"
+		};
+
+		return promise<list_modified_files_result>(execute_command("status", command_arguments));
+	}
+
+	promise<commit_result> git_wrapper::commit(const commit_arguments& arguments)
+	{
+		std::vector<std::string> command_arguments{
+			"-m", arguments.message.c_str(),
+			"-m", arguments.descryption.c_str()
+		};
+
+		return promise<commit_result>(execute_command("commit", command_arguments));
+	}
+
+	execute_command_result git_wrapper::execute_command(const std::string& command, const std::vector<std::string>& arguments) const
 	{
 		std::vector<const char*> process_args;
 		process_args.reserve((4 + arguments.size() + 1));
@@ -183,10 +322,11 @@ namespace vt::git
 		subprocess_s process_handle{};
 		if (subprocess_create(process_args.data(), subprocess_option_no_window | subprocess_option_inherit_environment, &process_handle) != 0)
 		{
-			return command_result(command_result_failed_construct);
+			//TODO: maybe do something else, the file could just be missing
+			debug::panic("Failed to create subprocess with args: {}", fmt::join(process_args, " "));
 		}
 
-		return command_result(std::move(process_handle));
+		return execute_command_result(std::move(process_handle));
 	}
 
 	std::filesystem::path get_global_git_path()
