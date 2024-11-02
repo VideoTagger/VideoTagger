@@ -243,6 +243,38 @@ namespace vt::git
 		return files_.cend();
 	}
 
+	is_repository_result::is_repository_result(execute_command_result& command_result)
+		: basic_result(command_result)
+	{
+		if (!succeeded())
+		{
+			value_ = false;
+			return;
+		}
+
+		std::string output = command_result.read_stdout();
+		output.pop_back();
+
+		if (output == "true")
+		{
+			value_ = true;
+		}
+		else
+		{
+			value_ = false;
+		}
+	}
+
+	bool is_repository_result::value() const
+	{
+		return value_;
+	}
+
+	is_repository_result::operator bool()
+	{
+		return value_;
+	}
+
 	git_wrapper::git_wrapper(std::filesystem::path git_path, std::filesystem::path working_directory)
 		: git_path_{ git_path }, working_directory_{ working_directory }
 	{
@@ -319,6 +351,15 @@ namespace vt::git
 		};
 
 		return promise<list_modified_files_result>(execute_command("status", command_arguments));
+	}
+
+	promise<is_repository_result> git_wrapper::is_repository()
+	{
+		std::vector<std::string> command_arguments{
+			"--is-inside-work-tree",
+		};
+
+		return promise<is_repository_result>(execute_command("rev-parse", command_arguments));
 	}
 
 	promise<basic_result> git_wrapper::stage_files(const std::vector<std::filesystem::path>& files)
@@ -417,4 +458,6 @@ namespace vt::git
 
 		return std::filesystem::path();
 	}
+
+	
 }

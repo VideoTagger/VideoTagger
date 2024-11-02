@@ -81,6 +81,8 @@ namespace vt::git
 
 		command_status status();
 
+		operator T();
+
 	private:
 		execute_command_result command_result_;
 	};
@@ -141,6 +143,19 @@ namespace vt::git
 		std::vector<file_list_item> files_;
 	};
 
+	class is_repository_result : basic_result
+	{
+	public:
+		explicit is_repository_result(execute_command_result& command_result);
+
+		bool value() const;
+		operator bool();
+
+	private:
+		bool value_;
+	};
+	
+
 	//TODO: validate command arguments ()
 	class git_wrapper
 	{
@@ -158,6 +173,7 @@ namespace vt::git
 
 		promise<repository_path_result> repository_path();
 		promise<list_modified_files_result> list_modified_files();
+		promise<is_repository_result> is_repository();
 		
 		promise<basic_result> stage_files(const std::vector<std::filesystem::path>& files);
 		promise<basic_result> unstage_files(const std::vector<std::filesystem::path>& files);
@@ -194,5 +210,11 @@ namespace vt::git
 	inline command_status promise<T>::status()
 	{
 		return command_result_.status();
+	}
+
+	template<typename T>
+	inline promise<T>::operator T()
+	{
+		return get();
 	}
 }
