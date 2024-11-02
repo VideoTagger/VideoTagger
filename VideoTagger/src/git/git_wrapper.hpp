@@ -55,6 +55,7 @@ namespace vt::git
 		std::string read_stdout();
 		std::string read_stderr();
 
+		void wait();
 		std::optional<int> return_value();
 
 		bool terminate();
@@ -74,6 +75,7 @@ namespace vt::git
 		using value_type = T;
 
 		explicit promise(execute_command_result&& command_result);
+		~promise();
 
 		T get();
 
@@ -104,14 +106,15 @@ namespace vt::git
 		std::string descryption;
 	};
 
-	class commit_result : public basic_result
+	class repository_path_result : basic_result
 	{
 	public:
-		explicit commit_result(execute_command_result& command_result);
+		explicit repository_path_result(execute_command_result& command_result);
 
+		std::filesystem::path path() const;
 
 	private:
-		
+		std::filesystem::path path_;
 	};
 
 	class list_modified_files_result : basic_result
@@ -142,22 +145,28 @@ namespace vt::git
 	class git_wrapper
 	{
 	public:
-		git_wrapper(std::filesystem::path git_path, std::filesystem::path repository_path);
+		git_wrapper(std::filesystem::path git_path, std::filesystem::path working_directory);
 
 		path_status check_git_path() const;
 		path_status check_repository_path() const;
 
-		const std::filesystem::path& git_path() const;
-		const std::filesystem::path& repository_path() const;
+		void set_git_path(std::filesystem::path git_path);
+		void set_working_directory(std::filesystem::path working_directory);
 
+		const std::filesystem::path& git_path() const;
+		const std::filesystem::path& working_directory() const;
+
+		promise<repository_path_result> repository_path();
 		promise<list_modified_files_result> list_modified_files();
 		
-		promise<commit_result> commit(const commit_arguments& arguments);
+		promise<basic_result> stage_files(const std::vector<std::filesystem::path>& files);
+		promise<basic_result> unstage_files(const std::vector<std::filesystem::path>& files);
+		promise<basic_result> commit(const commit_arguments& arguments);
 
 		execute_command_result execute_command(const std::string& command, const std::vector<std::string>& arguments) const;
 	private:
 		std::filesystem::path git_path_;
-		std::filesystem::path repository_path_;
+		std::filesystem::path working_directory_;
 	};
 
 	extern std::filesystem::path get_global_git_path();
@@ -169,8 +178,15 @@ namespace vt::git
 	}
 
 	template<typename T>
+	inline promise<T>::~promise()
+	{
+		command_result_.wait();
+	}
+
+	template<typename T>
 	inline T promise<T>::get()
 	{
+		command_result_.wait();
 		return T(command_result_);
 	}
 

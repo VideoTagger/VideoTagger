@@ -73,6 +73,11 @@ namespace vt::git
 		return read_FILE(subprocess_stderr(process_handle_.get()));
 	}
 
+	void execute_command_result::wait()
+	{
+		static_cast<void>(return_value());
+	}
+
 	std::optional<int> execute_command_result::return_value()
 	{
 		if (!return_value_.has_value())
@@ -128,9 +133,18 @@ namespace vt::git
 		return error_string_;
 	}
 
-	commit_result::commit_result(execute_command_result& command_result)
+	repository_path_result::repository_path_result(execute_command_result& command_result)
 		: basic_result(command_result)
 	{
+		std::string string_path = command_result.read_stdout();
+		//remove new line
+		string_path.pop_back();
+		path_ = string_path;
+	}
+
+	std::filesystem::path repository_path_result::path() const
+	{
+		return path_;
 	}
 
 	list_modified_files_result::list_modified_files_result(execute_command_result& command_result)
@@ -229,8 +243,8 @@ namespace vt::git
 		return files_.cend();
 	}
 
-	git_wrapper::git_wrapper(std::filesystem::path git_path, std::filesystem::path repository_path)
-		: git_path_{ git_path }, repository_path_{ repository_path }
+	git_wrapper::git_wrapper(std::filesystem::path git_path, std::filesystem::path working_directory)
+		: git_path_{ git_path }, working_directory_{ working_directory }
 	{
 	}
 
@@ -253,7 +267,7 @@ namespace vt::git
 
 	path_status git_wrapper::check_repository_path() const
 	{
-		std::filesystem::file_status file_status = std::filesystem::status(repository_path_);
+		std::filesystem::file_status file_status = std::filesystem::status(working_directory_);
 
 		if (file_status.type() == std::filesystem::file_type::not_found)
 		{
@@ -268,14 +282,33 @@ namespace vt::git
 		return path_status::ok;
 	}
 
+	void git_wrapper::set_git_path(std::filesystem::path git_path)
+	{
+		git_path_ = std::move(git_path);
+	}
+
+	void git_wrapper::set_working_directory(std::filesystem::path working_directory)
+	{
+		working_directory_ = std::move(working_directory);
+	}
+
 	const std::filesystem::path& git_wrapper::git_path() const
 	{
 		return git_path_;
 	}
 
-	const std::filesystem::path& git_wrapper::repository_path() const
+	const std::filesystem::path& git_wrapper::working_directory() const
 	{
-		return repository_path_;
+		return working_directory_;
+	}
+
+	promise<repository_path_result> git_wrapper::repository_path()
+	{
+		std::vector<std::string> command_arguments{
+			"--show-toplevel"
+		};
+
+		return promise<repository_path_result>(execute_command("rev-parse", command_arguments));
 	}
 
 	promise<list_modified_files_result> git_wrapper::list_modified_files()
@@ -288,14 +321,39 @@ namespace vt::git
 		return promise<list_modified_files_result>(execute_command("status", command_arguments));
 	}
 
-	promise<commit_result> git_wrapper::commit(const commit_arguments& arguments)
+	promise<basic_result> git_wrapper::stage_files(const std::vector<std::filesystem::path>& files)
+	{
+		std::vector<std::string> command_arguments;
+		command_arguments.reserve(files.size());
+		for (auto& path : files)
+		{
+			command_arguments.push_back(path.u8string());
+		}
+
+		return promise<basic_result>(execute_command("add", command_arguments));
+	}
+
+	promise<basic_result> git_wrapper::unstage_files(const std::vector<std::filesystem::path>& files)
+	{
+		std::vector<std::string> command_arguments;
+		command_arguments.reserve(files.size() + 1);
+		command_arguments.push_back("--staged");
+		for (auto& path : files)
+		{
+			command_arguments.push_back(path.u8string());
+		}
+
+		return promise<basic_result>(execute_command("restore", command_arguments));
+	}
+
+	promise<basic_result> git_wrapper::commit(const commit_arguments& arguments)
 	{
 		std::vector<std::string> command_arguments{
 			"-m", arguments.message.c_str(),
 			"-m", arguments.descryption.c_str()
 		};
 
-		return promise<commit_result>(execute_command("commit", command_arguments));
+		return promise<basic_result>(execute_command("commit", command_arguments));
 	}
 
 	execute_command_result git_wrapper::execute_command(const std::string& command, const std::vector<std::string>& arguments) const
@@ -304,7 +362,7 @@ namespace vt::git
 		process_args.reserve((4 + arguments.size() + 1));
 		
 		std::string git_path_string = git_path_.u8string();
-		std::string rep_path_string = repository_path_.u8string();
+		std::string rep_path_string = working_directory_.u8string();
 
 		process_args.push_back(git_path_string.c_str());
 		process_args.push_back("-C");
