@@ -5,11 +5,11 @@
 
 namespace vt::utils
 {
-	SDL_Texture* thumbnail::font_texture()
+	GLuint thumbnail::font_texture()
 	{
-		if (ctx_.fonts.count("thumbnail") == 0) return nullptr;
+		if (ctx_.fonts.count("thumbnail") == 0) return 0;
 		auto font = ctx_.fonts.at("thumbnail");
-		return reinterpret_cast<SDL_Texture*>(font->ContainerAtlas->TexID);
+		return reinterpret_cast<GLuint>(font->ContainerAtlas->TexID);
 	}
 
 	const thumbnail::font_glyph thumbnail::find_glyph(ImWchar c)

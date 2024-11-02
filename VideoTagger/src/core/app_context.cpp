@@ -87,8 +87,7 @@ namespace vt
 				&pool_video_metadata->video,
 				group_video_info.offset,
 				pool_video_metadata->width,
-				pool_video_metadata->height,
-				renderer
+				pool_video_metadata->height
 			);
 		}
 		

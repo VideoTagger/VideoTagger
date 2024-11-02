@@ -14,7 +14,7 @@ namespace vt::widgets
 	{
 		if (!ctx_.current_project.has_value()) return;
 
-		static auto draw_video_tile = [this](video_id_t id, const video_pool::video_metadata& vmeta, ImVec2 tile_size, bool& open, bool& remove, SDL_Texture* image = nullptr)
+		static auto draw_video_tile = [this](video_id_t id, const video_pool::video_metadata& vmeta, ImVec2 tile_size, bool& open, bool& remove, GLuint image = 0)
 		{
 			std::string label = vmeta.path.filename().u8string();
 			ImVec2 image_tile_size{ tile_size.x * 0.9f, tile_size.x * 0.9f };
@@ -23,7 +23,7 @@ namespace vt::widgets
 
 			ImVec2 uv0{ 0, 0 };
 			ImVec2 uv1{ 1, 1 };
-			if (image == nullptr)
+			if (image == 0)
 			{
 				image = utils::thumbnail::font_texture();
 				auto glyph = utils::thumbnail::find_glyph(utils::thumbnail::video_icon);
@@ -94,7 +94,7 @@ namespace vt::widgets
 						bool remove_video{};
 
 						ImGui::TableNextColumn();
-						draw_video_tile(id, metadata, tile_size, open_video, remove_video, metadata.thumbnail);
+						draw_video_tile(id, metadata, tile_size, open_video, remove_video, metadata.thumbnail ? metadata.thumbnail->id() : 0);
 						if (remove_video)
 						{
 							debug::log("Removing video with id: {}", id);

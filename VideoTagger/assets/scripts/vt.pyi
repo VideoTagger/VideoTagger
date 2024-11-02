@@ -1,4 +1,14 @@
+from abc import ABCMeta, abstractmethod
 from typing import Optional
+
+class Script(metaclass=ABCMeta):
+    def __init__(self: Script) -> None: ...
+    @abstractmethod
+    def has_progress(self: Script) -> bool: ...
+    @abstractmethod
+    def on_run(self: Script) -> None:
+        """This method doesn't need to be implemented since it isn't purely virtual"""
+        ...
 
 class Timeline:
     def __init__(self: Timeline) -> None: ...

@@ -76,7 +76,7 @@ namespace vt::widgets
 							}
 						};
 
-						SDL_Texture* image = utils::thumbnail::font_texture();
+						auto image = utils::thumbnail::font_texture();
 						auto glyph = utils::thumbnail::find_glyph(utils::thumbnail::video_group_icon);
 
 						size_t playlist_size = playlist.size();

@@ -5,8 +5,45 @@
 
 namespace vt
 {
+	struct script_base
+	{
+		script_base() = default;
+		virtual ~script_base() = default;
+		virtual bool has_progress() const = 0;
+		virtual void on_run() const { debug::log("Test"); };
+	};
+
+	struct script : public script_base
+	{
+		using script_base::script_base;
+		virtual bool has_progress() const override
+		{
+			PYBIND11_OVERRIDE_PURE
+			(
+				bool,
+				script_base,
+				has_progress,
+			);
+		}
+
+		virtual void on_run() const override
+		{
+			PYBIND11_OVERRIDE
+			(
+				void,
+				script_base,
+				on_run,
+			);
+		}
+	};
+
 	PYBIND11_EMBEDDED_MODULE(vt, this_module)
 	{
+		py::class_<script_base, script, std::shared_ptr<script_base>>(this_module, "Script")
+		.def(py::init<>())
+		.def("has_progress", &script_base::has_progress)
+		.def("on_run", &script_base::on_run);
+
 		py::class_<widgets::video_timeline>(this_module, "Timeline")
 		.def(py::init<>())
 		.def_property_readonly("segment_count", [](const widgets::video_timeline&)
@@ -99,21 +136,48 @@ namespace vt
 		sys.attr("stderr") = std::exchange(stderr_, {});
 	}
 
-	void scripting_engine::run(const std::string& script_name, const std::string& entrypoint)
+	bool scripting_engine::run(const std::string& script_name, const std::string& entrypoint)
 	{
 		py::scoped_interpreter interp_lock{};
 		try
 		{
 			redirect_script_io();
 			set_script_dir(ctx_.scripts_filepath);
-			py::module_::import("vt");
+			auto vt = py::module_::import("vt");
+			py::object base_script_class = vt.attr("Script");
+
 			auto script = py::module_::import(script_name.c_str());
-			script.attr(entrypoint.c_str())();
+			if (!py::hasattr(script, script_name.c_str()))
+			{
+				debug::error("Couldn't find '{}' class. Script files should contain a class with the same name as the filename (class filename(vt.Script): ...)", script_name);
+				return false;
+			}
+			
+			auto script_class = script.attr(script_name.c_str());
+
+			//check if script is a subclass of vt.Script
+			if (!py::isinstance<py::type>(script_class) and py::hasattr(script_class, "__bases__") and script_class.attr("__bases__").attr("__contains__")(base_script_class).cast<bool>())
+			{
+				debug::error("Script class '{}' should be a subclass of vt.Script", script_name);
+				return false;
+			}
+
+			auto script_class_obj = script_class();
+			if (!py::isinstance<vt::script>(script_class_obj))
+			{
+				debug::error("Failed to convert script object of class '{}' into native object", script_name);
+				return false;
+			}
+
+			auto native_script = script_class_obj.cast<std::shared_ptr<vt::script>>();
+			native_script->on_run();
+			//script.attr(entrypoint.c_str())();
 		}
 		catch (const std::exception& ex)
 		{
 			debug::error("{}", ex.what());
 		}
 		reset_script_io();
+		return true;
 	}
 }

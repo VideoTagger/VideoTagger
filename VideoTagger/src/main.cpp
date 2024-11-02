@@ -5,12 +5,14 @@
 int main(int argc, char* argv[])
 {
 	vt::app app;
-	vt::app_config cfg;
-	cfg.window_pos_x = -1;
-	cfg.window_pos_y = -1;
-	cfg.window_name = "VideoTagger";
+	vt::app_window_config main_cfg;
+	{
+		main_cfg.window_pos_x = -1;
+		main_cfg.window_pos_y = -1;
+		main_cfg.window_name = "VideoTagger";
+	}
 
-	if (app.init(cfg))
+	if (app.init(main_cfg))
 	{
 		app.run();
 	}
