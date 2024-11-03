@@ -62,7 +62,7 @@ namespace vt
 		.def_static("write", [](py::object buffer)
 		{
 			auto str = buffer.cast<std::string>();
-			std::cout << (str != "\n" ? "[Script] : " : "") << str;
+			std::cout << (str != "\n" ? "[Script]: " : "") << str;
 		})
 		.def_static("flush", []()
 		{
@@ -74,7 +74,7 @@ namespace vt
 		.def_static("write", [](py::object buffer)
 		{
 			auto str = buffer.cast<std::string>();
-			std::cerr << (str != "\n" ? "[Script Error] : " : "") << str;
+			std::cerr << (str != "\n" ? "[Script Error]: " : "") << str;
 		})
 		.def_static("flush", []()
 		{
