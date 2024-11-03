@@ -8,9 +8,34 @@
 
 namespace vt::git
 {
-	file_list_item::file_list_item(std::filesystem::path name, file_status status, bool staged)
-		: name{ name }, status{ status }, staged{ staged }
+	file_list_item::file_list_item(std::filesystem::path name, std::variant<file_status, file_conflict_status> status, bool staged)
+		: name{ name }, status_{ status }, staged{ staged }
 	{
+	}
+
+	bool file_list_item::conflict() const
+	{
+		return std::holds_alternative<file_conflict_status>(status_);
+	}
+
+	file_status& file_list_item::status()
+	{
+		return std::get<file_status>(status_);
+	}
+
+	const file_status& file_list_item::status() const
+	{
+		return std::get<file_status>(status_);
+	}
+
+	file_conflict_status& file_list_item::conflict_status()
+	{
+		return std::get<file_conflict_status>(status_);
+	}
+
+	const file_conflict_status& file_list_item::conflict_status() const
+	{
+		return std::get<file_conflict_status>(status_);
 	}
 
 	execute_command_result::execute_command_result(subprocess_s&& process_handle)
@@ -155,40 +180,51 @@ namespace vt::git
 
 		auto func = [this](std::string_view line)
 		{
-			//TODO: handle other cases, like during merge or something https://git-scm.com/docs/git-status#:~:text=config%20option%20below.-,Short%20Format,-In%20the%20short
+			auto char_to_status = [](char ch)
+			{
+				switch (ch)
+				{
+					case ' ':	return file_status::unmodified;
+					case 'M':	return file_status::modified;
+					case 'T':	return file_status::file_type_changed;
+					case 'A':	return file_status::added;
+					case 'D':	return file_status::deleted;
+					case 'R':	return file_status::renamed;
+					case 'C':	return file_status::copied;
+					case 'U':	return file_status::modified;
+					default:	return file_status::unknown;
+				}
+			};
+
 			char status_char{};
 
-			file_status status{};
+			std::variant<file_status, file_conflict_status> status{};
 			bool staged{};
 
-			if (line[0] != ' ')
+			if (line.substr(0, 2) == "??")
 			{
-				staged = true;
-				status_char = line[0];
+				staged = false;
+				status = file_status::added;
+			}
+			else if (line[0] == ' ' or line[1] == ' ')
+			{
+				if (line[0] == ' ')
+				{
+					staged = false;
+					status_char = line[1];
+				}
+				else
+				{
+					staged = true;
+					status_char = line[0];
+				}
+
+				status = char_to_status(status_char);
 			}
 			else
 			{
+				status = file_conflict_status{ char_to_status(line[0]), char_to_status(line[1]) };
 				staged = false;
-				status_char = line[1];
-			}
-
-			switch (status_char)
-			{
-			case 'M':
-				status = file_status::modified;
-				break;
-			case 'A':
-				status = file_status::added;
-				break;
-			case 'D':
-				status = file_status::deleted;
-				break;
-			case 'R':
-				status = file_status::renamed;
-				break;
-			default:
-				status = file_status::unmodified;
-				break;
 			}
 
 			line.remove_prefix(3);
@@ -362,6 +398,11 @@ namespace vt::git
 		return promise<is_repository_result>(execute_command("rev-parse", command_arguments));
 	}
 
+	promise<basic_result> git_wrapper::init_repository()
+	{
+		return promise<basic_result>(execute_command("init", {}));
+	}
+
 	promise<basic_result> git_wrapper::stage_files(const std::vector<std::filesystem::path>& files)
 	{
 		std::vector<std::string> command_arguments;
@@ -422,6 +463,7 @@ namespace vt::git
 		if (subprocess_create(process_args.data(), subprocess_option_no_window | subprocess_option_inherit_environment, &process_handle) != 0)
 		{
 			//TODO: maybe do something else, the file could just be missing
+			process_args.pop_back();
 			debug::panic("Failed to create subprocess with args: {}", fmt::join(process_args, " "));
 		}
 

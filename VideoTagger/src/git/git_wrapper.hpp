@@ -1,8 +1,10 @@
 #pragma once
 #include <filesystem>
 #include <string>
+#include <string_view>
 #include <vector>
 #include <memory>
+#include <variant>
 
 struct subprocess_s;
 
@@ -23,20 +25,40 @@ namespace vt::git
 
 	enum class file_status
 	{
+		unknown,
+
 		unmodified,
 		modified,
+		file_type_changed,
 		added,
 		deleted,
-		renamed
+		renamed,
+		copied
+	};
+
+	inline constexpr std::string_view file_status_to_string(file_status status);
+
+	struct file_conflict_status
+	{
+		file_status local;
+		file_status incoming;
 	};
 
 	struct file_list_item
 	{
-		file_list_item(std::filesystem::path name, file_status status, bool staged);
+		file_list_item(std::filesystem::path name, std::variant<file_status, file_conflict_status> status, bool staged);
 
 		std::filesystem::path name;
-		file_status status;
 		bool staged;
+
+		bool conflict() const;
+		file_status& status();
+		const file_status& status() const;
+		file_conflict_status& conflict_status();
+		const file_conflict_status& conflict_status() const;
+
+	private:
+		std::variant<file_status, file_conflict_status> status_;
 	};
 
 	struct command_result_failed_construct_t { explicit command_result_failed_construct_t() = default; };
@@ -156,7 +178,7 @@ namespace vt::git
 	};
 	
 
-	//TODO: validate command arguments ()
+	//TODO: validate command arguments
 	class git_wrapper
 	{
 	public:
@@ -175,6 +197,7 @@ namespace vt::git
 		promise<list_modified_files_result> list_modified_files();
 		promise<is_repository_result> is_repository();
 		
+		promise<basic_result> init_repository();
 		promise<basic_result> stage_files(const std::vector<std::filesystem::path>& files);
 		promise<basic_result> unstage_files(const std::vector<std::filesystem::path>& files);
 		promise<basic_result> commit(const commit_arguments& arguments);
@@ -186,6 +209,21 @@ namespace vt::git
 	};
 
 	extern std::filesystem::path get_global_git_path();
+
+	inline constexpr std::string_view file_status_to_string(file_status status)
+	{
+		switch (status)
+		{
+		case vt::git::file_status::unmodified:			return "unmodified";
+		case vt::git::file_status::modified:			return "modified";
+		case vt::git::file_status::file_type_changed:	return "file_type_changed";
+		case vt::git::file_status::added:				return "added";
+		case vt::git::file_status::deleted:				return "deleted";
+		case vt::git::file_status::renamed:				return "renamed";
+		case vt::git::file_status::copied:				return "copied";
+		default:										return "unknown";
+		}
+	}
 
 	template<typename T>
 	inline promise<T>::promise(execute_command_result&& command_result)
