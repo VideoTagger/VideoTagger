@@ -71,6 +71,12 @@ namespace vt
 
 	scripting_engine::scripting_engine() {}
 
+	void scripting_engine::init()
+	{
+		lock_ = std::make_unique<py::scoped_interpreter>();
+		unlock_ = std::make_unique<py::gil_scoped_release>();
+	}
+
 	void scripting_engine::set_script_dir(const std::filesystem::path& dir)
 	{
 		auto sys_module = py::module_::import("sys");
@@ -104,7 +110,7 @@ namespace vt
 	{
 		ctx_.script_handle = script_handle(std::async(std::launch::async, [this, script_name]()
 		{
-			py::scoped_interpreter interp_lock{};
+			py::gil_scoped_acquire lock{};
 			try
 			{
 				py::object stdout_;
@@ -140,6 +146,7 @@ namespace vt
 
 				auto native_script = script_class_obj.cast<std::shared_ptr<vt::script>>();
 				ctx_.script_handle->script = native_script;
+
 				native_script->on_run();
 				ctx_.script_handle->script = {};
 				//script.attr(entrypoint.c_str())();

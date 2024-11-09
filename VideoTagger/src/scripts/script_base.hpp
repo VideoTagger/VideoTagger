@@ -13,8 +13,8 @@ namespace vt
 		std::string progress_info_;
 
 	public:
-		virtual bool has_progress() const = 0;
-		virtual void on_run() const {};
+		virtual bool has_progress() const;
+		virtual void on_run() const;
 
 		void set_progress_info(const std::string& progress_info);
 		void set_progress(float value);
