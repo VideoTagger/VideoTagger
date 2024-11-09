@@ -30,6 +30,16 @@ namespace vt::widgets::modal
 
 		if (win_open)
 		{
+			if (ctx_.script_handle->has_finished())
+			{
+				debug::log("Closing script progress window...");
+				ctx_.script_handle = std::nullopt;
+				is_open = false;
+				ImGui::CloseCurrentPopup();
+				ImGui::EndPopup();
+				return;
+			}
+
 			ImGuiWindow* win = ImGui::GetCurrentWindow();
 			auto wind = (SDL_Window*)ImGui::GetCurrentWindow()->Viewport->PlatformHandle;
 
@@ -50,6 +60,7 @@ namespace vt::widgets::modal
 
 			if (std::shared_ptr<script> script = ctx_.script_handle->script.lock())
 			{
+				py::gil_scoped_acquire lock{};
 				std::string suffix = std::string(dot_count, '.') + std::string(max_dots - dot_count, ' ');
 				std::string info = utils::string::trim_whitespace(script->progress_info());
 
@@ -58,19 +69,9 @@ namespace vt::widgets::modal
 				{
 					ImGui::ProgressBar(script->progress(), ImVec2{ width, ImGui::GetTextLineHeight() / 3.f }, "");
 				}
-			}			
-
-			if (ctx_.script_handle->has_finished())
-			{
-				ImGui::CloseCurrentPopup();
 			}
-			ImGui::EndPopup();
-		}
 
-		if (ctx_.script_handle->has_finished())
-		{
-			ctx_.script_handle = std::nullopt;
-			is_open = false;
+			ImGui::EndPopup();
 		}
 	}
 }

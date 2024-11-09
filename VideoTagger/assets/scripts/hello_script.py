@@ -1,5 +1,5 @@
 import vt
-import time
+# import time
 
 
 class hello_script(vt.Script):
@@ -18,7 +18,7 @@ class hello_script(vt.Script):
         self.progress_info = "Testing progress"
         print(project.name)
 
-        time.sleep(5)
+        # time.sleep(5)
         self.progress = 1.0
         self.progress_info = ""
         help(vt)

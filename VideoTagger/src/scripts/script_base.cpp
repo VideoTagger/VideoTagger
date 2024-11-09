@@ -3,6 +3,13 @@
 
 namespace vt
 {
+	bool script_base::has_progress() const
+	{
+		return false;
+	}
+
+	void script_base::on_run() const {}
+
 	void script_base::set_progress_info(const std::string& progress_info)
 	{
 		progress_info_ = progress_info;
