@@ -31,6 +31,11 @@ namespace vt
 		promise_ = std::move(promise);
 	}
 
+	std::future<bool>& script_handle::promise()
+	{
+		return promise_;
+	}
+
 	bool script_handle::has_finished() const
 	{
 		return promise_.wait_for(std::chrono::seconds(0)) == std::future_status::ready;;

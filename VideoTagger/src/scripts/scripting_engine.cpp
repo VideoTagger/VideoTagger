@@ -88,7 +88,7 @@ namespace vt
 		}
 	}
 
-	void scripting_engine::redirect_script_io()
+	void scripting_engine::redirect_script_io(py::object stdout_, py::object stderr_)
 	{
 		auto sys = py::module::import("sys");
 		auto vt = py::module::import("vt");
@@ -100,13 +100,6 @@ namespace vt
 		sys.attr("stderr") = vt.attr("stderr_hook");
 	}
 
-	void scripting_engine::reset_script_io()
-	{
-		auto sys = py::module::import("sys");
-		sys.attr("stdout") = std::exchange(stdout_, {});
-		sys.attr("stderr") = std::exchange(stderr_, {});
-	}
-
 	void scripting_engine::run(const std::string& script_name, const std::string& entrypoint)
 	{
 		ctx_.script_handle = script_handle(std::async(std::launch::async, [this, script_name]()
@@ -114,7 +107,10 @@ namespace vt
 			py::scoped_interpreter interp_lock{};
 			try
 			{
-				redirect_script_io();
+				py::object stdout_;
+				py::object stderr_;
+
+				redirect_script_io(stdout_, stderr_);
 				set_script_dir(ctx_.scripts_filepath);
 				auto vt = py::module_::import("vt");
 				py::object base_script_class = vt.attr("Script");
@@ -152,7 +148,6 @@ namespace vt
 			{
 				debug::error("{}", ex.what());
 			}
-			reset_script_io();
 			return true;
 		}));
 	}

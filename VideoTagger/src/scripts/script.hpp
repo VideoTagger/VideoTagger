@@ -29,6 +29,7 @@ namespace vt
 		std::weak_ptr<script> script;
 
 	public:
+		std::future<bool>& promise();
 		bool has_finished() const;
 	};
 }

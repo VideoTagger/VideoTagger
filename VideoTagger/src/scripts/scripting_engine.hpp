@@ -19,8 +19,7 @@ namespace vt
 
 	private:
 		void set_script_dir(const std::filesystem::path& dir);
-		void redirect_script_io();
-		void reset_script_io();
+		void redirect_script_io(py::object stdout_, py::object stderr_);
 
 	public:
 		void run(const std::string& script_name, const std::string& entrypoint);
