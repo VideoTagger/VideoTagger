@@ -14,6 +14,9 @@
 #include "keybind_storage.hpp"
 #include "theme.hpp"
 #include "eng_lang_pack.hpp"
+
+#include "main_window.hpp"
+
 #include <video/video_stream.hpp>
 #include <widgets/project_selector.hpp>
 #include <widgets/video_timeline.hpp>
@@ -25,8 +28,10 @@
 #include <widgets/theme_customizer.hpp>
 #include <widgets/modal/options.hpp>
 #include <widgets/modal/tag_importer.hpp>
+#include <widgets/modal/script_progress.hpp>
 #include "displayed_videos_manager.hpp"
 #include <utils/json.hpp>
+#include <scripts/scripting_engine.hpp>
 
 namespace vt
 {
@@ -35,6 +40,14 @@ namespace vt
 		normal,
 		minimized, //not serialized
 		maximized
+	};
+
+	enum class app_state
+	{
+		uninitialized,
+		initialized,
+		running,
+		shutdown
 	};
 
 	struct app_settings
@@ -62,10 +75,12 @@ namespace vt
 		bool show_theme_customizer_window = false;
 		bool show_about_window = false;
 		bool show_tag_importer_window = false;
+		bool show_script_progress = false;
 	};
 
 	struct app_context
 	{
+		std::optional<project> current_project;
 		widgets::video_timeline video_timeline;
 		widgets::project_selector project_selector;
 		widgets::video_player player;
@@ -74,27 +89,31 @@ namespace vt
 		widgets::video_group_queue group_queue;
 		widgets::theme_customizer theme_customizer;
 		widgets::modal::options options;
+		widgets::modal::script_progress script_progress;
 		widgets::color_picker color_picker;
 		widgets::modal::tag_importer tag_importer;
 
 		std::filesystem::path projects_list_filepath = std::filesystem::path("projects").replace_extension("json");
 		std::filesystem::path app_settings_filepath = std::filesystem::path("settings").replace_extension("json");
+		std::filesystem::path scripts_filepath = std::filesystem::path("assets") / "scripts";
 		std::filesystem::path theme_dir_filepath = "themes";
 		nlohmann::ordered_json settings;
 		window_config win_cfg;
 		std::unordered_map<std::string, ImFont*> fonts;
 		std::vector<std::filesystem::path> themes;
 		keybind_storage keybinds;
+		scripting_engine script_eng;
+		std::optional<script_handle> script_handle;
 
-		std::optional<project> current_project;
 		displayed_videos_manager displayed_videos;
 
 		widgets::insert_segment_data_container insert_segment_data;
 
 		app_settings app_settings;
 		lang_pack<lang_pack_id> lang{ eng_lang_data };
-		SDL_Window* main_window{};
-		SDL_Renderer* renderer{};
+		std::unique_ptr<main_window> main_window{};
+
+		app_state state_ = app_state::uninitialized;
 
 		bool is_project_dirty{};
 		bool first_launch = true;

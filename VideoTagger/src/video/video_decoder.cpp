@@ -1,6 +1,11 @@
 #include "pch.hpp"
 #include "video_decoder.hpp"
 
+extern "C"
+{
+	#include <libavutil/pixdesc.h>
+}
+
 #define CALC_FFMPEG_VERSION(a,b,c) ( a<<16 | b<<8 | c )
 
 namespace vt
@@ -79,23 +84,9 @@ namespace vt
 		return *this;
 	}
 
-	video_plane video_frame::get_plane(video_plane_channel channel) const
+	video_plane video_frame::get_plane(size_t plane_index) const
 	{
-		size_t plane_index = static_cast<size_t>(channel);
-
-		//"frame_->linesize[plane_index] * frame_->height" This works but I'm not sure if it's how it should be done or whether it will work in every case.
-		//May not work with different pixel formats
 		return video_plane(frame_->data[plane_index], int64_t(frame_->linesize[plane_index]) * frame_->height, frame_->linesize[plane_index]);
-	}
-
-	video_planes video_frame::get_planes() const
-	{
-		return video_planes
-		{
-			get_plane(vt::video_plane_channel::y),
-			get_plane(vt::video_plane_channel::u),
-			get_plane(vt::video_plane_channel::v)
-		};
 	}
 
 	int video_frame::width() const
@@ -126,6 +117,16 @@ namespace vt
 	std::chrono::nanoseconds video_frame::duration() const
 	{
 		return std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::duration<double>(frame_->duration * av_q2d(frame_->time_base)));
+	}
+
+	size_t video_frame::planes_count() const
+	{
+		return av_pix_fmt_count_planes(pixel_format());
+	}
+
+	AVPixelFormat video_frame::pixel_format() const
+	{
+		return static_cast<AVPixelFormat>(frame_->format);
 	}
 
 	bool video_frame::is_keyframe() const
@@ -579,6 +580,10 @@ namespace vt
 			{
 				continue;
 			}
+			else if (read_frame_result == AVERROR(EAGAIN))
+			{
+				continue;
+			}
 			else if (read_frame_result != 0)
 			{
 				//TODO: Do something
@@ -688,6 +693,8 @@ namespace vt
 
 	void video_decoder::seek_keyframe(std::chrono::nanoseconds timestamp)
 	{
+		//TODO https://github.com/bmewj/video-app/blob/master/src/video_reader.cpp write this like here
+
 		//TODO: handle invalid timestamp
 
 		auto video_stream_index = stream_indices_[static_cast<size_t>(stream_type::video)];
@@ -733,7 +740,7 @@ namespace vt
 #if LIBAVCODEC_BUILD >= CALC_FFMPEG_VERSION(54, 1, 0) or LIBAVFORMAT_BUILD >= CALC_FFMPEG_VERSION(52, 111, 0)
 			fps = av_q2d(video_stream->avg_frame_rate);
 #else
-			metadata.fps = av_q2d(video_stream->r_frame_rate);
+			fps = av_q2d(video_stream->r_frame_rate);
 #endif
 
 #if LIBAVFORMAT_BUILD >= CALC_FFMPEG_VERSION(55, 1, 100) and LIBAVFORMAT_VERSION_MICRO >= 100
@@ -788,9 +795,15 @@ namespace vt
 	{
 		return packet_queues_.at(static_cast<size_t>(type));
 	}
+
 	const packet_queue& video_decoder::get_packet_queue(stream_type type) const
 	{
 		return packet_queues_.at(static_cast<size_t>(type));
+	}
+
+	AVPixelFormat video_decoder::pixel_format() const
+	{
+		return static_cast<AVPixelFormat>(format_context_->streams[stream_indices_[static_cast<size_t>(stream_type::video)]]->codecpar->format);
 	}
 
 	AVFormatContext* video_decoder::av_format_context()

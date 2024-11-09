@@ -36,6 +36,7 @@ namespace vt
 		static constexpr std::string_view forbidden_characters = "\t\n\r\a\b\v\f\"\'\\/<>|:?*";
 		static constexpr std::string_view forbidden_edge_characters = " "; // tag name can't contain these characters at the very start or end
 
+		std::pair<iterator, bool> insert(const tag& tag);
 		std::pair<iterator, bool> insert(const std::string& name, uint32_t color);
 		std::pair<iterator, bool> insert(const std::string& name);
 		bool erase(const std::string& name);

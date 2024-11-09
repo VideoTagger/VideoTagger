@@ -33,6 +33,7 @@ namespace vt
 		{ lang_pack_id::window, "Window" },
 		{ lang_pack_id::redock_videos, "Re-dock Videos" },
 		{ lang_pack_id::reset_layout, "Reset Layout" },
+		{ lang_pack_id::run, "Run" },
 		{ lang_pack_id::tools, "Tools" },
 		{ lang_pack_id::options, "Options" },
 		{ lang_pack_id::help, "Help" },

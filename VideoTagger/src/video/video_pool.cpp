@@ -1,5 +1,6 @@
 #include "pch.hpp"
 #include "video_pool.hpp"
+#include <core/debug.hpp>
 
 namespace vt
 {
@@ -128,8 +129,7 @@ namespace vt
 			}
 		}
 
-		video_metadata video_info = { video_path, video_stream() };
-		auto[_, inserted] = videos_.try_emplace(video_id, std::move(video_info));
+		auto[_, inserted] = videos_.try_emplace(video_id, video_metadata{ video_path });
 		return inserted;
 	}
 
@@ -302,10 +302,6 @@ namespace vt
 
 	video_pool::video_metadata::~video_metadata()
 	{
-		if (thumbnail != nullptr)
-		{
-			SDL_DestroyTexture(thumbnail);
-		}
 	}
 
 	bool video_pool::video_metadata::update_data()
@@ -323,7 +319,7 @@ namespace vt
 		height = video.height();
 		duration = video.duration();
 		fps = video.fps();
-		//update_thumbnail(renderer);
+		//update_thumbnail(gl_ctx);
 
 		if (!was_open)
 		{
@@ -333,7 +329,7 @@ namespace vt
 		return true;
 	}
 
-	bool video_pool::video_metadata::update_thumbnail(SDL_Renderer* renderer)
+	bool video_pool::video_metadata::update_thumbnail()
 	{
 		bool was_open = video.is_open();
 		if (!was_open)
@@ -344,35 +340,10 @@ namespace vt
 			}
 		}
 
-		if (thumbnail != nullptr)
-		{
-			SDL_DestroyTexture(thumbnail);
-			thumbnail = nullptr;
-		}
-
-		SDL_Texture* tmp_texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_YV12, SDL_TEXTUREACCESS_STREAMING, video.width(), video.height());
-		if (tmp_texture == nullptr)
-		{
-			return false;
-		}
 		
-		//TODO: probably should have some max dimensions not just half of video
-		thumbnail = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGB888, SDL_TEXTUREACCESS_TARGET, video.width() / 2, video.height() / 2);
-		if (thumbnail == nullptr)
-		{
-			SDL_DestroyTexture(tmp_texture);
-			return false;
-		}
 
-		video.get_thumbnail(tmp_texture);
-
-		SDL_Texture* target = SDL_GetRenderTarget(renderer);
-		SDL_SetRenderTarget(renderer, thumbnail);
-		SDL_RenderCopy(renderer, tmp_texture, NULL, NULL);
-		SDL_RenderPresent(renderer);
-		SDL_SetRenderTarget(renderer, target);
-
-		SDL_DestroyTexture(tmp_texture);
+		thumbnail = gl_texture(video.width() / 2, video.height() / 2, GL_RGB);
+		video.get_thumbnail(*thumbnail);
 
 		if (!was_open)
 		{

@@ -2,15 +2,14 @@
 #include <chrono>
 #include <vector>
 
-#include <SDL.h>
-
 #include <video/video_pool.hpp>
+#include <core/gl_texture.hpp>
 
 namespace vt
 {
 	struct displayed_video_data
 	{
-		displayed_video_data(video_id_t id, video_stream* video, std::chrono::nanoseconds offset, int video_width, int video_height, SDL_Renderer* renderer);
+		displayed_video_data(video_id_t id, video_stream* video, std::chrono::nanoseconds offset, int video_width, int video_height);
 		displayed_video_data(const displayed_video_data&) = delete;
 		displayed_video_data(displayed_video_data&&) noexcept;
 		~displayed_video_data();
@@ -22,7 +21,7 @@ namespace vt
 		video_stream* video{};
 		std::chrono::nanoseconds offset{};
 
-		SDL_Texture* display_texture{};
+		gl_texture display_texture;
 
 		bool is_timestamp_in_range(std::chrono::nanoseconds timestamp) const;
 	};
@@ -41,7 +40,7 @@ namespace vt
 		void seek(std::chrono::nanoseconds timestamp);
 
 		//if update is true and a video with id is already present the video data will be updated
-		std::pair<iterator, bool> insert(video_id_t id, video_stream* video, std::chrono::nanoseconds offset, int video_width, int video_height, SDL_Renderer* renderer, bool update = true);
+		std::pair<iterator, bool> insert(video_id_t id, video_stream* video, std::chrono::nanoseconds offset, int video_width, int video_height, bool update = true);
 		bool erase(video_id_t video_id);
 		iterator erase(const_iterator it);
 		void clear();

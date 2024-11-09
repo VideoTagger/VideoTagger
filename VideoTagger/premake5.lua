@@ -1,3 +1,5 @@
+include "setup-python"
+
 project "VideoTagger"
 	language "C++"
 	targetdir (ProjectTargetDir)
@@ -17,10 +19,12 @@ project "VideoTagger"
 		"vendor/ImGui/misc/cpp/*.cpp",
 		"vendor/ImGui/backends/imgui_impl_sdl2.h",
 		"vendor/ImGui/backends/imgui_impl_sdl2.cpp",
-		"vendor/ImGui/backends/imgui_impl_sdlrenderer2.h",
-		"vendor/ImGui/backends/imgui_impl_sdlrenderer2.cpp",
+		"vendor/ImGui/backends/imgui_impl_opengl3.h",
+		"vendor/ImGui/backends/imgui_impl_opengl3.cpp",
 		"vendor/ImGuizmo/ImSequencer.h",
-		"vendor/ImGuizmo/ImSequencer.cpp"
+		"vendor/ImGuizmo/ImSequencer.cpp",
+		"assets/scripts/**.py",
+		"assets/scripts/**.pyi",
 	}
 
 	includedirs
@@ -32,7 +36,14 @@ project "VideoTagger"
 		"vendor/nativefiledialog-extended/src/include",
 		"vendor/fmt/include",
 		"vendor/nlohmann/single_include",
-		"vendor/utf8"
+		"vendor/utf8",
+		"vendor/pybind11/include",
+		PythonIncludePath
+	}
+
+	libdirs
+	{
+		PythonLibPath
 	}
 
 	pchheader "pch.hpp"
@@ -45,7 +56,10 @@ project "VideoTagger"
 		"SDL2main",
 		"avcodec",
 		"avformat",
-		"avutil"
+		"avutil",
+		"swscale",
+		"opengl32",
+		PythonLibName
 	}
 
 	defines
@@ -63,6 +77,16 @@ project "VideoTagger"
 		"{COPY} assets %{cfg.targetdir}/assets"
 	}
 
+	filter 'files:**.py or **.pyi'
+   		buildmessage 'Copying Python file: %{file.relpath}'
+
+		buildcommands
+		{
+			"{COPYFILE} %{file.relpath} %{cfg.targetdir}/assets/scripts/%{file.name}",
+		}
+		buildoutputs { "%{cfg.targetdir}/assets/scripts/%{file.name}" }
+
+	filter {}
 	filter "files:src/embeds/**.cpp"
 		flags { "NoPCH" }
 	filter "files:vendor/ImGuizmo/**.cpp"
@@ -76,6 +100,7 @@ project "VideoTagger"
 			"vendor/SDL2/include",
 			"vendor/ffmpeg/include/libavcodec",
 			"vendor/ffmpeg/include/libavformat",
+			"vendor/ffmpeg/include/libswscale",
 			"vendor/ffmpeg/include"
 		}
 
@@ -99,28 +124,28 @@ project "VideoTagger"
 	filter "system:linux"
 		buildoptions
 		{
-			"`pkg-config --cflags libavcodec libavformat sdl2 gtk+-3.0 glib-2.0`"
+			"`pkg-config --cflags libavcodec libavformat libswscale sdl2 gtk+-3.0 glib-2.0`"
 		}
 
 		linkoptions
 		{
-			"`pkg-config --libs libavcodec libavformat sdl2 gtk+-3.0 glib-2.0`"
+			"`pkg-config --libs libavcodec libavformat libswscale sdl2 gtk+-3.0 glib-2.0`"
 		}
 	filter "system:macosx"
 		buildoptions
 		{
-			"`pkg-config --cflags libavcodec libavformat sdl2`"
+			"`pkg-config --cflags libavcodec libavformat libswscale sdl2`"
 		}
 
 		linkoptions
 		{
-			"`pkg-config --libs libavcodec libavformat sdl2`"
+			"`pkg-config --libs libavcodec libavformat libswscale sdl2`"
 		}
 
-        links
+        buildoptions
 		{
-            "AppKit.framework",
-            "UniformTypeIdentifiers.framework"
+            "-framework AppKit",
+            "-framework UniformTypeIdentifiers"
         }
 	
 	filter "configurations:Debug"

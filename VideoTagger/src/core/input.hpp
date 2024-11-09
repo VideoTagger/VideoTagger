@@ -71,6 +71,6 @@ namespace vt
 	struct input
 	{
 		static keybind last_keybind;
-		static void process_event(SDL_Event& event, const keybind_storage& app_keybinds, keybind_storage* project_keybinds);
+		static void process_event(const SDL_Event& event, const keybind_storage& app_keybinds, keybind_storage* project_keybinds);
 	};
 }

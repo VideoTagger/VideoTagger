@@ -5,8 +5,11 @@
 #include <deque>
 #include <optional>
 #include <SDL.h>
+#include <SDL_opengl.h>
+#include <core/gl_texture.hpp>
 
 #include "video_decoder.hpp"
+#include "frame_converter.hpp"
 
 namespace vt
 {
@@ -30,7 +33,7 @@ namespace vt
 		void seek(std::chrono::nanoseconds target_timestamp);
 
 		//texture must be in yuv format, have streaming access and with and height the same as the video
-		void get_frame(SDL_Texture* texture);
+		void get_frame(gl_texture& texture);
 
 		[[nodiscard]] bool is_open() const;
 
@@ -47,13 +50,16 @@ namespace vt
 		std::chrono::nanoseconds frame_time() const;
 
 		//texture must be in yuv format, have streaming access and with and height the same as the video
-		void get_thumbnail(SDL_Texture* texture, std::optional<std::chrono::nanoseconds> timestamp = std::nullopt);
+		void get_thumbnail(gl_texture& texture, std::optional<std::chrono::nanoseconds> timestamp = std::nullopt);
 
 		//TODO: should be somewhere in utils
-		static void clear_yuv_texture(SDL_Texture* texture, uint8_t r, uint8_t g, uint8_t b);
+		static void clear_yuv_texture(GLuint texture, uint8_t r, uint8_t g, uint8_t b);
 
 	private:
 		video_decoder decoder_;
+		std::optional<frame_converter> frame_converter_;
+
+		std::vector<uint8_t> conversion_buffer;
 
 		std::optional<video_frame> last_frame;
 		//maybe this is not necessary
