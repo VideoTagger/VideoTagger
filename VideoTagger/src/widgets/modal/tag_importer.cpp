@@ -7,9 +7,15 @@
 
 namespace vt::widgets::modal
 {
+	bool tag_importer::is_open() const
+	{
+		return ImGui::IsPopupOpen(widgets::modal::tag_importer::popup_id.data());
+	}
+
 	void tag_importer::open()
 	{
-		ImGui::OpenPopup("Import Tags");
+		load_tags();
+		ImGui::OpenPopup(popup_id.data());
 	}
 
 	bool tag_importer::load_tags()
@@ -33,6 +39,11 @@ namespace vt::widgets::modal
 
 		for (auto& tag : loaded_tags)
 		{
+			if (ctx_.current_project->tags.contains(tag.name))
+			{
+				continue;
+			}
+
 			imported_tags.push_back(imported_tag_data{ tag, true });
 		}
 
@@ -64,163 +75,142 @@ namespace vt::widgets::modal
 			}
 			ImGui::Separator();
 
-			bool update_all = false;
-			bool update_state = false;
-
-			ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2{});
-
-			ImGui::BeginDisabled(imported_tags.empty());
-			if (icon_button(vt::icons::toggle_more))
+			if (imported_tags.empty())
 			{
-				update_state = true;
-				update_all = true;
+				auto text = "There are no new tags to import";
+
+				ImGui::PushFont(ctx_.fonts["title"]);
+				ImGui::SetCursorPos(ImGui::GetContentRegionAvail() / 2 - ImGui::CalcTextSize(text) / 2);
+				ImGui::Text(text);
+				ImGui::PopFont();
+
+				ImVec2 dummy_size = ImGui::GetContentRegionAvail();
+				dummy_size.y -= ImGui::GetTextLineHeightWithSpacing() + 2 * style.FramePadding.y + style.WindowPadding.y;
+				ImGui::Dummy(dummy_size);
 			}
-			tooltip("Expand All");
-			ImGui::SameLine();
-			ImGui::PopStyleVar();
-			if (icon_button(icons::toggle_less))
+			else
 			{
-				update_state = false;
-				update_all = true;
-			}
-			tooltip("Collapse All");
-			ImGui::EndDisabled();
+				bool update_all = false;
+				bool update_state = false;
 
-			ImGui::SameLine();
+				ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2{});
 
-			std::string path = tags_path.u8string();
-
-			int input_flags = ImGuiInputTextFlags_AutoSelectAll;
-
-			if (ImGui::InputTextWithHint("##ImportPath", "Tag File Location...", &path, input_flags))
-			{
-				tags_path = std::filesystem::absolute(path);
-				tags_path.make_preferred();
-			}
-
-			ImGui::SameLine();
-			auto path_sel = fmt::format("{}##PathSelector", icons::dots_hor);
-			if (ImGui::Button(path_sel.c_str()))
-			{
-				utils::dialog_filters filters{ { "VideoTagger Tags", "vttags" } };
-				auto result = utils::filesystem::get_file({}, filters);
-				if (result)
+				ImGui::BeginDisabled(imported_tags.empty());
+				if (icon_button(vt::icons::toggle_more))
 				{
-					tags_path = result.path;
-					tags_path.make_preferred();
+					update_state = true;
+					update_all = true;
 				}
-			}
-
-			ImGui::SameLine();
-			if (ImGui::Button("Load"))
-			{
-				if (!load_tags())
+				tooltip("Expand All");
+				ImGui::SameLine();
+				ImGui::PopStyleVar();
+				if (icon_button(icons::toggle_less))
 				{
-					//TODO: popup or some text on the window;
-					debug::log("File not found");
+					update_state = false;
+					update_all = true;
 				}
-			}
+				tooltip("Collapse All");
+				ImGui::EndDisabled();
 
-			
+				static constexpr float tag_column_width = 100;
 
-			static constexpr float tag_column_width = 100;
-
-			ImGui::Separator();
+				ImGui::Separator();
 
 
-			//ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2{});
+				//ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2{});
 
-			ImVec2 tag_list_size = ImGui::GetContentRegionAvail();
-			tag_list_size.y -= ImGui::GetTextLineHeightWithSpacing() + 2 * style.FramePadding.y + style.WindowPadding.y;
+				ImVec2 tag_list_size = ImGui::GetContentRegionAvail();
+				tag_list_size.y -= ImGui::GetTextLineHeightWithSpacing() + 2 * style.FramePadding.y + style.WindowPadding.y;
 
-			bool is_scrollable_list_open = ImGui::BeginChild("##ScrollableTagList", tag_list_size);
+				bool is_scrollable_list_open = ImGui::BeginChild("##ScrollableTagList", tag_list_size);
 
-			//ImGui::PopStyleVar();
-			if (is_scrollable_list_open)
-			{
-				static auto color_ref = imported_tags.end();
-				int id{};
-
-				auto node_flags = ImGuiTreeNodeFlags_Framed | ImGuiTreeNodeFlags_SpanFullWidth | ImGuiTreeNodeFlags_AllowOverlap;
-
-				if (ImGui::BeginTable("##TagListTable", 2, ImGuiTableFlags_SizingStretchProp, ImGui::GetContentRegionAvail()))
+				//ImGui::PopStyleVar();
+				if (is_scrollable_list_open)
 				{
-					for (auto it = imported_tags.begin(); it != imported_tags.end(); ++it)
+					static auto color_ref = imported_tags.end();
+					int id{};
+
+					auto node_flags = ImGuiTreeNodeFlags_Framed | ImGuiTreeNodeFlags_SpanFullWidth | ImGuiTreeNodeFlags_AllowOverlap;
+
+					if (ImGui::BeginTable("##TagListTable", 2, ImGuiTableFlags_SizingStretchProp, ImGui::GetContentRegionAvail()))
 					{
-						auto& is_selected = it->selected;
-						auto& tag = it->tag;
-						
-						ImGui::TableNextRow();
-						ImGui::TableNextColumn();
-
-						ImGui::PushID(id++);
-
-						//TODO: better checkbox position
-
-						std::string checkbox_id = "##CheckBox" + it->tag.name;
-						checkbox(checkbox_id.c_str(), &it->selected);
-
-						ImGui::TableNextColumn();
-						auto color = ImGui::ColorConvertU32ToFloat4(tag.color);
-						//ImGui::SetCursorPosX(ImGui::GetCursorPosX() + style.ItemSpacing.x * 0.5f);
-						//ImGui::AlignTextToFramePadding();
-						ImGui::TextColored(color, icons::label);
-						ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2{});
-						ImGui::SameLine();
-
-
-						bool open_color_picker = false;
-
-						if (update_all)
+						for (auto it = imported_tags.begin(); it != imported_tags.end(); ++it)
 						{
-							ImGui::SetNextItemOpen(update_state);
-						}
+							auto& is_selected = it->selected;
+							auto& tag = it->tag;
 
-						ImGui::PushStyleColor(ImGuiCol_Text, ImVec4{});
-						bool node_open = ImGui::TreeNodeEx("##TagManagerNode", node_flags);
-						ImGui::PopStyleColor();
-						ImGui::PopStyleVar();
+							ImGui::TableNextRow();
+							ImGui::TableNextColumn();
 
-						auto icon = node_open ? icons::expand_less : icons::expand_more;
+							ImGui::PushID(id++);
 
-						ImGui::SameLine(ImGui::GetTreeNodeToLabelSpacing());
-						ImGui::TextUnformatted(tag.name.c_str());
-						auto cpos = ImGui::GetCursorPos();
-						ImGui::SameLine();
-						ImGui::SetCursorPosX(ImGui::GetContentRegionMax().x - style.ItemSpacing.x - ImGui::CalcTextSize(icon).x);
-						ImGui::TextUnformatted(icon);
-						ImGui::SetCursorPos(cpos);
+							//TODO: better checkbox position
 
-						if (node_open)
-						{
-							ImGui::Unindent();
-							ImGui::PushStyleColor(ImGuiCol_TableRowBg, style.Colors[ImGuiCol_MenuBarBg]);
-							bool body_open = ImGui::BeginTable("##Background", 1, ImGuiTableFlags_RowBg);
-							ImGui::PopStyleColor();
-							ImGui::Indent();
-							if (body_open)
+							std::string checkbox_id = "##CheckBox" + it->tag.name;
+							checkbox(checkbox_id.c_str(), &it->selected);
+
+							ImGui::TableNextColumn();
+							auto color = ImGui::ColorConvertU32ToFloat4(tag.color);
+							//ImGui::SetCursorPosX(ImGui::GetCursorPosX() + style.ItemSpacing.x * 0.5f);
+							//ImGui::AlignTextToFramePadding();
+							ImGui::TextColored(color, icons::label);
+							ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2{});
+							ImGui::SameLine();
+
+
+							bool open_color_picker = false;
+
+							if (update_all)
 							{
-								ImGui::TableNextColumn();
-								ImGui::Columns(2, "##TagColumnSeparator");
-								ImGui::Text("Name");
-								ImGui::NextColumn();
-								ImGui::Text(tag.name.c_str());
-								ImGui::NextColumn();
-								ImGui::Text("Color");
-								ImGui::NextColumn();
-								ImGui::ColorButton("##ColorButton", color, ImGuiColorEditFlags_NoInputs);
-								ImGui::Columns();
-								ImGui::EndTable();
+								ImGui::SetNextItemOpen(update_state);
 							}
-							ImGui::TreePop();
-						}
-						ImGui::PopID();
-					}
 
-					ImGui::EndTable();
+							ImGui::PushStyleColor(ImGuiCol_Text, ImVec4{});
+							bool node_open = ImGui::TreeNodeEx("##TagManagerNode", node_flags);
+							ImGui::PopStyleColor();
+							ImGui::PopStyleVar();
+
+							auto icon = node_open ? icons::expand_less : icons::expand_more;
+
+							ImGui::SameLine(ImGui::GetTreeNodeToLabelSpacing());
+							ImGui::TextUnformatted(tag.name.c_str());
+							auto cpos = ImGui::GetCursorPos();
+							ImGui::SameLine();
+							ImGui::SetCursorPosX(ImGui::GetContentRegionMax().x - style.ItemSpacing.x - ImGui::CalcTextSize(icon).x);
+							ImGui::TextUnformatted(icon);
+							ImGui::SetCursorPos(cpos);
+
+							if (node_open)
+							{
+								ImGui::Unindent();
+								ImGui::PushStyleColor(ImGuiCol_TableRowBg, style.Colors[ImGuiCol_MenuBarBg]);
+								bool body_open = ImGui::BeginTable("##Background", 1, ImGuiTableFlags_RowBg);
+								ImGui::PopStyleColor();
+								ImGui::Indent();
+								if (body_open)
+								{
+									ImGui::TableNextColumn();
+									ImGui::Columns(2, "##TagColumnSeparator");
+									ImGui::Text("Name");
+									ImGui::NextColumn();
+									ImGui::Text(tag.name.c_str());
+									ImGui::NextColumn();
+									ImGui::Text("Color");
+									ImGui::NextColumn();
+									ImGui::ColorButton("##ColorButton", color, ImGuiColorEditFlags_NoInputs);
+									ImGui::Columns();
+									ImGui::EndTable();
+								}
+								ImGui::TreePop();
+							}
+							ImGui::PopID();
+						}
+
+						ImGui::EndTable();
+					}
 				}
+				ImGui::EndChild();
 			}
-			ImGui::EndChild();
 
 			ImGui::Dummy(style.ItemSpacing);
 			ImGui::BeginDisabled(imported_tags.empty());
@@ -235,14 +225,8 @@ namespace vt::widgets::modal
 
 					auto& project_tags = ctx_.current_project->tags;
 
-					if (project_tags.contains(tag_data.tag.name))
-					{
-						project_tags.at(tag_data.tag.name) = tag_data.tag;
-					}
-					else
-					{
-						project_tags.insert(tag_data.tag.name, tag_data.tag.color);
-					}
+					ctx_.is_project_dirty = true;
+					project_tags.insert(tag_data.tag.name, tag_data.tag.color);
 				}
 
 				result = true;
@@ -256,6 +240,7 @@ namespace vt::widgets::modal
 				is_open = false;
 				ImGui::CloseCurrentPopup();
 			}
+
 			ImGui::EndPopup();
 	
 			if (!is_open)
