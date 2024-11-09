@@ -177,6 +177,16 @@ namespace vt::widgets
 
 			ImGui::NextColumn();
 			{
+				if (icon_toggle_button(icons::play_next, ctx_.app_settings.next_video_on_end, { button_size, button_size }))
+				{
+					ctx_.app_settings.next_video_on_end = !ctx_.app_settings.next_video_on_end;
+				}
+				if (has_child_videos)
+				{
+					tooltip(ctx_.app_settings.next_video_on_end ? "Autoplay: On" : "Autoplay: Off");
+				}
+
+				ImGui::SameLine();
 				bool looping = loop_mode_ != loop_mode::off;
 
 				auto loop_icon = loop_mode_ != loop_mode::one ? icons::repeat : icons::repeat_one;
@@ -190,6 +200,15 @@ namespace vt::widgets
 					}
 
 					std::invoke(callbacks.on_set_looping, loop_mode_);
+				}
+				if (has_child_videos)
+				{
+					switch (loop_mode_)
+					{
+					case loop_mode::off: tooltip("Loop: Off"); break;
+					case loop_mode::all: tooltip("Loop: All"); break;
+					case loop_mode::one: tooltip("Loop: One"); break;
+					}
 				}
 				ImGui::SameLine();
 
@@ -247,16 +266,6 @@ namespace vt::widgets
 					}
 					ImGui::PopStyleColor();
 					widgets::end_button_dropdown();
-				}
-
-				ImGui::SameLine();
-				if (icon_toggle_button(icons::playlist_play, ctx_.app_settings.next_video_on_end, { button_size, button_size }))
-				{
-					ctx_.app_settings.next_video_on_end = !ctx_.app_settings.next_video_on_end;
-				}
-				if (has_child_videos)
-				{
-					ImGui::SetItemTooltip("Autoplay is %s", ctx_.app_settings.next_video_on_end ? "on" : "off");
 				}
 			}
 			if (!has_child_videos) ImGui::EndDisabled();

@@ -77,11 +77,8 @@ namespace vt::widgets::modal
 
 			if (imported_tags.empty())
 			{
-				auto text = "There are no new tags to import";
-
 				ImGui::PushFont(ctx_.fonts["title"]);
-				ImGui::SetCursorPos(ImGui::GetContentRegionAvail() / 2 - ImGui::CalcTextSize(text) / 2);
-				ImGui::Text(text);
+				centered_text("There are no new tags to import", ImGui::GetContentRegionMax());
 				ImGui::PopFont();
 
 				ImVec2 dummy_size = ImGui::GetContentRegionAvail();
