@@ -370,40 +370,40 @@ namespace vt::git
 		return working_directory_;
 	}
 
-	promise<repository_path_result> git_wrapper::repository_path()
+	command_promise<repository_path_result> git_wrapper::repository_path()
 	{
 		std::vector<std::string> command_arguments{
 			"--show-toplevel"
 		};
 
-		return promise<repository_path_result>(execute_command("rev-parse", command_arguments));
+		return command_promise<repository_path_result>(execute_command("rev-parse", command_arguments));
 	}
 
-	promise<list_modified_files_result> git_wrapper::list_modified_files()
+	command_promise<list_modified_files_result> git_wrapper::list_modified_files()
 	{
 		std::vector<std::string> command_arguments{
 			"--porcelain",
 			"-uall"
 		};
 
-		return promise<list_modified_files_result>(execute_command("status", command_arguments));
+		return command_promise<list_modified_files_result>(execute_command("status", command_arguments));
 	}
 
-	promise<is_repository_result> git_wrapper::is_repository()
+	command_promise<is_repository_result> git_wrapper::is_repository()
 	{
 		std::vector<std::string> command_arguments{
 			"--is-inside-work-tree",
 		};
 
-		return promise<is_repository_result>(execute_command("rev-parse", command_arguments));
+		return command_promise<is_repository_result>(execute_command("rev-parse", command_arguments));
 	}
 
-	promise<basic_result> git_wrapper::init_repository()
+	command_promise<basic_result> git_wrapper::init_repository()
 	{
-		return promise<basic_result>(execute_command("init", {}));
+		return command_promise<basic_result>(execute_command("init", {}));
 	}
 
-	promise<basic_result> git_wrapper::stage_files(const std::vector<std::filesystem::path>& files)
+	command_promise<basic_result> git_wrapper::stage_files(const std::vector<std::filesystem::path>& files)
 	{
 		std::vector<std::string> command_arguments;
 		command_arguments.reserve(files.size());
@@ -412,10 +412,10 @@ namespace vt::git
 			command_arguments.push_back(path.u8string());
 		}
 
-		return promise<basic_result>(execute_command("add", command_arguments));
+		return command_promise<basic_result>(execute_command("add", command_arguments));
 	}
 
-	promise<basic_result> git_wrapper::unstage_files(const std::vector<std::filesystem::path>& files)
+	command_promise<basic_result> git_wrapper::unstage_files(const std::vector<std::filesystem::path>& files)
 	{
 		std::vector<std::string> command_arguments;
 		command_arguments.reserve(files.size() + 1);
@@ -425,17 +425,17 @@ namespace vt::git
 			command_arguments.push_back(path.u8string());
 		}
 
-		return promise<basic_result>(execute_command("restore", command_arguments));
+		return command_promise<basic_result>(execute_command("restore", command_arguments));
 	}
 
-	promise<basic_result> git_wrapper::commit(const commit_arguments& arguments)
+	command_promise<basic_result> git_wrapper::commit(const commit_arguments& arguments)
 	{
 		std::vector<std::string> command_arguments{
 			"-m", arguments.message.c_str(),
 			"-m", arguments.descryption.c_str()
 		};
 
-		return promise<basic_result>(execute_command("commit", command_arguments));
+		return command_promise<basic_result>(execute_command("commit", command_arguments));
 	}
 
 	execute_command_result git_wrapper::execute_command(const std::string& command, const std::vector<std::string>& arguments) const

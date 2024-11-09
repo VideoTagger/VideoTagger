@@ -91,13 +91,13 @@ namespace vt::git
 	};
 
 	template<typename T>
-	class promise
+	class command_promise
 	{
 	public:
 		using value_type = T;
 
-		explicit promise(execute_command_result&& command_result);
-		~promise();
+		explicit command_promise(execute_command_result&& command_result);
+		~command_promise();
 
 		T get();
 
@@ -193,14 +193,14 @@ namespace vt::git
 		const std::filesystem::path& git_path() const;
 		const std::filesystem::path& working_directory() const;
 
-		promise<repository_path_result> repository_path();
-		promise<list_modified_files_result> list_modified_files();
-		promise<is_repository_result> is_repository();
+		command_promise<repository_path_result> repository_path();
+		command_promise<list_modified_files_result> list_modified_files();
+		command_promise<is_repository_result> is_repository();
 		
-		promise<basic_result> init_repository();
-		promise<basic_result> stage_files(const std::vector<std::filesystem::path>& files);
-		promise<basic_result> unstage_files(const std::vector<std::filesystem::path>& files);
-		promise<basic_result> commit(const commit_arguments& arguments);
+		command_promise<basic_result> init_repository();
+		command_promise<basic_result> stage_files(const std::vector<std::filesystem::path>& files);
+		command_promise<basic_result> unstage_files(const std::vector<std::filesystem::path>& files);
+		command_promise<basic_result> commit(const commit_arguments& arguments);
 
 		execute_command_result execute_command(const std::string& command, const std::vector<std::string>& arguments) const;
 	private:
@@ -226,32 +226,32 @@ namespace vt::git
 	}
 
 	template<typename T>
-	inline promise<T>::promise(execute_command_result&& command_result)
+	inline command_promise<T>::command_promise(execute_command_result&& command_result)
 		: command_result_{ std::move(command_result) }
 	{
 	}
 
 	template<typename T>
-	inline promise<T>::~promise()
+	inline command_promise<T>::~command_promise()
 	{
 		command_result_.wait();
 	}
 
 	template<typename T>
-	inline T promise<T>::get()
+	inline T command_promise<T>::get()
 	{
 		command_result_.wait();
 		return T(command_result_);
 	}
 
 	template<typename T>
-	inline command_status promise<T>::status()
+	inline command_status command_promise<T>::status()
 	{
 		return command_result_.status();
 	}
 
 	template<typename T>
-	inline promise<T>::operator T()
+	inline command_promise<T>::operator T()
 	{
 		return get();
 	}
