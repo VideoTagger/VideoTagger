@@ -923,7 +923,20 @@ namespace vt
 						std::string menu_name = fmt::format("{} {}", icons::import_export, ctx_.lang.get(lang_pack_id::import_export));
 						if (ImGui::BeginMenu(menu_name.c_str()))
 						{
-							ImGui::MenuItem("Import Tags", nullptr, &ctx_.win_cfg.show_tag_importer_window, true);
+							if (ImGui::MenuItem("Import Tags", nullptr, &ctx_.win_cfg.show_tag_importer_window))
+							{
+								utils::dialog_filters filters{ { "VideoTagger Tags", "vttags" } };
+								auto result = utils::filesystem::get_file({}, filters);
+								if (result)
+								{
+									ctx_.tag_importer.tags_path = result.path;
+								}
+								else
+								{
+									ctx_.win_cfg.show_tag_importer_window = false;
+								}
+
+							}
 
 							ImGui::Separator();
 							if (ImGui::MenuItem("Export Tags"))
@@ -1158,7 +1171,7 @@ namespace vt
 		{
 			ImGui::OpenPopup("Options");
 		}
-		if (ctx_.win_cfg.show_tag_importer_window)
+		if (ctx_.win_cfg.show_tag_importer_window and !ctx_.tag_importer.is_open())
 		{
 			ctx_.tag_importer.open();
 		}

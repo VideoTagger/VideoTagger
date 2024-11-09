@@ -4,10 +4,11 @@
 
 namespace vt::icons
 {
-	//https://fonts.google.com/icons?icon.set=Material+Icons
+	//https://fonts.google.com/icons?icon.set=Material+Symbols
 
 	inline constexpr auto dots_hor = "\xee\x97\x93";
 	inline constexpr auto play = "\xee\x80\xb7";
+	inline constexpr auto play_next = "\xee\x85\x94";
 	inline constexpr auto pause = "\xee\x80\xb4";
 	inline constexpr auto repeat = "\xee\x81\x80";
 	inline constexpr auto repeat_one = "\xee\x81\x81";
@@ -44,7 +45,7 @@ namespace vt::icons
 
 	inline std::vector<std::string> all
 	({
-		dots_hor, play, pause, repeat, repeat_one, shuffle, skip_next, skip_prev, fast_back, fast_fwd,
+		dots_hor, play, play_next, pause, repeat, repeat_one, shuffle, skip_next, skip_prev, fast_back, fast_fwd,
 		save, save_as, import_, import_export, exit, close, back, visibility_on, visibility_off, add, delete_, folder, folder_code, label, expand_less, expand_more,
 		toggle_less, toggle_more, link, edit, help, video_group, video, search, terminal
 	});
