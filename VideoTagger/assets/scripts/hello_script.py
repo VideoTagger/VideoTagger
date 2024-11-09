@@ -1,5 +1,5 @@
 import vt
-# import time
+import time
 
 
 class hello_script(vt.Script):
@@ -7,13 +7,18 @@ class hello_script(vt.Script):
         return True
 
     def on_run(self: vt.Script) -> None:
-        print(type(vt.timeline.segment_count))
+        project = vt.current_project()
+        if project is None:
+            return
 
+        print(type(vt.timeline.segment_count))
         print(vt.timeline)
 
-        project = vt.current_project()
-        if project is not None:
-            print(project.name)
+        self.progress = 0.5
+        self.progress_info = "Testing progress"
+        print(project.name)
 
-        # time.sleep(5)
+        time.sleep(5)
+        self.progress = 1.0
+        self.progress_info = ""
         help(vt)

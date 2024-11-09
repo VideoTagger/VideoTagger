@@ -2,6 +2,8 @@
 #include <pybind11/stl.h>
 #include <pybind11/embed.h>
 
+#include "script.hpp"
+
 namespace vt
 {
 	namespace py = pybind11;
@@ -21,6 +23,6 @@ namespace vt
 		void reset_script_io();
 
 	public:
-		bool run(const std::string& script_name, const std::string& entrypoint);
+		void run(const std::string& script_name, const std::string& entrypoint);
 	};
 }

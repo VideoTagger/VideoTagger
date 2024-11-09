@@ -28,6 +28,7 @@
 #include <widgets/theme_customizer.hpp>
 #include <widgets/modal/options.hpp>
 #include <widgets/modal/tag_importer.hpp>
+#include <widgets/modal/script_progress.hpp>
 #include "displayed_videos_manager.hpp"
 #include <utils/json.hpp>
 #include <scripts/scripting_engine.hpp>
@@ -74,6 +75,7 @@ namespace vt
 		bool show_theme_customizer_window = false;
 		bool show_about_window = false;
 		bool show_tag_importer_window = false;
+		bool show_script_progress = false;
 	};
 
 	struct app_context
@@ -87,6 +89,7 @@ namespace vt
 		widgets::video_group_queue group_queue;
 		widgets::theme_customizer theme_customizer;
 		widgets::modal::options options;
+		widgets::modal::script_progress script_progress;
 		widgets::color_picker color_picker;
 		widgets::modal::tag_importer tag_importer;
 
@@ -100,6 +103,7 @@ namespace vt
 		std::vector<std::filesystem::path> themes;
 		keybind_storage keybinds;
 		scripting_engine script_eng;
+		std::optional<script_handle> script_handle;
 
 		displayed_videos_manager displayed_videos;
 
