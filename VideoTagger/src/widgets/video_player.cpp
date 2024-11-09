@@ -6,6 +6,7 @@
 #include "controls.hpp"
 #include "icons.hpp"
 #include "time_input.hpp"
+#include <core/app_context.hpp>
 
 namespace vt::widgets
 {
@@ -246,6 +247,16 @@ namespace vt::widgets
 					}
 					ImGui::PopStyleColor();
 					widgets::end_button_dropdown();
+				}
+
+				ImGui::SameLine();
+				if (icon_toggle_button(icons::playlist_play, ctx_.app_settings.next_video_on_end, { button_size, button_size }))
+				{
+					ctx_.app_settings.next_video_on_end = !ctx_.app_settings.next_video_on_end;
+				}
+				if (has_child_videos)
+				{
+					ImGui::SetItemTooltip("Autoplay is %s", ctx_.app_settings.next_video_on_end ? "on" : "off");
 				}
 			}
 			if (!has_child_videos) ImGui::EndDisabled();
