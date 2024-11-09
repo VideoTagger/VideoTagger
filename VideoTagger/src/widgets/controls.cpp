@@ -91,14 +91,28 @@ namespace vt::widgets
 		ImVec2 size(20, button_size.y);
 		bool pressed = ImGui::Button("##", size);
 
+		bool is_popup_open = ImGui::IsPopupOpen(label);
 		// Arrow
 		ImVec2 center(window->Pos.x + cursor_pos.x + 10, window->Pos.y + cursor_pos.y + button_size.y / 2);
-		float r = 8.f;
-		center.y -= r * 0.25f;
-		ImVec2 a = center + ImVec2(0, 1) * r;
-		ImVec2 b = center + ImVec2(-0.866f, -0.5f) * r;
-		ImVec2 c = center + ImVec2(0.866f, -0.5f) * r;
+		float r = 5.f;
+		//center.y -= r * 0.25f;
 
+		ImVec2 a;
+		ImVec2 b;
+		ImVec2 c;
+
+		if (!is_popup_open)
+		{
+			a = center + ImVec2(0, 1) * r;
+			b = center + ImVec2(-0.866f, -0.5f) * r;
+			c = center + ImVec2(0.866f, -0.5f) * r;
+		}
+		else
+		{
+			b = center + ImVec2(0, -1) * r;
+			a = center + ImVec2(-0.866f, 0.5f) * r;
+			c = center + ImVec2(0.866f, 0.5f) * r;
+		}
 		window->DrawList->AddTriangleFilled(a, b, c, ImGui::GetColorU32(ImGuiCol_Text));
 
 		// Popup
