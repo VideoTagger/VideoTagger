@@ -31,7 +31,7 @@ namespace vt
 		std::string display_name;
 
 		video_group() = default;
-		video_group(std::string name, std::vector<video_info> video_infos);
+		video_group(const std::string& name, const std::vector<video_info>& video_infos);
 
 		bool insert(video_info video_info);
 		bool erase(video_id_t video_id);

@@ -16,7 +16,6 @@ namespace vt
 		.def("on_run", &script_base::on_run);
 
 		py::class_<widgets::video_timeline>(this_module, "Timeline")
-		.def(py::init<>())
 		.def_property_readonly("segment_count", [](const widgets::video_timeline&)
 		{
 			return ctx_.video_timeline.displayed_tags().size();
@@ -24,6 +23,29 @@ namespace vt
 		.def("__repr__", [](const widgets::video_timeline&)
 		{
 			return "<vt.Timeline>";
+		});
+
+		py::class_<tag_storage>(this_module, "TagStorage")
+		.def("add_tag", [](tag_storage& tags, const tag& t) -> bool
+		{
+			if (&tags == &ctx_.current_project->tags)
+			{
+				ctx_.is_project_dirty = true;
+			}
+			auto[_, result] = tags.insert(t);
+			return result;
+		})
+		.def("clear", [](tag_storage& tags)
+		{
+			if (&tags == &ctx_.current_project->tags)
+			{
+				ctx_.is_project_dirty = true;
+			}
+			tags.clear();
+		})
+		.def_property_readonly("list", [](const tag_storage& tags) -> std::vector<tag>
+		{
+			return { tags.begin(), tags.end() };
 		});
 
 		this_module.attr("timeline") = &ctx_.video_timeline;
@@ -53,19 +75,69 @@ namespace vt
 		});
 
 		py::class_<tag>(this_module, "Tag")
+		.def(py::init<const std::string&, uint32_t>())
 		.def_readwrite("name", &tag::name)
 		.def_readwrite("color", &tag::color);
 
-		struct vt_project {};
-		py::class_<vt_project>(this_module, "Project")
-		.def_property_readonly("name", [](py::object)
+		struct vt_video
 		{
-			return ctx_.current_project->name;
+			std::filesystem::path path;
+			video_id_t id{};
+			int width{};
+			int height{};
+		};
+
+		struct vt_project
+		{
+			project& ref;
+		};
+
+		struct vt_video_group
+		{
+			std::string name;
+		};
+
+		py::class_<vt_project>(this_module, "Project")
+		.def_property_readonly("name", [](const vt_project& p) -> std::string
+		{
+			return p.ref.name;
+		})
+		.def_property_readonly("videos", [](const vt_project& p) -> std::vector<vt_video>
+		{
+			std::vector<vt_video> result;
+			result.reserve(p.ref.videos.size());
+			for (const auto& [k, v] : p.ref.videos)
+			{
+				result.push_back({ v.path, k, v.width, v.height });
+			}
+			return result;
+		})
+		.def_property_readonly("tags", [](const vt_project& p) -> tag_storage&
+		{
+			return p.ref.tags;
+		})
+		.def("import_video", [](vt_project& p, const std::string& path)
+		{
+			p.ref.import_video(path);
+		});
+
+		py::class_<vt_video>(this_module, "Video")
+		.def_property_readonly("id", [](const vt_video& vid) -> video_id_t
+		{
+			return vid.id;
+		})
+		.def_property_readonly("path", [](const vt_video& vid) -> std::string
+		{
+			return vid.path.string();
+		})
+		.def_property_readonly("size", [](const vt_video& vid) -> std::pair<int, int>
+		{
+			return std::make_pair(vid.width, vid.height);
 		});
 
 		this_module.def("current_project", []()
 		{
-			return ctx_.current_project.has_value() ? std::optional<vt_project>{ vt_project() } : std::nullopt;
+			return ctx_.current_project.has_value() ? std::optional<vt_project>{ vt_project{ ctx_.current_project.value() } } : std::nullopt;
 		});
 	}
 

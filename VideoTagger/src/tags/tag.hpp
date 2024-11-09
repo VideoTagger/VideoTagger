@@ -10,10 +10,7 @@ namespace vt
 		//ABGR
 		uint32_t color{};
 
-		tag(std::string name, uint32_t color)
-			: name{ name }, color{ color | 0xff000000 }
-		{
-		}
+		tag(const std::string& name, uint32_t color) : name{ name }, color{ color | 0xff000000 } {}
 	};
 
 	inline bool operator==(const tag& lhs, const tag& rhs)

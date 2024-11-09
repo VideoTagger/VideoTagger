@@ -39,6 +39,11 @@ namespace vt
 		return iterator{ tags_.erase(it.unwrapped()) };
 	}
 
+    void tag_storage::clear()
+    {
+		tags_.clear();
+    }
+
 	tag_rename_result tag_storage::rename(const std::string& current_name, const std::string& new_name)
 	{
 		auto current_it = tags_.find(current_name);

@@ -42,6 +42,8 @@ namespace vt
 		bool erase(const std::string& name);
 		iterator erase(iterator it);
 		iterator erase(const_iterator it);
+		void clear();
+
 		// returns:
 		//	if current_name doesn't exist: { end, false }
 		//	if new_name already exists: { iterator-to-new_name, false }
