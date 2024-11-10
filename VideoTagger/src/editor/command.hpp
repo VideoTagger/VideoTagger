@@ -8,16 +8,13 @@ namespace vt::editor
 		virtual ~command() = default;
 	};
 
+	namespace impl { struct command_handler_interface {}; }
+
 	template<typename command_type>
-	struct command_handler
+	struct command_handler : public impl::command_handler_interface
 	{
+		using command_t = command_type;
+
 		virtual void handle(const command_type& command) = 0;
 	};
-
-	template<typename command_type, typename... args, typename = std::enable_if_t<std::is_base_of_v<command, command_type> and std::is_constructible_v<command_type, args...> and std::is_default_constructible_v<command_handler<command_type>>>>
-	constexpr inline void handle(args&&... arguments)
-	{
-		command_handler<command_type> handler{};
-		handler.handle(command_type{ std::forward<args>(arguments)... });
-	}
 }
