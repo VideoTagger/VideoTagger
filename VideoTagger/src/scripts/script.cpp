@@ -6,8 +6,7 @@ namespace vt
 {
 	bool script::has_progress() const
 	{
-		pybind11::gil_scoped_acquire acquire;
-		PYBIND11_OVERRIDE_PURE
+		PYBIND11_OVERRIDE
 		(
 			bool,
 			script_base,
@@ -17,7 +16,6 @@ namespace vt
 
 	void script::on_run() const
 	{
-		pybind11::gil_scoped_acquire acquire;
 		PYBIND11_OVERRIDE
 		(
 			void,

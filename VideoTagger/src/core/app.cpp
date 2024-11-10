@@ -106,6 +106,7 @@ namespace vt
 		SDL_GL_SetSwapInterval(1); //VSync
 
 
+		ctx_.script_eng.init();
 		ctx_.state_ = app_state::initialized;
 		return true;
 	}
