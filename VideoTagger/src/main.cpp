@@ -1,7 +1,7 @@
 #include "pch.hpp"
 #include <core/app.hpp>
 #include <core/debug.hpp>
-
+#include <utils/filesystem.hpp>
 #include <git/git_wrapper.hpp>
 
 int main(int argc, char* argv[])

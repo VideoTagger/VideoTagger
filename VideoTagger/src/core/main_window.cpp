@@ -21,6 +21,8 @@
 
 #include <utils/filesystem.hpp>
 
+#include <git/git_wrapper.hpp>
+
 namespace vt
 {
 	main_window::main_window(const app_window_config& cfg) : app_window{ cfg }
@@ -315,6 +317,28 @@ namespace vt
 			if (ctx_.settings.contains("load-thumbnails"))
 			{
 				ctx_.app_settings.load_thumbnails = ctx_.settings.at("load-thumbnails");
+			}
+			if (ctx_.settings.contains("git-paths"))
+			{
+				ctx_.app_settings.git_paths = ctx_.settings.at("git-paths");
+			}
+			if (ctx_.settings.contains("active-git-path-index"))
+			{
+				ctx_.app_settings.active_git_path_index = ctx_.settings.at("active-git-path-index");
+			}
+			if (ctx_.settings.contains("autoplay"))
+			{
+				ctx_.app_settings.autoplay = ctx_.settings.at("autoplay");
+			}
+
+			if (ctx_.app_settings.git_paths.empty())
+			{
+				auto path = git::get_global_git_path();
+				if (!path.empty())
+				{
+					ctx_.app_settings.git_paths.push_back(path.u8string());
+				}
+
 			}
 		}
 		else
@@ -729,6 +753,88 @@ namespace vt
 			ImGui::DragFloat("Font Scale", &io.FontGlobalScale, 0.005f, 0.5f, 2.0f, "%.2f", ImGuiSliderFlags_AlwaysClamp);
 #endif
 		};
+		options("Application Settings", "Git") = [this]()
+		{
+			ImGui::Text("Current git instance");
+
+			ImGui::SameLine();
+			std::string git_path_dropdown_text = ctx_.app_settings.git_paths.empty() ?
+				"No paths available" : ctx_.app_settings.git_paths.at(ctx_.app_settings.active_git_path_index);
+
+			ImGui::InputText("##GitPathDropdownText", &git_path_dropdown_text, ImGuiInputTextFlags_ReadOnly);
+			ImVec2 dropdown_size = ImGui::GetItemRectSize();
+			if (widgets::begin_button_dropdown("#GitPathDropdown", dropdown_size))
+			{
+				ImGui::PushStyleColor(ImGuiCol_Button, ImVec4{});
+				ImGui::PushStyleVar(ImGuiStyleVar_ButtonTextAlign, ImVec2(0.0f, 0.5f));
+				for (size_t i = 0; i < ctx_.app_settings.git_paths.size(); ++i)
+				{
+					auto& path = ctx_.app_settings.git_paths[i];
+					if (ImGui::Button(path.c_str(), dropdown_size))
+					{
+						ctx_.app_settings.active_git_path_index = i;
+						ctx_.settings["active-git-path-index"] = ctx_.app_settings.active_git_path_index;
+						ImGui::CloseCurrentPopup();
+					}
+				}
+				ImGui::PopStyleVar();
+				ImGui::PopStyleColor();
+				widgets::end_button_dropdown();
+			}
+
+			ImGui::TextUnformatted("New git instance");
+
+			ImGui::SameLine();
+			static std::string git_path;
+			ImGui::InputTextWithHint("##GitPathInput", "Git Path...", &git_path, ImGuiInputTextFlags_AutoSelectAll);
+
+			ImGui::SameLine();
+			auto path_sel = fmt::format("{}##GitPathSelector", icons::dots_hor);
+			if (ImGui::Button(path_sel.c_str()))
+			{
+				utils::dialog_filters filters{ { "Applications", "exe" } };
+				auto result = utils::filesystem::get_file({}, filters);
+				if (result)
+				{
+					git_path = result.path.u8string();
+				}
+			}
+
+			ImGui::SameLine();
+			if (ImGui::Button("Add Path"))
+			{
+				git::git_wrapper git_wrapper;
+				git_wrapper.set_git_path(git_path);
+
+				bool add_path_failed = false;
+				if (git_wrapper.check_git_path() == git::path_status::ok)
+				{
+					auto& git_paths = ctx_.app_settings.git_paths;
+					if (std::find(git_paths.begin(), git_paths.end(), git_path) == git_paths.end())
+					{
+						ctx_.app_settings.git_paths.push_back(git_path);
+						ctx_.settings["git-paths"] = ctx_.app_settings.git_paths;
+					}
+					else
+					{
+						add_path_failed = true;
+					}
+				}
+				else
+				{
+					add_path_failed = true;
+				}
+
+				if (add_path_failed)
+				{
+					//TODO: some popup;
+					debug::error("Path {} is not a path to a git instance", git_path);
+				}
+
+				git_path.clear();
+			}
+		};
+
 		options("Application Settings", "Keybinds") = []()
 		{
 			display_keybinds_panel(ctx_.keybinds, false, false, false);
@@ -838,7 +944,7 @@ namespace vt
 				return;
 			}
 
-			if (ctx_.app_settings.next_video_on_end)
+			if (ctx_.app_settings.autoplay)
 			{
 				ctx_.player.reset_data();
 

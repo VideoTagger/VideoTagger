@@ -5,6 +5,7 @@
 #include <vector>
 #include <memory>
 #include <variant>
+#include <optional>
 
 struct subprocess_s;
 
@@ -14,7 +15,8 @@ namespace vt::git
 	{
 		ok,
 		not_found,
-		wrong_file_type
+		wrong_file_type,
+		not_git
 	};
 
 	enum class command_status
@@ -75,7 +77,9 @@ namespace vt::git
 
 		command_status status();
 		std::string read_stdout();
+		bool read_stdout_to_file(const std::filesystem::path& file_path);
 		std::string read_stderr();
+		bool read_stderr_to_file(const std::filesystem::path& file_path);
 
 		void wait();
 		std::optional<int> return_value();
@@ -119,6 +123,9 @@ namespace vt::git
 
 		const std::string& error_string();
 
+	protected:
+		void set_success(bool value);
+
 	private:
 		std::string error_string_;
 		int command_return_value_;
@@ -130,7 +137,7 @@ namespace vt::git
 		std::string descryption;
 	};
 
-	class repository_path_result : basic_result
+	class repository_path_result : public basic_result
 	{
 	public:
 		explicit repository_path_result(execute_command_result& command_result);
@@ -141,7 +148,24 @@ namespace vt::git
 		std::filesystem::path path_;
 	};
 
-	class list_modified_files_result : basic_result
+	class version_result : public basic_result
+	{
+	public:
+		explicit version_result(execute_command_result& command_result);
+
+		std::string version_string() const;
+		int major() const;
+		int minor() const;
+		int patch() const;
+
+	private:
+		std::string version_;
+		int major_{};
+		int minor_{};
+		int patch_{};
+	};
+
+	class list_modified_files_result : public basic_result
 	{
 	public:
 		using iterator = std::vector<file_list_item>::iterator;
@@ -165,7 +189,7 @@ namespace vt::git
 		std::vector<file_list_item> files_;
 	};
 
-	class is_repository_result : basic_result
+	class is_repository_result : public basic_result
 	{
 	public:
 		explicit is_repository_result(execute_command_result& command_result);
@@ -182,6 +206,7 @@ namespace vt::git
 	class git_wrapper
 	{
 	public:
+		git_wrapper() = default;
 		git_wrapper(std::filesystem::path git_path, std::filesystem::path working_directory);
 
 		path_status check_git_path() const;
@@ -193,14 +218,15 @@ namespace vt::git
 		const std::filesystem::path& git_path() const;
 		const std::filesystem::path& working_directory() const;
 
-		command_promise<repository_path_result> repository_path();
-		command_promise<list_modified_files_result> list_modified_files();
-		command_promise<is_repository_result> is_repository();
+		command_promise<version_result> version() const;
+		command_promise<repository_path_result> repository_path() const;
+		command_promise<list_modified_files_result> list_modified_files() const;
+		command_promise<is_repository_result> is_repository() const;
 		
-		command_promise<basic_result> init_repository();
-		command_promise<basic_result> stage_files(const std::vector<std::filesystem::path>& files);
-		command_promise<basic_result> unstage_files(const std::vector<std::filesystem::path>& files);
-		command_promise<basic_result> commit(const commit_arguments& arguments);
+		command_promise<basic_result> init_repository() const;
+		command_promise<basic_result> stage_files(const std::vector<std::filesystem::path>& files) const;
+		command_promise<basic_result> unstage_files(const std::vector<std::filesystem::path>& files) const;
+		command_promise<basic_result> commit(const commit_arguments& arguments) const;
 
 		execute_command_result execute_command(const std::string& command, const std::vector<std::string>& arguments) const;
 	private:

@@ -1,6 +1,15 @@
 #include "pch.hpp"
 #include "filesystem.hpp"
 
+#ifdef _WIN32
+#define NOMINMAX
+#include <Windows.h>
+#elif defined(__linux__)
+#include <unistd.h>
+#elif defined(__APPLE__)
+#include <mach-o/dyld.h>
+#endif
+
 static nfdu8char_t* make_nfd_path(const std::string& input)
 {
 	return (nfdu8char_t*)input.c_str();
@@ -120,5 +129,37 @@ namespace vt::utils
 			}
 		}
 		return result;
+	}
+
+	std::filesystem::path filesystem::executable_path()
+	{
+		std::filesystem::path result_path;
+
+	#ifdef _WIN32
+		char path[MAX_PATH]{};
+		GetModuleFileNameA(NULL, path, MAX_PATH);
+		result_path = path;
+	
+	#elif defined(__linux__)
+		char path[PATH_MAX]{};
+		auto len = readlink("/proc/self/exe", path, PATH_MAX - 1);
+		if (len != -1)
+		{
+			path[len] = '\0';
+			result_path = path;
+		}
+
+	#elif defined(__APPLE__)
+		std::vector<char> path;
+		uint32_t size = 0;
+		_NSGetExecutablePath(NULL, &size);
+		path.resize(path);
+		if (_NSGetExecutablePath(path.data(), &size) == 0)
+		{
+			result_path = path;
+		}
+	#endif
+
+		return std::filesystem::absolute(result_path);
 	}
 }

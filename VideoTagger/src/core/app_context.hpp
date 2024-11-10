@@ -54,8 +54,10 @@ namespace vt
 	{
 		float thumbnail_size = 45.0f;
 		bool link_start_end_segment = true;
-		bool next_video_on_end = true;
+		bool autoplay = true;
 		bool load_thumbnails = true;
+		std::vector<std::string> git_paths;
+		size_t active_git_path_index = 0;
 	};
 
 	struct window_config

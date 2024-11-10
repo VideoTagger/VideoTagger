@@ -63,19 +63,15 @@ namespace vt::git
 		return command_status::finished;
 	}
 
-	static std::string read_FILE(FILE* file)
+	static void read_FILE(FILE* file, std::ostream& out)
 	{
 		std::array<char, 4096> read_buffer{};
-
-		std::string result;
 
 		size_t bytes_read{};
 		while (bytes_read = fread(read_buffer.data(), 1, read_buffer.size(), file))
 		{
-			result.insert(result.end(), read_buffer.begin(), read_buffer.begin() + bytes_read);
+			out.write(read_buffer.data(), bytes_read);
 		}
-
-		return result;
 	}
 
 	std::string execute_command_result::read_stdout()
@@ -85,7 +81,25 @@ namespace vt::git
 			return std::string();
 		}
 
-		return read_FILE(subprocess_stdout(process_handle_.get()));
+		std::stringstream ss;
+		read_FILE(subprocess_stdout(process_handle_.get()), ss);
+		return ss.str();
+	}
+
+	bool execute_command_result::read_stdout_to_file(const std::filesystem::path& file_path)
+	{
+		if (status() != command_status::finished)
+		{
+			return false;
+		}
+
+		std::ofstream file(file_path);
+		if (!file.is_open())
+		{
+			return false;
+		}
+		read_FILE(subprocess_stdout(process_handle_.get()), file);
+		return true;
 	}
 
 	std::string execute_command_result::read_stderr()
@@ -95,7 +109,25 @@ namespace vt::git
 			return std::string();
 		}
 
-		return read_FILE(subprocess_stderr(process_handle_.get()));
+		std::stringstream ss;
+		read_FILE(subprocess_stderr(process_handle_.get()), ss);
+		return ss.str();
+	}
+
+	bool execute_command_result::read_stderr_to_file(const std::filesystem::path& file_path)
+	{
+		if (status() != command_status::finished)
+		{
+			return false;
+		}
+
+		std::ofstream file(file_path);
+		if (!file.is_open())
+		{
+			return false;
+		}
+		read_FILE(subprocess_stderr(process_handle_.get()), file);
+		return true;
 	}
 
 	void execute_command_result::wait()
@@ -158,9 +190,19 @@ namespace vt::git
 		return error_string_;
 	}
 
+	void basic_result::set_success(bool value)
+	{
+		command_return_value_ = !value;
+	}
+
 	repository_path_result::repository_path_result(execute_command_result& command_result)
 		: basic_result(command_result)
 	{
+		if (!succeeded())
+		{
+			return;
+		}
+
 		std::string string_path = command_result.read_stdout();
 		//remove new line
 		string_path.pop_back();
@@ -172,9 +214,67 @@ namespace vt::git
 		return path_;
 	}
 
+	version_result::version_result(execute_command_result& command_result)
+		: basic_result(command_result)
+	{
+		if (!succeeded())
+		{
+			return;
+		}
+
+		auto parts = utils::string::split(command_result.read_stdout(), ' ');
+
+		if (parts.size() != 3)
+		{
+			set_success(false);
+			return;
+		}
+		if (parts[0] != "git" or parts[1] != "version")
+		{
+			set_success(false);
+			return;
+		}
+
+		version_ = parts[2];
+		auto version_parts = utils::string::split(version_, '.');
+		if (version_parts.size() < 3)
+		{
+			set_success(false);
+			return;
+		}
+
+		major_ = std::stoi(version_parts[0]);
+		minor_ = std::stoi(version_parts[1]);
+		patch_ = std::stoi(version_parts[2]);
+	}
+
+	std::string version_result::version_string() const
+	{
+		return version_;
+	}
+
+	int version_result::major() const
+	{
+		return major_;
+	}
+
+	int version_result::minor() const
+	{
+		return minor_;
+	}
+
+	int version_result::patch() const
+	{
+		return patch_;
+	}
+
 	list_modified_files_result::list_modified_files_result(execute_command_result& command_result)
 		: basic_result(command_result)
 	{
+		if (!succeeded())
+		{
+			return;
+		}
 
 		std::string command_output = command_result.read_stdout();
 
@@ -330,6 +430,12 @@ namespace vt::git
 			return path_status::wrong_file_type;
 		}
 
+		auto result = version().get();
+		if (!result.succeeded())
+		{
+			return path_status::not_git;
+		}
+
 		return path_status::ok;
 	}
 
@@ -370,7 +476,12 @@ namespace vt::git
 		return working_directory_;
 	}
 
-	command_promise<repository_path_result> git_wrapper::repository_path()
+	command_promise<version_result> git_wrapper::version() const
+	{
+		return command_promise<version_result>(execute_command("version", {}));
+	}
+
+	command_promise<repository_path_result> git_wrapper::repository_path() const
 	{
 		std::vector<std::string> command_arguments{
 			"--show-toplevel"
@@ -379,7 +490,7 @@ namespace vt::git
 		return command_promise<repository_path_result>(execute_command("rev-parse", command_arguments));
 	}
 
-	command_promise<list_modified_files_result> git_wrapper::list_modified_files()
+	command_promise<list_modified_files_result> git_wrapper::list_modified_files() const
 	{
 		std::vector<std::string> command_arguments{
 			"--porcelain",
@@ -389,7 +500,7 @@ namespace vt::git
 		return command_promise<list_modified_files_result>(execute_command("status", command_arguments));
 	}
 
-	command_promise<is_repository_result> git_wrapper::is_repository()
+	command_promise<is_repository_result> git_wrapper::is_repository() const
 	{
 		std::vector<std::string> command_arguments{
 			"--is-inside-work-tree",
@@ -398,12 +509,12 @@ namespace vt::git
 		return command_promise<is_repository_result>(execute_command("rev-parse", command_arguments));
 	}
 
-	command_promise<basic_result> git_wrapper::init_repository()
+	command_promise<basic_result> git_wrapper::init_repository() const
 	{
 		return command_promise<basic_result>(execute_command("init", {}));
 	}
 
-	command_promise<basic_result> git_wrapper::stage_files(const std::vector<std::filesystem::path>& files)
+	command_promise<basic_result> git_wrapper::stage_files(const std::vector<std::filesystem::path>& files) const
 	{
 		std::vector<std::string> command_arguments;
 		command_arguments.reserve(files.size());
@@ -415,7 +526,7 @@ namespace vt::git
 		return command_promise<basic_result>(execute_command("add", command_arguments));
 	}
 
-	command_promise<basic_result> git_wrapper::unstage_files(const std::vector<std::filesystem::path>& files)
+	command_promise<basic_result> git_wrapper::unstage_files(const std::vector<std::filesystem::path>& files) const
 	{
 		std::vector<std::string> command_arguments;
 		command_arguments.reserve(files.size() + 1);
@@ -428,7 +539,7 @@ namespace vt::git
 		return command_promise<basic_result>(execute_command("restore", command_arguments));
 	}
 
-	command_promise<basic_result> git_wrapper::commit(const commit_arguments& arguments)
+	command_promise<basic_result> git_wrapper::commit(const commit_arguments& arguments) const
 	{
 		std::vector<std::string> command_arguments{
 			"-m", arguments.message.c_str(),
@@ -500,6 +611,4 @@ namespace vt::git
 
 		return std::filesystem::path();
 	}
-
-	
 }

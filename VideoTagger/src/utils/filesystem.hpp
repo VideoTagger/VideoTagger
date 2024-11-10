@@ -55,5 +55,7 @@ namespace vt::utils
 		static void open_in_explorer(const std::filesystem::path& path);
 
 		static std::string concat_extensions(const std::vector<std::string>& extensions);
+
+		static std::filesystem::path executable_path();
 	};
 }
