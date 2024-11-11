@@ -753,9 +753,9 @@ namespace vt
 			ImGui::DragFloat("Font Scale", &io.FontGlobalScale, 0.005f, 0.5f, 2.0f, "%.2f", ImGuiSliderFlags_AlwaysClamp);
 #endif
 		};
-		options("Application Settings", "Git") = [this]()
+		options("Application Settings", "Git Integration") = [this]()
 		{
-			ImGui::Text("Current git instance");
+			ImGui::TextUnformatted("Current git instance");
 
 			ImGui::SameLine();
 			std::string git_path_dropdown_text = ctx_.app_settings.git_paths.empty() ?
