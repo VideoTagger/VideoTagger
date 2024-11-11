@@ -611,7 +611,7 @@ namespace vt::widgets
 
 					if (add_tag_attribute("Add Attribute", attribute_name_buf, attribute_buf))
 					{
-						tag.attributes.insert({ attribute_name_buf, attribute_buf });
+						ctx_.current_project->tags.at(tag_name).attributes.insert({ attribute_name_buf, attribute_buf });
 						dirty_flag = true;
 					}
 					ImGui::PopID();
