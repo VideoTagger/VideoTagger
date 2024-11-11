@@ -938,7 +938,6 @@ namespace vt
 
 							}
 
-							ImGui::Separator();
 							if (ImGui::MenuItem("Export Tags"))
 							{
 								utils::dialog_filter filter{ "VideoTagger Tags", "vttags" };
@@ -951,6 +950,7 @@ namespace vt
 									utils::json::write_to_file(json, result.path);
 								}
 							}
+							ImGui::Separator();
 							if (ImGui::MenuItem("Export Segments", nullptr, nullptr, ctx_.current_video_group_id() != invalid_video_group_id))
 							{
 								const auto& group_name = ctx_.current_project->video_groups.at(ctx_.current_video_group_id()).display_name;
