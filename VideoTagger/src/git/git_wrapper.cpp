@@ -185,12 +185,11 @@ namespace vt::git
 	}
 
 	template<>
-	extern auto basic_result_make_value_error<version_result>(execute_command_result& command_result)
-		-> std::variant<version_result::value_type, version_result::error_type>
+	extern version_result make_command_result<version_result>(execute_command_result& command_result)
 	{
 		if (auto error = make_generic_error<version_result::error_type>(command_result); error.has_value())
 		{
-			return std::move(*error);
+			return version_result(std::move(*error));
 		}
 
 		auto parts = utils::string::split(command_result.read_stdout(), ' ');
@@ -199,33 +198,32 @@ namespace vt::git
 
 		if (parts.size() != 3)
 		{
-			return error;
+			return version_result(error);
 		}
 		if (parts[0] != "git" or parts[1] != "version")
 		{
-			return error;
+			return version_result(error);
 		}
 
 		auto version_parts = utils::string::split(parts[2], '.');
 		if (version_parts.size() < 3)
 		{
-			return error;
+			return version_result(error);
 		}
 
 		version_result::value_type version;
 		version.major = std::stoi(version_parts[0]);
 		version.minor = std::stoi(version_parts[1]);
 		version.patch = std::stoi(version_parts[2]);
-		return version;
+		return version_result(version);
 	}
 
 	template<>
-	extern auto basic_result_make_value_error<list_modified_files_result>(execute_command_result& command_result)
-		-> std::variant<list_modified_files_result::value_type, list_modified_files_result::error_type>
+	extern list_modified_files_result make_command_result<list_modified_files_result>(execute_command_result& command_result)
 	{
 		if (auto error = make_generic_error<list_modified_files_result::error_type>(command_result); error.has_value())
 		{
-			return std::move(*error);
+			return list_modified_files_result(std::move(*error));
 		}
 
 		std::string command_output = command_result.read_stdout();
@@ -285,22 +283,21 @@ namespace vt::git
 			};
 
 		vt::utils::string::for_each_line(command_output, func);
-		return result;
+		return list_modified_files_result(result);
 	}
 
 	template<>
-	extern auto basic_result_make_value_error<bool_result>(execute_command_result& command_result)
-		-> std::variant<bool_result::value_type, bool_result::error_type>
+	extern bool_result make_command_result<bool_result>(execute_command_result& command_result)
 	{
 		std::optional<int> command_return = command_result.return_value();
 		if (!command_return.has_value())
 		{
-			return bool_result::error_type("Proccess failure", -1);
+			return bool_result(bool_result::error_type("Proccess failure", -1));
 		}
 
 		if (*command_return != 0)
 		{
-			return false;
+			return bool_result(false);
 		}
 
 		std::string output = command_result.read_stdout();
@@ -309,11 +306,11 @@ namespace vt::git
 			output.pop_back();
 			if (output == "true" and output.back() == '\n')
 			{
-				return true;
+				return bool_result(true);
 			}
 		}
 
-		return false;
+		return bool_result(false);
 	}
 	
 	git_wrapper::git_wrapper(std::filesystem::path git_path, std::filesystem::path working_directory)

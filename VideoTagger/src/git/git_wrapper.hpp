@@ -6,6 +6,7 @@
 #include <memory>
 #include <variant>
 #include <optional>
+#include <type_traits>
 
 struct subprocess_s;
 
@@ -137,7 +138,8 @@ namespace vt::git
 		using value_type = T;
 		using error_type = E;
 
-		explicit basic_command_result(execute_command_result& command_result);
+		basic_command_result(value_type value);
+		basic_command_result(error_type error);
 
 		constexpr T& value() &;
 		constexpr const T& value() const&;
@@ -160,12 +162,13 @@ namespace vt::git
 	class basic_command_result<void, E>
 	{
 	public:
-		using value_type = std::monostate;
+		using value_type = void;
 		using error_type = E;
 
-		explicit basic_command_result(execute_command_result& command_result);
+		basic_command_result();
+		basic_command_result(error_type error);
 		
-		std::monostate value() const;
+		void value() const;
 
 		constexpr E& error()&;
 		constexpr const E& error() const&;
@@ -180,8 +183,7 @@ namespace vt::git
 	};
 
 	template<typename ResultType>
-	inline auto basic_result_make_value_error(execute_command_result& command_result)
-		-> std::variant<typename ResultType::value_type, typename ResultType::error_type>;
+	inline ResultType make_command_result(execute_command_result& command_result);
 
 	template<typename E>
 	inline std::optional<E> make_generic_error(execute_command_result& command_result);
@@ -199,20 +201,17 @@ namespace vt::git
 	
 	using version_result = basic_command_result<git_version, generic_command_error_result>;
 	template<> 
-	extern auto basic_result_make_value_error<version_result>(execute_command_result& command_result)
-		-> std::variant<version_result::value_type, version_result::error_type>;
+	extern version_result make_command_result<version_result>(execute_command_result& command_result);
 
 	using path_result = basic_command_result<std::filesystem::path, generic_command_error_result>;
 
 	using list_modified_files_result = basic_command_result<std::vector<file_list_item>, generic_command_error_result>;
 	template<>
-	extern auto basic_result_make_value_error<list_modified_files_result>(execute_command_result& command_result)
-		-> std::variant<list_modified_files_result::value_type, list_modified_files_result::error_type>;
+	extern list_modified_files_result make_command_result<list_modified_files_result>(execute_command_result& command_result);
 
 	using bool_result = basic_command_result<bool, generic_command_error_result>;
 	template<>
-	extern auto basic_result_make_value_error<bool_result>(execute_command_result& command_result)
-		-> std::variant<bool_result::value_type, bool_result::error_type>;
+	extern bool_result make_command_result<bool_result>(execute_command_result& command_result);
 
 	using string_result = basic_command_result<std::string, generic_command_error_result>;
 
@@ -285,7 +284,7 @@ namespace vt::git
 	inline T command_promise<T>::get()
 	{
 		command_result_.wait();
-		return T(command_result_);
+		return make_command_result<T>(command_result_);
 	}
 
 	template<typename T>
@@ -301,8 +300,14 @@ namespace vt::git
 	}
 
 	template<typename T, typename E>
-	inline basic_command_result<T, E>::basic_command_result(execute_command_result& command_result)
-		: value_error_{ basic_result_make_value_error<basic_command_result<T, E>>(command_result) }
+	inline basic_command_result<T, E>::basic_command_result(value_type value)
+		: value_error_{ std::move(value) }
+	{
+	}
+
+	template<typename T, typename E>
+	inline basic_command_result<T, E>::basic_command_result(error_type error)
+		: value_error_{ std::move(error) }
 	{
 	}
 
@@ -367,15 +372,20 @@ namespace vt::git
 	}
 
 	template<typename E>
-	inline basic_command_result<void, E>::basic_command_result(execute_command_result& command_result)
+	inline basic_command_result<void, E>::basic_command_result()
+		: value_error_{ std::monostate{} }
 	{
-
 	}
 
 	template<typename E>
-	inline std::monostate basic_command_result<void, E>::value() const
+	inline basic_command_result<void, E>::basic_command_result(error_type error)
+		: value_error_{ std::move(error) }
 	{
-		return std::monostate{};
+	}
+
+	template<typename E>
+	inline void basic_command_result<void, E>::value() const
+	{
 	}
 
 	template<typename E>
@@ -405,7 +415,7 @@ namespace vt::git
 	template<typename E>
 	inline bool basic_command_result<void, E>::has_value() const
 	{
-		std::holds_alternative<std::monostate>(value_error_);
+		return std::holds_alternative<std::monostate>(value_error_);
 	}
 
 	template<typename E>
@@ -415,21 +425,27 @@ namespace vt::git
 	}
 
 	template<typename ResultType>
-	inline auto basic_result_make_value_error(execute_command_result& command_result)
-		-> std::variant<typename ResultType::value_type, typename ResultType::error_type>
+	inline ResultType make_command_result(execute_command_result& command_result)
 	{
 		if (auto error = make_generic_error<typename ResultType::error_type>(command_result); error.has_value())
 		{
-			return std::move(*error);
+			return ResultType(std::move(*error));
 		}
 
-		std::string result = command_result.read_stdout();
-		if (!result.empty() and result.back() == '\n')
+		if constexpr (std::is_same_v<typename ResultType::value_type, void>)
 		{
-			result.pop_back();
+			return ResultType();
 		}
+		else
+		{
+			std::string result = command_result.read_stdout();
+			if (!result.empty() and result.back() == '\n')
+			{
+				result.pop_back();
+			}
 
-		return typename ResultType::value_type(result);
+			return ResultType(typename ResultType::value_type(result));
+		}
 	}
 
 	template<typename E>
