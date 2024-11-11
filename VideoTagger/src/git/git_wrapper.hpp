@@ -63,8 +63,12 @@ namespace vt::git
 		std::variant<file_status, file_conflict_status> status_;
 	};
 
-	struct command_result_failed_construct_t { explicit command_result_failed_construct_t() = default; };
-	inline constexpr command_result_failed_construct_t command_result_failed_construct;
+	struct git_version
+	{
+		int major{};
+		int minor{};
+		int patch{};
+	};
 
 	class execute_command_result
 	{
@@ -112,95 +116,107 @@ namespace vt::git
 	private:
 		execute_command_result command_result_;
 	};
-
-	class basic_result
+	
+	class generic_command_error_result
 	{
 	public:
-		explicit basic_result(execute_command_result& command_result);
+		explicit generic_command_error_result(std::string message, int return_value);
 
-		int command_return_value() const;
-		bool succeeded() const;
-
-		const std::string& error_string();
-
-	protected:
-		void set_success(bool value);
+		int return_value() const;
+		const std::string& message() const;
 
 	private:
-		std::string error_string_;
-		int command_return_value_;
+		std::string message_;
+		int return_value_;
 	};
+
+	template<typename T, typename E>
+	class basic_command_result
+	{
+	public:
+		using value_type = T;
+		using error_type = E;
+
+		explicit basic_command_result(execute_command_result& command_result);
+
+		constexpr T& value() &;
+		constexpr const T& value() const&;
+		constexpr T&& value() &&;
+		constexpr const T&& value() const&&;
+
+		constexpr E& error() &;
+		constexpr const E& error() const&;
+		constexpr E&& error() &&;
+		constexpr const E&& error() const&&;
+
+		bool has_value() const;
+		operator bool() const;
+
+	private:
+		std::variant<T, E> value_error_;
+	};
+
+	template<typename E>
+	class basic_command_result<void, E>
+	{
+	public:
+		using value_type = std::monostate;
+		using error_type = E;
+
+		explicit basic_command_result(execute_command_result& command_result);
+		
+		std::monostate value() const;
+
+		constexpr E& error()&;
+		constexpr const E& error() const&;
+		constexpr E&& error()&&;
+		constexpr const E&& error() const&&;
+
+		bool has_value() const;
+		operator bool() const;
+
+	private:
+		std::variant<std::monostate, E> value_error_;
+	};
+
+	template<typename ResultType>
+	inline auto basic_result_make_value_error(execute_command_result& command_result)
+		-> std::variant<typename ResultType::value_type, typename ResultType::error_type>;
+
+	template<typename E>
+	inline std::optional<E> make_generic_error(execute_command_result& command_result);
 
 	struct commit_arguments
 	{
-		std::string message;
 		std::string descryption;
 	};
 
-	class repository_path_result : public basic_result
+	struct clone_arguments
 	{
-	public:
-		explicit repository_path_result(execute_command_result& command_result);
-
-		std::filesystem::path path() const;
-
-	private:
-		std::filesystem::path path_;
-	};
-
-	class version_result : public basic_result
-	{
-	public:
-		explicit version_result(execute_command_result& command_result);
-
-		std::string version_string() const;
-		int major() const;
-		int minor() const;
-		int patch() const;
-
-	private:
-		std::string version_;
-		int major_{};
-		int minor_{};
-		int patch_{};
-	};
-
-	class list_modified_files_result : public basic_result
-	{
-	public:
-		using iterator = std::vector<file_list_item>::iterator;
-		using const_iterator = std::vector<file_list_item>::const_iterator;
-
-		explicit list_modified_files_result(execute_command_result& command_result);
-
-		file_list_item& at(size_t index);
-		const file_list_item& at(size_t index) const;
-
-		size_t size() const;
-
-		iterator begin();
-		const_iterator begin() const;
-		const_iterator cbegin() const;
-		iterator end();
-		const_iterator end() const;
-		const_iterator cend() const;
-
-	private:
-		std::vector<file_list_item> files_;
-	};
-
-	class is_repository_result : public basic_result
-	{
-	public:
-		explicit is_repository_result(execute_command_result& command_result);
-
-		bool value() const;
-		operator bool();
-
-	private:
-		bool value_;
+		std::optional<std::filesystem::path> clone_into;
+		bool no_checkout = false;
 	};
 	
+	using version_result = basic_command_result<git_version, generic_command_error_result>;
+	template<> 
+	extern auto basic_result_make_value_error<version_result>(execute_command_result& command_result)
+		-> std::variant<version_result::value_type, version_result::error_type>;
+
+	using path_result = basic_command_result<std::filesystem::path, generic_command_error_result>;
+
+	using list_modified_files_result = basic_command_result<std::vector<file_list_item>, generic_command_error_result>;
+	template<>
+	extern auto basic_result_make_value_error<list_modified_files_result>(execute_command_result& command_result)
+		-> std::variant<list_modified_files_result::value_type, list_modified_files_result::error_type>;
+
+	using bool_result = basic_command_result<bool, generic_command_error_result>;
+	template<>
+	extern auto basic_result_make_value_error<bool_result>(execute_command_result& command_result)
+		-> std::variant<bool_result::value_type, bool_result::error_type>;
+
+	using string_result = basic_command_result<std::string, generic_command_error_result>;
+
+	using void_result = basic_command_result<void, generic_command_error_result>;
 
 	//TODO: validate command arguments
 	class git_wrapper
@@ -219,14 +235,16 @@ namespace vt::git
 		const std::filesystem::path& working_directory() const;
 
 		command_promise<version_result> version() const;
-		command_promise<repository_path_result> repository_path() const;
+		command_promise<path_result> repository_path() const;
 		command_promise<list_modified_files_result> list_modified_files() const;
-		command_promise<is_repository_result> is_repository() const;
+		command_promise<bool_result> is_repository() const;
+		command_promise<string_result> current_branch() const;
 		
-		command_promise<basic_result> init_repository() const;
-		command_promise<basic_result> stage_files(const std::vector<std::filesystem::path>& files) const;
-		command_promise<basic_result> unstage_files(const std::vector<std::filesystem::path>& files) const;
-		command_promise<basic_result> commit(const commit_arguments& arguments) const;
+		command_promise<void_result> init_repository() const;
+		command_promise<void_result> clone(const std::string& remote_url, const clone_arguments& arguments) const;
+		command_promise<void_result> stage_files(const std::vector<std::filesystem::path>& files) const;
+		command_promise<void_result> unstage_files(const std::vector<std::filesystem::path>& files) const;
+		command_promise<void_result> commit(const std::string& message, const commit_arguments& arguments) const;
 
 		execute_command_result execute_command(const std::string& command, const std::vector<std::string>& arguments) const;
 	private:
@@ -280,5 +298,154 @@ namespace vt::git
 	inline command_promise<T>::operator T()
 	{
 		return get();
+	}
+
+	template<typename T, typename E>
+	inline basic_command_result<T, E>::basic_command_result(execute_command_result& command_result)
+		: value_error_{ basic_result_make_value_error<basic_command_result<T, E>>(command_result) }
+	{
+	}
+
+	template<typename T, typename E>
+	inline constexpr T& basic_command_result<T, E>::value() &
+	{
+		return std::get<T>(value_error_);
+	}
+
+	template<typename T, typename E>
+	inline constexpr const T& basic_command_result<T, E>::value() const&
+	{
+		return std::get<T>(value_error_);
+	}
+
+	template<typename T, typename E>
+	inline constexpr T&& basic_command_result<T, E>::value() &&
+	{
+		return std::move(std::get<T>(value_error_));
+	}
+
+	template<typename T, typename E>
+	inline constexpr const T&& basic_command_result<T, E>::value() const&&
+	{
+		return std::move(std::get<T>(value_error_));
+	}
+
+	template<typename T, typename E>
+	inline constexpr E& basic_command_result<T, E>::error() &
+	{
+		return std::get<E>(value_error_);
+	}
+
+	template<typename T, typename E>
+	inline constexpr const E& basic_command_result<T, E>::error() const&
+	{
+		return std::get<E>(value_error_);
+	}
+
+	template<typename T, typename E>
+	inline constexpr E&& basic_command_result<T, E>::error() &&
+	{
+		return std::move(std::get<error_type>(value_error_));
+	}
+
+	template<typename T, typename E>
+	inline constexpr const E&& basic_command_result<T, E>::error() const&&
+	{
+		return std::move(std::get<error_type>(value_error_));
+	}
+
+	template<typename T, typename E>
+	inline bool basic_command_result<T, E>::has_value() const
+	{
+		return std::holds_alternative<T>(value_error_);
+	}
+
+	template<typename T, typename E>
+	inline basic_command_result<T, E>::operator bool() const
+	{
+		return has_value();
+	}
+
+	template<typename E>
+	inline basic_command_result<void, E>::basic_command_result(execute_command_result& command_result)
+	{
+
+	}
+
+	template<typename E>
+	inline std::monostate basic_command_result<void, E>::value() const
+	{
+		return std::monostate{};
+	}
+
+	template<typename E>
+	inline constexpr E& basic_command_result<void, E>::error() &
+	{
+		return std::get<E>(value_error_);
+	}
+
+	template<typename E>
+	inline constexpr const E& basic_command_result<void, E>::error() const&
+	{
+		return std::get<E>(value_error_);
+	}
+
+	template<typename E>
+	inline constexpr E&& basic_command_result<void, E>::error()&&
+	{
+		return std::move(std::get<E>(value_error_));
+	}
+
+	template<typename E>
+	inline constexpr const E&& basic_command_result<void, E>::error() const&&
+	{
+		return std::move(std::get<E>(value_error_));
+	}
+
+	template<typename E>
+	inline bool basic_command_result<void, E>::has_value() const
+	{
+		std::holds_alternative<std::monostate>(value_error_);
+	}
+
+	template<typename E>
+	inline basic_command_result<void, E>::operator bool() const
+	{
+		return has_value();
+	}
+
+	template<typename ResultType>
+	inline auto basic_result_make_value_error(execute_command_result& command_result)
+		-> std::variant<typename ResultType::value_type, typename ResultType::error_type>
+	{
+		if (auto error = make_generic_error<typename ResultType::error_type>(command_result); error.has_value())
+		{
+			return std::move(*error);
+		}
+
+		std::string result = command_result.read_stdout();
+		if (!result.empty() and result.back() == '\n')
+		{
+			result.pop_back();
+		}
+
+		return typename ResultType::value_type(result);
+	}
+
+	template<typename E>
+	std::optional<E> make_generic_error(execute_command_result& command_result)
+	{
+		std::optional<int> command_return = command_result.return_value();
+		if (!command_return.has_value())
+		{
+			return std::optional<E>{ E("Proccess failure", -1) };
+		}
+
+		if (*command_return != 0)
+		{
+			return std::optional<E>{ E(command_result.read_stderr(), *command_result.return_value()) };
+		}
+
+		return std::nullopt;
 	}
 }

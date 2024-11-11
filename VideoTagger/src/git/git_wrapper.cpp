@@ -169,248 +169,153 @@ namespace vt::git
 		return *process_handle_;
 	}
 
-	basic_result::basic_result(execute_command_result& command_result)
+	generic_command_error_result::generic_command_error_result(std::string message, int return_value)
+		: message_{ std::move(message) }, return_value_{ return_value }
 	{
-		command_return_value_ = *command_result.return_value();
-		error_string_ = command_result.read_stderr();
 	}
 
-	int basic_result::command_return_value() const
+	int generic_command_error_result::return_value() const
 	{
-		return command_return_value_;
+		return return_value_;
 	}
 
-	bool basic_result::succeeded() const
+	const std::string& generic_command_error_result::message() const
 	{
-		return command_return_value_ == 0;
+		return message_;
 	}
 
-	const std::string& basic_result::error_string()
+	template<>
+	extern auto basic_result_make_value_error<version_result>(execute_command_result& command_result)
+		-> std::variant<version_result::value_type, version_result::error_type>
 	{
-		return error_string_;
-	}
-
-	void basic_result::set_success(bool value)
-	{
-		command_return_value_ = !value;
-	}
-
-	repository_path_result::repository_path_result(execute_command_result& command_result)
-		: basic_result(command_result)
-	{
-		if (!succeeded())
+		if (auto error = make_generic_error<version_result::error_type>(command_result); error.has_value())
 		{
-			return;
-		}
-
-		std::string string_path = command_result.read_stdout();
-		//remove new line
-		string_path.pop_back();
-		path_ = string_path;
-	}
-
-	std::filesystem::path repository_path_result::path() const
-	{
-		return path_;
-	}
-
-	version_result::version_result(execute_command_result& command_result)
-		: basic_result(command_result)
-	{
-		if (!succeeded())
-		{
-			return;
+			return std::move(*error);
 		}
 
 		auto parts = utils::string::split(command_result.read_stdout(), ' ');
 
+		version_result::error_type error("Unexpected output", -1);
+
 		if (parts.size() != 3)
 		{
-			set_success(false);
-			return;
+			return error;
 		}
 		if (parts[0] != "git" or parts[1] != "version")
 		{
-			set_success(false);
-			return;
+			return error;
 		}
 
-		version_ = parts[2];
-		auto version_parts = utils::string::split(version_, '.');
+		auto version_parts = utils::string::split(parts[2], '.');
 		if (version_parts.size() < 3)
 		{
-			set_success(false);
-			return;
+			return error;
 		}
 
-		major_ = std::stoi(version_parts[0]);
-		minor_ = std::stoi(version_parts[1]);
-		patch_ = std::stoi(version_parts[2]);
+		version_result::value_type version;
+		version.major = std::stoi(version_parts[0]);
+		version.minor = std::stoi(version_parts[1]);
+		version.patch = std::stoi(version_parts[2]);
+		return version;
 	}
 
-	std::string version_result::version_string() const
+	template<>
+	extern auto basic_result_make_value_error<list_modified_files_result>(execute_command_result& command_result)
+		-> std::variant<list_modified_files_result::value_type, list_modified_files_result::error_type>
 	{
-		return version_;
-	}
-
-	int version_result::major() const
-	{
-		return major_;
-	}
-
-	int version_result::minor() const
-	{
-		return minor_;
-	}
-
-	int version_result::patch() const
-	{
-		return patch_;
-	}
-
-	list_modified_files_result::list_modified_files_result(execute_command_result& command_result)
-		: basic_result(command_result)
-	{
-		if (!succeeded())
+		if (auto error = make_generic_error<list_modified_files_result::error_type>(command_result); error.has_value())
 		{
-			return;
+			return std::move(*error);
 		}
 
 		std::string command_output = command_result.read_stdout();
+		list_modified_files_result::value_type result;
 
-		auto func = [this](std::string_view line)
-		{
-			auto char_to_status = [](char ch)
+		auto func = [&result](std::string_view line)
 			{
-				switch (ch)
-				{
-					case ' ':	return file_status::unmodified;
-					case 'M':	return file_status::modified;
-					case 'T':	return file_status::file_type_changed;
-					case 'A':	return file_status::added;
-					case 'D':	return file_status::deleted;
-					case 'R':	return file_status::renamed;
-					case 'C':	return file_status::copied;
-					case 'U':	return file_status::modified;
-					default:	return file_status::unknown;
-				}
-			};
+				auto char_to_status = [](char ch)
+					{
+						switch (ch)
+						{
+						case ' ':	return file_status::unmodified;
+						case 'M':	return file_status::modified;
+						case 'T':	return file_status::file_type_changed;
+						case 'A':	return file_status::added;
+						case 'D':	return file_status::deleted;
+						case 'R':	return file_status::renamed;
+						case 'C':	return file_status::copied;
+						case 'U':	return file_status::modified;
+						default:	return file_status::unknown;
+						}
+					};
 
-			char status_char{};
+				char status_char{};
 
-			std::variant<file_status, file_conflict_status> status{};
-			bool staged{};
+				std::variant<file_status, file_conflict_status> status{};
+				bool staged{};
 
-			if (line.substr(0, 2) == "??")
-			{
-				staged = false;
-				status = file_status::added;
-			}
-			else if (line[0] == ' ' or line[1] == ' ')
-			{
-				if (line[0] == ' ')
+				if (line.substr(0, 2) == "??")
 				{
 					staged = false;
-					status_char = line[1];
+					status = file_status::added;
+				}
+				else if (line[0] == ' ' or line[1] == ' ')
+				{
+					if (line[0] == ' ')
+					{
+						staged = false;
+						status_char = line[1];
+					}
+					else
+					{
+						staged = true;
+						status_char = line[0];
+					}
+
+					status = char_to_status(status_char);
 				}
 				else
 				{
-					staged = true;
-					status_char = line[0];
+					status = file_conflict_status{ char_to_status(line[0]), char_to_status(line[1]) };
+					staged = false;
 				}
 
-				status = char_to_status(status_char);
-			}
-			else
-			{
-				status = file_conflict_status{ char_to_status(line[0]), char_to_status(line[1]) };
-				staged = false;
-			}
-
-			line.remove_prefix(3);
-			files_.emplace_back(std::filesystem::path(line), status, staged);
-		};
+				line.remove_prefix(3);
+				result.emplace_back(std::filesystem::path(line), status, staged);
+			};
 
 		vt::utils::string::for_each_line(command_output, func);
+		return result;
 	}
 
-	file_list_item& list_modified_files_result::at(size_t index)
+	template<>
+	extern auto basic_result_make_value_error<bool_result>(execute_command_result& command_result)
+		-> std::variant<bool_result::value_type, bool_result::error_type>
 	{
-		return files_.at(index);
-	}
-
-	const file_list_item& list_modified_files_result::at(size_t index) const
-	{
-		return files_.at(index);
-	}
-
-	size_t list_modified_files_result::size() const
-	{
-		return files_.size();
-	}
-
-	list_modified_files_result::iterator list_modified_files_result::begin()
-	{
-		return files_.begin();
-	}
-
-	list_modified_files_result::const_iterator list_modified_files_result::begin() const
-	{
-		return files_.begin();
-	}
-
-	list_modified_files_result::const_iterator list_modified_files_result::cbegin() const
-	{
-		return files_.cbegin();
-	}
-
-	list_modified_files_result::iterator list_modified_files_result::end()
-	{
-		return files_.end();
-	}
-
-	list_modified_files_result::const_iterator list_modified_files_result::end() const
-	{
-		return files_.end();
-	}
-
-	list_modified_files_result::const_iterator list_modified_files_result::cend() const
-	{
-		return files_.cend();
-	}
-
-	is_repository_result::is_repository_result(execute_command_result& command_result)
-		: basic_result(command_result)
-	{
-		if (!succeeded())
+		std::optional<int> command_return = command_result.return_value();
+		if (!command_return.has_value())
 		{
-			value_ = false;
-			return;
+			return bool_result::error_type("Proccess failure", -1);
+		}
+
+		if (*command_return != 0)
+		{
+			return false;
 		}
 
 		std::string output = command_result.read_stdout();
-		output.pop_back();
-
-		if (output == "true")
+		if (!output.empty())
 		{
-			value_ = true;
+			output.pop_back();
+			if (output == "true" and output.back() == '\n')
+			{
+				return true;
+			}
 		}
-		else
-		{
-			value_ = false;
-		}
-	}
 
-	bool is_repository_result::value() const
-	{
-		return value_;
+		return false;
 	}
-
-	is_repository_result::operator bool()
-	{
-		return value_;
-	}
-
+	
 	git_wrapper::git_wrapper(std::filesystem::path git_path, std::filesystem::path working_directory)
 		: git_path_{ git_path }, working_directory_{ working_directory }
 	{
@@ -430,8 +335,9 @@ namespace vt::git
 			return path_status::wrong_file_type;
 		}
 
+		//TODO: find some better way to check if it's actually git
 		auto result = version().get();
-		if (!result.succeeded())
+		if (!result.has_value())
 		{
 			return path_status::not_git;
 		}
@@ -481,13 +387,13 @@ namespace vt::git
 		return command_promise<version_result>(execute_command("version", {}));
 	}
 
-	command_promise<repository_path_result> git_wrapper::repository_path() const
+	command_promise<path_result> git_wrapper::repository_path() const
 	{
 		std::vector<std::string> command_arguments{
 			"--show-toplevel"
 		};
 
-		return command_promise<repository_path_result>(execute_command("rev-parse", command_arguments));
+		return command_promise<path_result>(execute_command("rev-parse", command_arguments));
 	}
 
 	command_promise<list_modified_files_result> git_wrapper::list_modified_files() const
@@ -500,21 +406,48 @@ namespace vt::git
 		return command_promise<list_modified_files_result>(execute_command("status", command_arguments));
 	}
 
-	command_promise<is_repository_result> git_wrapper::is_repository() const
+	command_promise<bool_result> git_wrapper::is_repository() const
 	{
 		std::vector<std::string> command_arguments{
 			"--is-inside-work-tree",
 		};
 
-		return command_promise<is_repository_result>(execute_command("rev-parse", command_arguments));
+		return command_promise<bool_result>(execute_command("rev-parse", command_arguments));
 	}
 
-	command_promise<basic_result> git_wrapper::init_repository() const
+	command_promise<string_result> git_wrapper::current_branch() const
 	{
-		return command_promise<basic_result>(execute_command("init", {}));
+		std::vector<std::string> command_arguments{
+			"--show-current",
+		};
+
+		return command_promise<string_result>(execute_command("branch", command_arguments));
 	}
 
-	command_promise<basic_result> git_wrapper::stage_files(const std::vector<std::filesystem::path>& files) const
+	command_promise<void_result> git_wrapper::init_repository() const
+	{
+		return command_promise<void_result>(execute_command("init", {}));
+	}
+
+	command_promise<void_result> git_wrapper::clone(const std::string& remote_url, const clone_arguments& arguments) const
+	{
+		std::vector<std::string> command_arguments;
+		if (arguments.no_checkout)
+		{
+			command_arguments.push_back("--no-checkout");
+		}
+
+		command_arguments.push_back(remote_url);
+
+		if (arguments.clone_into)
+		{
+			command_arguments.push_back(arguments.clone_into->u8string());
+		}
+
+		return command_promise<void_result>(execute_command("clone", command_arguments));
+	}
+
+	command_promise<void_result> git_wrapper::stage_files(const std::vector<std::filesystem::path>& files) const
 	{
 		std::vector<std::string> command_arguments;
 		command_arguments.reserve(files.size());
@@ -523,10 +456,10 @@ namespace vt::git
 			command_arguments.push_back(path.u8string());
 		}
 
-		return command_promise<basic_result>(execute_command("add", command_arguments));
+		return command_promise<void_result>(execute_command("add", command_arguments));
 	}
 
-	command_promise<basic_result> git_wrapper::unstage_files(const std::vector<std::filesystem::path>& files) const
+	command_promise<void_result> git_wrapper::unstage_files(const std::vector<std::filesystem::path>& files) const
 	{
 		std::vector<std::string> command_arguments;
 		command_arguments.reserve(files.size() + 1);
@@ -536,17 +469,17 @@ namespace vt::git
 			command_arguments.push_back(path.u8string());
 		}
 
-		return command_promise<basic_result>(execute_command("restore", command_arguments));
+		return command_promise<void_result>(execute_command("restore", command_arguments));
 	}
 
-	command_promise<basic_result> git_wrapper::commit(const commit_arguments& arguments) const
+	command_promise<void_result> git_wrapper::commit(const std::string& message, const commit_arguments& arguments) const
 	{
 		std::vector<std::string> command_arguments{
-			"-m", arguments.message.c_str(),
+			"-m", message.c_str(),
 			"-m", arguments.descryption.c_str()
 		};
 
-		return command_promise<basic_result>(execute_command("commit", command_arguments));
+		return command_promise<void_result>(execute_command("commit", command_arguments));
 	}
 
 	execute_command_result git_wrapper::execute_command(const std::string& command, const std::vector<std::string>& arguments) const
@@ -565,6 +498,11 @@ namespace vt::git
 
 		for (const auto& arg : arguments)
 		{
+			if (arg.empty())
+			{
+				continue;
+			}
+
 			process_args.push_back(arg.c_str());
 		}
 
