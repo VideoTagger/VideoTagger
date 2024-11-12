@@ -367,4 +367,57 @@ namespace vt::widgets
 		}
 		return ImGui::IsMouseReleased(mouse_button) and valid;
 	}
+
+    void color_indicator(float thickness, uint32_t color)
+    {
+		auto& style = ImGui::GetStyle();
+		float sz = ImGui::GetTextLineHeight();
+		auto* window = ImGui::GetCurrentWindow();
+		const ImRect rect{ window->DC.CursorPos, window->DC.CursorPos + ImVec2{ thickness, sz + style.FramePadding.y * 2.0f } };
+		ImGui::Dummy(ImVec2{ thickness - style.ItemSpacing.x, sz });
+
+		ImGui::RenderFrame(rect.Min, rect.Max, color, false, style.FrameRounding);
+    }
+
+	bool begin_collapsible(const std::string& id, const std::string& label, ImGuiTreeNodeFlags flags, const char* icon, const std::optional<ImVec4>& icon_color, const std::function<void(void)>& on_dragdrop)
+	{
+		const auto& style = ImGui::GetStyle();
+		flags |= ImGuiTreeNodeFlags_Framed | ImGuiTreeNodeFlags_SpanFullWidth | ImGuiTreeNodeFlags_FramePadding | ImGuiTreeNodeFlags_ClipLabelForTrailingButton;
+
+		ImGui::BeginGroup();
+		if (icon != nullptr)
+		{
+			ImGui::SetCursorPosX(ImGui::GetCursorPosX() + style.ItemSpacing.x * 0.5f);
+			ImGui::AlignTextToFramePadding();
+			ImGui::TextColored(icon_color.has_value() ? icon_color.value() : style.Colors[ImGuiCol_Text], icon);
+			ImGui::SameLine();
+		}
+
+		ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2{});
+		ImGui::PushStyleColor(ImGuiCol_Text, ImVec4{});
+		bool node_open = ImGui::TreeNodeEx(id.c_str(), flags);
+		ImGui::PopStyleColor();
+		ImGui::PopStyleVar();
+
+		if (on_dragdrop != nullptr)
+		{
+			on_dragdrop();
+		}
+
+		auto suffix_icon = node_open ? icons::expand_less : icons::expand_more;
+
+		ImGui::SameLine(ImGui::GetTreeNodeToLabelSpacing());
+		ImGui::TextUnformatted(label.c_str());
+		ImGui::SameLine(ImGui::GetContentRegionMax().x - style.ItemSpacing.x - ImGui::CalcTextSize(suffix_icon).x);
+		ImGui::TextUnformatted(suffix_icon);
+		ImGui::Unindent();
+		ImGui::EndGroup();
+		return node_open;
+	}
+
+	void end_collapsible()
+	{
+		ImGui::Indent();
+		ImGui::TreePop();
+	}
 }

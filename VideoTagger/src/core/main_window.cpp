@@ -938,7 +938,6 @@ namespace vt
 
 							}
 
-							ImGui::Separator();
 							if (ImGui::MenuItem("Export Tags"))
 							{
 								utils::dialog_filter filter{ "VideoTagger Tags", "vttags" };
@@ -951,6 +950,7 @@ namespace vt
 									utils::json::write_to_file(json, result.path);
 								}
 							}
+							ImGui::Separator();
 							if (ImGui::MenuItem("Export Segments", nullptr, nullptr, ctx_.current_video_group_id() != invalid_video_group_id))
 							{
 								const auto& group_name = ctx_.current_project->video_groups.at(ctx_.current_video_group_id()).display_name;
@@ -1646,7 +1646,7 @@ namespace vt
 			auto main_dock_up_left = ImGui::DockBuilderSplitNode(main_dock_up, ImGuiDir_Left, 0.25f, nullptr, &main_dock_up);
 			auto main_dock_down = ImGui::DockBuilderSplitNode(main_dock_up, ImGuiDir_Down, 0.25f, nullptr, &main_dock_up);
 			auto dock_right_up = ImGui::DockBuilderSplitNode(main_dock_right, ImGuiDir_Up, 0.5f, nullptr, &main_dock_right);
-			ImGui::DockBuilderDockWindow("Inspector", dock_right_up);
+			ImGui::DockBuilderDockWindow(widgets::inspector_id.c_str(), dock_right_up);
 			ImGui::DockBuilderDockWindow("Tag Manager", main_dock_right);
 			ImGui::DockBuilderDockWindow("Group Queue", main_dock_down);
 			ImGui::DockBuilderDockWindow("Video Player", main_dock_up);

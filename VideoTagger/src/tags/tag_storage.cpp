@@ -5,7 +5,7 @@ namespace vt
 {
     std::pair<tag_storage::iterator, bool> tag_storage::insert(const tag& tag)
     {
-		return insert(tag.name, tag.color);
+		return tags_.try_emplace(tag.name, tag);
     }
 
     std::pair<tag_storage::iterator, bool> tag_storage::insert(const std::string& name, uint32_t color)

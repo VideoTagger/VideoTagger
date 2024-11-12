@@ -9,13 +9,15 @@
 #include <core/debug.hpp>
 
 #include "video_timeline.hpp"
+#include <core/app_context.hpp>
 
 namespace vt::widgets
 {
 	bool inspector(std::optional<selected_segment_data>& selected_segment, std::optional<moving_segment_data>& moving_segment, bool& link_start_end, bool& dirty_flag, bool* open, uint64_t min_timestamp, uint64_t max_timestamp)
 	{
 		bool result{};
-		if (ImGui::Begin("Inspector", open, ImGuiWindowFlags_NoCollapse))
+		
+		if (ImGui::Begin(inspector_id.c_str(), open, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse) and ImGui::BeginChild("##ScrollableInspector", ImGui::GetContentRegionAvail()))
 		{
 			if (selected_segment.has_value())
 			{
@@ -36,89 +38,97 @@ namespace vt::widgets
 				bool modified_timestamp = false;
 				uint8_t grab_part{};
 				timestamp grab_position;
+				const auto& style = ImGui::GetStyle();
 
-				if (ImGui::CollapsingHeader("Properties", ImGuiTreeNodeFlags_DefaultOpen))
+				if (begin_collapsible("##Properties", "Properties", ImGuiTreeNodeFlags_DefaultOpen, icons::property))
 				{
-					ImGui::Columns(2);
-					ImGui::Indent();
-					ImGui::Text("Timestamp");
-					ImGui::Unindent();
-					ImGui::NextColumn();
-					switch (ts->type())
+					ImGui::PushStyleColor(ImGuiCol_TableRowBg, style.Colors[ImGuiCol_MenuBarBg]);
+					if (ImGui::BeginTable("##Background", 1, ImGuiTableFlags_RowBg))
 					{
-						case tag_segment_type::timestamp:
+						ImGui::TableNextColumn();
+						ImGui::AlignTextToFramePadding();
+						ImGui::Columns(2);
+						ImGui::Text("Timestamp");
+						ImGui::NextColumn();
+						switch (ts->type())
 						{
-							modified_timestamp = timestamp_control("Point", ts_start, min_timestamp, max_timestamp, &started_editing, &finished_editing);
-							ts_end = ts_start;
-							grab_part = 0b11;
-							grab_position = ts_start;
-						}
-						break;
-						case tag_segment_type::segment:
-						{
-							timestamp prev_ts_start = ts_start;
-							timestamp prev_ts_end = ts_end;
-
-							uint64_t start_max = link_start_end ? max_timestamp : std::max<uint64_t>(0, ts_end.seconds_total.count() - 1);
-							uint64_t end_min = link_start_end ? min_timestamp : ts_start.seconds_total.count() + 1;
-
-							//ImGui::Columns(2, nullptr, false);
-							bool start_activated = false;
-							bool start_released = false;
-							bool modified_start = timestamp_control("Start", ts_start, min_timestamp, start_max, &start_activated, &start_released);
-							//ImGui::NextColumn();
-							bool end_activated = false;
-							bool end_released = false;
-							bool modified_end = timestamp_control("End", ts_end, end_min, max_timestamp, &end_activated, &end_released);
-							
-							std::string name = icons::link + std::string("##LinkTimestamps");
-							if (icon_toggle_button(name.c_str(), link_start_end))
+							case tag_segment_type::timestamp:
 							{
-								link_start_end = !link_start_end;
-							}
-
-							if (link_start_end)
-							{
-								if (modified_start)
-								{
-									ts_end += ts_start - prev_ts_start;
-								}
-								else if (modified_end)
-								{
-									ts_start += ts_end - prev_ts_end;
-								}
-							}
-
-							if (ts_start > ts_end)
-							{
-								std::swap(ts_start, ts_end);
-							}
-							
-							if (ts_start < timestamp::zero())
-							{
-								timestamp move_value = timestamp(std::abs(ts_start.seconds_total.count()));
-								ts_start += move_value;
-								ts_end += move_value;
-							}
-
-							modified_timestamp = modified_start or modified_end;
-							started_editing = start_activated or end_activated;
-							finished_editing = start_released or end_released;
-
-							if (start_activated)
-							{
-								grab_part |= 0b01;
+								modified_timestamp = timestamp_control("Point", ts_start, min_timestamp, max_timestamp, &started_editing, &finished_editing);
+								ts_end = ts_start;
+								grab_part = 0b11;
 								grab_position = ts_start;
 							}
-							if (end_activated)
+							break;
+							case tag_segment_type::segment:
 							{
-								grab_part |= 0b10;
-								grab_position = ts_end;
+								timestamp prev_ts_start = ts_start;
+								timestamp prev_ts_end = ts_end;
+
+								uint64_t start_max = link_start_end ? max_timestamp : std::max<uint64_t>(0, ts_end.seconds_total.count() - 1);
+								uint64_t end_min = link_start_end ? min_timestamp : ts_start.seconds_total.count() + 1;
+
+								//ImGui::Columns(2, nullptr, false);
+								bool start_activated = false;
+								bool start_released = false;
+								bool modified_start = timestamp_control("Start", ts_start, min_timestamp, start_max, &start_activated, &start_released);
+								//ImGui::NextColumn();
+								bool end_activated = false;
+								bool end_released = false;
+								bool modified_end = timestamp_control("End", ts_end, end_min, max_timestamp, &end_activated, &end_released);
+
+								std::string name = icons::link + std::string("##LinkTimestamps");
+								if (icon_toggle_button(name.c_str(), link_start_end))
+								{
+									link_start_end = !link_start_end;
+								}
+
+								if (link_start_end)
+								{
+									if (modified_start)
+									{
+										ts_end += ts_start - prev_ts_start;
+									}
+									else if (modified_end)
+									{
+										ts_start += ts_end - prev_ts_end;
+									}
+								}
+
+								if (ts_start > ts_end)
+								{
+									std::swap(ts_start, ts_end);
+								}
+
+								if (ts_start < timestamp::zero())
+								{
+									timestamp move_value = timestamp(std::abs(ts_start.seconds_total.count()));
+									ts_start += move_value;
+									ts_end += move_value;
+								}
+
+								modified_timestamp = modified_start or modified_end;
+								started_editing = start_activated or end_activated;
+								finished_editing = start_released or end_released;
+
+								if (start_activated)
+								{
+									grab_part |= 0b01;
+									grab_position = ts_start;
+								}
+								if (end_activated)
+								{
+									grab_part |= 0b10;
+									grab_position = ts_end;
+								}
 							}
+							break;
 						}
-						break;
+						ImGui::Columns();
+						ImGui::EndTable();
 					}
-					ImGui::Columns();
+					ImGui::PopStyleColor();
+					end_collapsible();
 				}
 
 				if (started_editing)
@@ -185,11 +195,76 @@ namespace vt::widgets
 					}
 					moving_segment.reset();
 				}
+
+				if (ctx_.current_video_group_id() != invalid_video_group_id and !selected_segment->tag->attributes.empty() and begin_collapsible("##Attributes", "Attributes", ImGuiTreeNodeFlags_DefaultOpen, icons::attribute))
+				{
+					ImGui::PushStyleColor(ImGuiCol_TableRowBg, style.Colors[ImGuiCol_MenuBarBg]);
+					if (ImGui::BeginTable("##Background", 1, ImGuiTableFlags_RowBg))
+					{
+						ImGui::TableNextColumn();
+						ImGui::Columns(2);
+						{
+							int i{};
+							for (auto& [name, attr] : selected_segment->tag->attributes)
+							{
+								ImGui::PushID(i++);
+								color_indicator(3.f, tag_attribute::type_color(attr.type_));
+								ImGui::SameLine(style.ItemSpacing.x);
+								//ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
+								//ImGui::InputText("##AttributeName", (std::string*)&name, ImGuiInputTextFlags_ReadOnly);
+								ImGui::AlignTextToFramePadding();
+								ImGui::TextUnformatted(name.c_str());
+								ImGui::NextColumn();
+
+								auto& attr_inst = selected_segment->segment_it->attributes[name].value_;
+								switch (attr.type_)
+								{
+									case tag_attribute::type::bool_:
+									{
+										if (!std::holds_alternative<bool>(attr_inst)) attr_inst = bool{};
+										auto& v = std::get<bool>(attr_inst);
+										ImGui::Checkbox("##AttributeCheckbox", &v);
+									}
+									break;
+									case tag_attribute::type::float_:
+									{
+										if (!std::holds_alternative<double>(attr_inst)) attr_inst = double{};
+										auto& v = std::get<double>(attr_inst);
+										ImGui::DragScalar("##AttributeFloat", ImGuiDataType_Double, &v, 1.f, nullptr, nullptr, "%g", ImGuiSliderFlags_AlwaysClamp | ImGuiSliderFlags_NoRoundToFormat);
+									}
+									break;
+									case tag_attribute::type::integer:
+									{
+										if (!std::holds_alternative<int64_t>(attr_inst)) attr_inst = int64_t{};
+										auto& v = std::get<int64_t>(attr_inst);
+										ImGui::DragScalar("##AttributeInt", ImGuiDataType_S64, &v, 1.f, nullptr, nullptr, nullptr, ImGuiSliderFlags_AlwaysClamp | ImGuiSliderFlags_NoRoundToFormat);
+									}
+									break;
+									case tag_attribute::type::string:
+									{
+										if (!std::holds_alternative<std::string>(attr_inst)) attr_inst = std::string{};
+										auto& v = std::get<std::string>(attr_inst);
+										ImGui::InputTextWithHint("##AttributeString", "Empty", &v);
+									}
+									break;
+								}
+								ImGui::NextColumn();
+
+								ImGui::PopID();
+							}
+						}
+						ImGui::Columns();
+						ImGui::EndTable();
+					}
+					ImGui::PopStyleColor();
+					end_collapsible();
+				}
 			}
 			else
 			{
 				centered_text("Select a segment to display its properties...", ImGui::GetContentRegionMax());
 			}
+			ImGui::EndChild();
 		}
 		ImGui::End();
 
