@@ -12,13 +12,52 @@ namespace vt
 		{
 			bool_,
 			float_,
-			int_,
+			integer,
 			string
 		} type_;
-	};
 
-	static constexpr const char* tag_attribute_types_str[] = { "bool", "float", "int", "string" };
-	static constexpr size_t tag_attribute_type_count = sizeof(tag_attribute_types_str) / sizeof(tag_attribute_types_str[0]);
+		static constexpr const char* type_str(tag_attribute::type type)
+		{
+			switch (type)
+			{
+				case tag_attribute::type::bool_: return "bool";
+				case tag_attribute::type::float_: return "float";
+				case tag_attribute::type::integer: return "integer";
+				case tag_attribute::type::string: return "string";
+			}
+			return "";
+		}
+
+		static constexpr uint32_t type_color(tag_attribute::type type)
+		{
+			switch (type)
+			{
+				case tag_attribute::type::bool_: return 0xFF000092;
+				case tag_attribute::type::float_: return 0xFF32C94C;
+				case tag_attribute::type::integer: return 0xFFC49B4E;
+				case tag_attribute::type::string: return 0xFF3F7C46;
+			}
+			return 0;
+		}
+
+		static std::optional<tag_attribute::type> parse(const std::string& input)
+		{
+			if (input == type_str(tag_attribute::type::bool_)) return tag_attribute::type::bool_;
+			else if (input == type_str(tag_attribute::type::float_)) return tag_attribute::type::float_;
+			else if (input == type_str(tag_attribute::type::integer)) return tag_attribute::type::integer;
+			else if (input == type_str(tag_attribute::type::string)) return tag_attribute::type::string;
+			return std::nullopt;
+		}
+
+		static constexpr const char* types_str[]
+		{
+			"bool",
+			"float",
+			"integer",
+			"string",
+		};
+		static constexpr size_t type_count = sizeof(types_str) / sizeof(types_str[0]);
+	};
 
 	struct tag
 	{
@@ -40,27 +79,6 @@ namespace vt
 		return !(lhs == rhs);
 	}
 
-	inline std::string tag_attribute_type_str(tag_attribute::type type)
-	{
-		switch (type)
-		{
-			case tag_attribute::type::bool_: return "bool";
-			case tag_attribute::type::float_: return "float";
-			case tag_attribute::type::int_: return "int";
-			case tag_attribute::type::string: return "string";
-		}
-		return "";
-	}
-
-	inline std::optional<tag_attribute::type> str_to_tag_attribute(const std::string& input)
-	{
-		if (input == "bool") return tag_attribute::type::bool_;
-		else if (input == "float") return tag_attribute::type::float_;
-		else if (input == "int") return tag_attribute::type::int_;
-		else if (input == "string") return tag_attribute::type::string;
-		return std::nullopt;
-	}
-
 	inline void to_json(nlohmann::ordered_json& json, const tag& t)
 	{
 		json["name"] = t.name;
@@ -71,7 +89,7 @@ namespace vt
 		{
 			nlohmann::ordered_json json_attr;
 			json_attr["name"] = name;
-			json_attr["type"] = tag_attribute_type_str(attr.type_);			
+			json_attr["type"] = tag_attribute::type_str(attr.type_);			
 			json_attributes.push_back(json_attr);
 		}
 		json["attributes"] = json_attributes;
@@ -94,7 +112,7 @@ namespace vt
 			for (const auto& attr_data : json["attributes"])
 			{
 				if (!attr_data.contains("name") or !attr_data.contains("type")) continue;
-				auto type = str_to_tag_attribute(attr_data["type"].get<std::string>());
+				auto type = tag_attribute::parse(attr_data["type"].get<std::string>());
 				if (!type.has_value()) continue;
 				t.attributes.emplace(attr_data["name"].get<std::string>(), tag_attribute{ type.value() });
 			}

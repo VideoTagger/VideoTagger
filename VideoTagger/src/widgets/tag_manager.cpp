@@ -126,8 +126,6 @@ namespace vt::widgets
 		if (ImGui::BeginPopupModal(id.c_str(), nullptr, flags))
 		{
 			ImGui::Text("Are you sure you want to rename the tag \"%s\" to \"%s\"?", data.old_name.c_str(), data.new_name.c_str());
-			//TODO: CHANGE THIS
-			//ImGui::TextDisabled("ONE SHALL NOT PERFORM SUCH ACTION CARELESSLY FOR IT COULD BRING DIRE CONSEQUENCES");
 			ImGui::NewLine();
 			auto area_size = ImGui::GetWindowSize();
 
@@ -261,6 +259,7 @@ namespace vt::widgets
 				ImGui::TableNextColumn();
 				ImGui::AlignTextToFramePadding();
 				ImGui::TextUnformatted("Name");
+
 				ImGui::TableNextColumn();
 				ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
 				ImGui::InputTextWithHint("##TagAttributePopupName", "Attribute Name...", &attribute_name);
@@ -269,9 +268,10 @@ namespace vt::widgets
 				ImGui::TableNextColumn();
 				ImGui::AlignTextToFramePadding();
 				ImGui::TextUnformatted("Type");
+				
 				ImGui::TableNextColumn();
 				ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
-				if (ImGui::Combo("##TagAttributePopupType", &current_type, tag_attribute_types_str, (int)tag_attribute_type_count))
+				if (ImGui::Combo("##TagAttributePopupType", &current_type, tag_attribute::types_str, (int)tag_attribute::type_count))
 				{
 					attribute.type_ = (tag_attribute::type)current_type;
 				}
@@ -316,6 +316,8 @@ namespace vt::widgets
 		ImGui::PushID(&attr);
 		ImGui::TableNextColumn();
 		ImGui::BeginGroup();
+		color_indicator(3.f, tag_attribute::type_color(attr.type_));
+		ImGui::SameLine();
 		ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
 		std::string new_name = name;
 		if (ImGui::InputText("##TagAttributeName", &new_name, ImGuiInputTextFlags_AutoSelectAll | ImGuiInputTextFlags_EnterReturnsTrue))
@@ -326,10 +328,19 @@ namespace vt::widgets
 
 		int current_type = (int)attr.type_;
 		ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
-		if (ImGui::Combo("##TagAttributeType", &current_type, tag_attribute_types_str, (int)tag_attribute_type_count))
+		if (ImGui::Combo("##TagAttributeType", &current_type, tag_attribute::types_str, (int)tag_attribute::type_count))
 		{
 			on_type_change((tag_attribute::type)current_type);
 		}
+
+		switch (attr.type_)
+		{
+			case tag_attribute::type::bool_: tooltip("Value: true/false"); break;
+			case tag_attribute::type::float_: tooltip("Value: Float (64 bit)"); break;
+			case tag_attribute::type::integer: tooltip("Value: Integer (64 bit)"); break;
+			case tag_attribute::type::string: tooltip("Value: Text"); break;			
+		}
+
 		ImGui::EndGroup();
 		if (ImGui::BeginPopupContextItem("##TagAttributeCtxMenu"))
 		{
@@ -362,7 +373,6 @@ namespace vt::widgets
 		bool update_state = false;
 
 
-		if (true /*ImGui::BeginTable("##TagManager", 2)*/)
 		{
 			static constexpr float tag_column_width = 100;
 
@@ -414,8 +424,6 @@ namespace vt::widgets
 				size_t filter_passes{};
 				static auto color_ref = tags.end();
 				int id{};
-
-				auto node_flags = ImGuiTreeNodeFlags_Framed | ImGuiTreeNodeFlags_SpanFullWidth;
 				
 				static std::string tag_name;
 
@@ -451,13 +459,7 @@ namespace vt::widgets
 						break;
 					}
 					*/
-					auto color = ImGui::ColorConvertU32ToFloat4(tag.color);
-					ImGui::SetCursorPosX(ImGui::GetCursorPosX() + style.ItemSpacing.x * 0.5f);
-					ImGui::AlignTextToFramePadding();
-					ImGui::TextColored(color, icons::label);
-					ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2{});
-					ImGui::SameLine();
-					
+					auto color = ImGui::ColorConvertU32ToFloat4(tag.color);					
 					bool open_color_picker = false;
 
 					if (update_all)
@@ -466,19 +468,18 @@ namespace vt::widgets
 					}
 
 					//A bit of a hack to not render the arrow
-					ImGui::PushStyleColor(ImGuiCol_Text, ImVec4{});
-					bool node_open = ImGui::TreeNodeEx("##TagManagerNode", node_flags);
-					ImGui::PopStyleColor();
-					ImGui::PopStyleVar();
-
-					if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_SourceNoHoldToOpenOthers))
+					bool node_open = begin_collapsible("##TagManagerNode", tag.name, 0, icons::label, color,
+					[&color, &tag]()
 					{
-						utils::drag_drop::set_payload("Tag", tag.name.c_str());
-						ImGui::TextColored(color, icons::label);
-						ImGui::SameLine();
-						ImGui::TextUnformatted(tag.name.c_str());
-						ImGui::EndDragDropSource();
-					}
+						if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_SourceNoHoldToOpenOthers))
+						{
+							utils::drag_drop::set_payload("Tag", tag.name.c_str());
+							ImGui::TextColored(color, icons::label);
+							ImGui::SameLine();
+							ImGui::TextUnformatted(tag.name.c_str());
+							ImGui::EndDragDropSource();
+						}
+					});					
 
 					if (ImGui::BeginPopupContextItem("##TagCtxMenu"))
 					{
@@ -498,16 +499,8 @@ namespace vt::widgets
 						ImGui::OpenPopup("##TagCtxMenu");
 					}
 
-					auto icon = node_open ? icons::expand_less : icons::expand_more;
-
-					ImGui::SameLine(ImGui::GetTreeNodeToLabelSpacing());
-					ImGui::TextUnformatted(tag.name.c_str());
-					ImGui::SameLine(ImGui::GetContentRegionMax().x - style.ItemSpacing.x - ImGui::CalcTextSize(icon).x);
-					ImGui::TextUnformatted(icon);
-
 					if (node_open)
 					{
-						ImGui::Unindent();
 						ImGui::PushStyleColor(ImGuiCol_TableRowBg, style.Colors[ImGuiCol_MenuBarBg]);
 						if (ImGui::BeginTable("##Background", 1, ImGuiTableFlags_RowBg))
 						{
@@ -543,6 +536,9 @@ namespace vt::widgets
 								static constexpr float table_border_size = 1.f; //FIXME: This is currently hardcoded in ImGui, change this when ImGui uses different border size
 								if (ImGui::BeginTable("##Attributes", 2, ImGuiTableFlags_BordersOuter, { ImGui::GetContentRegionAvail().x - table_border_size, 0 }))
 								{
+									ImGui::TableSetupColumn("Name");
+									ImGui::TableSetupColumn("Type");
+
 									ImGui::TableNextColumn();
 									if (icon_button(icons::add))
 									{
@@ -552,6 +548,12 @@ namespace vt::widgets
 									ImGui::AlignTextToFramePadding();
 									ImGui::TextUnformatted("Attributes");
 
+									if (!tag.attributes.empty())
+									{
+										ImGui::BeginDisabled();
+										ImGui::TableHeadersRow();
+										ImGui::EndDisabled();
+									}
 									std::string new_name_candidate;
 									std::string new_name;
 									for (auto it = tag.attributes.begin(); it != tag.attributes.end();)
@@ -595,8 +597,7 @@ namespace vt::widgets
 							ImGui::EndTable();
 						}		
 						ImGui::PopStyleColor();
-						ImGui::Indent();
-						ImGui::TreePop();
+						end_collapsible();
 					}
 
 					static std::string attribute_name_buf;
