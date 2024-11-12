@@ -11,6 +11,7 @@
 #include <utils/time.hpp>
 #include <utils/timestamp.hpp>
 #include <utils/iterator_range.hpp>
+#include <tags/tag.hpp>
 
 namespace vt
 {
@@ -25,6 +26,8 @@ namespace vt
 	{
 		timestamp start{};
 		timestamp end{};
+
+		mutable std::unordered_map<std::string, tag_attribute_instance> attributes;
 
 		tag_segment(timestamp time_start, timestamp time_end);
 		tag_segment(timestamp time_point);

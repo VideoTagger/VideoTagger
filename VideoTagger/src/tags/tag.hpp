@@ -2,7 +2,9 @@
 #include <string>
 #include <cstdint>
 #include <map>
+#include <variant>
 #include <utils/json.hpp>
+#include <utils/color.hpp>
 
 namespace vt
 {
@@ -57,6 +59,11 @@ namespace vt
 			"string",
 		};
 		static constexpr size_t type_count = sizeof(types_str) / sizeof(types_str[0]);
+	};
+
+	struct tag_attribute_instance
+	{
+		std::variant<bool, double, int64_t, std::string> value_;
 	};
 
 	struct tag

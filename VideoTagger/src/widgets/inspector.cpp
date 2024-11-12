@@ -9,6 +9,7 @@
 #include <core/debug.hpp>
 
 #include "video_timeline.hpp"
+#include <core/app_context.hpp>
 
 namespace vt::widgets
 {
@@ -195,7 +196,7 @@ namespace vt::widgets
 					moving_segment.reset();
 				}
 
-				if (!selected_segment->tag->attributes.empty() and begin_collapsible("##Attributes", "Attributes", ImGuiTreeNodeFlags_DefaultOpen, icons::attribute))
+				if (ctx_.current_video_group_id() != invalid_video_group_id and !selected_segment->tag->attributes.empty() and begin_collapsible("##Attributes", "Attributes", ImGuiTreeNodeFlags_DefaultOpen, icons::attribute))
 				{
 					ImGui::PushStyleColor(ImGuiCol_TableRowBg, style.Colors[ImGuiCol_MenuBarBg]);
 					if (ImGui::BeginTable("##Background", 1, ImGuiTableFlags_RowBg))
@@ -215,29 +216,34 @@ namespace vt::widgets
 								ImGui::TextUnformatted(name.c_str());
 								ImGui::NextColumn();
 
+								auto& attr_inst = selected_segment->segment_it->attributes[name].value_;
 								switch (attr.type_)
 								{
 									case tag_attribute::type::bool_:
 									{
-										bool v = true;
+										if (!std::holds_alternative<bool>(attr_inst)) attr_inst = bool{};
+										auto& v = std::get<bool>(attr_inst);
 										ImGui::Checkbox("##AttributeCheckbox", &v);
 									}
 									break;
 									case tag_attribute::type::float_:
 									{
-										double v = 0.5;
+										if (!std::holds_alternative<double>(attr_inst)) attr_inst = double{};
+										auto& v = std::get<double>(attr_inst);
 										ImGui::DragScalar("##AttributeFloat", ImGuiDataType_Double, &v, 1.f, nullptr, nullptr, "%g", ImGuiSliderFlags_AlwaysClamp | ImGuiSliderFlags_NoRoundToFormat);
 									}
 									break;
 									case tag_attribute::type::integer:
 									{
-										int64_t v{};
+										if (!std::holds_alternative<int64_t>(attr_inst)) attr_inst = int64_t{};
+										auto& v = std::get<int64_t>(attr_inst);
 										ImGui::DragScalar("##AttributeInt", ImGuiDataType_S64, &v, 1.f, nullptr, nullptr, nullptr, ImGuiSliderFlags_AlwaysClamp | ImGuiSliderFlags_NoRoundToFormat);
 									}
 									break;
 									case tag_attribute::type::string:
 									{
-										std::string v;
+										if (!std::holds_alternative<std::string>(attr_inst)) attr_inst = std::string{};
+										auto& v = std::get<std::string>(attr_inst);
 										ImGui::InputTextWithHint("##AttributeString", "Empty", &v);
 									}
 									break;
