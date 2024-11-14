@@ -177,13 +177,14 @@ namespace vt::widgets
 
 			ImGui::NextColumn();
 			{
-				if (icon_toggle_button(icons::play_next, ctx_.app_settings.next_video_on_end, { button_size, button_size }))
+				if (icon_toggle_button(icons::play_next, ctx_.app_settings.autoplay, { button_size, button_size }))
 				{
-					ctx_.app_settings.next_video_on_end = !ctx_.app_settings.next_video_on_end;
+					ctx_.app_settings.autoplay = !ctx_.app_settings.autoplay;
+					ctx_.settings["autoplay"] = ctx_.app_settings.autoplay;
 				}
 				if (has_child_videos)
 				{
-					tooltip(ctx_.app_settings.next_video_on_end ? "Autoplay: On" : "Autoplay: Off");
+					tooltip(ctx_.app_settings.autoplay ? "Autoplay: On" : "Autoplay: Off");
 				}
 
 				ImGui::SameLine();

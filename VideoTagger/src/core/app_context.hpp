@@ -54,7 +54,7 @@ namespace vt
 	{
 		float thumbnail_size = 45.0f;
 		bool link_start_end_segment = true;
-		bool next_video_on_end = true;
+		bool autoplay = true;
 		bool load_thumbnails = true;
 	};
 
