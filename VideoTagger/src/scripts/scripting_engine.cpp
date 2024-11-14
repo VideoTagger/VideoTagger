@@ -39,7 +39,11 @@ namespace vt
 		{
 			if (&tags == &ctx_.current_project->tags)
 			{
+				//TODO: This should be a command
 				ctx_.is_project_dirty = true;
+				ctx_.video_timeline.displayed_tags().clear();
+				ctx_.video_timeline.selected_segment = std::nullopt;
+				ctx_.video_timeline.moving_segment = std::nullopt;
 			}
 			tags.clear();
 		})
