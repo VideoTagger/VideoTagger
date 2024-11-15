@@ -44,7 +44,7 @@ namespace vt
 		}
 
 		template<typename query_type, typename... args, typename = std::enable_if_t<std::is_base_of_v<query<typename query_type::result>, query_type> and std::is_constructible_v<query_type, args&&...>>>
-		constexpr inline typename query_type::result execute(args&&... arguments)
+		constexpr inline typename query_type::result execute_query(args&&... arguments)
 		{
 			auto hash = typeid(query_type).hash_code();
 			auto it = query_handlers_.find(hash);
