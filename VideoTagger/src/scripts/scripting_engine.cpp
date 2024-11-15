@@ -182,7 +182,7 @@ namespace vt
 		sys.attr("stderr") = vt.attr("stderr_hook");
 	}
 
-	void scripting_engine::run(const std::string& script_name, const std::string& entrypoint)
+	void scripting_engine::run(const std::string& script_name)
 	{
 		ctx_.script_handle = script_handle(std::async(std::launch::async, [this, script_name]()
 		{

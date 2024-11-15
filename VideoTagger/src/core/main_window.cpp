@@ -20,6 +20,7 @@
 #include <widgets/insert_segment_popup.hpp>
 
 #include <utils/filesystem.hpp>
+#include <editor/run_script_command.hpp>
 
 namespace vt
 {
@@ -1104,8 +1105,7 @@ namespace vt
 								std::string script_menu_name = fmt::format("{} {}", icons::terminal, script_name);
 								if (ImGui::MenuItem(script_menu_name.c_str()))
 								{
-									ctx_.script_eng.run(script_name, "on_run");
-									ctx_.win_cfg.show_script_progress = true;
+									ctx_.registry.execute<run_script_command>(script_name);
 								}
 							}
 							else if (dir_entry.is_directory() and !std::filesystem::is_empty(dir_entry))

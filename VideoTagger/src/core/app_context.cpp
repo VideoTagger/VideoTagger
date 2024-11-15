@@ -2,6 +2,8 @@
 #include "app_context.hpp"
 #include <core/debug.hpp>
 
+#include <editor/run_script_command.hpp>
+
 namespace vt
 {
 	app_context::app_context()
@@ -11,7 +13,7 @@ namespace vt
 
 	void app_context::register_handlers()
 	{
-
+		registry.register_command_handler<run_script_command_handler>();
 	}
 
 	void app_context::update_current_video_group()

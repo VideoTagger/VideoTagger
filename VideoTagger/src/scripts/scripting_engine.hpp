@@ -23,6 +23,6 @@ namespace vt
 
 	public:
 		void init();
-		void run(const std::string& script_name, const std::string& entrypoint);
+		void run(const std::string& script_name);
 	};
 }
