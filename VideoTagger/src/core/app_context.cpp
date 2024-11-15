@@ -4,6 +4,16 @@
 
 namespace vt
 {
+	app_context::app_context()
+	{
+		register_handlers();
+	}
+
+	void app_context::register_handlers()
+	{
+
+	}
+
 	void app_context::update_current_video_group()
 	{
 		//TODO: needs a refactor

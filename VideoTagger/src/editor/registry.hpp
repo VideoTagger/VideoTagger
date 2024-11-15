@@ -5,7 +5,7 @@
 #include "command.hpp"
 #include "query.hpp"
 
-namespace vt::editor
+namespace vt
 {
 	struct registry
 	{
