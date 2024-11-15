@@ -316,6 +316,10 @@ namespace vt
 			{
 				ctx_.app_settings.load_thumbnails = ctx_.settings.at("load-thumbnails");
 			}
+			if (ctx_.settings.contains("autoplay"))
+			{
+				ctx_.app_settings.autoplay = ctx_.settings.at("autoplay");
+			}
 		}
 		else
 		{
@@ -838,7 +842,7 @@ namespace vt
 				return;
 			}
 
-			if (ctx_.app_settings.next_video_on_end)
+			if (ctx_.app_settings.autoplay)
 			{
 				ctx_.player.reset_data();
 

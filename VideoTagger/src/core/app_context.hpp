@@ -33,6 +33,8 @@
 #include <utils/json.hpp>
 #include <scripts/scripting_engine.hpp>
 
+#include <editor/registry.hpp>
+
 namespace vt
 {
 	enum class window_state : uint8_t
@@ -54,7 +56,7 @@ namespace vt
 	{
 		float thumbnail_size = 45.0f;
 		bool link_start_end_segment = true;
-		bool next_video_on_end = true;
+		bool autoplay = true;
 		bool load_thumbnails = true;
 	};
 
@@ -80,6 +82,8 @@ namespace vt
 
 	struct app_context
 	{
+		app_context();
+
 		std::optional<project> current_project;
 		widgets::video_timeline video_timeline;
 		widgets::project_selector project_selector;
@@ -97,6 +101,7 @@ namespace vt
 		std::filesystem::path app_settings_filepath = std::filesystem::path("settings").replace_extension("json");
 		std::filesystem::path scripts_filepath = std::filesystem::path("assets") / "scripts";
 		std::filesystem::path theme_dir_filepath = "themes";
+		registry registry;
 		nlohmann::ordered_json settings;
 		window_config win_cfg;
 		std::unordered_map<std::string, ImFont*> fonts;
@@ -122,6 +127,7 @@ namespace vt
 
 		bool pause_player = false;
 
+		void register_handlers();
 		void update_current_video_group();
 		void reset_current_video_group();
 
