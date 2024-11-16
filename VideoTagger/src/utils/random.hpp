@@ -26,12 +26,12 @@ namespace vt::utils
 				return distribution(rd);
 			}			
 		}
-		template<typename type> static type get(type max = 1.0f)
+		template<typename type> static type get(type max = 1)
 		{
 			return get<type>(0, max);
 		}
 	};
 
-	std::random_device random::rd{};
-	std::mt19937_64 random::gen = std::mt19937_64(random::rd());
+	inline std::random_device random::rd{};
+	inline std::mt19937_64 random::gen = std::mt19937_64(random::rd());
 }
