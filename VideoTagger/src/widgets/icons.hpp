@@ -46,10 +46,18 @@ namespace vt::icons
 	inline constexpr auto attribute = "\xee\xab\x93";
 	inline constexpr auto object = "\xef\x9c\xa0";
 
+	inline constexpr auto shape = "\xee\x95\xb4";
+	inline constexpr auto shape_none = "\xef\x80\xa3";
+	inline constexpr auto shape_circle = "\xee\xbd\x8a";
+	inline constexpr auto shape_rectangle = "\xee\x8f\x86";
+	inline constexpr auto shape_polygon = "\xee\xad\x90";
+	inline constexpr auto interpolate = "\xee\x9c\x9c";
+
 	inline std::vector<std::string> all
 	({
 		dots_hor, play, play_next, pause, repeat, repeat_one, shuffle, skip_next, skip_prev, fast_back, fast_fwd,
 		save, save_as, import_, import_export, exit, close, back, visibility_on, visibility_off, add, delete_, folder, folder_code, label, expand_less, expand_more,
-		toggle_less, toggle_more, link, edit, help, video_group, video, search, terminal, property, attribute, object
+		toggle_less, toggle_more, link, edit, help, video_group, video, search, terminal, property, attribute, object,
+		shape, shape_none, shape_circle, shape_rectangle, shape_polygon, interpolate
 	});
 }

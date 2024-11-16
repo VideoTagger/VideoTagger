@@ -214,6 +214,8 @@ namespace vt::widgets
 								//ImGui::InputText("##AttributeName", (std::string*)&name, ImGuiInputTextFlags_ReadOnly);
 								ImGui::AlignTextToFramePadding();
 								ImGui::TextUnformatted(name.c_str());
+								std::string var_tooltip = fmt::format("Type: {}", utils::string::to_titlecase(tag_attribute::type_str(attr.type_)));
+								tooltip(var_tooltip.c_str());
 								ImGui::NextColumn();
 
 								auto& attr_inst = selected_segment->segment_it->attributes[name].value_;
@@ -274,6 +276,62 @@ namespace vt::widgets
 										{
 											attr_inst = v;
 										}
+									}
+									break;
+									case tag_attribute::type::shape:
+									{
+										shape v{};
+										if (has_value)
+										{
+											if (!std::holds_alternative<shape>(attr_inst)) attr_inst = shape{};
+											v = std::get<shape>(attr_inst);
+										}
+										
+										const auto& shapes = shape::types;
+										ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2{});
+										float button_width = ImGui::CalcTextSize(shape::type_icon(shape::type::none)).x;
+										if (ImGui::BeginTable("##ShapeAttributeType", 2, ImGuiTableFlags_BordersOuter | ImGuiTableFlags_BordersInnerV))
+										{
+											ImGui::TableSetupColumn(nullptr, ImGuiTableColumnFlags_WidthStretch);
+											ImGui::TableSetupColumn(nullptr, ImGuiTableColumnFlags_WidthFixed);
+
+											ImGui::TableNextColumn();
+											
+											bool will_fit = (ImGui::GetContentRegionAvail().x - (button_width + 2 * style.FramePadding.x) * shapes.size() >= 0);
+											ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2{});
+											if (ImGui::BeginChild("##ScrollableShapeTypeList", { ImGui::GetContentRegionAvail().x, (will_fit ? ImGui::GetTextLineHeight() : ImGui::GetTextLineHeight() + style.ScrollbarSize) + 2.f * style.FramePadding.y }, 0, ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_NoSavedSettings))
+											{
+												for (size_t i = 0; i < shapes.size(); ++i)
+												{
+													auto type = (shape::type)i;
+													if (icon_toggle_button(fmt::format("{}", shape::type_icon(type)).c_str(), v.type_ == type))
+													{
+														v.type_ = type;
+														attr_inst = v;
+														ctx_.is_project_dirty = true;
+													}
+													std::string btn_tooltip = utils::string::to_titlecase(shape::type_str(type));
+													tooltip(btn_tooltip.c_str());
+													if (i + 1 < shapes.size())
+													{
+														ImGui::SameLine();
+													}
+												}
+												ImGui::EndChild();
+											}
+											ImGui::PopStyleVar();
+
+											ImGui::TableNextColumn();
+											if (icon_toggle_button(icons::interpolate, v.interpolate))
+											{
+												v.interpolate = !v.interpolate;
+												attr_inst = v;
+												ctx_.is_project_dirty = true;
+											}
+											tooltip(v.interpolate ? "Interpolation: On" : "Interpolation: Off");
+											ImGui::EndTable();
+										}
+										ImGui::PopStyleVar();
 									}
 									break;
 								}

@@ -7,6 +7,7 @@
 #include <utils/color.hpp>
 #include <utils/string.hpp>
 #include <charconv>
+#include "shape.hpp"
 
 namespace vt
 {
@@ -17,39 +18,42 @@ namespace vt
 			bool_,
 			float_,
 			integer,
-			string
+			string,
+			shape
 		} type_;
 
-		static constexpr const char* type_str(tag_attribute::type type)
+		static constexpr const char* type_str(type type)
 		{
 			switch (type)
 			{
-				case tag_attribute::type::bool_: return "bool";
-				case tag_attribute::type::float_: return "float";
-				case tag_attribute::type::integer: return "integer";
-				case tag_attribute::type::string: return "string";
+				case type::bool_: return "bool";
+				case type::float_: return "float";
+				case type::integer: return "integer";
+				case type::string: return "string";
+				case type::shape: return "shape";
 			}
 			return "";
 		}
 
-		static constexpr uint32_t type_color(tag_attribute::type type)
+		static constexpr uint32_t type_color(type type)
 		{
 			switch (type)
 			{
-				case tag_attribute::type::bool_: return 0xFF000092;
-				case tag_attribute::type::float_: return 0xFF32C94C;
-				case tag_attribute::type::integer: return 0xFFC49B4E;
-				case tag_attribute::type::string: return 0xFF3F7C46;
+				case type::bool_: return 0xFF000092;
+				case type::float_: return 0xFF32C94C;
+				case type::integer: return 0xFFC49B4E;
+				case type::string: return 0xFF3F7C46;
+				case type::shape: return 0xFF0097FF;
 			}
 			return 0;
 		}
 
-		static std::optional<tag_attribute::type> parse(const std::string& input)
+		static std::optional<type> parse(const std::string& input)
 		{
-			if (input == type_str(tag_attribute::type::bool_)) return tag_attribute::type::bool_;
-			else if (input == type_str(tag_attribute::type::float_)) return tag_attribute::type::float_;
-			else if (input == type_str(tag_attribute::type::integer)) return tag_attribute::type::integer;
-			else if (input == type_str(tag_attribute::type::string)) return tag_attribute::type::string;
+			for (const auto& type : types)
+			{
+				if (input == type_str(type)) return type;
+			}
 			return std::nullopt;
 		}
 
@@ -59,13 +63,16 @@ namespace vt
 			"float",
 			"integer",
 			"string",
+			"shape"
 		};
+
+		static constexpr auto types = { type::bool_, type::float_, type::integer, type::string, type::shape };
 		static constexpr size_t type_count = sizeof(types_str) / sizeof(types_str[0]);
 	};
 
 	struct tag_attribute_instance
 	{
-		std::variant<std::monostate, bool, double, int64_t, std::string> value_;
+		std::variant<std::monostate, bool, double, int64_t, std::string, shape> value_;
 	};
 
 	inline void from_json(const nlohmann::ordered_json& json, tag_attribute_instance& attribute, tag_attribute::type type)
@@ -76,6 +83,7 @@ namespace vt
 			case tag_attribute::type::float_: { attribute = { json.get<double>() }; } break;
 			case tag_attribute::type::integer: { attribute = { json.get<int64_t>() }; } break;
 			case tag_attribute::type::string: { attribute = { json.get<std::string>() }; } break;
+			case tag_attribute::type::shape: { attribute = { json.get<shape>() }; } break;
 		}
 	}
 
