@@ -21,6 +21,10 @@ namespace vt::widgets
 		ImGui::PushStyleColor(ImGuiCol_Button, ImVec4{});
 		bool result = ImGui::Button(label, size);
 		ImGui::PopStyleColor();
+		if (!is_item_disabled() and ImGui::IsItemHovered())
+		{
+			ImGui::SetMouseCursor(ImGuiMouseCursor_Hand);
+		}
 		return result;
 	}
 
@@ -38,6 +42,10 @@ namespace vt::widgets
 		if (!is_toggled) ImGui::PushStyleColor(ImGuiCol_Text, ImGui::GetStyleColorVec4(ImGuiCol_TextDisabled));
 		bool result = icon_button(label, size);
 		if (!is_toggled) ImGui::PopStyleColor();
+		if (!is_item_disabled() and ImGui::IsItemHovered())
+		{
+			ImGui::SetMouseCursor(ImGuiMouseCursor_Hand);
+		}
 		return result;
 	}
 
@@ -412,6 +420,7 @@ namespace vt::widgets
 		ImGui::TextUnformatted(suffix_icon);
 		ImGui::Unindent();
 		ImGui::EndGroup();
+
 		return node_open;
 	}
 
@@ -419,5 +428,11 @@ namespace vt::widgets
 	{
 		ImGui::Indent();
 		ImGui::TreePop();
+	}
+
+	bool is_item_disabled()
+	{
+		ImGuiContext& g = *GImGui;
+		return (g.CurrentItemFlags & ImGuiItemFlags_Disabled) != 0;
 	}
 }

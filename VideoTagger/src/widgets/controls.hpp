@@ -36,4 +36,6 @@ namespace vt::widgets
 	extern void color_indicator(float thickness, uint32_t color);
 	extern bool begin_collapsible(const std::string& id, const std::string& label, ImGuiTreeNodeFlags flags = 0, const char* icon = nullptr, const std::optional<ImVec4>& icon_color = std::nullopt, const std::function<void(void)>& on_dragdrop = nullptr);
 	extern void end_collapsible();
+
+	extern bool is_item_disabled();
 }

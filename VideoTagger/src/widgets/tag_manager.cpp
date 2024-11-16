@@ -526,6 +526,10 @@ namespace vt::widgets
 								color_ref = it;
 								open_color_picker = true;
 							}
+							if (ImGui::IsItemHovered())
+							{
+								ImGui::SetMouseCursor(ImGuiMouseCursor_Hand);
+							}
 							ImGui::Columns();
 
 
