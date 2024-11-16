@@ -68,7 +68,7 @@ namespace vt::utils::base64
 		else throw std::runtime_error("Input is not valid base64-encoded data.");
 	}
 
-	std::vector<uint8_t> decode(const std::string& encoded_string)
+	std::vector<uint8_t> decode(std::string_view encoded_string)
 	{
 		size_t input_size = encoded_string.size();
 
