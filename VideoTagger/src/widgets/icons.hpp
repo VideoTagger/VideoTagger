@@ -28,6 +28,7 @@ namespace vt::icons
 	inline constexpr auto visibility_off = "\xee\xa3\xb5";
 	inline constexpr auto add = "\xee\x85\x85";
 	inline constexpr auto delete_ = "\xee\xa1\xb2";
+	inline constexpr auto reset = "\xef\x81\x93";
 	inline constexpr auto folder = "\xee\x8b\x87";
 	inline constexpr auto folder_code = "\xef\x8f\x88";
 	inline constexpr auto label = "\xee\xa2\x92";
@@ -56,7 +57,7 @@ namespace vt::icons
 	inline std::vector<std::string> all
 	({
 		dots_hor, play, play_next, pause, repeat, repeat_one, shuffle, skip_next, skip_prev, fast_back, fast_fwd,
-		save, save_as, import_, import_export, exit, close, back, visibility_on, visibility_off, add, delete_, folder, folder_code, label, expand_less, expand_more,
+		save, save_as, import_, import_export, exit, close, back, visibility_on, visibility_off, add, delete_, reset, folder, folder_code, label, expand_less, expand_more,
 		toggle_less, toggle_more, link, edit, help, video_group, video, search, terminal, property, attribute, object,
 		shape, shape_none, shape_circle, shape_rectangle, shape_polygon, interpolate
 	});

@@ -307,11 +307,7 @@ namespace vt::widgets
 		const auto& style = ImGui::GetStyle();
 
 		bool selected{};
-		bool row_hovered = ImGui::TableGetHoveredRow() == ImGui::TableGetRowIndex();
-		if (row_hovered)
-		{
-			ImGui::TableSetBgColor(ImGuiTableBgTarget_RowBg0, ImGui::ColorConvertFloat4ToU32(style.Colors[ImGuiCol_TableRowBgAlt]));
-		}
+		bool row_hovered = table_hovered_row_style();
 
 		ImGui::PushID(&attr);
 		ImGui::TableNextColumn();
@@ -335,10 +331,25 @@ namespace vt::widgets
 
 		switch (attr.type_)
 		{
-			case tag_attribute::type::bool_: tooltip("Value: true/false"); break;
+			case tag_attribute::type::bool_: tooltip("Value: True/False"); break;
 			case tag_attribute::type::float_: tooltip("Value: Float (64 bit)"); break;
 			case tag_attribute::type::integer: tooltip("Value: Integer (64 bit)"); break;
-			case tag_attribute::type::string: tooltip("Value: Text"); break;			
+			case tag_attribute::type::string: tooltip("Value: Text"); break;
+			case tag_attribute::type::shape:
+			{
+				std::string shapes;
+				size_t i{};
+				for (auto type : shape::types)
+				{
+					shapes += utils::string::to_titlecase(shape::type_str(type));
+					if (++i < shape::types.size())
+					{
+						shapes += "/";
+					}
+				}
+				tooltip(fmt::format("Value: {}", shapes).c_str());
+			}
+			break;
 		}
 
 		ImGui::EndGroup();
@@ -535,7 +546,7 @@ namespace vt::widgets
 
 							// Attributes
 							{
-								ImGui::Separator();								
+								ImGui::Separator();				
 
 								static constexpr float table_border_size = 1.f; //FIXME: This is currently hardcoded in ImGui, change this when ImGui uses different border size
 								if (ImGui::BeginTable("##Attributes", 2, ImGuiTableFlags_BordersOuter, { ImGui::GetContentRegionAvail().x - table_border_size, 0 }))

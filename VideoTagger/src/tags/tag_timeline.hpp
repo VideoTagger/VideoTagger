@@ -102,18 +102,18 @@ namespace vt
 		json_attributes = nlohmann::json::array();
 		for (const auto& [name, attr] : segment.attributes)
 		{
-			if (!std::holds_alternative<std::monostate>(attr.value_))
+			if (attr.has_value())
 			{
 				nlohmann::ordered_json json_attribute;
 				json_attribute["name"] = name;
 
-				std::visit([&json_attribute](const auto& value)
+				attr.visit([&json_attribute](const auto& value)
 				{
 					if constexpr (!std::is_same_v<std::monostate, std::remove_cv_t<std::remove_reference_t<decltype(value)>>>)
 					{
 						json_attribute["value"] = value;
 					}
-				}, attr.value_);
+				});
 				json_attributes.push_back(json_attribute);
 			}
 		}

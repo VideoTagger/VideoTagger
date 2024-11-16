@@ -72,7 +72,84 @@ namespace vt
 
 	struct tag_attribute_instance
 	{
-		std::variant<std::monostate, bool, double, int64_t, std::string, shape> value_;
+		using value_container = std::variant<std::monostate, bool, double, int64_t, std::string, shape>;
+
+	public:
+		tag_attribute_instance() = default;
+		tag_attribute_instance(const tag_attribute_instance& other) = default;
+		tag_attribute_instance(tag_attribute_instance&& other) = default;
+		tag_attribute_instance(const value_container& value) : value_{ value } {}
+		tag_attribute_instance(value_container&& value) : value_{ std::move(value) } {}
+
+	private:
+		value_container value_;
+
+	public:
+		void clear_value()
+		{
+			value_ = std::monostate{};
+		}
+
+		constexpr void default_construct_current()
+		{
+			visit([this](const auto& value)
+			{
+				if constexpr (!std::is_same_v<std::monostate, std::remove_cv_t<std::remove_reference_t<decltype(value)>>>)
+				{
+					value_ = typename std::remove_cv_t<std::remove_reference_t<decltype(value)>>{};
+				}
+			});
+		}
+
+		template<typename visitor_t>
+		constexpr void visit(const visitor_t& visitor)
+		{
+			std::visit(visitor, value_);
+		}
+
+		template<typename visitor_t>
+		constexpr void visit(const visitor_t& visitor) const
+		{
+			std::visit(visitor, value_);
+		}
+
+		template<typename type>
+		constexpr bool has() const
+		{
+			return std::holds_alternative<type>(value_);
+		}
+
+		template<typename type>
+		constexpr type& get()
+		{
+			return std::get<type>(value_);
+		}
+
+		constexpr bool has_value() const
+		{
+			return !has<std::monostate>();
+		}
+
+		tag_attribute_instance& operator=(const tag_attribute_instance& other)
+		{
+			value_ = other.value_;
+			return *this;
+		}
+
+		tag_attribute_instance& operator=(tag_attribute_instance&& other)
+		{
+			value_ = std::move(other.value_);
+			return *this;
+		}
+
+		template<typename type>
+		tag_attribute_instance& operator=(const type& value)
+		{
+			value_ = value;
+			return *this;
+		}
+
+		void draw(const std::string& name, const tag_attribute& attribute, bool& dirty_flag);
 	};
 
 	inline void from_json(const nlohmann::ordered_json& json, tag_attribute_instance& attribute, tag_attribute::type type)
@@ -95,6 +172,9 @@ namespace vt
 		std::map<std::string, tag_attribute> attributes;
 
 		tag(const std::string& name, uint32_t color) : name{ name }, color{ color | 0xff000000 } {}
+
+		bool draw_attributes(bool& dirty_flag, const std::function<void()>& on_add_new);
+		bool draw_attribute_instances(const struct tag_segment& selected_segment, bool& dirty_flag) const;
 	};
 
 	inline bool operator==(const tag& lhs, const tag& rhs)

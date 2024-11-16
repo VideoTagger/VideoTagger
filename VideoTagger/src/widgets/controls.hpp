@@ -38,4 +38,5 @@ namespace vt::widgets
 	extern void end_collapsible();
 
 	extern bool is_item_disabled();
+	extern bool table_hovered_row_style();
 }

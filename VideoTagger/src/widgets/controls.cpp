@@ -435,4 +435,14 @@ namespace vt::widgets
 		ImGuiContext& g = *GImGui;
 		return (g.CurrentItemFlags & ImGuiItemFlags_Disabled) != 0;
 	}
+
+	bool table_hovered_row_style()
+	{
+		bool row_hovered = ImGui::TableGetHoveredRow() == ImGui::TableGetRowIndex();
+		if (row_hovered)
+		{
+			ImGui::TableSetBgColor(ImGuiTableBgTarget_RowBg0, ImGui::ColorConvertFloat4ToU32(ImGui::GetStyleColorVec4(ImGuiCol_TableRowBgAlt)));
+		}
+		return row_hovered;
+	}
 }
