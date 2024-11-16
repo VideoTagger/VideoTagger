@@ -1,5 +1,6 @@
 #include "pch.hpp"
 #include "hash.hpp"
+#include <openssl/sha.h>
 
 namespace vt::utils::hash
 {
@@ -33,5 +34,12 @@ namespace vt::utils::hash
 			}
 		}
 		return hash;
+	}
+
+	std::vector<uint8_t> sha256(std::string_view string)
+	{
+		std::vector<uint8_t> result(SHA256_DIGEST_LENGTH, 0);
+		SHA256(reinterpret_cast<const unsigned char*>(string.data()), string.size(), result.data());
+		return result;
 	}
 }
