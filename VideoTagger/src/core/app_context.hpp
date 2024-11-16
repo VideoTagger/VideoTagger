@@ -32,6 +32,7 @@
 #include "displayed_videos_manager.hpp"
 #include <utils/json.hpp>
 #include <scripts/scripting_engine.hpp>
+#include <services/service_account_manager.hpp>
 
 #include <editor/registry.hpp>
 
@@ -82,8 +83,6 @@ namespace vt
 
 	struct app_context
 	{
-		app_context();
-
 		std::optional<project> current_project;
 		widgets::video_timeline video_timeline;
 		widgets::project_selector project_selector;
@@ -99,6 +98,7 @@ namespace vt
 
 		std::filesystem::path projects_list_filepath = std::filesystem::path("projects").replace_extension("json");
 		std::filesystem::path app_settings_filepath = std::filesystem::path("settings").replace_extension("json");
+		std::filesystem::path accounts_filepath = std::filesystem::path("accounts").replace_extension("json");
 		std::filesystem::path scripts_filepath = std::filesystem::path("assets") / "scripts";
 		std::filesystem::path theme_dir_filepath = "themes";
 		registry registry;
@@ -109,6 +109,7 @@ namespace vt
 		keybind_storage keybinds;
 		scripting_engine script_eng;
 		std::optional<script_handle> script_handle;
+		std::unordered_map<std::string, std::unique_ptr<service_account_manager>> account_managers;
 
 		displayed_videos_manager displayed_videos;
 
@@ -127,6 +128,10 @@ namespace vt
 
 		bool pause_player = false;
 
+		template<typename ServiceAccountManager>
+		void register_account_manager();
+
+		void register_account_managers();
 		void register_handlers();
 		void update_current_video_group();
 		void reset_current_video_group();
@@ -141,4 +146,10 @@ namespace vt
 	};
 
 	inline app_context ctx_;
+
+	template<typename ServiceAccountManager>
+	inline void app_context::register_account_manager()
+	{
+		account_managers[ServiceAccountManager::static_service_name] = std::make_unique<ServiceAccountManager>();
+	}
 }

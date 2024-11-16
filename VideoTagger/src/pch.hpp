@@ -35,5 +35,6 @@
 
 #define FMT_HEADER_ONLY
 #include <fmt/core.h>
+#include <fmt/ranges.h>
 #include <nfd.hpp>
 #include <utf8.h>

@@ -124,7 +124,8 @@ project "VideoTagger"
 
 		buildoptions
 		{
-			"/utf-8"
+			"/utf-8",
+			"/bigobj"
 		}
 
 	filter "system:linux"

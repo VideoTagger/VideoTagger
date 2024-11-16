@@ -1,12 +1,13 @@
 #include "pch.hpp"
 #include "app_context.hpp"
 #include <core/debug.hpp>
+#include <services/google/google_account_manager.hpp>
 
 namespace vt
 {
-	app_context::app_context()
+	void app_context::register_account_managers()
 	{
-		register_handlers();
+		register_account_manager<google_account_manager>();
 	}
 
 	void app_context::register_handlers()

@@ -93,6 +93,7 @@ namespace vt
 		init_keybinds();
 		init_player();
 		fetch_themes();
+		load_accounts();
 
 		ctx_.project_selector.load_projects_file(ctx_.projects_list_filepath);
 	}
@@ -251,6 +252,27 @@ namespace vt
 		{
 			ctx_.video_timeline.selected_segment->segments->erase(it);
 			ctx_.video_timeline.selected_segment.reset();
+		}
+	}
+
+	bool main_window::load_accounts()
+	{
+		if (!std::filesystem::exists(ctx_.accounts_filepath))
+		{
+			return false;
+		}
+
+		auto accounts_json = utils::json::load_from_file(ctx_.accounts_filepath);
+		for (auto& [service_name, service_accounts] : accounts_json.items())
+		{
+			if (ctx_.account_managers.count(service_name) == 0)
+			{
+				debug::log("Accounts file contains unsupported service: {}", service_name);
+				continue;
+			}
+
+			auto& manager = ctx_.account_managers.at(service_name);
+			manager->load(service_accounts);
 		}
 	}
 
@@ -742,6 +764,65 @@ namespace vt
 		{
 			display_keybinds_panel(ctx_.current_project->keybinds);
 		};
+
+		for (auto& [service_name, account_manager] : ctx_.account_managers)
+		{
+			options("Accounts", service_name) = [&manager = *account_manager]()
+			{
+				bool modifed_accounts = false;
+
+				std::optional<std::string> delete_name;
+				for (auto& [account_name, info] : manager.accounts())
+				{
+					manager.options_draw_account(account_name);
+
+					std::string button_id = fmt::format("Delete account##{}", account_name);
+					if (ImGui::Button(button_id.c_str()))
+					{
+						delete_name = account_name;
+					}
+					ImGui::Separator();
+				}
+				if (delete_name.has_value())
+				{
+					manager.remove_account(*delete_name);
+					modifed_accounts = true;
+				}
+
+				std::string popup_id = fmt::format("Add new {} account", manager.service_name());
+				if (ImGui::Button("Add account"))
+				{
+					ImGui::OpenPopup(popup_id.c_str());
+				}
+
+				if (ImGui::BeginPopupModal(popup_id.c_str()))
+				{
+					bool success;
+					if (manager.add_popup_draw(success))
+					{
+						if (success)
+						{
+							modifed_accounts = true;
+						}
+
+						debug::log("Add account popup success: ", success);
+						ImGui::CloseCurrentPopup();
+					}
+					ImGui::EndPopup();
+				}
+
+				if (modifed_accounts)
+				{
+					nlohmann::ordered_json accounts_json;
+					for (auto& [service_name, manager] : ctx_.account_managers)
+					{
+						accounts_json[service_name] = *manager;
+					}
+
+					utils::json::write_to_file(accounts_json, ctx_.accounts_filepath);
+				}
+			};
+		}
 		options.set_active_tab("Application Settings", "General");
 	}
 
