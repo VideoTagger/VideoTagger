@@ -217,34 +217,63 @@ namespace vt::widgets
 								ImGui::NextColumn();
 
 								auto& attr_inst = selected_segment->segment_it->attributes[name].value_;
+								bool has_value = !std::holds_alternative<std::monostate>(attr_inst);
 								switch (attr.type_)
 								{
 									case tag_attribute::type::bool_:
 									{
-										if (!std::holds_alternative<bool>(attr_inst)) attr_inst = bool{};
-										auto& v = std::get<bool>(attr_inst);
-										ImGui::Checkbox("##AttributeCheckbox", &v);
+										bool v{};
+										if (has_value)
+										{
+											if (!std::holds_alternative<bool>(attr_inst)) attr_inst = bool{};
+											v = std::get<bool>(attr_inst);
+										}
+										if (ImGui::Checkbox("##AttributeCheckbox", &v))
+										{
+											attr_inst = v;
+										}
 									}
 									break;
 									case tag_attribute::type::float_:
 									{
-										if (!std::holds_alternative<double>(attr_inst)) attr_inst = double{};
-										auto& v = std::get<double>(attr_inst);
-										ImGui::DragScalar("##AttributeFloat", ImGuiDataType_Double, &v, 1.f, nullptr, nullptr, "%g", ImGuiSliderFlags_AlwaysClamp | ImGuiSliderFlags_NoRoundToFormat);
+										double v{};
+										if (has_value)
+										{
+											if (!std::holds_alternative<double>(attr_inst)) attr_inst = double{};
+											v = std::get<double>(attr_inst);
+										}
+										if (ImGui::DragScalar("##AttributeFloat", ImGuiDataType_Double, &v, 1.f, nullptr, nullptr, "%g", ImGuiSliderFlags_AlwaysClamp | ImGuiSliderFlags_NoRoundToFormat))
+										{
+											attr_inst = v;
+										}
 									}
 									break;
 									case tag_attribute::type::integer:
 									{
-										if (!std::holds_alternative<int64_t>(attr_inst)) attr_inst = int64_t{};
-										auto& v = std::get<int64_t>(attr_inst);
-										ImGui::DragScalar("##AttributeInt", ImGuiDataType_S64, &v, 1.f, nullptr, nullptr, nullptr, ImGuiSliderFlags_AlwaysClamp | ImGuiSliderFlags_NoRoundToFormat);
+										int64_t v{};
+										if (has_value)
+										{
+											if (!std::holds_alternative<int64_t>(attr_inst)) attr_inst = int64_t{};
+											v = std::get<int64_t>(attr_inst);
+										}
+										if (ImGui::DragScalar("##AttributeInt", ImGuiDataType_S64, &v, 1.f, nullptr, nullptr, nullptr, ImGuiSliderFlags_AlwaysClamp | ImGuiSliderFlags_NoRoundToFormat))
+										{
+											attr_inst = v;
+										}
 									}
 									break;
 									case tag_attribute::type::string:
 									{
-										if (!std::holds_alternative<std::string>(attr_inst)) attr_inst = std::string{};
-										auto& v = std::get<std::string>(attr_inst);
-										ImGui::InputTextWithHint("##AttributeString", "Empty", &v);
+										std::string v{};
+										if (has_value)
+										{
+											if (!std::holds_alternative<std::string>(attr_inst)) attr_inst = std::string{};
+											v = std::get<std::string>(attr_inst);
+										}
+										if (ImGui::InputTextWithHint("##AttributeString", "Empty", &v))
+										{
+											attr_inst = v;
+										}
 									}
 									break;
 								}

@@ -11,7 +11,8 @@
 #include <utils/time.hpp>
 #include <utils/timestamp.hpp>
 #include <utils/iterator_range.hpp>
-#include <tags/tag.hpp>
+#include "tags/tag.hpp"
+#include "tag_storage.hpp"
 
 namespace vt
 {
@@ -29,8 +30,8 @@ namespace vt
 
 		mutable std::unordered_map<std::string, tag_attribute_instance> attributes;
 
-		tag_segment(timestamp time_start, timestamp time_end);
-		tag_segment(timestamp time_point);
+		tag_segment(timestamp time_start, timestamp time_end, const std::unordered_map<std::string, tag_attribute_instance>& attributes = {});
+		tag_segment(timestamp time_point, const std::unordered_map<std::string, tag_attribute_instance>& attributes = {});
 
 		void set(timestamp time_start, timestamp time_end);
 		void set(timestamp time_point);
@@ -53,8 +54,8 @@ namespace vt
 		using iterator = std::set<tag_segment, tag_timeline_set_comparator_>::iterator;
 		using reverse_iterator = std::set<tag_segment, tag_timeline_set_comparator_>::reverse_iterator;
 
-		std::pair<iterator, bool> insert(timestamp time_start, timestamp time_end);
-		std::pair<iterator, bool> insert(timestamp time_point);
+		std::pair<iterator, bool> insert(timestamp time_start, timestamp time_end, const std::unordered_map<std::string, tag_attribute_instance>& attributes = {});
+		std::pair<iterator, bool> insert(timestamp time_point, const std::unordered_map<std::string, tag_attribute_instance>& attributes = {});
 		iterator erase(iterator it);
 
 		//will invalidate it
@@ -96,6 +97,26 @@ namespace vt
 		}
 		break;
 		}
+
+		auto& json_attributes = json["attributes"];
+		json_attributes = nlohmann::json::array();
+		for (const auto& [name, attr] : segment.attributes)
+		{
+			if (!std::holds_alternative<std::monostate>(attr.value_))
+			{
+				nlohmann::ordered_json json_attribute;
+				json_attribute["name"] = name;
+
+				std::visit([&json_attribute](const auto& value)
+				{
+					if constexpr (!std::is_same_v<std::monostate, std::remove_cv_t<std::remove_reference_t<decltype(value)>>>)
+					{
+						json_attribute["value"] = value;
+					}
+				}, attr.value_);
+				json_attributes.push_back(json_attribute);
+			}
+		}
 	}
 
 	inline void to_json(nlohmann::ordered_json& json, const segment_storage& ss)
@@ -115,7 +136,7 @@ namespace vt
 		}
 	}
 
-	inline void from_json(const nlohmann::ordered_json& json, segment_storage& ss)
+	inline void from_json(const nlohmann::ordered_json& json, segment_storage& ss, const tag_storage& ts)
 	{
 		for (const auto& json_group_segments : json)
 		{
@@ -134,16 +155,39 @@ namespace vt
 			auto& tag_segments = ss[tag_name];
 			for (auto& json_tag_segments : json_group_segments["tag-segments"])
 			{
+				std::unordered_map<std::string, tag_attribute_instance> attributes;
+				if (json_tag_segments.contains("attributes"))
+				{
+					for (const auto& json_attribute : json_tag_segments["attributes"])
+					{
+						if (!json_attribute.contains("name") or !json_attribute.contains("value"))
+						{
+							debug::error("Invalid tag attribute format encountered while deserializing");
+							continue;
+						}
+						auto attribute_name = json_attribute["name"].get<std::string>();
+						auto& tag = ts[tag_name];
+						if (!tag.attributes.count(attribute_name))
+						{
+							debug::error("Tag {} doesn't exist, skipping while deserializing", attribute_name);
+							continue;
+						}
+
+						auto& attribute = attributes[attribute_name];
+						from_json(json_attribute["value"], attribute, tag.attributes.at(attribute_name).type_);
+					}
+				}
+
 				if (json_tag_segments.contains("timestamp"))
 				{
 					auto ts = utils::time::parse_time_to_sec(json_tag_segments["timestamp"]);
-					tag_segments.insert(vt::timestamp{ ts });
+					tag_segments.insert(vt::timestamp{ ts }, attributes);
 				}
 				else if (json_tag_segments.contains("start") and json_tag_segments.contains("end"))
 				{
 					auto start = utils::time::parse_time_to_sec(json_tag_segments["start"]);
 					auto end = utils::time::parse_time_to_sec(json_tag_segments["end"]);
-					tag_segments.insert(vt::timestamp{ start }, vt::timestamp{ end });
+					tag_segments.insert(vt::timestamp{ start }, vt::timestamp{ end }, attributes);
 				}
 			}
 		}

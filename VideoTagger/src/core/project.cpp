@@ -413,7 +413,7 @@ namespace vt
 
 					video_group_id_t group_id = json_segments["group-id"];
 					auto& group_segments = result.segments[group_id];
-					group_segments = json_segments["group-segments"];
+					from_json(json_segments["group-segments"], group_segments, result.tags);
 				}
 			}
 

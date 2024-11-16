@@ -5,6 +5,8 @@
 #include <variant>
 #include <utils/json.hpp>
 #include <utils/color.hpp>
+#include <utils/string.hpp>
+#include <charconv>
 
 namespace vt
 {
@@ -63,8 +65,19 @@ namespace vt
 
 	struct tag_attribute_instance
 	{
-		std::variant<bool, double, int64_t, std::string> value_;
+		std::variant<std::monostate, bool, double, int64_t, std::string> value_;
 	};
+
+	inline void from_json(const nlohmann::ordered_json& json, tag_attribute_instance& attribute, tag_attribute::type type)
+	{
+		switch (type)
+		{
+			case tag_attribute::type::bool_: { attribute = { json.get<bool>() }; } break;
+			case tag_attribute::type::float_: { attribute = { json.get<double>() }; } break;
+			case tag_attribute::type::integer: { attribute = { json.get<int64_t>() }; } break;
+			case tag_attribute::type::string: { attribute = { json.get<std::string>() }; } break;
+		}
+	}
 
 	struct tag
 	{
