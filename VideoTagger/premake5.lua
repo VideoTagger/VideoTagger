@@ -38,6 +38,7 @@ project "VideoTagger"
 		"vendor/nlohmann/single_include",
 		"vendor/utf8",
 		"vendor/pybind11/include",
+		"vendor/cpp-httplib",
 		PythonIncludePath
 	}
 
@@ -59,6 +60,8 @@ project "VideoTagger"
 		"avutil",
 		"swscale",
 		"opengl32",
+		"libssl",
+		"libcrypto",
 		PythonLibName
 	}
 
@@ -101,19 +104,22 @@ project "VideoTagger"
 			"vendor/ffmpeg/include/libavcodec",
 			"vendor/ffmpeg/include/libavformat",
 			"vendor/ffmpeg/include/libswscale",
-			"vendor/ffmpeg/include"
+			"vendor/ffmpeg/include",
+			"vendor/openssl/include"
 		}
 
 		libdirs
 		{
 			"vendor/SDL2/lib/%{cfg.architecture}",
-			"vendor/ffmpeg/lib/%{cfg.architecture}"
+			"vendor/ffmpeg/lib/%{cfg.architecture}",
+			"vendor/openssl/lib/%{cfg.architecture}"
 		}
 
 		postbuildcommands
 		{
 			"{COPYFILE} vendor/SDL2/lib/%{cfg.architecture}/*.dll %{cfg.targetdir}",
-			"{COPYFILE} vendor/ffmpeg/lib/%{cfg.architecture}/*.dll %{cfg.targetdir}"
+			"{COPYFILE} vendor/ffmpeg/lib/%{cfg.architecture}/*.dll %{cfg.targetdir}",
+			"{COPYFILE} vendor/openssl/lib/%{cfg.architecture}/*.dll %{cfg.targetdir}"
 		}
 
 		buildoptions

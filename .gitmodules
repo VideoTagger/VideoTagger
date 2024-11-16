@@ -24,3 +24,6 @@
 	path = VideoTagger/vendor/pybind11
 	url = https://github.com/pybind/pybind11.git
 	branch = stable
+[submodule "VideoTagger/vendor/cpp-httplib"]
+	path = VideoTagger/vendor/cpp-httplib
+	url = https://github.com/yhirose/cpp-httplib.git
