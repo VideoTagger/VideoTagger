@@ -79,13 +79,13 @@ namespace vt
 		template<typename visitor_t>
 		constexpr void visit(const visitor_t& visitor)
 		{
-			std::visit(visitor, value_);
+			std::visit(visitor, data);
 		}
 
 		template<typename visitor_t>
 		constexpr void visit(const visitor_t& visitor) const
 		{
-			std::visit(visitor, value_);
+			std::visit(visitor, data);
 		}
 
 		template<typename type>
@@ -97,7 +97,7 @@ namespace vt
 		template<typename type>
 		constexpr type& get()
 		{
-			return std::get<type>(value_);
+			return std::get<type>(data);
 		}
 
 		constexpr bool has_data() const
