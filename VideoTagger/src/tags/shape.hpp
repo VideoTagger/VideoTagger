@@ -1,34 +1,33 @@
 #pragma once
 #include <string>
 #include <vector>
+#include <variant>
 #include <utils/json.hpp>
 #include <widgets/icons.hpp>
 #include <imgui.h>
+#include <core/debug.hpp>
 
 namespace vt
 {
-	namespace impl
+	struct circle
 	{
-		struct circle
-		{
-			ImVec2 pos;
-			float radius;
-		};
+		ImVec2 pos;
+		float radius = 1.f;
+	};
 
-		struct rectangle
-		{
-			ImRect rect;
-		};
+	struct rectangle
+	{
+		ImRect rect;
+	};
 
-		struct polygon
-		{
-			std::vector<ImVec2> vertices;
-		};
-	}
+	struct polygon
+	{
+		std::vector<ImVec2> vertices;
+	};
 
 	struct shape
 	{
-		using shape_data_container = std::variant<std::monostate, impl::circle, impl::rectangle, impl::polygon>;
+		using shape_data_container = std::variant<std::monostate, circle, rectangle, polygon>;
 
 		enum class type
 		{
@@ -104,6 +103,22 @@ namespace vt
 		{
 			return !has<std::monostate>();
 		}
+
+		constexpr void set_type(type type)
+		{
+			if (type_ == type) return;
+			type_ = type;
+			switch (type_)
+			{
+				case shape::type::none: data = std::monostate{}; break;
+				case shape::type::circle: data = circle{}; break;
+				case shape::type::rectangle: data = rectangle{}; break;
+				case shape::type::polygon: data = polygon{}; break;
+				default: debug::panic("Unknown shape::type"); break;
+			}
+		}
+
+		void draw_data(const ImVec2& max_size, bool& dirty_flag);
 	};
 
 	inline void to_json(nlohmann::ordered_json& json, const shape& s)

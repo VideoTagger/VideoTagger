@@ -136,9 +136,12 @@ namespace vt
 							auto type = (shape::type)i;
 							if (widgets::icon_toggle_button(fmt::format("{}", shape::type_icon(type)).c_str(), v.type_ == type))
 							{
-								v.type_ = type;
-								*this = v;
-								dirty_flag = true;
+								if (v.type_ != type)
+								{
+									v.set_type(type);
+									*this = v;
+									dirty_flag = true;
+								}
 							}
 							std::string btn_tooltip = utils::string::to_titlecase(shape::type_str(type));
 							widgets::tooltip(btn_tooltip.c_str());

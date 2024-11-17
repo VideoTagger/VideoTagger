@@ -68,19 +68,34 @@ namespace vt::widgets
 								uint64_t start_max = link_start_end ? max_timestamp : std::max<uint64_t>(0, ts_end.seconds_total.count() - 1);
 								uint64_t end_min = link_start_end ? min_timestamp : ts_start.seconds_total.count() + 1;
 
-								//ImGui::Columns(2, nullptr, false);
 								bool start_activated = false;
 								bool start_released = false;
-								bool modified_start = timestamp_control("Start", ts_start, min_timestamp, start_max, &start_activated, &start_released);
-								//ImGui::NextColumn();
 								bool end_activated = false;
 								bool end_released = false;
-								bool modified_end = timestamp_control("End", ts_end, end_min, max_timestamp, &end_activated, &end_released);
+								bool modified_start = false;
+								bool modified_end = false;
 
-								std::string name = icons::link + std::string("##LinkTimestamps");
-								if (icon_toggle_button(name.c_str(), link_start_end))
+								if (ImGui::BeginTable("##SegmentProperties", 2, ImGuiTableFlags_NoSavedSettings))
 								{
-									link_start_end = !link_start_end;
+									ImGui::TableSetupColumn(nullptr, ImGuiTableColumnFlags_WidthStretch);
+									ImGui::TableSetupColumn(nullptr, ImGuiTableColumnFlags_WidthFixed);
+
+									ImGui::TableNextColumn();
+									//ImGui::Columns(2, nullptr, false);
+									float start_y = ImGui::GetCursorPosY();
+									modified_start = timestamp_control("Start", ts_start, min_timestamp, start_max, &start_activated, &start_released);
+									//ImGui::NextColumn();
+									float end_y = ImGui::GetCursorPosY();
+									modified_end = timestamp_control("End", ts_end, end_min, max_timestamp, &end_activated, &end_released);
+									ImGui::TableNextColumn();
+									std::string name = fmt::format("{}##LinkTimestamps", icons::link);
+									
+									ImGui::SetCursorPosY(end_y - start_y + 2 * style.ItemSpacing.y + (ImGui::CalcTextSize(icons::link).y) / 2);
+									if (icon_toggle_button(name.c_str(), link_start_end))
+									{
+										link_start_end = !link_start_end;
+									}
+									ImGui::EndTable();
 								}
 
 								if (link_start_end)
