@@ -769,49 +769,44 @@ namespace vt
 		{
 			options("Accounts", service_name) = [&manager = *account_manager]()
 			{
-				bool modifed_accounts = false;
+				bool modifed_account = false;
 
-				std::optional<std::string> delete_name;
-				for (auto& [account_name, info] : manager.accounts())
+				if (manager.logged_in())
 				{
-					manager.options_draw_account(account_name);
-
-					std::string button_id = fmt::format("Delete account##{}", account_name);
-					if (ImGui::Button(button_id.c_str()))
+					manager.draw_options_page();
+;
+					if (ImGui::Button("Log out"))
 					{
-						delete_name = account_name;
+						manager.remove_account();
+						modifed_account = true;
 					}
-					ImGui::Separator();
 				}
-				if (delete_name.has_value())
+				else
 				{
-					manager.remove_account(*delete_name);
-					modifed_accounts = true;
-				}
-
-				std::string popup_id = fmt::format("Add new {} account", manager.service_name());
-				if (ImGui::Button("Add account"))
-				{
-					ImGui::OpenPopup(popup_id.c_str());
-				}
-
-				if (ImGui::BeginPopupModal(popup_id.c_str()))
-				{
-					bool success;
-					if (manager.add_popup_draw(success))
+					std::string popup_id = fmt::format("Add new {} account", manager.service_name());
+					if (ImGui::Button("Add account"))
 					{
-						if (success)
+						ImGui::OpenPopup(popup_id.c_str());
+					}
+
+					if (ImGui::BeginPopupModal(popup_id.c_str()))
+					{
+						bool success;
+						if (manager.draw_add_popup(success))
 						{
-							modifed_accounts = true;
-						}
+							if (success)
+							{
+								modifed_account = true;
+							}
 
-						debug::log("Add account popup success: ", success);
-						ImGui::CloseCurrentPopup();
+							debug::log("Add account popup success: {}", success);
+							ImGui::CloseCurrentPopup();
+						}
+						ImGui::EndPopup();
 					}
-					ImGui::EndPopup();
 				}
 
-				if (modifed_accounts)
+				if (modifed_account)
 				{
 					nlohmann::ordered_json accounts_json;
 					for (auto& [service_name, manager] : ctx_.account_managers)

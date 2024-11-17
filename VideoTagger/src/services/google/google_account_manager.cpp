@@ -9,73 +9,135 @@
 
 namespace vt
 {
-	const std::string& google_account_manager::service_name() const
+	std::string google_account_info::client_id() const
 	{
-		return static_service_name;
+		return properties.at("client_id");
+	}
+
+	std::string google_account_info::client_secret() const
+	{
+		return properties.at("client_secret");
+	}
+
+	std::string google_account_info::access_token() const
+	{
+		return properties.at("access_token");
+	}
+
+	std::string google_account_info::refresh_token() const
+	{
+		return properties.at("refresh_token");
+	}
+
+	std::vector<std::string> google_account_info::scope() const
+	{
+		return properties.at("scope");
+	}
+
+	bool google_account_info::access_token_expired() const
+	{
+		return (expire_tp - std::chrono::steady_clock::now()) <= std::chrono::steady_clock::duration::zero();
+	}
+
+	google_account_manager::google_account_manager()
+		: service_account_manager(static_service_name, std::nullopt)
+	{
 	}
 
 	nlohmann::ordered_json google_account_manager::save() const
 	{
-		auto json_accounts = nlohmann::json::array();
-		for (auto& [name, info] : accounts())
-		{
-			auto json_account_info = nlohmann::json::object();
-			json_account_info["name"] = name;
-			for (auto& [prop_name, prop_value] : info.properties.items())
-			{
-				json_account_info[prop_name] = prop_value;
-			}
+		auto json_account = nlohmann::json::object();
+		json_account["name"] = account_name();
+		json_account["client_id"] = account_info_.client_id();
+		json_account["client_secret"] = account_info_.client_secret();
+		json_account["refresh_token"] = account_info_.refresh_token();
 
-			json_accounts.push_back(json_account_info);
-		}
-
-		return json_accounts;
+		return json_account;
 	}
 
 	void google_account_manager::load(const nlohmann::ordered_json& json)
 	{
-		for (auto& json_account_info : json)
+		account_properties properties;
+
+		if (!json.contains("name") or !json.contains("client_id") or !json.contains("client_secret") or !json.contains("refresh_token"))
 		{
-			if (!json_account_info.contains("name"))
-			{
-				continue;
-			}
+			return;
+		}
+		properties["client_id"] = json.at("client_id");
+		properties["client_secret"] = json.at("client_secret");
+		properties["refresh_token"] = json.at("refresh_token");
 
-			std::string name = json_account_info.at("name");
-			account_info info;
-			//TODO: refresh token
-			info.active = true;
-			for (auto& [json_prop_name, json_prop_value] : json_account_info.items())
-			{
-				if (json_prop_name == "name")
-				{
-					continue;
-				}
+		add_account(json.at("name"), properties);
+	}
 
-				info.properties[json_prop_name] = json_prop_value;
-			}
+	bool google_account_manager::on_add_account(const std::string& name, const account_properties& properties)
+	{
+		//TODO: if refresh token is present obtain token from it
 
-			add_account(name, info);
+		std::string client_id = properties.at("client_id");
+		std::string client_secret = properties.at("client_secret");
+
+		auto token_result = obtain_token(client_id, client_secret);
+		if (!token_result.has_value())
+		{
+			debug::error("Failed to obtain access token");
+			return false;
+		}
+
+		account_info_.properties["client_id"] = client_id;
+		account_info_.properties["client_secret"] = client_secret;
+
+		account_info_.properties["access_token"] = token_result->access_token;
+		account_info_.properties["refresh_token"] = token_result->refresh_token;
+		account_info_.properties["scope"] = token_result->scope;
+		account_info_.expire_tp = token_result->expire_tp;
+
+		return true;
+	}
+
+	void google_account_manager::on_remove_account()
+	{
+		account_info_ = google_account_info{};
+	}
+
+	const account_properties& google_account_manager::get_account_properties() const
+	{
+		return account_info_.properties;
+	}
+
+	void google_account_manager::set_account_properties(const account_properties& properties)
+	{
+		for (auto& [prop_name, prop_value] : properties.items())
+		{
+			account_info_.properties[prop_name] = prop_value;
 		}
 	}
 
-	void google_account_manager::options_draw_account(const std::string& account_name)
+	const google_account_info& google_account_manager::account_info() const
 	{
-		auto& info = get_account_info(account_name);
-
-		ImGui::Text("Active: %s", info.active ? "Yes" : "No");
-
-		std::string access_token = info.properties.contains("access_token") ? info.properties.at("access_token") : "No Token";
-		ImGui::Text("Access token: %s", access_token.c_str());
-
-		std::string refresh_token = info.properties.contains("refresh_token") ? info.properties.at("refresh_token") : "No Token";
-		ImGui::Text("Refresh token: %s", refresh_token.c_str());
-		
-		std::string secret = info.properties["client_secret"];
-		ImGui::Text("Client secret: %s", secret.c_str());
+		return account_info_;
 	}
 
-	bool google_account_manager::add_popup_draw(bool& success)
+	bool google_account_manager::active() const
+	{
+		return !account_info_.access_token_expired();
+	}
+
+	void google_account_manager::draw_options_page()
+	{
+		ImGui::Text("Active: %s", active() ? "Yes" : "No");
+
+		std::string access_token = account_info_.access_token();
+		ImGui::Text("Access token: %s", access_token.c_str());
+
+		std::string refresh_token = account_info_.refresh_token();
+		ImGui::Text("Refresh token: %s", refresh_token.c_str());
+		
+		std::string client_secret = account_info_.client_secret();
+		ImGui::Text("Client secret: %s", client_secret.c_str());
+	}
+
+	bool google_account_manager::draw_add_popup(bool& success)
 	{
 		static std::string account_name;
 		static std::string client_id;
@@ -87,23 +149,10 @@ namespace vt
 		
 		if (ImGui::Button("Add"))
 		{
-			auto token_result = obtain_token(client_id, client_secret);
-			if (!token_result.has_value())
-			{
-				debug::error("Failed to obtain access token");
-				success = false;
-				return true;
-			}
-
-			account_info info;
-			info.active = true;
-			info.properties["access_token"] = token_result->access_token;
-			info.properties["refresh_token"] = token_result->refresh_token;
-			info.properties["token_expires_in"] = token_result->expires_in_seconds;
-			info.properties["scope"] = token_result->scope;
-			info.properties["client_id"] = client_id;
-			info.properties["client_secret"] = client_secret;
-			success = add_account(account_name, info);
+			account_properties properties;
+			properties["client_id"] = client_id;
+			properties["client_secret"] = client_secret;
+			success = add_account(account_name, properties);
 			return true;
 		}
 		ImGui::SameLine();
@@ -138,7 +187,7 @@ namespace vt
 				"scope={}&"
 				"code_challenge={}&"
 				"code_challenge_method=S256",
-				client_id, redirect_uri, fmt::join(scope, " "), code_challenge
+				client_id, redirect_uri, fmt::join(request_scope, " "), code_challenge
 			);
 
 			std::string auth_url = auth_host + auth_get;
@@ -192,7 +241,7 @@ namespace vt
 		auto json = nlohmann::json::parse(post_res->body);
 		result.access_token = json.at("access_token");
 		result.refresh_token = json.at("refresh_token");
-		result.expires_in_seconds = json.at("expires_in");
+		result.expire_tp = std::chrono::steady_clock::now() + std::chrono::seconds{ int(json.at("expires_in")) };
 		result.scope = utils::string::split(json.at("scope"), ' ');
 
 		return result;

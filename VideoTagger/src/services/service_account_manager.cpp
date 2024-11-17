@@ -3,34 +3,40 @@
 
 namespace vt
 {
-	bool service_account_manager::add_account(const std::string& name, const account_info& info)
+	service_account_manager::service_account_manager(std::string service_name, std::optional<std::string> account_name)
+		: service_name_{ std::move(service_name) }, account_name_{ std::move(account_name) }
 	{
-		return accounts_.try_emplace(name, info).second;
 	}
 
-	bool service_account_manager::remove_account(const std::string& name)
+	const std::string& service_account_manager::service_name() const
 	{
-		return accounts_.erase(name);
+		return service_name_;
 	}
 
-	bool service_account_manager::contains_account(const std::string& name) const
+	const std::string& service_account_manager::account_name() const
 	{
-		return accounts_.find(name) != accounts_.end();
-
+		return account_name_ ? *account_name_ : empty_account_name;
 	}
 
-	const account_info& service_account_manager::get_account_info(const std::string& name) const
+	bool service_account_manager::add_account(const std::string& name, const account_properties& properties)
 	{
-		return accounts_.at(name);
+		if (!on_add_account(name, properties))
+		{
+			return false;
+		}
+
+		account_name_ = name;
+		return true;
 	}
 
-	account_info& service_account_manager::get_account_info(const std::string& name)
+	void service_account_manager::remove_account()
 	{
-		return accounts_.at(name);
+		on_remove_account();
+		account_name_.reset();
 	}
 
-	const std::unordered_map<std::string, account_info>& service_account_manager::accounts() const
+	bool service_account_manager::logged_in() const
 	{
-		return accounts_;
+		return account_name_.has_value();
 	}
 }
