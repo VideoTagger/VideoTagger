@@ -6,23 +6,24 @@
 #include <widgets/icons.hpp>
 #include <imgui.h>
 #include <core/debug.hpp>
+#include <utils/vec.hpp>
 
 namespace vt
 {
 	struct circle
 	{
-		ImVec2 pos;
+		utils::vec2<uint32_t> pos;
 		float radius = 1.f;
 	};
 
 	struct rectangle
 	{
-		ImRect rect;
+		utils::vec4<uint32_t> rect;
 	};
 
 	struct polygon
 	{
-		std::vector<ImVec2> vertices;
+		std::vector<utils::vec2<uint32_t>> vertices;
 	};
 
 	struct shape
@@ -35,8 +36,19 @@ namespace vt
 			circle,
 			rectangle,
 			polygon
-		} type_;
+		};
 
+	public:
+		constexpr shape() : type_{ type::none } {}
+		constexpr shape(type type, bool interpolate = false) : type_{ type::none }, interpolate{ interpolate }
+		{
+			set_type(type);
+		}
+
+	private:
+		type type_;
+
+	public:
 		bool interpolate{};
 		shape_data_container data;
 
@@ -104,6 +116,11 @@ namespace vt
 			return !has<std::monostate>();
 		}
 
+		constexpr type get_type() const
+		{
+			return type_;
+		}
+
 		constexpr void set_type(type type)
 		{
 			if (type_ == type) return;
@@ -118,12 +135,12 @@ namespace vt
 			}
 		}
 
-		void draw_data(const ImVec2& max_size, bool& dirty_flag);
+		void draw_data(const utils::vec2<uint32_t>& max_size, utils::vec2<uint32_t>*& gizmo_target, bool& dirty_flag);
 	};
 
 	inline void to_json(nlohmann::ordered_json& json, const shape& s)
 	{
-		json["type"] = shape::type_str(s.type_);
+		json["type"] = shape::type_str(s.get_type());
 		json["interpolate"] = s.interpolate;
 	}
 
@@ -134,7 +151,7 @@ namespace vt
 			auto type = shape::parse(json["type"]);
 			if (type.has_value())
 			{
-				s.type_ = type.value();
+				s.set_type(type.value());
 			}
 		}
 

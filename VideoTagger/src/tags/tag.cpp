@@ -134,9 +134,9 @@ namespace vt
 						for (size_t i = 0; i < shapes.size(); ++i)
 						{
 							auto type = (shape::type)i;
-							if (widgets::icon_toggle_button(fmt::format("{}", shape::type_icon(type)).c_str(), v.type_ == type))
+							if (widgets::icon_toggle_button(fmt::format("{}", shape::type_icon(type)).c_str(), v.get_type() == type))
 							{
-								if (v.type_ != type)
+								if (v.get_type() != type)
 								{
 									v.set_type(type);
 									*this = v;
@@ -169,7 +169,7 @@ namespace vt
 			break;
 		}
 
-		if (ImGui::IsWindowHovered() and ImGui::IsMouseClicked(0) and !ImGui::IsItemHovered())
+		if (ImGui::IsWindowHovered() and ImGui::IsMouseClicked(0) and !ImGui::IsAnyItemHovered())
 		{
 			ctx_.registry.execute<set_selected_attribute_command>(nullptr);
 		}

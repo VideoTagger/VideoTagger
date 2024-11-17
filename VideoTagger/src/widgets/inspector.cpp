@@ -10,6 +10,8 @@
 
 #include "video_timeline.hpp"
 #include <core/app_context.hpp>
+#include <editor/selected_attribute_query.hpp>
+#include <editor/active_video_tex_size_query.hpp>
 
 namespace vt::widgets
 {
@@ -216,6 +218,26 @@ namespace vt::widgets
 					ImGui::BeginDisabled(selected_segment->tag->attributes.empty());
 					selected_segment->tag->draw_attribute_instances(*selected_segment->segment_it, ctx_.is_project_dirty);
 					ImGui::EndDisabled();
+
+					auto selected_attr_inst = ctx_.registry.execute_query<selected_attribute_query>();
+					auto active_vid_size = ctx_.registry.execute_query<active_video_tex_size_query>();
+					if (active_vid_size.has_value() and selected_attr_inst != nullptr and selected_attr_inst->has<shape>())
+					{
+						auto& shape = selected_attr_inst->get<vt::shape>();
+						bool visible = shape.has_data() and begin_collapsible("##ShapeAttributes", "Shape Attributes", ImGuiTreeNodeFlags_DefaultOpen, icons::shape);
+						if (visible)
+						{
+							ImGui::PushStyleColor(ImGuiCol_TableRowBg, style.Colors[ImGuiCol_MenuBarBg]);
+							if (ImGui::BeginTable("##Background", 1, ImGuiTableFlags_RowBg))
+							{
+								ImGui::TableNextColumn();
+								shape.draw_data(active_vid_size.value(), ctx_.gizmo_target, ctx_.is_project_dirty);
+								ImGui::EndTable();
+							}
+							ImGui::PopStyleColor();
+							end_collapsible();
+						}
+					}
 				}
 			}
 			else

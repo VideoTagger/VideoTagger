@@ -5,6 +5,7 @@
 #include <editor/run_script_command.hpp>
 #include <editor/selected_attribute_query.hpp>
 #include <editor/set_selected_attribute_command.hpp>
+#include <editor/active_video_tex_size_query.hpp>
 
 namespace vt
 {
@@ -19,6 +20,7 @@ namespace vt
 		registry.register_command_handler<set_selected_attribute_command_handler>();
 		
 		registry.register_query_handler<selected_attribute_query_handler>();
+		registry.register_query_handler<active_video_tex_size_query_handler>();
 	}
 
 	void app_context::update_current_video_group()

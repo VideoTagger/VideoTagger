@@ -31,6 +31,7 @@
 #include <widgets/modal/script_progress.hpp>
 #include "displayed_videos_manager.hpp"
 #include <utils/json.hpp>
+#include <utils/vec.hpp>
 #include <scripts/scripting_engine.hpp>
 
 #include <editor/registry.hpp>
@@ -109,7 +110,9 @@ namespace vt
 		keybind_storage keybinds;
 		scripting_engine script_eng;
 		std::optional<script_handle> script_handle;
+		std::optional<video_id_t> last_focused_video;
 		tag_attribute_instance* selected_attribute{};
+		utils::vec2<uint32_t>* gizmo_target{};
 
 		displayed_videos_manager displayed_videos;
 
