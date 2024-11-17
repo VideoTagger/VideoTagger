@@ -22,5 +22,7 @@ if __name__ == "__main__":
 				"Error: Invalid format, expected <icon_name>:<codepoint> or <codepoint>",
 				file=sys.stderr,
 			)
-		icon_name = icon_info[0] if len(icon_info) == 2 else "icon_name"
-		print(f'inline constexpr auto {icon_name} = "{utf16_to_utf8(icon_info[-1])}";')
+		icon_name = icon_info[0].strip() if len(icon_info) == 2 else "icon_name"
+		print(
+			f'inline constexpr auto {icon_name} = "{utf16_to_utf8(icon_info[-1].strip())}";'
+		)

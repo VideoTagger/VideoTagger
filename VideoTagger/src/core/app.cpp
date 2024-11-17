@@ -10,6 +10,7 @@
 
 #include <utils/string.hpp>
 #include <scripts/scripting_engine.hpp>
+#include <ImGuizmo.h>
 
 namespace vt
 {
@@ -126,6 +127,7 @@ namespace vt
 			ImGui_ImplOpenGL3_NewFrame();
 			ImGui_ImplSDL2_NewFrame();
 			ImGui::NewFrame();
+			ImGuizmo::BeginFrame();
 
 			handle_events();
 			ctx_.main_window->render();

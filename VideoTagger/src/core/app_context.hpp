@@ -109,6 +109,7 @@ namespace vt
 		keybind_storage keybinds;
 		scripting_engine script_eng;
 		std::optional<script_handle> script_handle;
+		tag_attribute_instance* selected_attribute{};
 
 		displayed_videos_manager displayed_videos;
 

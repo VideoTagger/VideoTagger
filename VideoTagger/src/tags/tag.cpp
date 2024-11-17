@@ -3,6 +3,9 @@
 
 #include <widgets/controls.hpp>
 #include "tag_timeline.hpp"
+#include <editor/selected_attribute_query.hpp>
+#include <editor/set_selected_attribute_command.hpp>
+#include <core/app_context.hpp>
 
 namespace vt
 {
@@ -10,6 +13,15 @@ namespace vt
 	{
 		const auto& style = ImGui::GetStyle();
 		bool has_value = this->has_value();
+
+		bool selected = (ctx_.registry.execute_query<selected_attribute_query>() == this);
+
+		auto cpos = ImGui::GetCursorPos();
+		if (ImGui::Selectable("##TagAttributeInstanceSelectable", selected, ImGuiSelectableFlags_AllowItemOverlap | ImGuiSelectableFlags_AllowOverlap | ImGuiSelectableFlags_SpanAllColumns, { 0.f, ImGui::GetTextLineHeightWithSpacing() }))
+		{
+			ctx_.registry.execute<set_selected_attribute_command>(this);
+		}
+		ImGui::SetCursorPos(cpos);
 
 		widgets::color_indicator(3.f, tag_attribute::type_color(attribute.type_));
 		ImGui::SameLine(style.ItemSpacing.x);
@@ -107,6 +119,7 @@ namespace vt
 				const auto& shapes = shape::types;
 				ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2{});
 				float button_width = ImGui::CalcTextSize(shape::type_icon(shape::type::none)).x;
+				ImGui::PushStyleVar(ImGuiStyleVar_CellPadding, ImVec2{});
 				if (ImGui::BeginTable("##ShapeAttributeType", 2, ImGuiTableFlags_BordersOuter | ImGuiTableFlags_BordersInnerV))
 				{
 					ImGui::TableSetupColumn(nullptr, ImGuiTableColumnFlags_WidthStretch);
@@ -148,9 +161,14 @@ namespace vt
 					widgets::tooltip(v.interpolate ? "Interpolation: On" : "Interpolation: Off");
 					ImGui::EndTable();
 				}
-				ImGui::PopStyleVar();
+				ImGui::PopStyleVar(2);
 			}
 			break;
+		}
+
+		if (ImGui::IsWindowHovered() and ImGui::IsMouseClicked(0) and !ImGui::IsItemHovered())
+		{
+			ctx_.registry.execute<set_selected_attribute_command>(nullptr);
 		}
 		ImGui::NextColumn();
 	}
@@ -299,9 +317,15 @@ namespace vt
 	{
 		const auto& style = ImGui::GetStyle();
 		auto flags = widgets::is_item_disabled() ? 0 : ImGuiTreeNodeFlags_DefaultOpen;
+		if (widgets::is_item_disabled())
+		{
+			ImGui::SetNextItemOpen(false, ImGuiCond_Appearing);
+		}
 		bool visible = widgets::begin_collapsible("##Attributes", "Attributes", flags, icons::attribute);
 		if (visible)
 		{
+			auto selected_attr_inst = ctx_.registry.execute_query<selected_attribute_query>();
+
 			ImGui::PushStyleColor(ImGuiCol_TableRowBg, style.Colors[ImGuiCol_MenuBarBg]);
 			if (ImGui::BeginTable("##Background", 1, ImGuiTableFlags_RowBg))
 			{
@@ -310,13 +334,23 @@ namespace vt
 				ImGui::Columns(2);
 				{
 					int i{};
+					bool contains_selected_attr = false;
 					for (auto& [name, attr] : attributes)
 					{
 						auto& attr_inst = selected_segment.attributes[name];
+						if (&attr_inst == selected_attr_inst)
+						{
+							contains_selected_attr = true;
+						}
 
 						ImGui::PushID(i++);
 						attr_inst.draw(name, attr, dirty_flag);
 						ImGui::PopID();
+					}
+
+					if (selected_attr_inst != nullptr and !contains_selected_attr)
+					{
+						ctx_.registry.execute<set_selected_attribute_command>(nullptr);
 					}
 				}
 				ImGui::Columns();

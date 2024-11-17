@@ -54,11 +54,20 @@ namespace vt::icons
 	inline constexpr auto shape_polygon = "\xee\xad\x90";
 	inline constexpr auto interpolate = "\xee\x9c\x9c";
 
+	inline constexpr auto align_horizontal_left = "\xee\x80\x8d";
+	inline constexpr auto align_horizontal_right = "\xee\x80\x90";
+	inline constexpr auto align_horizontal_center = "\xee\x80\x8f";
+	inline constexpr auto align_vertical_bottom = "\xee\x80\x95";
+	inline constexpr auto align_vertical_top = "\xee\x80\x8c";
+	inline constexpr auto align_vertical_center = "\xee\x80\x91";
+	inline constexpr auto align_center = "\xee\x8d\x96";
+
 	inline std::vector<std::string> all
 	({
 		dots_hor, play, play_next, pause, repeat, repeat_one, shuffle, skip_next, skip_prev, fast_back, fast_fwd,
 		save, save_as, import_, import_export, exit, close, back, visibility_on, visibility_off, add, delete_, reset, folder, folder_code, label, expand_less, expand_more,
 		toggle_less, toggle_more, link, edit, help, video_group, video, search, terminal, property, attribute, object,
-		shape, shape_none, shape_circle, shape_rectangle, shape_polygon, interpolate
+		shape, shape_none, shape_circle, shape_rectangle, shape_polygon, interpolate,
+		align_horizontal_left, align_horizontal_right, align_horizontal_center, align_vertical_bottom, align_vertical_top, align_vertical_center, align_center
 	});
 }

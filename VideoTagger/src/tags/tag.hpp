@@ -136,7 +136,7 @@ namespace vt
 			return *this;
 		}
 
-		tag_attribute_instance& operator=(tag_attribute_instance&& other)
+		tag_attribute_instance& operator=(tag_attribute_instance&& other) noexcept
 		{
 			value_ = std::move(other.value_);
 			return *this;

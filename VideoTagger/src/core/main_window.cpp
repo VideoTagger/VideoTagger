@@ -21,6 +21,10 @@
 
 #include <utils/filesystem.hpp>
 #include <editor/run_script_command.hpp>
+#include <editor/selected_attribute_query.hpp>
+#include <ImGuizmo.h>
+#include <utils/matrix.hpp>
+#include <editor/set_selected_attribute_command.hpp>
 
 namespace vt
 {
@@ -100,6 +104,8 @@ namespace vt
 
 	void main_window::on_close_project(bool should_shutdown)
 	{
+		ctx_.registry.execute<set_selected_attribute_command>(nullptr);
+
 		//Save window size & state
 		{
 			auto& json_window = ctx_.settings["window"];
@@ -1458,8 +1464,194 @@ namespace vt
 				if (!pool_data->is_widget_open) continue;
 
 				bool timestamp_in_range = video_data.is_timestamp_in_range(ctx_.displayed_videos.current_timestamp());
+				auto selected_segment = ctx_.video_timeline.selected_segment;
 
-				widgets::draw_video_widget(*video_data.video, video_data.display_texture, timestamp_in_range, pool_data->is_widget_open, vid_id++);
+				tag_attribute_instance* selected_attribute = ctx_.registry.execute_query<selected_attribute_query>();
+				bool has_selected_attribute = selected_attribute != nullptr;
+
+				static ImVec2 point_pos{};
+				widgets::draw_video_widget(*video_data.video, video_data.display_texture, timestamp_in_range, pool_data->is_widget_open, vid_id++, [&selected_segment, has_selected_attribute, selected_attribute](ImVec2 pos, ImVec2 size, ImVec2 tex_size)
+				{
+					static auto from_tex_pos = [&pos, &tex_size, &size](const ImVec2 point)
+					{
+						return pos + (point / tex_size) * size;
+					};
+
+					ImGuiIO& io = ImGui::GetIO();
+					bool hovered = ImGui::IsWindowHovered();
+					bool focused = ImGui::IsWindowFocused();
+					auto border_color = hovered ? 0xFF00FF00 : 0xFF0000FF;
+					float border_thickness = 2.0f;
+
+					bool is_shape = has_selected_attribute and selected_attribute->has<shape>() and selected_attribute->get<shape>().type_ != shape::type::none;
+					bool is_polygon = is_shape and selected_attribute->get<shape>().type_ == shape::type::polygon;
+
+					if (is_shape and ImGui::BeginPopupContextItem("##VideoCtxMenu"))
+					{
+						auto& shape = selected_attribute->get<vt::shape>();
+						bool close = false;
+						const auto& style = ImGui::GetStyle();
+
+						if (ImGui::MenuItem("Add Point", nullptr, nullptr, is_polygon))
+						{
+
+						}
+
+						if (ImGui::BeginMenu("Transform"))
+						{
+							auto icon_size = ImGui::CalcTextSize(icons::align_center).x;
+							ImGui::PushStyleVar(ImGuiStyleVar_CellPadding, ImVec2{});
+							if (ImGui::BeginTable("##AlignTable", 3, ImGuiTableFlags_NoSavedSettings | ImGuiTableFlags_BordersInner, { 3.f * (icon_size + 2 * style.FramePadding.x), 0.f }))
+							{
+								ImGui::TableNextRow();
+								ImGui::TableNextColumn();
+								if (widgets::icon_button(icons::align_horizontal_center))
+								{
+									point_pos.x = tex_size.x / 2;
+									close = true;
+								}
+								widgets::tooltip("Align Horizontal Center");
+								ImGui::TableNextColumn();
+								if (widgets::icon_button(icons::align_vertical_top))
+								{
+									point_pos.y = 0;
+									close = true;
+								}
+								widgets::tooltip("Align Vertical Top");
+
+								ImGui::TableNextRow();
+								ImGui::TableNextColumn();
+								if (widgets::icon_button(icons::align_horizontal_left))
+								{
+									point_pos.x = 0;
+									close = true;
+								}
+								widgets::tooltip("Align Horizontal Left");
+								ImGui::TableNextColumn();
+								if (widgets::icon_button(icons::align_center))
+								{
+									point_pos = tex_size / 2;
+									close = true;
+								}
+								widgets::tooltip("Align Center");
+								ImGui::TableNextColumn();
+								if (widgets::icon_button(icons::align_horizontal_right))
+								{
+									point_pos.x = tex_size.x;
+									close = true;
+								}
+								widgets::tooltip("Align Horizontal Right");
+
+								ImGui::TableNextRow();
+								ImGui::TableNextColumn();
+								if (widgets::icon_button(icons::align_vertical_center))
+								{
+									point_pos.y = tex_size.y / 2;
+									close = true;
+								}
+								widgets::tooltip("Align Vertical Center");
+								ImGui::TableNextColumn();
+								if (widgets::icon_button(icons::align_vertical_bottom))
+								{
+									point_pos.y = tex_size.y;
+									close = true;
+								}
+								widgets::tooltip("Align Vertical Bottom");
+
+								ImGui::EndTable();
+							}
+							ImGui::PopStyleVar();
+							ImGui::EndMenu();
+						}
+
+						if (close)
+						{
+							ImGui::CloseCurrentPopup();
+						}
+						ImGui::EndPopup();
+					}
+
+					ImVec2 top_left = { pos.x, pos.y };
+					ImVec2 top_right = { pos.x + size.x, pos.y };
+					ImVec2 bottom_left = { pos.x, pos.y + size.y };
+					ImVec2 bottom_right = { pos.x + size.x, pos.y + size.y };
+
+					auto draw_list = ImGui::GetWindowDrawList();
+					//draw_list->AddRectFilled(top_left, bottom_right, overlay_color);
+					draw_list->AddRect(top_left, bottom_right, border_color, 0, 0, border_thickness);
+					/*draw_list->AddLine(top_left, bottom_right, border_color, border_thickness);
+					draw_list->AddLine(top_right, bottom_left, border_color, border_thickness);*/
+
+					if (is_shape)
+					{
+						auto wpos = ImGui::GetWindowPos();
+						auto wsize = ImGui::GetWindowSize();
+
+						auto mouse_pos = ImGui::GetMousePos();
+						border_color = ImGui::IsMouseHoveringRect(top_left, bottom_right) ? 0xFF00FF00 : 0xFF0000FF;
+						draw_list->AddCircleFilled(mouse_pos, 5.f, border_color);
+
+						float translation[3]{ point_pos.x, point_pos.y, 0.0f };
+						float rotation[3]{};
+						float scale[3] = { 1.f, 1.f, 1.f };
+
+						float target[3]
+						{
+							utils::matrix::front[0], //translation[0] + utils::matrix::front[0],
+							utils::matrix::front[1], //translation[1] + utils::matrix::front[1],
+							utils::matrix::front[2], //translation[2] + utils::matrix::front[2]
+						};
+
+						float cam_distance = 0.f;
+						float cam_angle[2]{};
+						float eye[3]
+						{
+							std::cos(cam_angle[1]) * std::cos(cam_angle[0]) * cam_distance,
+							std::sin(cam_angle[0]) * cam_distance,
+							std::sin(cam_angle[1]) * std::cosf(cam_angle[0]) * cam_distance
+						};
+						utils::matrix view_mat = (utils::matrix::look_at(eye, target));
+
+						float left = 0.0f; // -size.x / 2.f;
+						float right = tex_size.x; // size.x / 2.f;
+						float bottom = tex_size.y; // -size.y / 2.f;
+						float top = 0.f; // size.y / 2.f;
+						float near_z = -1.0f;
+						float far_z = 1.0f;
+
+						utils::matrix proj_mat = utils::matrix::ortho(left, right, bottom, top, near_z, far_z);
+						ImGuizmo::SetRect(pos.x, pos.y, size.x, size.y);
+
+						utils::matrix mod{};
+						auto& gizmo_style = ImGuizmo::GetStyle();
+						gizmo_style.Colors[ImGuizmo::COLOR::DIRECTION_X] = ImGui::ColorConvertU32ToFloat4(0xFF1EC880);
+						gizmo_style.Colors[ImGuizmo::COLOR::DIRECTION_Y] = ImGui::ColorConvertU32ToFloat4(0xFF503CF0);
+						gizmo_style.Colors[ImGuizmo::COLOR::PLANE_Z] = ImGui::ColorConvertU32ToFloat4(0x80F08830);
+						gizmo_style.Colors[ImGuizmo::COLOR::SELECTION] = ImGui::ColorConvertU32ToFloat4(0xFF30A0F0);
+
+
+						gizmo_style.CenterCircleSize = 5.f;
+						gizmo_style.TranslationLineThickness = 3.f;
+						gizmo_style.TranslationLineArrowSize = 1.5f * gizmo_style.TranslationLineThickness;
+						ImGuizmo::AllowAxisFlip(true);
+						ImGuizmo::SetOrthographic(true);
+						ImGuizmo::SetDrawlist();
+
+						float snap[3]{ 1.00f, 1.00f, 1.00f };
+						ImVec2 obj_size{ 5, 100.f };
+						float bounds[] = { -obj_size.y / 2, -obj_size.x / 2, 0.f, obj_size.y / 2, obj_size.x / 2, 0.f };
+						ImGuizmo::RecomposeMatrixFromComponents(translation, rotation, scale, mod.data);
+						if (ImGuizmo::Manipulate(view_mat.data, proj_mat.data, ImGuizmo::OPERATION::TRANSLATE_X | ImGuizmo::OPERATION::TRANSLATE_Y/* | ImGuizmo::OPERATION::BOUNDS*/, ImGuizmo::MODE::LOCAL, mod.data, nullptr, snap, nullptr/*bounds*/))
+						{
+							ImGuizmo::DecomposeMatrixToComponents(mod.data, translation, rotation, scale);
+							point_pos.x = std::clamp(translation[0], 0.0f, tex_size.x);
+							point_pos.y = std::clamp(translation[1], 0.0f, tex_size.y);
+						}
+					}
+
+					auto local_pos = from_tex_pos(point_pos);
+					draw_list->AddCircle(local_pos, 10.f, border_color);
+				});
 			}
 		}
 

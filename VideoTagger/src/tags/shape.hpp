@@ -1,12 +1,35 @@
 #pragma once
 #include <string>
+#include <vector>
 #include <utils/json.hpp>
 #include <widgets/icons.hpp>
+#include <imgui.h>
 
 namespace vt
 {
+	namespace impl
+	{
+		struct circle
+		{
+			ImVec2 pos;
+			float radius;
+		};
+
+		struct rectangle
+		{
+			ImRect rect;
+		};
+
+		struct polygon
+		{
+			std::vector<ImVec2> vertices;
+		};
+	}
+
 	struct shape
 	{
+		using shape_data_container = std::variant<std::monostate, impl::circle, impl::rectangle, impl::polygon>;
+
 		enum class type
 		{
 			none,
@@ -16,6 +39,7 @@ namespace vt
 		} type_;
 
 		bool interpolate{};
+		shape_data_container data;
 
 		static constexpr const char* type_str(type type)
 		{
@@ -51,6 +75,35 @@ namespace vt
 		}
 
 		static constexpr auto types = { type::none, type::circle, type::rectangle, type::polygon };
+
+		template<typename visitor_t>
+		constexpr void visit(const visitor_t& visitor)
+		{
+			std::visit(visitor, value_);
+		}
+
+		template<typename visitor_t>
+		constexpr void visit(const visitor_t& visitor) const
+		{
+			std::visit(visitor, value_);
+		}
+
+		template<typename type>
+		constexpr bool has() const
+		{
+			return std::holds_alternative<type>(data);
+		}
+
+		template<typename type>
+		constexpr type& get()
+		{
+			return std::get<type>(value_);
+		}
+
+		constexpr bool has_data() const
+		{
+			return !has<std::monostate>();
+		}
 	};
 
 	inline void to_json(nlohmann::ordered_json& json, const shape& s)

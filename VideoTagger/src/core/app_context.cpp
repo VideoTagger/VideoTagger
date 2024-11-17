@@ -3,6 +3,8 @@
 #include <core/debug.hpp>
 
 #include <editor/run_script_command.hpp>
+#include <editor/selected_attribute_query.hpp>
+#include <editor/set_selected_attribute_command.hpp>
 
 namespace vt
 {
@@ -14,6 +16,9 @@ namespace vt
 	void app_context::register_handlers()
 	{
 		registry.register_command_handler<run_script_command_handler>();
+		registry.register_command_handler<set_selected_attribute_command_handler>();
+		
+		registry.register_query_handler<selected_attribute_query_handler>();
 	}
 
 	void app_context::update_current_video_group()
