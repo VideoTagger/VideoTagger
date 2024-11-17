@@ -21,6 +21,7 @@ namespace vt
 		virtual nlohmann::ordered_json save() const = 0;
 		virtual void load(const nlohmann::ordered_json& json) = 0;
 
+		//TODO: maybe use std::any instead of nlohmann::json
 		bool add_account(const std::string& name, const account_properties& properties);
 		virtual bool on_add_account(const std::string& name, const account_properties& properties) = 0;
 

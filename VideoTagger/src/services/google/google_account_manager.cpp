@@ -46,7 +46,7 @@ namespace vt
 
 	nlohmann::ordered_json google_account_manager::save() const
 	{
-		auto json_account = nlohmann::json::object();
+		auto json_account = nlohmann::ordered_json::object();
 		json_account["name"] = account_name();
 		json_account["client_id"] = account_info_.client_id();
 		json_account["client_secret"] = account_info_.client_secret();
