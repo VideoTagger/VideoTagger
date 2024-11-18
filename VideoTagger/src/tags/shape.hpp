@@ -144,7 +144,7 @@ namespace vt
 			}
 		}
 
-		void draw(const std::function<ImVec2(const ImVec2&)>& to_local_pos, const ImVec2& tex_size, const ImVec2& viewport_size, uint32_t outline_color, uint32_t fill_color, bool& is_mouse_over) const;
+		void draw(const std::function<ImVec2(const ImVec2&)>& to_local_pos, const ImVec2& tex_size, const ImVec2& viewport_size, uint32_t outline_color, uint32_t fill_color, bool show_points, bool& is_mouse_over) const;
 		void draw_data(const utils::vec2<uint32_t>& max_size, utils::vec2<uint32_t>*& gizmo_target, bool& dirty_flag);
 	};
 

@@ -64,8 +64,10 @@ namespace vt
 		}
 	}
 
-	void shape::draw(const std::function<ImVec2(const ImVec2&)>& to_local_pos, const ImVec2& tex_size, const ImVec2& viewport_size, uint32_t outline_color, uint32_t fill_color, bool& is_mouse_over) const
+	void shape::draw(const std::function<ImVec2(const ImVec2&)>& to_local_pos, const ImVec2& tex_size, const ImVec2& viewport_size, uint32_t outline_color, uint32_t fill_color, bool show_points, bool& is_mouse_over) const
 	{
+		float point_size = 5.f;
+
 		static auto to_imvec2 = [](const utils::vec2<uint32_t>& v) -> ImVec2
 		{
 			return ImVec2{ (float)v[0], (float)v[1] };
@@ -93,6 +95,11 @@ namespace vt
 				{
 					is_mouse_over = true;
 				}
+
+				if (show_points)
+				{
+					draw_list->AddCircleFilled(local_pos, point_size, 0xFFFFFFFF);
+				}
 			}
 			break;
 			case shape::type::rectangle:
@@ -100,12 +107,22 @@ namespace vt
 				auto& v = get<rectangle>();
 				auto min = to_local_pos(to_imvec2(v.vertices.at(0)));
 				auto max = to_local_pos(to_imvec2(v.vertices.at(1)));
+
 				draw_list->AddRectFilled(min, max, fill_color);
 				draw_list->AddRect(min, max, outline_color);
 
 				if (utils::intersection::is_in_rect(mouse_pos, ImRect{ min, max }))
 				{
 					is_mouse_over = true;
+				}
+
+				if (show_points)
+				{
+					auto size = max - min;
+					for (const auto& point : { min, min + ImVec2{ size.x, 0.f} , min + ImVec2{ 0.f, size.y }, max })
+					{
+						draw_list->AddCircleFilled(point, point_size, 0xFFFFFFFF);
+					}
 				}
 			}
 			break;
@@ -133,6 +150,14 @@ namespace vt
 					draw_list->AddConcavePolyFilled(vertices.data(), vert_int_size, fill_color);
 				}
 				draw_list->AddPolyline(vertices.data(), vert_int_size, outline_color, ImDrawFlags_Closed, 1.f);
+
+				if (show_points)
+				{
+					for (const auto& vertex : vertices)
+					{
+						draw_list->AddCircleFilled(vertex, point_size, 0xFFFFFFFF);
+					}
+				}
 			}
 			break;
 			default: debug::panic("Unknown shape::type"); break;

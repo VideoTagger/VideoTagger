@@ -25,6 +25,7 @@
 #include <ImGuizmo.h>
 #include <utils/matrix.hpp>
 #include <utils/vec.hpp>
+#include <utils/intersection.hpp>
 #include <editor/set_selected_attribute_command.hpp>
 
 namespace vt
@@ -1521,18 +1522,18 @@ namespace vt
 
 					bool is_polygon = is_shape and selected_attribute->get<shape>().get_type() == shape::type::polygon;
 
+					ImVec2 add_point_pos{};
+					bool add_point{};
+
 					if (last_focused and is_shape and ImGui::BeginPopupContextItem("##VideoCtxMenu"))
 					{
-						auto& shape = selected_attribute->get<vt::shape>();
 						bool close = false;
 						const auto& style = ImGui::GetStyle();
 
 						if (ImGui::MenuItem("Add Point", nullptr, nullptr, is_polygon))
 						{
-							auto& poly = shape.get<polygon>();
-							auto pos = ImGui::GetWindowPos();
-							poly.vertices.push_back(to_tex_pos(pos));
-							ctx_.gizmo_target = &poly.vertices.back();
+							add_point_pos = ImGui::GetWindowPos();
+							add_point = true;
 						}
 
 						if (ImGui::BeginMenu("Transform", has_target))
@@ -1611,6 +1612,59 @@ namespace vt
 						ImGui::EndPopup();
 					}
 
+					if (!add_point and (ImGui::IsKeyDown(ImGuiKey_LeftShift) or ImGui::IsKeyDown(ImGuiKey_RightShift)) and ImGui::IsMouseClicked(0))
+					{
+						add_point_pos = ImGui::GetMousePos();
+						add_point = true;
+					}
+
+					if (add_point and is_polygon)
+					{
+						auto& shape = selected_attribute->get<vt::shape>();
+
+						auto& poly = shape.get<polygon>();
+						auto& pos = add_point_pos;
+
+						auto closest_it = poly.vertices.end();
+						float min_distance = std::numeric_limits<float>::infinity();
+
+						for (auto it = poly.vertices.begin(); it != poly.vertices.end(); ++it)
+						{
+							auto next_it = std::next(it);
+							if (next_it == poly.vertices.end())
+							{
+								next_it = poly.vertices.begin();
+							}
+
+							const auto& vertex1 = *it;
+							const auto& vertex2 = *next_it;
+
+							float new_distance = utils::intersection::distance_to_segment(pos, from_tex_pos({ (float)vertex1[0], (float)vertex1[1] }), from_tex_pos({ (float)vertex2[0], (float)vertex2[1] }));
+
+
+							if (new_distance < min_distance)
+							{
+								min_distance = new_distance;
+								closest_it = it;
+							}
+						}
+
+						if (closest_it != poly.vertices.end())
+						{
+							auto next_it = std::next(closest_it);
+							if (next_it == poly.vertices.end())
+							{
+								next_it = poly.vertices.begin();
+							}
+
+							ctx_.gizmo_target = &*poly.vertices.insert(next_it, to_tex_pos(pos));
+						}
+						else
+						{
+							ctx_.gizmo_target = &*poly.vertices.insert(closest_it, to_tex_pos(pos));
+						}
+					}
+
 					auto draw_list = ImGui::GetWindowDrawList();
 					//draw_list->AddRectFilled(top_left, bottom_right, overlay_color);
 					/*draw_list->AddLine(top_left, bottom_right, border_color, border_thickness);
@@ -1650,11 +1704,12 @@ namespace vt
 									if (!attr.has<shape>()) continue;
 
 									bool is_selected = selected_attribute == &attr;
+									bool show_points = is_selected;
 
 									const auto& shape = attr.get<vt::shape>();
 									draw_list->PushClipRect(top_left, bottom_right, true);
 									bool is_mouse_over{};
-									shape.draw(from_tex_pos, tex_size, size, is_selected ? orange : tag.color, fill_color, is_mouse_over);
+									shape.draw(from_tex_pos, tex_size, size, is_selected ? orange : tag.color, fill_color, show_points, is_mouse_over);
 
 									if (is_mouse_over)
 									{
