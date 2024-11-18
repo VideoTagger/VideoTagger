@@ -67,6 +67,7 @@ namespace vt
 		properties["client_secret"] = json.at("client_secret");
 		properties["refresh_token"] = json.at("refresh_token");
 
+		//TODO: handle fail
 		add_account(json.at("name"), properties);
 	}
 

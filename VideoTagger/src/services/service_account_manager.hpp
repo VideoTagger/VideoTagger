@@ -36,6 +36,7 @@ namespace vt
 
 		virtual void draw_options_page() = 0;
 		//return true if the popup is ready to be closed
+		//TODO: in the app push this into some vector so i runs in every frame until it returns false
 		virtual bool draw_add_popup(bool& success) = 0;
 
 	private:
