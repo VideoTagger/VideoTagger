@@ -99,6 +99,7 @@ namespace vt
 		io.ConfigWindowsMoveFromTitleBarOnly = true;
 
 		ctx_.register_account_managers();
+		ctx_.register_video_importers();
 
 		ctx_.main_window = std::make_unique<main_window>(main_config);
 		ImGui_ImplSDL2_InitForOpenGL(ctx_.main_window->window, ctx_.main_window->gl_ctx);

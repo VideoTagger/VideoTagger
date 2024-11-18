@@ -14,9 +14,10 @@ namespace vt::widgets
 	{
 		if (!ctx_.current_project.has_value()) return;
 
-		static auto draw_video_tile = [this](video_id_t id, const video_pool::video_metadata& vmeta, ImVec2 tile_size, bool& open, bool& remove, GLuint image = 0)
+		static auto draw_video_tile = [this](video_id_t id, const video_resource& vid_resource, ImVec2 tile_size, bool& open, bool& remove, GLuint image = 0)
 		{
-			std::string label = vmeta.path.filename().u8string();
+			const auto& metadata = vid_resource.metadata();
+			std::string label = metadata.title.value_or("");
 			ImVec2 image_tile_size{ tile_size.x * 0.9f, tile_size.x * 0.9f };
 
 			ImVec2 image_size = image_tile_size;
@@ -32,8 +33,8 @@ namespace vt::widgets
 			}
 			else
 			{
-				float scaled_width = vmeta.width * image_tile_size.y / vmeta.height;
-				float scaled_height = image_tile_size.x * vmeta.height / vmeta.width;
+				float scaled_width = *metadata.width * image_tile_size.y / *metadata.height;
+				float scaled_height = image_tile_size.x * *metadata.height / *metadata.width;
 
 				if (scaled_width < image_tile_size.x)
 				{
@@ -88,17 +89,17 @@ namespace vt::widgets
 				if (ImGui::BeginTable("##VideoBrowserBody", columns, ImGuiTableFlags_ScrollY | ImGuiTableFlags_SizingFixedSame, ImGui::GetContentRegionMax()))
 				{
 					ImGui::TableNextRow();
-					for (auto& [id, metadata] : ctx_.current_project->videos)
+					for (auto& [id, vid_resource] : ctx_.current_project->videos)
 					{
 						bool open_video{};
 						bool remove_video{};
 
 						ImGui::TableNextColumn();
-						draw_video_tile(id, metadata, tile_size, open_video, remove_video, metadata.thumbnail ? metadata.thumbnail->id() : 0);
+						draw_video_tile(id, *vid_resource, tile_size, open_video, remove_video, vid_resource->thumbnail() ? vid_resource->thumbnail()->id() : 0);
 						if (remove_video)
 						{
 							debug::log("Removing video with id: {}", id);
-							ctx_.current_project->videos.erase(id);
+							ctx_.current_project->remove_video(id);
 							break;
 						}
 

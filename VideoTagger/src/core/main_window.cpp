@@ -83,10 +83,9 @@ namespace vt
 
 		ctx_.group_browser.on_open_video = [this](video_id_t id)
 		{
-			auto* vinfo = ctx_.current_project->videos.get(id);
-			vinfo->is_widget_open = true;
+			//auto& vid_resource = ctx_.current_project->videos.get(id);
 			ctx_.reset_player_docking = true;
-			ctx_.current_project->videos.open_video(id);
+			//ctx_.current_project->videos.open_video(id);
 		};
 		init_options();
 		load_settings();
@@ -185,53 +184,7 @@ namespace vt
 
 	void main_window::on_import_videos()
 	{
-		if (!ctx_.current_project.has_value()) return;
-
-		static std::vector<std::string> vid_exts(ctx_.valid_video_extensions.begin(), ctx_.valid_video_extensions.end());
-
-		static utils::dialog_filters filters
-		{
-			{ "Video", utils::filesystem::concat_extensions(vid_exts) },
-		};
-
-		auto result = utils::filesystem::get_files({}, filters);
-		if (result)
-		{
-			for (const auto& path : result.paths)
-			{
-				{
-					auto it = std::find_if(vid_exts.begin(), vid_exts.end(), [&path](const std::string& ext)
-					{
-						return path.extension() == "." + ext;
-					});
-
-					if (it == vid_exts.end())
-					{
-						//TODO: Should probably display a popup
-						debug::error("Failed to import file {} - its not a valid video type", path.u8string());
-						continue;
-					}
-				}
-
-				const auto& videos = ctx_.current_project->videos;
-				{
-					auto it = std::find_if(videos.begin(), videos.end(), [path](const video_pool::iterator::value_type& video_data)
-					{
-						return video_data.second.path == path;
-					});
-
-					if (it == videos.end())
-					{
-						debug::log("Importing video {}", path.u8string());
-						ctx_.current_project->video_import_tasks.push_back(ctx_.current_project->import_video(path));
-					}
-					else
-					{
-						//TODO: Display message box
-					}
-				}
-			}
-		}
+		//TODO: implement
 	}
 
 	void main_window::on_delete()
@@ -268,6 +221,8 @@ namespace vt
 			auto& manager = ctx_.account_managers.at(service_name);
 			manager->load(service_accounts);
 		}
+
+		return true;
 	}
 
 	bool main_window::load_settings()
@@ -956,9 +911,18 @@ namespace vt
 				std::string key_name = ctx_.lang.get(lang_pack_id::import_videos);
 				auto& kb = ctx_.keybinds.at(key_name);
 				std::string menu_name = fmt::format("{} {}", icons::import_, key_name);
-				if (ImGui::MenuItem(menu_name.c_str(), kb.name().c_str()))
+				if (ImGui::BeginMenu(menu_name.c_str()))
 				{
-					on_import_videos();
+					for (auto& [importer_id, importer] : ctx_.video_importers)
+					{
+						std::string menu_importer_name = importer->importer_display_name();
+						if (ImGui::MenuItem(menu_importer_name.c_str()))
+						{
+							ctx_.current_project->prepare_video_import(importer_id);
+						}
+					}
+
+					ImGui::EndMenu();
 				}
 				ImGui::Separator();
 				{
@@ -1426,29 +1390,62 @@ namespace vt
 		}
 
 		{
+			auto& tasks = ctx_.current_project->prepare_video_import_tasks;
+			for (auto it = tasks.begin(); it != tasks.end();)
+			{
+				auto& task = *it;
+				if (!task())
+				{
+					continue;
+				}
+
+				for (auto& import_data : task.import_data)
+				{
+					ctx_.current_project->schedule_video_import(task.importer_id, std::move(import_data), utils::uuid::get());
+				}
+				it = tasks.erase(it);
+
+				//TODO: set some frame time limit;
+				break;
+			}
+		}
+
+		{
 			auto& tasks = ctx_.current_project->video_import_tasks;
 			for (auto it = tasks.begin(); it != tasks.end();)
 			{
-				auto status = it->wait_for(std::chrono::nanoseconds(0));
-				if (status == std::future_status::ready)
+				auto& task = *it;
+				auto vid_resource = task();
+				if (vid_resource != nullptr)
 				{
-					auto result = it->get();
-					if (!result.success)
+					video_id_t video_id = vid_resource->id();
+					if (ctx_.current_project->import_video(std::move(vid_resource), task.group_id))
 					{
-						debug::error("Failed to import {}", result.video_path.u8string());
+						if (ctx_.app_settings.load_thumbnails)
+						{
+							ctx_.current_project->schedule_generate_thumbnail(video_id);
+						}
 					}
-					else if (ctx_.app_settings.load_thumbnails)
-					{
-						auto video_data = ctx_.current_project->videos.get(result.video_id);
-						video_data->update_thumbnail();
-					}
+				}
+				it = tasks.erase(it);
+				//TODO: set some frame time limit;
+				break;
+			}
+		}
 
-					it = tasks.erase(it);
-					break;
-					//continue;
+		{
+			auto& tasks = ctx_.current_project->generate_thumbnail_tasks;
+			for (auto it = tasks.begin(); it != tasks.end();)
+			{
+				auto& task = *it;
+				if (!task())
+				{
+					debug::error("Failed to generate thumbnail");
 				}
 
-				++it;
+				it = tasks.erase(it);
+				//TODO: set some frame time limit;
+				break;
 			}
 		}
 
@@ -1524,12 +1521,11 @@ namespace vt
 			uint64_t vid_id{};
 			for (auto& video_data : ctx_.displayed_videos)
 			{
-				auto pool_data = ctx_.current_project->videos.get(video_data.id);
-				if (!pool_data->is_widget_open) continue;
-
 				bool timestamp_in_range = video_data.is_timestamp_in_range(ctx_.displayed_videos.current_timestamp());
 
-				widgets::draw_video_widget(*video_data.video, video_data.display_texture, timestamp_in_range, pool_data->is_widget_open, vid_id++);
+				//TODO: handle is_widget_open
+				bool is_widget_open = true;
+				widgets::draw_video_widget(video_data.video, video_data.display_texture, timestamp_in_range, is_widget_open, vid_id++);
 			}
 		}
 

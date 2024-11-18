@@ -34,6 +34,7 @@
 #include <utils/json.hpp>
 #include <scripts/scripting_engine.hpp>
 #include <services/service_account_manager.hpp>
+#include <video/video_importer.hpp>
 
 #include <editor/registry.hpp>
 
@@ -113,6 +114,7 @@ namespace vt
 		scripting_engine script_eng;
 		std::optional<script_handle> script_handle;
 		std::unordered_map<std::string, std::unique_ptr<service_account_manager>> account_managers;
+		std::unordered_map<std::string, std::unique_ptr<video_importer>> video_importers;
 
 		displayed_videos_manager displayed_videos;
 
@@ -134,8 +136,18 @@ namespace vt
 		//TODO: add get and is registered for account managers
 		template<typename ServiceAccountManager>
 		void register_account_manager();
-
 		void register_account_managers();
+
+		template<typename VideoImporter>
+		void register_video_importer();
+		void register_video_importers();
+		template<typename VideoImporter>
+		VideoImporter& get_video_importer();
+		video_importer& get_video_importer(const std::string& importer_id);
+		template<typename VideoImporter>
+		bool is_video_importer_registered() const;
+		bool is_video_importer_registered(const std::string& importer_id) const;
+
 		void register_handlers();
 		void update_current_video_group();
 		void reset_current_video_group();
@@ -157,5 +169,35 @@ namespace vt
 		//TODO: Check if is registered
 
 		account_managers[ServiceAccountManager::static_service_name] = std::make_unique<ServiceAccountManager>();
+	}
+
+	template<typename VideoImporter>
+	inline void app_context::register_video_importer()
+	{
+		if (is_video_importer_registered<VideoImporter>())
+		{
+			debug::error("Video importer with id {} is already registered", VideoImporter::static_importer_id);
+			return;
+		}
+
+		video_importers[VideoImporter::static_importer_id] = std::make_unique<VideoImporter>();
+	}
+
+	template<typename VideoImporter>
+	inline VideoImporter& app_context::get_video_importer()
+	{
+		VideoImporter* result = dynamic_cast<VideoImporter>(video_importers.at(VideoImporter::static_importer_id).get());
+		if (result == nullptr)
+		{
+			debug::panic("Video importer type in the template argument didn't match the registered type for id {}", VideoImporter::static_importer_id);
+		}
+
+		return *result;
+	}
+
+	template<typename VideoImporter>
+	inline bool app_context::is_video_importer_registered() const
+	{
+		return video_importers.count(VideoImporter::static_importer_id) != 0;
 	}
 }
