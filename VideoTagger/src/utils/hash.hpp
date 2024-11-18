@@ -8,6 +8,8 @@ namespace vt::utils::hash
 {
 	extern uint64_t fnv_hash(const std::filesystem::path& filepath);
 
+	static constexpr auto sha256_byte_count = 32;
+
 	extern std::vector<uint8_t> sha256(std::string_view string);
 	extern std::vector<uint8_t> sha256_file(const std::filesystem::path& filepath);
 
