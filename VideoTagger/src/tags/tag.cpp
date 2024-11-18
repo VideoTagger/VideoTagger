@@ -150,8 +150,8 @@ namespace vt
 								ImGui::SameLine();
 							}
 						}
-						ImGui::EndChild();
 					}
+					ImGui::EndChild();
 					ImGui::PopStyleVar();
 
 					ImGui::TableNextColumn();
@@ -341,14 +341,15 @@ namespace vt
 					for (auto& [name, attr] : attributes)
 					{
 						auto& attr_inst = selected_segment.attributes[name];
-						if (&attr_inst == selected_attr_inst)
-						{
-							contains_selected_attr = true;
-						}
 
 						ImGui::PushID(i++);
 						attr_inst.draw(name, attr, dirty_flag);
 						ImGui::PopID();
+
+						if (&attr_inst == selected_attr_inst)
+						{
+							contains_selected_attr = true;
+						}
 					}
 
 					if (selected_attr_inst != nullptr and !contains_selected_attr)

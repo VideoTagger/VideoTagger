@@ -5,6 +5,7 @@
 #include <SDL.h>
 #include <imgui.h>
 #include <utils/timestamp.hpp>
+#include <utils/vec.hpp>
 
 namespace vt::widgets
 {
@@ -39,4 +40,6 @@ namespace vt::widgets
 
 	extern bool is_item_disabled();
 	extern bool table_hovered_row_style();
+
+	extern bool positon_control(utils::vec2<uint32_t>& pos, const utils::vec2<uint32_t>& max_size);
 }

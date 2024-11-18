@@ -45,6 +45,7 @@
 
 #include <core/app_context.hpp>
 #include <utils/drag_drop.hpp>
+#include <editor/set_selected_attribute_command.hpp>
 
 namespace vt::widgets
 {
@@ -667,6 +668,7 @@ namespace vt::widgets
 										&segments,
 										segment_it
 									};
+									ctx_.registry.execute<set_selected_attribute_command>(nullptr);
 									moving_segment.reset();
 								}
 
@@ -872,6 +874,7 @@ namespace vt::widgets
 								segments->erase(*segment_it);
 								if (selected_segment.has_value() and selected_segment->segments == segments and selected_segment->segment_it == *segment_it)
 								{
+									ctx_.registry.execute<set_selected_attribute_command>(nullptr);
 									selected_segment.reset();
 									moving_segment.reset();
 								}
@@ -901,6 +904,7 @@ namespace vt::widgets
 
 				if (ImGui::IsMouseHoveringRect(contentMin, contentMax) and ImGui::IsMouseClicked(ImGuiMouseButton_Left) and deselect)
 				{
+					ctx_.registry.execute<set_selected_attribute_command>(nullptr);
 					selected_segment.reset();
 					moving_segment.reset();
 				}

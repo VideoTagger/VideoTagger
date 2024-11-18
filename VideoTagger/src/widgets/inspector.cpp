@@ -238,6 +238,10 @@ namespace vt::widgets
 							end_collapsible();
 						}
 					}
+					else
+					{
+						ctx_.gizmo_target = nullptr;
+					}
 				}
 			}
 			else

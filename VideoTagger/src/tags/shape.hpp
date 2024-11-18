@@ -13,17 +13,20 @@ namespace vt
 	struct circle
 	{
 		utils::vec2<uint32_t> pos;
-		float radius = 1.f;
-	};
-
-	struct rectangle
-	{
-		utils::vec4<uint32_t> rect;
+		uint32_t radius = 1;
 	};
 
 	struct polygon
 	{
 		std::vector<utils::vec2<uint32_t>> vertices;
+	};
+
+	struct rectangle : public polygon
+	{
+		rectangle() : polygon{}
+		{
+			polygon::vertices.resize(2);
+		}
 	};
 
 	struct shape
@@ -111,6 +114,12 @@ namespace vt
 			return std::get<type>(data);
 		}
 
+		template<typename type>
+		constexpr const type& get() const
+		{
+			return std::get<type>(data);
+		}
+
 		constexpr bool has_data() const
 		{
 			return !has<std::monostate>();
@@ -135,6 +144,7 @@ namespace vt
 			}
 		}
 
+		void draw(const std::function<ImVec2(const ImVec2&)>& to_local_pos, const ImVec2& tex_size, const ImVec2& viewport_size, uint32_t outline_color, uint32_t fill_color, bool& is_mouse_over) const;
 		void draw_data(const utils::vec2<uint32_t>& max_size, utils::vec2<uint32_t>*& gizmo_target, bool& dirty_flag);
 	};
 

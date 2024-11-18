@@ -24,6 +24,7 @@
 #include <editor/selected_attribute_query.hpp>
 #include <ImGuizmo.h>
 #include <utils/matrix.hpp>
+#include <utils/vec.hpp>
 #include <editor/set_selected_attribute_command.hpp>
 
 namespace vt
@@ -1459,10 +1460,19 @@ namespace vt
 		//TODO: This breaks when there are undocked videos
 		if (ctx_.player.is_visible())
 		{
+			tag_attribute_instance* selected_attribute = ctx_.registry.execute_query<selected_attribute_query>();
+			bool has_selected_attribute = selected_attribute != nullptr;
+
+			bool is_shape = has_selected_attribute and selected_attribute->has<shape>() and selected_attribute->get<shape>().get_type() != shape::type::none;
 			if (ctx_.last_focused_video.has_value() and ctx_.displayed_videos.find(ctx_.last_focused_video.value()) == ctx_.displayed_videos.end())
 			{
 				ctx_.last_focused_video = std::nullopt;
 				ctx_.registry.execute<set_selected_attribute_command>(nullptr);
+				ctx_.gizmo_target = nullptr;
+			}
+
+			if (!is_shape)
+			{
 				ctx_.gizmo_target = nullptr;
 			}
 
@@ -1475,9 +1485,6 @@ namespace vt
 				bool timestamp_in_range = video_data.is_timestamp_in_range(ctx_.displayed_videos.current_timestamp());
 				auto selected_segment = ctx_.video_timeline.selected_segment;
 
-				tag_attribute_instance* selected_attribute = ctx_.registry.execute_query<selected_attribute_query>();
-				bool has_selected_attribute = selected_attribute != nullptr;
-
 				ImVec2 point_pos{};
 				bool has_target = ctx_.gizmo_target != nullptr;
 				if (has_target)
@@ -1485,12 +1492,18 @@ namespace vt
 					point_pos = { (float)ctx_.gizmo_target->at(0), (float)ctx_.gizmo_target->at(1) };
 				}
 
-				widgets::draw_video_widget(*video_data.video, video_data.display_texture, timestamp_in_range, pool_data->is_widget_open, vid_id++, [&selected_segment, &point_pos, has_selected_attribute, selected_attribute, has_target, &video_data](ImVec2 pos, ImVec2 size, ImVec2 tex_size)
+				widgets::draw_video_widget(*video_data.video, video_data.display_texture, timestamp_in_range, pool_data->is_widget_open, vid_id++, [&point_pos, has_selected_attribute, selected_attribute, is_shape, has_target, &video_data](ImVec2 pos, ImVec2 size, ImVec2 tex_size)
 				{
 					static constexpr auto orange = tag_attribute::type_color(tag_attribute::type::shape); //0xFF30A0F0;
-					static auto from_tex_pos = [&pos, &tex_size, &size](const ImVec2 point)
+					static auto from_tex_pos = [&pos, &tex_size, &size](const ImVec2 point) -> ImVec2
 					{
 						return pos + (point / tex_size) * size;
+					};
+
+					static auto to_tex_pos = [&pos, &tex_size, &size](const ImVec2 point) -> utils::vec2<uint32_t>
+					{
+						ImVec2 tex_coords = (point - pos) / size * tex_size;
+						return utils::vec2<uint32_t>{ static_cast<uint32_t>(std::round(tex_coords.x)), static_cast<uint32_t>(std::round(tex_coords.y)) };
 					};
 
 					ImGuiIO& io = ImGui::GetIO();
@@ -1504,10 +1517,11 @@ namespace vt
 						ctx_.last_focused_video = video_data.id;
 					}
 
-					bool is_shape = has_selected_attribute and selected_attribute->has<shape>() and selected_attribute->get<shape>().get_type() != shape::type::none;
+					bool last_focused = ctx_.last_focused_video == video_data.id;
+
 					bool is_polygon = is_shape and selected_attribute->get<shape>().get_type() == shape::type::polygon;
 
-					if (is_shape and ImGui::BeginPopupContextItem("##VideoCtxMenu"))
+					if (last_focused and is_shape and ImGui::BeginPopupContextItem("##VideoCtxMenu"))
 					{
 						auto& shape = selected_attribute->get<vt::shape>();
 						bool close = false;
@@ -1515,7 +1529,10 @@ namespace vt
 
 						if (ImGui::MenuItem("Add Point", nullptr, nullptr, is_polygon))
 						{
-
+							auto& poly = shape.get<polygon>();
+							auto pos = ImGui::GetWindowPos();
+							poly.vertices.push_back(to_tex_pos(pos));
+							ctx_.gizmo_target = &poly.vertices.back();
 						}
 
 						if (ImGui::BeginMenu("Transform", has_target))
@@ -1604,29 +1621,64 @@ namespace vt
 					ImVec2 bottom_left = { pos.x, pos.y + size.y };
 					ImVec2 bottom_right = { pos.x + size.x, pos.y + size.y };
 					
-					float left = 0.0f; // -size.x / 2.f;
-					float right = tex_size.x; // size.x / 2.f;
-					float bottom = tex_size.y; // -size.y / 2.f;
-					float top = 0.f; // size.y / 2.f;
+					float left = 0.0f;
+					float right = tex_size.x;
+					float bottom = tex_size.y;
+					float top = 0.f;
 					float near_z = -1.0f;
 					float far_z = 1.0f;
 					
-					if (is_shape)
+					//shape drawing
+					std::string tooltip;
+					auto current_ts = ctx_.video_timeline.current_timestamp();
+					for (const auto& displayed_tag : ctx_.video_timeline.displayed_tags())
 					{
-						if (ctx_.last_focused_video.has_value() and ctx_.last_focused_video.value() == video_data.id)
+						auto& segment_storage = ctx_.get_current_segment_storage();
+						auto it = segment_storage.find(displayed_tag);
+						if (it == segment_storage.end()) continue;
+						const auto& tag = ctx_.current_project->tags.at(it->first);
+						auto fill_color = (tag.color & ~0xFF000000) | 0x80000000;
+
+						auto& segments = it->second;
+						for (const auto& segment : segments)
 						{
-							draw_list->AddRect(top_left, bottom_right, orange, 0, 0, border_thickness);
+							bool is_onscreen = current_ts >= segment.start and current_ts <= segment.end;
+							if (is_onscreen)
+							{
+								for (auto& [attr_name, attr] : segment.attributes)
+								{
+									if (!attr.has<shape>()) continue;
+
+									bool is_selected = selected_attribute == &attr;
+
+									const auto& shape = attr.get<vt::shape>();
+									draw_list->PushClipRect(top_left, bottom_right, true);
+									bool is_mouse_over{};
+									shape.draw(from_tex_pos, tex_size, size, is_selected ? orange : tag.color, fill_color, is_mouse_over);
+
+									if (is_mouse_over)
+									{
+										if (ImGui::IsMouseClicked(0))
+										{
+											ctx_.registry.execute<set_selected_attribute_command>(&attr);
+										}
+										tooltip = fmt::format("Tag: {}\nAttribute: {}", tag.name, attr_name);
+									}
+								}
+							}
 						}
 					}
 
-					if (has_target)
+					if (hovered and !tooltip.empty() and !ImGuizmo::IsOver())
+					{
+						ImGui::SetMouseCursor(ImGuiMouseCursor_Hand);
+						widgets::tooltip(tooltip.c_str());
+					}
+
+					if (last_focused and has_target)
 					{
 						auto wpos = ImGui::GetWindowPos();
 						auto wsize = ImGui::GetWindowSize();
-
-						auto mouse_pos = ImGui::GetMousePos();
-						border_color = ImGui::IsMouseHoveringRect(top_left, bottom_right) ? 0xFF00FF00 : 0xFF0000FF;
-						draw_list->AddCircleFilled(mouse_pos, 5.f, border_color);
 
 						float translation[3]{ point_pos.x, point_pos.y, 0.0f };
 						float rotation[3]{};
@@ -1681,8 +1733,13 @@ namespace vt
 						}
 					}
 
-					auto local_pos = from_tex_pos(point_pos);
-					draw_list->AddCircle(local_pos, 10.f, border_color);
+					//window focus frame
+					if (is_shape and last_focused and ctx_.last_focused_video.has_value())
+					{
+						draw_list->AddRect(top_left, bottom_right, orange, 0, 0, border_thickness);
+					}
+					//auto local_pos = from_tex_pos(point_pos);
+					//draw_list->AddCircle(local_pos, 10.f, border_color);
 				});
 			}
 		}

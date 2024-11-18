@@ -125,6 +125,12 @@ namespace vt
 			return std::get<type>(value_);
 		}
 
+		template<typename type>
+		constexpr const type& get() const
+		{
+			return std::get<type>(value_);
+		}
+
 		constexpr bool has_value() const
 		{
 			return !has<std::monostate>();
