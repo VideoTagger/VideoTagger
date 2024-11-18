@@ -47,10 +47,15 @@ namespace vt
 	nlohmann::ordered_json google_account_manager::save() const
 	{
 		auto json_account = nlohmann::ordered_json::object();
+		
+		//TODO: improve / handle errors
 		json_account["name"] = account_name();
-		json_account["client_id"] = account_info_.client_id();
-		json_account["client_secret"] = account_info_.client_secret();
-		json_account["refresh_token"] = account_info_.refresh_token();
+		if (logged_in())
+		{
+			json_account["client_id"] = account_info_.client_id();
+			json_account["client_secret"] = account_info_.client_secret();
+			json_account["refresh_token"] = account_info_.refresh_token();
+		}
 
 		return json_account;
 	}

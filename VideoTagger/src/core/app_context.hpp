@@ -131,6 +131,7 @@ namespace vt
 
 		bool pause_player = false;
 
+		//TODO: add get and is registered for account managers
 		template<typename ServiceAccountManager>
 		void register_account_manager();
 
@@ -153,6 +154,8 @@ namespace vt
 	template<typename ServiceAccountManager>
 	inline void app_context::register_account_manager()
 	{
+		//TODO: Check if is registered
+
 		account_managers[ServiceAccountManager::static_service_name] = std::make_unique<ServiceAccountManager>();
 	}
 }

@@ -40,6 +40,7 @@ namespace vt
 		virtual bool draw_add_popup(bool& success) = 0;
 
 	private:
+		//TODO: id, and display name like in video_importer
 		std::string service_name_;
 		std::optional<std::string> account_name_;
 	};
