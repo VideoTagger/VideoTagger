@@ -6,6 +6,7 @@
 #include <vector>
 #include <map>
 #include <unordered_map>
+#include <array>
 
 #include <imgui.h>
 
@@ -95,6 +96,8 @@ namespace vt
 		widgets::modal::script_progress script_progress;
 		widgets::color_picker color_picker;
 		widgets::modal::tag_importer tag_importer;
+
+		static constexpr auto valid_video_extensions = std::array{ "mp4", "mkv", "avi", "mov", "flv", "wmv", "webm", "m4v", "mpg", "mpeg", "3gp", "ogv", "vob", "mts", "m2ts", "mxf", "f4v", "divx", "rmvb", "asf", "swf" };
 
 		std::filesystem::path projects_list_filepath = std::filesystem::path("projects").replace_extension("json");
 		std::filesystem::path app_settings_filepath = std::filesystem::path("settings").replace_extension("json");

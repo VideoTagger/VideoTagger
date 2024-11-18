@@ -183,17 +183,11 @@ namespace vt
 		}
 	}
 
-	//TODO: Shouldn't this be a static array somewhere or at least constexpr?
-	static std::vector<std::string> valid_video_extensions()
-	{
-		return { "mp4", "mkv", "avi", "mov", "flv", "wmv", "webm", "m4v", "mpg", "mpeg", "3gp", "ogv", "vob", "mts", "m2ts", "mxf", "f4v", "divx", "rmvb", "asf", "swf" };
-	}
-
 	void main_window::on_import_videos()
 	{
 		if (!ctx_.current_project.has_value()) return;
 
-		static std::vector<std::string> vid_exts = valid_video_extensions();
+		static std::vector<std::string> vid_exts(ctx_.valid_video_extensions.begin(), ctx_.valid_video_extensions.end());
 
 		static utils::dialog_filters filters
 		{
