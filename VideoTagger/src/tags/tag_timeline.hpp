@@ -13,6 +13,7 @@
 #include <utils/iterator_range.hpp>
 #include "tags/tag.hpp"
 #include "tag_storage.hpp"
+#include <video/video_pool.hpp>
 
 namespace vt
 {
@@ -24,13 +25,15 @@ namespace vt
 
 	struct tag_segment
 	{
+		using attribute_instance_container = std::unordered_map<video_id_t, std::unordered_map<std::string, tag_attribute_instance>>;
+
 		timestamp start{};
 		timestamp end{};
 
-		mutable std::unordered_map<std::string, tag_attribute_instance> attributes;
+		mutable attribute_instance_container attributes;
 
-		tag_segment(timestamp time_start, timestamp time_end, const std::unordered_map<std::string, tag_attribute_instance>& attributes = {});
-		tag_segment(timestamp time_point, const std::unordered_map<std::string, tag_attribute_instance>& attributes = {});
+		tag_segment(timestamp time_start, timestamp time_end, const attribute_instance_container& attributes = {});
+		tag_segment(timestamp time_point, const attribute_instance_container& attributes = {});
 
 		void set(timestamp time_start, timestamp time_end);
 		void set(timestamp time_point);
@@ -53,8 +56,8 @@ namespace vt
 		using iterator = std::set<tag_segment, tag_timeline_set_comparator_>::iterator;
 		using reverse_iterator = std::set<tag_segment, tag_timeline_set_comparator_>::reverse_iterator;
 
-		std::pair<iterator, bool> insert(timestamp time_start, timestamp time_end, const std::unordered_map<std::string, tag_attribute_instance>& attributes = {});
-		std::pair<iterator, bool> insert(timestamp time_point, const std::unordered_map<std::string, tag_attribute_instance>& attributes = {});
+		std::pair<iterator, bool> insert(timestamp time_start, timestamp time_end, const tag_segment::attribute_instance_container& attributes = {});
+		std::pair<iterator, bool> insert(timestamp time_point, const tag_segment::attribute_instance_container& attributes = {});
 		iterator erase(iterator it);
 
 		//will invalidate it
@@ -98,22 +101,26 @@ namespace vt
 		}
 
 		auto& json_attributes = json["attributes"];
-		json_attributes = nlohmann::json::array();
-		for (const auto& [name, attr] : segment.attributes)
+		for (const auto& [vid_id, attr_map] : segment.attributes)
 		{
-			if (attr.has_value())
+			auto& json_vid_attributes = json_attributes[std::to_string(vid_id)];
+			json_vid_attributes = nlohmann::json::array();
+			for (const auto& [name, attr] : attr_map)
 			{
-				nlohmann::ordered_json json_attribute;
-				json_attribute["name"] = name;
-
-				attr.visit([&json_attribute](const auto& value)
+				if (attr.has_value())
 				{
-					if constexpr (!std::is_same_v<std::monostate, std::remove_cv_t<std::remove_reference_t<decltype(value)>>>)
+					auto json_attribute = nlohmann::ordered_json::object();
+					json_attribute["name"] = name;
+
+					attr.visit([&json_attribute](const auto& value)
 					{
-						json_attribute["value"] = value;
-					}
-				});
-				json_attributes.push_back(json_attribute);
+						if constexpr (!std::is_same_v<std::monostate, std::remove_cv_t<std::remove_reference_t<decltype(value)>>>)
+						{
+							json_attribute["value"] = value;
+						}
+					});
+					json_vid_attributes.push_back(json_attribute);
+				}
 			}
 		}
 	}
@@ -154,26 +161,38 @@ namespace vt
 			auto& tag_segments = ss[tag_name];
 			for (auto& json_tag_segments : json_group_segments["tag-segments"])
 			{
-				std::unordered_map<std::string, tag_attribute_instance> attributes;
+				tag_segment::attribute_instance_container attributes;
 				if (json_tag_segments.contains("attributes"))
 				{
-					for (const auto& json_attribute : json_tag_segments["attributes"])
+					for (const auto& [vid_id, vid_attributes] : json_tag_segments["attributes"].items())
 					{
-						if (!json_attribute.contains("name") or !json_attribute.contains("value"))
+						video_id_t vid_id_int{};
+
+						auto [ptr, ec] = std::from_chars(vid_id.c_str(), vid_id.c_str() + vid_id.size(), vid_id_int);
+						if (ec != std::errc())
 						{
-							debug::error("Invalid tag attribute format encountered while deserializing");
-							continue;
-						}
-						auto attribute_name = json_attribute["name"].get<std::string>();
-						auto& tag = ts[tag_name];
-						if (!tag.attributes.count(attribute_name))
-						{
-							debug::error("Tag {} doesn't exist, skipping while deserializing", attribute_name);
+							debug::log("Failed to deserialize video id string: \"{}\"", vid_id);
 							continue;
 						}
 
-						auto& attribute = attributes[attribute_name];
-						from_json(json_attribute["value"], attribute, tag.attributes.at(attribute_name).type_);
+						for (const auto& json_attribute : vid_attributes)
+						{
+							if (!json_attribute.contains("name") or !json_attribute.contains("value"))
+							{
+								debug::error("Invalid tag attribute format encountered while deserializing");
+								continue;
+							}
+							auto attribute_name = json_attribute["name"].get<std::string>();
+							auto& tag = ts[tag_name];
+							if (!tag.attributes.count(attribute_name))
+							{
+								debug::error("Tag {} doesn't exist, skipping while deserializing", attribute_name);
+								continue;
+							}
+
+							auto& attribute = attributes[vid_id_int][attribute_name];
+							from_json(json_attribute["value"], attribute, tag.attributes.at(attribute_name).type_);
+						}
 					}
 				}
 

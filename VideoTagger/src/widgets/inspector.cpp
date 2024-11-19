@@ -213,10 +213,10 @@ namespace vt::widgets
 					moving_segment.reset();
 				}
 
-				if (ctx_.current_video_group_id() != invalid_video_group_id)
+				if (ctx_.current_video_group_id() != invalid_video_group_id and ctx_.last_focused_video.has_value())
 				{
 					ImGui::BeginDisabled(selected_segment->tag->attributes.empty());
-					selected_segment->tag->draw_attribute_instances(*selected_segment->segment_it, ctx_.is_project_dirty);
+					selected_segment->tag->draw_attribute_instances(*selected_segment->segment_it, ctx_.last_focused_video.value(), ctx_.is_project_dirty);
 					ImGui::EndDisabled();
 
 					auto selected_attr_inst = ctx_.registry.execute_query<selected_attribute_query>();

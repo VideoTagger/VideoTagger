@@ -316,7 +316,7 @@ namespace vt
 		return false;
 	}
 
-	bool tag::draw_attribute_instances(const tag_segment& selected_segment, bool& dirty_flag) const
+	bool tag::draw_attribute_instances(const tag_segment& selected_segment, video_id_t video_id, bool& dirty_flag) const
 	{
 		const auto& style = ImGui::GetStyle();
 		auto flags = widgets::is_item_disabled() ? 0 : ImGuiTreeNodeFlags_DefaultOpen;
@@ -340,7 +340,7 @@ namespace vt
 					bool contains_selected_attr = false;
 					for (auto& [name, attr] : attributes)
 					{
-						auto& attr_inst = selected_segment.attributes[name];
+						auto& attr_inst = selected_segment.attributes[video_id][name];
 
 						ImGui::PushID(i++);
 						attr_inst.draw(name, attr, dirty_flag);

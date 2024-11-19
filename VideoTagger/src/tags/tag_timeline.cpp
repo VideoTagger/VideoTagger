@@ -3,8 +3,8 @@
 
 namespace vt
 {
-	tag_segment::tag_segment(timestamp time_start, timestamp time_end, const std::unordered_map<std::string, tag_attribute_instance>& attributes) : start{ std::min(time_start, time_end) }, end{ std::max(time_start, time_end) }, attributes{ attributes } {}
-	tag_segment::tag_segment(timestamp time_point, const std::unordered_map<std::string, tag_attribute_instance>& attributes) : start{ time_point }, end{ time_point }, attributes{ attributes } {}
+	tag_segment::tag_segment(timestamp time_start, timestamp time_end, const attribute_instance_container& attributes) : start{ std::min(time_start, time_end) }, end{ std::max(time_start, time_end) }, attributes{ attributes } {}
+	tag_segment::tag_segment(timestamp time_point, const attribute_instance_container& attributes) : start{ time_point }, end{ time_point }, attributes{ attributes } {}
 
     void tag_segment::set(timestamp time_start, timestamp time_end)
 	{
@@ -28,7 +28,7 @@ namespace vt
 		return start == end ? tag_segment_type::timestamp : tag_segment_type::segment;
 	}
 
-	std::pair<tag_timeline::iterator, bool> tag_timeline::insert(timestamp time_start, timestamp time_end, const std::unordered_map<std::string, tag_attribute_instance>& attributes)
+	std::pair<tag_timeline::iterator, bool> tag_timeline::insert(timestamp time_start, timestamp time_end, const tag_segment::attribute_instance_container& attributes)
 	{
 		auto overlapping = find_range(time_start, time_end);
 		
@@ -52,7 +52,7 @@ namespace vt
 		return timestamps_.emplace(insert_start, insert_end, attributes);
 	}
 
-	std::pair<tag_timeline::iterator, bool> tag_timeline::insert(timestamp time_point, const std::unordered_map<std::string, tag_attribute_instance>& attributes)
+	std::pair<tag_timeline::iterator, bool> tag_timeline::insert(timestamp time_point, const tag_segment::attribute_instance_container& attributes)
 	{
 		auto it = find(time_point);
 		if (it != end())

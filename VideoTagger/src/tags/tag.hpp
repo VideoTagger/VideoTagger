@@ -8,6 +8,7 @@
 #include <utils/string.hpp>
 #include <charconv>
 #include "shape.hpp"
+#include <video/video_pool.hpp>
 
 namespace vt
 {
@@ -180,7 +181,7 @@ namespace vt
 		tag(const std::string& name, uint32_t color) : name{ name }, color{ color | 0xff000000 } {}
 
 		bool draw_attributes(bool& dirty_flag, const std::function<void()>& on_add_new);
-		bool draw_attribute_instances(const struct tag_segment& selected_segment, bool& dirty_flag) const;
+		bool draw_attribute_instances(const struct tag_segment& selected_segment, video_id_t video_id, bool& dirty_flag) const;
 	};
 
 	inline bool operator==(const tag& lhs, const tag& rhs)

@@ -1699,25 +1699,29 @@ namespace vt
 							bool is_onscreen = current_ts >= segment.start and current_ts <= segment.end;
 							if (is_onscreen)
 							{
-								for (auto& [attr_name, attr] : segment.attributes)
+								auto segment_attr_it = segment.attributes.find(video_data.id);
+								if (segment_attr_it != segment.attributes.end())
 								{
-									if (!attr.has<shape>()) continue;
-
-									bool is_selected = selected_attribute == &attr;
-									bool show_points = is_selected;
-
-									const auto& shape = attr.get<vt::shape>();
-									draw_list->PushClipRect(top_left, bottom_right, true);
-									bool is_mouse_over{};
-									shape.draw(from_tex_pos, tex_size, size, is_selected ? orange : tag.color, fill_color, show_points, is_mouse_over);
-
-									if (is_mouse_over)
+									for (auto& [attr_name, attr] : segment_attr_it->second)
 									{
-										if (ImGui::IsMouseClicked(0))
+										if (!attr.has<shape>()) continue;
+
+										bool is_selected = selected_attribute == &attr;
+										bool show_points = is_selected;
+
+										const auto& shape = attr.get<vt::shape>();
+										draw_list->PushClipRect(top_left, bottom_right, true);
+										bool is_mouse_over{};
+										shape.draw(from_tex_pos, tex_size, size, is_selected ? orange : tag.color, fill_color, show_points, is_mouse_over);
+
+										if (is_mouse_over)
 										{
-											ctx_.registry.execute<set_selected_attribute_command>(&attr);
+											if (ImGui::IsMouseClicked(0))
+											{
+												ctx_.registry.execute<set_selected_attribute_command>(&attr);
+											}
+											tooltip = fmt::format("Tag: {}\nAttribute: {}", tag.name, attr_name);
 										}
-										tooltip = fmt::format("Tag: {}\nAttribute: {}", tag.name, attr_name);
 									}
 								}
 							}
