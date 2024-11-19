@@ -3,6 +3,7 @@
 #include <core/debug.hpp>
 #include <services/google/google_account_manager.hpp>
 #include <video/local_video_importer.hpp>
+#include <video/google_drive/google_drive_video_importer.hpp>
 
 namespace vt
 {
@@ -24,6 +25,7 @@ namespace vt
 	void app_context::register_video_importers()
 	{
 		register_video_importer<local_video_importer>();
+		register_video_importer<google_drive_video_importer>();
 	}
 
 	video_importer& app_context::get_video_importer(const std::string& importer_id)
