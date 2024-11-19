@@ -133,10 +133,15 @@ namespace vt
 
 		bool pause_player = false;
 
-		//TODO: add get and is registered for account managers
 		template<typename ServiceAccountManager>
 		void register_account_manager();
 		void register_account_managers();
+		template<typename ServiceAccountManager>
+		ServiceAccountManager& get_account_manager();
+		service_account_manager& get_account_manager(const std::string& service_id);
+		template<typename ServiceAccountManager>
+		bool is_account_manager_registered() const;
+		bool is_account_manager_registered(const std::string& service_id) const;
 
 		template<typename VideoImporter>
 		void register_video_importer();
@@ -166,9 +171,31 @@ namespace vt
 	template<typename ServiceAccountManager>
 	inline void app_context::register_account_manager()
 	{
-		//TODO: Check if is registered
+		if (is_account_manager_registered<ServiceAccountManager>())
+		{
+			debug::error("Account manager with id {} is already registered", ServiceAccountManager::static_service_id);
+			return;
+		}
 
-		account_managers[ServiceAccountManager::static_service_name] = std::make_unique<ServiceAccountManager>();
+		account_managers[ServiceAccountManager::static_service_id] = std::make_unique<ServiceAccountManager>();
+	}
+
+	template<typename ServiceAccountManager>
+	inline ServiceAccountManager& app_context::get_account_manager()
+	{
+		ServiceAccountManager* result = dynamic_cast<ServiceAccountManager*>(account_managers.at(ServiceAccountManager::static_service_id).get());
+		if (result == nullptr)
+		{
+			debug::panic("Account manager type in the template argument didn't match the registered type for id {}", ServiceAccountManager::static_service_id);
+		}
+
+		return *result;
+	}
+
+	template<typename ServiceAccountManager>
+	inline bool app_context::is_account_manager_registered() const
+	{
+		return account_managers.count(ServiceAccountManager::static_service_id) != 0;
 	}
 
 	template<typename VideoImporter>

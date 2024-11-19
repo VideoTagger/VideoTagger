@@ -40,7 +40,7 @@ namespace vt
 	}
 
 	google_account_manager::google_account_manager()
-		: service_account_manager(static_service_name, std::nullopt)
+		: service_account_manager(static_service_id, std::nullopt)
 	{
 	}
 
@@ -251,5 +251,17 @@ namespace vt
 		result.scope = utils::string::split(json.at("scope"), ' ');
 
 		return result;
+	}
+
+	std::optional<std::string> google_account_manager::access_token()
+	{
+		//TODO: refresh if expired
+
+		if (!account_info_.properties.contains("access_token"))
+		{
+			return std::nullopt;
+		}
+
+		return account_info_.access_token();
 	}
 }

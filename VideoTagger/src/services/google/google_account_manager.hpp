@@ -30,7 +30,7 @@ namespace vt
 	class google_account_manager : public service_account_manager
 	{
 	public:
-		static std::string static_service_name;
+		static constexpr auto static_service_id = "google";
 
 		google_account_manager();
 
@@ -50,11 +50,10 @@ namespace vt
 		bool draw_add_popup(bool& success) override;
 
 		std::optional<obtain_token_result> obtain_token(const std::string& client_id, const std::string& client_secret);
+		std::optional<std::string> access_token();
 
 	private:
 		static constexpr auto request_scope = { "https://www.googleapis.com/auth/drive.readonly" };
 		google_account_info account_info_;
 	};
-
-	inline std::string google_account_manager::static_service_name = "Google";
 }

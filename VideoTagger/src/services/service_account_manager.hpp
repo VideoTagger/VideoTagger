@@ -12,10 +12,10 @@ namespace vt
 	public:
 		static std::string empty_account_name;
 
-		service_account_manager(std::string service_name, std::optional<std::string> account_name);
+		service_account_manager(std::string service_id, std::optional<std::string> account_name);
 		virtual ~service_account_manager() = default;
 
-		const std::string& service_name() const;
+		const std::string& service_id() const;
 		const std::string& account_name() const;
 
 		virtual nlohmann::ordered_json save() const = 0;
@@ -41,7 +41,7 @@ namespace vt
 
 	private:
 		//TODO: id, and display name like in video_importer
-		std::string service_name_;
+		std::string service_id_;
 		std::optional<std::string> account_name_;
 	};
 

@@ -210,15 +210,15 @@ namespace vt
 		}
 
 		auto accounts_json = utils::json::load_from_file(ctx_.accounts_filepath);
-		for (auto& [service_name, service_accounts] : accounts_json.items())
+		for (auto& [service_id, service_accounts] : accounts_json.items())
 		{
-			if (ctx_.account_managers.count(service_name) == 0)
+			if (ctx_.account_managers.count(service_id) == 0)
 			{
-				debug::log("Accounts file contains unsupported service: {}", service_name);
+				debug::log("Accounts file contains unsupported service: {}", service_id);
 				continue;
 			}
 
-			auto& manager = ctx_.account_managers.at(service_name);
+			auto& manager = ctx_.account_managers.at(service_id);
 			manager->load(service_accounts);
 		}
 
@@ -714,9 +714,9 @@ namespace vt
 			display_keybinds_panel(ctx_.current_project->keybinds);
 		};
 
-		for (auto& [service_name, account_manager] : ctx_.account_managers)
+		for (auto& [service_id, account_manager] : ctx_.account_managers)
 		{
-			options("Accounts", service_name) = [&manager = *account_manager]()
+			options("Accounts", service_id) = [&manager = *account_manager]()
 			{
 				bool modifed_account = false;
 
@@ -732,13 +732,13 @@ namespace vt
 				}
 				else
 				{
-					std::string popup_id = fmt::format("Add new {} account", manager.service_name());
+					std::string popup_id = fmt::format("Add new {} account", manager.service_id());
 					if (ImGui::Button("Add account"))
 					{
 						ImGui::OpenPopup(popup_id.c_str());
 					}
 
-					if (ImGui::BeginPopupModal(popup_id.c_str()))
+					if (ImGui::BeginPopupModal(popup_id.c_str(), nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoResize))
 					{
 						bool success;
 						if (manager.draw_add_popup(success))
@@ -758,9 +758,9 @@ namespace vt
 				if (modifed_account)
 				{
 					nlohmann::ordered_json accounts_json;
-					for (auto& [service_name, manager] : ctx_.account_managers)
+					for (auto& [service_id, manager] : ctx_.account_managers)
 					{
-						accounts_json[service_name] = *manager;
+						accounts_json[service_id] = *manager;
 					}
 
 					utils::json::write_to_file(accounts_json, ctx_.accounts_filepath);

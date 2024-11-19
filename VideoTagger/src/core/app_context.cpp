@@ -11,6 +11,16 @@ namespace vt
 		register_account_manager<google_account_manager>();
 	}
 
+	service_account_manager& app_context::get_account_manager(const std::string& service_id)
+	{
+		return *account_managers.at(service_id);
+	}
+
+	bool app_context::is_account_manager_registered(const std::string& service_id) const
+	{
+		return account_managers.count(service_id) != 0;
+	}
+
 	void app_context::register_video_importers()
 	{
 		register_video_importer<local_video_importer>();
