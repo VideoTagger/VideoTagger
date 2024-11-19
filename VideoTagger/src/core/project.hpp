@@ -54,9 +54,16 @@ namespace vt
 
 	struct generate_thumbnail_task
 	{
+		video_id_t video_id;
 		std::function<bool()> task;
 
 		bool operator()();
+	};
+
+	struct make_available_task
+	{
+		video_id_t video_id;
+		make_available_result result;
 	};
 
 	struct project : public project_info
@@ -75,6 +82,7 @@ namespace vt
 		std::vector<prepare_video_import_task> prepare_video_import_tasks;
 		std::vector<video_import_task> video_import_tasks;
 		std::vector<generate_thumbnail_task> generate_thumbnail_tasks;
+		std::vector<make_available_task> make_available_tasks;
 
 		project() = default;
 		project(const project&) = delete;
@@ -91,7 +99,9 @@ namespace vt
 		void schedule_video_import(typename VideoImporter::import_data import_data, std::optional<video_group_id_t> group_id);
 		void schedule_video_import(const std::string& importer_id, std::any import_data, std::optional<video_group_id_t> group_id);
 
-		void schedule_generate_thumbnail(video_id_t id);
+		void schedule_video_make_available(video_id_t video_id);
+
+		void schedule_generate_thumbnail(video_id_t video_id);
 
 		bool import_video(std::unique_ptr<video_resource>&& vid_resource, std::optional<video_group_id_t> group_id, bool set_project_dirty = true);
 

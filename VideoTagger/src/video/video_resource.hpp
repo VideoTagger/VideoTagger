@@ -2,6 +2,7 @@
 #include <cstdint>
 #include <chrono>
 #include <functional>
+#include <future>
 #include <nlohmann/json.hpp>
 #include <core/gl_texture.hpp>
 #include "video_stream.hpp"
@@ -30,6 +31,28 @@ namespace vt
 		std::function<void()> function;
 	};
 
+	enum class make_available_status
+	{
+		success,
+		failure
+	};
+
+	struct make_available_data
+	{
+		float progress = 0.f;
+		bool cancel = false;
+	};
+
+	struct make_available_result
+	{
+		std::shared_ptr<make_available_data> data;
+		std::future<make_available_status> result;
+
+		bool is_done() const;
+		void cancel();
+	};
+
+	//TODO: add context menu
 	class video_resource
 	{
 	public:
@@ -44,7 +67,11 @@ namespace vt
 
 		virtual bool available() const = 0;
 		virtual video_stream video() const = 0;
+
 		virtual bool update_thumbnail() = 0;
+
+		//TODO: maybe remove this and just let the children do this
+		virtual make_available_result make_available();
 
 		void set_metadata(const video_resource_metadata& metadata);
 		void set_thumbnail(gl_texture&& texture);

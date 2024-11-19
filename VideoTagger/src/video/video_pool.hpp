@@ -85,7 +85,7 @@ namespace vt
 		//TODO: consider taking a vector as an argument instead of returning. This could allow to avoid unnecessary allocations
 		std::vector<const video_resource*> get_group(const video_group& group) const;
 
-		bool exists(video_id_t video_id) const;
+		bool contains(video_id_t video_id) const;
 		size_t size() const;
 		bool empty() const;
 

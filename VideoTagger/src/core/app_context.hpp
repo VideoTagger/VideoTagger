@@ -213,7 +213,7 @@ namespace vt
 	template<typename VideoImporter>
 	inline VideoImporter& app_context::get_video_importer()
 	{
-		VideoImporter* result = dynamic_cast<VideoImporter>(video_importers.at(VideoImporter::static_importer_id).get());
+		VideoImporter* result = dynamic_cast<VideoImporter*>(video_importers.at(VideoImporter::static_importer_id).get());
 		if (result == nullptr)
 		{
 			debug::panic("Video importer type in the template argument didn't match the registered type for id {}", VideoImporter::static_importer_id);

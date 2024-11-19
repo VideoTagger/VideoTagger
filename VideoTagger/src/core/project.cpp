@@ -129,18 +129,39 @@ namespace vt
 		video_import_tasks.push_back(std::move(task));
 	}
 
-	void project::schedule_generate_thumbnail(video_id_t id)
+	void project::schedule_video_make_available(video_id_t video_id)
 	{
-		if (!videos.exists(id))
+		if (!videos.contains(video_id))
+		{
+			return;
+		}
+
+		auto& vid_resource = videos.get(video_id);
+		if (vid_resource.available())
+		{
+			return;
+		}
+
+		make_available_task task;
+		task.video_id = video_id;
+		task.result = vid_resource.make_available();
+
+		make_available_tasks.push_back(std::move(task));
+	}
+
+	void project::schedule_generate_thumbnail(video_id_t video_id)
+	{
+		if (!videos.contains(video_id))
 		{
 			return;
 		}
 
 		generate_thumbnail_task task;
-		task.task = [vid_resource = &videos.get(id)]()
+		task.task = [vid_resource = &videos.get(video_id)]()
 		{
 			return vid_resource->update_thumbnail();
 		};
+		task.video_id = video_id;
 		generate_thumbnail_tasks.push_back(std::move(task));
 	}
 
@@ -429,6 +450,24 @@ namespace vt
 		}
 
 		ctx_.displayed_videos.erase(id);
+
+		{
+			auto it = std::find_if(generate_thumbnail_tasks.begin(), generate_thumbnail_tasks.end(), [id](const auto& task) { return task.video_id == id; });
+			if (it != generate_thumbnail_tasks.end())
+			{
+				generate_thumbnail_tasks.erase(it);
+			}
+		}
+		
+		{
+			auto it = std::find_if(make_available_tasks.begin(), make_available_tasks.end(), [id](const auto& task) { return task.video_id == id; });
+			if (it != make_available_tasks.end())
+			{
+				it->result.cancel();
+				it->result.result.get();
+				make_available_tasks.erase(it);
+			}
+		}
 
 		if (videos.erase(id))
 		{

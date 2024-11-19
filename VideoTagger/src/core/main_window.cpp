@@ -1396,6 +1396,7 @@ namespace vt
 				auto& task = *it;
 				if (!task())
 				{
+					++it;
 					continue;
 				}
 
@@ -1446,6 +1447,31 @@ namespace vt
 				it = tasks.erase(it);
 				//TODO: set some frame time limit;
 				break;
+			}
+		}
+
+		{
+			auto& tasks = ctx_.current_project->make_available_tasks;
+			for (auto it = tasks.begin(); it != tasks.end();)
+			{
+				auto& task = *it;
+				if (!task.result.is_done())
+				{
+					debug::log("Download progress {} %", task.result.data->progress * 100.f);
+
+					++it;
+					continue;
+				}
+
+				auto status = task.result.result.get();
+				if (status == make_available_status::failure)
+				{
+					debug::error("Failed to download video {}", task.video_id);
+				}
+
+				debug::log("Downloaded file {}", task.video_id);
+
+				it = tasks.erase(it);
 			}
 		}
 

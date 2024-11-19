@@ -102,9 +102,11 @@ namespace vt
 			const auto& metadata = vid_resource.metadata();
 			if (!vid_resource.available())
 			{
-				debug::error("Video {} with id {} is not available", metadata.title.has_value() ? *metadata.title : "[UNTITLED]");
+				debug::error("Video {} with id {} is not available", metadata.title.has_value() ? *metadata.title : "[UNTITLED]", vid_resource.id());
 				continue;
 			}
+
+			debug::log("Download finished");
 
 			displayed_videos.insert(vid_resource.id(), vid_resource.video(), group_inf.offset, *metadata.width, *metadata.height);
 		}

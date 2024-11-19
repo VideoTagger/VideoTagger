@@ -5,6 +5,7 @@
 #include <core/app_context.hpp>
 #include <utils/drag_drop.hpp>
 #include <utils/thumbnail.hpp>
+#include <widgets/controls.hpp>
 #include "controls.hpp"
 #include "icons.hpp"
 
@@ -49,13 +50,17 @@ namespace vt::widgets
 			open = widgets::tile(label, tile_size, image_size, image,
 			[&](const std::string& label)
 			{
-				if (ImGui::MenuItem("Open"))
-				{
-					open = true;
-				}
 				if (ImGui::MenuItem("Remove"))
 				{
 					remove = true;
+				}
+				//TODO: CHANGE THIS
+				if (!vid_resource.available())
+				{
+					if (ImGui::MenuItem("Download"))
+					{
+						ctx_.current_project->schedule_video_make_available(vid_resource.id());
+					}
 				}
 			},
 			[=](const std::string& label)
@@ -86,33 +91,43 @@ namespace vt::widgets
 					columns = 1;
 				}
 
-				if (ImGui::BeginTable("##VideoBrowserBody", columns, ImGuiTableFlags_ScrollY | ImGuiTableFlags_SizingFixedSame, ImGui::GetContentRegionMax()))
+				std::unordered_map<std::string, std::vector<video_resource*>> grouped_videos;
+				for (auto& [id, vid_resource] : ctx_.current_project->videos)
+				{
+					grouped_videos[vid_resource->importer_id()].push_back(vid_resource.get());
+				}
+
+				auto table_flags = ImGuiTableFlags_ScrollY | ImGuiTableFlags_SizingFixedSame;
+				if (ImGui::BeginTable("##VideoBrowserBody", columns, table_flags, ImGui::GetContentRegionMax()))
 				{
 					ImGui::TableNextRow();
-					for (auto& [id, vid_resource] : ctx_.current_project->videos)
+
+					//auto node_flags = ImGuiTreeNodeFlags_Framed | ImGuiTreeNodeFlags_SpanFullWidth;
+					for (auto& [importer_id, vid_resources] : grouped_videos)
 					{
-						bool open_video{};
-						bool remove_video{};
+						//if (collapsing_header(ctx_.video_importers.at(importer_id)->importer_display_name().c_str()))
+						//{
+							//std::string table_id = fmt::format("##VideoBrowser{}", importer_id);
+							//if (ImGui::BeginTable(table_id.c_str(), columns, ImGuiTableFlags_SizingFixedFit))
+							//{
+								for (auto& vid_resource : vid_resources)
+								{
+									bool open_video{};
+									bool remove_video{};
 
-						ImGui::TableNextColumn();
-						draw_video_tile(id, *vid_resource, tile_size, open_video, remove_video, vid_resource->thumbnail() ? vid_resource->thumbnail()->id() : 0);
-						if (remove_video)
-						{
-							debug::log("Removing video with id: {}", id);
-							ctx_.current_project->remove_video(id);
-							break;
-						}
+									ImGui::TableNextColumn();
+									draw_video_tile(vid_resource->id(), *vid_resource, tile_size, open_video, remove_video, vid_resource->thumbnail() ? vid_resource->thumbnail()->id() : 0);
+									if (remove_video)
+									{
+										debug::log("Removing video with id: {}", vid_resource->id());
+										ctx_.current_project->remove_video(vid_resource->id());
+										break;
+									}
+								}
 
-						/*
-						if (open_video and !metadata.is_widget_open)
-						{
-							debug::log("Opening video {}", metadata.path.u8string());
-							if (on_open_video != nullptr)
-							{
-								std::invoke(on_open_video, id);
-							}
-						}
-						*/
+								//ImGui::EndTable();
+							//}
+						//}
 					}
 					ImGui::EndTable();
 				}

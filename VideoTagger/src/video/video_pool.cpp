@@ -181,7 +181,7 @@ namespace vt
 		return result;
 	}
 
-	bool video_pool::exists(video_id_t video_id) const
+	bool video_pool::contains(video_id_t video_id) const
 	{
 		return videos_.count(video_id) != 0;
 	}
