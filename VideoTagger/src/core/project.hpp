@@ -11,6 +11,7 @@
 #include <tags/tag_storage.hpp>
 #include <tags/tag_timeline.hpp>
 #include <video/video_pool.hpp>
+#include <video/downloadable_video_resource.hpp>
 #include <video/video_group_playlist.hpp>
 #include <video/video_importer.hpp>
 #include <core/input.hpp>
@@ -60,10 +61,10 @@ namespace vt
 		bool operator()();
 	};
 
-	struct make_available_task
+	struct video_download_task
 	{
 		video_id_t video_id;
-		make_available_result result;
+		video_download_result result;
 	};
 
 	struct project : public project_info
@@ -82,7 +83,7 @@ namespace vt
 		std::vector<prepare_video_import_task> prepare_video_import_tasks;
 		std::vector<video_import_task> video_import_tasks;
 		std::vector<generate_thumbnail_task> generate_thumbnail_tasks;
-		std::vector<make_available_task> make_available_tasks;
+		std::vector<video_download_task> make_available_tasks;
 
 		project() = default;
 		project(const project&) = delete;
@@ -99,7 +100,7 @@ namespace vt
 		void schedule_video_import(typename VideoImporter::import_data import_data, std::optional<video_group_id_t> group_id);
 		void schedule_video_import(const std::string& importer_id, std::any import_data, std::optional<video_group_id_t> group_id);
 
-		void schedule_video_make_available(video_id_t video_id);
+		void schedule_video_download(video_id_t video_id);
 
 		void schedule_generate_thumbnail(video_id_t video_id);
 

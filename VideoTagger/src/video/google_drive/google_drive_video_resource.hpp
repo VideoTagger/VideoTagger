@@ -1,27 +1,26 @@
 #pragma once
-#include <video/video_resource.hpp>
+#include <video/downloadable_video_resource.hpp>
 
 namespace vt
 {
-	class google_drive_video_resource : public video_resource
+	class google_drive_video_resource : public downloadable_video_resource
 	{
 	public:
 		google_drive_video_resource(video_id_t id, std::string file_id);
 		google_drive_video_resource(const nlohmann::ordered_json& json);
 
 		const std::string& file_id() const;
-		const std::filesystem::path& local_path() const;
 
-		bool available() const override;
 		video_stream video() const override;
 		bool update_thumbnail() override;
 
-		make_available_result make_available() override;
 
 		void on_save(nlohmann::ordered_json& json) const override;
+	
+	protected:
+		std::function<video_download_status(std::shared_ptr<video_download_data>)> get_download_function() override;
 
 	private:
-		std::filesystem::path local_path_;
 		std::string file_id_;
 	};
 }

@@ -20,6 +20,7 @@ namespace vt
 		const std::string& importer_id() const;
 		const std::string& importer_display_name() const;
 
+		//TODO: maybe return an std::future
 		virtual std::unique_ptr<video_resource> import_video(video_id_t id, std::any data) = 0;
 		virtual std::unique_ptr<video_resource> import_video_from_json(const nlohmann::ordered_json& json) = 0;
 

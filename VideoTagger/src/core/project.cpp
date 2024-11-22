@@ -8,6 +8,8 @@
 #include <utils/hash.hpp>
 #include <utils/filesystem.hpp>
 #include "app_context.hpp"
+#include <video/downloadable_video_resource.hpp>
+#include <video/video_resource.hpp>
 
 static std::chrono::system_clock::time_point to_sys_time(const std::filesystem::file_time_type& ftime)
 {
@@ -129,22 +131,22 @@ namespace vt
 		video_import_tasks.push_back(std::move(task));
 	}
 
-	void project::schedule_video_make_available(video_id_t video_id)
+	void project::schedule_video_download(video_id_t video_id)
 	{
 		if (!videos.contains(video_id))
 		{
 			return;
 		}
 
-		auto& vid_resource = videos.get(video_id);
-		if (vid_resource.available())
+		auto* vid_resource = dynamic_cast<downloadable_video_resource*>(&videos.get(video_id));
+		if (vid_resource == nullptr or vid_resource->available())
 		{
 			return;
 		}
 
-		make_available_task task;
+		video_download_task task;
 		task.video_id = video_id;
-		task.result = vid_resource.make_available();
+		task.result = vid_resource->download();
 
 		make_available_tasks.push_back(std::move(task));
 	}

@@ -33,13 +33,8 @@ namespace vt
 		return thumbnail_;
 	}
 
-	make_available_result video_resource::make_available()
+	void video_resource::on_remove()
 	{
-		make_available_result result;
-		result.data = std::make_unique<make_available_data>();
-		result.result = std::async([]() { return make_available_status::success; });
-
-		return std::move(result);
 	}
 
 	void video_resource::set_metadata(const video_resource_metadata& metadata)
@@ -164,18 +159,5 @@ namespace vt
 		}
 
 		return json.at("id");
-	}
-
-	bool make_available_result::is_done() const
-	{
-		return result.wait_for(std::chrono::seconds{0}) == std::future_status::ready;
-	}
-
-	void make_available_result::cancel()
-	{
-		if (data != nullptr)
-		{
-			data->cancel = true;
-		}
 	}
 }

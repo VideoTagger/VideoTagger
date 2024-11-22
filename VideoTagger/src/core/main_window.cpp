@@ -1464,12 +1464,15 @@ namespace vt
 				}
 
 				auto status = task.result.result.get();
-				if (status == make_available_status::failure)
+				if (status == video_download_status::failure)
 				{
 					debug::error("Failed to download video {}", task.video_id);
 				}
-
-				debug::log("Downloaded file {}", task.video_id);
+				else
+				{
+					debug::log("Downloaded file {}", task.video_id);
+					dynamic_cast<downloadable_video_resource&>(ctx_.current_project->videos.get(task.video_id)).set_local_path(task.result.data->download_path);
+				}
 
 				it = tasks.erase(it);
 			}

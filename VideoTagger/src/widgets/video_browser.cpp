@@ -59,7 +59,7 @@ namespace vt::widgets
 				{
 					if (ImGui::MenuItem("Download"))
 					{
-						ctx_.current_project->schedule_video_make_available(vid_resource.id());
+						ctx_.current_project->schedule_video_download(vid_resource.id());
 					}
 				}
 			},
