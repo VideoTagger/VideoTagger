@@ -35,7 +35,7 @@ namespace vt::widgets
 			else
 			{
 				widgets::timestamp_control("Start", start, min_timestamp, max_timestamp, nullptr, nullptr);
-				widgets::timestamp_control("End", end, start.seconds_total.count() + 1, max_timestamp, nullptr, nullptr);
+				widgets::timestamp_control("End", end, (start.total_milliseconds + tag_segment::min_segment_size).count(), max_timestamp, nullptr, nullptr);
 			}
 
 			if (start > end)

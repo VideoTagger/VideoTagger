@@ -26,6 +26,8 @@ namespace vt
 	struct tag_segment
 	{
 		using attribute_instance_container = std::unordered_map<video_id_t, std::unordered_map<std::string, tag_attribute_instance>>;
+		static constexpr auto min_segment_size = std::chrono::milliseconds{ 1 };
+		static constexpr auto default_segment_size = std::chrono::milliseconds{ 500 };
 
 		timestamp start{};
 		timestamp end{};
@@ -89,13 +91,13 @@ namespace vt
 		{
 		case tag_segment_type::timestamp:
 		{
-			json["timestamp"] = utils::time::time_to_string(segment.start.seconds_total.count());
+			json["timestamp"] = segment.start;
 		}
 		break;
 		case tag_segment_type::segment:
 		{
-			json["start"] = utils::time::time_to_string(segment.start.seconds_total.count());
-			json["end"] = utils::time::time_to_string(segment.end.seconds_total.count());
+			json["start"] = segment.start;
+			json["end"] = segment.end;
 		}
 		break;
 		}
@@ -198,14 +200,11 @@ namespace vt
 
 				if (json_tag_segments.contains("timestamp"))
 				{
-					auto ts = utils::time::parse_time_to_sec(json_tag_segments["timestamp"]);
-					tag_segments.insert(vt::timestamp{ ts }, attributes);
+					tag_segments.insert(json_tag_segments["timestamp"].get<timestamp>());
 				}
 				else if (json_tag_segments.contains("start") and json_tag_segments.contains("end"))
 				{
-					auto start = utils::time::parse_time_to_sec(json_tag_segments["start"]);
-					auto end = utils::time::parse_time_to_sec(json_tag_segments["end"]);
-					tag_segments.insert(vt::timestamp{ start }, vt::timestamp{ end }, attributes);
+					tag_segments.insert(json_tag_segments["start"].get<timestamp>(), json_tag_segments["end"].get<timestamp>());
 				}
 			}
 		}

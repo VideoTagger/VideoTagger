@@ -44,21 +44,21 @@ namespace vt::utils::time
 		return {};
 	}
 
-	std::string time_to_string(int64_t seconds, const char* format)
+	std::string time_to_string(int64_t milliseconds, const char* format)
 	{
-		timestamp ts(seconds);
+		timestamp ts(milliseconds);
 		char buffer[256];
-		ImFormatString(buffer, IM_ARRAYSIZE(buffer), format, ts.hours(), ts.minutes(), ts.seconds());
+		ImFormatString(buffer, IM_ARRAYSIZE(buffer), format, ts.hours(), ts.minutes(), ts.seconds(), ts.milliseconds());
 		return buffer;
 	}
 
-	//parses HH:MM:SS string into seconds
-	int64_t parse_time_to_sec(const std::string& input, char separator)
+	//parses HH:MM:SS:mmm string into milliseconds
+	int64_t parse_time_to_ms(const std::string& input, char separator)
 	{
 		uint8_t n = 0;
-		uint8_t segment = 0;
-		constexpr uint8_t segment_max = 3;
-		int64_t seconds{};
+		int8_t segment = -1;
+		constexpr uint8_t segment_max = 4;
+		int64_t milliseconds{};
 		int64_t val{};
 		auto it = input.rbegin();
 		while (it != input.rend() and segment != segment_max)
@@ -71,12 +71,20 @@ namespace vt::utils::time
 			}
 			if (is_separator or it == input.rend())
 			{
-				seconds += val * static_cast<int64_t>(std::pow(60ull, segment++));
+				if (segment < 0)
+				{
+					milliseconds += val;
+				}
+				else
+				{
+					milliseconds += val * static_cast<int64_t>(std::pow(60ull, segment)) * 1000;
+				}
 				n = 0;
 				val = 0;
+				segment++;
 			}
 		}
-		return seconds;
+		return milliseconds;
 	}
 
     std::string utc_timestamp()

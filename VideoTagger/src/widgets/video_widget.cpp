@@ -106,8 +106,8 @@ namespace vt::widgets
 
 				auto video_ts = video.current_timestamp();
 				auto duration_ts = video.duration();
-				timestamp current_time{ std::chrono::duration_cast<std::chrono::seconds>(video_ts) };
-				timestamp duration{ std::chrono::duration_cast<std::chrono::seconds>(duration_ts) };
+				timestamp current_time{ std::chrono::duration_cast<std::chrono::milliseconds>(video_ts) };
+				timestamp duration{ std::chrono::duration_cast<std::chrono::milliseconds>(duration_ts) };
 				decltype(video_ts) min_ts{};
 
 				if (show_controls)
