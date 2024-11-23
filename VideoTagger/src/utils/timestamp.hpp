@@ -10,29 +10,29 @@ namespace vt
 
 		constexpr timestamp() : seconds_total{} {}
 		constexpr explicit timestamp(std::chrono::seconds seconds_total) : seconds_total{ seconds_total } {}
-		constexpr explicit timestamp(uint64_t seconds) : timestamp(std::chrono::seconds(seconds)) {}
+		constexpr explicit timestamp(int64_t seconds) : timestamp(std::chrono::seconds(seconds)) {}
 
-		constexpr timestamp(uint32_t hours, uint16_t minutes, uint16_t seconds) : seconds_total{ std::chrono::seconds(seconds) + std::chrono::minutes(minutes) + std::chrono::hours(hours) } {}
+		constexpr timestamp(int64_t hours, int64_t minutes, int64_t seconds) : seconds_total{ std::chrono::seconds(seconds) + std::chrono::minutes(minutes) + std::chrono::hours(hours) } {}
 
-		constexpr void set(uint32_t hours, uint16_t minutes, uint16_t seconds)
+		constexpr void set(int64_t hours, int64_t minutes, int64_t seconds)
 		{
 			seconds %= 60;
 			minutes %= 60;
 			seconds_total = std::chrono::seconds(seconds) + std::chrono::minutes(minutes) + std::chrono::hours(hours);
 		}
 
-		constexpr void set_hours(uint64_t value)
+		constexpr void set_hours(int64_t value)
 		{
 			seconds_total = seconds_total - std::chrono::hours(hours()) + std::chrono::hours(value);
 		}
 
-		constexpr void set_minutes(uint64_t value)
+		constexpr void set_minutes(int64_t value)
 		{
 			value %= 60;
 			seconds_total = seconds_total - std::chrono::minutes(minutes()) + std::chrono::minutes(value);
 		}
 
-		constexpr void set_seconds(uint64_t value)
+		constexpr void set_seconds(int64_t value)
 		{
 			value %= 60;
 			seconds_total = seconds_total - std::chrono::seconds(seconds()) + std::chrono::seconds(value);
