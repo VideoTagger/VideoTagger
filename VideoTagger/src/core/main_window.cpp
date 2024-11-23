@@ -1311,8 +1311,8 @@ namespace vt
 
 		auto& insert_data = insert_data_it->second;
 
-		auto min_ts = ctx_.video_timeline.start_timestamp().seconds_total.count();
-		auto max_ts = ctx_.video_timeline.end_timestamp().seconds_total.count();
+		auto min_ts = ctx_.video_timeline.start_timestamp().total_milliseconds.count();
+		auto max_ts = ctx_.video_timeline.end_timestamp().total_milliseconds.count();
 		//should it be this or all tags?
 		auto& tags = ctx_.video_timeline.displayed_tags();
 
@@ -1574,15 +1574,15 @@ namespace vt
 			ctx_.video_timeline.set_segment_storage(ctx_.current_video_group_id() != invalid_video_group_id ? &ctx_.get_current_segment_storage() : nullptr);
 			ctx_.video_timeline.sync_tags();
 			ctx_.video_timeline.set_start_timestamp(timestamp::zero());
-			ctx_.video_timeline.set_end_timestamp(timestamp(std::chrono::duration_cast<std::chrono::seconds>(group_duration)));
-			ctx_.video_timeline.set_current_timestamp(timestamp{ std::chrono::duration_cast<std::chrono::seconds>(ctx_.displayed_videos.current_timestamp()) });
+			ctx_.video_timeline.set_end_timestamp(timestamp(std::chrono::duration_cast<std::chrono::milliseconds>(group_duration)));
+			ctx_.video_timeline.set_current_timestamp(timestamp{ std::chrono::duration_cast<std::chrono::milliseconds>(ctx_.displayed_videos.current_timestamp()) });
 			ctx_.video_timeline.insert_segment_container = &ctx_.insert_segment_data;
 
 			ctx_.video_timeline.render(ctx_.win_cfg.show_timeline_window);
 
-			if (ctx_.video_timeline.current_timestamp().seconds_total != std::chrono::duration_cast<std::chrono::seconds>(ctx_.displayed_videos.current_timestamp()))
+			if (ctx_.video_timeline.current_timestamp().total_milliseconds != std::chrono::duration_cast<std::chrono::milliseconds>(ctx_.displayed_videos.current_timestamp()))
 			{
-				ctx_.displayed_videos.seek(ctx_.video_timeline.current_timestamp().seconds_total);
+				ctx_.displayed_videos.seek(ctx_.video_timeline.current_timestamp().total_milliseconds);
 			}
 		}
 

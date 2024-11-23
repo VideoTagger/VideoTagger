@@ -288,8 +288,8 @@ namespace vt
 						json_tag_segments = nlohmann::ordered_json::array();
 						for (tag_segment segment : tag_segments) //copy is intended
 						{
-							segment.start -= timestamp{ std::chrono::duration_cast<std::chrono::seconds>(group_video_info.offset) };
-							segment.end -= timestamp{ std::chrono::duration_cast<std::chrono::seconds>(group_video_info.offset) };
+							segment.start -= timestamp{ std::chrono::duration_cast<std::chrono::milliseconds>(group_video_info.offset) };
+							segment.end -= timestamp{ std::chrono::duration_cast<std::chrono::milliseconds>(group_video_info.offset) };
 
 							bool clipped_start = false;
 							bool clipped_end = false;
@@ -623,7 +623,7 @@ namespace vt
 
 						video_group::video_info vinfo;
 						vinfo.id = group_video["id"];
-						vinfo.offset = (decltype(vinfo.offset))utils::time::parse_time_to_sec(group_video["offset"]);
+						vinfo.offset = (decltype(vinfo.offset))utils::time::parse_time_to_ms(group_video["offset"]);
 						vgroup.insert(vinfo);
 					}
 					result.video_groups.insert({ id, vgroup });

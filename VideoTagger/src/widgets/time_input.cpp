@@ -40,7 +40,7 @@ namespace vt::widgets
 		// "%d" -> "%d" / "There are %d items" -> "%d" / "items" -> "%d" (fallback). Also see #6405
 		const ImGuiDataTypeInfo* type_info = ImGui::DataTypeGetInfo(data_type);
 		char data_buf[32];
-		ImFormatString(data_buf, IM_ARRAYSIZE(data_buf), format, p_data->hours(), p_data->minutes(), p_data->seconds());
+		ImFormatString(data_buf, IM_ARRAYSIZE(data_buf), format, p_data->hours(), p_data->minutes(), p_data->seconds(), p_data->milliseconds());
 		ImStrTrimBlanks(data_buf);
 
 		ImGuiInputTextFlags flags = ImGuiInputTextFlags_EnterReturnsTrue | ImGuiInputTextFlags_AutoSelectAll | ImGuiInputTextFlags_NoMarkEdited;
@@ -55,7 +55,7 @@ namespace vt::widgets
 			memcpy(&data_backup, p_data, data_type_size);
 
 			// Input text parsing
-			p_data->seconds_total = std::chrono::seconds(utils::time::parse_time_to_sec(data_buf));
+			p_data->total_milliseconds = std::chrono::milliseconds(utils::time::parse_time_to_ms(data_buf));
 			/*
 			// Apply new value (or operations) then clamp
 			ImGui::DataTypeApplyFromText(data_buf, data_type, p_data, format);
@@ -153,7 +153,7 @@ namespace vt::widgets
 
 		// Display value using user-provided display format so user can add prefix/suffix/decorations to the value.
 		char value_buf[64];
-		const char* value_buf_end = value_buf + ImFormatString(value_buf, IM_ARRAYSIZE(value_buf), format, v->hours(), v->minutes(), v->seconds());
+		const char* value_buf_end = value_buf + ImFormatString(value_buf, IM_ARRAYSIZE(value_buf), format, v->hours(), v->minutes(), v->seconds(), v->milliseconds());
 		
 		if (g.LogEnabled)
 			ImGui::LogSetNextTextDecoration("{", "}");

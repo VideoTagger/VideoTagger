@@ -98,8 +98,8 @@ namespace vt::widgets
 			}
 			ImGui::EndChild();
 
-			timestamp current_time{ std::chrono::duration_cast<std::chrono::seconds>(data_.current_ts) };
-			timestamp duration{ std::chrono::duration_cast<std::chrono::seconds>(data_.end_ts) };
+			timestamp current_time{ std::chrono::duration_cast<std::chrono::milliseconds>(data_.current_ts) };
+			timestamp duration{ std::chrono::duration_cast<std::chrono::milliseconds>(data_.end_ts) };
 			decltype(data_.current_ts) min_ts{};
 
 			ImGui::BeginGroup();
@@ -120,21 +120,21 @@ namespace vt::widgets
 			ImGui::Columns(3);
 			{
 				auto avail_size = ImGui::GetContentRegionAvail();
-				auto time_size = ImGui::CalcTextSize("00:00:00");
-				auto total_size = ImGui::CalcTextSize("00:00:00 | 00:00:00");
+				auto time_size = ImGui::CalcTextSize("00:00:00:000");
+				auto total_size = ImGui::CalcTextSize("00:00:00:000 | 00:00:00:000");
 
 				ImGui::SetCursorPos({ avail_size.x - total_size.x, ImGui::GetCursorPosY() + total_size.y / 4 });
 				ImGui::SetNextItemWidth(time_size.x);
 				ImGui::PushStyleColor(ImGuiCol_FrameBg, { 0, 0, 0, 0 });
-				if (widgets::time_input("##TimeInput", &current_time, 1, 0, duration.seconds_total.count()))
+				if (widgets::time_input("##TimeInput", &current_time, 1, 0, duration.total_milliseconds.count()))
 				{
-					callbacks.on_seek(current_time.seconds_total);
+					callbacks.on_seek(current_time.total_milliseconds);
 				}
 				ImGui::PopStyleColor();
 				ImGui::SameLine();
-				ImGui::Text("| %02d:%02d:%02d",
-					duration.hours(), duration.minutes(), duration.seconds()
-				);
+
+				std::string video_duration = fmt::format("| {}", utils::time::time_to_string(duration.total_milliseconds.count()));
+				ImGui::TextUnformatted(video_duration.c_str());
 			}
 
 			ImGui::NextColumn();
