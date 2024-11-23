@@ -59,8 +59,8 @@ namespace vt::widgets
 							timestamp prev_ts_start = ts_start;
 							timestamp prev_ts_end = ts_end;
 
-							uint64_t start_max = link_start_end ? max_timestamp : std::max<uint64_t>(0, ts_end.seconds_total.count() - 1);
-							uint64_t end_min = link_start_end ? min_timestamp : ts_start.seconds_total.count() + 1;
+							uint64_t start_max = link_start_end ? max_timestamp : std::max<uint64_t>(0, ts_end.total_milliseconds.count() - 1);
+							uint64_t end_min = link_start_end ? min_timestamp : ts_start.total_milliseconds.count() + 1;
 
 							//ImGui::Columns(2, nullptr, false);
 							bool start_activated = false;
@@ -96,7 +96,7 @@ namespace vt::widgets
 							
 							if (ts_start < timestamp::zero())
 							{
-								timestamp move_value = timestamp(std::abs(ts_start.seconds_total.count()));
+								timestamp move_value = timestamp(std::abs(ts_start.total_milliseconds.count()));
 								ts_start += move_value;
 								ts_end += move_value;
 							}

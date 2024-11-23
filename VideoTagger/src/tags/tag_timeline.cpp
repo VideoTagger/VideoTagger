@@ -27,7 +27,7 @@ namespace vt
 
 	std::chrono::nanoseconds tag_segment::duration() const
 	{
-		return end.seconds_total - start.seconds_total;
+		return (end - start).total_milliseconds;
 	}
 
 	tag_segment_type tag_segment::type() const
