@@ -37,6 +37,10 @@ namespace vt
 	{
 	}
 
+	void video_resource::context_menu_items(std::vector<video_resource_context_menu_item>& items)
+	{
+	}
+
 	void video_resource::set_metadata(const video_resource_metadata& metadata)
 	{
 		if (metadata.title.has_value())

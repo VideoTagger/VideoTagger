@@ -1,5 +1,6 @@
 #include "pch.hpp"
 #include "downloadable_video_resource.hpp"
+#include <core/app_context.hpp>
 
 namespace vt
 {
@@ -59,6 +60,17 @@ namespace vt
 		return ptr->progress;
 	}
 
+	void downloadable_video_resource::remove_downloaded()
+	{
+		if (!available())
+		{
+			return;
+		}
+
+		std::filesystem::remove(local_path_);
+		local_path_.clear();
+	}
+
 	bool downloadable_video_resource::available() const
 	{
 		return std::filesystem::is_regular_file(local_path_);
@@ -71,11 +83,33 @@ namespace vt
 
 	void downloadable_video_resource::on_remove()
 	{
-		if (!available())
-		{
-			return;
-		}
+		remove_downloaded();
+	}
 
-		std::filesystem::remove(local_path_);
+	void downloadable_video_resource::context_menu_items(std::vector<video_resource_context_menu_item>& items)
+	{
+		if (download_progress() == std::nullopt)
+		{
+			if (!available() and download_progress())
+			{
+				video_resource_context_menu_item item;
+				item.name = "Download";
+				item.function = [id = id()]()
+					{
+						ctx_.current_project->schedule_video_download(id);
+					};
+				items.push_back(std::move(item));
+			}
+			else
+			{
+				video_resource_context_menu_item item;
+				item.name = "Remove Local File";
+				item.function = [this]()
+					{
+						remove_downloaded();
+					};
+				items.push_back(std::move(item));
+			}
+		}
 	}
 }

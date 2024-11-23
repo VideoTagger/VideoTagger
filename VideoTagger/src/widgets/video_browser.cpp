@@ -15,7 +15,7 @@ namespace vt::widgets
 	{
 		if (!ctx_.current_project.has_value()) return;
 
-		static auto draw_video_tile = [this](video_id_t id, const video_resource& vid_resource, ImVec2 tile_size, bool& open, bool& remove, GLuint image = 0)
+		static auto draw_video_tile = [this](video_id_t id, video_resource& vid_resource, ImVec2 tile_size, bool& open, bool& remove, GLuint image = 0)
 		{
 			const auto& metadata = vid_resource.metadata();
 			std::string label = metadata.title.value_or("");
@@ -54,12 +54,13 @@ namespace vt::widgets
 				{
 					remove = true;
 				}
-				//TODO: CHANGE THIS
-				if (!vid_resource.available())
+				std::vector<video_resource_context_menu_item> context_items;
+				vid_resource.context_menu_items(context_items);
+				for (auto& item : context_items)
 				{
-					if (ImGui::MenuItem("Download"))
+					if (ImGui::MenuItem(item.name.c_str()))
 					{
-						ctx_.current_project->schedule_video_download(vid_resource.id());
+						item.function();
 					}
 				}
 			},

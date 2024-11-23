@@ -14,7 +14,6 @@ namespace vt
 		video_stream video() const override;
 		bool update_thumbnail() override;
 
-
 		void on_save(nlohmann::ordered_json& json) const override;
 	
 	protected:

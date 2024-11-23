@@ -44,9 +44,12 @@ namespace vt
 		video_download_result download(std::launch launch_policy = std::launch::async);
 		std::optional<float> download_progress() const;
 
+		void remove_downloaded();
+
 		virtual bool available() const;
 		virtual void on_save(nlohmann::ordered_json& json) const;
 		virtual void on_remove() override;
+		virtual void context_menu_items(std::vector<video_resource_context_menu_item>& items);
 
 	protected:
 		virtual std::function<video_download_status(std::shared_ptr<video_download_data>)> get_download_function() = 0;

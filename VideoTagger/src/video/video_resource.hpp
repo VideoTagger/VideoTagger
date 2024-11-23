@@ -3,6 +3,7 @@
 #include <chrono>
 #include <functional>
 #include <future>
+#include <vector>
 #include <nlohmann/json.hpp>
 #include <core/gl_texture.hpp>
 #include "video_stream.hpp"
@@ -25,7 +26,7 @@ namespace vt
 	extern video_resource_metadata make_video_metadata_from_json(const nlohmann::ordered_json& json);
 	extern video_id_t make_video_id_from_json(const nlohmann::ordered_json& json);
 
-	struct video_resource_context_menu_data
+	struct video_resource_context_menu_item
 	{
 		std::string name;
 		std::function<void()> function;
@@ -50,6 +51,8 @@ namespace vt
 		virtual bool update_thumbnail() = 0;
 
 		virtual void on_remove();
+
+		virtual void context_menu_items(std::vector<video_resource_context_menu_item>& items);
 
 		void set_metadata(const video_resource_metadata& metadata);
 		void set_thumbnail(gl_texture&& texture);
