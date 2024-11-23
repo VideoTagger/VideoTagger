@@ -201,8 +201,7 @@ namespace vt
 
 			server.Get("/oauth2", [&oauth2_code, &server](const httplib::Request& req, httplib::Response& res)
 			{
-				//TODO: Display a page
-				res.set_content("You can now close this tab", "text/html");
+				res.set_content(service_account_manager::success_page, "text/html");
 
 				//TODO: check for errors
 				oauth2_code = req.params.find("code")->second;
