@@ -58,6 +58,7 @@ namespace vt
 		bool link_start_end_segment = true;
 		bool autoplay = true;
 		bool load_thumbnails = true;
+		bool enable_undocking = true;
 	};
 
 	struct window_config
