@@ -10,9 +10,9 @@
 namespace vt::widgets
 {
 	extern bool checkbox(const char* label, bool* value);
-	extern bool icon_button(const char* label, const ImVec2& size = ImVec2(0, 0));
+	extern bool icon_button(const char* label, const ImVec2& size = ImVec2{}, const ImVec4& color = ImGui::GetStyleColorVec4(ImGuiCol_Text));
 	extern void tooltip(const char* text);
-	extern bool icon_toggle_button(const char* label, bool is_toggled, const ImVec2& size = ImVec2(0, 0));
+	extern bool icon_toggle_button(const char* label, bool is_toggled, const ImVec2& size = ImVec2{}, const ImVec4& color = ImGui::GetStyleColorVec4(ImGuiCol_Text));
 
 	extern bool collapsing_header(const char* label, bool hide_background = false);
 	extern void label(const char* label);

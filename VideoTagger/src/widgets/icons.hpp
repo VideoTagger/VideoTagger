@@ -62,12 +62,19 @@ namespace vt::icons
 	inline constexpr auto align_vertical_center = "\xee\x80\x91";
 	inline constexpr auto align_center = "\xee\x8d\x96";
 
+	inline constexpr auto info = "\xee\xa2\x8e";
+	inline constexpr auto warning = "\xee\x80\x82";
+	//inline constexpr auto error = "\xee\x80\x80";
+	inline constexpr auto error = "\xee\x85\xa0";
+	inline constexpr auto delete_on_run = "\xee\x85\xac";
+
 	inline std::vector<std::string> all
 	({
 		dots_hor, play, play_next, pause, repeat, repeat_one, shuffle, skip_next, skip_prev, fast_back, fast_fwd,
 		save, save_as, import_, import_export, exit, close, back, visibility_on, visibility_off, add, delete_, reset, folder, folder_code, label, expand_less, expand_more,
 		toggle_less, toggle_more, link, edit, help, video_group, video, search, terminal, property, attribute, object,
 		shape, shape_none, shape_circle, shape_rectangle, shape_polygon, interpolate,
-		align_horizontal_left, align_horizontal_right, align_horizontal_center, align_vertical_bottom, align_vertical_top, align_vertical_center, align_center
+		align_horizontal_left, align_horizontal_right, align_horizontal_center, align_vertical_bottom, align_vertical_top, align_vertical_center, align_center,
+		info, warning, error, delete_on_run
 	});
 }

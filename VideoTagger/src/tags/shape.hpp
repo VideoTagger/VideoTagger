@@ -27,6 +27,11 @@ namespace vt
 		{
 			polygon::vertices.resize(2);
 		}
+
+		rectangle(const utils::vec2<uint32_t>& start, const utils::vec2<uint32_t>& end) : polygon{ { start, end } }
+		{
+
+		}
 	};
 
 	struct shape

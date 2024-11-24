@@ -322,6 +322,7 @@ namespace vt
 				if (show_windows.contains("video-browser")) ctx_.win_cfg.show_video_browser_window = show_windows["video-browser"];
 				if (show_windows.contains("video-group-browser")) ctx_.win_cfg.show_video_group_browser_window = show_windows["video-group-browser"];
 				if (show_windows.contains("video-group-queue")) ctx_.win_cfg.show_video_group_queue_window = show_windows["video-group-queue"];
+				if (show_windows.contains("console")) ctx_.win_cfg.show_console_window = show_windows["console"];
 			}
 			if (ctx_.settings.contains("load-thumbnails"))
 			{
@@ -330,6 +331,10 @@ namespace vt
 			if (ctx_.settings.contains("autoplay"))
 			{
 				ctx_.app_settings.autoplay = ctx_.settings.at("autoplay");
+			}
+			if (ctx_.settings.contains("clear-console-on-run"))
+			{
+				ctx_.app_settings.clear_console_on_run = ctx_.settings.at("clear-console-on-run");
 			}
 		}
 		else
@@ -447,6 +452,7 @@ namespace vt
 		ctx_.keybinds.insert("Toggle Inspector", keybind(SDLK_F5, toggle_window_mod, flags, toggle_window_action("inspector", ctx_.win_cfg.show_inspector_window)));
 		ctx_.keybinds.insert("Toggle Tag Manager", keybind(SDLK_F6, toggle_window_mod, flags, toggle_window_action("tag-manager", ctx_.win_cfg.show_tag_manager_window)));
 		ctx_.keybinds.insert("Toggle Timeline", keybind(SDLK_F7, toggle_window_mod, flags, toggle_window_action("timeline", ctx_.win_cfg.show_timeline_window)));
+		ctx_.keybinds.insert("Toggle Console", keybind(SDLK_F8, toggle_window_mod, flags, toggle_window_action("console", ctx_.win_cfg.show_console_window)));
 
 		keybind_modifiers player_mod{};
 		ctx_.keybinds.insert("Play/Pause", keybind(SDLK_SPACE, player_mod, flags, player_action(player_action_type::play_pause)));
@@ -1048,6 +1054,7 @@ namespace vt
 						win_toggles{ "Show Inspector", "Toggle Inspector", "inspector", &ctx_.win_cfg.show_inspector_window },
 						win_toggles{ "Show Tag Manager", "Toggle Tag Manager", "tag-manager", &ctx_.win_cfg.show_tag_manager_window },
 						win_toggles{ "Show Timeline", "Toggle Timeline", "timeline", &ctx_.win_cfg.show_timeline_window },
+						win_toggles{ "Show Console", "Toggle Console", "console", &ctx_.win_cfg.show_console_window},
 
 					})
 				{
@@ -1612,7 +1619,7 @@ namespace vt
 						ImGui::EndPopup();
 					}
 
-					if (!add_point and (ImGui::IsKeyDown(ImGuiKey_LeftShift) or ImGui::IsKeyDown(ImGuiKey_RightShift)) and ImGui::IsMouseClicked(0))
+					if (!add_point and (ImGui::IsKeyDown(ImGuiKey_LeftShift) or ImGui::IsKeyDown(ImGuiKey_RightShift)) and ImGui::IsMouseClicked(0) and hovered)
 					{
 						add_point_pos = ImGui::GetMousePos();
 						add_point = true;
@@ -1938,6 +1945,17 @@ namespace vt
 			ctx_.theme_customizer.render(ctx_.win_cfg.show_theme_customizer_window);
 		}
 
+		if (ctx_.win_cfg.show_console_window)
+		{
+			bool clear_console = ctx_.app_settings.clear_console_on_run;
+			ctx_.console.render(ctx_.win_cfg.show_console_window, ctx_.app_settings.clear_console_on_run, ctx_.scripts_filepath);
+			if (clear_console != ctx_.app_settings.clear_console_on_run)
+			{
+				ctx_.settings["clear-console-on-run"] = ctx_.app_settings.clear_console_on_run;
+				save_settings();
+			}
+		}
+
 		if (ctx_.win_cfg.show_script_progress)
 		{
 			ctx_.script_progress.open();
@@ -1996,13 +2014,9 @@ namespace vt
 			ImGui::DockBuilderDockWindow("Video Player", main_dock_up);
 			ImGui::DockBuilderDockWindow("Video Browser", main_dock_up_left);
 			ImGui::DockBuilderDockWindow("Theme Customizer", main_dock_up);
+			ImGui::DockBuilderDockWindow(widgets::console::window_name().c_str(), dockspace_id_copy);
 			ImGui::DockBuilderDockWindow("Timeline", dockspace_id_copy);
 			ImGui::DockBuilderDockWindow("Video Group Browser", dockspace_id_copy);
-			/*for (size_t i = 0; i < 4; ++i)
-			{
-				auto video_id = "Video##" + std::to_string(i);
-				ImGui::DockBuilderDockWindow(video_id.c_str(), main_dock_up);
-			}*/
 
 			ImGui::DockBuilderFinish(dockspace_id);
 			ctx_.reset_layout = false;

@@ -26,6 +26,7 @@
 #include <widgets/video_group_browser.hpp>
 #include <widgets/video_group_queue.hpp>
 #include <widgets/theme_customizer.hpp>
+#include <widgets/console.hpp>
 #include <widgets/modal/options.hpp>
 #include <widgets/modal/tag_importer.hpp>
 #include <widgets/modal/script_progress.hpp>
@@ -59,6 +60,7 @@ namespace vt
 		bool link_start_end_segment = true;
 		bool autoplay = true;
 		bool load_thumbnails = true;
+		bool clear_console_on_run = true;
 	};
 
 	struct window_config
@@ -72,6 +74,7 @@ namespace vt
 		bool show_video_browser_window = true;
 		bool show_video_group_browser_window = true;
 		bool show_video_group_queue_window = true;
+		bool show_console_window = true;
 
 		//not serialized
 		bool show_options_window = false;
@@ -93,6 +96,7 @@ namespace vt
 		widgets::video_group_browser group_browser;
 		widgets::video_group_queue group_queue;
 		widgets::theme_customizer theme_customizer;
+		widgets::console console;
 		widgets::modal::options options;
 		widgets::modal::script_progress script_progress;
 		widgets::color_picker color_picker;

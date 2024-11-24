@@ -14,6 +14,7 @@ namespace vt
 		scripting_engine();
 
 	private:
+		PyConfig cfg{};
 		std::unique_ptr<py::scoped_interpreter> lock_;
 		std::unique_ptr<py::gil_scoped_release> unlock_;
 
