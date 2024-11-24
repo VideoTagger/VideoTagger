@@ -5,6 +5,7 @@
 #include <set>
 #include <chrono>
 #include <unordered_map>
+#include <optional>
 
 #include <core/debug.hpp>
 #include <utils/json.hpp>
@@ -74,7 +75,10 @@ namespace vt
 		bool empty() const;
 
 	private:
-		std::set<tag_segment, tag_timeline_set_comparator_> timestamps_;
+		std::set<tag_segment, tag_timeline_set_comparator_> segments_;
+
+		std::optional<std::pair<iterator_range<iterator>, bool>> prepare_insert(timestamp& time_start, timestamp& time_end);
+		std::optional<iterator> prepare_insert(timestamp ts);
 	};
 
 	//key: tag name
