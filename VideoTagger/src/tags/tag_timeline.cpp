@@ -44,7 +44,7 @@ namespace vt
 			segments_.erase(overlapping.begin(), overlapping.end());
 		}
 
-		return timestamps_.emplace(insert_start, insert_end, attributes);
+		return segments_.emplace(time_start, time_end, attributes);
 	}
 
 	std::pair<tag_timeline::iterator, bool> tag_timeline::insert(timestamp time_point, const tag_segment::attribute_instance_container& attributes)
@@ -55,7 +55,7 @@ namespace vt
 			return { *prepare_result, false };
 		}
 
-		return timestamps_.emplace(time_point, attributes);
+		return segments_.emplace(time_point, attributes);
 	}
 
 	tag_timeline::iterator tag_timeline::erase(iterator it)
