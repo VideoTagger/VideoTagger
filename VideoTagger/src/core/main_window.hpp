@@ -32,6 +32,8 @@ namespace vt
 		void draw_project_selector();
 		void draw_main_app();
 
+		void enable_undocking(bool value);
+
 		virtual void draw() override;
 		virtual void handle_event(const SDL_Event& event) override;
 	};

@@ -245,11 +245,11 @@ namespace vt
 		ImFontGlyphRangesBuilder default_font_builder;
 
 		for (const auto& range :
-			{
-				io.Fonts->GetGlyphRangesDefault(),
-				io.Fonts->GetGlyphRangesGreek(),
-				io.Fonts->GetGlyphRangesCyrillic()
-			})
+		{
+			io.Fonts->GetGlyphRangesDefault(),
+			io.Fonts->GetGlyphRangesGreek(),
+			io.Fonts->GetGlyphRangesCyrillic()
+		})
 		{
 			default_font_builder.AddRanges(range);
 		}

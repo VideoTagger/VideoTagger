@@ -61,6 +61,7 @@ namespace vt
 		bool autoplay = true;
 		bool load_thumbnails = true;
 		bool clear_console_on_run = true;
+		bool enable_undocking = true;
 	};
 
 	struct window_config
