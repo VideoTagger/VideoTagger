@@ -20,6 +20,7 @@
 #include <widgets/insert_segment_popup.hpp>
 
 #include <utils/filesystem.hpp>
+#include <utils/string.hpp>
 
 namespace vt
 {
@@ -207,7 +208,7 @@ namespace vt
 				{
 					auto it = std::find_if(vid_exts.begin(), vid_exts.end(), [&path](const std::string& ext)
 					{
-						return path.extension() == "." + ext;
+						return utils::string::to_lowercase(path.extension().string()) == "." + ext;
 					});
 
 					if (it == vid_exts.end())
