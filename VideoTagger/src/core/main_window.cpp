@@ -107,6 +107,8 @@ namespace vt
 
 	void main_window::on_close_project(bool should_shutdown)
 	{
+		if (ctx_.script_handle.has_value()) return;
+
 		ctx_.gizmo_target = nullptr;
 		ctx_.last_focused_video = std::nullopt;
 		ctx_.registry.execute<set_selected_attribute_command>(nullptr);
@@ -316,6 +318,7 @@ namespace vt
 			if (ctx_.settings.contains("show-windows"))
 			{
 				auto& show_windows = ctx_.settings["show-windows"];
+
 				if (show_windows.contains("inspector")) ctx_.win_cfg.show_inspector_window = show_windows["inspector"];
 				if (show_windows.contains("tag-manager")) ctx_.win_cfg.show_tag_manager_window = show_windows["tag-manager"];
 				if (show_windows.contains("timeline")) ctx_.win_cfg.show_timeline_window = show_windows["timeline"];
