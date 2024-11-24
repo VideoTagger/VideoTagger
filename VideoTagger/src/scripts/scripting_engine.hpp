@@ -25,5 +25,6 @@ namespace vt
 	public:
 		void init();
 		void run(const std::string& script_name);
+		void interrupt();
 	};
 }

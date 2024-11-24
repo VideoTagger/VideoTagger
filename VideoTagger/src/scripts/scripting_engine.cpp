@@ -451,8 +451,10 @@ namespace vt
 				}
 
 				auto native_script = script_class_obj.cast<std::shared_ptr<vt::script>>();
+				ctx_.script_handle->thread_id = native_script->thread_id();
 				ctx_.script_handle->script = native_script;
 
+				ctx_.script_handle->has_progress = native_script->has_progress();
 				native_script->on_run();
 				ctx_.script_handle->script = {};
 				//script.attr(entrypoint.c_str())();
@@ -477,7 +479,19 @@ namespace vt
 					std::string exception_type = py::str(exc_type.attr("__name__"));
 
 					std::string message = utils::string::trim_whitespace(ex.what());
-					if (!message.empty())
+
+					if (ex.matches(PyExc_InterruptedError))
+					{
+						debug::log_source(fmt::format("{}:{}", std::filesystem::relative(file_name, ctx_.scripts_filepath).string(), lineno), "Info", "{}", "Script successfully interrupted");
+						auto sys = py::module_::import("sys");
+						try
+						{
+							sys.attr("exit")(py::int_(-1));
+						}
+						catch (...) {}
+						return false;
+					}
+					else if (!message.empty())
 					{
 						debug::log_source(fmt::format("{}:{}", std::filesystem::relative(file_name, ctx_.scripts_filepath).string(), lineno), "Error", "{}", message);
 						ctx_.console.add_entry(widgets::console::entry::flag_type::error, message, widgets::console::entry::source_info{ file_name, lineno });
@@ -490,5 +504,14 @@ namespace vt
 			}
 			return true;
 		}));
+	}
+
+	void scripting_engine::interrupt()
+	{
+		if (ctx_.script_handle.has_value())
+		{
+			py::gil_scoped_acquire lock{};
+			PyThreadState_SetAsyncExc(ctx_.script_handle->thread_id, PyExc_InterruptedError);
+		}
 	}
 }

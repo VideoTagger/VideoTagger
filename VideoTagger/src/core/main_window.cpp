@@ -107,7 +107,11 @@ namespace vt
 
 	void main_window::on_close_project(bool should_shutdown)
 	{
-		if (ctx_.script_handle.has_value()) return;
+		if (ctx_.script_handle.has_value())
+		{
+			ctx_.script_eng.interrupt();
+			return;
+		}
 
 		ctx_.gizmo_target = nullptr;
 		ctx_.last_focused_video = std::nullopt;
