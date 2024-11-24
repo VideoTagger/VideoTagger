@@ -482,13 +482,14 @@ namespace vt
 
 					if (ex.matches(PyExc_InterruptedError))
 					{
-						debug::log_source(fmt::format("{}:{}", std::filesystem::relative(file_name, ctx_.scripts_filepath).string(), lineno), "Info", "{}", "Script successfully interrupted");
 						auto sys = py::module_::import("sys");
 						try
 						{
 							sys.attr("exit")(py::int_(-1));
 						}
 						catch (...) {}
+						debug::log_source(fmt::format("{}:{}", std::filesystem::relative(file_name, ctx_.scripts_filepath).string(), lineno), "Info", "{}", "Script interrupted");
+						ctx_.console.add_entry(widgets::console::entry::flag_type::info, "Script interrupted", widgets::console::entry::source_info{ file_name, lineno });
 						return false;
 					}
 					else if (!message.empty())
