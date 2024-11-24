@@ -4,6 +4,13 @@
 
 namespace vt
 {
+	uint32_t script::thread_id() const
+	{
+		namespace py = pybind11;
+		auto threading = py::module_::import("threading");
+		return py::cast<uint32_t>(threading.attr("get_native_id")());
+	}
+
 	bool script::has_progress() const
 	{
 		PYBIND11_OVERRIDE
@@ -37,5 +44,10 @@ namespace vt
 	bool script_handle::has_finished() const
 	{
 		return promise_.wait_for(std::chrono::seconds(0)) == std::future_status::ready;
+	}
+
+	void script_handle::wait()
+	{
+		promise_.wait();
 	}
 }
