@@ -2,7 +2,7 @@
 ![VideoTagger Preview](./resources/images/preview.png?raw=true)
 
 ## Getting started
-To download the repository use `git clone --recursive https://github.com/Vexte/VideoTagger`.
+To download the repository use `git clone --recursive https://github.com/VideoTagger/VideoTagger`.
 
 If the repository was cloned non-recursively use `git submodule update --init` to clone the submodules.
 
