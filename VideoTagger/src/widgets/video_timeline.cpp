@@ -627,11 +627,13 @@ namespace vt::widgets
 								}
 								else if (tag_segment.type() == tag_segment_type::timestamp)
 								{
+									auto width = item_height; //(slot_p2.x - slot_p1.x)
+
 									ImVec2 pos = { (slot_p2.x + slot_p1.x) / 2, slot_p1.y + item_height / 2 - 2 };
 									ImVec2 p1 = { pos.x, pos.y - item_height / 2 + 1 };
-									ImVec2 p2 = { pos.x + (slot_p2.x - slot_p1.x) / 2, pos.y };
+									ImVec2 p2 = { pos.x + width / 2, pos.y };
 									ImVec2 p3 = { pos.x, pos.y + item_height / 2 - 1 };
-									ImVec2 p4 = { pos.x - (slot_p2.x - slot_p1.x) / 2, pos.y };
+									ImVec2 p4 = { pos.x - width / 2, pos.y };
 
 									draw_list->AddQuadFilled(p1, p2, p3, p4, timestamp_color);
 									if (is_selected)
@@ -649,10 +651,13 @@ namespace vt::widgets
 							const float max_handle_width = slot_p2.x - slot_p1.x / 3.0f;
 							const float min_handle_width = std::min(10.0f, max_handle_width);
 							const float handle_width = std::clamp(frame_pixel_width / 2.0f, min_handle_width, max_handle_width);
+
+							float offset = (tag_segment.type() == tag_segment_type::timestamp) ? item_height / 2 : 0.f;
+
 							ImRect rects[3] = {
 								ImRect(slot_p1, ImVec2(slot_p1.x + handle_width, slot_p2.y)),
 								ImRect(ImVec2(slot_p2.x - handle_width, slot_p1.y), slot_p2),
-								ImRect(slot_p1, slot_p2)
+								ImRect(slot_p1 - ImVec2{ offset, 0.f }, slot_p2 + ImVec2{ offset, 0.f })
 							};
 
 							bool mouse_on_segment = rects[2].Contains(io.MousePos);
@@ -758,11 +763,13 @@ namespace vt::widgets
 								}
 								else if (tag_segment.type() == tag_segment_type::timestamp)
 								{
+									auto width = item_height; //(slot_p2.x - slot_p1.x)
+
 									ImVec2 pos = { (slot_p2.x + slot_p1.x) / 2, slot_p1.y + item_height / 2 - 2 };
 									ImVec2 p1 = { pos.x, pos.y - item_height / 2 + 1 };
-									ImVec2 p2 = { pos.x + (slot_p2.x - slot_p1.x) / 2, pos.y };
+									ImVec2 p2 = { pos.x + width / 2, pos.y };
 									ImVec2 p3 = { pos.x, pos.y + item_height / 2 - 1 };
-									ImVec2 p4 = { pos.x - (slot_p2.x - slot_p1.x) / 2, pos.y };
+									ImVec2 p4 = { pos.x - width / 2, pos.y };
 
 									draw_list->AddQuadFilled(p1, p2, p3, p4, timestamp_color);
 									draw_list->AddQuad(p1, p2, p3, p4, selection_color, selection_thickness);
@@ -1058,16 +1065,15 @@ namespace vt::widgets
 					float startFrameOffset = ((float)(first_frame_used - time_min) / (float)frame_count) * (canvas_size.x - legend_width);
 					ImVec2 scrollBarA(scrollBarMin.x + legend_width, scrollBarMin.y - 2);
 					ImVec2 scrollBarB(scrollBarMin.x + canvas_size.x, scrollBarMax.y - 1);
-					draw_list->AddRectFilled(scrollBarA, scrollBarB, scroll_bg_alt_color, 0);
+					
+					ImVec2 scrollBarC(scrollBarA.x + startFrameOffset, scrollBarMin.y);
+					ImVec2 scrollBarD(scrollBarC.x + barWidthInPixels, scrollBarMax.y - 2);
 
 					ImRect scrollBarRect(scrollBarA, scrollBarB);
-					bool inScrollBar = scrollBarRect.Contains(io.MousePos);
 
+					draw_list->AddRectFilled(scrollBarA, scrollBarB, scroll_bg_alt_color, 0);
 					draw_list->AddRectFilled(scrollBarA, scrollBarB, scroll_bg_color, style.ScrollbarRounding);
-
-
-					ImVec2 scrollBarC(scrollBarMin.x + legend_width + startFrameOffset, scrollBarMin.y);
-					ImVec2 scrollBarD(scrollBarMin.x + legend_width + barWidthInPixels + startFrameOffset, scrollBarMax.y - 2);
+					bool inScrollBar = scrollBarRect.Contains(io.MousePos);
 					draw_list->AddRectFilled(scrollBarC, scrollBarD, (inScrollBar || moving_scroll_bar) ? scroll_active_color : scroll_color, style.ScrollbarRounding);
 
 					ImRect barHandleLeft(scrollBarC, ImVec2(scrollBarC.x + style.ScrollbarSize, scrollBarD.y));
