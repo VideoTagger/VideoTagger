@@ -90,7 +90,7 @@ namespace vt
 	{
 		if (download_progress() == std::nullopt)
 		{
-			if (!available() and download_progress())
+			if (!available())
 			{
 				video_resource_context_menu_item item;
 				item.name = "Download";
@@ -106,6 +106,7 @@ namespace vt
 				item.name = "Remove Local File";
 				item.function = [this]()
 					{
+						//TODO: should be done through the project so it can remove it from displayed videos or something
 						remove_downloaded();
 					};
 				items.push_back(std::move(item));
