@@ -20,6 +20,7 @@
 #include <widgets/insert_segment_popup.hpp>
 
 #include <utils/filesystem.hpp>
+#include <utils/string.hpp>
 
 namespace vt
 {
@@ -290,6 +291,10 @@ namespace vt
 			if (ctx_.settings.contains("autoplay"))
 			{
 				ctx_.app_settings.autoplay = ctx_.settings.at("autoplay");
+			}
+			if (ctx_.settings.contains("enable-undocking"))
+			{
+				ctx_.app_settings.enable_undocking = ctx_.settings.at("enable-undocking");
 			}
 		}
 		else
@@ -1101,6 +1106,13 @@ namespace vt
 #endif
 
 				ImGui::Separator();
+				if (ImGui::MenuItem("Enable Undocking", nullptr, ctx_.app_settings.enable_undocking))
+				{
+					ctx_.app_settings.enable_undocking = !ctx_.app_settings.enable_undocking;
+					ctx_.settings["enable-undocking"] = ctx_.app_settings.enable_undocking;
+					save_settings();
+					enable_undocking(ctx_.app_settings.enable_undocking);
+				}
 				if (ImGui::MenuItem(ctx_.lang.get(lang_pack_id::redock_videos)))
 				{
 					ctx_.reset_player_docking = true;
@@ -1718,6 +1730,23 @@ namespace vt
 		}
 	}
 
+	void main_window::enable_undocking(bool value)
+	{
+		ImGuiID dockspace_id = ImGui::GetID("MainDockspace");
+		auto node = ImGui::DockBuilderGetNode(dockspace_id);
+		if (node != nullptr)
+		{
+			if (value)
+			{
+				node->LocalFlags |= ImGuiDockNodeFlags_NoUndocking;
+			}
+			else
+			{
+				node->LocalFlags &= ~ImGuiDockNodeFlags_NoUndocking;
+			}
+		}
+	}
+
 	void main_window::draw()
 	{
 		ImGuiViewport* viewport = ImGui::GetMainViewport();
@@ -1739,10 +1768,11 @@ namespace vt
 		ImGui::Begin("##Editor", NULL, window_flags);
 		ImGui::PopStyleVar(3);
 
+		auto dock_flags = ctx_.app_settings.enable_undocking ? dockspace_flags : (dockspace_flags | ImGuiDockNodeFlags_NoUndocking);
 		if (ctx_.reset_layout and ImGui::DockBuilderGetNode(dockspace_id) != nullptr)
 		{
 			ImGui::DockBuilderRemoveNode(dockspace_id);
-			ImGui::DockBuilderAddNode(dockspace_id, dockspace_flags);
+			ImGui::DockBuilderAddNode(dockspace_id, dock_flags);
 			ImGuiViewport* viewport = ImGui::GetMainViewport();
 			ImGui::DockBuilderSetNodeSize(dockspace_id, viewport->Size);
 
@@ -1770,7 +1800,7 @@ namespace vt
 			ctx_.reset_layout = false;
 		}
 
-		ImGui::DockSpace(dockspace_id, ImVec2{}, dockspace_flags);
+		ImGui::DockSpace(dockspace_id, ImVec2{}, dock_flags);
 		ctx_.current_project.has_value() ? draw_main_app() : draw_project_selector();
 
 		ImGui::End();
