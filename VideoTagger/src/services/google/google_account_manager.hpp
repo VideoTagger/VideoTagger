@@ -19,6 +19,7 @@ namespace vt
 
 		std::chrono::steady_clock::time_point expire_tp;
 
+		std::string user_name() const;
 		std::string client_id() const;
 		std::string client_secret() const;
 		std::string access_token() const;
@@ -30,6 +31,7 @@ namespace vt
 	class google_account_manager : public service_account_manager
 	{
 	public:
+		static constexpr auto static_service_display_name = "Google";
 		static constexpr auto static_service_id = "google";
 
 		google_account_manager();
@@ -37,23 +39,31 @@ namespace vt
 		nlohmann::ordered_json save() const override;
 		void load(const nlohmann::ordered_json& json) override;
 
-		bool on_add_account(const std::string& name, const account_properties& properties) override;
-		void on_remove_account() override;
+		void on_log_out() override;
 
 		const account_properties& get_account_properties() const override;
 		void set_account_properties(const account_properties& properties) override;
 
 		const google_account_info& account_info() const;
-		bool active() const;
+		bool active() const override;
+		bool logged_in() const override;
 
 		void draw_options_page() override;
 		bool draw_add_popup(bool& success) override;
 
-		std::optional<obtain_token_result> obtain_token(const std::string& client_id, const std::string& client_secret);
+		std::optional<obtain_token_result> obtain_access_token(const std::string& client_id, const std::string& client_secret, bool* cancel_token);
+		std::optional<obtain_token_result> refresh_access_token(const std::string& client_id, const std::string& client_secret, const std::string& refresh_token);
 		std::optional<std::string> access_token();
-
+		std::optional<std::string> obtain_user_name();
+		bool revoke_token();
+	
+	protected:
+		bool on_log_in(const account_properties& properties, bool* cancel_token) override;
+	
 	private:
-		static constexpr auto request_scope = { "https://www.googleapis.com/auth/drive.readonly" };
+		static constexpr auto request_scope = { "https://www.googleapis.com/auth/drive.readonly", "https://www.googleapis.com/auth/userinfo.profile" };
 		google_account_info account_info_;
+		std::future<bool> add_account_result_;
+		bool logged_in_{};
 	};
 }

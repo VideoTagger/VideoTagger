@@ -714,45 +714,51 @@ namespace vt
 			display_keybinds_panel(ctx_.current_project->keybinds);
 		};
 
-		for (auto& [service_id, account_manager] : ctx_.account_managers)
+		options("Storage Settings", "Accounts") = []()
 		{
-			options("Accounts", service_id) = [&manager = *account_manager]()
+			//TODO: move this somewhere so it can have a value per account
+			static bool login_in_progress = false;
+
+			for (auto& [service_id, account_manager] : ctx_.account_managers)
 			{
+				ImGui::TextUnformatted(account_manager->service_display_name().c_str());
+
 				bool modifed_account = false;
 
-				if (manager.logged_in())
+				if (!login_in_progress and account_manager->logged_in())
 				{
-					manager.draw_options_page();
+					account_manager->draw_options_page();
 ;
 					if (ImGui::Button("Log out"))
 					{
-						manager.remove_account();
+						account_manager->log_out();
 						modifed_account = true;
 					}
 				}
 				else
 				{
-					std::string popup_id = fmt::format("Add new {} account", manager.service_id());
-					if (ImGui::Button("Add account"))
-					{
-						ImGui::OpenPopup(popup_id.c_str());
-					}
-
+					std::string popup_id = fmt::format("Log in to a {} account", account_manager->service_display_name());
 					if (ImGui::BeginPopupModal(popup_id.c_str(), nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoResize))
 					{
-						bool success;
-						if (manager.draw_add_popup(success))
+						bool success{};
+						if (account_manager->draw_add_popup(success))
 						{
 							if (success)
 							{
 								modifed_account = true;
 							}
 
-							debug::log("Add account popup success: {}", success);
+							debug::log("Login popup success: {}", success);
 							ImGui::CloseCurrentPopup();
+							login_in_progress = false;
 						}
 						ImGui::EndPopup();
 					}
+					if (ImGui::Button("Log in"))
+					{
+						ImGui::OpenPopup(popup_id.c_str());
+						login_in_progress = true;
+					}					
 				}
 
 				if (modifed_account)
@@ -765,8 +771,9 @@ namespace vt
 
 					utils::json::write_to_file(accounts_json, ctx_.accounts_filepath);
 				}
-			};
-		}
+			}
+		};
+
 		options.set_active_tab("Application Settings", "General");
 	}
 

@@ -3,8 +3,8 @@
 
 namespace vt
 {
-	service_account_manager::service_account_manager(std::string service_id, std::optional<std::string> account_name)
-		: service_id_{ std::move(service_id) }, account_name_{ std::move(account_name) }
+	service_account_manager::service_account_manager(std::string service_id, std::string service_display_name)
+		: service_id_{ std::move(service_id) }, service_display_name_{ std::move(service_display_name) }
 	{
 	}
 
@@ -13,30 +13,25 @@ namespace vt
 		return service_id_;
 	}
 
-	const std::string& service_account_manager::account_name() const
+	const std::string& service_account_manager::service_display_name() const
 	{
-		return account_name_ ? *account_name_ : empty_account_name;
+		return service_display_name_;
 	}
 
-	bool service_account_manager::add_account(const std::string& name, const account_properties& properties)
+	std::future<bool> service_account_manager::log_in(const account_properties& properties, bool* cancel_token)
 	{
-		if (!on_add_account(name, properties))
+		return std::async(std::launch::async, [this, cancel_token, properties]()
 		{
-			return false;
-		}
-
-		account_name_ = name;
-		return true;
+			if (!on_log_in(properties, cancel_token))
+			{
+				return false;
+			}
+			return true;
+		});
 	}
 
-	void service_account_manager::remove_account()
+	void service_account_manager::log_out()
 	{
-		on_remove_account();
-		account_name_.reset();
-	}
-
-	bool service_account_manager::logged_in() const
-	{
-		return account_name_.has_value();
+		on_log_out();
 	}
 }
