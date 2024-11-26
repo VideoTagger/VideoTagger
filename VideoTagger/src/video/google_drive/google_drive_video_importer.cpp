@@ -2,6 +2,11 @@
 #include "google_drive_video_importer.hpp"
 #include "google_drive_video_resource.hpp"
 #include <core/debug.hpp>
+#include <core/app_context.hpp>
+#include <services/google/google_account_manager.hpp>
+
+#define CPPHTTPLIB_OPENSSL_SUPPORT
+#include <httplib.h>
 
 namespace vt
 {
@@ -48,14 +53,120 @@ namespace vt
 		}
 	}
 
+	static std::string get_file_id(std::string_view string)
+	{
+		std::string_view find_string = "file/d/";
+		auto pos = string.find(find_string);
+		if (pos == string.npos)
+		{
+			find_string = "folders/";
+			pos = string.find(find_string);
+			if (pos == string.npos)
+			{
+				//TODO: do some more validation
+				return std::string(string);
+			}
+		}
+
+		auto id_start = pos + find_string.size();
+		auto id_end = string.find_first_of("/?", id_start);
+		/*if (id_end == string.npos)
+		{
+			return "";
+		}*/
+
+		return std::string(string.substr(id_start, id_end - id_start));
+	}
+
+	static void prepare_video_import(std::string_view file_id, std::vector<std::any>& import_data)
+	{
+		auto& account_manager = ctx_.get_account_manager<google_account_manager>();
+		
+		auto access_token = account_manager.access_token().value_or("");
+		if (access_token.empty())
+		{
+			debug::error("Failed to obtain google access token");
+			return;
+		}
+		
+		httplib::Client client("https://www.googleapis.com");
+		client.set_bearer_token_auth(access_token);
+
+		nlohmann::json response_json;
+		{
+			auto get_result = client.Get(fmt::format("/drive/v3/files/{}?fields=mimeType", file_id));
+			if (!get_result)
+			{
+				debug::error(httplib::to_string(get_result.error()));
+				return;
+			}
+			auto& response = *get_result;
+			if (response.status != 200)
+			{
+				debug::error(response.reason);
+				return;
+			}
+
+			response_json = nlohmann::json::parse(response.body);
+		}
+		
+		std::string mime_type = response_json.at("mimeType");
+		if (mime_type.find("video/") != mime_type.npos)
+		{
+			google_drive_video_importer::import_arguments imp_args;
+			imp_args.file_id = file_id;
+			import_data.push_back(imp_args);
+			return;
+		}
+		if (mime_type == "application/vnd.google-apps.folder")
+		{
+			std::string next_page_token;
+			std::string base_get_url = fmt::format("/drive/v3/files?q='{}' in parents&fields=files(id)", file_id);
+			std::string get_url = base_get_url;
+			do
+			{
+				auto get_result = client.Get(get_url);
+				if (!get_result)
+				{
+					debug::error(httplib::to_string(get_result.error()));
+					return;
+				}
+				auto& response = *get_result;
+				if (response.status != 200)
+				{
+					debug::error(response.reason);
+					return;
+				}
+
+				response_json = nlohmann::json::parse(response.body);
+				for (auto& file : response_json.at("files"))
+				{
+					google_drive_video_importer::import_arguments imp_args;
+					imp_args.file_id = file.at("id");
+					import_data.push_back(imp_args);
+				}
+
+				if (response_json.contains("nextPageToken"))
+				{
+					next_page_token = response_json.at("nextPageToken");
+					get_url = fmt::format("{}&pageToken={}", base_get_url, next_page_token);
+				}
+
+			} while (!next_page_token.empty());
+
+			return;
+		}
+
+		debug::error("Google Drive file id did not refer to a video file or a folder");
+	}
+
 	std::function<bool(std::vector<std::any>&)> google_drive_video_importer::prepare_video_import_task()
 	{
-		return [](std::vector<std::any>& import_data)
+		return [open = false, user_input = std::string()](std::vector<std::any>& import_data) mutable
 		{
 			//TODO: CHANGE THIS WHOLE POPUP
 
-			static std::string file_id;
-			static bool open = false;
+			bool return_value = false;
 			if (!open)
 			{
 				ImGui::OpenPopup("Google Drive Import");
@@ -65,16 +176,21 @@ namespace vt
 			if (ImGui::BeginPopupModal("Google Drive Import", &open, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoResize))
 			{
 				ImGui::SetNextItemWidth(390.f);
-				if (ImGui::InputTextWithHint("##FileId", "Google Drive File ID...", &file_id, ImGuiInputTextFlags_EnterReturnsTrue))
+				if (ImGui::InputTextWithHint("##FileId", "Google Drive File ID...", &user_input, ImGuiInputTextFlags_EnterReturnsTrue))
 				{
-					google_drive_video_importer::import_arguments args;
-					args.file_id = file_id;
-					import_data.push_back(args);
-					open = false;
-					ImGui::CloseCurrentPopup();
-					file_id.clear();
-					ImGui::EndPopup();
-					return true;
+					std::string file_id = get_file_id(user_input);
+					if (!file_id.empty())
+					{
+						prepare_video_import(file_id, import_data);
+						open = false;
+						ImGui::CloseCurrentPopup();
+					}
+					else
+					{
+						debug::error("Failed to obtain file id from user input");
+					}
+
+					//TODO: some notification if it fails
 				}
 
 				ImGui::EndPopup();
@@ -82,11 +198,11 @@ namespace vt
 
 			if (!open)
 			{
-				file_id.clear();
-				return true;
+				user_input.clear();
+				return_value = true;
 			}
 
-			return false;
+			return return_value;
 		};
 	}
 
