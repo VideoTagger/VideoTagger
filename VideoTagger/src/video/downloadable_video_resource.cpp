@@ -46,6 +46,7 @@ namespace vt
 		video_download_result result;
 		result.data = std::make_shared<video_download_data>();
 		result.result = std::async(launch_policy, get_download_function(), result.data);
+		download_data_ = result.data;
 		return result;
 	}
 
@@ -95,9 +96,9 @@ namespace vt
 				video_resource_context_menu_item item;
 				item.name = "Download";
 				item.function = [id = id()]()
-					{
-						ctx_.current_project->schedule_video_download(id);
-					};
+				{
+					ctx_.current_project->schedule_video_download(id);
+				};
 				items.push_back(std::move(item));
 			}
 			else
@@ -105,12 +106,28 @@ namespace vt
 				video_resource_context_menu_item item;
 				item.name = "Remove Local File";
 				item.function = [this]()
-					{
-						//TODO: should be done through the project so it can remove it from displayed videos or something
-						remove_downloaded();
-					};
+				{
+					//TODO: should be done through the project so it can remove it from displayed videos or something
+					remove_downloaded();
+				};
 				items.push_back(std::move(item));
 			}
+		}
+		else
+		{
+			video_resource_context_menu_item item;
+			item.name = "Cancel download";
+			item.function = [this]()
+			{
+				auto ptr = download_data_.lock();
+				if (ptr == nullptr)
+				{
+					return;
+				}
+
+				ptr->cancel = true;
+			};
+			items.push_back(std::move(item));
 		}
 	}
 }
