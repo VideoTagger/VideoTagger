@@ -204,11 +204,11 @@ namespace vt
 
 				if (json_tag_segments.contains("timestamp"))
 				{
-					tag_segments.insert(json_tag_segments["timestamp"].get<timestamp>());
+					tag_segments.insert(json_tag_segments["timestamp"].get<timestamp>(), attributes);
 				}
 				else if (json_tag_segments.contains("start") and json_tag_segments.contains("end"))
 				{
-					tag_segments.insert(json_tag_segments["start"].get<timestamp>(), json_tag_segments["end"].get<timestamp>());
+					tag_segments.insert(json_tag_segments["start"].get<timestamp>(), json_tag_segments["end"].get<timestamp>(), attributes);
 				}
 			}
 		}

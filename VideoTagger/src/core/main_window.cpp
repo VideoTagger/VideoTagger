@@ -1551,6 +1551,8 @@ namespace vt
 					ImVec2 add_point_pos{};
 					bool add_point{};
 
+					auto current_ts = ctx_.video_timeline.current_timestamp();
+
 					if (last_focused and is_shape and ImGui::BeginPopupContextItem("##VideoCtxMenu"))
 					{
 						bool close = false;
@@ -1633,6 +1635,7 @@ namespace vt
 						{
 							ctx_.gizmo_target->at(0) = (uint32_t)point_pos.x;
 							ctx_.gizmo_target->at(1) = (uint32_t)point_pos.y;
+							ctx_.is_project_dirty = true;
 							ImGui::CloseCurrentPopup();
 						}
 						ImGui::EndPopup();
@@ -1646,9 +1649,10 @@ namespace vt
 
 					if (add_point and is_polygon)
 					{
-						auto& shape = selected_attribute->get<vt::shape>();
+						/*auto& shape = selected_attribute->get<vt::shape>();
 
-						auto& poly = shape.get<polygon>();
+						auto& polygons = shape.get<std::map<timestamp, std::vector<polygon>>>();
+						shape.get_prev_or_current_keyframe<polygon>(current_ts);
 						auto& pos = add_point_pos;
 
 						auto closest_it = poly.vertices.end();
@@ -1688,7 +1692,7 @@ namespace vt
 						else
 						{
 							ctx_.gizmo_target = &*poly.vertices.insert(closest_it, to_tex_pos(pos));
-						}
+						}*/
 					}
 
 					auto draw_list = ImGui::GetWindowDrawList();
@@ -1710,7 +1714,6 @@ namespace vt
 					
 					//shape drawing
 					std::string tooltip;
-					auto current_ts = ctx_.video_timeline.current_timestamp();
 					for (const auto& displayed_tag : ctx_.video_timeline.displayed_tags())
 					{
 						auto& segment_storage = ctx_.get_current_segment_storage();
@@ -1738,7 +1741,7 @@ namespace vt
 										const auto& shape = attr.get<vt::shape>();
 										draw_list->PushClipRect(top_left, bottom_right, true);
 										bool is_mouse_over{};
-										shape.draw(from_tex_pos, tex_size, size, is_selected ? orange : tag.color, fill_color, show_points, is_mouse_over);
+										shape.draw(current_ts, shape.interpolate, from_tex_pos, tex_size, size, is_selected ? orange : tag.color, fill_color, show_points, is_mouse_over);
 
 										if (is_mouse_over)
 										{

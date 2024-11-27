@@ -206,7 +206,8 @@ namespace vt
 		.def("set_rect", [](tag_attribute_instance& attr, uint32_t x, uint32_t y, uint32_t w, uint32_t h)
 		{
 			auto s = shape{ shape::type::rectangle };
-			s.data = rectangle{ utils::vec2<uint32_t>{ x, y }, utils::vec2<uint32_t>{ x + w, y + h } };
+			//TODO: Implement this!
+			//s.data = rectangle{ utils::vec2<uint32_t>{ x, y }, utils::vec2<uint32_t>{ x + w, y + h } };
 			attr = s;
 		});
 

@@ -68,6 +68,10 @@ namespace vt::icons
 	inline constexpr auto error = "\xee\x85\xa0";
 	inline constexpr auto delete_on_run = "\xee\x85\xac";
 
+	inline constexpr auto keyframe = "\xee\x9a\x97";
+	inline constexpr auto keyframe_current = "\xee\x9a\xb7";
+	inline constexpr auto goto_keyframe = "\xee\x81\xb4";
+
 	inline std::vector<std::string> all
 	({
 		dots_hor, play, play_next, pause, repeat, repeat_one, shuffle, skip_next, skip_prev, fast_back, fast_fwd,
@@ -75,6 +79,7 @@ namespace vt::icons
 		toggle_less, toggle_more, link, edit, help, video_group, video, search, terminal, property, attribute, object,
 		shape, shape_none, shape_circle, shape_rectangle, shape_polygon, interpolate,
 		align_horizontal_left, align_horizontal_right, align_horizontal_center, align_vertical_bottom, align_vertical_top, align_vertical_center, align_center,
-		info, warning, error, delete_on_run
+		info, warning, error, delete_on_run,
+		keyframe, keyframe_current, goto_keyframe,
 	});
 }
