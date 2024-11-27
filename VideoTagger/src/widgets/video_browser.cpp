@@ -73,6 +73,34 @@ namespace vt::widgets
 					ImGui::TextUnformatted(text.c_str());
 					ImGui::EndDragDropSource();
 				}
+			},
+			//TODO: maybe make a function in video resource that returns custom draw
+			[&](ImDrawList& draw_list, ImRect item_rect, ImRect image_rect)
+			{
+				downloadable_video_resource* vid = dynamic_cast<downloadable_video_resource*>(&vid_resource);
+				if (vid == nullptr)
+				{
+					return;
+				}
+
+				auto download_progress = vid->download_progress();
+				if (download_progress.has_value())
+				{
+					float progress_bar_width = image_rect.GetWidth() * *download_progress;
+					ImVec2 progress_bar_min = image_rect.Min;
+					ImVec2 progress_bar_max = { image_rect.Min.x + progress_bar_width, image_rect.Max.y };
+
+					draw_list.AddRectFilled(progress_bar_min, progress_bar_max, ImGui::ColorConvertFloat4ToU32({ 0.f, 1.f, 0.f, 0.75f }));
+				}
+				else
+				{
+					if (!vid_resource.available())
+					{
+						//TODO: change this
+						draw_list.AddText(ImGui::GetFont(), 50.f, image_rect.Min, ImGui::ColorConvertFloat4ToU32({ 1.f, 0.f, 0.f, 1.f }), icons::download);
+						//draw_list.AddRectFilled(item_rect.Min, item_rect.Max, ImGui::ColorConvertFloat4ToU32({ 1.f, 0.f, 0.f, 1.f }));
+					}
+				}
 			}, uv0, uv1);
 		};
 

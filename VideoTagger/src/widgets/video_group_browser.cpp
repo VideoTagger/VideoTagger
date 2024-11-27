@@ -17,6 +17,7 @@ namespace vt::widgets
 	{
 		if (!ctx_.current_project.has_value()) return;
 
+		//TODO: would be nice to just use the fucntion from video_browser
 		static auto draw_video_tile = [this](const video_resource& vid_resource, ImVec2 tile_size, bool& open, bool& remove, bool& properties, GLuint image = 0)
 		{
 			const auto& metadata = vid_resource.metadata();
@@ -66,7 +67,34 @@ namespace vt::widgets
 				{
 					properties = true;
 				}
-			}, nullptr, uv0, uv1);
+			}, nullptr,
+			[&](ImDrawList& draw_list, ImRect item_rect, ImRect image_rect)
+			{
+				const downloadable_video_resource* vid = dynamic_cast<const downloadable_video_resource*>(&vid_resource);
+				if (vid == nullptr)
+				{
+					return;
+				}
+
+				auto download_progress = vid->download_progress();
+				if (download_progress.has_value())
+				{
+					float progress_bar_width = image_rect.GetWidth() * *download_progress;
+					ImVec2 progress_bar_min = image_rect.Min;
+					ImVec2 progress_bar_max = { image_rect.Min.x + progress_bar_width, image_rect.Max.y };
+
+					draw_list.AddRectFilled(progress_bar_min, progress_bar_max, ImGui::ColorConvertFloat4ToU32({ 0.f, 1.f, 0.f, 0.75f }));
+				}
+				else
+				{
+					if (!vid_resource.available())
+					{
+						//TODO: change this
+						draw_list.AddText(ImGui::GetFont(), 50.f, image_rect.Min, ImGui::ColorConvertFloat4ToU32({ 1.f, 0.f, 0.f, 1.f }), icons::download);
+						//draw_list.AddRectFilled(item_rect.Min, item_rect.Max, ImGui::ColorConvertFloat4ToU32({ 1.f, 0.f, 0.f, 1.f }));
+					}
+				}
+			}, uv0, uv1);
 		};
 
 		static auto group_ctx_menu = [](bool& open, bool& remove, bool& enqueue, bool can_enqueue)
@@ -133,7 +161,7 @@ namespace vt::widgets
 					ImGui::EndDragDropSource();
 				}
 			},
-			glyph.uv0, glyph.uv1);
+			nullptr, glyph.uv0, glyph.uv1);
 			ImGui::PopID();
 		};
 

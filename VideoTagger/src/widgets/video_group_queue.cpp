@@ -119,7 +119,7 @@ namespace vt::widgets
 									ImGui::TextUnformatted(str.c_str());
 									ImGui::EndDragDropSource();
 								}
-							}, glyph.uv0, glyph.uv1, is_selected);
+							}, nullptr, glyph.uv0, glyph.uv1, is_selected);
 
 							ImGui::SameLine();
 

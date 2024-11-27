@@ -276,7 +276,7 @@ namespace vt::widgets
 		return tile_size + style.FramePadding + text_size;
 	}
 
-	bool tile(const std::string& label, ImVec2 tile_size, ImVec2 image_size, GLuint image, const std::function<void(const std::string&)> context_menu, const std::function<void(const std::string&)> drag_drop, ImVec2 uv0, ImVec2 uv1, bool is_selected)
+	bool tile(const std::string& label, ImVec2 tile_size, ImVec2 image_size, GLuint image, const std::function<void(const std::string&)> context_menu, const std::function<void(const std::string&)> drag_drop, std::function<void(ImDrawList&, ImRect, ImRect)> custom_draw, ImVec2 uv0, ImVec2 uv1, bool is_selected)
 	{
 		bool result{};
 		ImVec2 image_tile_size = ImVec2{ tile_size.x, tile_size.x } * 0.9f;
@@ -319,6 +319,7 @@ namespace vt::widgets
 
 		ImGui::SetCursorPos(std::exchange(cpos, ImGui::GetCursorPos()));
 		ImGui::Image(imgui_tex, image_size, uv0, uv1);
+		ImRect image_rect = { ImGui::GetItemRectMin(), ImGui::GetItemRectMax() };
 		ImGui::Dummy({ 0, (image_tile_size.y - image_size.y) / 2.f });
 		//widgets::clipped_text(id, { tile_size.x, text_size.y });
 		//TODO: Text clipping, change widgets::clipped_text into this
@@ -334,6 +335,13 @@ namespace vt::widgets
 		ImGui::SetCursorPos(cpos);
 		ImGui::PopID();
 		ImGui::PopStyleVar();
+
+		ImRect item_rect = { ImGui::GetItemRectMin(), ImGui::GetItemRectMax() };
+		auto* draw_list = ImGui::GetWindowDrawList();
+		if (custom_draw != nullptr)
+		{
+			custom_draw(*draw_list, item_rect, image_rect);
+		}
 
 		return result;
 	}
