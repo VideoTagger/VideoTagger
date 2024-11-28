@@ -128,6 +128,18 @@ namespace vt
 		}
 
 		template<typename type>
+		constexpr std::map<timestamp, std::vector<type>>& get_map()
+		{
+			return std::get<std::map<timestamp, std::vector<type>>>(data);
+		}
+
+		template<typename type>
+		constexpr const std::map<timestamp, std::vector<type>>& get_map() const
+		{
+			return std::get<std::map<timestamp, std::vector<type>>>(data);
+		}
+
+		template<typename type>
 		constexpr std::optional<typename std::map<timestamp, std::vector<type>>::iterator> get_prev_or_current_keyframe(timestamp ts)
 		{
 			auto& map = get<std::map<timestamp, std::vector<type>>>();
@@ -177,6 +189,15 @@ namespace vt
 			return type_;
 		}
 
+		template<typename type>
+		constexpr bool contains(timestamp ts) const
+		{
+			if (!has_data()) return false;
+			const auto& map = get_map<type>();
+			auto it = map.find(ts);
+			return it != map.end();
+		}
+
 		constexpr void set_type(type type)
 		{
 			if (type_ == type) return;
@@ -192,7 +213,7 @@ namespace vt
 		}
 
 		void draw(timestamp current_ts, bool lerp, const std::function<ImVec2(const ImVec2&)>& to_local_pos, const ImVec2& tex_size, const ImVec2& viewport_size, uint32_t outline_color, uint32_t fill_color, bool show_points, bool& is_mouse_over) const;
-		void draw_data(const utils::vec2<uint32_t>& max_size, utils::vec2<uint32_t>*& gizmo_target, timestamp ts, bool is_timestamp, bool modifiable, bool& dirty_flag, const std::function<void(timestamp)>& on_seek);
+		void draw_data(const utils::vec2<uint32_t>& max_size, utils::vec2<uint32_t>*& gizmo_target, timestamp start_ts, timestamp end_ts, timestamp ts, bool is_timestamp, bool modifiable, bool& dirty_flag, const std::function<void(timestamp)>& on_seek);
 	};
 
 	inline void to_json(nlohmann::ordered_json& json, const circle& c)
@@ -327,12 +348,34 @@ namespace vt
 	}
 
 	template<>
-	constexpr circle utils::lerp(const circle& start, const circle& end, float alpha)
+	inline constexpr circle utils::lerp(const circle& start, const circle& end, float alpha)
 	{
 		return circle
 		{
 			lerp(start.pos, end.pos, alpha), //pos lerp
 			lerp(start.radius, end.radius, alpha) //radius lerp
 		};
+	}
+
+	template<>
+	inline rectangle utils::lerp(const rectangle& start, const rectangle& end, float alpha)
+	{
+		rectangle rect;
+		for (size_t i = 0; i < rect.vertices.size(); ++i)
+		{
+			rect.vertices[i] = lerp(start.vertices[i], end.vertices[i], alpha);
+		}
+		return rect;
+	}
+
+	template<>
+	inline polygon utils::lerp(const polygon& start, const polygon& end, float alpha)
+	{
+		polygon poly;
+		for (size_t i = 0; i < poly.vertices.size(); ++i)
+		{
+			poly.vertices[i] = lerp(start.vertices[i], end.vertices[i], alpha);
+		}
+		return poly;
 	}
 }

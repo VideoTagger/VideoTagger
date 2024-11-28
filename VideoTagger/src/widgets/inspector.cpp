@@ -236,7 +236,7 @@ namespace vt::widgets
 							{
 								ImGui::TableNextColumn();
 								bool modifiable = is_on_screen;
-								shape.draw_data(active_vid_size.value(), ctx_.gizmo_target, current_ts, is_timestamp, modifiable, ctx_.is_project_dirty, [](timestamp target_ts)
+								shape.draw_data(active_vid_size.value(), ctx_.gizmo_target, selected_segment->segment_it->start, selected_segment->segment_it->end, current_ts, is_timestamp, modifiable, ctx_.is_project_dirty, [](timestamp target_ts)
 								{
 									ctx_.displayed_videos.seek(target_ts.total_milliseconds);
 								});

@@ -1552,13 +1552,19 @@ namespace vt
 					bool add_point{};
 
 					auto current_ts = ctx_.video_timeline.current_timestamp();
+					bool can_add_point{};
+					if (is_polygon)
+					{
+						const auto& shape = selected_attribute->get<vt::shape>();
+						can_add_point = shape.contains<polygon>(current_ts);
+					}
 
 					if (last_focused and is_shape and ImGui::BeginPopupContextItem("##VideoCtxMenu"))
 					{
 						bool close = false;
 						const auto& style = ImGui::GetStyle();
 
-						if (ImGui::MenuItem("Add Point", nullptr, nullptr, is_polygon))
+						if (ImGui::MenuItem("Add Point", nullptr, nullptr, is_polygon and can_add_point))
 						{
 							add_point_pos = ImGui::GetWindowPos();
 							add_point = true;
@@ -1641,58 +1647,76 @@ namespace vt
 						ImGui::EndPopup();
 					}
 
-					if (!add_point and (ImGui::IsKeyDown(ImGuiKey_LeftShift) or ImGui::IsKeyDown(ImGuiKey_RightShift)) and ImGui::IsMouseClicked(0) and hovered)
+					if (!add_point and can_add_point and (ImGui::IsKeyDown(ImGuiKey_LeftShift) or ImGui::IsKeyDown(ImGuiKey_RightShift)) and ImGui::IsMouseClicked(0) and hovered)
 					{
 						add_point_pos = ImGui::GetMousePos();
 						add_point = true;
 					}
 
-					if (add_point and is_polygon)
+					if (add_point and can_add_point and is_polygon)
 					{
-						/*auto& shape = selected_attribute->get<vt::shape>();
+						auto& shape = selected_attribute->get<vt::shape>();
+						auto& map = shape.get_map<polygon>();
+						auto& polygons = map.at(current_ts); //this keyframe definitely exists, it was checked before
 
-						auto& polygons = shape.get<std::map<timestamp, std::vector<polygon>>>();
-						shape.get_prev_or_current_keyframe<polygon>(current_ts);
-						auto& pos = add_point_pos;
-
-						auto closest_it = poly.vertices.end();
-						float min_distance = std::numeric_limits<float>::infinity();
-
-						for (auto it = poly.vertices.begin(); it != poly.vertices.end(); ++it)
+						auto it = std::find_if(polygons.begin(), polygons.end(), [](const polygon& poly)
 						{
-							auto next_it = std::next(it);
-							if (next_it == poly.vertices.end())
+							for (const auto& vertex : poly.vertices)
 							{
-								next_it = poly.vertices.begin();
+								if (ctx_.gizmo_target == &vertex) return true;
 							}
+							return false;
+						});
 
-							const auto& vertex1 = *it;
-							const auto& vertex2 = *next_it;
-
-							float new_distance = utils::intersection::distance_to_segment(pos, from_tex_pos({ (float)vertex1[0], (float)vertex1[1] }), from_tex_pos({ (float)vertex2[0], (float)vertex2[1] }));
-
-
-							if (new_distance < min_distance)
-							{
-								min_distance = new_distance;
-								closest_it = it;
-							}
-						}
-
-						if (closest_it != poly.vertices.end())
+						if (it == polygons.end())
 						{
-							auto next_it = std::next(closest_it);
-							if (next_it == poly.vertices.end())
-							{
-								next_it = poly.vertices.begin();
-							}
-
-							ctx_.gizmo_target = &*poly.vertices.insert(next_it, to_tex_pos(pos));
+							//add new polygon with that point
+							polygons.push_back(polygon{ { to_tex_pos(add_point_pos) } });
 						}
 						else
 						{
-							ctx_.gizmo_target = &*poly.vertices.insert(closest_it, to_tex_pos(pos));
-						}*/
+							auto& polygon = *it;
+							auto& pos = add_point_pos;
+
+							auto closest_it = polygon.vertices.end();
+							float min_distance = std::numeric_limits<float>::infinity();
+
+							for (auto it = polygon.vertices.begin(); it != polygon.vertices.end(); ++it)
+							{
+								auto next_it = std::next(it);
+								if (next_it == polygon.vertices.end())
+								{
+									next_it = polygon.vertices.begin();
+								}
+
+								const auto& vertex1 = *it;
+								const auto& vertex2 = *next_it;
+
+								float new_distance = utils::intersection::distance_to_segment(pos, from_tex_pos({ (float)vertex1[0], (float)vertex1[1] }), from_tex_pos({ (float)vertex2[0], (float)vertex2[1] }));
+
+
+								if (new_distance < min_distance)
+								{
+									min_distance = new_distance;
+									closest_it = it;
+								}
+							}
+
+							if (closest_it != polygon.vertices.end())
+							{
+								auto next_it = std::next(closest_it);
+								if (next_it == polygon.vertices.end())
+								{
+									next_it = polygon.vertices.begin();
+								}
+
+								ctx_.gizmo_target = &*polygon.vertices.insert(next_it, to_tex_pos(pos));
+							}
+							else
+							{
+								ctx_.gizmo_target = &*polygon.vertices.insert(closest_it, to_tex_pos(pos));
+							}
+						}
 					}
 
 					auto draw_list = ImGui::GetWindowDrawList();
