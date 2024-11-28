@@ -61,7 +61,7 @@ namespace vt
 		bool on_log_in(const account_properties& properties, bool* cancel_token) override;
 	
 	private:
-		static constexpr auto request_scope = { "https://www.googleapis.com/auth/drive.readonly", "https://www.googleapis.com/auth/userinfo.profile" };
+		static constexpr auto request_scope_ = { "https://www.googleapis.com/auth/drive.readonly", "https://www.googleapis.com/auth/userinfo.profile" };
 		google_account_info account_info_;
 		std::future<bool> add_account_result_;
 		bool logged_in_{};

@@ -282,7 +282,7 @@ namespace vt
 				"scope={}&"
 				"code_challenge={}&"
 				"code_challenge_method=S256",
-				client_id, redirect_uri, fmt::join(request_scope, " "), code_challenge
+				client_id, redirect_uri, fmt::join(request_scope_, " "), code_challenge
 			);
 
 			std::string auth_url = auth_host + auth_get;
@@ -439,12 +439,12 @@ namespace vt
 			return false;
 		}
 
-		httplib::Client client("https://oauth2.googleapis.com/revoke");
+		httplib::Client client("https://oauth2.googleapis.com");
 		httplib::Params params
 		{
 			{ "token", account_info_.access_token() }
 		};
-		auto post_result = client.Post("/token", params);
+		auto post_result = client.Post("/revoke", params);
 		if (!post_result)
 		{
 			debug::error("POST failed: {}", httplib::to_string(post_result.error()));
