@@ -104,14 +104,17 @@ namespace vt
 			}
 			else
 			{
-				video_resource_context_menu_item item;
-				item.name = "Remove Local File";
-				item.function = [this]()
+				if (!ctx_.displayed_videos.contains(id()))
 				{
-					//TODO: should be done through the project so it can remove it from displayed videos or something
-					remove_downloaded();
-				};
-				items.push_back(std::move(item));
+					video_resource_context_menu_item item;
+					item.name = "Remove Local File";
+					item.function = [this]()
+					{
+						//TODO: should be done through the project so it can remove it from displayed videos or something
+						remove_downloaded();
+					};
+					items.push_back(std::move(item));
+				}
 			}
 		}
 		else

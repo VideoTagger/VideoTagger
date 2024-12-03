@@ -50,10 +50,14 @@ namespace vt::widgets
 			open = widgets::tile(label, tile_size, image_size, image,
 			[&](const std::string& label)
 			{
-				if (ImGui::MenuItem("Remove"))
+				if (!ctx_.displayed_videos.contains(id))
 				{
-					remove = true;
+					if (ImGui::MenuItem("Remove"))
+					{
+						remove = true;
+					}
 				}
+				
 				std::vector<video_resource_context_menu_item> context_items;
 				vid_resource.context_menu_items(context_items);
 				for (auto& item : context_items)
