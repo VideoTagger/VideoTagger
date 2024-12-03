@@ -1,6 +1,7 @@
 #pragma once
 #include <random>
 #include <type_traits>
+#include <limits>
 
 namespace vt::utils
 {
@@ -29,6 +30,10 @@ namespace vt::utils
 		template<typename type> static type get(type max = 1)
 		{
 			return get<type>(0, max);
+		}
+		template<typename type> static type get()
+		{
+			return get<type>(std::numeric_limits<type>::min(), std::numeric_limits<type>::max());
 		}
 	};
 
