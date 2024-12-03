@@ -21,6 +21,7 @@ namespace vt::utils
 		
 		static constexpr ImWchar video_group_icon{ 0xE04A };
 		static constexpr ImWchar video_icon{ 0xE02C };
+		static constexpr ImWchar download_icon{ 0xF090 };
 	};
 
 }

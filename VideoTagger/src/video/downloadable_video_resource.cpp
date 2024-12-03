@@ -1,6 +1,7 @@
 #include "pch.hpp"
 #include "downloadable_video_resource.hpp"
 #include <core/app_context.hpp>
+#include <utils/thumbnail.hpp>
 
 namespace vt
 {
@@ -129,5 +130,35 @@ namespace vt
 			};
 			items.push_back(std::move(item));
 		}
+	}
+
+	std::function<void(ImDrawList&, ImRect, ImRect)> downloadable_video_resource::icon_custom_draw() const
+	{
+		return [this](ImDrawList& draw_list, ImRect item_rect, ImRect image_rect)
+		{
+			auto download_prog = download_progress();
+			if (download_prog.has_value())
+			{
+				float progress_bar_width = image_rect.GetWidth() * *download_prog;
+				ImVec2 progress_bar_min = image_rect.Min;
+				ImVec2 progress_bar_max = { image_rect.Min.x + progress_bar_width, image_rect.Max.y };
+
+				draw_list.AddRectFilled(progress_bar_min, progress_bar_max, ImGui::ColorConvertFloat4ToU32({ 0.f, 1.f, 0.f, 0.75f }));
+			}
+			else
+			{
+				if (!available())
+				{
+					auto download_icon_image = utils::thumbnail::font_texture();
+					auto glyph = utils::thumbnail::find_glyph(utils::thumbnail::download_icon);
+					auto uv0 = glyph.uv0;
+					auto uv1 = glyph.uv1;
+
+					ImVec2 icon_padding = image_rect.GetSize() * 0.2;
+
+					draw_list.AddImage(reinterpret_cast<ImTextureID>(download_icon_image), image_rect.Min + icon_padding, image_rect.Max - icon_padding, uv0, uv1, ImGui::ColorConvertFloat4ToU32({ 1.f, 0.f, 0.f, 1.f }));
+				}
+			}
+		};
 	}
 }

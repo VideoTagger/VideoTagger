@@ -8,6 +8,7 @@
 #include <core/gl_texture.hpp>
 #include "video_stream.hpp"
 #include <utils/hash.hpp>
+#include <imgui.h>
 
 namespace vt
 {
@@ -47,12 +48,10 @@ namespace vt
 
 		virtual bool available() const = 0;
 		virtual video_stream video() const = 0;
-
 		virtual bool update_thumbnail() = 0;
-
 		virtual void on_remove();
-
 		virtual void context_menu_items(std::vector<video_resource_context_menu_item>& items);
+		virtual std::function<void(ImDrawList&, ImRect, ImRect)> icon_custom_draw() const;
 
 		void set_metadata(const video_resource_metadata& metadata);
 		void set_thumbnail(gl_texture&& texture);

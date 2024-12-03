@@ -41,6 +41,11 @@ namespace vt
 	{
 	}
 
+	std::function<void(ImDrawList&, ImRect, ImRect)> video_resource::icon_custom_draw() const
+	{
+		return std::function<void(ImDrawList&, ImRect, ImRect)>();
+	}
+
 	void video_resource::set_metadata(const video_resource_metadata& metadata)
 	{
 		if (metadata.title.has_value())
