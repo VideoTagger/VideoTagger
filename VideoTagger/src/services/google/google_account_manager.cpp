@@ -3,6 +3,7 @@
 #include <utils/oauth2.hpp>
 #include <utils/string.hpp>
 #include <core/debug.hpp>
+#include <utils/random.hpp>
 
 #define CPPHTTPLIB_OPENSSL_SUPPORT
 #include <httplib.h>
@@ -191,22 +192,11 @@ namespace vt
 
 	void google_account_manager::draw_options_page()
 	{
-		ImGui::Text("Active: %s", active() ? "Yes" : "No");
-
 		std::string user_name = account_info_.user_name();
 		ImGui::Text("User name: %s", user_name.c_str());
-
-		/*std::string access_token = account_info_.access_token();
-		ImGui::Text("Access token: %s", access_token.c_str());
-
-		std::string refresh_token = account_info_.refresh_token();
-		ImGui::Text("Refresh token: %s", refresh_token.c_str());
-		
-		std::string client_secret = account_info_.client_secret();
-		ImGui::Text("Client secret: %s", client_secret.c_str());*/
 	}
 
-	bool google_account_manager::draw_add_popup(bool& success)
+	bool google_account_manager::draw_login_popup(bool& success)
 	{
 		//TODO: this needs improving
 
@@ -216,21 +206,32 @@ namespace vt
 
 		bool return_value = false;
 
-		if (ImGui::BeginPopupModal("Waiting"))
+		bool open_login_failed_popup = false;
+
+		if (ImGui::BeginPopupModal("Waiting", nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoResize))
 		{
 			ImGui::TextUnformatted("Waiting for login...");
 			
 			if (add_account_result_.wait_for(std::chrono::seconds{ 0 }) == std::future_status::ready)
 			{
 				success = add_account_result_.get();
-				return_value = true;
-				ImGui::CloseCurrentPopup();
+				if (success)
+				{
+					return_value = true;
+					ImGui::CloseCurrentPopup();
+				}
+				else
+				{
+					open_login_failed_popup = true;
+					ImGui::CloseCurrentPopup();
+				}
 			}
 		
 			if (ImGui::Button("Cancel"))
 			{
 				cancel_token = true;
-				success = add_account_result_.get();
+				add_account_result_.get();
+				success = false;
 				return_value = true;
 				ImGui::CloseCurrentPopup();
 			}
@@ -238,10 +239,26 @@ namespace vt
 			ImGui::EndPopup();
 		}
 
+		if (open_login_failed_popup)
+		{
+			ImGui::OpenPopup("Login failed");
+		}
+
+		if (ImGui::BeginPopupModal("Login failed", nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoResize))
+		{
+			ImGui::TextUnformatted("Login attempt failed");
+			if (ImGui::Button("OK"))
+			{
+				ImGui::CloseCurrentPopup();
+			}
+
+			ImGui::EndPopup();
+		}
+
 		ImGui::InputText("Client id", &client_id);
 		ImGui::InputText("Client secret", &client_secret);
 		
-		if (ImGui::Button("Add"))
+		if (ImGui::Button("Log in"))
 		{
 			account_properties properties;
 			properties["client_id"] = client_id;
@@ -269,7 +286,8 @@ namespace vt
 
 		int redirect_port = 6060;
 
-		std::string redirect_uri = fmt::format("http://127.0.0.1:{}/oauth2", redirect_port);
+		std::string get_path = fmt::format("/oauth2/{}", utils::random::get<uint64_t>());
+		std::string redirect_uri = fmt::format("http://127.0.0.1:{}{}", redirect_port, get_path);
 
 		std::optional<std::string> oauth2_code;
 		{
@@ -288,13 +306,18 @@ namespace vt
 			std::string auth_url = auth_host + auth_get;
 			SDL_OpenURL(auth_url.c_str());
 
-			server.Get("/oauth2", [&oauth2_code, &server](const httplib::Request& req, httplib::Response& res)
+			server.Get(get_path, [&oauth2_code, &server](const httplib::Request& req, httplib::Response& res)
 			{
-				res.set_content(service_account_manager::success_page, "text/html");
-
-				//TODO: check for errors
-				oauth2_code = req.params.find("code")->second;
-
+				if (req.params.count("code") != 0)
+				{
+					res.set_content(service_account_manager::success_page(), "text/html");
+					oauth2_code = req.params.find("code")->second;
+				}
+				else
+				{
+					res.set_content(service_account_manager::failure_page(req.params.find("error")->second), "text/html");
+				}
+				
 				server.stop();
 			});
 
@@ -350,6 +373,12 @@ namespace vt
 		result.refresh_token = json.at("refresh_token");
 		result.expire_tp = std::chrono::steady_clock::now() + std::chrono::seconds{ int(json.at("expires_in")) };
 		result.scope = utils::string::split(json.at("scope"), ' ');
+
+		if (!std::equal(result.scope.begin(), result.scope.end(), request_scope_.begin(), request_scope_.end()))
+		{
+			debug::error("User didn't grant all the required scopes");
+			return std::nullopt;
+		}
 
 		return result;
 	}

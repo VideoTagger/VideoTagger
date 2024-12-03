@@ -49,8 +49,9 @@ namespace vt
 		bool logged_in() const override;
 
 		void draw_options_page() override;
-		bool draw_add_popup(bool& success) override;
+		bool draw_login_popup(bool& success) override;
 
+		//TODO: error messages in the return value would be nice, would require something like std::expected
 		std::optional<obtain_token_result> obtain_access_token(const std::string& client_id, const std::string& client_secret, bool* cancel_token);
 		std::optional<obtain_token_result> refresh_access_token(const std::string& client_id, const std::string& client_secret, const std::string& refresh_token);
 		std::optional<std::string> access_token();

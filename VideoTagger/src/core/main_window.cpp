@@ -746,7 +746,7 @@ namespace vt
 					if (ImGui::BeginPopupModal(popup_id.c_str(), nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoResize))
 					{
 						bool success{};
-						if (account_manager->draw_add_popup(success))
+						if (account_manager->draw_login_popup(success))
 						{
 							if (success)
 							{
