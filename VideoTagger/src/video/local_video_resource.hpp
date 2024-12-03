@@ -14,7 +14,7 @@ namespace vt
 
 		const std::filesystem::path& path() const;
 
-		bool available() const override;
+		bool playable() const override;
 		video_stream video() const override;
 		bool update_thumbnail() override;
 

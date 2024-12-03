@@ -139,7 +139,7 @@ namespace vt
 		}
 
 		auto* vid_resource = dynamic_cast<downloadable_video_resource*>(&videos.get(video_id));
-		if (vid_resource == nullptr or vid_resource->available())
+		if (vid_resource == nullptr or vid_resource->playable())
 		{
 			return;
 		}

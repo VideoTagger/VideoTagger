@@ -46,7 +46,7 @@ namespace vt
 		const video_resource_metadata& metadata() const;
 		const std::optional<gl_texture>& thumbnail() const;
 
-		virtual bool available() const = 0;
+		virtual bool playable() const = 0;
 		virtual video_stream video() const = 0;
 		virtual bool update_thumbnail() = 0;
 		virtual void on_remove();

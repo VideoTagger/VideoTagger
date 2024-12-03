@@ -64,7 +64,7 @@ namespace vt
 
 	void downloadable_video_resource::remove_downloaded()
 	{
-		if (!available())
+		if (!playable())
 		{
 			return;
 		}
@@ -73,7 +73,7 @@ namespace vt
 		local_path_.clear();
 	}
 
-	bool downloadable_video_resource::available() const
+	bool downloadable_video_resource::playable() const
 	{
 		return std::filesystem::is_regular_file(local_path_);
 	}
@@ -92,7 +92,7 @@ namespace vt
 	{
 		if (download_progress() == std::nullopt)
 		{
-			if (!available())
+			if (!playable())
 			{
 				video_resource_context_menu_item item;
 				item.name = "Download";
@@ -147,7 +147,7 @@ namespace vt
 			}
 			else
 			{
-				if (!available())
+				if (!playable())
 				{
 					auto download_icon_image = utils::thumbnail::font_texture();
 					auto glyph = utils::thumbnail::find_glyph(utils::thumbnail::download_icon);

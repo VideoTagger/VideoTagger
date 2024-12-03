@@ -46,7 +46,7 @@ namespace vt
 
 		void remove_downloaded();
 
-		virtual bool available() const;
+		virtual bool playable() const;
 		virtual void on_save(nlohmann::ordered_json& json) const;
 		virtual void on_remove() override;
 		virtual void context_menu_items(std::vector<video_resource_context_menu_item>& items);

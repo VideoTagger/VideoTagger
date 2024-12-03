@@ -102,7 +102,7 @@ namespace vt
 		{
 			auto& vid_resource = current_project->videos.get(group_inf.id);
 			const auto& metadata = vid_resource.metadata();
-			if (!vid_resource.available())
+			if (!vid_resource.playable())
 			{
 				debug::error("Video {} with id {} is not available", metadata.title.has_value() ? *metadata.title : "[UNTITLED]", vid_resource.id());
 				continue;

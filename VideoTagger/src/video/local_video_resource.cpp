@@ -51,7 +51,7 @@ namespace vt
 		return path_;
 	}
 
-	bool local_video_resource::available() const
+	bool local_video_resource::playable() const
 	{
 		return std::filesystem::is_regular_file(path_);
 	}

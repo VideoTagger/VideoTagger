@@ -9,6 +9,7 @@ namespace vt
 	class video_group_playlist
 	{
 	public:
+		using value_type = video_group_id_t;
 		using iterator = std::vector<video_group_id_t>::iterator;
 		using const_iterator = std::vector<video_group_id_t>::const_iterator;
 
