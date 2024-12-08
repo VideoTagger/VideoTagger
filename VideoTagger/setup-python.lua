@@ -47,7 +47,7 @@ PythonPath = python_find_path()
 PythonIncludePath = python_get_include_path()
 PythonLibName, PythonLibPath = python_get_lib_name_and_path()
 
-if PythonPath == "" or PythonLibName == "" then
+if PythonPath == "" then
     error("Failed to find Python path")
 else
     print("Python include path: " .. PythonIncludePath)
