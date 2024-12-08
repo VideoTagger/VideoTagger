@@ -10,9 +10,6 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Init submodules
-        run: git submodule update --init
-
       - name: Installing premake5
         uses: Jarod42/install-premake5@v2
 
