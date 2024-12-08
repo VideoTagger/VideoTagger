@@ -20,9 +20,8 @@ jobs:
         with:
           repository: premake/premake-core
           latest: true
-          preRelease: false
+          preRelease: true
           fileName: '*-linux.tar.gz'
-          out-file-path: '.'
           extract: true
     
       
