@@ -11,22 +11,39 @@ jobs:
 
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           submodules: true
 
-      - name: Installing premake5
-        uses: Jarod42/install-premake5@v2
+      - name: Restore Premake Cache
+        uses: actions/cache@v3
+        with:
+          path: ~/.premake5
+          key: premake5-${{ runner.os }}-${{ hashFiles('.premake-build/build/bootstrap/*') }}
+          restore-keys: |
+            premake5-${{ runner.os }}-
+      
+      - name: Check if Premake exists
+        id: check-premake
+        run: |
+          if [ ! -f ~/.premake5/premake5 ]; then
+            echo "premake_needs_install=true" >> $GITHUB_ENV
+          else
+            echo "premake_needs_install=false" >> $GITHUB_ENV
+          fi
 
-      - name: Checkout
-        uses: actions/checkout@v4
+      - name: Installing premake5
+        if: ${{ env.premake_needs_install == 'true' }}
+        uses: Jarod42/install-premake5@v2
       
       - name: Setup Packages
-        run: sudo apt-get install -y build-essential libsdl2-dev ffmpeg python3.12
-      
+        run: |
+            sudo apt-get install -y build-essential libsdl2-dev ffmpeg software-properties-common
+            sudo add-apt-repository ppa:deadsnakes/ppa
+            sudo apt-get install -y python3.12
+
       - name: run premake5
         run: premake5 gmake2
-
 
       - name: build
         run: |
