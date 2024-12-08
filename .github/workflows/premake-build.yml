@@ -1,0 +1,30 @@
+name: Build With Premake
+on:
+  push:
+    branches: [ "main", "dev" ]
+  pull_request:
+    branches: [ "main", "dev" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Init submodules
+        run: git submodule update --init
+
+      - name: Installing premake5
+        uses: Jarod42/install-premake5@v2
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: run premake5
+        run: premake5 gmake2
+
+      - name: Setup Packages
+        run: sudo apt-get install -y build-essential libsdl2-dev ffmpeg python3.12
+
+      - name: build
+        run: |
+            make config=shipping_x86_64
