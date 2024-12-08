@@ -15,6 +15,15 @@ jobs:
         with:
           submodules: true
       
+      - name: Cache Build Artefacts
+        id: cache
+        uses: actions/cache@v4
+        with:
+          path: build **/Makefile
+          key: build-${{ runner.os }}-${{ hashFiles('build', '**/Makefile') }}
+          restore-keys:
+            build-${{ runner.os }}-
+
       - name: Setup Premake5
         uses: robinraju/release-downloader@v1.11
         with:

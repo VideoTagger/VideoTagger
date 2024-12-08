@@ -56,7 +56,6 @@ project "VideoTagger"
 		"avformat",
 		"avutil",
 		"swscale",
-		"opengl32",
 		PythonLibName
 	}
 
@@ -108,6 +107,11 @@ project "VideoTagger"
 		buildoptions
 		{
 			"/utf-8"
+		}
+
+		links
+		{
+			"opengl32"
 		}
 
 	filter "system:linux"
