@@ -4,6 +4,8 @@ on:
     branches: [ "main", "dev" ]
   pull_request:
     branches: [ "main", "dev" ]
+env:
+  premake_version: v5.0.0-beta3
 
 jobs:
   build:
@@ -18,13 +20,13 @@ jobs:
       - name: Restore Premake Cache
         uses: actions/cache@v3
         with:
-          path: .premake-build/build/bootstrap/
-          key: premake5-${{ runner.os }}-${{ hashFiles('.premake-build/build/bootstrap/*') }}
-          restore-keys: |
-            premake5-${{ runner.os }}-
+          path: .premake-build
+          key: premake5-${{ runner.os }}-${{ env.premake_version }}
       
       - name: Installing premake5
         uses: Jarod42/install-premake5@v2
+        with:
+          ref: v5.0.0-beta3
       
       - name: Setup Python
         uses: actions/setup-python@v5
@@ -34,7 +36,7 @@ jobs:
       - name: Setup Packages
         uses: tecolicom/actions-use-apt-tools@v1
         with:
-          tools: build-essential libsdl2-dev ffmpeg libgtk-3-dev
+          tools: build-essential libsdl2-dev sdl2 libavcodec libavformat libswscale libgtk-3-dev
 
       - name: run premake5
         run: premake5 gmake2
