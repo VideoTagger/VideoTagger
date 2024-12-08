@@ -36,7 +36,7 @@ jobs:
       - name: Setup Packages
         uses: tecolicom/actions-use-apt-tools@v1
         with:
-          tools: build-essential libsdl2-dev sdl2 libavcodec libavformat libswscale libgtk-3-dev
+          tools: build-essential libsdl2-dev ffmpeg libgtk-3-dev
 
       - name: run premake5
         run: premake5 gmake2
