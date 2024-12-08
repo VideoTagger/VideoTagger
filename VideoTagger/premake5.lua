@@ -134,7 +134,7 @@ project "VideoTagger"
 
 		linkoptions
 		{
-			"`pkg-config --libs libavcodec libavformat libswscale sdl2`"
+			"`pkg-config --libs libavcodec libavformat libswscale sdl2 opengl`"
 		}
 
         buildoptions
