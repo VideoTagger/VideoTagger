@@ -1,4 +1,5 @@
 #include "NotoSans_Regular.hpp"
+#include <cstdint>
 
 namespace vt::embed
 {
