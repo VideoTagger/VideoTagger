@@ -18,12 +18,14 @@ jobs:
           submodules: true
 
       - name: Restore Premake Cache
+        id: cache
         uses: actions/cache@v3
         with:
           path: .premake-build
           key: premake5-${{ runner.os }}-${{ env.premake_version }}
       
       - name: Installing premake5
+        if: steps.cache.outputs.cache-hit != 'true'
         uses: Jarod42/install-premake5@v2
         with:
           ref: v5.0.0-beta3
@@ -33,6 +35,9 @@ jobs:
         with:
           python-version: '3.12'
 
+      - name: Setup Package Repository
+        run: |
+          sudo add-apt-repository ppa:savoury1/ffmpeg5
       - name: Setup Packages
         uses: tecolicom/actions-use-apt-tools@v1
         with:
