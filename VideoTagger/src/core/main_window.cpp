@@ -1826,12 +1826,13 @@ namespace vt
 						auto& segment_storage = ctx_.get_current_segment_storage();
 						auto it = segment_storage.find(displayed_tag);
 						if (it == segment_storage.end()) continue;
-						const auto& tag = ctx_.current_project->tags.at(it->first);
+						auto& tag = ctx_.current_project->tags.at(it->first);
 						auto fill_color = (tag.color & ~0xFF000000) | 0x80000000;
 
 						auto& segments = it->second;
-						for (const auto& segment : segments)
+						for (auto segment_it = segments.begin(); segment_it != segments.end(); ++segment_it)
 						{
+							auto& segment = *segment_it;
 							bool is_onscreen = current_ts >= segment.start and current_ts <= segment.end;
 							if (is_onscreen)
 							{
@@ -1851,6 +1852,7 @@ namespace vt
 										{
 											if (ImGui::IsMouseClicked(0))
 											{
+												ctx_.video_timeline.selected_segment = widgets::selected_segment_data{ &tag, &segments, segment_it };
 												ctx_.registry.execute<set_selected_attribute_command>(&attr);
 											}
 											tooltip = fmt::format("Tag: {}\nAttribute: {}\nID: {}", tag.name, attr_name, i + 1);
