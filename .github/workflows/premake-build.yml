@@ -34,14 +34,18 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+      
+      - name: Setup FFmpeg
+        id: setup-ffmpeg
+        uses: federicocarboni/setup-ffmpeg@v3.1
+        with:
+          ffmpeg-version: release
+          linking-type: static
 
-      - name: Setup Package Repository
-        run: |
-          sudo add-apt-repository ppa:savoury1/ffmpeg5
       - name: Setup Packages
         uses: tecolicom/actions-use-apt-tools@v1
         with:
-          tools: build-essential pkg-config libsdl2-dev libavcodec-dev libavformat-dev libswscale-dev libgtk-3-dev
+          tools: build-essential pkg-config libsdl2-dev libgtk-3-dev
 
       - name: run premake5
         run: premake5 gmake2
