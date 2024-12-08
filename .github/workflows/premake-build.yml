@@ -37,8 +37,8 @@ jobs:
 
       - name: Run Premake5
         run: |
-						chmod +x ./premake5
-						./premake5 gmake2
+            chmod +x ./premake5
+            ./premake5 gmake2
 
       - name: Build with Makefile
         run: |
