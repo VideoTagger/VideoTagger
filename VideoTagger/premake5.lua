@@ -47,17 +47,30 @@ project "VideoTagger"
 	pchheader "pch.hpp"
 	pchsource "src/pch.cpp"
 
-	links
-	{
-		"nativefiledialog-extended",
-		"SDL2",
-		"SDL2main",
-		"avcodec",
-		"avformat",
-		"avutil",
-		"swscale",
-		PythonLibName
-	}
+	if string.len(PythonLibName) > 0 then
+		links
+		{
+			"nativefiledialog-extended",
+			"SDL2",
+			"SDL2main",
+			"avcodec",
+			"avformat",
+			"avutil",
+			"swscale",
+			PythonLibName
+		}
+	else
+		links
+		{
+			"nativefiledialog-extended",
+			"SDL2",
+			"SDL2main",
+			"avcodec",
+			"avformat",
+			"avutil",
+			"swscale",
+		}
+	end
 
 	defines
 	{
