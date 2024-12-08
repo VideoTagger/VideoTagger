@@ -23,8 +23,6 @@ project "VideoTagger"
 		"vendor/ImGui/backends/imgui_impl_opengl3.cpp",
 		"vendor/ImGuizmo/ImSequencer.h",
 		"vendor/ImGuizmo/ImSequencer.cpp",
-		"assets/scripts/**.py",
-		"assets/scripts/**.pyi",
 	}
 
 	includedirs
@@ -74,17 +72,8 @@ project "VideoTagger"
 
 	postbuildcommands
 	{
-		"{COPY} assets %{cfg.targetdir}/assets"
+		"{COPYDIR} assets %{cfg.targetdir}/assets"
 	}
-
-	filter 'files:**.py or **.pyi'
-   		buildmessage 'Copying Python file: %{file.relpath}'
-
-		buildcommands
-		{
-			"{COPYFILE} %{file.relpath} %{cfg.targetdir}/assets/scripts/%{file.name}",
-		}
-		buildoutputs { "%{cfg.targetdir}/assets/scripts/%{file.name}" }
 
 	filter {}
 	filter "files:src/embeds/**.cpp"

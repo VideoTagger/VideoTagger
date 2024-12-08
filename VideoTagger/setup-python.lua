@@ -21,7 +21,7 @@ function python_find_path()
 end
 
 function python_get_include_path()
-	if os.get() == "windows" then
+	if os.host() == "windows" then
 		return python_find_path() .. "/include"
 	else
 		return sys_invoke('python -c "from sysconfig import get_paths as gp; print(gp()[\'include\'])"')
@@ -29,7 +29,7 @@ function python_get_include_path()
 end
 
 function python_get_lib_name_and_path()
-	if os.get() == "windows" then
+	if os.host() == "windows" then
 		local lib_name =  sys_invoke("python -c \"import sys; import os; import glob; path = os.path.dirname(sys.executable); libs = glob.glob(path + '/libs/python*'); print(os.path.splitext(os.path.basename(libs[-1]))[0]);\"")
 		return lib_name, python_find_path() .. "/libs"
 	else
