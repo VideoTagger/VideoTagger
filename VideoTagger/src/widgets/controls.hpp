@@ -35,7 +35,7 @@ namespace vt::widgets
 	extern bool selection_area(ImVec2& start_pos, ImVec2& end_pos, ImGuiMouseButton mouse_button = ImGuiMouseButton_Left);
 
 	extern void color_indicator(float thickness, uint32_t color);
-	extern bool begin_collapsible(const std::string& id, const std::string& label, ImGuiTreeNodeFlags flags = 0, const char* icon = nullptr, const std::optional<ImVec4>& icon_color = std::nullopt, const std::function<void(void)>& on_dragdrop = nullptr);
+	extern bool begin_collapsible(const std::string& id, const std::string& label, ImGuiTreeNodeFlags flags = 0, const char* icon = nullptr, const std::optional<ImVec4>& icon_color = std::nullopt, const std::function<void(void)>& on_dragdrop = nullptr, const std::optional<size_t>& index = std::nullopt);
 	extern void end_collapsible();
 
 	extern bool is_item_disabled();

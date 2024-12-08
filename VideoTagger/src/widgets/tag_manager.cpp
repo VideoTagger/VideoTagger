@@ -396,7 +396,7 @@ namespace vt::widgets
 			}
 
 			ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2{});
-			if (icon_button(icons::add))
+			if (icon_button(icons::add_tag))
 			{
 				open_add_tag_popup = true;
 			}

@@ -9,7 +9,7 @@ namespace vt::utils
 	{
 		if (ctx_.fonts.count("thumbnail") == 0) return 0;
 		auto font = ctx_.fonts.at("thumbnail");
-		return reinterpret_cast<GLuint>(font->ContainerAtlas->TexID);
+		return static_cast<GLuint>((uintptr_t)font->ContainerAtlas->TexID);
 	}
 
 	const thumbnail::font_glyph thumbnail::find_glyph(ImWchar c)

@@ -51,6 +51,12 @@ namespace vt::utils
 		{
 			return data[index];
 		}
+
+		template<typename = std::enable_if_t<dims >= 2>>
+		static constexpr float distance(const vec& left, const vec& right)
+		{
+			return std::sqrtf(std::powf((float)left[0] - right[0], 2) + std::powf((float)left[1] - right[1], 2));
+		}
 	};
 
 	template<typename type>

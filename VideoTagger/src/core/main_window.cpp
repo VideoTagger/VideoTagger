@@ -1533,6 +1533,20 @@ namespace vt
 						return utils::vec2<uint32_t>{ static_cast<uint32_t>(std::round(tex_coords.x)), static_cast<uint32_t>(std::round(tex_coords.y)) };
 					};
 
+					static auto from_pixels = [&tex_size, &size](uint32_t value) -> float
+					{
+						float viewport_diagonal = utils::intersection::length(size);
+						float tex_diagonal = utils::intersection::length(tex_size);
+						return (float)value * viewport_diagonal / tex_diagonal;
+					};
+
+					static auto to_pixels = [&tex_size, &size](float value) -> uint32_t
+					{
+						float viewport_diagonal = utils::intersection::length(size);
+						float tex_diagonal = utils::intersection::length(tex_size);
+						return (uint32_t)(value * tex_diagonal / viewport_diagonal);
+					};
+
 					ImGuiIO& io = ImGui::GetIO();
 					bool hovered = ImGui::IsWindowHovered();
 					bool focused = ImGui::IsWindowFocused();
@@ -1553,21 +1567,67 @@ namespace vt
 
 					auto current_ts = ctx_.video_timeline.current_timestamp();
 					bool can_add_point{};
+
+					bool is_keyframe{};
+					if (is_shape)
+					{
+						const auto& shape = selected_attribute->get<vt::shape>();
+						shape.visit([current_ts, &is_keyframe](const auto& map)
+						{
+							if constexpr (!std::is_same_v<std::monostate, std::remove_const_t<std::remove_reference_t<decltype(map)>>>)
+							{
+								auto it = map.find(current_ts);
+								if (it != map.end())
+								{
+									is_keyframe = true;
+								}
+							}
+						});
+					}
+
 					if (is_polygon)
 					{
 						const auto& shape = selected_attribute->get<vt::shape>();
-						can_add_point = shape.contains<polygon>(current_ts);
+						can_add_point = is_keyframe;
 					}
 
 					if (last_focused and is_shape and ImGui::BeginPopupContextItem("##VideoCtxMenu"))
 					{
+						auto& shape = selected_attribute->get<vt::shape>();
 						bool close = false;
 						const auto& style = ImGui::GetStyle();
 
-						if (ImGui::MenuItem("Add Point", nullptr, nullptr, is_polygon and can_add_point))
+						if (can_add_point and ImGui::MenuItem("Add Point", nullptr, nullptr))
 						{
 							add_point_pos = ImGui::GetWindowPos();
 							add_point = true;
+						}
+
+						if (ImGui::MenuItem(fmt::format("{} Add Keyframe", icons::keyframe).c_str(), nullptr, nullptr, !is_keyframe))
+						{
+							shape.visit([current_ts, &is_keyframe](auto& map)
+							{
+								if constexpr (!std::is_same_v<std::monostate, std::remove_const_t<std::remove_reference_t<decltype(map)>>>)
+								{
+									map[current_ts].push_back({});
+									is_keyframe = true;
+									ctx_.is_project_dirty = true;
+								}
+							});
+						}
+
+						if (ImGui::MenuItem(fmt::format("{} Add Region", shape.type_icon(shape.get_type())).c_str(), nullptr, nullptr, is_keyframe))
+						{
+							shape.visit([current_ts, &is_keyframe](auto& map)
+							{
+								if constexpr (!std::is_same_v<std::monostate, std::remove_const_t<std::remove_reference_t<decltype(map)>>>)
+								{
+									auto& keyframe = map.at(current_ts);
+									keyframe.push_back({});
+									keyframe.back().set_target(ctx_.gizmo_target);
+									ctx_.is_project_dirty = true;
+								}
+							});
 						}
 
 						if (ImGui::BeginMenu("Transform", has_target))
@@ -1652,6 +1712,15 @@ namespace vt
 						add_point_pos = ImGui::GetMousePos();
 						add_point = true;
 					}
+					else if (is_shape and !add_point and ImGui::IsMouseClicked(0) and hovered)
+					{
+						auto& shape = selected_attribute->get<vt::shape>();
+						auto closest_target = shape.closest_point(current_ts, to_tex_pos(ImGui::GetMousePos()), from_pixels(10));
+						if (closest_target != nullptr)
+						{
+							ctx_.gizmo_target = closest_target;
+						}
+					}
 
 					if (add_point and can_add_point and is_polygon)
 					{
@@ -1668,7 +1737,21 @@ namespace vt
 							return false;
 						});
 
-						if (it == polygons.end())
+						bool all_empty = true;
+						for (const auto& poly : polygons)
+						{
+							if (!poly.vertices.empty())
+							{
+								all_empty = false;
+								break;
+							}
+						}
+
+						if (all_empty)
+						{
+							polygons.front().vertices.push_back({ to_tex_pos(add_point_pos) });
+						}
+						else if (it == polygons.end())
 						{
 							//add new polygon with that point
 							polygons.push_back(polygon{ { to_tex_pos(add_point_pos) } });
@@ -1764,17 +1847,14 @@ namespace vt
 
 										const auto& shape = attr.get<vt::shape>();
 										draw_list->PushClipRect(top_left, bottom_right, true);
-										bool is_mouse_over{};
-										shape.draw(current_ts, shape.interpolate, from_tex_pos, tex_size, size, is_selected ? orange : tag.color, fill_color, show_points, is_mouse_over);
-
-										if (is_mouse_over)
+										shape.draw(current_ts, shape.interpolate, from_tex_pos, from_pixels, tex_size, size, is_selected ? orange : tag.color, fill_color, show_points, [&](size_t i)
 										{
 											if (ImGui::IsMouseClicked(0))
 											{
 												ctx_.registry.execute<set_selected_attribute_command>(&attr);
 											}
-											tooltip = fmt::format("Tag: {}\nAttribute: {}", tag.name, attr_name);
-										}
+											tooltip = fmt::format("Tag: {}\nAttribute: {}\nID: {}", tag.name, attr_name, i + 1);
+										});
 									}
 								}
 							}
@@ -1824,8 +1904,9 @@ namespace vt
 						gizmo_style.Colors[ImGuizmo::COLOR::SELECTION] = ImGui::ColorConvertU32ToFloat4(orange);
 
 
-						gizmo_style.CenterCircleSize = 5.f;
-						gizmo_style.TranslationLineThickness = 3.f;
+						gizmo_style.CenterCircleSize = from_pixels(5);
+						gizmo_style.ScaleLineCircleSize = gizmo_style.CenterCircleSize;
+						gizmo_style.TranslationLineThickness = 2.f * gizmo_style.CenterCircleSize / 3.f;
 						gizmo_style.TranslationLineArrowSize = 1.5f * gizmo_style.TranslationLineThickness;
 						ImGuizmo::SetOrthographic(true);
 						ImGuizmo::SetDrawlist();
@@ -2072,15 +2153,19 @@ namespace vt
 			auto main_dock_up_left = ImGui::DockBuilderSplitNode(main_dock_up, ImGuiDir_Left, 0.25f, nullptr, &main_dock_up);
 			auto main_dock_down = ImGui::DockBuilderSplitNode(main_dock_up, ImGuiDir_Down, 0.25f, nullptr, &main_dock_up);
 			auto dock_right_up = ImGui::DockBuilderSplitNode(main_dock_right, ImGuiDir_Up, 0.5f, nullptr, &main_dock_right);
+			
 			ImGui::DockBuilderDockWindow(widgets::inspector_id.c_str(), dock_right_up);
-			ImGui::DockBuilderDockWindow("Tag Manager", main_dock_right);
-			ImGui::DockBuilderDockWindow("Group Queue", main_dock_down);
+			ImGui::DockBuilderDockWindow(widgets::tag_manager_window_name().c_str(), main_dock_right);
+			ImGui::DockBuilderDockWindow(widgets::video_group_queue::window_name().c_str(), main_dock_down);
 			ImGui::DockBuilderDockWindow("Video Player", main_dock_up);
-			ImGui::DockBuilderDockWindow("Video Browser", main_dock_up_left);
+			ImGui::DockBuilderDockWindow(widgets::video_browser::window_name().c_str(), main_dock_up_left);
 			ImGui::DockBuilderDockWindow("Theme Customizer", main_dock_up);
 			ImGui::DockBuilderDockWindow(widgets::console::window_name().c_str(), dockspace_id_copy);
-			ImGui::DockBuilderDockWindow("Timeline", dockspace_id_copy);
+			ImGui::DockBuilderDockWindow(widgets::video_timeline::window_name().c_str(), dockspace_id_copy);
 			ImGui::DockBuilderDockWindow("Video Group Browser", dockspace_id_copy);
+
+			auto queue_node = ImGui::DockBuilderGetNode(main_dock_down);
+			queue_node->LocalFlags = ImGuiDockNodeFlags_NoResizeY;
 
 			ImGui::DockBuilderFinish(dockspace_id);
 			ctx_.reset_layout = false;

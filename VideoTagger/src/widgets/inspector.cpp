@@ -82,21 +82,48 @@ namespace vt::widgets
 									ImGui::TableSetupColumn(nullptr, ImGuiTableColumnFlags_WidthStretch);
 									ImGui::TableSetupColumn(nullptr, ImGuiTableColumnFlags_WidthFixed);
 
+									auto y_offset = ImVec2{ 0.f, (ImGui::GetTextLineHeight() / 2 + style.FramePadding.y) };
+
 									ImGui::TableNextColumn();
 									//ImGui::Columns(2, nullptr, false);
-									float start_y = ImGui::GetCursorPosY();
 									modified_start = timestamp_control("Start", ts_start, min_timestamp, start_max, &start_activated, &start_released);
+									ImGui::SameLine();
+									auto start_pos = ImGui::GetCursorScreenPos() + y_offset;
+									ImGui::NewLine();
+
 									//ImGui::NextColumn();
-									float end_y = ImGui::GetCursorPosY();
 									modified_end = timestamp_control("End", ts_end, end_min, max_timestamp, &end_activated, &end_released);
+									ImGui::SameLine();
+									auto end_pos = ImGui::GetCursorScreenPos() + y_offset;
+									ImGui::NewLine();
+
 									ImGui::TableNextColumn();
-									std::string name = fmt::format("{}##LinkTimestamps", icons::link);
+									auto icon = link_start_end ? icons::link : icons::link_off;
+									std::string name = fmt::format("{}##LinkTimestamps", icon);
 									
-									ImGui::SetCursorPosY(end_y - start_y + 2 * style.ItemSpacing.y + (ImGui::CalcTextSize(icons::link).y) / 2);
+									auto icon_link_y = end_pos.y - start_pos.y + 2.125f * style.ItemSpacing.y + (ImGui::CalcTextSize(icon).y) / 2;
+									ImGui::SetCursorPosY(icon_link_y);
+									auto cpos = ImGui::GetCursorScreenPos();
+									auto link_pos = cpos + ImGui::CalcTextSize(icon) / 2.f + style.FramePadding;
+
+									auto drawlist = ImGui::GetWindowDrawList();
+									auto line_size = 1.f;
+									auto line_color_vec4 = link_start_end ? style.Colors[ImGuiCol_Text] : style.Colors[ImGuiCol_TextDisabled];
+									line_color_vec4.w *= 0.4f;
+									auto line_color = ImGui::ColorConvertFloat4ToU32(line_color_vec4);
+									drawlist->AddLine(start_pos, { link_pos.x, start_pos.y }, line_color, line_size);
+									drawlist->AddLine(end_pos, { link_pos.x, end_pos.y }, line_color, line_size);
+
+									ImVec2 link_pos_offset{ 0.f, ImGui::CalcTextSize(icon).y / 4 + style.FramePadding.y };
+
+									drawlist->AddLine({ link_pos.x, start_pos.y - line_size / 2 }, link_pos - link_pos_offset, line_color, line_size);
+									drawlist->AddLine({ link_pos.x, end_pos.y + line_size / 2 }, link_pos + link_pos_offset, line_color, line_size);
+
 									if (icon_toggle_button(name.c_str(), link_start_end))
 									{
 										link_start_end = !link_start_end;
 									}
+
 									ImGui::EndTable();
 								}
 

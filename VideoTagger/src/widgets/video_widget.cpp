@@ -79,7 +79,7 @@ namespace vt::widgets
 
 				auto video_screen_pos = ImGui::GetCursorScreenPos();
 
-				ImGui::Image((ImTextureID)video_texture.id(), image_size);
+				ImGui::Image(reinterpret_cast<ImTextureID>((uintptr_t)video_texture.id()), image_size);
 
 				if (!is_video_active)
 				{

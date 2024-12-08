@@ -291,7 +291,7 @@ namespace vt::widgets
 
 		auto& style = ImGui::GetStyle();
 		ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2{});
-		auto imgui_tex = reinterpret_cast<ImTextureID>(image);
+		auto imgui_tex = reinterpret_cast<ImTextureID>((uintptr_t)image);
 		const char* id = label.c_str();
 		ImGui::PushID(id);
 		auto text_size = ImVec2{ 0, 2 * ImGui::GetTextLineHeight() };
@@ -387,7 +387,7 @@ namespace vt::widgets
 		ImGui::RenderFrame(rect.Min, rect.Max, color, false, style.FrameRounding);
     }
 
-	bool begin_collapsible(const std::string& id, const std::string& label, ImGuiTreeNodeFlags flags, const char* icon, const std::optional<ImVec4>& icon_color, const std::function<void(void)>& on_dragdrop)
+	bool begin_collapsible(const std::string& id, const std::string& label, ImGuiTreeNodeFlags flags, const char* icon, const std::optional<ImVec4>& icon_color, const std::function<void(void)>& on_dragdrop, const std::optional<size_t>& index)
 	{
 		const auto& style = ImGui::GetStyle();
 		flags |= ImGuiTreeNodeFlags_Framed | ImGuiTreeNodeFlags_SpanFullWidth | ImGuiTreeNodeFlags_FramePadding | ImGuiTreeNodeFlags_ClipLabelForTrailingButton;
@@ -416,6 +416,11 @@ namespace vt::widgets
 
 		ImGui::SameLine(ImGui::GetTreeNodeToLabelSpacing());
 		ImGui::TextUnformatted(label.c_str());
+		if (index.has_value())
+		{
+			ImGui::SameLine();
+			ImGui::TextDisabled("[%zu]", index.value());
+		}
 		ImGui::SameLine(ImGui::GetContentRegionMax().x - style.ItemSpacing.x - ImGui::CalcTextSize(suffix_icon).x);
 		ImGui::TextUnformatted(suffix_icon);
 		ImGui::Unindent();

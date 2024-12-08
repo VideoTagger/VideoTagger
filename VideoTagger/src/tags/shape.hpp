@@ -12,15 +12,39 @@
 
 namespace vt
 {
-	struct circle
+	struct shape_base
 	{
-		utils::vec2<uint32_t> pos;
-		uint32_t radius = 1;
+		virtual void set_target(utils::vec2<uint32_t>*& target) = 0;
 	};
 
-	struct polygon
+	struct circle : public shape_base
 	{
+		circle() = default;
+		constexpr circle(const utils::vec2<uint32_t>& pos, uint32_t radius) : shape_base{}, pos { pos }, radius{ radius } {}
+
+		utils::vec2<uint32_t> pos;
+		uint32_t radius = 1;
+
+		virtual void set_target(utils::vec2<uint32_t>*& target) override
+		{
+			target = &pos;
+		}
+	};
+
+	struct polygon : public shape_base
+	{
+		polygon() = default;
+		polygon(const std::vector<utils::vec2<uint32_t>>& vertices) : shape_base{}, vertices{ vertices } {}
+
 		std::vector<utils::vec2<uint32_t>> vertices;
+
+		virtual void set_target(utils::vec2<uint32_t>*& target) override
+		{
+			if (!vertices.empty())
+			{
+				target = &vertices.back();
+			}
+		}
 	};
 
 	struct rectangle : public polygon
@@ -33,6 +57,11 @@ namespace vt
 		rectangle(const utils::vec2<uint32_t>& start, const utils::vec2<uint32_t>& end) : polygon{ { start, end } }
 		{
 
+		}
+
+		virtual void set_target(utils::vec2<uint32_t>*& target) override
+		{
+			target = &vertices.front();
 		}
 	};
 
@@ -98,13 +127,13 @@ namespace vt
 		static constexpr auto types = { type::none, type::circle, type::rectangle, type::polygon };
 
 		template<typename visitor_t>
-		constexpr void visit(const visitor_t& visitor)
+		constexpr void visit(visitor_t&& visitor)
 		{
 			std::visit(visitor, data);
 		}
 
 		template<typename visitor_t>
-		constexpr void visit(const visitor_t& visitor) const
+		constexpr void visit(visitor_t&& visitor) const
 		{
 			std::visit(visitor, data);
 		}
@@ -179,6 +208,83 @@ namespace vt
 			return it != map.end() ? std::optional<typename std::map<timestamp, std::vector<type>>::const_iterator>{ it } : std::nullopt;
 		}
 
+		utils::vec2<uint32_t>* closest_point(timestamp ts, const utils::vec2<uint32_t>& origin, float max_distance = std::numeric_limits<float>::infinity())
+		{
+			switch (type_)
+			{
+				case type::circle:
+				{
+					auto& map = get_map<circle>();
+					auto it = map.find(ts);
+					if (it == map.end()) return nullptr;
+					auto& regions = it->second;
+					if (regions.empty()) return nullptr;
+					
+					float distance = std::numeric_limits<float>::infinity();
+					utils::vec2<uint32_t>* result{};
+					for (auto& region : regions)
+					{
+						float new_distance = utils::vec2<uint32_t>::distance(origin, region.pos);
+						if (new_distance < distance)
+						{
+							result = &region.pos;
+							distance = new_distance;
+						}
+					}
+					return distance <= max_distance ? result : nullptr;
+				}
+				case type::rectangle:
+				{
+					auto& map = get_map<rectangle>();
+					auto it = map.find(ts);
+					if (it == map.end()) return nullptr;
+					auto& regions = it->second;
+					if (regions.empty()) return nullptr;
+
+					float distance = std::numeric_limits<float>::infinity();
+					utils::vec2<uint32_t>* result{};
+					for (auto& region : regions)
+					{
+						for (auto& vertex : region.vertices)
+						{
+							float new_distance = utils::vec2<uint32_t>::distance(origin, vertex);
+							if (new_distance < distance)
+							{
+								result = &vertex;
+								distance = new_distance;
+							}
+						}
+					}
+					return distance <= max_distance ? result : nullptr;
+				}
+				case type::polygon:
+				{
+					auto& map = get_map<polygon>();
+					auto it = map.find(ts);
+					if (it == map.end()) return nullptr;
+					auto& regions = it->second;
+					if (regions.empty()) return nullptr;
+
+					float distance = std::numeric_limits<float>::infinity();
+					utils::vec2<uint32_t>* result{};
+					for (auto& region : regions)
+					{
+						for (auto& vertex : region.vertices)
+						{
+							float new_distance = utils::vec2<uint32_t>::distance(origin, vertex);
+							if (new_distance < distance)
+							{
+								result = &vertex;
+								distance = new_distance;
+							}
+						}
+					}
+					return distance <= max_distance ? result : nullptr;
+				}
+			}
+			return nullptr;
+		}
+
 		constexpr bool has_data() const
 		{
 			return !has<std::monostate>();
@@ -212,7 +318,7 @@ namespace vt
 			}
 		}
 
-		void draw(timestamp current_ts, bool lerp, const std::function<ImVec2(const ImVec2&)>& to_local_pos, const ImVec2& tex_size, const ImVec2& viewport_size, uint32_t outline_color, uint32_t fill_color, bool show_points, bool& is_mouse_over) const;
+		void draw(timestamp current_ts, bool lerp, const std::function<ImVec2(const ImVec2&)>& to_local_pos, const std::function<float(uint32_t)>& from_pixels, const ImVec2& tex_size, const ImVec2& viewport_size, uint32_t outline_color, uint32_t fill_color, bool show_points, const std::function<void(size_t)>& on_mouse_over) const;
 		void draw_data(const utils::vec2<uint32_t>& max_size, utils::vec2<uint32_t>*& gizmo_target, timestamp start_ts, timestamp end_ts, timestamp ts, bool is_timestamp, bool modifiable, bool& dirty_flag, const std::function<void(timestamp)>& on_seek);
 	};
 

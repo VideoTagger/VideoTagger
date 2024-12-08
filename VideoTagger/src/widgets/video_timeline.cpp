@@ -278,7 +278,7 @@ namespace vt::widgets
 		static std::string window_id = "Timeline";
 		ImVec2 default_window_padding = ImGui::GetStyle().WindowPadding;
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2{});
-		if (ImGui::Begin(window_id.c_str(), &open))
+		if (ImGui::Begin(window_name().c_str(), &open))
 		{
 			//TODO: check for nulls
 
@@ -1183,4 +1183,9 @@ namespace vt::widgets
 		ImGui::End();
 		ImGui::PopStyleVar();
 	}
+
+    std::string video_timeline::window_name()
+    {
+        return fmt::format("{} Timeline###Timeline", icons::timeline);
+    }
 }
