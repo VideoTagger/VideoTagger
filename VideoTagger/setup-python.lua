@@ -35,11 +35,7 @@ function python_get_lib_name_and_path()
 	else
 		local lib_name = sys_invoke('python -c "import sysconfig; print(sysconfig.get_config_var(\'LDLIBRARY\'))"')
 		local lib_path = sys_invoke('python -c "from sysconfig import get_config_var as gcv; print(gcv(\'LIBDIR\') or gcv(\'LIBPL\'))"')
-		if path.getextension(lib_name) == ".so" then
-			return "", ""
-		else
-			return lib_name, lib_path
-		end
+		return lib_name, lib_path
 	end
 end
 

@@ -47,30 +47,16 @@ project "VideoTagger"
 	pchheader "pch.hpp"
 	pchsource "src/pch.cpp"
 
-	if string.len(PythonLibName) > 0 then
-		links
-		{
-			"nativefiledialog-extended",
-			"SDL2",
-			"SDL2main",
-			"avcodec",
-			"avformat",
-			"avutil",
-			"swscale",
-			PythonLibName
-		}
-	else
-		links
-		{
-			"nativefiledialog-extended",
-			"SDL2",
-			"SDL2main",
-			"avcodec",
-			"avformat",
-			"avutil",
-			"swscale",
-		}
-	end
+	links
+	{
+		"nativefiledialog-extended",
+		"SDL2",
+		"SDL2main",
+		"avcodec",
+		"avformat",
+		"avutil",
+		"swscale",
+	}
 
 	defines
 	{
@@ -124,18 +110,21 @@ project "VideoTagger"
 
 		links
 		{
-			"opengl32"
+			"opengl32",
+			PythonLibName
 		}
 
 	filter "system:linux"
 		buildoptions
 		{
-			"`pkg-config --cflags libavcodec libavformat libswscale sdl2 gtk+-3.0 glib-2.0`"
+			"`pkg-config --cflags libavcodec libavformat libswscale sdl2 gtk+-3.0 glib-2.0`",
+			"`python3-config --cflags`"
 		}
 
 		linkoptions
 		{
-			"`pkg-config --libs libavcodec libavformat libswscale sdl2 gtk+-3.0 glib-2.0`"
+			"`pkg-config --libs libavcodec libavformat libswscale sdl2 gtk+-3.0 glib-2.0`",
+			"`python3-config --ldflags`"
 		}
 
 		buildoptions
