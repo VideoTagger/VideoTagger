@@ -24,6 +24,12 @@ jobs:
           fileName: '*-linux.tar.gz'
           extract: true
     
+      - name: Cache Build Artefacts
+        id: cache
+        uses: actions/cache@v4
+        with:
+          path: .build
+          key: build-${{ runner.os }}-${{ hashFiles('.build/**.*') }}
       
       - name: Setup Python
         uses: actions/setup-python@v5
