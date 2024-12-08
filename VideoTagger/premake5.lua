@@ -120,6 +120,12 @@ project "VideoTagger"
 		{
 			"`pkg-config --libs libavcodec libavformat libswscale sdl2 gtk+-3.0 glib-2.0`"
 		}
+
+		buildoptions
+		{
+			"-fpermissive"
+		}
+
 	filter "system:macosx"
 		buildoptions
 		{
@@ -136,6 +142,11 @@ project "VideoTagger"
             "-framework AppKit",
             "-framework UniformTypeIdentifiers"
         }
+
+		buildoptions
+		{
+			"-fpermissive"
+		}
 	
 	filter "configurations:Debug"
 		kind "ConsoleApp"
