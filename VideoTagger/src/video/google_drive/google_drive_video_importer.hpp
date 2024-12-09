@@ -21,5 +21,7 @@ namespace vt
 		std::unique_ptr<video_resource> import_video_from_json(const nlohmann::ordered_json& json) override;
 
 		std::function<bool(std::vector<std::any>&)> prepare_video_import_task() override;
+
+		bool available() override;
 	};
 }

@@ -107,7 +107,7 @@ namespace vt
 		json["file_id"] = file_id_;
 	}
 
-	std::function<video_download_status(std::shared_ptr<video_download_data>)> google_drive_video_resource::get_download_function()
+	std::function<video_download_status(std::shared_ptr<video_download_data>)> google_drive_video_resource::download_function()
 	{
 		return [file_id = file_id_](std::shared_ptr<video_download_data> data)
 		{

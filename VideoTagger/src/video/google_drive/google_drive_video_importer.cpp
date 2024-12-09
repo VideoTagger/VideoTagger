@@ -4,6 +4,7 @@
 #include <core/debug.hpp>
 #include <core/app_context.hpp>
 #include <services/google/google_account_manager.hpp>
+#include <widgets/google_drive_browser.hpp>
 
 #define CPPHTTPLIB_OPENSSL_SUPPORT
 #include <httplib.h>
@@ -151,6 +152,10 @@ namespace vt
 					next_page_token = response_json.at("nextPageToken");
 					get_url = fmt::format("{}&pageToken={}", base_get_url, next_page_token);
 				}
+				else
+				{
+					next_page_token.clear();
+				}
 
 			} while (!next_page_token.empty());
 
@@ -162,7 +167,7 @@ namespace vt
 
 	std::function<bool(std::vector<std::any>&)> google_drive_video_importer::prepare_video_import_task()
 	{
-		return [open = false, user_input = std::string()](std::vector<std::any>& import_data) mutable
+		return [open = false, user_input = std::string(), browser = widgets::google_drive_browser("DriveBrowser")](std::vector<std::any>& import_data) mutable
 		{
 			//TODO: CHANGE THIS WHOLE POPUP
 
@@ -173,25 +178,27 @@ namespace vt
 				open = true;
 			}
 
-			if (ImGui::BeginPopupModal("Google Drive Import", &open, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoResize))
+			ImGui::SetNextWindowSize(ImGui::GetContentRegionMax() * 0.75f, ImGuiCond_Appearing);
+			if (ImGui::BeginPopupModal("Google Drive Import", &open, 0))
 			{
-				ImGui::SetNextItemWidth(390.f);
-				if (ImGui::InputTextWithHint("##FileId", "Google Drive File ID...", &user_input, ImGuiInputTextFlags_EnterReturnsTrue))
-				{
-					std::string file_id = get_file_id(user_input);
-					if (!file_id.empty())
-					{
-						prepare_video_import(file_id, import_data);
-						open = false;
-						ImGui::CloseCurrentPopup();
-					}
-					else
-					{
-						debug::error("Failed to obtain file id from user input");
-					}
-
-					//TODO: some notification if it fails
-				}
+				browser.render();
+				//ImGui::SetNextItemWidth(390.f);
+				//if (ImGui::InputTextWithHint("##FileId", "Google Drive File ID...", &user_input, ImGuiInputTextFlags_EnterReturnsTrue))
+				//{
+				//	std::string file_id = get_file_id(user_input);
+				//	if (!file_id.empty())
+				//	{
+				//		prepare_video_import(file_id, import_data);
+				//		open = false;
+				//		ImGui::CloseCurrentPopup();
+				//	}
+				//	else
+				//	{
+				//		debug::error("Failed to obtain file id from user input");
+				//	}
+				//
+				//	//TODO: some notification if it fails
+				//}
 
 				ImGui::EndPopup();
 			}
@@ -204,6 +211,17 @@ namespace vt
 
 			return return_value;
 		};
+	}
+
+	bool google_drive_video_importer::available()
+	{
+		if (!ctx_.is_account_manager_registered<google_account_manager>())
+		{
+			return false;
+		}
+
+		auto& manager = ctx_.get_account_manager<google_account_manager>();
+		return manager.logged_in();
 	}
 
 }
