@@ -1,0 +1,59 @@
+name: Build With Premake
+on:
+  push:
+    branches: [ "main", "dev" ]
+  pull_request:
+    branches: [ "main", "dev" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Cache Submodules
+        id: cache-submodules
+        uses: actions/cache@v4
+        with:
+          path: VideoTagger/vendor
+          key: submodules-${{ runner.os }}-${{ hashFiles('VideoTagger/vendor') }}
+          restore-keys:
+            submodules-${{ runner.os }}-
+
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          submodules: true
+      
+      - name: Cache Build Artifacts
+        id: cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            build
+            **/Makefile
+          key: build-${{ runner.os }}-${{ hashFiles('build', '**/Makefile') }}
+          restore-keys:
+            build-${{ runner.os }}-
+
+      - name: Setup Premake5
+        uses: robinraju/release-downloader@v1.11
+        with:
+          repository: premake/premake-core
+          latest: true
+          preRelease: true
+          fileName: '*-linux.tar.gz'
+          extract: true
+
+      - name: Setup Packages
+        uses: tecolicom/actions-use-apt-tools@v1
+        with:
+          tools: build-essential pkg-config libsdl2-dev libavcodec-dev libavformat-dev libswscale-dev python3-dev libgtk-3-dev libglib2.0-dev libgtk2.0-dev libpango1.0-dev
+
+      - name: Run Premake5
+        run: |
+            chmod +x ./premake5
+            ./premake5 gmake2
+
+      - name: Build with Makefile
+        run: |
+            make config=shipping_x86_64
