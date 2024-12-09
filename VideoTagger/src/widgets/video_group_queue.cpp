@@ -118,7 +118,7 @@ namespace vt::widgets
 									remove_group = true;
 								}
 							},
-							[&remove_group, gid = group_id, label](const std::string& label)
+							[&remove_group, gid = group_id](const std::string& label)
 							{
 								//TODO: This will display "..." when it gets removed, try to fix that
 								if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_SourceNoHoldToOpenOthers))

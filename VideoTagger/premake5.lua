@@ -23,8 +23,6 @@ project "VideoTagger"
 		"vendor/ImGui/backends/imgui_impl_opengl3.cpp",
 		"vendor/ImGuizmo/ImSequencer.h",
 		"vendor/ImGuizmo/ImSequencer.cpp",
-		"assets/scripts/**.py",
-		"assets/scripts/**.pyi",
 	}
 
 	includedirs
@@ -38,13 +36,7 @@ project "VideoTagger"
 		"vendor/nlohmann/single_include",
 		"vendor/utf8",
 		"vendor/pybind11/include",
-		"vendor/cpp-httplib",
-		PythonIncludePath
-	}
-
-	libdirs
-	{
-		PythonLibPath
+		"vendor/cpp-httplib"
 	}
 
 	pchheader "pch.hpp"
@@ -59,10 +51,8 @@ project "VideoTagger"
 		"avformat",
 		"avutil",
 		"swscale",
-		"opengl32",
 		"libssl",
-		"libcrypto",
-		PythonLibName
+		"libcrypto"
 	}
 
 	defines
@@ -77,17 +67,8 @@ project "VideoTagger"
 
 	postbuildcommands
 	{
-		"{COPY} assets %{cfg.targetdir}/assets"
+		"{COPYDIR} assets %{cfg.targetdir}/assets"
 	}
-
-	filter 'files:**.py or **.pyi'
-   		buildmessage 'Copying Python file: %{file.relpath}'
-
-		buildcommands
-		{
-			"{COPYFILE} %{file.relpath} %{cfg.targetdir}/assets/scripts/%{file.name}",
-		}
-		buildoutputs { "%{cfg.targetdir}/assets/scripts/%{file.name}" }
 
 	filter {}
 	filter "files:src/embeds/**.cpp"
@@ -105,14 +86,16 @@ project "VideoTagger"
 			"vendor/ffmpeg/include/libavformat",
 			"vendor/ffmpeg/include/libswscale",
 			"vendor/ffmpeg/include",
-			"vendor/openssl/include"
+			"vendor/openssl/include",
+			PythonIncludePath
 		}
 
 		libdirs
 		{
 			"vendor/SDL2/lib/%{cfg.architecture}",
 			"vendor/ffmpeg/lib/%{cfg.architecture}",
-			"vendor/openssl/lib/%{cfg.architecture}"
+			"vendor/openssl/lib/%{cfg.architecture}",
+			PythonLibPath
 		}
 
 		postbuildcommands
@@ -128,32 +111,39 @@ project "VideoTagger"
 			"/bigobj"
 		}
 
+		links
+		{
+			"opengl32",
+			PythonLibName
+		}
+
 	filter "system:linux"
 		buildoptions
 		{
-			"`pkg-config --cflags libavcodec libavformat libswscale sdl2 gtk+-3.0 glib-2.0`"
+			"`pkg-config --cflags libavcodec libavformat libswscale sdl2 opengl gtk+-3.0 glib-2.0`",
+			"`python3-config --cflags`",
+			"-fpermissive"
 		}
 
 		linkoptions
 		{
-			"`pkg-config --libs libavcodec libavformat libswscale sdl2 gtk+-3.0 glib-2.0`"
+			"`pkg-config --libs libavcodec libavformat libswscale sdl2 opengl gtk+-3.0 glib-2.0`",
+			"`python3-config --embed --ldflags`"
 		}
+
 	filter "system:macosx"
 		buildoptions
 		{
-			"`pkg-config --cflags libavcodec libavformat libswscale sdl2`"
+			"`pkg-config --cflags libavcodec libavformat libswscale sdl2 opengl`",
+			"-framework AppKit",
+            "-framework UniformTypeIdentifiers",
+			"-fpermissive"
 		}
 
 		linkoptions
 		{
-			"`pkg-config --libs libavcodec libavformat libswscale sdl2`"
+			"`pkg-config --libs libavcodec libavformat libswscale sdl2 opengl`"
 		}
-
-        buildoptions
-		{
-            "-framework AppKit",
-            "-framework UniformTypeIdentifiers"
-        }
 	
 	filter "configurations:Debug"
 		kind "ConsoleApp"
