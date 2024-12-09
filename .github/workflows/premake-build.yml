@@ -45,4 +45,5 @@ jobs:
 
       - name: Build with Makefile
         run: |
+            cat Makefile
             make config=shipping_x86_64

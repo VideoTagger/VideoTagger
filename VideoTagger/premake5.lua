@@ -36,12 +36,6 @@ project "VideoTagger"
 		"vendor/nlohmann/single_include",
 		"vendor/utf8",
 		"vendor/pybind11/include",
-		PythonIncludePath
-	}
-
-	libdirs
-	{
-		PythonLibPath
 	}
 
 	pchheader "pch.hpp"
@@ -88,13 +82,15 @@ project "VideoTagger"
 			"vendor/ffmpeg/include/libavcodec",
 			"vendor/ffmpeg/include/libavformat",
 			"vendor/ffmpeg/include/libswscale",
-			"vendor/ffmpeg/include"
+			"vendor/ffmpeg/include",
+			PythonIncludePath
 		}
 
 		libdirs
 		{
 			"vendor/SDL2/lib/%{cfg.architecture}",
-			"vendor/ffmpeg/lib/%{cfg.architecture}"
+			"vendor/ffmpeg/lib/%{cfg.architecture}",
+			PythonLibPath
 		}
 
 		postbuildcommands
@@ -118,40 +114,28 @@ project "VideoTagger"
 		buildoptions
 		{
 			"`pkg-config --cflags libavcodec libavformat libswscale sdl2 opengl gtk+-3.0 glib-2.0`",
-			"`python3-config --cflags`"
+			"`python3-config --cflags`",
+			"-fpermissive"
 		}
 
 		linkoptions
 		{
 			"`pkg-config --libs libavcodec libavformat libswscale sdl2 opengl gtk+-3.0 glib-2.0`",
-			"`python3-config --libs`"
-		}
-
-		buildoptions
-		{
-			"-fpermissive"
+			"`python3-config --ldflags`"
 		}
 
 	filter "system:macosx"
 		buildoptions
 		{
-			"`pkg-config --cflags libavcodec libavformat libswscale sdl2`"
+			"`pkg-config --cflags libavcodec libavformat libswscale sdl2 opengl`",
+			"-framework AppKit",
+            "-framework UniformTypeIdentifiers",
+			"-fpermissive"
 		}
 
 		linkoptions
 		{
-			"`pkg-config --libs libavcodec libavformat libswscale sdl2`"
-		}
-
-        buildoptions
-		{
-            "-framework AppKit",
-            "-framework UniformTypeIdentifiers"
-        }
-
-		buildoptions
-		{
-			"-fpermissive"
+			"`pkg-config --libs libavcodec libavformat libswscale sdl2 opengl`"
 		}
 	
 	filter "configurations:Debug"
