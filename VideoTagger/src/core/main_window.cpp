@@ -567,7 +567,7 @@ namespace vt
 						ImGui::PopID();
 					}
 					ImGui::TableNextColumn();
-					ImGui::Text(id);
+					ImGui::TextUnformatted(id);
 
 					//TODO: This is repeated 3 times, refactor this
 					{
@@ -602,7 +602,7 @@ namespace vt
 
 					ImGui::TableNextColumn();
 					std::string key_combination = keybind.name(false);
-					ImGui::Text(key_combination.c_str());
+					ImGui::TextUnformatted(key_combination.c_str());
 
 					if (keybind.flags.rebindable)
 					{
@@ -639,7 +639,7 @@ namespace vt
 					if (show_actions)
 					{
 						ImGui::TableNextColumn();
-						ImGui::Text(keybind.action->name().c_str());
+						ImGui::TextUnformatted(keybind.action->name().c_str());
 
 						if (keybind.flags.rebindable)
 						{

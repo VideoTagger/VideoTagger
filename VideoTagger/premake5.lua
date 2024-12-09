@@ -121,7 +121,7 @@ project "VideoTagger"
 		linkoptions
 		{
 			"`pkg-config --libs libavcodec libavformat libswscale sdl2 opengl gtk+-3.0 glib-2.0`",
-			"`python3-config --ldflags`"
+			"`python3-config --embed --ldflags`"
 		}
 
 	filter "system:macosx"
