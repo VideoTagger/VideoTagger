@@ -59,9 +59,9 @@ namespace vt::widgets
 		auto px = ImGui::GetCursorPosX();
 		ImGui::SetCursorPosX(px - (px - cx) + style.ItemInnerSpacing.x);
 		//ImGui::SameLine(ImGui::GetTreeNodeToLabelSpacing());
-		ImGui::Text(label);
+		ImGui::TextUnformatted(label);
 		ImGui::SameLine(ImGui::GetContentRegionMax().x - style.FramePadding.x - ImGui::CalcTextSize(icon).x);
-		ImGui::Text(icon);
+		ImGui::TextUnformatted(icon);
 		return result;
 	}
 
@@ -170,7 +170,7 @@ namespace vt::widgets
 		auto cpos = ImGui::GetCursorPos();
 		ImGui::SetCursorPos(offset + avail_area / 2 - half_text_size);
 		ImGui::BeginDisabled();
-		ImGui::TextWrapped(text);
+		ImGui::TextWrapped("%s", text);
 		ImGui::EndDisabled();
 		ImGui::SetCursorPos(cpos);
 	}
@@ -188,7 +188,7 @@ namespace vt::widgets
 		std::string str = text;
 		if (text_size.x <= avail_area.x and text_size.y <= avail_area.y)
 		{
-			ImGui::TextWrapped(text);
+			ImGui::TextWrapped("%s", text);
 			return;
 		}
 
@@ -202,7 +202,7 @@ namespace vt::widgets
 		if (!str.empty())
 		{
 			std::string temp = str + "...";
-			ImGui::TextWrapped(temp.c_str());
+			ImGui::TextWrapped("%s", temp.c_str());
 		}
 	}
 	
@@ -326,7 +326,7 @@ namespace vt::widgets
 		{
 			ImGui::TableNextRow();
 			ImGui::TableNextColumn();
-			ImGui::TextWrapped(short_label.c_str());
+			ImGui::TextWrapped("%s", short_label.c_str());
 			ImGui::EndTable();
 		}
 		ImGui::EndGroup();
