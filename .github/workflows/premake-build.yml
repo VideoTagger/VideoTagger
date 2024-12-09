@@ -19,7 +19,9 @@ jobs:
         id: cache
         uses: actions/cache@v4
         with:
-          path: build **/Makefile
+          path: |
+            build
+            **/Makefile
           key: build-${{ runner.os }}-${{ hashFiles('build', '**/Makefile') }}
           restore-keys:
             build-${{ runner.os }}-
