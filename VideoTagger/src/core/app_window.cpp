@@ -270,6 +270,8 @@ namespace vt
 		thumbnail_font_builder.AddText(icons::video_group);
 		thumbnail_font_builder.AddText(icons::video);
 		thumbnail_font_builder.AddText(icons::download);
+		thumbnail_font_builder.AddText(icons::file);
+		thumbnail_font_builder.AddText(icons::folder);
 		thumbnail_font_builder.BuildRanges(&thumbnail_ranges);
 
 		builder.BuildRanges(&ranges);

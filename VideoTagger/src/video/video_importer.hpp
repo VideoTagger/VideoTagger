@@ -26,6 +26,8 @@ namespace vt
 
 		//return true when import_data is ready
 		virtual std::function<bool(std::vector<std::any>&)> prepare_video_import_task() = 0;
+
+		virtual bool available() = 0;
 	
 	private:
 		std::string importer_id_;

@@ -42,11 +42,11 @@ namespace vt
 		local_path_ = std::move(path);
 	}
 
-	video_download_result downloadable_video_resource::download(std::launch launch_policy)
+	video_download_result downloadable_video_resource::download()
 	{
 		video_download_result result;
 		result.data = std::make_shared<video_download_data>();
-		result.result = std::async(launch_policy, get_download_function(), result.data);
+		result.result = std::async(std::launch::async, download_function(), result.data);
 		download_data_ = result.data;
 		return result;
 	}

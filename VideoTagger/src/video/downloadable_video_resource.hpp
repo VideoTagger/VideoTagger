@@ -41,7 +41,7 @@ namespace vt
 		void set_local_path(std::filesystem::path path);
 
 		//local_path must be updated manually
-		video_download_result download(std::launch launch_policy = std::launch::async);
+		video_download_result download();
 		std::optional<float> download_progress() const;
 
 		void remove_downloaded();
@@ -53,7 +53,7 @@ namespace vt
 		virtual std::function<void(ImDrawList&, ImRect, ImRect)> icon_custom_draw() const override;
 
 	protected:
-		virtual std::function<video_download_status(std::shared_ptr<video_download_data>)> get_download_function() = 0;
+		virtual std::function<video_download_status(std::shared_ptr<video_download_data>)> download_function() = 0;
 
 	private:
 		std::filesystem::path local_path_;

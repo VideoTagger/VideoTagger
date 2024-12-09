@@ -47,7 +47,7 @@ namespace vt::widgets
 				}
 			}
 
-			open = widgets::tile(label, tile_size, image_size, image,
+			open = widgets::tile(fmt::format("video{}", id).c_str(), label, tile_size, image_size, image,
 			[&](const std::string& label)
 			{
 				if (!ctx_.displayed_videos.contains(id))

@@ -49,7 +49,7 @@ namespace vt::widgets
 				}
 			}
 			std::string label = metadata.title.value_or("");
-			open |= widgets::tile(label, tile_size, image_size, image,
+			open |= widgets::tile(fmt::format("video{}", vid_resource.id()).c_str(), label, tile_size, image_size, image,
 			[&](const std::string& label)
 			{
 				//TODO: Temporarily disabled, enable this later
@@ -94,7 +94,7 @@ namespace vt::widgets
 			auto image = utils::thumbnail::font_texture();
 			auto glyph = utils::thumbnail::find_glyph(utils::thumbnail::video_group_icon);
 
-			open |= widgets::tile(vgroup.display_name, tile_size, tile_size, image,
+			open |= widgets::tile(fmt::format("group{}", gid).c_str(), vgroup.display_name, tile_size, tile_size, image,
 			[&](const std::string& label)
 			{
 				group_ctx_menu(open, remove, enqueue, can_enqueue);

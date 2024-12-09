@@ -276,15 +276,19 @@ namespace vt::widgets
 		return tile_size + style.FramePadding + text_size;
 	}
 
-	bool tile(const std::string& label, ImVec2 tile_size, ImVec2 image_size, GLuint image, const std::function<void(const std::string&)> context_menu, const std::function<void(const std::string&)> drag_drop, std::function<void(ImDrawList&, ImRect, ImRect)> custom_draw, ImVec2 uv0, ImVec2 uv1, bool is_selected)
+	bool tile(const char* id, const std::string& label, ImVec2 tile_size, ImVec2 image_size, GLuint image, const std::function<void(const std::string&)> context_menu, const std::function<void(const std::string&)> drag_drop, std::function<void(ImDrawList&, ImRect, ImRect)> custom_draw, ImVec2 uv0, ImVec2 uv1, bool is_selected)
 	{
 		bool result{};
 		ImVec2 image_tile_size = ImVec2{ tile_size.x, tile_size.x } * 0.9f;
 
+		if (id == nullptr)
+		{
+			id = label.c_str();
+		}
+
 		auto& style = ImGui::GetStyle();
 		ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2{});
 		auto imgui_tex = reinterpret_cast<ImTextureID>(image);
-		const char* id = label.c_str();
 		ImGui::PushID(id);
 		auto text_size = ImVec2{ 0, 2 * ImGui::GetTextLineHeight() };
 		auto selectable_size = tile_size + style.FramePadding + text_size;
@@ -302,12 +306,12 @@ namespace vt::widgets
 		}
 		auto char_size = ImGui::CalcTextSize("A");
 		size_t max_chars = static_cast<size_t>(std::floor(text_size.y / char_size.y) * static_cast<size_t>(selectable_size.x / char_size.x));
-		bool is_shortened = strlen(id) > max_chars;
-		std::string short_label = is_shortened ? std::string(id, max_chars) + "..." : label;
+		bool is_shortened = label.size() > max_chars;
+		std::string short_label = is_shortened ? label.substr(0, max_chars) + "..." : label;
 
 		if (is_shortened and ImGui::IsItemHovered(ImGuiHoveredFlags_ForTooltip | ImGuiHoveredFlags_DelayNormal) and ImGui::BeginTooltip())
 		{
-			ImGui::Text("%s", id);
+			ImGui::Text("%s", label.c_str());
 			ImGui::EndTooltip();
 		}
 

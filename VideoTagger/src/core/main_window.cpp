@@ -927,6 +927,11 @@ namespace vt
 				{
 					for (auto& [importer_id, importer] : ctx_.video_importers)
 					{
+						if (!importer->available())
+						{
+							continue;
+						}
+
 						std::string menu_importer_name = importer->importer_display_name();
 						if (ImGui::MenuItem(menu_importer_name.c_str()))
 						{

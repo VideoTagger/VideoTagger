@@ -92,4 +92,9 @@ namespace vt
 		};
 	}
 
+	bool local_video_importer::available()
+	{
+		return true;
+	}
+
 }

@@ -23,6 +23,8 @@ namespace vt
 
 		std::function<bool(std::vector<std::any>&)> prepare_video_import_task() override;
 
+		bool available() override;
+
 	private:
 
 	};
