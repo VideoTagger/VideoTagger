@@ -55,6 +55,7 @@ namespace vt::widgets
 		bool render();
 
 	private:
+		std::string search_query_;
 		std::string id_;
 		std::optional<google_drive_browser_item_data> selected_item_;
 		std::vector<google_drive_browser_item_data> current_path_;

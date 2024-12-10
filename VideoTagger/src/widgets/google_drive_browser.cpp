@@ -203,11 +203,13 @@ namespace vt::widgets
 			update_items();
 		}
 
+		float search_bar_width = 150.f;
+
 		ImGui::SameLine();
-		ImVec2 path_bar_table_size = { ImGui::GetContentRegionAvail().x - style.WindowPadding.x, icon_button_size.y };
-		if (ImGui::BeginTable("PathBar", 1, 0, path_bar_table_size))
+		ImVec2 path_bar_window_size = { ImGui::GetContentRegionAvail().x - style.WindowPadding.x - search_bar_width, icon_button_size.y + style.FramePadding.y * 2 };
+		if (ImGui::BeginChild("PathBar", path_bar_window_size))
 		{
-			ImGui::TableNextColumn();
+			//TODO: handle too long path
 			
 			std::optional<size_t> folder_index;
 
@@ -239,8 +241,12 @@ namespace vt::widgets
 				update_items();
 			}
 
-			ImGui::EndTable();
+			ImGui::EndChild();
 		}
+
+		ImGui::SameLine();
+
+		widgets::search_bar("##SearchBar", "Search...", search_query_, search_bar_width);
 
 		ImGui::Separator();
 
@@ -264,11 +270,30 @@ namespace vt::widgets
 
 		auto start_table_pos = ImGui::GetCursorPos();
 
-		if (items_.empty())
+		std::map<google_drive_browser_item_type, std::vector<google_drive_browser_item_data*>> grouped_items;
+		for (auto& item : items_)
+		{
+			//TODO: case insensitive
+			if (item.name.find(search_query_) == item.name.npos)
+			{
+				continue;
+			}
+
+			grouped_items[item.type].push_back(&item);
+		}
+
+		if (grouped_items.empty())
 		{
 			if (ImGui::BeginChild(table_id.c_str(), table_size))
 			{
-				widgets::centered_text("This folder is empty", ImGui::GetContentRegionMax());
+				if (items_.empty())
+				{
+					widgets::centered_text("This folder is empty", ImGui::GetContentRegionMax());
+				}
+				else
+				{
+					widgets::centered_text("No items match the search query", ImGui::GetContentRegionMax());
+				}
 				ImGui::EndChild();
 			}
 		}
@@ -280,12 +305,6 @@ namespace vt::widgets
 				ImGui::TableNextRow();
 
 				auto item_icon_image = utils::thumbnail::font_texture();
-
-				std::map<google_drive_browser_item_type, std::vector<google_drive_browser_item_data*>> grouped_items;
-				for (auto& item : items_)
-				{
-					grouped_items[item.type].push_back(&item);
-				}
 
 				bool folder_changed = false;
 				for (auto& [item_type, items] : grouped_items)
