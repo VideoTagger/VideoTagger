@@ -31,7 +31,7 @@ namespace vt::widgets
 	//TODO: Consider moving these parameters into a struct
 	extern bool tile(
 		const char* id, const std::string& label, ImVec2 tile_size, ImVec2 image_size, GLuint image,
-		const std::function<void(const std::string& /*label*/, void* /*user data*/)> context_menu = nullptr, void* context_menu_data = {},
+		const std::function<void(const std::string& /*label*/)> context_menu = nullptr,
 		const std::function<void(const std::string& /*label*/)> drag_drop = nullptr,
 		std::function<void(ImDrawList& /*label*/, ImRect /*item rect*/, ImRect /*image rect*/)> custom_draw = nullptr,
 		ImVec2 uv0 = {0, 0}, ImVec2 uv1 = {1, 1}, bool is_selected = false

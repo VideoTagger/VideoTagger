@@ -50,7 +50,7 @@ namespace vt::widgets
 			}
 			std::string label = metadata.title.value_or("");
 			open |= widgets::tile(fmt::format("video{}", vid_resource.id()).c_str(), label, tile_size, image_size, image,
-			[&](const std::string& label, void*)
+			[&](const std::string& label)
 			{
 				//TODO: Temporarily disabled, enable this later
 				/*
@@ -67,7 +67,7 @@ namespace vt::widgets
 				{
 					properties = true;
 				}
-			}, nullptr,
+			},
 			nullptr,
 			vid_resource.icon_custom_draw(), uv0, uv1);
 		};
@@ -96,10 +96,10 @@ namespace vt::widgets
 			auto glyph = utils::thumbnail::find_glyph(utils::thumbnail::video_group_icon);
 
 			open |= widgets::tile(fmt::format("group{}", gid).c_str(), vgroup.display_name, tile_size, tile_size, image,
-			[&](const std::string& label, void*)
+			[&](const std::string& label)
 			{
 				group_ctx_menu(open, remove, enqueue, can_enqueue);
-			}, nullptr,
+			},
 			[&](const std::string& label)
 			{
 				if (ImGui::BeginDragDropTarget())

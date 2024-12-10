@@ -48,7 +48,7 @@ namespace vt::widgets
 			}
 
 			open = widgets::tile(fmt::format("video{}", id).c_str(), label, tile_size, image_size, image,
-			[&](const std::string& label, void*)
+			[&](const std::string& label)
 			{
 				if (!ctx_.displayed_videos.contains(id))
 				{
@@ -67,7 +67,7 @@ namespace vt::widgets
 						item.function();
 					}
 				}
-			}, nullptr,
+			},
 			[=](const std::string& label)
 			{
 				if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_SourceNoHoldToOpenOthers)) //ImGuiDragDropFlags_SourceNoPreviewTooltip
