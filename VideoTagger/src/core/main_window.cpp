@@ -1481,7 +1481,7 @@ namespace vt
 				auto& task = *it;
 				if (!task.result.is_done())
 				{
-					debug::log("Download progress {} %", task.result.data->progress * 100.f);
+					//debug::log("Download progress {} %", task.result.data->progress * 100.f);
 
 					++it;
 					continue;

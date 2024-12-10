@@ -111,13 +111,14 @@ namespace vt::widgets
 							ImGui::SameLine();
 							bool is_selected = current_group_id != 0 and current_group_id == group_id;
 
-							tile(fmt::format("group{}", group_id).c_str(), label, tile_size, image_tile_size, image, [&remove_group](const std::string& label)
+							tile(fmt::format("group{}", group_id).c_str(), label, tile_size, image_tile_size, image,
+							[&remove_group](const std::string& label, void*)
 							{
 								if (ImGui::MenuItem("Remove"))
 								{
 									remove_group = true;
 								}
-							},
+							}, nullptr,
 							[&remove_group, gid = group_id](const std::string& label)
 							{
 								//TODO: This will display "..." when it gets removed, try to fix that

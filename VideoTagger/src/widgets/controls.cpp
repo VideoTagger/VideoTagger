@@ -276,7 +276,12 @@ namespace vt::widgets
 		return tile_size + style.FramePadding + text_size;
 	}
 
-	bool tile(const char* id, const std::string& label, ImVec2 tile_size, ImVec2 image_size, GLuint image, const std::function<void(const std::string&)> context_menu, const std::function<void(const std::string&)> drag_drop, std::function<void(ImDrawList&, ImRect, ImRect)> custom_draw, ImVec2 uv0, ImVec2 uv1, bool is_selected)
+	bool tile(
+		const char* id, const std::string& label, ImVec2 tile_size, ImVec2 image_size, GLuint image,
+		const std::function<void(const std::string&, void*)> context_menu, void* context_menu_data,
+		const std::function<void(const std::string&)> drag_drop, std::function<void(ImDrawList&, ImRect, ImRect)> custom_draw,
+		ImVec2 uv0, ImVec2 uv1, bool is_selected
+	)
 	{
 		bool result{};
 		ImVec2 image_tile_size = ImVec2{ tile_size.x, tile_size.x } * 0.9f;
@@ -317,7 +322,7 @@ namespace vt::widgets
 
 		if (context_menu != nullptr and ImGui::BeginPopupContextItem("##TileCtxMenu"))
 		{
-			std::invoke(context_menu, label);
+			std::invoke(context_menu, label, context_menu_data);
 			ImGui::EndPopup();
 		}
 

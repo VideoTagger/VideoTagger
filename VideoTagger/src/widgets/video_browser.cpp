@@ -48,7 +48,7 @@ namespace vt::widgets
 			}
 
 			open = widgets::tile(fmt::format("video{}", id).c_str(), label, tile_size, image_size, image,
-			[&](const std::string& label)
+			[&](const std::string& label, void*)
 			{
 				if (!ctx_.displayed_videos.contains(id))
 				{
@@ -67,7 +67,7 @@ namespace vt::widgets
 						item.function();
 					}
 				}
-			},
+			}, nullptr,
 			[=](const std::string& label)
 			{
 				if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_SourceNoHoldToOpenOthers)) //ImGuiDragDropFlags_SourceNoPreviewTooltip
@@ -141,9 +141,9 @@ namespace vt::widgets
 						//}
 					}
 
-					if (!any_item_hovered and ImGui::IsMouseReleased(ImGuiMouseButton_Right))
+					if (!any_item_hovered and ImGui::IsMouseReleased(ImGuiMouseButton_Right) and ImGui::IsWindowHovered())
 					{
-						ImGui::OpenPopup("##BrowserContextMenu");
+						ImGui::OpenPopup("##BrowserContextMenu", ImGuiPopupFlags_NoOpenOverExistingPopup);
 					}
 
 					if (ImGui::BeginPopup("##BrowserContextMenu"))
