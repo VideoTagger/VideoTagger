@@ -188,6 +188,7 @@ namespace vt::widgets
 			bool parent_folder_disabled = current_path_.empty();
 			if (parent_folder_disabled) ImGui::BeginDisabled();
 
+			//TODO: hint
 			if (widgets::icon_button(icons::arrow_up, icon_button_size))
 			{
 				pop_folder();
@@ -198,6 +199,7 @@ namespace vt::widgets
 		}
 
 		ImGui::SameLine();
+		//TODO: hint
 		if (widgets::icon_button(icons::refresh, icon_button_size))
 		{
 			update_items();
@@ -288,7 +290,7 @@ namespace vt::widgets
 			{
 				if (items_.empty())
 				{
-					widgets::centered_text("This folder is empty", ImGui::GetContentRegionMax());
+					widgets::centered_text("This folder doesn't contain any videos", ImGui::GetContentRegionMax());
 				}
 				else
 				{

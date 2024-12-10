@@ -285,8 +285,10 @@ namespace vt
 					ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, { 0, 0 });
 					ImGui::PushStyleColor(ImGuiCol_FrameBg, {});
 
-					for (auto& item : import_items)
+					std::optional<decltype(import_items)::iterator> remove_it;
+					for (auto it = import_items.begin(); it != import_items.end(); ++it)
 					{
+						auto& item = *it;
 						if (!list_search_query.empty())
 						{
 							//TODO: case insensitive
@@ -296,12 +298,21 @@ namespace vt
 							}
 						}
 
-						widgets::icon_button(icons::delete_, button_size);
+						if (widgets::icon_button(icons::delete_, button_size))
+						{
+							remove_it = it;
+						}
 						//TODO: use something better than input text
 						ImGui::SameLine();
 						//ImGui::SetNextItemWidth(list_size.x - button_size.x - style.WindowPadding.x - style.ScrollbarSize);
 						ImGui::InputText("##in", &item.name, ImGuiInputTextFlags_ReadOnly);
 
+					}
+
+					if (remove_it.has_value())
+					{
+						import_items.erase(*remove_it);
+						remove_it.reset();
 					}
 
 					ImGui::PopStyleColor();
