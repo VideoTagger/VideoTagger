@@ -8,12 +8,10 @@ namespace vt::widgets
 	class video_browser
 	{
 	public:
-		video_browser() = default;
-
-	public:
 		std::function<void(video_id_t)> on_open_video;
 
-	public:
+		video_browser() = default;
+
 		void render(bool& is_open);
 	};
 }

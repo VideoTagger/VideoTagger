@@ -78,7 +78,6 @@ namespace vt::widgets
 					ImGui::EndDragDropSource();
 				}
 			},
-			//TODO: maybe make a function in video resource that returns custom draw
 			vid_resource.icon_custom_draw(), uv0, uv1);
 		};
 
@@ -109,6 +108,8 @@ namespace vt::widgets
 				{
 					ImGui::TableNextRow();
 
+					bool any_item_hovered = false;
+
 					//auto node_flags = ImGuiTreeNodeFlags_Framed | ImGuiTreeNodeFlags_SpanFullWidth;
 					for (auto& [importer_id, vid_resources] : grouped_videos)
 					{
@@ -124,6 +125,9 @@ namespace vt::widgets
 
 									ImGui::TableNextColumn();
 									draw_video_tile(vid_resource->id(), *vid_resource, tile_size, open_video, remove_video, vid_resource->thumbnail() ? vid_resource->thumbnail()->id() : 0);
+									
+									any_item_hovered = any_item_hovered or ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenBlockedByPopup);
+									
 									if (remove_video)
 									{
 										debug::log("Removing video with id: {}", vid_resource->id());
@@ -136,6 +140,38 @@ namespace vt::widgets
 							//}
 						//}
 					}
+
+					if (!any_item_hovered and ImGui::IsMouseReleased(ImGuiMouseButton_Right))
+					{
+						ImGui::OpenPopup("##BrowserContextMenu");
+					}
+
+					if (ImGui::BeginPopup("##BrowserContextMenu"))
+					{
+						std::string key_name = ctx_.lang.get(lang_pack_id::import_videos);
+						std::string menu_name = fmt::format("{} {}", icons::import_, key_name);
+						if (ImGui::BeginMenu(menu_name.c_str()))
+						{
+							for (auto& [importer_id, importer] : ctx_.video_importers)
+							{
+								if (!importer->available())
+								{
+									continue;
+								}
+
+								std::string menu_importer_name = importer->importer_display_name();
+								if (ImGui::MenuItem(menu_importer_name.c_str()))
+								{
+									ctx_.current_project->prepare_video_import(importer_id);
+								}
+							}
+
+							ImGui::EndMenu();
+						}
+
+						ImGui::EndPopup();
+					}
+
 					ImGui::EndTable();
 				}
 			}
