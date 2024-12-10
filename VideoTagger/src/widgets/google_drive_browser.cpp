@@ -51,12 +51,9 @@ namespace vt::widgets
 		current_path_.erase(current_path_.begin() + index, current_path_.end());
 	}
 
-	void google_drive_browser::set_item_context_menu(std::function<void(const std::string&, const google_drive_browser_item_data&)> item_context_menu)
+	void google_drive_browser::set_item_context_menu(std::function<void(const google_drive_browser_item_data&)> item_context_menu)
 	{
-		item_context_menu_ = [item_context_menu](const std::string& label, void* user_data)
-		{
-			item_context_menu(label, *reinterpret_cast<google_drive_browser_item_data*>(user_data));
-		};
+		item_context_menu_ = item_context_menu;
 	}
 
 	const google_drive_browser_item_data& google_drive_browser::current_folder() const
@@ -324,7 +321,16 @@ namespace vt::widgets
 							selected = item->id == selected_item_->id;
 						}
 
-						if (widgets::tile(item->id.c_str(), item->name, tile_size, img_tile_size, item_icon_image, item_context_menu_, item, nullptr, nullptr, glyph.uv0, glyph.uv1, selected))
+						std::function<void(const std::string&)> tile_context_menu = nullptr;
+						if (item_context_menu_)
+						{
+							tile_context_menu = [item, this](const std::string&)
+							{
+								item_context_menu_(*item);
+							};
+						}
+
+						if (widgets::tile(item->id.c_str(), item->name, tile_size, img_tile_size, item_icon_image, tile_context_menu, nullptr, nullptr, glyph.uv0, glyph.uv1, selected))
 						{
 							selected_item_ = *item;
 

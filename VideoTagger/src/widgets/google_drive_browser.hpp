@@ -41,7 +41,7 @@ namespace vt::widgets
 		void pop_folder();
 		void go_to_folder(size_t index);
 
-		void set_item_context_menu(std::function<void(const std::string&, const google_drive_browser_item_data&)> item_context_menu);
+		void set_item_context_menu(std::function<void(const google_drive_browser_item_data&)> item_context_menu);
 
 		const google_drive_browser_item_data& current_folder() const;
 
@@ -59,6 +59,6 @@ namespace vt::widgets
 		std::optional<google_drive_browser_item_data> selected_item_;
 		std::vector<google_drive_browser_item_data> current_path_;
 		std::vector<google_drive_browser_item_data> items_;
-		std::function<void(const std::string& /*label*/, void* /*google_drive_browser_item_data*/)> item_context_menu_;
+		std::function<void(const google_drive_browser_item_data&)> item_context_menu_;
 	};
 }
