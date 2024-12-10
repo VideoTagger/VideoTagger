@@ -193,7 +193,13 @@ namespace vt::widgets
 		}
 
 		ImGui::SameLine();
-		ImVec2 path_bar_table_size = { ImGui::GetContentRegionAvail().x - icon_button_size.x - style.WindowPadding.x - style.ItemSpacing.x, icon_button_size.y };
+		if (widgets::icon_button(icons::refresh, icon_button_size))
+		{
+			update_items();
+		}
+
+		ImGui::SameLine();
+		ImVec2 path_bar_table_size = { ImGui::GetContentRegionAvail().x - style.WindowPadding.x, icon_button_size.y };
 		if (ImGui::BeginTable("PathBar", 1, 0, path_bar_table_size))
 		{
 			ImGui::TableNextColumn();
@@ -229,12 +235,6 @@ namespace vt::widgets
 			}
 
 			ImGui::EndTable();
-		}
-
-		ImGui::SameLine();
-		if (widgets::icon_button(icons::refresh, icon_button_size))
-		{
-			update_items();
 		}
 
 		ImGui::Separator();
