@@ -148,25 +148,18 @@ namespace vt::widgets
 
 					if (ImGui::BeginPopup("##BrowserContextMenu"))
 					{
-						std::string key_name = ctx_.lang.get(lang_pack_id::import_videos);
-						std::string menu_name = fmt::format("{} {}", icons::import_, key_name);
-						if (ImGui::BeginMenu(menu_name.c_str()))
+						for (auto& [importer_id, importer] : ctx_.video_importers)
 						{
-							for (auto& [importer_id, importer] : ctx_.video_importers)
+							if (!importer->available())
 							{
-								if (!importer->available())
-								{
-									continue;
-								}
-
-								std::string menu_importer_name = importer->importer_display_name();
-								if (ImGui::MenuItem(menu_importer_name.c_str()))
-								{
-									ctx_.current_project->prepare_video_import(importer_id);
-								}
+								continue;
 							}
 
-							ImGui::EndMenu();
+							std::string item_name = fmt::format("Import From {}", importer->importer_display_name());
+							if (ImGui::MenuItem(item_name.c_str()))
+							{
+								ctx_.current_project->prepare_video_import(importer_id);
+							}
 						}
 
 						ImGui::EndPopup();
