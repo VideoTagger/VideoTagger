@@ -51,6 +51,14 @@ namespace vt::widgets
 		current_path_.erase(current_path_.begin() + index, current_path_.end());
 	}
 
+	void google_drive_browser::set_item_context_menu(std::function<void(const std::string&, const google_drive_browser_item_data&)> item_context_menu)
+	{
+		item_context_menu_ = [item_context_menu](const std::string& label, void* user_data)
+		{
+			item_context_menu(label, *reinterpret_cast<google_drive_browser_item_data*>(user_data));
+		};
+	}
+
 	const google_drive_browser_item_data& google_drive_browser::current_folder() const
 	{
 		return current_path_.back();
@@ -316,7 +324,7 @@ namespace vt::widgets
 							selected = item->id == selected_item_->id;
 						}
 
-						if (widgets::tile(item->id.c_str(), item->name, tile_size, img_tile_size, item_icon_image, nullptr, nullptr, nullptr, glyph.uv0, glyph.uv1, selected))
+						if (widgets::tile(item->id.c_str(), item->name, tile_size, img_tile_size, item_icon_image, item_context_menu_, item, nullptr, nullptr, glyph.uv0, glyph.uv1, selected))
 						{
 							selected_item_ = *item;
 

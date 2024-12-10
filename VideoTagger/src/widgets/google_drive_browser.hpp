@@ -1,6 +1,9 @@
 #pragma once
 #include <string>
 #include <vector>
+#include <any>
+#include <functional>
+#include <optional>
 
 namespace vt::widgets
 {
@@ -38,6 +41,8 @@ namespace vt::widgets
 		void pop_folder();
 		void go_to_folder(size_t index);
 
+		void set_item_context_menu(std::function<void(const std::string&, const google_drive_browser_item_data&)> item_context_menu);
+
 		const google_drive_browser_item_data& current_folder() const;
 
 		const std::optional<google_drive_browser_item_data>& selected_item() const;
@@ -54,5 +59,6 @@ namespace vt::widgets
 		std::optional<google_drive_browser_item_data> selected_item_;
 		std::vector<google_drive_browser_item_data> current_path_;
 		std::vector<google_drive_browser_item_data> items_;
+		std::function<void(const std::string& /*label*/, void* /*google_drive_browser_item_data*/)> item_context_menu_;
 	};
 }
