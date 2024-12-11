@@ -85,6 +85,8 @@ namespace vt::widgets
 
 		if (ImGui::Begin("Video Browser", &is_open, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse))
 		{
+			bool any_item_hovered = false;
+			bool window_hovered = false;
 			if (ctx_.current_project->videos.size() > 0)
 			{
 				ImVec2 img_tile_size{ ctx_.app_settings.thumbnail_size, ctx_.app_settings.thumbnail_size };
@@ -108,7 +110,6 @@ namespace vt::widgets
 				{
 					ImGui::TableNextRow();
 
-					bool any_item_hovered = false;
 
 					//auto node_flags = ImGuiTreeNodeFlags_Framed | ImGuiTreeNodeFlags_SpanFullWidth;
 					for (auto& [importer_id, vid_resources] : grouped_videos)
@@ -141,36 +142,39 @@ namespace vt::widgets
 						//}
 					}
 
-					if (!any_item_hovered and ImGui::IsMouseReleased(ImGuiMouseButton_Right) and ImGui::IsWindowHovered())
-					{
-						ImGui::OpenPopup("##BrowserContextMenu", ImGuiPopupFlags_NoOpenOverExistingPopup);
-					}
-
-					if (ImGui::BeginPopup("##BrowserContextMenu"))
-					{
-						for (auto& [importer_id, importer] : ctx_.video_importers)
-						{
-							if (!importer->available())
-							{
-								continue;
-							}
-
-							std::string item_name = fmt::format("{} Import From {}", importer->importer_display_icon(), importer->importer_display_name());
-							if (ImGui::MenuItem(item_name.c_str()))
-							{
-								ctx_.current_project->prepare_video_import(importer_id);
-							}
-						}
-
-						ImGui::EndPopup();
-					}
+					window_hovered = ImGui::IsWindowHovered();
 
 					ImGui::EndTable();
 				}
 			}
 			else
 			{
+				window_hovered = ImGui::IsWindowHovered();
 				widgets::centered_text("Import videos to display them here...", ImGui::GetContentRegionMax());
+			}
+
+			if (!any_item_hovered and ImGui::IsMouseReleased(ImGuiMouseButton_Right) and window_hovered)
+			{
+				ImGui::OpenPopup("##BrowserContextMenu", ImGuiPopupFlags_NoOpenOverExistingPopup);
+			}
+
+			if (ImGui::BeginPopup("##BrowserContextMenu"))
+			{
+				for (auto& [importer_id, importer] : ctx_.video_importers)
+				{
+					if (!importer->available())
+					{
+						continue;
+					}
+
+					std::string item_name = fmt::format("{} Import From {}", importer->importer_display_icon(), importer->importer_display_name());
+					if (ImGui::MenuItem(item_name.c_str()))
+					{
+						ctx_.current_project->prepare_video_import(importer_id);
+					}
+				}
+
+				ImGui::EndPopup();
 			}
 		}
 		ImGui::End();
