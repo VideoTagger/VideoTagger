@@ -1512,64 +1512,77 @@ namespace vt
 			//TODO: Should this be done in the widget or outside?
 			if (tag_rename.has_value() and tag_rename->ready)
 			{
-				//TODO: maybe make this a function in the project class
-
-				ctx_.is_project_dirty = true;
-
-				for (auto& [_, displayed_tags] : ctx_.video_timeline.displayed_tags_per_group())
+				static auto rename_failed_popup = [](const std::string& id, const widgets::tag_rename_data& data, tag_validate_result fail_reason)
 				{
-					for (auto& tag_name : displayed_tags)
+					static constexpr ImVec2 button_size = { 55, 30 };
+
+					bool return_value = false;
+
+					auto& style = ImGui::GetStyle();
+					ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 7);
+					ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, style.WindowPadding * 2);
+					ImGui::SetNextWindowPos(ImGui::GetMainViewport()->GetCenter(), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
+					auto flags = ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoMove;
+
+					if (ImGui::BeginPopupModal(id.c_str(), nullptr, flags))
 					{
-						if (tag_name == tag_rename->old_name)
+						ImGui::Text("Failed to rename tag \"%s\" to \"%s\"", data.old_name.c_str(), data.new_name.c_str());
+
+						std::string error_text;
+						switch (fail_reason)
 						{
-							tag_name = tag_rename->new_name;
+						case vt::tag_validate_result::already_exists: error_text = fmt::format("Tag \"{}\" already exists", data.new_name); break;
+						case vt::tag_validate_result::invalid_name: error_text = "Invalid name"; break;
+						case vt::tag_validate_result::too_long: error_text = fmt::format("Name can be at most {} characters long", tag_storage::max_tag_name_length); break;
+						default: error_text = "Invalid name"; break;
 						}
-					}
-				}
+						ImGui::TextDisabled(error_text.c_str());
+						ImGui::NewLine();
+						auto area_size = ImGui::GetWindowSize();
 
-				for (auto& [group_id, segments] : ctx_.current_project->segments)
+						ImGui::SetCursorPosX(area_size.x / 2 - button_size.x / 2);
+						if (ImGui::Button("OK", button_size))
+						{
+							return_value = true;
+							ImGui::CloseCurrentPopup();
+						}
+						ImGui::EndPopup();
+					}
+
+					ImGui::PopStyleVar(2);
+
+					return return_value;
+				};
+
+				static tag_validate_result fail_reason{};
+
+				if (!tag_rename->processed)
 				{
-					auto node_handle = segments.extract(tag_rename->old_name);
-					if (!node_handle.empty())
+					tag_rename->processed = true;
+
+					auto rename_result = ctx_.current_project->rename_tag(tag_rename->old_name, tag_rename->new_name);
+
+					if (!rename_result.inserted)
 					{
-						node_handle.key() = tag_rename->new_name;
-						segments.insert(std::move(node_handle));
+						//TODO: Display popup
+						ImGui::OpenPopup("Rename Failed");
+						fail_reason = rename_result.validation_result;
+					}
+					else
+					{
+						tag_rename.reset();
 					}
 				}
+				
+				if (tag_rename.has_value() and rename_failed_popup("Rename Failed", *tag_rename, fail_reason))
+				{
+					tag_rename.reset();
+				}
 
-				//TODO: consider renaming tags in keybinds
-
-				tag_rename.reset();
 			}
 			if (tag_delete.has_value() and tag_delete->ready)
 			{
-				ctx_.is_project_dirty = true;
-
-				auto& selected_segment = ctx_.video_timeline.selected_segment;
-				if (selected_segment.has_value() and selected_segment->tag->name == tag_delete->tag)
-				{
-					selected_segment.reset();
-				}
-
-				auto& moving_segment = ctx_.video_timeline.moving_segment;
-				if (moving_segment.has_value() and moving_segment->tag->name == tag_delete->tag)
-				{
-					moving_segment.reset();
-				}
-
-				auto& segments = ctx_.current_project->segments;
-
-				for (auto it = segments.begin(); it != segments.end(); ++it)
-				{
-					auto& group_segments = it->second;
-					auto group_segments_it = group_segments.find(tag_delete->tag);
-					if (group_segments_it != group_segments.end())
-					{
-						group_segments.erase(group_segments_it);
-					}
-				}
-
-				ctx_.current_project->tags.erase(tag_delete->tag);
+				ctx_.current_project->delete_tag(tag_delete->tag);
 
 				tag_delete.reset();
 			}

@@ -6,6 +6,7 @@
 
 #include "video_stream.hpp"
 #include <utils/uuid.hpp>
+#include <tags/tag_timeline.hpp>
 
 namespace vt
 {
@@ -48,6 +49,9 @@ namespace vt
 		video_info& operator[](size_t index);
 		const video_info& operator[](size_t index) const;
 
+		segment_storage& segments();
+		const segment_storage& segments() const;
+
 		iterator begin();
 		const_iterator begin() const;
 		const_iterator cbegin() const;
@@ -57,6 +61,7 @@ namespace vt
 
 	private:
 		container video_ids_;
+		segment_storage segments_;
 	};
 
 	class video_pool

@@ -142,15 +142,13 @@ namespace vt
 		for (const auto& group_id : group_ids)
 		{
 			auto group_it = video_groups.find(group_id);
-			auto segments_it = segments.find(group_id);
-			if (group_it == video_groups.end() or segments_it == segments.end())
+			if (group_it == video_groups.end())
 			{
 				//TODO: Should this do something?
 				continue;
 			}
 
 			auto& group = group_it->second;
-			auto& group_segments = segments_it->second;
 
 			nlohmann::ordered_json json_group;
 
@@ -179,7 +177,7 @@ namespace vt
 			{
 				auto& json_tags = json_group["tags"];
 				json_tags = nlohmann::ordered_json::array();
-				for (auto& [tag_name, _] : group_segments)
+				for (auto& [tag_name, _] : group.segments())
 				{
 					json_tags.push_back(tag_name);
 				}
@@ -192,7 +190,7 @@ namespace vt
 				{
 					auto& json_video_segments = json_group_segments[std::to_string(group_video_info.id)];
 					json_video_segments = nlohmann::ordered_json::array();
-					for (auto& [tag_name, tag_segments] : group_segments)
+					for (auto& [tag_name, tag_segments] : group.segments())
 					{
 						auto json_tag_data = nlohmann::ordered_json::object();
 						json_tag_data["tag"] = tag_name;
@@ -250,21 +248,6 @@ namespace vt
 		auto& json_tags = json["tags"];
 		json_tags = tags;
 
-		auto& json_segments = json["segments"];
-		json_segments = nlohmann::json::array();
-
-		if (!segments.empty())
-		{
-			for (auto& [group_id, group_segments] : segments)
-			{
-				nlohmann::ordered_json json_group_segments_data;
-				json_group_segments_data["group-id"] = group_id;
-				auto& json_group_segments = json_group_segments_data["group-segments"];
-				json_group_segments = group_segments;
-				json_segments.push_back(json_group_segments_data);
-			}
-		}
-
 		if (!videos.empty())
 		{
 			auto& json_videos = json["videos"];
@@ -299,6 +282,9 @@ namespace vt
 					group_video["offset"] = utils::time::time_to_string(video.offset.count());
 					group_videos.push_back(group_video);
 				}
+
+				json_group["segments"] = group.segments();
+
 				json_groups.push_back(json_group);
 			}
 		}
@@ -358,6 +344,82 @@ namespace vt
 
 		ctx_.is_project_dirty = true;
 	}
+
+	tag_rename_result project::rename_tag(const std::string& old_name, const std::string& new_name)
+	{
+		
+		auto rename_result = tags.rename(old_name, new_name);
+
+		if (!rename_result.inserted)
+		{
+			return rename_result;
+		}
+
+		ctx_.is_project_dirty = true;
+
+		for (auto& [_, displayed_tags] : ctx_.video_timeline.displayed_tags_per_group())
+		{
+			for (auto& tag_name : displayed_tags)
+			{
+				if (tag_name == old_name)
+				{
+					tag_name = new_name;
+				}
+			}
+		}
+
+		//TODO: maybe handle selected and moving segment but it may not be necessary
+
+		for (auto& [group_id, group] : video_groups)
+		{
+			auto& segments = group.segments();
+			auto node_handle = segments.extract(old_name);
+			if (!node_handle.empty())
+			{
+				node_handle.key() = new_name;
+				segments.insert(std::move(node_handle));
+				ctx_.is_project_dirty = true;
+			}
+		}
+
+		//TODO: consider renaming tags in keybinds
+
+		return rename_result;
+	}
+
+	void project::delete_tag(const std::string& tag_name)
+	{
+		if (!tags.contains(tag_name))
+		{
+			return;
+		}
+
+		ctx_.is_project_dirty = true;
+
+		auto& selected_segment = ctx_.video_timeline.selected_segment;
+		if (selected_segment.has_value() and selected_segment->tag->name == tag_name)
+		{
+			selected_segment.reset();
+		}
+
+		auto& moving_segment = ctx_.video_timeline.moving_segment;
+		if (moving_segment.has_value() and moving_segment->tag->name == tag_name)
+		{
+			moving_segment.reset();
+		}
+
+		for (auto& [group_id, group] :video_groups)
+		{
+			auto& group_segments = group.segments();
+			auto segments_it = group_segments.find(tag_name);
+			if (segments_it != group_segments.end())
+			{
+				group_segments.erase(segments_it);
+			}
+		}
+
+		tags.erase(tag_name);
+	}
 	
 	project project::load_from_file(const std::filesystem::path& filepath)
 	{
@@ -396,27 +458,6 @@ namespace vt
 				result.tags = json["tags"];
 			}
 
-			if (json.contains("segments") and json.at("segments").is_array())
-			{
-				for (auto& json_segments : json["segments"])
-				{
-					if (!json_segments.contains("group-id"))
-					{
-						debug::error("Missing group id");
-						continue;
-					}
-					if (!json_segments.contains("group-segments"))
-					{
-						debug::error("Missing group segments");
-						continue;
-					}
-
-					video_group_id_t group_id = json_segments["group-id"];
-					auto& group_segments = result.segments[group_id];
-					group_segments = json_segments["group-segments"];
-				}
-			}
-
 			if (json.contains("videos") and json.at("videos").is_array())
 			{
 				const auto& videos = json["videos"];
@@ -450,33 +491,33 @@ namespace vt
 			if (json.contains("groups") and json.at("groups").is_array())
 			{
 				const auto& json_groups = json["groups"];
-				for (auto& group : json_groups)
+				for (auto& json_group : json_groups)
 				{
 					video_group vgroup;
-					if (!group.contains("id"))
+					if (!json_group.contains("id"))
 					{
 						debug::error("Project's video group doesn't contain id, skipping...");
 						continue;
 					}
 
 
-					video_group_id_t id = group["id"];
-					if (!group.contains("videos") or !json["videos"].is_array())
+					video_group_id_t id = json_group["id"];
+					if (!json_group.contains("videos") or !json["videos"].is_array())
 					{
 						debug::error("Project's video group's videos format was invalid, skipping...");
 						continue;
 					}
 					
-					if (group.contains("name"))
+					if (json_group.contains("name"))
 					{
-						vgroup.display_name = group["name"];
+						vgroup.display_name = json_group["name"];
 					}
 					else
 					{
 						vgroup.display_name = std::to_string(id);
 					}
 
-					const auto& group_videos = group["videos"];
+					const auto& group_videos = json_group["videos"];
 					for (const auto& group_video : group_videos)
 					{
 						if (!group_video.contains("id") or !group_video.contains("offset"))
@@ -490,6 +531,12 @@ namespace vt
 						vinfo.offset = (decltype(vinfo.offset))utils::time::parse_time_to_ms(group_video["offset"]);
 						vgroup.insert(vinfo);
 					}
+
+					if (json_group.contains("segments") and json_group.at("segments").is_array())
+					{
+						vgroup.segments() = json_group.at("segments");
+					}
+
 					result.video_groups.insert({ id, vgroup });
 				}
 			}
