@@ -190,7 +190,7 @@ namespace vt::widgets
 
 		auto& style = ImGui::GetStyle();
 
-		ImVec2 icon_button_size = { 25.f, 25.f };
+		ImVec2 icon_button_size = { ImGui::GetTextLineHeightWithSpacing(), ImGui::GetTextLineHeightWithSpacing() };
 
 		{
 			bool parent_folder_disabled = current_path_.empty();
