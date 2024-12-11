@@ -46,12 +46,15 @@ namespace vt::icons
 	inline constexpr auto download = "\xef\x82\x90";
 	inline constexpr auto arrow_up = "\xee\x97\x98";
 	inline constexpr auto refresh = "\xee\x97\x95";
+	inline constexpr auto local_storage = "\xee\x87\x9b";
+	inline constexpr auto google_drive_add = "\xee\x99\x9c";
+	inline constexpr auto home = "\xee\xa2\x8a";
 
 	inline std::vector<std::string> all
 	({
 		dots_hor, play, play_next, pause, repeat, repeat_one, shuffle, skip_next, skip_prev, fast_back, fast_fwd,
 		save, save_as, import_, import_export, exit, close, back, visibility_on, visibility_off, add, delete_,
 		folder, folder_code, file, label, expand_less, expand_more, toggle_less, toggle_more, link, edit, help,
-		video_group, video, search, terminal, download, arrow_up, refresh
+		video_group, video, search, terminal, download, arrow_up, refresh, local_storage, google_drive_add, home
 	});
 }

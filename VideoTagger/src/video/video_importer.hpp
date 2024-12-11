@@ -14,11 +14,13 @@ namespace vt
 		//static constexpr auto static_importer_id = "importer_id";
 		//static constexpr auto static_importer_display_name = "Importer Name";
 
-		video_importer(std::string importer_id, std::string importer_display_name);
+		video_importer(std::string importer_id, std::string importer_display_name, std::string importer_display_icon);
 		virtual ~video_importer() = default;
 
+		//TODO: maybe make this virtual
 		const std::string& importer_id() const;
 		const std::string& importer_display_name() const;
+		const std::string& importer_display_icon() const;
 
 		//TODO: maybe return an std::future
 		virtual std::unique_ptr<video_resource> import_video(video_id_t id, std::any data) = 0;
@@ -32,5 +34,6 @@ namespace vt
 	private:
 		std::string importer_id_;
 		std::string importer_display_name_;
+		std::string importer_display_icon_;
 	};
 }

@@ -9,6 +9,14 @@ namespace vt
 {
 	using account_properties = nlohmann::json;
 
+	enum class account_login_status
+	{
+		not_logged_in,
+		logged_in,
+		refresh_failed,
+		expired
+	};
+
 	class service_account_manager
 	{
 	public:
@@ -30,8 +38,7 @@ namespace vt
 		void log_out();
 		virtual void on_log_out() = 0;
 
-		virtual bool logged_in() const = 0;
-		virtual bool active() const = 0;
+		virtual account_login_status login_status() const = 0;
 
 		virtual const account_properties& get_account_properties() const = 0;
 		virtual void set_account_properties(const account_properties& properties) = 0;

@@ -205,6 +205,16 @@ namespace vt::widgets
 			ImGui::TextWrapped("%s", temp.c_str());
 		}
 	}
+
+	void text_with_size(const char* text, ImVec2 size)
+	{
+		auto text_size = ImGui::CalcTextSize(text);
+		size.x = std::max(size.x, text_size.x);
+		size.y = std::max(size.y, text_size.y);
+
+		ImGui::SetCursorPos(ImGui::GetCursorPos() + (size - text_size) / 2);
+		ImGui::TextUnformatted(text);
+	}
 	
 	bool timestamp_control(const std::string& name, timestamp& timestamp, uint64_t min_timestamp, uint64_t max_timestamp, bool* was_activated, bool* was_released, bool fill_area)
 	{

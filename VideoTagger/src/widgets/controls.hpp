@@ -22,6 +22,7 @@ namespace vt::widgets
 	extern void help_marker(const char* description);
 	extern void centered_text(const char* text, ImVec2 avail_area, ImVec2 offset = {});
 	extern void clipped_text(const char* text, ImVec2 avail_area);
+	extern void text_with_size(const char* text, ImVec2 size = { 0.f, 0.f });
 
 	extern bool timestamp_control(const std::string& name, timestamp& timestamp, uint64_t min_timestamp, uint64_t max_timestamp, bool* was_activated, bool* was_released, bool fill_area = true);
 	

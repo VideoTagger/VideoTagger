@@ -730,7 +730,7 @@ namespace vt
 
 				bool modifed_account = false;
 
-				if (!login_in_progress and account_manager->logged_in())
+				if (!login_in_progress and account_manager->login_status() == account_login_status::logged_in)
 				{
 					account_manager->draw_options_page();
 ;

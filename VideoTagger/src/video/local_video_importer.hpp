@@ -1,6 +1,7 @@
 #pragma once
 #include "video_importer.hpp"
 #include "local_video_resource.hpp"
+#include <widgets/icons.hpp>
 
 namespace vt
 {
@@ -14,6 +15,7 @@ namespace vt
 
 		static constexpr auto static_importer_id = "local_storage";
 		static constexpr auto static_importer_display_name = "Local Storage";
+		static constexpr auto static_importer_display_icon = icons::local_storage;
 
 		local_video_importer();
 

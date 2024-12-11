@@ -155,7 +155,7 @@ namespace vt::widgets
 								continue;
 							}
 
-							std::string item_name = fmt::format("Import From {}", importer->importer_display_name());
+							std::string item_name = fmt::format("{} Import From {}", importer->importer_display_icon(), importer->importer_display_name());
 							if (ImGui::MenuItem(item_name.c_str()))
 							{
 								ctx_.current_project->prepare_video_import(importer_id);
