@@ -14,7 +14,7 @@
 namespace vt
 {
 	google_drive_video_importer::google_drive_video_importer()
-		: video_importer(static_importer_id, static_importer_display_name)
+		: video_importer(static_importer_id, static_importer_display_name, static_importer_display_icon)
 	{
 	}
 
@@ -272,11 +272,14 @@ namespace vt
 					ImGui::SetNextItemWidth(avail.x - button_size.x);
 					ImGui::InputTextWithHint("##FileId", "File link or ID...", &user_input);
 
+					//TODO: maybe put the list here
 
 					ImGui::EndChild();
 				}
 
 				ImGui::PopStyleVar();
+
+				//TODO: reduce the space between these widgets
 				
 				avail = ImGui::GetContentRegionAvail();
 				ImVec2 list_size = { avail.x, avail.y - ImGui::GetFrameHeight() - style.ItemSpacing.y };
@@ -304,7 +307,6 @@ namespace vt
 						}
 						//TODO: use something better than input text
 						ImGui::SameLine();
-						//ImGui::SetNextItemWidth(list_size.x - button_size.x - style.WindowPadding.x - style.ScrollbarSize);
 						ImGui::InputText("##in", &item.name, ImGuiInputTextFlags_ReadOnly);
 
 					}
@@ -362,7 +364,7 @@ namespace vt
 		}
 
 		auto& manager = ctx_.get_account_manager<google_account_manager>();
-		return manager.logged_in();
+		return manager.login_status() == account_login_status::logged_in;
 	}
 
 }

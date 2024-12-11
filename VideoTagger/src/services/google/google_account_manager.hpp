@@ -25,7 +25,11 @@ namespace vt
 		std::string access_token() const;
 		std::string refresh_token() const;
 		std::vector<std::string> scope() const;
+
 		bool access_token_expired() const;
+		bool has_access_token() const;
+		bool has_login_data() const;
+		bool has_refresh_token() const;
 	};
 
 	class google_account_manager : public service_account_manager
@@ -45,8 +49,7 @@ namespace vt
 		void set_account_properties(const account_properties& properties) override;
 
 		const google_account_info& account_info() const;
-		bool active() const override;
-		bool logged_in() const override;
+		account_login_status login_status() const override;
 
 		void draw_options_page() override;
 		bool draw_login_popup(bool& success) override;
@@ -65,6 +68,5 @@ namespace vt
 		static constexpr auto request_scope_ = { "https://www.googleapis.com/auth/drive.readonly", "https://www.googleapis.com/auth/userinfo.profile" };
 		google_account_info account_info_;
 		std::future<bool> add_account_result_;
-		bool logged_in_{};
 	};
 }

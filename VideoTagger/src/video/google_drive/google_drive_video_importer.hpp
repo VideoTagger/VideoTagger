@@ -1,5 +1,6 @@
 #pragma once
 #include <video/video_importer.hpp>
+#include <widgets/icons.hpp>
 
 namespace vt
 {
@@ -13,6 +14,7 @@ namespace vt
 
 		static constexpr auto static_importer_id = "google_drive";
 		static constexpr auto static_importer_display_name = "Google Drive";
+		static constexpr auto static_importer_display_icon = icons::google_drive_add;
 
 		google_drive_video_importer();
 

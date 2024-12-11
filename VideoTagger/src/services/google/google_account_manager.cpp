@@ -45,6 +45,21 @@ namespace vt
 		return (expire_tp - std::chrono::steady_clock::now()) <= std::chrono::steady_clock::duration::zero();
 	}
 
+	bool google_account_info::has_access_token() const
+	{
+		return properties.contains("access_token");
+	}
+
+	bool google_account_info::has_login_data() const
+	{
+		return properties.contains("client_secret") and properties.contains("client_id"); 
+	}
+
+	bool google_account_info::has_refresh_token() const
+	{
+		return properties.contains("refresh_token");
+	}
+
 	google_account_manager::google_account_manager()
 		: service_account_manager(static_service_id, static_service_display_name)
 	{
@@ -54,8 +69,10 @@ namespace vt
 	{
 		auto json_account = nlohmann::ordered_json::object();
 		
+		auto status = login_status();
+
 		//TODO: improve / handle errors
-		if (logged_in())
+		if (status != account_login_status::not_logged_in)
 		{
 			json_account["user_name"] = account_info_.user_name();
 			json_account["client_id"] = account_info_.client_id();
@@ -92,8 +109,6 @@ namespace vt
 
 		account_info_.expire_tp = result->expire_tp;
 		account_info_.properties = properties;
-
-		logged_in_ = true;
 	}
 
 	bool google_account_manager::on_log_in(const account_properties& properties, bool* cancel_token)
@@ -147,19 +162,16 @@ namespace vt
 		auto user_name = obtain_user_name();
 		account_info_.properties["user_name"] = user_name.value_or("unknown");
 
-		logged_in_ = true;
-
 		return true;
 	}
 
 	void google_account_manager::on_log_out()
 	{
-		if (active())
+		if (account_info_.has_access_token())
 		{
 			revoke_token();
 		}
 		account_info_ = google_account_info{};
-		logged_in_ = false;
 	}
 
 	const account_properties& google_account_manager::get_account_properties() const
@@ -180,14 +192,22 @@ namespace vt
 		return account_info_;
 	}
 
-	bool google_account_manager::active() const
+	account_login_status google_account_manager::login_status() const
 	{
-		return !account_info_.access_token_expired();
-	}
+		if (account_info_.has_access_token())
+		{
+			return account_login_status::logged_in;
+		}
+		if (account_info_.has_access_token() and account_info_.access_token_expired())
+		{
+			return account_login_status::expired;
+		}
+		if (account_info_.has_login_data() and account_info_.has_refresh_token() and !account_info_.has_access_token())
+		{
+			return account_login_status::refresh_failed;
+		}
 
-	bool google_account_manager::logged_in() const
-	{
-		return logged_in_;
+		return account_login_status::not_logged_in;
 	}
 
 	void google_account_manager::draw_options_page()
@@ -270,6 +290,9 @@ namespace vt
 		ImGui::SameLine();
 		if (ImGui::Button("Cancel"))
 		{
+			client_id.clear();
+			client_secret.clear();
+
 			success = false;
 			return_value = true;
 		}

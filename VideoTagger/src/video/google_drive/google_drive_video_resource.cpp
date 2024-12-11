@@ -16,7 +16,7 @@ namespace vt
 		}
 
 		auto& account_manager = ctx_.get_account_manager<google_account_manager>();
-		if (!account_manager.logged_in())
+		if (account_manager.login_status() != account_login_status::logged_in)
 		{
 			throw std::runtime_error("google_account_manager is not logged in");
 		}
@@ -118,7 +118,7 @@ namespace vt
 			}
 
 			auto& account_manager = ctx_.get_account_manager<google_account_manager>();
-			if (!account_manager.logged_in())
+			if (account_manager.login_status() != account_login_status::logged_in)
 			{
 				debug::error("Google account manager not logged in");
 				return video_download_status::failure;
