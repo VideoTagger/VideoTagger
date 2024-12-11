@@ -69,11 +69,9 @@ namespace vt
 
 	struct project : public project_info
 	{
-		using segment_storage_map = std::unordered_map<video_group_id_t, segment_storage>;
 		using video_group_map = std::unordered_map<video_group_id_t, video_group>;
 
 		video_group_playlist video_group_playlist;
-		segment_storage_map segments;
 		video_group_map video_groups;
 		video_pool videos;
 		tag_storage tags;
@@ -114,6 +112,9 @@ namespace vt
 
 		void remove_video(video_id_t id);
 		void remove_video_group(video_group_id_t id);
+
+		tag_rename_result rename_tag(const std::string& old_name, const std::string& new_name);
+		void delete_tag(const std::string& tag_name);
 
 		static project load_from_file(const std::filesystem::path& filepath);
 	};
