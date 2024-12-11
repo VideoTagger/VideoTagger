@@ -245,38 +245,6 @@ namespace vt::widgets
 					ImGui::BeginDisabled(selected_segment->tag->attributes.empty());
 					selected_segment->tag->draw_attribute_instances(*selected_segment->segment_it, ctx_.last_focused_video.value(), ctx_.is_project_dirty);
 					ImGui::EndDisabled();
-
-					auto selected_attr_inst = ctx_.registry.execute_query<selected_attribute_query>();
-					auto active_vid_size = ctx_.registry.execute_query<active_video_tex_size_query>();
-
-					auto current_ts = ctx_.video_timeline.current_timestamp();
-					bool is_on_screen = current_ts >= selected_segment->segment_it->start and current_ts <= selected_segment->segment_it->end;
-					bool is_timestamp = selected_segment->segment_it->start == selected_segment->segment_it->end;
-					if (active_vid_size.has_value() and selected_attr_inst != nullptr and selected_attr_inst->has<shape>() and is_on_screen)
-					{
-						auto& shape = selected_attr_inst->get<vt::shape>();
-						bool visible = shape.has_data() and begin_collapsible("##ShapeAttributes", "Shape Attributes", ImGuiTreeNodeFlags_DefaultOpen, icons::shape);
-						if (visible)
-						{
-							ImGui::PushStyleColor(ImGuiCol_TableRowBg, style.Colors[ImGuiCol_MenuBarBg]);
-							if (ImGui::BeginTable("##Background", 1, ImGuiTableFlags_RowBg))
-							{
-								ImGui::TableNextColumn();
-								bool modifiable = is_on_screen;
-								shape.draw_data(active_vid_size.value(), ctx_.gizmo_target, selected_segment->segment_it->start, selected_segment->segment_it->end, current_ts, is_timestamp, modifiable, ctx_.is_project_dirty, [](timestamp target_ts)
-								{
-									ctx_.displayed_videos.seek(target_ts.total_milliseconds);
-								});
-								ImGui::EndTable();
-							}
-							ImGui::PopStyleColor();
-							end_collapsible();
-						}
-					}
-					else
-					{
-						ctx_.gizmo_target = nullptr;
-					}
 				}
 			}
 			else

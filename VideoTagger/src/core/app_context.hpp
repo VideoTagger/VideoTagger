@@ -26,6 +26,7 @@
 #include <widgets/video_group_browser.hpp>
 #include <widgets/video_group_queue.hpp>
 #include <widgets/theme_customizer.hpp>
+#include <widgets/shape_attributes.hpp>
 #include <widgets/console.hpp>
 #include <widgets/modal/options.hpp>
 #include <widgets/modal/tag_importer.hpp>
@@ -69,6 +70,7 @@ namespace vt
 		//serialized
 		window_state state = window_state::normal;
 		bool show_inspector_window = true;
+		bool show_shape_attributes_window = true;
 		bool show_tag_manager_window = true;
 		bool show_timeline_window = true;
 		bool show_video_player_window = true;
@@ -97,6 +99,7 @@ namespace vt
 		widgets::video_group_browser group_browser;
 		widgets::video_group_queue group_queue;
 		widgets::theme_customizer theme_customizer;
+		widgets::shape_attributes shape_attributes;
 		widgets::console console;
 		widgets::modal::options options;
 		widgets::modal::script_progress script_progress;

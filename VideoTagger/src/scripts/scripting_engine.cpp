@@ -48,6 +48,42 @@ namespace vt
 			tag_segment& ref;
 		};
 
+		struct stdout_hook {};
+		py::class_<stdout_hook>(this_module, "stdout_hook")
+		.def_static("write", [](std::string message)
+		{
+			auto caller_info = get_caller_info();
+			message = utils::string::trim_whitespace(message);
+			if (!message.empty())
+			{
+				debug::log_source(fmt::format("{}:{}", std::filesystem::relative(caller_info.path, ctx_.scripts_filepath).string(), caller_info.line), "Info", "{}", message);
+				ctx_.console.add_entry(widgets::console::entry::flag_type::info, message, caller_info);
+			}
+		})
+		.def_static("flush", []()
+		{
+			std::cout << std::flush;
+		});
+
+		auto inspect = py::module::import("inspect");
+
+		struct stderr_hook {};
+		py::class_<stderr_hook>(this_module, "stderr_hook")
+		.def_static("write", [](std::string message)
+		{
+			auto caller_info = get_caller_info();
+			message = utils::string::trim_whitespace(message);
+			if (!message.empty())
+			{
+				debug::log_source(fmt::format("{}:{}", std::filesystem::relative(caller_info.path, ctx_.scripts_filepath).string(), caller_info.line), "Error", "{}", message);
+				ctx_.console.add_entry(widgets::console::entry::flag_type::error, message, caller_info);
+			}
+		})
+		.def_static("flush", []()
+		{
+			std::cerr << std::flush;
+		});
+
 		py::class_<script_base, script, std::shared_ptr<script_base>>(this_module, "Script")
 		.def(py::init<>())
 		.def("has_progress", &script_base::has_progress)
@@ -120,6 +156,10 @@ namespace vt
 			auto[_, result] = tags.insert(t);
 			return result;
 		})
+		.def("has_tag", [](tag_storage& tags, const std::string& name) -> bool
+		{
+			return tags.contains(name);
+		})
 		.def("clear", [](tag_storage& tags)
 		{
 			if (&tags == &ctx_.current_project->tags)
@@ -138,42 +178,6 @@ namespace vt
 		});
 
 		this_module.attr("timeline") = &ctx_.video_timeline;
-
-		struct stdout_hook {};
-		py::class_<stdout_hook>(this_module, "stdout_hook")
-		.def_static("write", [](std::string message)
-		{
-			auto caller_info = get_caller_info();
-			message = utils::string::trim_whitespace(message);
-			if (!message.empty())
-			{
-				debug::log_source(fmt::format("{}:{}", std::filesystem::relative(caller_info.path, ctx_.scripts_filepath).string(), caller_info.line), "Info", "{}", message);
-				ctx_.console.add_entry(widgets::console::entry::flag_type::info, message, caller_info);
-			}
-		})
-		.def_static("flush", []()
-		{
-			std::cout << std::flush;
-		});
-
-		auto inspect = py::module::import("inspect");
-
-		struct stderr_hook {};
-		py::class_<stderr_hook>(this_module, "stderr_hook")
-		.def_static("write", [](std::string message)
-		{
-			auto caller_info = get_caller_info();
-			message = utils::string::trim_whitespace(message);
-			if (!message.empty())
-			{
-				debug::log_source(fmt::format("{}:{}", std::filesystem::relative(caller_info.path, ctx_.scripts_filepath).string(), caller_info.line), "Error", "{}", message);
-				ctx_.console.add_entry(widgets::console::entry::flag_type::error, message, caller_info);
-			}
-		})
-		.def_static("flush", []()
-		{
-			std::cerr << std::flush;
-		});
 
 		py::enum_<tag_attribute::type>(this_module, "TagAttributeType")
 		.value("bool", tag_attribute::type::bool_)
@@ -219,6 +223,14 @@ namespace vt
 		.def("add_attribute", [](tag& t, const std::string& name, tag_attribute::type type) -> tag_attribute&
 		{
 			return t.attributes[name] = tag_attribute{ type };
+		})
+		.def("remove_attribute", [](tag& t, const std::string& name)
+		{
+			t.attributes.erase(name);
+		})
+		.def("has_attribute", [](tag& t, const std::string& name) -> bool
+		{
+			return t.attributes.find(name) != t.attributes.end();
 		});
 
 		py::class_<vt_tag_segment>(this_module, "Segment")
@@ -236,6 +248,7 @@ namespace vt
 		{
 			return video_group{ name, {} };
 		}))
+		.def_readwrite("name", &video_group::display_name)
 		.def("add_video", [](video_group& group, const vt_video& vid, int64_t offset)
 		{
 			group.insert(video_group::video_info{ vid.id, std::chrono::nanoseconds(offset) });

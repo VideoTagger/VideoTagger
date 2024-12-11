@@ -324,6 +324,7 @@ namespace vt
 				auto& show_windows = ctx_.settings["show-windows"];
 
 				if (show_windows.contains("inspector")) ctx_.win_cfg.show_inspector_window = show_windows["inspector"];
+				if (show_windows.contains("shape-attributes")) ctx_.win_cfg.show_inspector_window = show_windows["shape-attributes"];
 				if (show_windows.contains("tag-manager")) ctx_.win_cfg.show_tag_manager_window = show_windows["tag-manager"];
 				if (show_windows.contains("timeline")) ctx_.win_cfg.show_timeline_window = show_windows["timeline"];
 				if (show_windows.contains("video-player")) ctx_.win_cfg.show_video_player_window = show_windows["video-player"];
@@ -462,9 +463,10 @@ namespace vt
 		ctx_.keybinds.insert("Toggle Video Group Browser", keybind(SDLK_F3, toggle_window_mod, flags, toggle_window_action("video-group-browser", ctx_.win_cfg.show_video_group_browser_window)));
 		ctx_.keybinds.insert("Toggle Video Group Queue", keybind(SDLK_F4, toggle_window_mod, flags, toggle_window_action("video-group-queue", ctx_.win_cfg.show_video_group_queue_window)));
 		ctx_.keybinds.insert("Toggle Inspector", keybind(SDLK_F5, toggle_window_mod, flags, toggle_window_action("inspector", ctx_.win_cfg.show_inspector_window)));
-		ctx_.keybinds.insert("Toggle Tag Manager", keybind(SDLK_F6, toggle_window_mod, flags, toggle_window_action("tag-manager", ctx_.win_cfg.show_tag_manager_window)));
-		ctx_.keybinds.insert("Toggle Timeline", keybind(SDLK_F7, toggle_window_mod, flags, toggle_window_action("timeline", ctx_.win_cfg.show_timeline_window)));
-		ctx_.keybinds.insert("Toggle Console", keybind(SDLK_F8, toggle_window_mod, flags, toggle_window_action("console", ctx_.win_cfg.show_console_window)));
+		ctx_.keybinds.insert("Toggle Shape Attributes", keybind(SDLK_F6, toggle_window_mod, flags, toggle_window_action("shape-attributes", ctx_.win_cfg.show_shape_attributes_window)));
+		ctx_.keybinds.insert("Toggle Tag Manager", keybind(SDLK_F7, toggle_window_mod, flags, toggle_window_action("tag-manager", ctx_.win_cfg.show_tag_manager_window)));
+		ctx_.keybinds.insert("Toggle Timeline", keybind(SDLK_F8, toggle_window_mod, flags, toggle_window_action("timeline", ctx_.win_cfg.show_timeline_window)));
+		ctx_.keybinds.insert("Toggle Console", keybind(SDLK_F9, toggle_window_mod, flags, toggle_window_action("console", ctx_.win_cfg.show_console_window)));
 
 		keybind_modifiers player_mod{};
 		ctx_.keybinds.insert("Play/Pause", keybind(SDLK_SPACE, player_mod, flags, player_action(player_action_type::play_pause)));
@@ -1064,6 +1066,7 @@ namespace vt
 						win_toggles{ "Show Video Group Queue", "Toggle Video Group Queue", "video-group-queue", &ctx_.win_cfg.show_video_group_queue_window },
 						win_toggles{},
 						win_toggles{ "Show Inspector", "Toggle Inspector", "inspector", &ctx_.win_cfg.show_inspector_window },
+						win_toggles{ "Show Shape Attributes", "Toggle Shape Attributes", "shape-attributes", &ctx_.win_cfg.show_shape_attributes_window },
 						win_toggles{ "Show Tag Manager", "Toggle Tag Manager", "tag-manager", &ctx_.win_cfg.show_tag_manager_window },
 						win_toggles{ "Show Timeline", "Toggle Timeline", "timeline", &ctx_.win_cfg.show_timeline_window },
 						win_toggles{ "Show Console", "Toggle Console", "console", &ctx_.win_cfg.show_console_window},
@@ -1119,7 +1122,7 @@ namespace vt
 						{
 							return true;
 						}
-						else if (dir_entry.is_regular_file() and dir_entry.path().extension() == ".py")
+						else if (dir_entry.is_regular_file() and utils::string::to_lowercase(dir_entry.path().extension().string()) == ".py")
 						{
 							return true;
 						}
@@ -1135,7 +1138,7 @@ namespace vt
 						for (const auto& dir_entry : std::filesystem::directory_iterator(path))
 						{
 							auto entry_path = dir_entry.path();
-							if (dir_entry.is_regular_file() and entry_path.extension() == ".py")
+							if (dir_entry.is_regular_file() and utils::string::to_lowercase(entry_path.extension().string()) == ".py")
 							{
 								std::string script_name = entry_path.stem().string();
 								std::string script_menu_name = fmt::format("{} {}", icons::terminal, script_name);
@@ -2053,6 +2056,11 @@ namespace vt
 			widgets::inspector(ctx_.video_timeline.selected_segment, ctx_.video_timeline.moving_segment, ctx_.app_settings.link_start_end_segment, ctx_.is_project_dirty, &ctx_.win_cfg.show_inspector_window);
 		}
 
+		if (ctx_.win_cfg.show_shape_attributes_window)
+		{
+			ctx_.shape_attributes.render(ctx_.video_timeline.selected_segment, ctx_.win_cfg.show_shape_attributes_window);
+		}
+
 		if (ctx_.win_cfg.show_video_browser_window)
 		{
 			ctx_.browser.render(ctx_.win_cfg.show_video_browser_window);
@@ -2158,6 +2166,7 @@ namespace vt
 			
 			ImGui::DockBuilderDockWindow(widgets::inspector_id.c_str(), dock_right_up);
 			ImGui::DockBuilderDockWindow(widgets::tag_manager_window_name().c_str(), main_dock_right);
+			ImGui::DockBuilderDockWindow(widgets::shape_attributes::window_name().c_str(), main_dock_right);
 			ImGui::DockBuilderDockWindow(widgets::video_group_queue::window_name().c_str(), main_dock_down);
 			ImGui::DockBuilderDockWindow("Video Player", main_dock_up);
 			ImGui::DockBuilderDockWindow(widgets::video_browser::window_name().c_str(), main_dock_up_left);

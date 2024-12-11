@@ -273,7 +273,7 @@ namespace vt
 		const auto& style = ImGui::GetStyle();
 		static constexpr auto selected_color = tag_attribute::type_color(tag_attribute::type::shape);
 
-		if (ImGui::BeginTable(fmt::format("##Shape{}Keyframes", shape_name).c_str(), 1))
+		if (ImGui::BeginTable(fmt::format("##Shape{}Keyframes", shape_name).c_str(), 1, ImGuiTableFlags_ScrollY))
 		{
 			bool is_ts_modifiable = is_modifiable and ((is_timestamp and map.empty()) or !is_timestamp);
 
@@ -328,7 +328,9 @@ namespace vt
 				{
 					ImGui::Columns(2);
 					ImGui::AlignTextToFramePadding();
+					ImGui::Indent();
 					ImGui::TextUnformatted("Timestamp");
+					ImGui::Unindent();
 
 					ImGui::NextColumn();
 
@@ -438,13 +440,17 @@ namespace vt
 						ImGui::SetCursorPos(cpos);
 
 						ImGui::Columns(2);
+						ImGui::Indent();
 						ImGui::TextUnformatted("Position");
+						ImGui::Unindent();
 						ImGui::NextColumn();
 
 						widgets::positon_control(v.pos, max_size);
 
 						ImGui::NextColumn();
+						ImGui::Indent();
 						ImGui::TextUnformatted("Radius");
+						ImGui::Unindent();
 						ImGui::NextColumn();
 						auto max = std::min(max_size[0], max_size[1]) / 2;
 						auto min = 1u;
