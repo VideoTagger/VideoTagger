@@ -273,30 +273,28 @@ namespace vt
 		const auto& style = ImGui::GetStyle();
 		static constexpr auto selected_color = tag_attribute::type_color(tag_attribute::type::shape);
 
+		bool is_ts_modifiable = is_modifiable and ((is_timestamp and map.empty()) or !is_timestamp);
+
+		ImVec2 separator_pos;
+		if (is_ts_modifiable and widgets::icon_button(icons::add))
+		{
+			map[ts].push_back({});
+			on_vec_modified();
+		}
+		if (is_ts_modifiable)
+		{
+			widgets::tooltip("Add Keyframe");
+		}
+		ImGui::SameLine();
+		ImGui::AlignTextToFramePadding();
+		ImGui::TextUnformatted("Keyframes");
+		separator_pos = ImGui::GetCursorPos() - ImVec2{ 0.f, style.ItemSpacing.y / 2 + 0.5f };
+
+		//iterator + new keyframe
+		auto change_keyframe_it = std::make_pair(map.end(), timestamp::zero());
+
 		if (ImGui::BeginTable(fmt::format("##Shape{}Keyframes", shape_name).c_str(), 1, ImGuiTableFlags_ScrollY))
 		{
-			bool is_ts_modifiable = is_modifiable and ((is_timestamp and map.empty()) or !is_timestamp);
-
-			ImVec2 separator_pos;
-			ImGui::TableNextColumn();
-			if (is_ts_modifiable and widgets::icon_button(icons::add))
-			{
-				map[ts].push_back({});
-				on_vec_modified();
-			}
-			if (is_ts_modifiable)
-			{
-				widgets::tooltip("Add Keyframe");
-			}
-			ImGui::SameLine();
-			ImGui::AlignTextToFramePadding();
-			ImGui::TextUnformatted("Keyframes");
-			separator_pos = ImGui::GetCursorPos() - ImVec2{ 0.f, style.ItemSpacing.y / 2 + 0.5f };
-
-			//iterator + new keyframe
-			auto change_keyframe_it = std::make_pair(map.end(), timestamp::zero());
-
-
 			for (auto it = map.begin(); it != map.end();)
 			{
 				auto& [keyframe, regions] = *it;
@@ -363,13 +361,13 @@ namespace vt
 							ImGui::PushID(&v);
 
 							draw_shape(keyframe, v, i);
-							
+
 							ImGui::PopID();
 						}
 						ImGui::EndTable();
 					}
 					widgets::end_collapsible();
-				}				
+				}
 
 				if (was_deleted)
 				{
@@ -382,19 +380,19 @@ namespace vt
 				}
 			}
 			ImGui::EndTable();
-			if (!map.empty())
-			{
-				ImGui::SetCursorPos(separator_pos);
-				ImGui::Separator();
-			}
+		}
+		if (!map.empty())
+		{
+			ImGui::SetCursorPos(separator_pos);
+			ImGui::Separator();
+		}
 
-			if (change_keyframe_it.first != map.end())
-			{
-				auto node = map.extract(change_keyframe_it.first->first);
-				node.key() = change_keyframe_it.second;
-				map.insert(std::move(node));
-				dirty_flag = true;
-			}
+		if (change_keyframe_it.first != map.end())
+		{
+			auto node = map.extract(change_keyframe_it.first->first);
+			node.key() = change_keyframe_it.second;
+			map.insert(std::move(node));
+			dirty_flag = true;
 		}
 	}
 
