@@ -122,11 +122,19 @@ namespace vt::widgets
 
 		if (current_path_.size() == 1)
 		{
-			base_get_url = fmt::format("/drive/v3/files?fields=files(id, name, mimeType)&q=(mimeType contains 'video/' or mimeType = 'application/vnd.google-apps.folder') and ({})", shared_or_my_files_param);
+			if (current_path_.front().id == my_files_id)
+			{
+				base_get_url = fmt::format("/drive/v3/files?fields=files(id, name, mimeType)&q=(trashed = false) and ('root' in parents) and (mimeType contains 'video/' or mimeType = 'application/vnd.google-apps.folder') and ({})", shared_or_my_files_param);
+			}
+			else
+			{
+				base_get_url = fmt::format("/drive/v3/files?fields=files(id, name, mimeType)&q=(trashed = false) and (mimeType contains 'video/' or mimeType = 'application/vnd.google-apps.folder') and ({})", shared_or_my_files_param);
+			}
+
 		}
 		else
 		{
-			base_get_url = fmt::format("/drive/v3/files?fields=files(id, name, mimeType)&q=('{}' in parents) and (mimeType contains 'video/' or mimeType = 'application/vnd.google-apps.folder') and ({})", current_folder().id, shared_or_my_files_param);
+			base_get_url = fmt::format("/drive/v3/files?fields=files(id, name, mimeType)&q=(trashed = false) and ('{}' in parents) and (mimeType contains 'video/' or mimeType = 'application/vnd.google-apps.folder') and ({})", current_folder().id, shared_or_my_files_param);
 		}
 
 		std::string next_page_token;
@@ -207,33 +215,35 @@ namespace vt::widgets
 
 		float search_bar_width = 150.f;
 
+		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, { 0, 0 });
+
 		ImGui::SameLine();
-		ImVec2 path_bar_window_size = { ImGui::GetContentRegionAvail().x - style.WindowPadding.x - search_bar_width, icon_button_size.y + style.FramePadding.y * 2 };
-		if (ImGui::BeginChild("PathBar", path_bar_window_size))
+		ImVec2 path_bar_window_size = { ImGui::GetContentRegionAvail().x - style.WindowPadding.x - search_bar_width, icon_button_size.y };
+		if (ImGui::BeginChild("PathBar", path_bar_window_size, ImGuiChildFlags_FrameStyle))
 		{
 			//TODO: handle too long path
 			
 			std::optional<size_t> folder_index;
 
-			if (ImGui::Button("Home"))
+			if (widgets::icon_button(icons::home, icon_button_size))
 			{
 				folder_index = 0;
 			}
 
 			ImGui::SameLine();
-			ImGui::TextUnformatted("/");
+			widgets::text_with_size("/", { 0.f, icon_button_size.y });
 
 			{
 				for (size_t i = 0; i < current_path_.size(); ++i)
 				{
 					ImGui::SameLine();
-					if (ImGui::Button(current_path_[i].name.c_str()))
+					if (widgets::icon_button(current_path_[i].name.c_str(), { 0.f, icon_button_size.y }))
 					{
 						folder_index = i + 1;
 					}
 
 					ImGui::SameLine();
-					ImGui::TextUnformatted("/");
+					widgets::text_with_size("/", { 0.f, icon_button_size.y });
 				}
 			}
 
@@ -245,6 +255,8 @@ namespace vt::widgets
 
 			ImGui::EndChild();
 		}
+
+		ImGui::PopStyleVar();
 
 		ImGui::SameLine();
 
