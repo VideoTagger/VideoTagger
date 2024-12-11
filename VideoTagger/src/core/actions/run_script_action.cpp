@@ -9,7 +9,7 @@ namespace vt
 	
 	void run_script_action::invoke() const
 	{
-		if (!ctx_.current_project.has_value()) return;
+		if (!ctx_.current_project.has_value() or ctx_.script_handle != std::nullopt) return;
 
 		auto all_scripts = ctx_.scripts.all_children();
 		auto it = std::find(all_scripts.begin(), all_scripts.end(), script_path_);

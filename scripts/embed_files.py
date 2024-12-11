@@ -1,7 +1,7 @@
 import os
 from pathlib import Path
 import re
-from setup import eprint, zip_extract_all_files, WORK_DIR
+from setup import eprint, WORK_DIR
 
 SOURCE_DIR = os.path.join(WORK_DIR, "embeds")
 EMBED_DIR = os.path.join(WORK_DIR, os.pardir, "VideoTagger", "src", "embeds")
