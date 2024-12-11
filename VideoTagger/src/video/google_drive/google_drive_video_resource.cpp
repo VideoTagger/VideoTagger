@@ -20,13 +20,10 @@ namespace vt
 		{
 			throw std::runtime_error("google_account_manager is not logged in");
 		}
-		
-		//TODO: check for errors
 
 		httplib::Client client("https://www.googleapis.com");
 		client.set_bearer_token_auth(*account_manager.access_token());
 
-		//TODO: request only required fields
 		auto get_result = client.Get(fmt::format("/drive/v3/files/{}/?fields=mimeType,videoMediaMetadata,name,sha256Checksum", file_id));
 		if (!get_result)
 		{
@@ -83,6 +80,7 @@ namespace vt
 	{
 		return file_id_;
 	}
+
 	video_stream google_drive_video_resource::video() const
 	{
 		video_stream result;
@@ -100,6 +98,14 @@ namespace vt
 		return false;
 	}
 
+	std::function<void()> google_drive_video_resource::on_refresh_task()
+	{
+		return []()
+		{
+			
+		};
+	}
+
 	void google_drive_video_resource::on_save(nlohmann::ordered_json& json) const
 	{
 		downloadable_video_resource::on_save(json);
@@ -107,7 +113,7 @@ namespace vt
 		json["file_id"] = file_id_;
 	}
 
-	std::function<video_download_status(std::shared_ptr<video_download_data>)> google_drive_video_resource::download_function()
+	std::function<video_download_status(std::shared_ptr<video_download_data>)> google_drive_video_resource::download_task()
 	{
 		return [file_id = file_id_](std::shared_ptr<video_download_data> data)
 		{

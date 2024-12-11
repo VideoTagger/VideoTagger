@@ -43,6 +43,8 @@ namespace vt
 		nlohmann::ordered_json save() const override;
 		void load(const nlohmann::ordered_json& json) override;
 
+		std::string account_name() const;
+
 		void on_log_out() override;
 
 		const account_properties& get_account_properties() const override;
@@ -51,7 +53,6 @@ namespace vt
 		const google_account_info& account_info() const;
 		account_login_status login_status() const override;
 
-		void draw_options_page() override;
 		bool draw_login_popup(bool& success) override;
 
 		//TODO: error messages in the return value would be nice, would require something like std::expected
@@ -63,6 +64,7 @@ namespace vt
 	
 	protected:
 		bool on_log_in(const account_properties& properties, bool* cancel_token) override;
+		bool on_retry_login() override;
 	
 	private:
 		static constexpr auto request_scope_ = { "https://www.googleapis.com/auth/drive.readonly", "https://www.googleapis.com/auth/userinfo.profile" };

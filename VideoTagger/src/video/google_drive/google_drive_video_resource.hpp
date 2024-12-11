@@ -13,13 +13,15 @@ namespace vt
 
 		video_stream video() const override;
 		bool update_thumbnail() override;
+		std::function<void()> on_refresh_task() override;
 
 		void on_save(nlohmann::ordered_json& json) const override;
 	
 	protected:
-		std::function<video_download_status(std::shared_ptr<video_download_data>)> download_function() override;
+		std::function<video_download_status(std::shared_ptr<video_download_data>)> download_task() override;
 
 	private:
 		std::string file_id_;
+
 	};
 }

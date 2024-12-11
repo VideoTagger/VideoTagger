@@ -101,6 +101,7 @@ namespace vt
 		if (!result.has_value())
 		{
 			debug::error("Failed to refresh access token for service {}", service_id());
+			account_info_.properties = properties;
 			return;
 		}
 
@@ -109,6 +110,11 @@ namespace vt
 
 		account_info_.expire_tp = result->expire_tp;
 		account_info_.properties = properties;
+	}
+
+	std::string google_account_manager::account_name() const
+	{
+		return account_info_.user_name();
 	}
 
 	bool google_account_manager::on_log_in(const account_properties& properties, bool* cancel_token)
@@ -165,6 +171,31 @@ namespace vt
 		return true;
 	}
 
+	bool google_account_manager::on_retry_login()
+	{
+		if (!account_info_.has_login_data() or !account_info_.has_refresh_token())
+		{
+			return false;
+		}
+
+		std::string client_id = account_info_.client_id();
+		std::string client_secret = account_info_.client_secret();
+		std::string refresh_token = account_info_.refresh_token();
+
+		auto result = refresh_access_token(client_id, client_secret, refresh_token);
+		if (!result.has_value())
+		{
+			debug::error("Failed to refresh access token for service {}", service_id());
+			return false;
+		}
+
+		account_info_.properties["access_token"] = result->access_token;
+		account_info_.properties["refresh_token"] = result->refresh_token;
+		account_info_.expire_tp = result->expire_tp;
+
+		return true;
+	}
+
 	void google_account_manager::on_log_out()
 	{
 		if (account_info_.has_access_token())
@@ -208,12 +239,6 @@ namespace vt
 		}
 
 		return account_login_status::not_logged_in;
-	}
-
-	void google_account_manager::draw_options_page()
-	{
-		std::string user_name = account_info_.user_name();
-		ImGui::Text("User name: %s", user_name.c_str());
 	}
 
 	bool google_account_manager::draw_login_popup(bool& success)
@@ -396,8 +421,13 @@ namespace vt
 		result.refresh_token = json.at("refresh_token");
 		result.expire_tp = std::chrono::steady_clock::now() + std::chrono::seconds{ int(json.at("expires_in")) };
 		result.scope = utils::string::split(json.at("scope"), ' ');
+		
+		std::vector<std::string> required_scopes(request_scope_.begin(), request_scope_.end());
 
-		if (!std::equal(result.scope.begin(), result.scope.end(), request_scope_.begin(), request_scope_.end()))
+		std::sort(result.scope.begin(), result.scope.end());
+		std::sort(required_scopes.begin(), required_scopes.end());
+
+		if (required_scopes != result.scope)
 		{
 			debug::error("User didn't grant all the required scopes");
 			return std::nullopt;
