@@ -34,11 +34,15 @@ namespace vt
 	{
 		return std::async(std::launch::async, [this, cancel_token, properties]()
 		{
-			if (!on_log_in(properties, cancel_token))
-			{
-				return false;
-			}
-			return true;
+			return on_log_in(properties, cancel_token);
+		});
+	}
+
+	std::future<bool> service_account_manager::retry_login()
+	{
+		return std::async(std::launch::async, [this]()
+		{
+			return on_retry_login();
 		});
 	}
 

@@ -723,21 +723,63 @@ namespace vt
 		{
 			//TODO: move this somewhere so it can have a value per account
 			static bool login_in_progress = false;
+			bool modifed_account = false;
+
+			static std::map<std::string, std::future<bool>> retry_login_futures;
 
 			for (auto& [service_id, account_manager] : ctx_.account_managers)
 			{
+				ImGui::PushFont(ctx_.fonts["title"]);
 				ImGui::TextUnformatted(account_manager->service_display_name().c_str());
+				ImGui::PopFont();
 
-				bool modifed_account = false;
-
-				if (!login_in_progress and account_manager->login_status() == account_login_status::logged_in)
+				auto account_status = account_manager->login_status();
+				if (!login_in_progress and (account_status == account_login_status::logged_in or account_status == account_login_status::refresh_failed))
 				{
-					account_manager->draw_options_page();
-;
-					if (ImGui::Button("Log out"))
+					std::string user_name = fmt::format("User: {}", account_manager->account_name());
+					ImGui::TextUnformatted(user_name.c_str());
+
+					if (account_status == account_login_status::logged_in)
 					{
-						account_manager->log_out();
-						modifed_account = true;
+						ImGui::TextColored(ImVec4{ 0.0f, 0.9f, 0.0f, 1.0f }, "Logged in");
+
+						if (ImGui::Button("Remove account"))
+						{
+							account_manager->log_out();
+							modifed_account = true;
+						}
+					}
+					else
+					{
+						if (retry_login_futures.count(service_id))
+						{
+							ImGui::TextUnformatted("Retrying...");
+
+							auto& future = retry_login_futures.at(service_id);
+							if (future.wait_for(std::chrono::seconds{}) == std::future_status::ready)
+							{
+								retry_login_futures.erase(service_id);
+							}
+						}
+						else
+						{
+							ImGui::AlignTextToFramePadding();
+							ImGui::TextColored(ImVec4{ 0.9f, 0.0f, 0.0f, 1.0f }, "Login failed");
+
+							ImGui::SameLine();
+							if (widgets::icon_button(icons::retry))
+							{
+								retry_login_futures[service_id] = account_manager->retry_login();
+								modifed_account = true;
+							}
+
+
+							if (ImGui::Button("Remove account"))
+							{
+								account_manager->log_out();
+								modifed_account = true;
+							}
+						}
 					}
 				}
 				else
@@ -763,7 +805,7 @@ namespace vt
 					{
 						ImGui::OpenPopup(popup_id.c_str());
 						login_in_progress = true;
-					}					
+					}
 				}
 
 				if (modifed_account)

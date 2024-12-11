@@ -46,7 +46,7 @@ namespace vt
 	{
 		video_download_result result;
 		result.data = std::make_shared<video_download_data>();
-		result.result = std::async(std::launch::async, download_function(), result.data);
+		result.result = std::async(std::launch::async, download_task(), result.data);
 		download_data_ = result.data;
 		return result;
 	}

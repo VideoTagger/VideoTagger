@@ -53,7 +53,7 @@ namespace vt
 		virtual std::function<void(ImDrawList&, ImRect, ImRect)> icon_custom_draw() const override;
 
 	protected:
-		virtual std::function<video_download_status(std::shared_ptr<video_download_data>)> download_function() = 0;
+		virtual std::function<video_download_status(std::shared_ptr<video_download_data>)> download_task() = 0;
 
 	private:
 		std::filesystem::path local_path_;

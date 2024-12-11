@@ -12,6 +12,7 @@ namespace vt::icons
 	inline constexpr auto pause = "\xee\x80\xb4";
 	inline constexpr auto repeat = "\xee\x81\x80";
 	inline constexpr auto repeat_one = "\xee\x81\x81";
+	inline constexpr auto retry = "\xee\x81\x82";
 	inline constexpr auto shuffle = "\xee\x81\x83";
 	inline constexpr auto skip_next = "\xee\x81\x84";
 	inline constexpr auto skip_prev = "\xee\x81\x85";
@@ -52,9 +53,9 @@ namespace vt::icons
 
 	inline std::vector<std::string> all
 	({
-		dots_hor, play, play_next, pause, repeat, repeat_one, shuffle, skip_next, skip_prev, fast_back, fast_fwd,
-		save, save_as, import_, import_export, exit, close, back, visibility_on, visibility_off, add, delete_,
-		folder, folder_code, file, label, expand_less, expand_more, toggle_less, toggle_more, link, edit, help,
-		video_group, video, search, terminal, download, arrow_up, refresh, local_storage, google_drive_add, home
+		dots_hor, play, play_next, pause, repeat, repeat_one, retry, shuffle, skip_next, skip_prev, fast_back, fast_fwd,
+		save, save_as, import_, import_export, exit, close, back, visibility_on, visibility_off, add, delete_, folder,
+		folder_code, file, label, expand_less, expand_more, toggle_less, toggle_more, link, edit, help, video_group,
+		video, search, terminal, download, arrow_up, refresh, local_storage, google_drive_add, home
 	});
 }

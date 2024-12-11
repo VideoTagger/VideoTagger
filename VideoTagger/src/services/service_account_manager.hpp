@@ -29,11 +29,15 @@ namespace vt
 		const std::string& service_id() const;
 		const std::string& service_display_name() const;
 
+		virtual std::string account_name() const = 0;
+
 		virtual nlohmann::ordered_json save() const = 0;
 		virtual void load(const nlohmann::ordered_json& json) = 0;
 
 		//TODO: maybe use std::any instead of nlohmann::json
 		std::future<bool> log_in(const account_properties& properties, bool* cancel_token);
+
+		std::future<bool> retry_login();
 
 		void log_out();
 		virtual void on_log_out() = 0;
@@ -44,14 +48,13 @@ namespace vt
 		virtual void set_account_properties(const account_properties& properties) = 0;
 
 		//TODO: maybe do the drawing in the parent class and let the children determine field names
-		virtual void draw_options_page() = 0;
-		//TODO: maybe do the drawing in the parent class and let the children determine field names
 		//return true if the popup is ready to be closed
 		virtual bool draw_login_popup(bool& success) = 0;
 
 	protected:
 		//It's safe to capture the arguments by reference
 		virtual bool on_log_in(const account_properties& properties, bool* cancel_token) = 0;
+		virtual bool on_retry_login() = 0;
 	
 	private:
 		std::string service_id_;

@@ -52,6 +52,7 @@ namespace vt
 		virtual void on_remove();
 		virtual void context_menu_items(std::vector<video_resource_context_menu_item>& items);
 		virtual std::function<void(ImDrawList&, ImRect, ImRect)> icon_custom_draw() const;
+		virtual std::function<void()> on_refresh_task();
 
 		void set_metadata(const video_resource_metadata& metadata);
 		void set_thumbnail(gl_texture&& texture);

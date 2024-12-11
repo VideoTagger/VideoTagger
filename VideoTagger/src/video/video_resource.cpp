@@ -46,6 +46,11 @@ namespace vt
 		return std::function<void(ImDrawList&, ImRect, ImRect)>();
 	}
 
+	std::function<void()> video_resource::on_refresh_task()
+	{
+		return nullptr;
+	}
+
 	void video_resource::set_metadata(const video_resource_metadata& metadata)
 	{
 		if (metadata.title.has_value())
