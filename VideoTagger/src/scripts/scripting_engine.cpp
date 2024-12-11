@@ -255,33 +255,19 @@ namespace vt
 		})
 		.def("add_timestamp", [](video_group& group, tag& t, int64_t start) -> std::optional<vt_tag_segment>
 		{
-			//TODO: Segments should be added to the group, not the project (when it gets implemented)
-			for (const auto& [id, group_node] : ctx_.current_project->video_groups)
+			auto it = group.segments()[t.name].insert(timestamp(start));
+			if (it.second)
 			{
-				if (group.display_name == group_node.display_name)
-				{
-					auto it = ctx_.current_project->segments[id][t.name].insert(timestamp(start));
-					if (it.second)
-					{
-						return vt_tag_segment{ (tag_segment&)(*it.first) };
-					}
-				}
+				return vt_tag_segment{ (tag_segment&)(*it.first) };
 			}
 			return std::nullopt;
 		})
 		.def("add_segment", [](video_group& group, tag& t, int64_t start, int64_t end) -> std::optional<vt_tag_segment>
 		{
-			//TODO: Segments should be added to the group, not the project (when it gets implemented)
-			for (const auto& [id, group_node] : ctx_.current_project->video_groups)
+			auto it = group.segments()[t.name].insert((timestamp(start), timestamp(end)));
+			if (it.second)
 			{
-				if (group.display_name == group_node.display_name)
-				{
-					auto it = ctx_.current_project->segments[id][t.name].insert(timestamp(start), timestamp(end));
-					if (it.second)
-					{
-						return vt_tag_segment{ (tag_segment&)(*it.first) };
-					}
-				}
+				return vt_tag_segment{ (tag_segment&)(*it.first) };
 			}
 			return std::nullopt;
 		});
@@ -325,6 +311,7 @@ namespace vt
 		})
 		.def("add_group", [](vt_project& p, const video_group& group) -> bool
 		{
+			auto segments = group.segments();
 			return p.ref.video_groups.insert({ utils::uuid::get(), group }).second;
 		});
 

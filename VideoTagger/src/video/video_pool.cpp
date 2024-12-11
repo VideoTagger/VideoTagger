@@ -85,6 +85,16 @@ namespace vt
 		return video_ids_[index];
 	}
 
+	segment_storage& video_group::segments()
+	{
+		return segments_;
+	}
+
+	const segment_storage& video_group::segments() const
+	{
+		return segments_;
+	}
+
 	video_group::iterator video_group::begin()
 	{
 		return video_ids_.begin();

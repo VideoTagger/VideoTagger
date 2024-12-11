@@ -110,7 +110,6 @@ class ocr_demo(vt.Script):
 
 		group = vt.VideoGroup(self.group_name)
 		group.add_video(video, 0)
-		project.add_group(group)
 
 		tag = vt.Tag(f"Text", vt.to_abgr(0xDEA584FF))
 		text_attribute_name = "text"
@@ -149,5 +148,6 @@ class ocr_demo(vt.Script):
 						segment["confidence"]
 					)
 
+		project.add_group(group)
 		self.progress = 1.0
 		self.progress_info = "Done!"

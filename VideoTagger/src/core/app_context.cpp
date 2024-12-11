@@ -131,7 +131,7 @@ namespace vt
 			debug::panic("No current video group");
 		}
 
-		return current_project->segments[current_video_group_id_];
+		return current_project->video_groups.at(current_video_group_id_).segments();
 	}
 
 	void app_context::set_current_video_group_id(video_group_id_t id)

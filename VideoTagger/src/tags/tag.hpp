@@ -8,7 +8,7 @@
 #include <utils/string.hpp>
 #include <charconv>
 #include "shape.hpp"
-#include <video/video_pool.hpp>
+#include <core/types.hpp>
 
 namespace vt
 {

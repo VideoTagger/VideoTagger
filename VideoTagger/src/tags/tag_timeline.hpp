@@ -12,9 +12,9 @@
 #include <utils/time.hpp>
 #include <utils/timestamp.hpp>
 #include <utils/iterator_range.hpp>
-#include "tags/tag.hpp"
+#include "tag.hpp"
 #include "tag_storage.hpp"
-#include <video/video_pool.hpp>
+#include <core/types.hpp>
 
 namespace vt
 {
