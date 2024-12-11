@@ -1,4 +1,5 @@
 build/
+scripts/embeds/
 __pycache__/
 *.log
 
