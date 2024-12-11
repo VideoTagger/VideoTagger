@@ -1,18 +1,17 @@
 #pragma once
-#include <functional>
 #include "keybind_action.hpp"
 
 namespace vt
 {
-	struct builtin_action : public keybind_action
+	struct run_script_action : public keybind_action
 	{
-		static constexpr auto action_name = "Builtin Action";
+		static constexpr auto action_name = "Run Script";
 
 	public:
-		builtin_action(const std::function<void()>& action, const std::string& name = action_name);
+		run_script_action(const std::filesystem::path& script_name = {});
 
 	private:
-		std::function<void()> action_;
+		std::filesystem::path script_path_;
 
 	public:
 		virtual void invoke() const final override;

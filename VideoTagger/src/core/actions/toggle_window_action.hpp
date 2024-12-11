@@ -1,5 +1,5 @@
 #pragma once
-#include <core/keybind_action.hpp>
+#include "keybind_action.hpp"
 
 namespace vt
 {

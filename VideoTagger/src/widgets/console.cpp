@@ -181,18 +181,30 @@ namespace vt::widgets
 					ImGui::TableNextColumn();
 					if (entry.info.has_value())
 					{
-						auto path = fmt::format("{}:{}", std::filesystem::relative(entry.info->path, scripts_path).string(), entry.info->line);
+						std::string path;
+						bool exists = std::filesystem::exists(entry.info->path);
+						if (entry.info->line > 0)
+						{
+							path = fmt::format("{}:{}", std::filesystem::relative(entry.info->path, scripts_path).string(), entry.info->line);
+						}
+						else
+						{
+							path = fmt::format("{}", exists ? std::filesystem::relative(entry.info->path, scripts_path).string() : entry.info->path.string());
+						}
 						auto abs_path = entry.info->path.string();
 						ImGui::TextUnformatted(path.c_str());
-						if (ImGui::IsItemHovered())
+						if (exists)
 						{
-							ImGui::SetMouseCursor(ImGuiMouseCursor_Hand);
+							if (ImGui::IsItemHovered())
+							{
+								ImGui::SetMouseCursor(ImGuiMouseCursor_Hand);
+							}
+							if (ImGui::IsItemClicked(0))
+							{
+								SDL_SetClipboardText(abs_path.c_str());
+							}
+							tooltip(abs_path.c_str());
 						}
-						if (ImGui::IsItemClicked(0))
-						{
-							SDL_SetClipboardText(abs_path.c_str());
-						}
-						tooltip(abs_path.c_str());
 					}
 					
 					ImGui::TableNextColumn();

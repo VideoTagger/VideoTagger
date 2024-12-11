@@ -101,6 +101,7 @@ namespace vt
 		init_keybinds();
 		init_player();
 		fetch_themes();
+		ctx_.scripts = fetch_scripts(ctx_.script_dir_filepath);
 
 		ctx_.project_selector.load_projects_file(ctx_.projects_list_filepath);
 	}
@@ -908,6 +909,26 @@ namespace vt
 		}
 	}
 
+	utils::file_node main_window::fetch_scripts(const std::filesystem::path& path)
+	{
+		utils::file_node result;
+		for (const auto& dir_entry : std::filesystem::directory_iterator(path))
+		{
+			auto entry_path = dir_entry.path();
+			if (dir_entry.is_regular_file() and utils::string::to_lowercase(entry_path.extension().string()) == ".py")
+			{
+				auto script_path = std::filesystem::relative(entry_path, ctx_.script_dir_filepath);
+				result.insert(script_path.stem());
+			}
+			else if (dir_entry.is_directory() and !std::filesystem::is_empty(dir_entry))
+			{
+				auto key = std::filesystem::relative(entry_path, ctx_.script_dir_filepath);
+				result[key] = fetch_scripts(dir_entry.path());
+			}
+		}
+		return result;
+	}
+
 	void main_window::draw_menubar()
 	{
 		if (ImGui::BeginMainMenuBar())
@@ -1131,35 +1152,42 @@ namespace vt
 				};
 
 				auto menu_name = fmt::format("{} {}", icons::folder_code, "Scripts");
-				if (ImGui::BeginMenu(menu_name.c_str(), has_scripts(ctx_.scripts_filepath)))
+				if (ImGui::IsWindowAppearing())
 				{
-					std::function<void(const std::filesystem::path&)> draw_folder = [&draw_folder, &has_scripts](const std::filesystem::path& path)
+					ctx_.scripts = fetch_scripts(ctx_.script_dir_filepath);
+				}
+
+				if (ImGui::BeginMenu(menu_name.c_str(), !ctx_.scripts.empty()))
+				{
+					std::function<void(const utils::file_node&)> draw_folder = [&draw_folder, &has_scripts](const utils::file_node& node)
 					{
-						for (const auto& dir_entry : std::filesystem::directory_iterator(path))
+						for (const auto& [path, folder] : node)
 						{
-							auto entry_path = dir_entry.path();
-							if (dir_entry.is_regular_file() and utils::string::to_lowercase(entry_path.extension().string()) == ".py")
+							auto dir_name = fmt::format("{} {}", icons::folder_code, path.stem().string());
+							if (!folder.empty() and ImGui::BeginMenu(dir_name.c_str()))
 							{
-								std::string script_name = entry_path.stem().string();
-								std::string script_menu_name = fmt::format("{} {}", icons::terminal, script_name);
-								if (ImGui::MenuItem(script_menu_name.c_str()))
-								{
-									ctx_.registry.execute<run_script_command>(script_name);
-								}
+								draw_folder(folder);
+								ImGui::EndMenu();
 							}
-							else if (dir_entry.is_directory() and !std::filesystem::is_empty(dir_entry))
+						}
+
+						if (!node.folders.empty())
+						{
+							ImGui::Separator();
+						}
+
+						for (auto& child : node.children)
+						{
+							std::string script_name = child.stem().string();
+							std::string script_menu_name = fmt::format("{} {}", icons::terminal, script_name);
+							if (ImGui::MenuItem(script_menu_name.c_str()))
 							{
-								auto dir_name = fmt::format("{} {}", icons::folder_code, entry_path.stem().string());
-								if (has_scripts(entry_path) and ImGui::BeginMenu(dir_name.c_str()))
-								{
-									draw_folder(entry_path);
-									ImGui::EndMenu();
-								}
+								ctx_.registry.execute<run_script_command>(script_name);
 							}
 						}
 					};
 
-					draw_folder(ctx_.scripts_filepath);
+					draw_folder(ctx_.scripts);
 					ImGui::EndMenu();
 				}
 				ImGui::EndMenu();
@@ -2085,7 +2113,7 @@ namespace vt
 		if (ctx_.win_cfg.show_console_window)
 		{
 			bool clear_console = ctx_.app_settings.clear_console_on_run;
-			ctx_.console.render(ctx_.win_cfg.show_console_window, ctx_.app_settings.clear_console_on_run, ctx_.scripts_filepath);
+			ctx_.console.render(ctx_.win_cfg.show_console_window, ctx_.app_settings.clear_console_on_run, ctx_.script_dir_filepath);
 			if (clear_console != ctx_.app_settings.clear_console_on_run)
 			{
 				ctx_.settings["clear-console-on-run"] = ctx_.app_settings.clear_console_on_run;

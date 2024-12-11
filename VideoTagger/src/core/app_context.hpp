@@ -34,6 +34,7 @@
 #include "displayed_videos_manager.hpp"
 #include <utils/json.hpp>
 #include <utils/vec.hpp>
+#include <utils/file_node.hpp>
 #include <scripts/scripting_engine.hpp>
 
 #include <editor/registry.hpp>
@@ -108,13 +109,14 @@ namespace vt
 
 		std::filesystem::path projects_list_filepath = std::filesystem::path("projects").replace_extension("json");
 		std::filesystem::path app_settings_filepath = std::filesystem::path("settings").replace_extension("json");
-		std::filesystem::path scripts_filepath = std::filesystem::path("assets") / "scripts";
+		std::filesystem::path script_dir_filepath = std::filesystem::path("assets") / "scripts";
 		std::filesystem::path theme_dir_filepath = "themes";
 		registry registry;
 		nlohmann::ordered_json settings;
 		window_config win_cfg;
 		std::unordered_map<std::string, ImFont*> fonts;
 		std::vector<std::filesystem::path> themes;
+		utils::file_node scripts;
 		keybind_storage keybinds;
 		scripting_engine script_eng;
 		std::optional<script_handle> script_handle;
