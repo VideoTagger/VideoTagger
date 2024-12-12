@@ -638,7 +638,7 @@ namespace vt
 
 
 					video_group_id_t id = json_group["id"];
-					if (!json_group.contains("videos") or !json_group["videos"].is_array())
+					if (!json_group.contains("videos") or !json_group.at("videos").is_array())
 					{
 						debug::error("Project's video group's videos format was invalid, skipping...");
 						continue;
@@ -653,7 +653,7 @@ namespace vt
 						vgroup.display_name = std::to_string(id);
 					}
 
-					const auto& group_videos = json_group["videos"];
+					const auto& group_videos = json_group.at("videos");
 					for (const auto& group_video : group_videos)
 					{
 						if (!group_video.contains("id") or !group_video.contains("offset"))
