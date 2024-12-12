@@ -95,6 +95,7 @@ namespace vt
 	bool google_drive_video_resource::update_thumbnail()
 	{
 		//TODO: implement
+		debug::error("Google drive thumbanail download is not yet implemented");
 		return false;
 	}
 

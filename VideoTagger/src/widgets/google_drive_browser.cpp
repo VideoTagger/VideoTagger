@@ -196,7 +196,7 @@ namespace vt::widgets
 			bool parent_folder_disabled = current_path_.empty();
 			if (parent_folder_disabled) ImGui::BeginDisabled();
 
-			//TODO: hint
+			//TODO: tooltip
 			if (widgets::icon_button(icons::arrow_up, icon_button_size))
 			{
 				pop_folder();
@@ -207,7 +207,7 @@ namespace vt::widgets
 		}
 
 		ImGui::SameLine();
-		//TODO: hint
+		//TODO: tooltip
 		if (widgets::icon_button(icons::refresh, icon_button_size))
 		{
 			update_items();

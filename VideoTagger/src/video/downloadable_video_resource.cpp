@@ -62,15 +62,23 @@ namespace vt
 		return ptr->progress;
 	}
 
-	void downloadable_video_resource::remove_downloaded()
+	bool downloadable_video_resource::remove_downloaded()
 	{
 		if (!playable())
 		{
-			return;
+			return false;
 		}
 
-		std::filesystem::remove(local_path_);
+		//TODO: check error
+		std::error_code error;
+		if (!std::filesystem::remove(local_path_, error))
+		{
+			debug::error(error.message());
+			return false;
+		}
+
 		local_path_.clear();
+		return true;
 	}
 
 	bool downloadable_video_resource::playable() const

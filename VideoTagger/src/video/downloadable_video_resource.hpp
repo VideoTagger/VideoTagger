@@ -44,7 +44,7 @@ namespace vt
 		video_download_result download();
 		std::optional<float> download_progress() const;
 
-		void remove_downloaded();
+		bool remove_downloaded();
 
 		virtual bool playable() const;
 		virtual void on_save(nlohmann::ordered_json& json) const;
