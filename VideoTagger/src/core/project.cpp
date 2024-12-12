@@ -594,7 +594,7 @@ namespace vt
 				result.tags = json["tags"];
 			}
 
-			if (json.contains("videos") and json.at("videos").is_array())
+			if (json.contains("videos") and json.at("videos").is_object())
 			{
 				const auto& videos_json = json["videos"];
 				for (auto& [importer_id, importer] : ctx_.video_importers)
@@ -638,7 +638,7 @@ namespace vt
 
 
 					video_group_id_t id = json_group["id"];
-					if (!json_group.contains("videos") or !json["videos"].is_array())
+					if (!json_group.contains("videos") or !json_group["videos"].is_array())
 					{
 						debug::error("Project's video group's videos format was invalid, skipping...");
 						continue;
