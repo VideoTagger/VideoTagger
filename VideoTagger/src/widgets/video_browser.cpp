@@ -52,7 +52,8 @@ namespace vt::widgets
 			{
 				if (!ctx_.displayed_videos.contains(id))
 				{
-					if (ImGui::MenuItem("Remove"))
+					std::string item_string = fmt::format("{} Remove", icons::delete_);
+					if (ImGui::MenuItem(item_string.c_str()))
 					{
 						remove = true;
 					}

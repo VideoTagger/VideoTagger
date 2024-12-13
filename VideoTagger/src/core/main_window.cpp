@@ -974,7 +974,7 @@ namespace vt
 							continue;
 						}
 
-						std::string menu_importer_name = importer->importer_display_name();
+						std::string menu_importer_name = fmt::format("{} {}", importer->importer_display_icon(), importer->importer_display_name());
 						if (ImGui::MenuItem(menu_importer_name.c_str()))
 						{
 							ctx_.current_project->prepare_video_import(importer_id);

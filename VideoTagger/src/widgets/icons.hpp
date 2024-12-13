@@ -45,6 +45,7 @@ namespace vt::icons
 	inline constexpr auto search = "\xee\xa2\xb6";
 	inline constexpr auto terminal = "\xee\xae\x8e";
 	inline constexpr auto download = "\xef\x82\x90";
+	inline constexpr auto download_off = "\xee\x93\xbe";
 	inline constexpr auto arrow_up = "\xee\x97\x98";
 	inline constexpr auto refresh = "\xee\x97\x95";
 	inline constexpr auto local_storage = "\xee\x87\x9b";
@@ -56,6 +57,6 @@ namespace vt::icons
 		dots_hor, play, play_next, pause, repeat, repeat_one, retry, shuffle, skip_next, skip_prev, fast_back, fast_fwd,
 		save, save_as, import_, import_export, exit, close, back, visibility_on, visibility_off, add, delete_, folder,
 		folder_code, file, label, expand_less, expand_more, toggle_less, toggle_more, link, edit, help, video_group,
-		video, search, terminal, download, arrow_up, refresh, local_storage, google_drive_add, home
+		video, search, terminal, download, download_off, arrow_up, refresh, local_storage, google_drive_add, home
 	});
 }

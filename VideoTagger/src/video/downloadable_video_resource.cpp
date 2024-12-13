@@ -2,6 +2,7 @@
 #include "downloadable_video_resource.hpp"
 #include <core/app_context.hpp>
 #include <utils/thumbnail.hpp>
+#include <widgets/icons.hpp>
 
 namespace vt
 {
@@ -103,7 +104,7 @@ namespace vt
 			if (!playable())
 			{
 				video_resource_context_menu_item item;
-				item.name = "Download";
+				item.name = fmt::format("{} Download", icons::download);
 				item.function = [id = id()]()
 				{
 					ctx_.current_project->schedule_video_download(id);
@@ -115,7 +116,7 @@ namespace vt
 				if (!ctx_.displayed_videos.contains(id()))
 				{
 					video_resource_context_menu_item item;
-					item.name = "Remove Local File";
+					item.name = fmt::format("{} Remove Local File", icons::delete_);
 					item.function = [this]()
 					{
 						//TODO: should be done through the project so it can remove it from displayed videos or something
@@ -128,7 +129,7 @@ namespace vt
 		else
 		{
 			video_resource_context_menu_item item;
-			item.name = "Cancel download";
+			item.name = fmt::format("{} Cancel download", icons::download_off);
 			item.function = [this]()
 			{
 				auto ptr = download_data_.lock();
@@ -147,27 +148,57 @@ namespace vt
 	{
 		return [this](ImDrawList& draw_list, ImRect item_rect, ImRect image_rect)
 		{
+			auto& style = ImGui::GetStyle();
+
+			ImVec2 progress_bar_size = { image_rect.GetWidth() - style.FramePadding.x * 2, 10.f };
+			ImVec2 progress_bar_pos = image_rect.Max - progress_bar_size - style.FramePadding;
+
 			auto download_prog = download_progress();
 			if (download_prog.has_value())
 			{
-				float progress_bar_width = image_rect.GetWidth() * *download_prog;
-				ImVec2 progress_bar_min = image_rect.Min;
-				ImVec2 progress_bar_max = { image_rect.Min.x + progress_bar_width, image_rect.Max.y };
+				//ImGui::PushStyleColor(ImGuiCol_PlotHistogram, { 0.9f, 0.0f, 0.0f, 1.0f });
 
-				draw_list.AddRectFilled(progress_bar_min, progress_bar_max, ImGui::ColorConvertFloat4ToU32({ 0.f, 1.f, 0.f, 0.75f }));
+				ImGui::SetCursorScreenPos(progress_bar_pos);
+
+				ImGui::ProgressBar(*download_prog, progress_bar_size, "");
+
+				//ImGui::PopStyleColor();
+
+				//float progress_bar_width = image_rect.GetWidth() * *download_prog;
+				//ImVec2 progress_bar_min = image_rect.Min;
+				//ImVec2 progress_bar_max = { image_rect.Min.x + progress_bar_width, image_rect.Max.y };
+				//
+				//draw_list.AddRectFilled(progress_bar_min, progress_bar_max, ImGui::ColorConvertFloat4ToU32({ 0.f, 1.f, 0.f, 0.75f }));
+				//
+				//std::string progress_string = fmt::format("{:.2f}%", *download_prog * 100.f);
+				//
+				//auto text_size = ImGui::CalcTextSize(progress_string.c_str());
+				//
+				//auto text_pos = image_rect.GetCenter() - text_size / 2;
+				//
+				//draw_list.AddRectFilled(text_pos, text_pos + text_size, ImGui::ColorConvertFloat4ToU32({ 0.1f, 0.1f, 0.1f, 0.5f }));
+				//draw_list.AddText(text_pos, ImGui::ColorConvertFloat4ToU32({ 1.f, 1.f, 1.f, 1.f }), progress_string.c_str());
 			}
 			else
 			{
 				if (!playable())
 				{
-					auto download_icon_image = utils::thumbnail::font_texture();
-					auto glyph = utils::thumbnail::find_glyph(utils::thumbnail::download_icon);
-					auto uv0 = glyph.uv0;
-					auto uv1 = glyph.uv1;
+					ImGui::PushStyleColor(ImGuiCol_PlotHistogram, { 0.9f, 0.0f, 0.0f, 1.0f });
+					
+					ImGui::SetCursorScreenPos(progress_bar_pos);
 
-					ImVec2 icon_padding = image_rect.GetSize() * 0.2;
+					ImGui::ProgressBar(1.f, progress_bar_size, "");
 
-					draw_list.AddImage(reinterpret_cast<ImTextureID>(download_icon_image), image_rect.Min + icon_padding, image_rect.Max - icon_padding, uv0, uv1, ImGui::ColorConvertFloat4ToU32({ 1.f, 0.f, 0.f, 1.f }));
+					ImGui::PopStyleColor();
+
+					//auto download_icon_image = utils::thumbnail::font_texture();
+					//auto glyph = utils::thumbnail::find_glyph(utils::thumbnail::download_icon);
+					//auto uv0 = glyph.uv0;
+					//auto uv1 = glyph.uv1;
+					//
+					//ImVec2 icon_padding = image_rect.GetSize() * 0.2;
+					//
+					//draw_list.AddImage(reinterpret_cast<ImTextureID>(download_icon_image), image_rect.Min + icon_padding, image_rect.Max - icon_padding, uv0, uv1, ImGui::ColorConvertFloat4ToU32({ 1.f, 0.f, 0.f, 1.f }));
 				}
 			}
 		};
