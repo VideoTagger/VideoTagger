@@ -133,6 +133,7 @@ namespace vt
 			std::chrono::nanoseconds video_ts = timestamp - video_data.offset;
 			std::chrono::nanoseconds clamped_video_ts = std::clamp(video_ts, std::chrono::nanoseconds{ 0 }, video_data.video->duration());
 			video_data.video->seek(clamped_video_ts);
+			video_data.video->get_frame(video_data.display_texture);
 
 			if (video_ts < std::chrono::nanoseconds{ 0 })
 			{
