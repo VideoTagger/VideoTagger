@@ -48,62 +48,6 @@
 
 namespace vt::widgets
 {
-	tag& video_timeline::get_displayed_tag(size_t index)
-	{
-		return tags_->at(displayed_tags_[current_video_group_id_].at(index));
-	}
-
-	void video_timeline::add_displayed_tag(const std::string& name)
-	{
-		if (current_video_group_id_ == invalid_video_group_id)
-		{
-			return;
-		}
-
-		if (!tags_->contains(name))
-		{
-			return;
-		}
-
-		auto& displayed_tags_vec = displayed_tags_[current_video_group_id_];
-
-		if (std::find(displayed_tags_vec.begin(), displayed_tags_vec.end(), name) != displayed_tags_vec.end())
-		{
-			return;
-		}
-
-		displayed_tags_vec.push_back(name);
-		ctx_.is_project_dirty = true;
-	}
-
-	void video_timeline::remove_displayed_tag(size_t index)
-	{
-		auto& displayed_tags_vec = displayed_tags_[current_video_group_id_];
-
-		displayed_tags_vec.erase(displayed_tags_vec.begin() + index);
-		ctx_.is_project_dirty = true;
-	}
-
-	void video_timeline::sync_tags()
-	{
-		for (auto& [_, displayed_tags_vec] : displayed_tags_)
-		{
-			for (auto it = displayed_tags_vec.begin(); it != displayed_tags_vec.end(); ++it)
-			{
-				if (!tags_->contains(*it))
-				{
-					it = displayed_tags_vec.erase(it);
-					ctx_.is_project_dirty = true;
-				}
-
-				if (it == displayed_tags_vec.end())
-				{
-					break;
-				}
-			}
-		}
-	}
-
 	void video_timeline::set_video_group_id(video_group_id_t id)
 	{
 		current_video_group_id_ = id;
@@ -174,28 +118,7 @@ namespace vt::widgets
 		return current_time_;
 	}
 
-	std::vector<std::string>& video_timeline::displayed_tags()
-	{
-		return displayed_tags_[current_video_group_id_];
-	}
-
-	const std::vector<std::string>& video_timeline::displayed_tags() const
-	{
-		return displayed_tags_.at(current_video_group_id_);
-	}
-
-	std::unordered_map<video_group_id_t, std::vector<std::string>>& video_timeline::displayed_tags_per_group()
-	{
-		return displayed_tags_;
-	}
-
-	const std::unordered_map<video_group_id_t, std::vector<std::string>>& video_timeline::displayed_tags_per_group() const
-	{
-		return displayed_tags_;
-	}
-
-
-	static bool timeline_add_button(ImDrawList* draw_list, ImVec2 pos, bool enabled)
+	static bool timeline_add_button(ImDrawList* draw_list, ImVec2 pos)
 	{
 		//TODO: Use a regular imgui button
 
@@ -204,7 +127,7 @@ namespace vt::widgets
 		const float button_size = 16.0f * font_scale;
 		const ImGuiStyle& style = ImGui::GetStyle();
 		ImRect btnRect(pos, ImVec2(pos.x + button_size, pos.y + button_size));
-		bool overBtn = btnRect.Contains(io.MousePos) and enabled;
+		bool overBtn = btnRect.Contains(io.MousePos);
 		bool containedClick = overBtn and btnRect.Contains(io.MouseClickedPos[0]);
 		bool clickedBtn = containedClick and io.MouseReleased[0];
 		//int btnColor = overBtn ? 0xAAEAFFAA : 0x77A3B2AA;
@@ -311,7 +234,7 @@ namespace vt::widgets
 			ImVec2 scroll_bar_size(canvas_size.x, style.ScrollbarSize);
 			bool has_scroll_bar = true;
 
-			auto& displayed_tags = displayed_tags_[current_video_group_id_];
+			auto& displayed_tags = ctx_.current_project->displayed_tags;
 
 			float control_height = std::max(std::max(displayed_tags.size(), size_t{ 1 }) * item_height, ImGui::GetWindowSize().y - (has_scroll_bar ? scroll_bar_size.y : 0));
 			int64_t frame_count = std::max<int64_t>(time_max - time_min, 1);
@@ -405,7 +328,7 @@ namespace vt::widgets
 
 						if (is_delivery)
 						{
-							add_displayed_tag(tag_name);
+							ctx_.current_project->add_displayed_tag(tag_name);
 
 							insert_segment_data insert_data;
 							insert_data.show_insert_popup = true;
@@ -458,23 +381,15 @@ namespace vt::widgets
 
 				//if (sequence_options & ImSequencer::SEQUENCER_ADD)
 				{
-					if (timeline_add_button(draw_list, ImVec2(canvas_pos.x + legend_width - item_height, canvas_pos.y + 2), enabled_))
+					if (timeline_add_button(draw_list, ImVec2(canvas_pos.x + legend_width - item_height, canvas_pos.y + 2)))
 					{
 						ImGui::OpenPopup("##AddEntry");
 					}
 
 					if (ImGui::BeginPopup("##AddEntry", ImGuiWindowFlags_NoMove))
 					{
-						//TODO: temporary. the add button should just be disable
-						if (current_video_group_id_ == invalid_video_group_id)
-						{
-							ImGui::CloseCurrentPopup();
-						}
-
 						auto selected_tag = tags_->end();
 
-						//TODO: This should already be sorted, not sorted every frame
-						std::sort(displayed_tags.begin(), displayed_tags.end());
 						bool tags_modifed = false;
 						if (tag_menu(*tags_, displayed_tags, tags_modifed))
 						{
@@ -584,7 +499,7 @@ namespace vt::widgets
 				if (segments_ != nullptr)
 					for (size_t i = 0; i < displayed_tags.size(); i++)
 					{
-						tag& tag_info = get_displayed_tag(i);
+						tag& tag_info = ctx_.current_project->tags.at(displayed_tags[i]);
 						//TODO: consider using at() instead but then an entry would need to be created somewhere first
 						tag_timeline& segments = (*segments_)[tag_info.name];
 
@@ -798,7 +713,7 @@ namespace vt::widgets
 					tag_timeline* segments{};
 					if (mouse_tag_line_index.has_value())
 					{
-						tag_info = &get_displayed_tag(*mouse_tag_line_index);
+						tag_info = &ctx_.current_project->tags.at(displayed_tags[*mouse_tag_line_index]);
 						segments = &segments_->at(tag_info->name);
 					}
 

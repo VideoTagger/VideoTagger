@@ -85,12 +85,6 @@ namespace vt::widgets
 		std::optional<moving_segment_data> moving_segment;
 		insert_segment_data_container* insert_segment_container{};
 
-		tag& get_displayed_tag(size_t index);
-		void add_displayed_tag(const std::string& name);
-		void remove_displayed_tag(size_t index);
-
-		void sync_tags();
-
 		void set_video_group_id(video_group_id_t id);
 		video_group_id_t video_group_id() const;
 
@@ -112,12 +106,6 @@ namespace vt::widgets
 		void set_current_timestamp(timestamp ts);
 		timestamp current_timestamp() const;
 
-		std::vector<std::string>& displayed_tags();
-		const std::vector<std::string>& displayed_tags() const;
-
-		std::unordered_map<video_group_id_t, std::vector<std::string>>& displayed_tags_per_group();
-		const std::unordered_map<video_group_id_t, std::vector<std::string>>& displayed_tags_per_group() const;
-
 		void render(bool& open);
 
 	private:
@@ -126,8 +114,6 @@ namespace vt::widgets
 		
 		vt::tag_storage* tags_{};
 		vt::segment_storage* segments_{};
-
-		std::unordered_map<video_group_id_t, std::vector<std::string>> displayed_tags_;
 
 		int64_t first_frame_{};
 

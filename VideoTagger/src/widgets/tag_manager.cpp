@@ -79,11 +79,13 @@ namespace vt::widgets
 			ImGui::BeginDisabled(valid_tag_name != tag_validate_result::ok);
 			if (ImGui::Button("Done"))
 			{
+				//TODO: inserting maybe should be done outside the widget (like renaming and removing)
 				auto [it, inserted] = tags.insert(tag_name);
 				if (inserted)
 				{
 					return_value = true;
 					it->color = ImGui::ColorConvertFloat4ToU32(color);
+
 					added_entry = it;
 				}
 				
@@ -438,6 +440,7 @@ namespace vt::widgets
 		tag_storage::iterator added_entry = tags.end();
 		if (add_tag_popup(tags, added_entry))
 		{
+			ctx_.current_project->add_displayed_tag(added_entry->name);
 			dirty_flag = true;
 		}
 

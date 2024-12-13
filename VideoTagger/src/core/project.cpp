@@ -396,12 +396,9 @@ namespace vt
 		auto& json_video_timeline = json["video-timeline"];
 		auto& json_displayed_tags = json_video_timeline["displayed-tags"];
 		json_displayed_tags = nlohmann::ordered_json::array();
-		for (auto& [group_id, displayed_tags] : ctx_.video_timeline.displayed_tags_per_group())
+		for (auto& tag_name : displayed_tags)
 		{
-			auto json_group_tags = nlohmann::ordered_json::object();
-			json_group_tags["group-id"] = group_id;
-			json_group_tags["tags"] = displayed_tags;
-			json_displayed_tags.push_back(json_group_tags);
+			json_displayed_tags.push_back(tag_name);
 		}
 
 		//TODO: This probably shouldnt be done
@@ -501,15 +498,10 @@ namespace vt
 
 		ctx_.is_project_dirty = true;
 
-		for (auto& [_, displayed_tags] : ctx_.video_timeline.displayed_tags_per_group())
+		if (auto it = find_displayed_tag(old_name); it != displayed_tags.end())
 		{
-			for (auto& tag_name : displayed_tags)
-			{
-				if (tag_name == old_name)
-				{
-					tag_name = new_name;
-				}
-			}
+			displayed_tags.erase(it);
+			add_displayed_tag(new_name);
 		}
 
 		//TODO: maybe handle selected and moving segment but it may not be necessary
@@ -552,6 +544,8 @@ namespace vt
 			moving_segment.reset();
 		}
 
+		remove_displayed_tag(tag_name);
+
 		for (auto& [group_id, group] :video_groups)
 		{
 			auto& group_segments = group.segments();
@@ -563,6 +557,41 @@ namespace vt
 		}
 
 		tags.erase(tag_name);
+	}
+
+	bool project::add_displayed_tag(const std::string& tag_name)
+	{
+		auto it = std::lower_bound(displayed_tags.begin(), displayed_tags.end(), tag_name);
+		if (it != displayed_tags.end() and *it == tag_name)
+		{
+			return false;
+		}
+
+		displayed_tags.insert(it, tag_name);
+		return true;
+	}
+
+	bool project::remove_displayed_tag(const std::string& tag_name)
+	{
+		auto it = std::lower_bound(displayed_tags.begin(), displayed_tags.end(), tag_name);
+		if (it != displayed_tags.end() or *it != tag_name)
+		{
+			return false;
+		}
+
+		displayed_tags.erase(it);
+		return true;
+	}
+
+	std::vector<std::string>::iterator project::find_displayed_tag(const std::string& tag_name)
+	{
+		auto it = std::lower_bound(displayed_tags.begin(), displayed_tags.end(), tag_name);
+		if (it == displayed_tags.end() or *it != tag_name)
+		{
+			return displayed_tags.end();
+		}
+		
+		return it;
 	}
 	
 	project project::load_from_file(const std::filesystem::path& filepath)
@@ -698,15 +727,11 @@ namespace vt
 			if (json.contains("video-timeline"))
 			{
 				auto& json_video_timeline = json.at("video-timeline");
-				if (json_video_timeline.contains("displayed-tags"))
+				if (json_video_timeline.contains("displayed-tags") and json_video_timeline.at("displayed-tags").is_array())
 				{
-					for (auto& json_group_tags : json_video_timeline.at("displayed-tags"))
+					for (auto& tag_name : json_video_timeline.at("displayed-tags"))
 					{
-						auto& timeline_displayed_tags = ctx_.video_timeline.displayed_tags_per_group();
-						if (json_group_tags.contains("group-id") and json_group_tags.contains("tags"))
-						{
-							timeline_displayed_tags[json_group_tags.at("group-id")] = json_group_tags.at("tags");
-						}
+						result.add_displayed_tag(tag_name);
 					}
 				}
 			}

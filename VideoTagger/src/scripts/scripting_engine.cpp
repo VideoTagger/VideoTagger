@@ -19,7 +19,7 @@ namespace vt
 		.def(py::init<>())
 		.def_property_readonly("segment_count", [](const widgets::video_timeline&)
 		{
-			return ctx_.video_timeline.displayed_tags().size();
+			return ctx_.current_project->displayed_tags.size();
 		})
 		.def("__repr__", [](const widgets::video_timeline&)
 		{

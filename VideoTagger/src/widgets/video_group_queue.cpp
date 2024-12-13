@@ -97,6 +97,7 @@ namespace vt::widgets
 						auto it = playlist.begin();
 						auto full_avail_area = ImGui::GetContentRegionAvail();
 
+						std::optional<video_group_playlist::iterator> clicked_group;
 						for (; it != playlist.end();)
 						{
 							bool remove_group{};
@@ -111,7 +112,7 @@ namespace vt::widgets
 							ImGui::SameLine();
 							bool is_selected = current_group_id != 0 and current_group_id == group_id;
 
-							tile(fmt::format("group{}", group_id).c_str(), label, tile_size, image_tile_size, image,
+							bool tile_active = tile(fmt::format("group{}", group_id).c_str(), label, tile_size, image_tile_size, image,
 							[&remove_group](const std::string& label)
 							{
 								if (ImGui::MenuItem("Remove"))
@@ -136,6 +137,11 @@ namespace vt::widgets
 								}
 							}, nullptr, glyph.uv0, glyph.uv1, is_selected);
 
+							if (tile_active)
+							{
+								clicked_group = it;
+							}
+
 							ImGui::SameLine();
 
 							if (remove_group)
@@ -146,6 +152,12 @@ namespace vt::widgets
 							{
 								++it;
 							}
+						}
+
+						if (clicked_group.has_value())
+						{
+							ctx_.set_current_video_group_id(**clicked_group);
+							clicked_group.reset();
 						}
 
 						//draw_spacer(spacer_size, it);
