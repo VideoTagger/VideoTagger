@@ -1234,10 +1234,9 @@ namespace vt
 
 			if (!insert_data.tag.empty() and insert_data.name_index < 0)
 			{
-				auto& tags = ctx_.video_timeline.displayed_tags();
+				auto& tags = ctx_.current_project->displayed_tags;
 
-				auto it = std::find(tags.begin(), tags.end(), insert_data.tag);
-				if (it != tags.end())
+				if (auto it = ctx_.current_project->find_displayed_tag(insert_data.tag); it != tags.end())
 				{
 					insert_data.name_index = static_cast<int>(it - tags.begin());
 				}
@@ -1292,7 +1291,7 @@ namespace vt
 		auto min_ts = ctx_.video_timeline.start_timestamp().total_milliseconds.count();
 		auto max_ts = ctx_.video_timeline.end_timestamp().total_milliseconds.count();
 		//should it be this or all tags?
-		auto& tags = ctx_.video_timeline.displayed_tags();
+		auto& tags = ctx_.current_project->displayed_tags;
 
 		auto segment_type = *insert_data.start == *insert_data.end ? tag_segment_type::timestamp : tag_segment_type::segment;
 		const char* insert_segment_popup_id = segment_type == tag_segment_type::timestamp ? "Insert Timestamp###AppInsertSegment" : "Insert Segment###AppInsertSegment";
@@ -1489,7 +1488,6 @@ namespace vt
 			ctx_.video_timeline.set_video_group_id(ctx_.current_video_group_id());
 			ctx_.video_timeline.set_tag_storage(&ctx_.current_project->tags);
 			ctx_.video_timeline.set_segment_storage(ctx_.current_video_group_id() != invalid_video_group_id ? &ctx_.get_current_segment_storage() : nullptr);
-			ctx_.video_timeline.sync_tags();
 			ctx_.video_timeline.set_start_timestamp(timestamp::zero());
 			ctx_.video_timeline.set_end_timestamp(timestamp(std::chrono::duration_cast<std::chrono::milliseconds>(group_duration)));
 			ctx_.video_timeline.set_current_timestamp(timestamp{ std::chrono::duration_cast<std::chrono::milliseconds>(ctx_.displayed_videos.current_timestamp()) });

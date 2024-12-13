@@ -51,7 +51,7 @@ namespace vt
 		video_pool videos;
 		tag_storage tags;
 		keybind_storage keybinds;
-
+		std::vector<std::string> displayed_tags;
 
 		project() = default;
 		project(const project&) = delete;
@@ -71,6 +71,10 @@ namespace vt
 
 		tag_rename_result rename_tag(const std::string& old_name, const std::string& new_name);
 		void delete_tag(const std::string& tag_name);
+
+		bool add_displayed_tag(const std::string& tag_name);
+		bool remove_displayed_tag(const std::string& tag_name);
+		std::vector<std::string>::iterator find_displayed_tag(const std::string& tag_name);
 
 		static project load_from_file(const std::filesystem::path& filepath);
 	};
