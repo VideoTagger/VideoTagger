@@ -95,7 +95,7 @@ namespace vt
 	bool google_drive_video_resource::update_thumbnail()
 	{
 		//TODO: implement
-		debug::error("Google drive thumbanail download is not yet implemented");
+		debug::error("Google drive thumbnail download is not yet implemented");
 		return false;
 	}
 
@@ -168,7 +168,15 @@ namespace vt
 				int range_start = downloaded_size;
 				int range_end = std::min(range_start + chunk_size - 1, file_size - 1);
 
-				auto get_result = client.Get(download_url, { httplib::make_range_header({ { range_start, range_end } }) });
+				auto current_progress = data->progress;
+
+				auto get_result = client.Get(download_url, { httplib::make_range_header({ { range_start, range_end } }) },
+					[&data, current_progress, file_size](uint64_t len, uint64_t total)
+					{
+						data->progress = current_progress + float(len) / file_size;
+						return true;
+					}
+				);
 				if (get_result and (get_result->status == 200 or get_result->status == 206))
 				{
 					file.write(get_result->body.c_str(), get_result->body.size());
@@ -180,8 +188,6 @@ namespace vt
 					debug::error("Error during download: {}", get_result ? get_result->reason : httplib::to_string(get_result.error()));
 					return video_download_status::failure;
 				}
-
-				data->progress = float(downloaded_size) / file_size;
 			}
 
 			data->download_path = file_path;
