@@ -167,7 +167,7 @@ namespace vt
 		generate_thumbnail_tasks.push_back(std::move(task));
 	}
 
-	bool project::import_video(std::unique_ptr<video_resource>&& vid_resource, std::optional<video_group_id_t> group_id, bool set_project_dirty)
+	bool project::import_video(std::unique_ptr<video_resource>&& vid_resource, std::optional<video_group_id_t> group_id, bool check_hash, bool set_project_dirty)
 	{
 		if (vid_resource == nullptr)
 		{
@@ -177,11 +177,22 @@ namespace vt
 
 		const auto& metadata = vid_resource->metadata();
 
-		//TODO: check hash
+		if (check_hash and vid_resource->metadata().sha256.has_value())
+		{
+			for (auto& [id, video] : videos)
+			{
+				const auto& hash = *video->metadata().sha256;
+				if (hash == vid_resource->metadata().sha256)
+				{
+					debug::error("Video with hash: {} is already imported", utils::hash::bytes_to_hex(hash, utils::hash::string_case::lower));
+					return false;
+				}
+			}
+		}
 
 		video_group::video_info group_info{};
 		group_info.id = vid_resource->id();
-
+		
 		if (!videos.insert(std::move(vid_resource)))
 		{
 			return false;
@@ -252,10 +263,7 @@ namespace vt
 					json_video["title"] = metadata.title.has_value() ? *metadata.title : "UNKNOWN";
 					if (metadata.sha256.has_value())
 					{
-						std::vector<uint8_t> tmp(metadata.sha256->size());
-						std::copy_n(metadata.sha256->begin(), metadata.sha256->size(), tmp.begin());
-
-						json_video["sha256"] = utils::hash::bytes_to_hex(tmp, utils::hash::string_case::lower);
+						json_video["sha256"] = utils::hash::bytes_to_hex(*metadata.sha256, utils::hash::string_case::lower);
 					}
 					json_group_videos.push_back(json_video);
 				}

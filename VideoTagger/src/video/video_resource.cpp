@@ -117,10 +117,7 @@ namespace vt
 		}
 		if (metadata_.sha256.has_value())
 		{
-			std::vector<uint8_t> tmp(metadata_.sha256->size());
-			std::copy_n(metadata_.sha256->begin(), metadata_.sha256->size(), tmp.begin());
-
-			result["sha256"] = utils::hash::bytes_to_hex(tmp, utils::hash::string_case::lower);
+			result["sha256"] = utils::hash::bytes_to_hex(*metadata_.sha256, utils::hash::string_case::lower);
 		}
 
 		on_save(result);

@@ -102,7 +102,7 @@ namespace vt
 
 		void schedule_generate_thumbnail(video_id_t video_id);
 
-		bool import_video(std::unique_ptr<video_resource>&& vid_resource, std::optional<video_group_id_t> group_id, bool set_project_dirty = true);
+		bool import_video(std::unique_ptr<video_resource>&& vid_resource, std::optional<video_group_id_t> group_id, bool check_hash = true, bool set_project_dirty = true);
 
 		bool export_segments(const std::filesystem::path& filepath, std::vector<video_group_id_t> group_ids) const;
 

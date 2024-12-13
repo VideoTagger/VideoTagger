@@ -19,6 +19,20 @@ namespace vt::utils::hash
 		lower
 	};
 
-	extern std::string bytes_to_hex(const std::vector<uint8_t>& bytes, string_case result_case);
+	template<typename Container>
+	inline std::string bytes_to_hex(const Container& bytes, string_case result_case);
 	extern std::vector<uint8_t> hex_to_bytes(std::string_view hex_string);
+
+	template<typename Container>
+	inline std::string bytes_to_hex(const Container& bytes, string_case result_case)
+	{
+		std::ostringstream ss;
+		ss << std::hex << (result_case == string_case::upper ? std::uppercase : std::nouppercase);
+		for (auto& byte : bytes)
+		{
+			ss << std::setw(2) << std::setfill('0') << static_cast<int>(byte);
+		}
+
+		return ss.str();
+	}
 }
