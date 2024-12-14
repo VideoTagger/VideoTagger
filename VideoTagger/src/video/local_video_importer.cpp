@@ -4,6 +4,7 @@
 #include <widgets/controls.hpp>
 #include <core/app_context.hpp>
 #include <utils/filesystem.hpp>
+#include <utils/string.hpp>
 
 namespace vt
 {
@@ -70,9 +71,9 @@ namespace vt
 				{
 					{
 						auto it = std::find_if(vid_exts.begin(), vid_exts.end(), [&path](const std::string& ext)
-							{
-								return path.extension() == "." + ext;
-							});
+						{
+							return utils::string::to_lowercase(path.extension().u8string()) == "." + ext;
+						});
 
 						if (it == vid_exts.end())
 						{
