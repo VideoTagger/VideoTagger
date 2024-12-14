@@ -493,6 +493,7 @@ namespace vt
 	inline polygon utils::lerp(const polygon& start, const polygon& end, float alpha)
 	{
 		polygon poly;
+		poly.vertices.resize(std::min(start.vertices.size(), end.vertices.size()));
 		for (size_t i = 0; i < poly.vertices.size(); ++i)
 		{
 			poly.vertices[i] = lerp(start.vertices[i], end.vertices[i], alpha);
