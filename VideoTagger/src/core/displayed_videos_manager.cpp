@@ -278,6 +278,17 @@ namespace vt
 		return videos_.empty();
 	}
 
+	double displayed_videos_manager::max_framerate() const
+	{
+		double return_value = -std::numeric_limits<float>::infinity();
+		for (auto& video : videos_)
+		{
+			return_value = std::max(return_value, video.video->fps());
+		}
+
+		return return_value;
+	}
+
 	displayed_videos_manager::iterator displayed_videos_manager::begin()
 	{
 		return videos_.begin();
