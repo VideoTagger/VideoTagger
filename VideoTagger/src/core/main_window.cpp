@@ -107,12 +107,12 @@ namespace vt
 		ctx_.project_selector.load_projects_file(ctx_.projects_list_filepath);
 	}
 
-	void main_window::on_close_project(bool should_shutdown)
+	bool main_window::on_close_project(bool should_shutdown)
 	{
 		if (ctx_.script_handle.has_value())
 		{
 			ctx_.script_eng.interrupt();
-			return;
+			return false;
 		}
 
 		ctx_.gizmo_target = nullptr;
@@ -160,18 +160,13 @@ namespace vt
 				case 1:
 				{
 					on_save();
-					if (should_shutdown) ctx_.state_ = app_state::shutdown;
 				}
 				break;
-				case 2:
-				{
-					if (should_shutdown) ctx_.state_ = app_state::shutdown;
-				}
-				break;
+				case 0: return false;
 			}
-			return;
 		}
 		if (should_shutdown) ctx_.state_ = app_state::shutdown;
+		return true;
 	}
 
 	void main_window::on_save()
@@ -398,11 +393,14 @@ namespace vt
 
 	void main_window::close_project()
 	{
-		on_close_project(false);
-		ctx_.reset_current_video_group();
-		ctx_.current_project = std::nullopt;
-		ctx_.video_timeline.selected_segment = std::nullopt;
-		set_subtitle();
+		if (on_close_project(false))
+		{
+			ctx_.reset_current_video_group();
+			ctx_.current_project = std::nullopt;
+			ctx_.video_timeline.selected_segment = std::nullopt;
+			ctx_.is_project_dirty = false;
+			set_subtitle();
+		}
 	}
 
 	void main_window::init_keybinds()

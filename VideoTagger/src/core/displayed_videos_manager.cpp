@@ -123,7 +123,7 @@ namespace vt
 
 	void displayed_videos_manager::seek(std::chrono::nanoseconds timestamp)
 	{
-		std::for_each(std::execution::par, videos_.begin(), videos_.end(), [timestamp, this](displayed_video_data& video_data)
+		std::for_each(std::execution::seq, videos_.begin(), videos_.end(), [timestamp, this](displayed_video_data& video_data)
 		{
 			if (video_data.video == nullptr)
 			{

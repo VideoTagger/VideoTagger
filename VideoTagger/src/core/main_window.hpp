@@ -10,7 +10,7 @@ namespace vt
 		main_window(const app_window_config& cfg);
 
 	public:
-		void on_close_project(bool should_shutdown);
+		bool on_close_project(bool should_shutdown);
 		void on_save();
 		void on_save_as();
 		void on_show_in_explorer();
