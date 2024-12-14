@@ -111,7 +111,7 @@ namespace vt
 
 	void displayed_videos_manager::seek(std::chrono::nanoseconds timestamp)
 	{
-		std::for_each(std::execution::par, videos_.begin(), videos_.end(), [timestamp, this](displayed_video_data& video_data)
+		std::for_each(std::execution::seq, videos_.begin(), videos_.end(), [timestamp, this](displayed_video_data& video_data)
 		{
 			std::chrono::nanoseconds video_ts = timestamp - video_data.offset;
 			std::chrono::nanoseconds clamped_video_ts = std::clamp(video_ts, std::chrono::nanoseconds{ 0 }, video_data.video.duration());

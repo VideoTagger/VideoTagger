@@ -13,11 +13,11 @@ namespace vt
 
 	namespace impl { struct query_handler_interface {}; }
 
-	template<typename result_type>
+	template<typename query_type>
 	struct query_handler : public impl::query_handler_interface
 	{
-		using query_t = query<result_type>;
+		using query_t = query_type;
 
-		virtual result_type handle(const query<result_type>& query) = 0;
+		virtual typename query_type::result handle(const query_type& query) = 0;
 	};
 }

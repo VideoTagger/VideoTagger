@@ -126,7 +126,7 @@ namespace vt
 		task.group_id = group_id;
 		task.task = [&importer, import_data = std::move(import_data)]()
 		{
-			return importer.import_video(utils::uuid::get(), std::move(import_data));
+			return importer.import_video(video_importer::generate_video_id(), std::move(import_data));
 		};
 		video_import_tasks.push_back(std::move(task));
 	}
@@ -223,7 +223,7 @@ namespace vt
 			if (group_it == video_groups.end())
 			{
 				auto& group = video_groups[*group_id];
-				group.display_name = metadata.title.has_value() ? *metadata.title : fmt::format("Untitled Group {}", vid_resource->id());
+				group.display_name = metadata.title.has_value() ? *metadata.title : fmt::format("Untitled Group {}", group_info.id);
 				group.insert(group_info);
 			}
 			else
@@ -726,7 +726,7 @@ namespace vt
 
 					if (json_group.contains("segments") and json_group.at("segments").is_array())
 					{
-						vgroup.segments() = json_group.at("segments");
+						from_json(json_group["segments"], vgroup.segments(), result.tags);
 					}
 
 					result.video_groups.insert({ id, vgroup });

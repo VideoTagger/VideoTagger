@@ -84,7 +84,7 @@ namespace vt::widgets
 
 		auto& style = ImGui::GetStyle();
 
-		if (ImGui::Begin("Video Browser", &is_open, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse))
+		if (ImGui::Begin(window_name().c_str(), &is_open, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse))
 		{
 			bool any_item_hovered = false;
 			bool window_hovered = false;
@@ -191,5 +191,10 @@ namespace vt::widgets
 			}
 		}
 		ImGui::End();
+	}
+
+	std::string video_browser::window_name()
+	{
+		return fmt::format("{} Video Browser", icons::database);
 	}
 }

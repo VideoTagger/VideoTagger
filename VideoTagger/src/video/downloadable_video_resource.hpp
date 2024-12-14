@@ -45,9 +45,6 @@ namespace vt
 		downloadable_video_resource(std::string importer_id, const nlohmann::ordered_json& json);
 		virtual ~downloadable_video_resource() = default;
 
-		const std::filesystem::path& local_path() const;
-		void set_local_path(std::filesystem::path path);
-
 		//local_path must be updated manually
 		video_download_result download();
 		std::optional<float> download_progress() const;
@@ -56,7 +53,6 @@ namespace vt
 
 		virtual video_downloadable downloadable() const = 0;
 		virtual bool playable() const;
-		virtual void on_save(nlohmann::ordered_json& json) const;
 		virtual void on_remove() override;
 		virtual void context_menu_items(std::vector<video_resource_context_menu_item>& items);
 		virtual std::function<void(ImDrawList&, ImRect, ImRect)> icon_custom_draw() const override;
@@ -65,7 +61,6 @@ namespace vt
 		virtual std::function<video_download_status(std::shared_ptr<video_download_data>)> download_task() = 0;
 
 	private:
-		std::filesystem::path local_path_;
 		std::weak_ptr<video_download_data> download_data_;
 	};
 }

@@ -14,6 +14,8 @@ namespace vt
 		//static constexpr auto static_importer_id = "importer_id";
 		//static constexpr auto static_importer_display_name = "Importer Name";
 
+		static video_id_t generate_video_id();
+
 		video_importer(std::string importer_id, std::string importer_display_name, std::string importer_display_icon);
 		virtual ~video_importer() = default;
 

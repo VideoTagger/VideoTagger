@@ -1,6 +1,6 @@
 #pragma once
 #include <functional>
-#include <core/keybind_action.hpp>
+#include "keybind_action.hpp"
 
 namespace vt
 {

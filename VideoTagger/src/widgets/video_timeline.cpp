@@ -45,6 +45,7 @@
 
 #include <core/app_context.hpp>
 #include <utils/drag_drop.hpp>
+#include <editor/set_selected_attribute_command.hpp>
 
 namespace vt::widgets
 {
@@ -200,7 +201,7 @@ namespace vt::widgets
 		static std::string window_id = "Timeline";
 		ImVec2 default_window_padding = ImGui::GetStyle().WindowPadding;
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2{});
-		if (ImGui::Begin(window_id.c_str(), &open))
+		if (ImGui::Begin(window_name().c_str(), &open))
 		{
 			//TODO: check for nulls
 
@@ -589,6 +590,7 @@ namespace vt::widgets
 										&segments,
 										segment_it
 									};
+									ctx_.registry.execute<set_selected_attribute_command>(nullptr);
 									moving_segment.reset();
 								}
 
@@ -795,6 +797,7 @@ namespace vt::widgets
 								segments->erase(*segment_it);
 								if (selected_segment.has_value() and selected_segment->segments == segments and selected_segment->segment_it == *segment_it)
 								{
+									ctx_.registry.execute<set_selected_attribute_command>(nullptr);
 									selected_segment.reset();
 									moving_segment.reset();
 								}
@@ -824,6 +827,7 @@ namespace vt::widgets
 
 				if (ImGui::IsMouseHoveringRect(contentMin, contentMax) and ImGui::IsMouseClicked(ImGuiMouseButton_Left) and deselect)
 				{
+					ctx_.registry.execute<set_selected_attribute_command>(nullptr);
 					selected_segment.reset();
 					moving_segment.reset();
 				}
@@ -1091,4 +1095,9 @@ namespace vt::widgets
 		ImGui::End();
 		ImGui::PopStyleVar();
 	}
+
+    std::string video_timeline::window_name()
+    {
+        return fmt::format("{} Timeline###Timeline", icons::timeline);
+    }
 }

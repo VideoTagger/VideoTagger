@@ -98,12 +98,12 @@ namespace vt
 		project& operator=(const project&) = delete;
 		project& operator=(project&&) = default;
 
-		template<typename VideoImporter>
+		template<typename video_importer>
 		void prepare_video_import();
 		void prepare_video_import(const std::string& importer_id);
 
-		template<typename VideoImporter>
-		void schedule_video_import(typename VideoImporter::import_data import_data, std::optional<video_group_id_t> group_id);
+		template<typename video_importer>
+		void schedule_video_import(typename video_importer::import_data import_data, std::optional<video_group_id_t> group_id);
 		void schedule_video_import(const std::string& importer_id, std::any import_data, std::optional<video_group_id_t> group_id);
 
 		void schedule_video_download(video_id_t video_id);
@@ -112,6 +112,7 @@ namespace vt
 
 		void schedule_video_refresh(video_id_t video_id);
 
+		//TODO: maybe return the imported video or the video with the same hash if it exist and bool inserted
 		bool import_video(std::unique_ptr<video_resource>&& vid_resource, std::optional<video_group_id_t> group_id, bool check_hash = true, bool set_project_dirty = true);
 
 		bool export_segments(const std::filesystem::path& filepath, std::vector<video_group_id_t> group_ids) const;
@@ -133,15 +134,15 @@ namespace vt
 		static project load_from_file(const std::filesystem::path& filepath);
 	};
 
-	template<typename VideoImporter>
+	template<typename video_importer>
 	inline void project::prepare_video_import()
 	{
-		return prepare_video_import(VideoImporter::static_importer_id);
+		return prepare_video_import(video_importer::static_importer_id);
 	}
 
-	template<typename VideoImporter>
-	inline void project::schedule_video_import(typename VideoImporter::import_data import_data, std::optional<video_group_id_t> group_id)
+	template<typename video_importer>
+	inline void project::schedule_video_import(typename video_importer::import_data import_data, std::optional<video_group_id_t> group_id)
 	{
-		return schedule_video_import(VideoImporter::static_importer_id, std::move(import_data), group_id);
+		return schedule_video_import(video_importer::static_importer_id, std::move(import_data), group_id);
 	}
 }

@@ -27,11 +27,15 @@
 #include <widgets/video_group_browser.hpp>
 #include <widgets/video_group_queue.hpp>
 #include <widgets/theme_customizer.hpp>
+#include <widgets/shape_attributes.hpp>
+#include <widgets/console.hpp>
 #include <widgets/modal/options.hpp>
 #include <widgets/modal/tag_importer.hpp>
 #include <widgets/modal/script_progress.hpp>
 #include "displayed_videos_manager.hpp"
 #include <utils/json.hpp>
+#include <utils/vec.hpp>
+#include <utils/file_node.hpp>
 #include <scripts/scripting_engine.hpp>
 #include <services/service_account_manager.hpp>
 #include <video/video_importer.hpp>
@@ -61,6 +65,7 @@ namespace vt
 		bool link_start_end_segment = true;
 		bool autoplay = true;
 		bool load_thumbnails = true;
+		bool clear_console_on_run = true;
 		bool enable_undocking = true;
 	};
 
@@ -69,12 +74,14 @@ namespace vt
 		//serialized
 		window_state state = window_state::normal;
 		bool show_inspector_window = true;
+		bool show_shape_attributes_window = true;
 		bool show_tag_manager_window = true;
 		bool show_timeline_window = true;
 		bool show_video_player_window = true;
 		bool show_video_browser_window = true;
 		bool show_video_group_browser_window = true;
 		bool show_video_group_queue_window = true;
+		bool show_console_window = true;
 
 		//not serialized
 		bool show_options_window = false;
@@ -94,6 +101,8 @@ namespace vt
 		widgets::video_group_browser group_browser;
 		widgets::video_group_queue group_queue;
 		widgets::theme_customizer theme_customizer;
+		widgets::shape_attributes shape_attributes;
+		widgets::console console;
 		widgets::modal::options options;
 		widgets::modal::script_progress script_progress;
 		widgets::color_picker color_picker;
@@ -104,18 +113,22 @@ namespace vt
 		std::filesystem::path projects_list_filepath = std::filesystem::path("projects").replace_extension("json");
 		std::filesystem::path app_settings_filepath = std::filesystem::path("settings").replace_extension("json");
 		std::filesystem::path accounts_filepath = std::filesystem::path("accounts").replace_extension("json");
-		std::filesystem::path scripts_filepath = std::filesystem::path("assets") / "scripts";
+		std::filesystem::path script_dir_filepath = std::filesystem::path("assets") / "scripts";
 		std::filesystem::path theme_dir_filepath = "themes";
 		registry registry;
 		nlohmann::ordered_json settings;
 		window_config win_cfg;
 		std::unordered_map<std::string, ImFont*> fonts;
 		std::vector<std::filesystem::path> themes;
+		utils::file_node scripts;
 		keybind_storage keybinds;
 		scripting_engine script_eng;
 		std::optional<script_handle> script_handle;
 		std::unordered_map<std::string, std::unique_ptr<service_account_manager>> account_managers;
 		std::unordered_map<std::string, std::unique_ptr<video_importer>> video_importers;
+		std::optional<video_id_t> last_focused_video;
+		tag_attribute_instance* selected_attribute{};
+		utils::vec2<uint32_t>* gizmo_target{};
 
 		displayed_videos_manager displayed_videos;
 

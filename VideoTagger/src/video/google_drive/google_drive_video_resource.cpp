@@ -68,12 +68,12 @@ namespace vt
 	google_drive_video_resource::google_drive_video_resource(const nlohmann::ordered_json& json)
 		: downloadable_video_resource(google_drive_video_importer::static_importer_id, json)
 	{
-		if (!json.contains("file_id"))
+		if (!json.contains("file-id"))
 		{
 			throw std::runtime_error("Video json didn't contain a google drive file id");
 		}
 		
-		file_id_ = json.at("file_id");
+		file_id_ = json.at("file-id");
 	}
 
 	const std::string& google_drive_video_resource::file_id() const
@@ -84,9 +84,9 @@ namespace vt
 	video_stream google_drive_video_resource::video() const
 	{
 		video_stream result;
-		if (!result.open_file(local_path()))
+		if (!result.open_file(file_path()))
 		{
-			debug::panic("Failed to open video from path {}", local_path().u8string());
+			debug::panic("Failed to open video from path {}", file_path());
 		}
 
 		return result;
@@ -116,7 +116,7 @@ namespace vt
 	{
 		downloadable_video_resource::on_save(json);
 
-		json["file_id"] = file_id_;
+		json["file-id"] = file_id_;
 	}
 
 	std::function<video_download_status(std::shared_ptr<video_download_data>)> google_drive_video_resource::download_task()

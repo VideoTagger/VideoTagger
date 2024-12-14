@@ -10,6 +10,7 @@ namespace vt::utils::string
 	
 	std::string to_lowercase(const std::string& input);
 	std::string to_uppercase(const std::string& input);
+	std::string to_titlecase(const std::string& input);
 	std::string trim_whitespace(const std::string& input);
 	std::vector<std::string> split(const std::string& input, char delimiter);
 

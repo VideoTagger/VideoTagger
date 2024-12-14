@@ -4,9 +4,7 @@
 
 namespace vt
 {
-	video_group::video_group(std::string name, std::vector<video_info> video_ids)
-		: display_name{ std::move(name) }, video_ids_(video_ids)
-	{}
+	video_group::video_group(const std::string& name, const std::vector<video_info>& video_ids) : display_name{ std::move(name) }, video_ids_(video_ids) {}
 
 	bool video_group::insert(video_info video_info)
 	{

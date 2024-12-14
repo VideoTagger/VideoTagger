@@ -1,5 +1,6 @@
 #pragma once
 #include "app_window.hpp"
+#include <utils/file_node.hpp>
 
 namespace vt
 {
@@ -9,7 +10,7 @@ namespace vt
 		main_window(const app_window_config& cfg);
 
 	public:
-		void on_close_project(bool should_shutdown);
+		bool on_close_project(bool should_shutdown);
 		void on_save();
 		void on_save_as();
 		void on_show_in_explorer();
@@ -28,6 +29,7 @@ namespace vt
 		void init_options();
 
 		void fetch_themes();
+		utils::file_node fetch_scripts(const std::filesystem::path& path);
 
 		void draw_menubar();
 		void draw_project_selector();

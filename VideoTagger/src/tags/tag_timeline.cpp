@@ -3,17 +3,10 @@
 
 namespace vt
 {
-	tag_segment::tag_segment(timestamp time_start, timestamp time_end)
-		: start{ std::min(time_start, time_end) }, end{ std::max(time_start, time_end) }
-	{
-	}
+	tag_segment::tag_segment(timestamp time_start, timestamp time_end, const attribute_instance_container& attributes) : start{ std::min(time_start, time_end) }, end{ std::max(time_start, time_end) }, attributes{ attributes } {}
+	tag_segment::tag_segment(timestamp time_point, const attribute_instance_container& attributes) : start{ time_point }, end{ time_point }, attributes{ attributes } {}
 
-	tag_segment::tag_segment(timestamp time_point)
-		: start{ time_point }, end{ time_point }
-	{
-	}
-
-	void tag_segment::set(timestamp time_start, timestamp time_end)
+    void tag_segment::set(timestamp time_start, timestamp time_end)
 	{
 		start = std::min(time_start, time_end);
 		end = std::max(time_start, time_end);
@@ -35,7 +28,7 @@ namespace vt
 		return start == end ? tag_segment_type::timestamp : tag_segment_type::segment;
 	}
 
-	std::pair<tag_timeline::iterator, bool> tag_timeline::insert(timestamp time_start, timestamp time_end)
+	std::pair<tag_timeline::iterator, bool> tag_timeline::insert(timestamp time_start, timestamp time_end, const tag_segment::attribute_instance_container& attributes)
 	{
 		auto prepare_result = prepare_insert(time_start, time_end);
 		if (prepare_result.has_value())
@@ -50,11 +43,11 @@ namespace vt
 
 			segments_.erase(overlapping.begin(), overlapping.end());
 		}
-		
-		return segments_.emplace(time_start, time_end);
+
+		return segments_.emplace(time_start, time_end, attributes);
 	}
 
-	std::pair<tag_timeline::iterator, bool> tag_timeline::insert(timestamp time_point)
+	std::pair<tag_timeline::iterator, bool> tag_timeline::insert(timestamp time_point, const tag_segment::attribute_instance_container& attributes)
 	{
 		auto prepare_result = prepare_insert(time_point);
 		if (prepare_result.has_value())
@@ -62,7 +55,7 @@ namespace vt
 			return { *prepare_result, false };
 		}
 
-		return segments_.emplace(time_point);
+		return segments_.emplace(time_point, attributes);
 	}
 
 	tag_timeline::iterator tag_timeline::erase(iterator it)

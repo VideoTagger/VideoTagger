@@ -27,20 +27,6 @@ namespace vt
 	downloadable_video_resource::downloadable_video_resource(std::string importer_id, const nlohmann::ordered_json& json)
 		: video_resource(std::move(importer_id), json)
 	{
-		if (json.contains("local_path"))
-		{
-			local_path_ = std::string(json.at("local_path"));
-		}
-	}
-
-	const std::filesystem::path& downloadable_video_resource::local_path() const
-	{
-		return local_path_;
-	}
-
-	void downloadable_video_resource::set_local_path(std::filesystem::path path)
-	{
-		local_path_ = std::move(path);
 	}
 
 	video_download_result downloadable_video_resource::download()
@@ -72,24 +58,19 @@ namespace vt
 
 		//TODO: check error
 		std::error_code error;
-		if (!std::filesystem::remove(local_path_, error))
+		if (!std::filesystem::remove(file_path(), error))
 		{
 			debug::error(error.message());
 			return false;
 		}
 
-		local_path_.clear();
+		set_file_path("");
 		return true;
 	}
 
 	bool downloadable_video_resource::playable() const
 	{
-		return std::filesystem::is_regular_file(local_path_);
-	}
-
-	void downloadable_video_resource::on_save(nlohmann::ordered_json& json) const
-	{
-		json["local_path"] = local_path_.u8string();
+		return std::filesystem::is_regular_file(file_path());
 	}
 
 	void downloadable_video_resource::on_remove()

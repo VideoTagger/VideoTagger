@@ -13,6 +13,10 @@ namespace vt
 	video_resource::video_resource(std::string importer_id, const nlohmann::ordered_json& json)
 		: importer_id_{ std::move(importer_id) }, id_{ make_video_id_from_json(json) }, metadata_{ make_video_metadata_from_json(json) }
 	{
+		if (json.contains("file-path"))
+		{
+			file_path_ = json.at("file-path");
+		}
 	}
 
 	const std::string& video_resource::importer_id() const
@@ -33,6 +37,11 @@ namespace vt
 	const std::optional<gl_texture>& video_resource::thumbnail() const
 	{
 		return thumbnail_;
+	}
+
+	const std::string& video_resource::file_path() const
+	{
+		return file_path_;
 	}
 
 	void video_resource::on_remove()
@@ -95,6 +104,11 @@ namespace vt
 		thumbnail_ = std::move(texture);
 	}
 
+	void video_resource::set_file_path(const std::string& file_path)
+	{
+		file_path_ = file_path;
+	}
+
 	void video_resource::remove_thumbnail()
 	{
 		thumbnail_.reset();
@@ -138,6 +152,10 @@ namespace vt
 
 	void video_resource::on_save(nlohmann::ordered_json& json) const
 	{
+		if (!file_path_.empty())
+		{
+			json["file-path"] = file_path_;
+		}
 	}
 
 	video_resource_metadata make_video_metadata_from_json(const nlohmann::ordered_json& json)

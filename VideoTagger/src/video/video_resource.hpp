@@ -33,7 +33,7 @@ namespace vt
 		std::function<void()> function;
 	};
 
-	//TODO: add context menu
+	//TODO: maybe put local file path in this class
 	class video_resource
 	{
 	public:
@@ -45,6 +45,7 @@ namespace vt
 		video_id_t id() const;
 		const video_resource_metadata& metadata() const;
 		const std::optional<gl_texture>& thumbnail() const;
+		const std::string& file_path() const;
 
 		virtual bool playable() const = 0;
 		virtual video_stream video() const = 0;
@@ -56,9 +57,11 @@ namespace vt
 
 		void set_metadata(const video_resource_metadata& metadata);
 		void set_thumbnail(gl_texture&& texture);
+		void set_file_path(const std::string& file_path);
 		void remove_thumbnail();
 
 		nlohmann::ordered_json save() const;
+		//when overloading call the function from parent
 		virtual void on_save(nlohmann::ordered_json& json) const;
 
 	private:
@@ -66,5 +69,6 @@ namespace vt
 		std::string importer_id_;
 		video_resource_metadata metadata_;
 		std::optional<gl_texture> thumbnail_;
+		std::string file_path_;
 	};
 }

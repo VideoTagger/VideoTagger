@@ -35,33 +35,27 @@ namespace vt
 	}
 
 	local_video_resource::local_video_resource(video_id_t id, std::filesystem::path path)
-		: video_resource(local_video_importer::static_importer_id, id, make_video_metadata_from_path(path)), path_{ std::move(path) }
+		: video_resource(local_video_importer::static_importer_id, id, make_video_metadata_from_path(path))
 	{
-		path_ = std::filesystem::relative(path_);
+		set_file_path(std::filesystem::relative(path).u8string());
 	}
 
 	local_video_resource::local_video_resource(const nlohmann::ordered_json& json)
 		: video_resource(local_video_importer::static_importer_id, json)
 	{
-		path_ = std::string(json["path"]);
-	}
-
-	const std::filesystem::path& local_video_resource::path() const
-	{
-		return path_;
 	}
 
 	bool local_video_resource::playable() const
 	{
-		return std::filesystem::is_regular_file(path_);
+		return std::filesystem::is_regular_file(file_path());
 	}
 
 	video_stream local_video_resource::video() const
 	{
 		video_stream result;
-		if (!result.open_file(path_))
+		if (!result.open_file(file_path()))
 		{
-			debug::panic("Failed to open video from path {}", path_.u8string());
+			debug::panic("Failed to open video from path {}", file_path());
 		}
 
 		return result;
@@ -70,9 +64,9 @@ namespace vt
 	bool local_video_resource::update_thumbnail()
 	{
 		video_stream video;
-		if (!video.open_file(path_))
+		if (!video.open_file(file_path()))
 		{
-			debug::error("Failed to open video from path {}", path_.u8string());
+			debug::error("Failed to open video from path {}", file_path());
 			return false;
 		}
 
@@ -81,11 +75,5 @@ namespace vt
 		set_thumbnail(std::move(result));
 
 		return true;
-	}
-
-	void local_video_resource::on_save(nlohmann::ordered_json& json) const
-	{
-		
-		json["path"] = utils::filesystem::normalize(std::filesystem::relative(path_));
 	}
 }

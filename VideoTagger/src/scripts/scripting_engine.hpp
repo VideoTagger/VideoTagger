@@ -1,4 +1,5 @@
 #pragma once
+#include <filesystem>
 #include <pybind11/stl.h>
 #include <pybind11/embed.h>
 
@@ -14,6 +15,7 @@ namespace vt
 		scripting_engine();
 
 	private:
+		PyConfig cfg{};
 		std::unique_ptr<py::scoped_interpreter> lock_;
 		std::unique_ptr<py::gil_scoped_release> unlock_;
 
@@ -23,6 +25,7 @@ namespace vt
 
 	public:
 		void init();
-		void run(const std::string& script_name, const std::string& entrypoint);
+		void run(std::filesystem::path script_path);
+		void interrupt();
 	};
 }

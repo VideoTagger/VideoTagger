@@ -14,6 +14,8 @@ namespace vt::widgets::modal
 	{
 		if (!ctx_.script_handle.has_value()) return;
 
+		std::shared_ptr<script> script = ctx_.script_handle->script.lock();
+
 		ImGuiWindowClass window_class{};
 		window_class.ViewportFlagsOverrideSet = ImGuiViewportFlags_NoAutoMerge | ImGuiViewportFlags_TopMost;
 		ImGui::SetNextWindowClass(&window_class);
@@ -25,21 +27,11 @@ namespace vt::widgets::modal
 		ImGui::SetNextWindowPos(ImGui::GetMainViewport()->GetCenter(), ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
 		auto flags = ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoMove;
 
-		auto win_open = ImGui::BeginPopupModal("##ScriptProgress", nullptr, ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoResize);
+		auto win_open = script and ImGui::BeginPopupModal("##ScriptProgress", nullptr, ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoResize);
 		ImGui::PopStyleVar(2);
 
 		if (win_open)
 		{
-			if (ctx_.script_handle->has_finished())
-			{
-				debug::log("Closing script progress window...");
-				ctx_.script_handle = std::nullopt;
-				is_open = false;
-				ImGui::CloseCurrentPopup();
-				ImGui::EndPopup();
-				return;
-			}
-
 			ImGuiWindow* win = ImGui::GetCurrentWindow();
 			auto wind = (SDL_Window*)ImGui::GetCurrentWindow()->Viewport->PlatformHandle;
 
@@ -58,20 +50,36 @@ namespace vt::widgets::modal
 			}
 			elapsed_acc += elapsed_time;
 
-			if (std::shared_ptr<script> script = ctx_.script_handle->script.lock())
 			{
 				py::gil_scoped_acquire lock{};
 				std::string suffix = std::string(dot_count, '.') + std::string(max_dots - dot_count, ' ');
 				std::string info = utils::string::trim_whitespace(script->progress_info());
 
 				ImGui::Text("%s%s", info.empty() ? "Script Running" : info.c_str(), suffix.c_str());
-				if (script->has_progress())
+				if (ctx_.script_handle->has_progress)
 				{
 					ImGui::ProgressBar(script->progress(), ImVec2{ width, ImGui::GetTextLineHeight() / 3.f }, "");
 				}
 			}
 
+			ImGui::Dummy(style.ItemSpacing);
+			ImGui::SetCursorPosX(ImGui::GetWindowContentRegionMax().x - (ImGui::CalcTextSize("Cancel").x + 2 * style.FramePadding.x - style.WindowPadding.x));
+			if (ImGui::Button("Cancel"))
+			{
+				ctx_.script_eng.interrupt();
+			}
 			ImGui::EndPopup();
+		}
+
+		if (ImGui::IsPopupOpen("##ScriptProgress"))
+		{
+			if (ctx_.script_handle->has_finished())
+			{
+				debug::log("Closing script progress window...");
+				ctx_.script_handle = std::nullopt;
+				is_open = false;
+				ImGui::CloseCurrentPopup();
+			}
 		}
 	}
 }

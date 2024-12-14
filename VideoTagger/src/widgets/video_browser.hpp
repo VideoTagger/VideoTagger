@@ -13,5 +13,7 @@ namespace vt::widgets
 		video_browser() = default;
 
 		void render(bool& is_open);
+
+		static std::string window_name();
 	};
 }
