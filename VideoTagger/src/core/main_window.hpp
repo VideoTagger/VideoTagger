@@ -1,5 +1,6 @@
 #pragma once
 #include "app_window.hpp"
+#include <utils/file_node.hpp>
 
 namespace vt
 {
@@ -27,6 +28,7 @@ namespace vt
 		void init_options();
 
 		void fetch_themes();
+		utils::file_node fetch_scripts(const std::filesystem::path& path);
 
 		void draw_menubar();
 		void draw_project_selector();

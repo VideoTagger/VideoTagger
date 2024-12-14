@@ -57,6 +57,7 @@ namespace vt::widgets
 		const video_player_data& data() const;
 
 		void set_loop_mode(loop_mode value);
+		void set_playing(bool value);
 
 		bool is_visible() const;
 		bool is_playing() const;

@@ -108,6 +108,8 @@ namespace vt::widgets
 
 		void render(bool& open);
 
+		static std::string window_name();
+
 	private:
 		bool focused_ = false;
 		bool enabled_ = true;

@@ -16,11 +16,16 @@ namespace vt::widgets
 		return result;
 	}
 
-	bool icon_button(const char* label, const ImVec2& size)
+	bool icon_button(const char* label, const ImVec2& size, const ImVec4& color)
 	{
 		ImGui::PushStyleColor(ImGuiCol_Button, ImVec4{});
+		ImGui::PushStyleColor(ImGuiCol_Text, color);
 		bool result = ImGui::Button(label, size);
-		ImGui::PopStyleColor();
+		ImGui::PopStyleColor(2);
+		if (!is_item_disabled() and ImGui::IsItemHovered())
+		{
+			ImGui::SetMouseCursor(ImGuiMouseCursor_Hand);
+		}
 		return result;
 	}
 
@@ -33,11 +38,13 @@ namespace vt::widgets
 		}
 	}
 
-	bool icon_toggle_button(const char* label, bool is_toggled, const ImVec2& size)
+	bool icon_toggle_button(const char* label, bool is_toggled, const ImVec2& size, const ImVec4& color)
 	{
-		if (!is_toggled) ImGui::PushStyleColor(ImGuiCol_Text, ImGui::GetStyleColorVec4(ImGuiCol_TextDisabled));
-		bool result = icon_button(label, size);
-		if (!is_toggled) ImGui::PopStyleColor();
+		bool result = icon_button(label, size, is_toggled ? color : ImGui::GetStyleColorVec4(ImGuiCol_TextDisabled));
+		if (!is_item_disabled() and ImGui::IsItemHovered())
+		{
+			ImGui::SetMouseCursor(ImGuiMouseCursor_Hand);
+		}
 		return result;
 	}
 
@@ -166,6 +173,7 @@ namespace vt::widgets
 	
 	void centered_text(const char* text, ImVec2 avail_area, ImVec2 offset)
 	{
+		//auto half_text_size = ImGui::CalcTextSize(text, nullptr, false, 3 * avail_area.x / 4) / 2;
 		auto half_text_size = ImGui::CalcTextSize(text, nullptr, false, 3 * avail_area.x / 4) / 2;
 		auto cpos = ImGui::GetCursorPos();
 		ImGui::SetCursorPos(offset + avail_area / 2 - half_text_size);
@@ -283,7 +291,7 @@ namespace vt::widgets
 
 		auto& style = ImGui::GetStyle();
 		ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2{});
-		auto imgui_tex = reinterpret_cast<ImTextureID>(image);
+		auto imgui_tex = reinterpret_cast<ImTextureID>((uintptr_t)image);
 		const char* id = label.c_str();
 		ImGui::PushID(id);
 		auto text_size = ImVec2{ 0, 2 * ImGui::GetTextLineHeight() };
@@ -366,5 +374,131 @@ namespace vt::widgets
 			}
 		}
 		return ImGui::IsMouseReleased(mouse_button) and valid;
+	}
+
+    void color_indicator(float thickness, uint32_t color)
+    {
+		auto& style = ImGui::GetStyle();
+		float sz = ImGui::GetTextLineHeight();
+		auto* window = ImGui::GetCurrentWindow();
+		const ImRect rect{ window->DC.CursorPos, window->DC.CursorPos + ImVec2{ thickness, sz + style.FramePadding.y * 2.0f } };
+		ImGui::Dummy(ImVec2{ thickness - style.ItemSpacing.x, sz });
+
+		ImGui::RenderFrame(rect.Min, rect.Max, color, false, style.FrameRounding);
+    }
+
+	bool begin_collapsible(const std::string& id, const std::string& label, ImGuiTreeNodeFlags flags, const char* icon, const std::optional<ImVec4>& icon_color, const std::function<void(void)>& on_dragdrop, const std::optional<size_t>& index)
+	{
+		const auto& style = ImGui::GetStyle();
+		flags |= ImGuiTreeNodeFlags_Framed | ImGuiTreeNodeFlags_SpanFullWidth | ImGuiTreeNodeFlags_FramePadding | ImGuiTreeNodeFlags_ClipLabelForTrailingButton;
+
+		ImGui::BeginGroup();
+		if (icon != nullptr)
+		{
+			ImGui::SetCursorPosX(ImGui::GetCursorPosX() + style.ItemSpacing.x * 0.5f);
+			ImGui::AlignTextToFramePadding();
+			ImGui::TextColored(icon_color.has_value() ? icon_color.value() : style.Colors[ImGuiCol_Text], icon);
+			ImGui::SameLine();
+		}
+
+		ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2{});
+		ImGui::PushStyleColor(ImGuiCol_Text, ImVec4{});
+		bool node_open = ImGui::TreeNodeEx(id.c_str(), flags);
+		ImGui::PopStyleColor();
+		ImGui::PopStyleVar();
+
+		if (on_dragdrop != nullptr)
+		{
+			on_dragdrop();
+		}
+
+		auto suffix_icon = node_open ? icons::expand_less : icons::expand_more;
+
+		ImGui::SameLine(ImGui::GetTreeNodeToLabelSpacing());
+		ImGui::TextUnformatted(label.c_str());
+		if (index.has_value())
+		{
+			ImGui::SameLine();
+			ImGui::TextDisabled("[%zu]", index.value());
+		}
+		ImGui::SameLine(ImGui::GetContentRegionMax().x - style.ItemSpacing.x - ImGui::CalcTextSize(suffix_icon).x);
+		ImGui::TextUnformatted(suffix_icon);
+		ImGui::Unindent();
+		ImGui::EndGroup();
+
+		return node_open;
+	}
+
+	void end_collapsible()
+	{
+		ImGui::Indent();
+		ImGui::TreePop();
+	}
+
+	bool is_item_disabled()
+	{
+		ImGuiContext& g = *GImGui;
+		return (g.CurrentItemFlags & ImGuiItemFlags_Disabled) != 0;
+	}
+
+	bool table_hovered_row_style()
+	{
+		bool row_hovered = ImGui::TableGetHoveredRow() == ImGui::TableGetRowIndex();
+		if (row_hovered)
+		{
+			ImGui::TableSetBgColor(ImGuiTableBgTarget_RowBg0, ImGui::ColorConvertFloat4ToU32(ImGui::GetStyleColorVec4(ImGuiCol_TableRowBgAlt)));
+		}
+		return row_hovered;
+	}
+
+	bool positon_control(utils::vec2<uint32_t>& pos, const utils::vec2<uint32_t>& max_size)
+	{
+		bool result{};
+		const auto& style = ImGui::GetStyle();
+
+		ImGui::PushStyleVar(ImGuiStyleVar_CellPadding, ImVec2{ style.ItemSpacing.x / 2, style.CellPadding.y });
+		ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2{});
+
+		float line_height = GImGui->Font->FontSize + GImGui->Style.FramePadding.y * 2.0f;
+		ImVec2 xysize = { line_height + 3.0f, line_height };
+
+		ImGui::PushID(&pos);
+		if (ImGui::BeginTable("##PositionControl", 2))
+		{
+			ImGui::TableNextColumn();
+			if (ImGui::Button("X", xysize))
+			{
+				pos[0] = 0;
+				result = true;
+			}
+			ImGui::SameLine();
+
+			ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
+			float x = (float)pos[0];
+			if (ImGui::DragScalar("##x", ImGuiDataType_U32, &pos[0], 1.f, 0, &max_size[0], "%d", ImGuiSliderFlags_AlwaysClamp))
+			{
+				pos[0] = std::clamp(pos[0], 0u, max_size[0]);
+				result = true;
+			}
+
+			ImGui::TableNextColumn();
+			if (ImGui::Button("Y", xysize))
+			{
+				pos[1] = 0;
+				result = true;
+			}
+			ImGui::SameLine();
+
+			ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
+			if (ImGui::DragScalar("##y", ImGuiDataType_U32, &pos[1], 1.f, 0, &max_size[1], "%d", ImGuiSliderFlags_AlwaysClamp))
+			{
+				pos[1] = std::clamp(pos[1], 0u, max_size[1]);
+				result = true;
+			}
+			ImGui::EndTable();
+		}
+		ImGui::PopID();
+		ImGui::PopStyleVar(2);
+		return result;
 	}
 }

@@ -23,6 +23,7 @@ project "VideoTagger"
 		"vendor/ImGui/backends/imgui_impl_opengl3.cpp",
 		"vendor/ImGuizmo/ImSequencer.h",
 		"vendor/ImGuizmo/ImSequencer.cpp",
+		"vendor/ImGuizmo/ImGuizmo.cpp",
 	}
 
 	includedirs

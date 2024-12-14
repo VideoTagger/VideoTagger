@@ -44,16 +44,55 @@ namespace vt::utils::string
 	std::string to_lowercase(const std::string& input)
 	{
 		std::string result = input;
-		std::transform(input.begin(), input.end(), result.begin(), tolower);
+		if (!result.empty())
+		{
+			utf8lwr(result.data());
+		}
 		return result;
 	}
 
 	std::string to_uppercase(const std::string& input)
 	{
 		std::string result = input;
-		std::transform(input.begin(), input.end(), result.begin(), toupper);
+		if (!result.empty())
+		{
+			utf8upr(result.data());
+		}
 		return result;
 	}
+
+    std::string to_titlecase(const std::string& input)
+    {
+		std::string result;
+		bool capitalize_next = true;
+
+		for (size_t i = 0; i < input.size();)
+		{
+			utf8_int32_t c;
+			auto char_ptr = input.data() + i;
+			utf8codepoint(char_ptr, &c);
+			auto c_size = utf8codepointsize(c);
+
+			if (capitalize_next and std::isalpha(c))
+			{
+				std::string upper_char = to_uppercase(input.substr(i, c_size));
+				result += upper_char;
+				capitalize_next = false;
+			}
+			else
+			{
+				result += input.substr(i, c_size);
+			}
+
+			if (std::isspace(c) or std::ispunct(c))
+			{
+				capitalize_next = true;
+			}
+
+			i += c_size;
+		}
+		return result;
+    }
 
 	static void ltrim(std::string& inout)
 	{

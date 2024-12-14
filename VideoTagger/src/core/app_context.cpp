@@ -2,6 +2,11 @@
 #include "app_context.hpp"
 #include <core/debug.hpp>
 
+#include <editor/run_script_command.hpp>
+#include <editor/selected_attribute_query.hpp>
+#include <editor/set_selected_attribute_command.hpp>
+#include <editor/active_video_tex_size_query.hpp>
+
 namespace vt
 {
 	app_context::app_context()
@@ -11,7 +16,11 @@ namespace vt
 
 	void app_context::register_handlers()
 	{
-
+		registry.register_command_handler<run_script_command_handler>();
+		registry.register_command_handler<set_selected_attribute_command_handler>();
+		
+		registry.register_query_handler<selected_attribute_query_handler>();
+		registry.register_query_handler<active_video_tex_size_query_handler>();
 	}
 
 	void app_context::update_current_video_group()

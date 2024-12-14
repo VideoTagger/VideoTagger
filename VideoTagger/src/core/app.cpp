@@ -10,6 +10,7 @@
 
 #include <utils/string.hpp>
 #include <scripts/scripting_engine.hpp>
+#include <ImGuizmo.h>
 
 namespace vt
 {
@@ -25,18 +26,18 @@ namespace vt
 #else
 			vsprintf(buffer, fmt, va);
 #endif
-			std::string message = "<FFmpeg> " + std::string(buffer);
+			std::string message{ buffer };
 			if (message.back() == '\n')
 			{
 				message.pop_back();
 			}
 			if (level == AV_LOG_ERROR)
 			{
-				debug::error(message);
+				debug::log_source("FFmpeg", "Error", "{}", message);
 			}
 			else
 			{
-				debug::panic(message);
+				debug::log_source("FFmpeg", "Panic!", "{}", message);
 			}
 		}
 	}
@@ -126,6 +127,7 @@ namespace vt
 			ImGui_ImplOpenGL3_NewFrame();
 			ImGui_ImplSDL2_NewFrame();
 			ImGui::NewFrame();
+			ImGuizmo::BeginFrame();
 
 			handle_events();
 			ctx_.main_window->render();

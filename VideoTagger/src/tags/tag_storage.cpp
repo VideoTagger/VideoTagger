@@ -5,7 +5,7 @@ namespace vt
 {
     std::pair<tag_storage::iterator, bool> tag_storage::insert(const tag& tag)
     {
-		return insert(tag.name, tag.color);
+		return tags_.try_emplace(tag.name, tag);
     }
 
     std::pair<tag_storage::iterator, bool> tag_storage::insert(const std::string& name, uint32_t color)
@@ -38,6 +38,11 @@ namespace vt
 	{
 		return iterator{ tags_.erase(it.unwrapped()) };
 	}
+
+    void tag_storage::clear()
+    {
+		tags_.clear();
+    }
 
 	tag_rename_result tag_storage::rename(const std::string& current_name, const std::string& new_name)
 	{

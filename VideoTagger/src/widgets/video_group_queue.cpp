@@ -12,8 +12,12 @@ namespace vt::widgets
 {
 	void video_group_queue::render(bool& is_open)
 	{
+		ImVec2 tile_size{ ctx_.app_settings.thumbnail_size, ctx_.app_settings.thumbnail_size };
+		ImVec2 image_tile_size{ tile_size.x * 0.9f, tile_size.x * 0.9f };
+		auto sel_tile_size = calc_selectable_tile_size(tile_size);
+
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2{});
-		bool win_open = ImGui::Begin("Group Queue", &is_open, ImGuiWindowFlags_NoCollapse);
+		bool win_open = ImGui::Begin(window_name().c_str(), &is_open, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize);
 		ImGui::PopStyleVar();
 
 		if (win_open)
@@ -28,7 +32,7 @@ namespace vt::widgets
 
 			if (table_open)
 			{
-				float icon_column_size = ImGui::CalcTextSize(icons::play).x + 2 * style.FramePadding.x + 2 * style.CellPadding.x;
+				float icon_column_size = ImGui::CalcTextSize(icons::play_queue).x + 2 * style.FramePadding.x + 2 * style.CellPadding.x;
 
 				ImGui::TableSetupColumn(nullptr);
 				ImGui::TableSetupColumn(nullptr, ImGuiTableColumnFlags_WidthFixed, icon_column_size);
@@ -44,9 +48,6 @@ namespace vt::widgets
 						auto& groups = ctx_.current_project->video_groups;
 
 						const auto& style = ImGui::GetStyle();
-						ImVec2 tile_size{ ctx_.app_settings.thumbnail_size, ctx_.app_settings.thumbnail_size };
-						ImVec2 image_tile_size{ tile_size.x * 0.9f, tile_size.x * 0.9f };
-						auto sel_tile_size = calc_selectable_tile_size(tile_size);
 
 						ImVec2 spacer_size{ 1.25f * style.ItemSpacing.x, sel_tile_size.y };
 
@@ -185,7 +186,7 @@ namespace vt::widgets
 					auto cpos = ImGui::GetCursorPosX() + style.CellPadding.x;
 					ImGui::SetCursorPosX(cpos);
 					if (!can_play) ImGui::BeginDisabled();
-					if (icon_button(icons::play))
+					if (icon_button(icons::play_queue))
 					{
 						auto it = playlist.set_current(playlist.begin());
 						ctx_.set_current_video_group_id(*it);
@@ -215,5 +216,10 @@ namespace vt::widgets
 			}
 		}
 		ImGui::End();
+	}
+
+	std::string video_group_queue::window_name()
+	{
+		return fmt::format("{} Group Queue###Group Queue", icons::queue);
 	}
 }

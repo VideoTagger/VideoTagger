@@ -563,7 +563,7 @@ namespace vt
 
 					if (json_group.contains("segments") and json_group.at("segments").is_array())
 					{
-						vgroup.segments() = json_group.at("segments");
+						from_json(json_group["segments"], vgroup.segments(), result.tags);
 					}
 
 					result.video_groups.insert({ id, vgroup });
