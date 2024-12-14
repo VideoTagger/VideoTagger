@@ -5,12 +5,11 @@
 
 namespace vt::widgets
 {
-	class video_browser
+	struct video_browser
 	{
-	public:
-		std::function<void(video_id_t)> on_open_video;
-
 		video_browser() = default;
+
+		std::function<void(video_id_t)> on_open_video;
 
 		void render(bool& is_open);
 
