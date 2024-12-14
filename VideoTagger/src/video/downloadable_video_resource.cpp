@@ -156,13 +156,13 @@ namespace vt
 			auto download_prog = download_progress();
 			if (download_prog.has_value())
 			{
-				//ImGui::PushStyleColor(ImGuiCol_PlotHistogram, { 0.9f, 0.0f, 0.0f, 1.0f });
+				ImGui::PushStyleColor(ImGuiCol_PlotHistogram, { 0.0f, 0.9f, 0.0f, 1.0f });
 
 				ImGui::SetCursorScreenPos(progress_bar_pos);
 
 				ImGui::ProgressBar(*download_prog, progress_bar_size, "");
 
-				//ImGui::PopStyleColor();
+				ImGui::PopStyleColor();
 
 				//float progress_bar_width = image_rect.GetWidth() * *download_prog;
 				//ImVec2 progress_bar_min = image_rect.Min;
