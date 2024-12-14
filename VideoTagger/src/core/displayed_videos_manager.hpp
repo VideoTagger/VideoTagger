@@ -55,6 +55,7 @@ namespace vt
 		std::chrono::nanoseconds current_timestamp() const;
 		size_t size() const;
 		bool empty() const;
+		double max_framerate() const;
 	
 		iterator begin();
 		const_iterator begin() const;
