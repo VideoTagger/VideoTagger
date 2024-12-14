@@ -170,8 +170,8 @@ namespace vt
 					return video_download_status::failure;
 				}
 
-				int range_start = downloaded_size;
-				int range_end = std::min(range_start + chunk_size - 1, file_size - 1);
+				int64_t range_start = downloaded_size;
+				int64_t range_end = std::min(range_start + chunk_size - 1, file_size - 1);
 
 				auto current_progress = data->progress;
 

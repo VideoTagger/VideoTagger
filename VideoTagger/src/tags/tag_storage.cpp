@@ -176,10 +176,7 @@ namespace vt
 		return end();
 	}
 
-	tag_storage_const_iterator::tag_storage_const_iterator(unwrapped_it it)
-		: it{ it }
-	{
-	}
+	tag_storage_const_iterator::tag_storage_const_iterator(unwrapped_it it) : it{ it } {}
 
 	tag_storage_const_iterator& tag_storage_const_iterator::operator++()
 	{
@@ -221,10 +218,7 @@ namespace vt
 		return it;
 	}
 
-	tag_storage_iterator::tag_storage_iterator(unwrapped_it it)
-		: it{ it }
-	{
-	}
+	tag_storage_iterator::tag_storage_iterator(unwrapped_it it) : it{ it } {}
 
 	tag_storage_iterator& tag_storage_iterator::operator++()
 	{

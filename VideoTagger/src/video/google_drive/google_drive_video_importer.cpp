@@ -196,6 +196,7 @@ namespace vt
 				}
 
 				import_items.push_back(std::move(item));
+				return true;
 			};
 
 			auto& style = ImGui::GetStyle();

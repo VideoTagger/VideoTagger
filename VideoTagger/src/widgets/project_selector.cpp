@@ -13,10 +13,7 @@
 
 namespace vt::widgets
 {
-	project_selector::project_selector(const std::vector<project_info>& projects) : projects_{ projects }
-	{
-
-	}
+	project_selector::project_selector(const std::vector<project_info>& projects) : projects_{ projects } {}
 
 	void project_selector::render_project_creation_menu()
 	{

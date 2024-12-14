@@ -147,23 +147,23 @@ namespace vt
 
 		bool pause_player = false;
 
-		template<typename ServiceAccountManager>
+		template<typename service_account_manager_type>
 		void register_account_manager();
 		void register_account_managers();
-		template<typename ServiceAccountManager>
-		ServiceAccountManager& get_account_manager();
+		template<typename service_account_manager_type>
+		service_account_manager_type& get_account_manager();
 		service_account_manager& get_account_manager(const std::string& service_id);
-		template<typename ServiceAccountManager>
+		template<typename service_account_manager_type>
 		bool is_account_manager_registered() const;
 		bool is_account_manager_registered(const std::string& service_id) const;
 
-		template<typename VideoImporter>
+		template<typename video_importer_type>
 		void register_video_importer();
 		void register_video_importers();
-		template<typename VideoImporter>
-		VideoImporter& get_video_importer();
+		template<typename video_importer_type>
+		video_importer_type& get_video_importer();
 		video_importer& get_video_importer(const std::string& importer_id);
-		template<typename VideoImporter>
+		template<typename video_importer_type>
 		bool is_video_importer_registered() const;
 		bool is_video_importer_registered(const std::string& importer_id) const;
 
@@ -182,63 +182,63 @@ namespace vt
 
 	inline app_context ctx_;
 
-	template<typename ServiceAccountManager>
+	template<typename service_account_manager_type>
 	inline void app_context::register_account_manager()
 	{
-		if (is_account_manager_registered<ServiceAccountManager>())
+		if (is_account_manager_registered<service_account_manager_type>())
 		{
-			debug::error("Account manager with id {} is already registered", ServiceAccountManager::static_service_id);
+			debug::error("Account manager with id {} is already registered", service_account_manager_type::static_service_id);
 			return;
 		}
 
-		account_managers[ServiceAccountManager::static_service_id] = std::make_unique<ServiceAccountManager>();
+		account_managers[service_account_manager_type::static_service_id] = std::make_unique<service_account_manager_type>();
 	}
 
-	template<typename ServiceAccountManager>
-	inline ServiceAccountManager& app_context::get_account_manager()
+	template<typename service_account_manager_type>
+	inline service_account_manager_type& app_context::get_account_manager()
 	{
-		ServiceAccountManager* result = dynamic_cast<ServiceAccountManager*>(account_managers.at(ServiceAccountManager::static_service_id).get());
+		service_account_manager_type* result = dynamic_cast<service_account_manager_type*>(account_managers.at(service_account_manager_type::static_service_id).get());
 		if (result == nullptr)
 		{
-			debug::panic("Account manager type in the template argument didn't match the registered type for id {}", ServiceAccountManager::static_service_id);
+			debug::panic("Account manager type in the template argument didn't match the registered type for id {}", service_account_manager_type::static_service_id);
 		}
 
 		return *result;
 	}
 
-	template<typename ServiceAccountManager>
+	template<typename service_account_manager_type>
 	inline bool app_context::is_account_manager_registered() const
 	{
-		return account_managers.count(ServiceAccountManager::static_service_id) != 0;
+		return account_managers.count(service_account_manager_type::static_service_id) != 0;
 	}
 
-	template<typename VideoImporter>
+	template<typename video_importer_type>
 	inline void app_context::register_video_importer()
 	{
-		if (is_video_importer_registered<VideoImporter>())
+		if (is_video_importer_registered<video_importer_type>())
 		{
-			debug::error("Video importer with id {} is already registered", VideoImporter::static_importer_id);
+			debug::error("Video importer with id {} is already registered", video_importer_type::static_importer_id);
 			return;
 		}
 
-		video_importers[VideoImporter::static_importer_id] = std::make_unique<VideoImporter>();
+		video_importers[video_importer_type::static_importer_id] = std::make_unique<video_importer_type>();
 	}
 
-	template<typename VideoImporter>
-	inline VideoImporter& app_context::get_video_importer()
+	template<typename video_importer_type>
+	inline video_importer_type& app_context::get_video_importer()
 	{
-		VideoImporter* result = dynamic_cast<VideoImporter*>(video_importers.at(VideoImporter::static_importer_id).get());
+		video_importer_type* result = dynamic_cast<video_importer_type*>(video_importers.at(video_importer_type::static_importer_id).get());
 		if (result == nullptr)
 		{
-			debug::panic("Video importer type in the template argument didn't match the registered type for id {}", VideoImporter::static_importer_id);
+			debug::panic("Video importer type in the template argument didn't match the registered type for id {}", video_importer_type::static_importer_id);
 		}
 
 		return *result;
 	}
 
-	template<typename VideoImporter>
+	template<typename video_importer_type>
 	inline bool app_context::is_video_importer_registered() const
 	{
-		return video_importers.count(VideoImporter::static_importer_id) != 0;
+		return video_importers.count(video_importer_type::static_importer_id) != 0;
 	}
 }

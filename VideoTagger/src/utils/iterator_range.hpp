@@ -3,20 +3,18 @@
 
 namespace vt
 {
-	template<typename Iterator>
+	template<typename iterator_t>
 	class iterator_range
 	{
 	public:
-		constexpr iterator_range(Iterator begin, Iterator end)
-			: begin_{ begin }, end_{ end }
-		{}
+		constexpr iterator_range(iterator_t begin, iterator_t end) : begin_{ begin }, end_{ end } {}
 
-		constexpr Iterator begin()
+		constexpr iterator_t begin()
 		{
 			return begin_;
 		}
 
-		constexpr Iterator end()
+		constexpr iterator_t end()
 		{
 			return end_;
 		}
@@ -32,7 +30,7 @@ namespace vt
 		}
 
 	private:
-		Iterator begin_;
-		Iterator end_;
+		iterator_t begin_;
+		iterator_t end_;
 	};
 }

@@ -10,10 +10,7 @@
 
 namespace vt::widgets
 {
-	video_player::video_player() : dock_window_count_{}, speed_{ 1.0f }, is_visible_{}, is_playing_ {}, loop_mode_{}
-    {
-
-    }
+	video_player::video_player() : dock_window_count_{}, speed_{ 1.0f }, is_visible_{}, is_playing_ {}, loop_mode_{} {}
 
 	void video_player::update_data(video_player_data data, bool is_playing)
 	{

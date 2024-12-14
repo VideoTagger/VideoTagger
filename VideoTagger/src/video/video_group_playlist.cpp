@@ -6,10 +6,7 @@ namespace vt
 	//TODO: Use random from uuid/make a "random" class
 	static std::mt19937_64 random_engine(std::random_device{}());
 
-	video_group_playlist::video_group_playlist() 
-		: shuffled_{ false }, current_element_{ end() }
-	{
-	}
+	video_group_playlist::video_group_playlist() : shuffled_{ false }, current_element_{ end() } {}
 
 	video_group_playlist::iterator video_group_playlist::peek_next()
 	{
@@ -224,10 +221,7 @@ namespace vt
 
 	void video_group_playlist::reshuffle()
 	{
-		if (videos_.empty())
-		{
-			return;
-		}
+		if (videos_.empty()) return;
 
 		shuffled_history_next = {};
 		shuffled_history_previous = {};
