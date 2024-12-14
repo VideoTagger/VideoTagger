@@ -459,7 +459,7 @@ namespace vt
 		{
 			ImVec4 color{ 0, 0, 0, 1 };
 
-			auto hue = utils::random::get<float>();
+			auto hue = utils::random::get_from_zero<float>();
 			auto value = utils::random::get<float>(0.5f, 1.0f);
 			ImGui::ColorConvertHSVtoRGB(hue, 0.75f, value, color.x, color.y, color.z);
 			return ImGui::ColorConvertFloat4ToU32(color);

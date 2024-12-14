@@ -16,7 +16,7 @@ namespace vt::utils::oauth2
 
 		for (auto& c : code_verifier)
 		{
-			c = code_verifier_alphabet[random::get<size_t>(code_verifier_alphabet.size() - 1)];
+			c = code_verifier_alphabet[random::get_from_zero<size_t>(code_verifier_alphabet.size() - 1)];
 		}
 
 		return code_verifier;
