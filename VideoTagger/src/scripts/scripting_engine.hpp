@@ -1,4 +1,5 @@
 #pragma once
+#include <filesystem>
 #include <pybind11/stl.h>
 #include <pybind11/embed.h>
 
@@ -24,7 +25,7 @@ namespace vt
 
 	public:
 		void init();
-		void run(const std::string& script_name);
+		void run(std::filesystem::path script_path);
 		void interrupt();
 	};
 }

@@ -29,6 +29,11 @@ namespace vt
 		{
 			target = &pos;
 		}
+
+		constexpr bool operator==(const circle& other) const
+		{
+			return radius == other.radius and pos == other.pos;
+		}
 	};
 
 	struct polygon : public shape_base
@@ -44,6 +49,11 @@ namespace vt
 			{
 				target = &vertices.back();
 			}
+		}
+
+		bool operator==(const polygon& other) const
+		{
+			return vertices == other.vertices;
 		}
 	};
 
@@ -62,6 +72,11 @@ namespace vt
 		virtual void set_target(utils::vec2<uint32_t>*& target) override
 		{
 			target = &vertices.front();
+		}
+
+		bool operator==(const rectangle& other) const
+		{
+			return vertices == other.vertices;
 		}
 	};
 

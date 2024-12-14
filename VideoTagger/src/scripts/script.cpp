@@ -31,7 +31,7 @@ namespace vt
 		);
 	}
 
-	script_handle::script_handle(std::future<bool>&& promise)
+	script_handle::script_handle(std::future<bool>&& promise) : has_progress{}
 	{
 		promise_ = std::move(promise);
 	}

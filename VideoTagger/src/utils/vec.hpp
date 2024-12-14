@@ -57,6 +57,11 @@ namespace vt::utils
 		{
 			return std::sqrtf(std::powf((float)left[0] - right[0], 2) + std::powf((float)left[1] - right[1], 2));
 		}
+
+		constexpr bool operator==(const vec& other) const
+		{
+			return data == other.data;
+		}
 	};
 
 	template<typename type>

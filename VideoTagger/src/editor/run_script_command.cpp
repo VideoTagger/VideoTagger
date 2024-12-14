@@ -10,7 +10,7 @@ namespace vt
 		{
 			ctx_.console.clear();
 		}
-		ctx_.script_eng.run(command.script_name);
+		ctx_.script_eng.run(command.script_path);
 		ctx_.win_cfg.show_script_progress = true;
 	}
 }

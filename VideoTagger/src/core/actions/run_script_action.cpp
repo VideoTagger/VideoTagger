@@ -1,6 +1,7 @@
 #include "pch.hpp"
 #include "run_script_action.hpp"
 #include <core/app_context.hpp>
+#include <utils/filesystem.hpp>
 #include <editor/run_script_command.hpp>
 
 namespace vt
@@ -23,14 +24,15 @@ namespace vt
 
 	void run_script_action::to_json(nlohmann::ordered_json& json) const
 	{
-		auto& script_name = json["script-path"];
+		auto& script_path = json["script-path"];
 		if (script_path_.empty())
 		{
-			script_name = nullptr;
+			script_path = nullptr;
 		}
 		else
 		{
-			script_name = script_path_;
+			auto path = utils::filesystem::normalize(script_path_);
+			script_path = path;
 		}
 	}
 
@@ -38,8 +40,8 @@ namespace vt
 	{
 		if (json.contains("script-path"))
 		{
-			const auto& script_name = json.at("script-path");
-			if (!script_name.is_null())
+			const auto& script_path = json.at("script-path");
+			if (!script_path.is_null())
 			{
 				script_path_ = json.at("script-path").get<std::string>();
 			}
@@ -48,6 +50,7 @@ namespace vt
 
 	void run_script_action::render_properties()
 	{
+		const auto& style = ImGui::GetStyle();
 		ImGui::TableNextColumn();
 		ImGui::Text("Script Path");
 		ImGui::TableNextColumn();
@@ -73,6 +76,7 @@ namespace vt
 			script_names_cstr.push_back(name.c_str());
 		}
 		
+		ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x - style.WindowPadding.x);
 		if (ImGui::Combo("##ScriptName", &selected_script, script_names_cstr.data(), static_cast<int>(script_names_cstr.size())))
 		{
 			script_path_ = available_scripts.at(static_cast<size_t>(selected_script));

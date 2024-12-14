@@ -151,21 +151,18 @@ namespace vt::widgets
 				ImGui::SameLine();
 				if (icon_button(icons::fast_back, { button_size, button_size }))
 				{
-					is_playing_ = false;
-					std::invoke(callbacks.on_set_playing, is_playing_);
+					set_playing(false);
 					std::invoke(callbacks.on_seek, std::chrono::nanoseconds{});
 				}
 				ImGui::SameLine();
 				if (icon_button(is_playing_ ? icons::pause : icons::play, { button_size, button_size }))
 				{
-					is_playing_ = !is_playing_;
-					std::invoke(callbacks.on_set_playing, is_playing_);
+					set_playing(!is_playing_);
 				}
 				ImGui::SameLine();
 				if (icon_button(icons::fast_fwd, { button_size, button_size }))
 				{
-					is_playing_ = false;
-					std::invoke(callbacks.on_set_playing, is_playing_);
+					set_playing(false);
 					std::invoke(callbacks.on_seek, std::chrono::nanoseconds(data_.end_ts));
 				}
 				ImGui::SameLine();
@@ -289,6 +286,12 @@ namespace vt::widgets
 	void video_player::set_loop_mode(vt::loop_mode value)
 	{
 		loop_mode_ = value;
+	}
+
+	void video_player::set_playing(bool value)
+	{
+		is_playing_ = value;
+		std::invoke(callbacks.on_set_playing, is_playing_);
 	}
 
 	bool video_player::is_visible() const

@@ -8,7 +8,7 @@ namespace vt
 		static constexpr auto action_name = "Run Script";
 
 	public:
-		run_script_action(const std::filesystem::path& script_name = {});
+		run_script_action(const std::filesystem::path& script_path = {});
 
 	private:
 		std::filesystem::path script_path_;

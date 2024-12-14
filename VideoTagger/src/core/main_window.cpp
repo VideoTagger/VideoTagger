@@ -80,6 +80,7 @@ namespace vt
 			}
 			ctx_.current_project = project::load_from_file(project_info.path);
 			ctx_.main_window->set_subtitle(ctx_.current_project->name);
+			ctx_.console.clear();
 		};
 
 		ctx_.project_selector.on_project_list_update = [&]()
@@ -410,49 +411,49 @@ namespace vt
 
 		keybind_flags flags(true, false, false);
 		ctx_.keybinds.insert(ctx_.lang.get(lang_pack_id::save_project), keybind(SDLK_s, keybind_modifiers{ true }, flags,
-			builtin_action([this]()
+		builtin_action([this]()
 		{
 			if (ImGui::IsPopupOpen(nullptr, ImGuiPopupFlags_AnyPopup)) return;
 			on_save();
 		})));
 
 		ctx_.keybinds.insert(ctx_.lang.get(lang_pack_id::save_project_as), keybind(SDLK_s, keybind_modifiers{ true, true }, flags,
-			builtin_action([this]()
+		builtin_action([this]()
 		{
 			if (ImGui::IsPopupOpen(nullptr, ImGuiPopupFlags_AnyPopup)) return;
 			on_save_as();
 		})));
 
 		ctx_.keybinds.insert(ctx_.lang.get(lang_pack_id::show_in_explorer), keybind(SDLK_o, keybind_modifiers{ true, false, true }, flags,
-			builtin_action([this]()
+		builtin_action([this]()
 		{
 			if (ImGui::IsPopupOpen(nullptr, ImGuiPopupFlags_AnyPopup)) return;
 			on_show_in_explorer();
 		})));
 
 		ctx_.keybinds.insert(ctx_.lang.get(lang_pack_id::import_videos), keybind(SDLK_i, keybind_modifiers{ true }, flags,
-			builtin_action([this]()
+		builtin_action([this]()
 		{
 			if (ImGui::IsPopupOpen(nullptr, ImGuiPopupFlags_AnyPopup)) return;
 			on_import_videos();
 		})));
 
 		ctx_.keybinds.insert("Delete", keybind(SDLK_DELETE, flags,
-			builtin_action([this]()
+		builtin_action([this]()
 		{
 			if (ImGui::IsPopupOpen(nullptr, ImGuiPopupFlags_AnyPopup)) return;
 			on_delete();
 		})));
 
 		ctx_.keybinds.insert(ctx_.lang.get(lang_pack_id::close_project), keybind(SDLK_F4, keybind_modifiers{ true }, flags,
-			builtin_action([this]()
+		builtin_action([this]()
 		{
 			if (ImGui::IsPopupOpen(nullptr, ImGuiPopupFlags_AnyPopup)) return;
 			close_project();
 		})));
 
 		ctx_.keybinds.insert(ctx_.lang.get(lang_pack_id::exit), keybind(SDLK_F4, keybind_modifiers{ false, false, true }, flags,
-			builtin_action([this]()
+		builtin_action([this]()
 		{
 			if (ImGui::IsPopupOpen(nullptr, ImGuiPopupFlags_AnyPopup)) return;
 			on_close_project(true);
@@ -918,7 +919,7 @@ namespace vt
 			if (dir_entry.is_regular_file() and utils::string::to_lowercase(entry_path.extension().string()) == ".py")
 			{
 				auto script_path = std::filesystem::relative(entry_path, ctx_.script_dir_filepath);
-				result.insert(script_path.stem());
+				result.insert(script_path);
 			}
 			else if (dir_entry.is_directory() and !std::filesystem::is_empty(dir_entry))
 			{
@@ -1178,17 +1179,23 @@ namespace vt
 
 						for (auto& child : node.children)
 						{
-							std::string script_name = child.stem().string();
-							std::string script_menu_name = fmt::format("{} {}", icons::terminal, script_name);
+							std::string script_path = child.stem().string();
+							std::string script_menu_name = fmt::format("{} {}", icons::terminal, script_path);
 							if (ImGui::MenuItem(script_menu_name.c_str()))
 							{
-								ctx_.registry.execute<run_script_command>(script_name);
+								ctx_.registry.execute<run_script_command>(child);
 							}
 						}
 					};
 
 					draw_folder(ctx_.scripts);
 					ImGui::EndMenu();
+				}
+
+				menu_name = fmt::format("{} {}", icons::folder, "Open Scripts Folder");
+				if (ImGui::MenuItem(menu_name.c_str()))
+				{
+					utils::filesystem::open_in_explorer(std::filesystem::absolute(ctx_.script_dir_filepath));
 				}
 				ImGui::EndMenu();
 			}

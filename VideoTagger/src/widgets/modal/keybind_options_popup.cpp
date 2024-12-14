@@ -86,13 +86,13 @@ namespace vt::widgets::modal
 			}
 			ImGui::Dummy(style.ItemSpacing);
 			bool is_valid = std::invoke(validator, keybind_name, keybind, validator_mode);
-			if (!is_valid) ImGui::BeginDisabled();
+			ImGui::BeginDisabled((creation_mode or show_keybind_field or show_name_field) and !is_valid);
 			if (ImGui::Button(!show_save_button ? "Add" : "Save"))
 			{
 				result = (keybind.key_code != -1);
 				ImGui::CloseCurrentPopup();
 			}
-			if (!is_valid) ImGui::EndDisabled();
+			ImGui::EndDisabled();
 			ImGui::SameLine();
 			if (ImGui::Button("Cancel") or ImGui::IsKeyPressed(ImGuiKey_Escape, false))
 			{

@@ -60,6 +60,7 @@ namespace vt::widgets
 			}
 
 			decltype(entries_) filtered_entries;
+			filtered_entries.reserve(entries_.size());
 			for (const auto& entry : entries_)
 			{
 				if (!filter.empty() and (utils::string::to_lowercase(entry.message).find(filter) == std::string::npos and std::filesystem::relative(entry.info->path, scripts_path).string().find(filter) == std::string::npos)) continue;
