@@ -3,18 +3,14 @@
 
 namespace vt
 {
-	frame_converter::frame_converter(int frame_width, int frame_height, AVPixelFormat frame_format, AVPixelFormat destination_format)
-		: frame_converter(frame_width, frame_height, frame_format, frame_width, frame_height, destination_format)
-	{
-	}
+	frame_converter::frame_converter(int frame_width, int frame_height, AVPixelFormat frame_format, AVPixelFormat destination_format) :
+		frame_converter(frame_width, frame_height, frame_format, frame_width, frame_height, destination_format) {}
 
-	frame_converter::frame_converter(int frame_width, int frame_height, AVPixelFormat frame_format, int destination_width, int destination_height)
-		: frame_converter(frame_width, frame_height, frame_format, destination_width, destination_height, frame_format)
-	{
-	}
+	frame_converter::frame_converter(int frame_width, int frame_height, AVPixelFormat frame_format, int destination_width, int destination_height) :
+		frame_converter(frame_width, frame_height, frame_format, destination_width, destination_height, frame_format) {}
 
-	frame_converter::frame_converter(int frame_width, int frame_height, AVPixelFormat frame_format, int destination_width, int destination_height, AVPixelFormat destination_format)
-		: context_{}, source_width_{ frame_width }, source_height_{ frame_height }, source_format_{ frame_format },
+	frame_converter::frame_converter(int frame_width, int frame_height, AVPixelFormat frame_format, int destination_width, int destination_height, AVPixelFormat destination_format) :
+		context_{}, source_width_{ frame_width }, source_height_{ frame_height }, source_format_{ frame_format },
 		destination_width_{ destination_width }, destination_height_{ destination_height }, destination_format_{ destination_format }
 	{
 		context_ = sws_getContext(frame_width, frame_height, frame_format, destination_width, destination_height, destination_format, SWS_BILINEAR, nullptr, nullptr, nullptr);
@@ -22,8 +18,8 @@ namespace vt
 		//TODO: probably should throw if context_ is nullptr
 	}
 
-	frame_converter::frame_converter(frame_converter&& other) noexcept
-		: context_{ other.context_ }, source_width_{ other.source_width_ }, source_height_{ other.source_height_ }, source_format_{ other.source_format_ },
+	frame_converter::frame_converter(frame_converter&& other) noexcept :
+		context_{ other.context_ }, source_width_{ other.source_width_ }, source_height_{ other.source_height_ }, source_format_{ other.source_format_ },
 		destination_width_{ other.destination_width_ }, destination_height_{ other.destination_height_ }, destination_format_{ other.destination_format_ }
 	{
 		other.context_ = nullptr;

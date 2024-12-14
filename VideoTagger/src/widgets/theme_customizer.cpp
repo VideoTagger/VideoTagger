@@ -9,10 +9,7 @@
 
 namespace vt::widgets
 {
-	theme_customizer::theme_customizer() : live_preview{ true }
-	{
-		
-	}
+	theme_customizer::theme_customizer() : live_preview{ true } {}
 
 	void theme_customizer::render(bool& is_open)
 	{

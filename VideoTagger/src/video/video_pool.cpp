@@ -308,9 +308,7 @@ namespace vt
 	}
 
 
-	video_pool::video_metadata::~video_metadata()
-	{
-	}
+	video_pool::video_metadata::~video_metadata() {}
 
 	bool video_pool::video_metadata::update_data()
 	{
@@ -346,9 +344,7 @@ namespace vt
 			{
 				return false;
 			}
-		}
-
-		
+		}		
 
 		thumbnail = gl_texture(video.width() / 2, video.height() / 2, GL_RGB);
 		video.get_thumbnail(*thumbnail);

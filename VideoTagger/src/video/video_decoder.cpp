@@ -49,8 +49,7 @@ namespace vt
 		return size_;
 	}
 
-	video_frame::video_frame()
-		: frame_{ av_frame_alloc() }
+	video_frame::video_frame() : frame_{ av_frame_alloc() }
 	{
 		if (frame_ == nullptr)
 		{
@@ -58,8 +57,7 @@ namespace vt
 		}
 	}
 
-	video_frame::video_frame(video_frame&& other) noexcept
-		: frame_{other.frame_}
+	video_frame::video_frame(video_frame&& other) noexcept : frame_{ other.frame_ }
 	{
 		other.frame_ = nullptr;
 	}
@@ -134,8 +132,7 @@ namespace vt
 		return frame_->flags & AV_FRAME_FLAG_KEY;
 	}
 
-	std::optional<typename stream_type_traits<stream_type::video>::decoded_packet_type>
-		stream_type_traits<stream_type::video>::decode(AVCodecContext* codec_context, class packet_wrapper& packet)
+	std::optional<typename stream_type_traits<stream_type::video>::decoded_packet_type> stream_type_traits<stream_type::video>::decode(AVCodecContext* codec_context, class packet_wrapper& packet)
 	{
 		AVPacket* unwrapped_packet = packet.unwrapped();
 
@@ -159,8 +156,7 @@ namespace vt
 		return frame;
 	}
 
-	packet_wrapper::packet_wrapper()
-		: packet_{ av_packet_alloc() }, type_{ stream_type::unknown }
+	packet_wrapper::packet_wrapper() : packet_{ av_packet_alloc() }, type_{ stream_type::unknown }
 	{
 		if (packet_ == nullptr)
 		{
@@ -168,8 +164,7 @@ namespace vt
 		}
 	}
 
-	packet_wrapper::packet_wrapper(packet_wrapper&& other) noexcept
-		: packet_{ other.packet_ }, type_{other.type_}
+	packet_wrapper::packet_wrapper(packet_wrapper&& other) noexcept : packet_{ other.packet_ }, type_{other.type_}
 	{
 		other.packet_ = nullptr;
 		other.type_ = stream_type::unknown;
@@ -238,10 +233,7 @@ namespace vt
 		return packet_->flags & AV_PKT_FLAG_KEY;
 	}
 
-	packet_queue::packet_queue()
-		: stream_index_{ -1 }
-	{
-	}
+	packet_queue::packet_queue() : stream_index_{ -1 } {}
 
 	bool packet_queue::push_front(packet_wrapper&& packet)
 	{
@@ -307,21 +299,13 @@ namespace vt
 
 	void packet_queue::pop_front()
 	{
-		if (empty())
-		{
-			return;
-		}
-
+		if (empty()) return;
 		return packets_.pop_front();
 	}
 
 	void packet_queue::pop_back()
 	{
-		if (empty())
-		{
-			return;
-		}
-
+		if (empty()) return;
 		return packets_.pop_back();
 	}
 
@@ -387,10 +371,7 @@ namespace vt
 
 	packet_queue& packet_queue::operator>>(packet_wrapper& rhs)
 	{
-		if (empty())
-		{
-			return *this;
-		}
+		if (empty()) return *this;
 
 		rhs = std::move(front());
 		pop_front();
@@ -405,16 +386,16 @@ namespace vt
 		return *this;
 	}
 
-	video_decoder::video_decoder()
-		: format_context_{ nullptr }, stream_indices_{}, codec_contexts_{}, packet_queues_{}, last_read_packet_type_{ stream_type::unknown },
-		eof_{ false }//, current_frame_number_{ 0 }
+	video_decoder::video_decoder() :
+		format_context_{ nullptr }, stream_indices_{}, codec_contexts_{}, packet_queues_{},
+		last_read_packet_type_{ stream_type::unknown }, eof_{ false }, pixel_format_{} //, current_frame_number_{ 0 }
 	{
 		std::fill(stream_indices_.begin(), stream_indices_.end(), -1);
 	}
 
-	video_decoder::video_decoder(video_decoder&& other) noexcept
-		: format_context_{ other.format_context_ }, stream_indices_(other.stream_indices_), codec_contexts_(other.codec_contexts_),
-		packet_queues_(std::move(other.packet_queues_)), last_read_packet_type_{ other.last_read_packet_type_ }, eof_{ other.eof_ }
+	video_decoder::video_decoder(video_decoder&& other) noexcept :
+		format_context_{ other.format_context_ }, stream_indices_(other.stream_indices_), codec_contexts_(other.codec_contexts_),
+		packet_queues_(std::move(other.packet_queues_)), last_read_packet_type_{ other.last_read_packet_type_ }, eof_{ other.eof_ }, pixel_format_{}
 	{
 		for (auto& codec_context : other.codec_contexts_)
 		{
