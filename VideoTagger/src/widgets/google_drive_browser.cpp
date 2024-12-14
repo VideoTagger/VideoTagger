@@ -13,8 +13,7 @@
 
 namespace vt::widgets
 {
-	google_drive_browser::google_drive_browser(std::string id)
-		: id_{ std::move(id) }
+	google_drive_browser::google_drive_browser(std::string id) : id_{ std::move(id) }
 	{
 		update_items();
 	}

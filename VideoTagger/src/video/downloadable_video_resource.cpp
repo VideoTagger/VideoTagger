@@ -19,13 +19,13 @@ namespace vt
 		}
 	}
 
-	downloadable_video_resource::downloadable_video_resource(std::string importer_id, video_id_t id, video_resource_metadata metadata)
-		: video_resource(std::move(importer_id), std::move(id), std::move(metadata))
+	downloadable_video_resource::downloadable_video_resource(std::string importer_id, video_id_t id, video_resource_metadata metadata) :
+		video_resource(std::move(importer_id), std::move(id), std::move(metadata))
 	{
 	}
 
-	downloadable_video_resource::downloadable_video_resource(std::string importer_id, const nlohmann::ordered_json& json)
-		: video_resource(std::move(importer_id), json)
+	downloadable_video_resource::downloadable_video_resource(std::string importer_id, const nlohmann::ordered_json& json) :
+		video_resource(std::move(importer_id), json)
 	{
 	}
 

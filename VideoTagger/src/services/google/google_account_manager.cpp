@@ -60,8 +60,8 @@ namespace vt
 		return properties.contains("refresh_token");
 	}
 
-	google_account_manager::google_account_manager()
-		: service_account_manager(static_service_id, static_service_display_name)
+	google_account_manager::google_account_manager() :
+		service_account_manager(static_service_id, static_service_display_name)
 	{
 	}
 

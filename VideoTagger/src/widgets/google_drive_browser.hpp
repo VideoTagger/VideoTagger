@@ -16,8 +16,8 @@ namespace vt::widgets
 
 	struct google_drive_browser_item_data
 	{
-		google_drive_browser_item_data(std::string id, std::string name, google_drive_browser_item_type type)
-			: id{ std::move(id) }, name{ std::move(name) }, type{ type }
+		google_drive_browser_item_data(std::string id, std::string name, google_drive_browser_item_type type) :
+			id{ std::move(id) }, name{ std::move(name) }, type{ type }
 		{}
 
 		std::string id;

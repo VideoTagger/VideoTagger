@@ -60,13 +60,13 @@ namespace vt
 		return metadata;
 	}
 
-	google_drive_video_resource::google_drive_video_resource(video_id_t id, std::string file_id)
-		: downloadable_video_resource(google_drive_video_importer::static_importer_id, id, make_video_metadata_from_file_id(file_id)), file_id_{ std::move(file_id) }
+	google_drive_video_resource::google_drive_video_resource(video_id_t id, std::string file_id) :
+		downloadable_video_resource(google_drive_video_importer::static_importer_id, id, make_video_metadata_from_file_id(file_id)), file_id_{ std::move(file_id) }
 	{
 	}
 
-	google_drive_video_resource::google_drive_video_resource(const nlohmann::ordered_json& json)
-		: downloadable_video_resource(google_drive_video_importer::static_importer_id, json)
+	google_drive_video_resource::google_drive_video_resource(const nlohmann::ordered_json& json) :
+		downloadable_video_resource(google_drive_video_importer::static_importer_id, json)
 	{
 		if (!json.contains("file-id"))
 		{

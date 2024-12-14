@@ -13,8 +13,8 @@
 
 namespace vt
 {
-	google_drive_video_importer::google_drive_video_importer()
-		: video_importer(static_importer_id, static_importer_display_name, static_importer_display_icon)
+	google_drive_video_importer::google_drive_video_importer() :
+		video_importer(static_importer_id, static_importer_display_name, static_importer_display_icon)
 	{
 	}
 

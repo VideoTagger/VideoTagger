@@ -8,8 +8,8 @@
 
 namespace vt
 {
-	local_video_importer::local_video_importer() 
-		: video_importer(static_importer_id, static_importer_display_name, static_importer_display_icon)
+	local_video_importer::local_video_importer() :
+		video_importer(static_importer_id, static_importer_display_name, static_importer_display_icon)
 	{
 	}
 

@@ -9,8 +9,8 @@ namespace vt
 		return utils::uuid::get();
 	}
 
-	video_importer::video_importer(std::string importer_id, std::string importer_display_name, std::string importer_display_icon)
-		: importer_id_{ std::move(importer_id) }, importer_display_name_{ std::move(importer_display_name) }, importer_display_icon_{ std::move(importer_display_icon) }
+	video_importer::video_importer(std::string importer_id, std::string importer_display_name, std::string importer_display_icon) :
+		importer_id_{ std::move(importer_id) }, importer_display_name_{ std::move(importer_display_name) }, importer_display_icon_{ std::move(importer_display_icon) }
 	{
 	}
 

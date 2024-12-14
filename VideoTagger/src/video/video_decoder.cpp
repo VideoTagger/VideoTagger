@@ -24,8 +24,8 @@ namespace vt
 		}
 	}
 
-	video_plane::video_plane(uint8_t* data, size_t size, int pitch)
-		: data_{ data }, size_{ size }, pitch_{ pitch }
+	video_plane::video_plane(uint8_t* data, size_t size, int pitch) :
+		data_{ data }, size_{ size }, pitch_{ pitch }
 	{
 	}
 

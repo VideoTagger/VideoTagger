@@ -34,14 +34,14 @@ namespace vt
 		return result;
 	}
 
-	local_video_resource::local_video_resource(video_id_t id, std::filesystem::path path)
-		: video_resource(local_video_importer::static_importer_id, id, make_video_metadata_from_path(path))
+	local_video_resource::local_video_resource(video_id_t id, std::filesystem::path path) :
+		video_resource(local_video_importer::static_importer_id, id, make_video_metadata_from_path(path))
 	{
 		set_file_path(std::filesystem::relative(path).u8string());
 	}
 
-	local_video_resource::local_video_resource(const nlohmann::ordered_json& json)
-		: video_resource(local_video_importer::static_importer_id, json)
+	local_video_resource::local_video_resource(const nlohmann::ordered_json& json) :
+		video_resource(local_video_importer::static_importer_id, json)
 	{
 	}
 

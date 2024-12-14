@@ -5,13 +5,13 @@
 
 namespace vt
 {
-	video_resource::video_resource(std::string importer_id, video_id_t id, video_resource_metadata metadata)
-		: importer_id_{ std::move(importer_id) }, id_{ id }, metadata_{ std::move(metadata) }
+	video_resource::video_resource(std::string importer_id, video_id_t id, video_resource_metadata metadata) :
+		importer_id_{ std::move(importer_id) }, id_{ id }, metadata_{ std::move(metadata) }
 	{
 	}
 
-	video_resource::video_resource(std::string importer_id, const nlohmann::ordered_json& json)
-		: importer_id_{ std::move(importer_id) }, id_{ make_video_id_from_json(json) }, metadata_{ make_video_metadata_from_json(json) }
+	video_resource::video_resource(std::string importer_id, const nlohmann::ordered_json& json) :
+		importer_id_{ std::move(importer_id) }, id_{ make_video_id_from_json(json) }, metadata_{ make_video_metadata_from_json(json) }
 	{
 		if (json.contains("file-path"))
 		{
