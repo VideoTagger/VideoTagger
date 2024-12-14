@@ -121,21 +121,21 @@ project "VideoTagger"
 	filter "system:linux"
 		buildoptions
 		{
-			"`pkg-config --cflags libavcodec libavformat libswscale sdl2 opengl gtk+-3.0 glib-2.0`",
+			"`pkg-config --cflags libavcodec libavformat libswscale sdl2 opengl gtk+-3.0 glib-2.0 openssl`",
 			"`python3-config --cflags`",
 			"-fpermissive"
 		}
 
 		linkoptions
 		{
-			"`pkg-config --libs libavcodec libavformat libswscale sdl2 opengl gtk+-3.0 glib-2.0`",
+			"`pkg-config --libs libavcodec libavformat libswscale sdl2 opengl gtk+-3.0 glib-2.0 openssl`",
 			"`python3-config --embed --ldflags`"
 		}
 
 	filter "system:macosx"
 		buildoptions
 		{
-			"`pkg-config --cflags libavcodec libavformat libswscale sdl2 opengl`",
+			"`pkg-config --cflags libavcodec libavformat libswscale sdl2 opengl openssl`",
 			"-framework AppKit",
             "-framework UniformTypeIdentifiers",
 			"-fpermissive"
@@ -143,7 +143,7 @@ project "VideoTagger"
 
 		linkoptions
 		{
-			"`pkg-config --libs libavcodec libavformat libswscale sdl2 opengl`"
+			"`pkg-config --libs libavcodec libavformat libswscale sdl2 opengl openssl`"
 		}
 	
 	filter "configurations:Debug"

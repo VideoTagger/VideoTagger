@@ -24,10 +24,7 @@ namespace vt
 		}
 	}
 
-	video_plane::video_plane(uint8_t* data, size_t size, int pitch) :
-		data_{ data }, size_{ size }, pitch_{ pitch }
-	{
-	}
+	video_plane::video_plane(uint8_t* data, size_t size, int pitch) : data_{ data }, size_{ size }, pitch_{ pitch } {}
 
 	uint8_t* video_plane::data()
 	{
@@ -405,7 +402,7 @@ namespace vt
 		other.format_context_ = nullptr;
 	}
 
-	vt::video_decoder::~video_decoder()
+	video_decoder::~video_decoder()
 	{
 		close();
 	}
