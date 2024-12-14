@@ -37,3 +37,7 @@
 #include <fmt/core.h>
 #include <nfd.hpp>
 #include <utf8.h>
+
+#include <pybind11/embed.h>
+#include <pybind11/stl.h>
+#include <pybind11/operators.h>

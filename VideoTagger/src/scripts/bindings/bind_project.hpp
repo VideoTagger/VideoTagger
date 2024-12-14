@@ -3,5 +3,5 @@
 
 namespace vt::bindings
 {
-	extern void bind_tag_attribute_instance(pybind11::module_& module);
+	extern void bind_project(pybind11::module_& module);
 }

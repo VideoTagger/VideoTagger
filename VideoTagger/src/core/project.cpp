@@ -8,6 +8,7 @@
 #include <utils/hash.hpp>
 #include <utils/filesystem.hpp>
 #include "app_context.hpp"
+#include "project.hpp"
 
 static std::chrono::system_clock::time_point to_sys_time(const std::filesystem::file_time_type& ftime)
 {
