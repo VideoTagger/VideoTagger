@@ -1858,7 +1858,7 @@ namespace vt
 					
 					//shape drawing
 					std::string tooltip;
-					for (const auto& displayed_tag : ctx_.video_timeline.displayed_tags())
+					for (const auto& displayed_tag : ctx_.current_project->displayed_tags)
 					{
 						auto& segment_storage = ctx_.get_current_segment_storage();
 						auto it = segment_storage.find(displayed_tag);
