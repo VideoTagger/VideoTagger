@@ -6,7 +6,15 @@
 #include <widgets/console.hpp>
 #include <video/local_video_importer.hpp>
 #include <utils/random.hpp>
-#include "bindings/tag_attribute_instance.hpp"
+#include "bindings/bind_tags.hpp"
+#include "bindings/bind_tag_attributes.hpp"
+#include "bindings/bind_timestamp.hpp"
+#include "bindings/bind_shapes.hpp"
+#include "bindings/bind_project.hpp"
+#include "bindings/bind_group.hpp"
+#include "bindings/bind_video.hpp"
+#include "bindings/bind_segment.hpp"
+#include "bindings/proxies.hpp"
 #include "script.hpp"
 
 namespace vt
@@ -28,31 +36,6 @@ namespace vt
 
 	PYBIND11_EMBEDDED_MODULE(vt, this_module)
 	{
-		struct vt_video
-		{
-			std::filesystem::path path;
-			video_id_t id{};
-			int width{};
-			int height{};
-		};
-
-		struct vt_video_group
-		{
-			video_group_id_t id{};
-			video_group& ref;
-		};
-
-		struct vt_project
-		{
-			project& ref;
-		};
-
-		struct vt_tag_segment
-		{
-			tag_segment& ref;
-			tag& tag_ref;
-		};
-
 		struct stdout_hook {};
 		py::class_<stdout_hook>(this_module, "stdout_hook")
 		.def_static("write", [](std::string message)
@@ -106,61 +89,7 @@ namespace vt
 			return "<vt.Timeline>";
 		});
 
-		py::class_<timestamp>(this_module, "Timestamp")
-		.def(py::init<int64_t>())
-		.def_property("hours",
-		[](const timestamp& ts) -> int64_t
-		{
-			return ts.hours();
-		},
-		[](timestamp& ts, int64_t value)
-		{
-			ts.set_hours(value);
-		})
-		.def_property("minutes",
-		[](const timestamp& ts) -> int64_t
-		{
-			return ts.minutes();
-		},
-		[](timestamp& ts, int64_t value)
-		{
-			ts.set_minutes(value);
-		})
-		.def_property("seconds",
-		[](const timestamp& ts) -> int64_t
-		{
-			return ts.seconds();
-		},
-		[](timestamp& ts, int64_t value)
-		{
-			ts.set_seconds(value);
-		})
-		.def_property("milliseconds",
-		[](const timestamp& ts) -> int64_t
-		{
-			return ts.milliseconds();
-		},
-		[](timestamp& ts, int64_t value)
-		{
-			ts.set_milliseconds(value);
-		})
-		.def_property("total_milliseconds",
-		[](const timestamp& ts) -> int64_t
-		{
-			return ts.total_milliseconds.count();
-		},
-		[](timestamp& ts, int64_t value)
-		{
-			ts.total_milliseconds = decltype(ts.total_milliseconds)(value);
-		})
-		.def(py::self < py::self)
-		.def(py::self > py::self)
-		.def(py::self <= py::self)
-		.def(py::self >= py::self)
-		.def("__repr__", [](const timestamp& ts)
-		{
-			return utils::time::time_to_string(ts.total_milliseconds.count());
-		});
+		bindings::bind_timestamp(this_module);
 
 		py::class_<widgets::video_player>(this_module, "Player")
 		.def_property_readonly("current_timestamp", [](const widgets::video_player& player) -> timestamp
@@ -191,49 +120,11 @@ namespace vt
 			return player.is_playing();
 		});
 
-		py::class_<tag_storage>(this_module, "TagStorage")
-		.def("add_tag", [](tag_storage& tags, const tag& t) -> bool
-		{
-			if (&tags == &ctx_.current_project->tags)
-			{
-				ctx_.is_project_dirty = true;
-			}
-			auto[_, result] = tags.insert(t);
-			return result;
-		})
-		.def("has_tag", [](tag_storage& tags, const std::string& name) -> bool
-		{
-			return tags.contains(name);
-		})
-		.def("clear", [](tag_storage& tags)
-		{
-			if (&tags == &ctx_.current_project->tags)
-			{
-				//TODO: This should be a command
-				ctx_.is_project_dirty = true;
-				ctx_.current_project->displayed_tags.clear();
-				ctx_.video_timeline.selected_segment = std::nullopt;
-				ctx_.video_timeline.moving_segment = std::nullopt;
-			}
-			tags.clear();
-		})
-		.def_property_readonly("list", [](const tag_storage& tags) -> std::vector<tag>
-		{
-			return { tags.begin(), tags.end() };
-		});
-
 		this_module.attr("timeline") = &ctx_.video_timeline;
 		this_module.attr("player") = &ctx_.player;
 
-		py::enum_<tag_attribute::type>(this_module, "TagAttributeType")
-		.value("bool", tag_attribute::type::bool_)
-		.value("float", tag_attribute::type::float_)
-		.value("integer", tag_attribute::type::integer)
-		.value("string", tag_attribute::type::string)
-		.value("shape", tag_attribute::type::shape);
-
-		py::class_<tag_attribute>(this_module, "TagAttribute")
-		.def(py::init<tag_attribute::type>());
+		bindings::bind_tags(this_module);
+		bindings::bind_tag_attributes(this_module);
 
 		py::class_<utils::vec2<uint32_t>>(this_module, "Vec2")
 		.def(py::init([](uint32_t x, uint32_t y)
@@ -260,200 +151,11 @@ namespace vt
 		})
 		.def(py::self == py::self);
 
-		py::class_<circle>(this_module, "Circle")
-		.def(py::init<const utils::vec2<uint32_t>&, uint32_t>())
-		.def_readwrite("pos", &circle::pos)
-		.def_property("radius",
-		[](const circle& c) -> int32_t
-		{
-			return c.radius;
-		},
-		[](circle& c, int64_t value)
-		{
-			c.radius = static_cast<uint32_t>(std::min(1ll, value));
-		})
-		.def(py::self == py::self);
-
-		py::class_<rectangle>(this_module, "Rectangle")
-		.def(py::init<const utils::vec2<uint32_t>&, const utils::vec2<uint32_t>&>())
-		.def_property("pos1",
-		[](rectangle& r) -> utils::vec2<uint32_t>&
-		{
-			return r.vertices[0];
-		},
-		[](rectangle& r, const utils::vec2<uint32_t>& value)
-		{
-			r.vertices[0] = value;
-		})
-		.def_property("pos2",
-		[](rectangle& r) -> utils::vec2<uint32_t>&
-		{
-			return r.vertices[1];
-		},
-		[](rectangle& r, const utils::vec2<uint32_t>& value)
-		{
-			r.vertices[1] = value;
-		}, py::return_value_policy::reference_internal)
-		.def(py::self == py::self);
-
-		py::class_<polygon>(this_module, "Polygon")
-		.def(py::init<const std::vector<utils::vec2<uint32_t>>&>())
-		.def_readwrite("vertices", &polygon::vertices)
-		.def(py::self == py::self);
-		
-		bindings::bind_tag_attribute_instance(this_module);
-
-		py::class_<tag>(this_module, "Tag")
-		.def(py::init<const std::string&, uint32_t>())
-		.def_readwrite("name", &tag::name)
-		.def_readwrite("color", &tag::color)
-		.def("add_attribute", [](tag& t, const std::string& name, tag_attribute::type type) -> tag_attribute&
-		{
-			return t.attributes[name] = tag_attribute{ type };
-		})
-		.def("remove_attribute", [](tag& t, const std::string& name)
-		{
-			t.attributes.erase(name);
-		})
-		.def("has_attribute", [](tag& t, const std::string& name) -> bool
-		{
-			return t.attributes.find(name) != t.attributes.end();
-		});
-
-		py::class_<vt_tag_segment>(this_module, "Segment")
-		//.def_property_readonly("attributes", [](vt_tag_segment& s) -> tag_segment::attribute_instance_container&
-		//{
-		//	return s.ref.attributes;
-		//}, py::return_value_policy::reference_internal)
-		.def("get_attribute", [](vt_tag_segment& s, const vt_video& vid, const std::string& name) -> tag_attribute_instance&
-		{
-			return s.ref.attributes[vid.id][name];
-		}, py::return_value_policy::reference_internal)
-		.def_property_readonly("tag", [](const vt_tag_segment& s) -> tag&
-		{
-			return s.tag_ref;
-		}, py::return_value_policy::reference_internal)
-		.def_property_readonly("start", [](const vt_tag_segment& s) -> timestamp
-		{
-			return s.ref.start;
-		})
-		.def_property_readonly("end", [](const vt_tag_segment& s) -> timestamp
-		{
-			return s.ref.end;
-		});
-
-		py::class_<video_group>(this_module, "VideoGroup")
-		.def(py::init([](const std::string& name) -> video_group
-		{
-			return video_group{ name, {} };
-		}))
-		.def_readwrite("name", &video_group::display_name)
-		.def("add_video", [](video_group& group, const vt_video& vid, timestamp offset)
-		{
-			group.insert(video_group::video_info{ vid.id, std::chrono::nanoseconds(offset.total_milliseconds) });
-		})
-		.def("add_timestamp", [](video_group& group, tag& t, timestamp start) -> std::optional<vt_tag_segment>
-		{
-			auto it = group.segments()[t.name].insert(start);
-			if (it.second)
-			{
-				return vt_tag_segment{ (tag_segment&)(*it.first), t };
-			}
-			return std::nullopt;
-		})
-		.def("add_segment", [](video_group& group, tag& t, timestamp start, timestamp end) -> std::optional<vt_tag_segment>
-		{
-			auto it = group.segments()[t.name].insert(start, end);
-			if (it.second)
-			{
-				return vt_tag_segment{ (tag_segment&)(*it.first), t };
-			}
-			return std::nullopt;
-		});
-
-		py::class_<video_group_playlist>(this_module, "GroupQueue")
-		.def("add_group", [](video_group_playlist& p, const video_group& g) -> bool
-		{
-			auto& groups = ctx_.current_project->video_groups;
-			auto it = std::find_if(groups.begin(), groups.end(), [&g](const std::pair<video_group_id_t, video_group>& group)
-			{
-				return group.second.display_name == g.display_name;
-			});
-			if (it == groups.end()) return false;
-			p.insert(p.end(), it->first);
-			return true;
-		}),
-
-		py::class_<vt_project>(this_module, "Project")
-		.def_property_readonly("name", [](const vt_project& p) -> std::string
-		{
-			return p.ref.name;
-		})
-		.def_property_readonly("videos", [](const vt_project& p) -> std::vector<vt_video>
-		{
-			std::vector<vt_video> result;
-			result.reserve(p.ref.videos.size());
-			for (const auto& [k, v] : p.ref.videos)
-			{
-				const auto& metadata = v->metadata();
-				result.push_back({ v->file_path(), k, metadata.width.value_or(0), metadata.height.value_or(0)});
-			}
-			return result;
-		})
-		.def_property_readonly("tags", [](const vt_project& p) -> tag_storage&
-		{
-			return p.ref.tags;
-		})
-		.def("import_video", [](vt_project& p, const std::string& path) -> std::optional<vt_video>
-		{
-			auto vid_resource_id = video_importer::generate_video_id();
-			auto vid_resource = ctx_.get_video_importer<local_video_importer>().import_video(vid_resource_id, std::filesystem::path(path));
-			if (vid_resource == nullptr) return std::nullopt;
-
-			if (!p.ref.import_video(std::move(vid_resource), std::nullopt)) return std::nullopt;
-
-			auto& vid = p.ref.videos.get<local_video_resource>(vid_resource_id);
-
-			const auto& metadata = vid.metadata();
-			return vt_video{ vid.file_path(), vid.id(), metadata.width.value_or(0), metadata.height.value_or(0) };
-		})
-		.def("find_group", [](const vt_project& p, const std::string& name) -> std::optional<video_group>
-		{
-			auto it = p.ref.video_groups.end();
-			for (auto& [id, group] : p.ref.video_groups)
-			{
-				if (group.display_name == name) return group;
-			}
-			return std::nullopt;
-		})
-		.def("add_group", [](vt_project& p, const video_group& group) -> bool
-		{
-			auto segments = group.segments();
-			return p.ref.video_groups.insert({ utils::uuid::get(), group }).second;
-		})
-		.def_property_readonly("group_queue", [](const vt_project& p) -> video_group_playlist&
-		{
-			return p.ref.video_group_playlist;
-		}, py::return_value_policy::reference_internal);
-
-		py::class_<vt_video>(this_module, "Video")
-		.def_property_readonly("id", [](const vt_video& vid) -> video_id_t
-		{
-			return vid.id;
-		})
-		.def_property_readonly("path", [](const vt_video& vid) -> std::string
-		{
-			return vid.path.string();
-		})
-		.def_property_readonly("size", [](const vt_video& vid) -> std::pair<int, int>
-		{
-			return std::make_pair(vid.width, vid.height);
-		});
-
-		this_module.def("current_project", []() -> std::optional<vt_project>
-		{
-			return ctx_.current_project.has_value() ? std::optional<vt_project>{ vt_project{ ctx_.current_project.value() } } : std::nullopt;
-		});
+		bindings::bind_shapes(this_module);
+		bindings::bind_segment(this_module);
+		bindings::bind_group(this_module);
+		bindings::bind_project(this_module);
+		bindings::bind_video(this_module);
 
 		this_module.def("random_color", []()
 		{

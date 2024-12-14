@@ -1,9 +1,9 @@
 #include "pch.hpp"
-#include "tag_attribute_instance.hpp"
+#include "bind_tag_attributes.hpp"
 #include <tags/tag.hpp>
 #include <scripts/helpers.hpp>
 
-void vt::bindings::bind_tag_attribute_instance(pybind11::module_& module)
+void vt::bindings::bind_tag_attributes(pybind11::module_& module)
 {
 	namespace py = pybind11;
 
@@ -60,4 +60,14 @@ void vt::bindings::bind_tag_attribute_instance(pybind11::module_& module)
 		s.get_map<polygon>() = helpers::to_map<timestamp, std::vector<polygon>>(keyframes);
 		attr = s;
 	});
+
+	py::enum_<tag_attribute::type>(module, "TagAttributeType")
+	.value("bool", tag_attribute::type::bool_)
+	.value("float", tag_attribute::type::float_)
+	.value("integer", tag_attribute::type::integer)
+	.value("string", tag_attribute::type::string)
+	.value("shape", tag_attribute::type::shape);
+
+	py::class_<tag_attribute>(module, "TagAttribute")
+	.def(py::init<tag_attribute::type>());
 }

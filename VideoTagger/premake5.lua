@@ -108,8 +108,7 @@ project "VideoTagger"
 
 		buildoptions
 		{
-			"/utf-8",
-			"/bigobj"
+			"/utf-8"
 		}
 
 		links
