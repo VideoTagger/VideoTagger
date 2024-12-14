@@ -669,7 +669,7 @@ namespace vt
 						}
 
 						video_id_t video_id = vid_resource->id();
-						if (result.import_video(std::move(vid_resource), std::nullopt, false))
+						if (result.import_video(std::move(vid_resource), std::nullopt, false, false))
 						{
 							if (ctx_.app_settings.load_thumbnails)
 							{
