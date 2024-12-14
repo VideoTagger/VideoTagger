@@ -16,9 +16,7 @@ namespace vt
 	}
 
 	service_account_manager::service_account_manager(std::string service_id, std::string service_display_name) :
-		service_id_{ std::move(service_id) }, service_display_name_{ std::move(service_display_name) }
-	{
-	}
+		service_id_{ std::move(service_id) }, service_display_name_{ std::move(service_display_name) } {}
 
 	const std::string& service_account_manager::service_id() const
 	{

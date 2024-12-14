@@ -115,6 +115,7 @@ namespace vt
 		std::filesystem::path accounts_filepath = std::filesystem::path("accounts").replace_extension("json");
 		std::filesystem::path script_dir_filepath = std::filesystem::path("assets") / "scripts";
 		std::filesystem::path theme_dir_filepath = "themes";
+		std::filesystem::path downloads_dir_filepath = "downloads";
 		registry registry;
 		nlohmann::ordered_json settings;
 		window_config win_cfg;

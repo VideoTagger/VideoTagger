@@ -62,8 +62,7 @@ namespace vt
 
 	google_drive_video_resource::google_drive_video_resource(video_id_t id, std::string file_id) :
 		downloadable_video_resource(google_drive_video_importer::static_importer_id, id, make_video_metadata_from_file_id(file_id)), file_id_{ std::move(file_id) }
-	{
-	}
+	{}
 
 	google_drive_video_resource::google_drive_video_resource(const nlohmann::ordered_json& json) :
 		downloadable_video_resource(google_drive_video_importer::static_importer_id, json)
@@ -147,10 +146,10 @@ namespace vt
 				return video_download_status::failure;
 			}
 			auto get_size_json = nlohmann::json::parse(get_size_result->body);
-			int64_t file_size = std::stoll(std::string(get_size_json.at("size")));
+			int64_t file_size = std::stoll(get_size_json.at("size").get<std::string>());
 
-			//TODO: some folder would be nice, probably in the projects directory
-			std::filesystem::path file_path = file_id;
+			std::filesystem::path file_path = ctx_.downloads_dir_filepath / file_id;
+			std::filesystem::create_directories(ctx_.downloads_dir_filepath);
 			std::ofstream file(file_path, std::ios::binary);
 			if (!file.is_open())
 			{
