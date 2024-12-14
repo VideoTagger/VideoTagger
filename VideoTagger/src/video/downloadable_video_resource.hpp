@@ -14,6 +14,14 @@ namespace vt
 		failure
 	};
 
+	enum class video_downloadable
+	{
+		yes,
+		no_connection,
+		no_deleted,
+		no_other
+	};
+
 	struct video_download_data
 	{
 		bool cancel = false;
@@ -46,6 +54,7 @@ namespace vt
 
 		bool remove_downloaded();
 
+		virtual video_downloadable downloadable() const = 0;
 		virtual bool playable() const;
 		virtual void on_save(nlohmann::ordered_json& json) const;
 		virtual void on_remove() override;

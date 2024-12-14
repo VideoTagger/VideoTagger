@@ -14,6 +14,7 @@ namespace vt
 		video_stream video() const override;
 		bool update_thumbnail() override;
 		std::function<void()> on_refresh_task() override;
+		video_downloadable downloadable() const override;
 
 		void on_save(nlohmann::ordered_json& json) const override;
 	
@@ -22,6 +23,6 @@ namespace vt
 
 	private:
 		std::string file_id_;
-
+		video_downloadable downloadable_ = video_downloadable::yes;
 	};
 }

@@ -1,5 +1,7 @@
 #include "pch.hpp"
 #include "video_resource.hpp"
+#include <core/app_context.hpp>
+#include <widgets/icons.hpp>
 
 namespace vt
 {
@@ -39,6 +41,15 @@ namespace vt
 
 	void video_resource::context_menu_items(std::vector<video_resource_context_menu_item>& items)
 	{
+		video_resource_context_menu_item item;
+		item.function = [id = id()]()
+		{
+			ctx_.current_project->schedule_video_refresh(id);
+		};
+
+		item.name = fmt::format("{} {}", icons::refresh, "Refresh");
+
+		items.push_back(std::move(item));
 	}
 
 	std::function<void(ImDrawList&, ImRect, ImRect)> video_resource::icon_custom_draw() const

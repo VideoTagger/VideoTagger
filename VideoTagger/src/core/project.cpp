@@ -167,6 +167,25 @@ namespace vt
 		generate_thumbnail_tasks.push_back(std::move(task));
 	}
 
+	void project::schedule_video_refresh(video_id_t video_id)
+	{
+		if (!videos.contains(video_id))
+		{
+			return;
+		}
+
+		auto refresh_task = videos.get(video_id).on_refresh_task();
+		if (refresh_task == nullptr)
+		{
+			return;
+		}
+
+		video_refresh_task task;
+		task.task = std::async(std::launch::async, refresh_task);
+		task.video_id = video_id;
+		video_refresh_tasks.push_back(std::move(task));
+	}
+
 	bool project::import_video(std::unique_ptr<video_resource>&& vid_resource, std::optional<video_group_id_t> group_id, bool check_hash, bool set_project_dirty)
 	{
 		if (vid_resource == nullptr)

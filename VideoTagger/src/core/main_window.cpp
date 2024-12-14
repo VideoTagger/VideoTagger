@@ -1522,8 +1522,6 @@ namespace vt
 				auto& task = *it;
 				if (!task.result.is_done())
 				{
-					//debug::log("Download progress {} %", task.result.data->progress * 100.f);
-
 					++it;
 					continue;
 				}
@@ -1537,6 +1535,21 @@ namespace vt
 				{
 					debug::log("Downloaded file {}", task.video_id);
 					dynamic_cast<downloadable_video_resource&>(ctx_.current_project->videos.get(task.video_id)).set_local_path(task.result.data->download_path);
+				}
+
+				it = tasks.erase(it);
+			}
+		}
+
+		{
+			auto& tasks = ctx_.current_project->video_refresh_tasks;
+			for (auto it = tasks.begin(); it != tasks.end();)
+			{
+				auto& task = *it;
+				if (task.task.wait_for(std::chrono::seconds{}) != std::future_status::ready)
+				{
+					++it;
+					continue;
 				}
 
 				it = tasks.erase(it);

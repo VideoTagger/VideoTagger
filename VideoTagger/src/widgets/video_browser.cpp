@@ -161,6 +161,18 @@ namespace vt::widgets
 
 			if (ImGui::BeginPopup("##BrowserContextMenu"))
 			{
+				if (!ctx_.current_project->videos.empty())
+				{
+					std::string refresh_item_name = fmt::format("{} {}", icons::refresh, "Refresh Videos");
+					if (ImGui::MenuItem(refresh_item_name.c_str()))
+					{
+						for (auto& [id, vid_resource] : ctx_.current_project->videos)
+						{
+							ctx_.current_project->schedule_video_refresh(id);
+						}
+					}
+				}
+				
 				for (auto& [importer_id, importer] : ctx_.video_importers)
 				{
 					if (!importer->available())

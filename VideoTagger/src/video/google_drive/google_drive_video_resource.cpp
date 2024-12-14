@@ -103,8 +103,13 @@ namespace vt
 	{
 		return []()
 		{
-			
+			//TODO: update downloadable_
 		};
+	}
+
+	video_downloadable google_drive_video_resource::downloadable() const
+	{
+		return downloadable_;
 	}
 
 	void google_drive_video_resource::on_save(nlohmann::ordered_json& json) const
