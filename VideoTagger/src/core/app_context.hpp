@@ -6,6 +6,7 @@
 #include <vector>
 #include <map>
 #include <unordered_map>
+#include <array>
 
 #include <imgui.h>
 
@@ -36,6 +37,8 @@
 #include <utils/vec.hpp>
 #include <utils/file_node.hpp>
 #include <scripts/scripting_engine.hpp>
+#include <services/service_account_manager.hpp>
+#include <video/video_importer.hpp>
 
 #include <editor/registry.hpp>
 
@@ -90,8 +93,6 @@ namespace vt
 
 	struct app_context
 	{
-		app_context();
-
 		std::optional<project> current_project;
 		widgets::video_timeline video_timeline;
 		widgets::project_selector project_selector;
@@ -107,10 +108,14 @@ namespace vt
 		widgets::color_picker color_picker;
 		widgets::modal::tag_importer tag_importer;
 
+		static constexpr auto valid_video_extensions = std::array{ "mp4", "mkv", "avi", "mov", "flv", "wmv", "webm", "m4v", "mpg", "mpeg", "3gp", "ogv", "vob", "mts", "m2ts", "mxf", "f4v", "divx", "rmvb", "asf", "swf" };
+
 		std::filesystem::path projects_list_filepath = std::filesystem::path("projects").replace_extension("json");
 		std::filesystem::path app_settings_filepath = std::filesystem::path("settings").replace_extension("json");
+		std::filesystem::path accounts_filepath = std::filesystem::path("accounts").replace_extension("json");
 		std::filesystem::path script_dir_filepath = std::filesystem::path("assets") / "scripts";
 		std::filesystem::path theme_dir_filepath = "themes";
+		std::filesystem::path downloads_dir_filepath = "downloads";
 		registry registry;
 		nlohmann::ordered_json settings;
 		window_config win_cfg;
@@ -120,6 +125,8 @@ namespace vt
 		keybind_storage keybinds;
 		scripting_engine script_eng;
 		std::optional<script_handle> script_handle;
+		std::unordered_map<std::string, std::unique_ptr<service_account_manager>> account_managers;
+		std::unordered_map<std::string, std::unique_ptr<video_importer>> video_importers;
 		std::optional<video_id_t> last_focused_video;
 		tag_attribute_instance* selected_attribute{};
 		utils::vec2<uint32_t>* gizmo_target{};
@@ -141,6 +148,26 @@ namespace vt
 
 		bool pause_player = false;
 
+		template<typename service_account_manager_type>
+		void register_account_manager();
+		void register_account_managers();
+		template<typename service_account_manager_type>
+		service_account_manager_type& get_account_manager();
+		service_account_manager& get_account_manager(const std::string& service_id);
+		template<typename service_account_manager_type>
+		bool is_account_manager_registered() const;
+		bool is_account_manager_registered(const std::string& service_id) const;
+
+		template<typename video_importer_type>
+		void register_video_importer();
+		void register_video_importers();
+		template<typename video_importer_type>
+		video_importer_type& get_video_importer();
+		video_importer& get_video_importer(const std::string& importer_id);
+		template<typename video_importer_type>
+		bool is_video_importer_registered() const;
+		bool is_video_importer_registered(const std::string& importer_id) const;
+
 		void register_handlers();
 		void update_current_video_group();
 		void reset_current_video_group();
@@ -155,4 +182,64 @@ namespace vt
 	};
 
 	inline app_context ctx_;
+
+	template<typename service_account_manager_type>
+	inline void app_context::register_account_manager()
+	{
+		if (is_account_manager_registered<service_account_manager_type>())
+		{
+			debug::error("Account manager with id {} is already registered", service_account_manager_type::static_service_id);
+			return;
+		}
+
+		account_managers[service_account_manager_type::static_service_id] = std::make_unique<service_account_manager_type>();
+	}
+
+	template<typename service_account_manager_type>
+	inline service_account_manager_type& app_context::get_account_manager()
+	{
+		service_account_manager_type* result = dynamic_cast<service_account_manager_type*>(account_managers.at(service_account_manager_type::static_service_id).get());
+		if (result == nullptr)
+		{
+			debug::panic("Account manager type in the template argument didn't match the registered type for id {}", service_account_manager_type::static_service_id);
+		}
+
+		return *result;
+	}
+
+	template<typename service_account_manager_type>
+	inline bool app_context::is_account_manager_registered() const
+	{
+		return account_managers.count(service_account_manager_type::static_service_id) != 0;
+	}
+
+	template<typename video_importer_type>
+	inline void app_context::register_video_importer()
+	{
+		if (is_video_importer_registered<video_importer_type>())
+		{
+			debug::error("Video importer with id {} is already registered", video_importer_type::static_importer_id);
+			return;
+		}
+
+		video_importers[video_importer_type::static_importer_id] = std::make_unique<video_importer_type>();
+	}
+
+	template<typename video_importer_type>
+	inline video_importer_type& app_context::get_video_importer()
+	{
+		video_importer_type* result = dynamic_cast<video_importer_type*>(video_importers.at(video_importer_type::static_importer_id).get());
+		if (result == nullptr)
+		{
+			debug::panic("Video importer type in the template argument didn't match the registered type for id {}", video_importer_type::static_importer_id);
+		}
+
+		return *result;
+	}
+
+	template<typename video_importer_type>
+	inline bool app_context::is_video_importer_registered() const
+	{
+		return video_importers.count(video_importer_type::static_importer_id) != 0;
+	}
 }

@@ -37,6 +37,7 @@ project "VideoTagger"
 		"vendor/nlohmann/single_include",
 		"vendor/utf8",
 		"vendor/pybind11/include",
+		"vendor/cpp-httplib"
 	}
 
 	pchheader "pch.hpp"
@@ -51,6 +52,8 @@ project "VideoTagger"
 		"avformat",
 		"avutil",
 		"swscale",
+		"libssl",
+		"libcrypto"
 	}
 
 	defines
@@ -84,6 +87,7 @@ project "VideoTagger"
 			"vendor/ffmpeg/include/libavformat",
 			"vendor/ffmpeg/include/libswscale",
 			"vendor/ffmpeg/include",
+			"vendor/openssl/include",
 			PythonIncludePath
 		}
 
@@ -91,13 +95,15 @@ project "VideoTagger"
 		{
 			"vendor/SDL2/lib/%{cfg.architecture}",
 			"vendor/ffmpeg/lib/%{cfg.architecture}",
+			"vendor/openssl/lib/%{cfg.architecture}",
 			PythonLibPath
 		}
 
 		postbuildcommands
 		{
 			"{COPYFILE} vendor/SDL2/lib/%{cfg.architecture}/*.dll %{cfg.targetdir}",
-			"{COPYFILE} vendor/ffmpeg/lib/%{cfg.architecture}/*.dll %{cfg.targetdir}"
+			"{COPYFILE} vendor/ffmpeg/lib/%{cfg.architecture}/*.dll %{cfg.targetdir}",
+			"{COPYFILE} vendor/openssl/lib/%{cfg.architecture}/*.dll %{cfg.targetdir}"
 		}
 
 		buildoptions
@@ -114,21 +120,21 @@ project "VideoTagger"
 	filter "system:linux"
 		buildoptions
 		{
-			"`pkg-config --cflags libavcodec libavformat libswscale sdl2 opengl gtk+-3.0 glib-2.0`",
+			"`pkg-config --cflags libavcodec libavformat libswscale sdl2 opengl gtk+-3.0 glib-2.0 openssl`",
 			"`python3-config --cflags`",
 			"-fpermissive"
 		}
 
 		linkoptions
 		{
-			"`pkg-config --libs libavcodec libavformat libswscale sdl2 opengl gtk+-3.0 glib-2.0`",
+			"`pkg-config --libs libavcodec libavformat libswscale sdl2 opengl gtk+-3.0 glib-2.0 openssl`",
 			"`python3-config --embed --ldflags`"
 		}
 
 	filter "system:macosx"
 		buildoptions
 		{
-			"`pkg-config --cflags libavcodec libavformat libswscale sdl2 opengl`",
+			"`pkg-config --cflags libavcodec libavformat libswscale sdl2 opengl openssl`",
 			"-framework AppKit",
             "-framework UniformTypeIdentifiers",
 			"-fpermissive"
@@ -136,7 +142,7 @@ project "VideoTagger"
 
 		linkoptions
 		{
-			"`pkg-config --libs libavcodec libavformat libswscale sdl2 opengl`"
+			"`pkg-config --libs libavcodec libavformat libswscale sdl2 opengl openssl`"
 		}
 	
 	filter "configurations:Debug"

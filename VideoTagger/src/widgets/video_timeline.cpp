@@ -781,9 +781,6 @@ namespace vt::widgets
 							{
 								//TODO: should draw a line or something so you know where you clicked
 
-								//***********
-								//TODO: THIS SHOULD INSERT INTO insert_segment_container BUT WITH ready = false
-								// ***********
 								inserted_segment_start = current_time_;
 							}
 							//TODO: probably should only be displayed after start was pressed

@@ -17,6 +17,7 @@ namespace vt
 		void on_import_videos();
 		void on_delete();
 
+		bool load_accounts();
 		bool load_settings();
 		void save_settings();
 		void save_project();

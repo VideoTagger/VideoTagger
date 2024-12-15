@@ -92,16 +92,16 @@ namespace vt
 
 		ctx_.group_browser.on_open_video = [this](video_id_t id)
 		{
-			auto* vinfo = ctx_.current_project->videos.get(id);
-			vinfo->is_widget_open = true;
+			//auto& vid_resource = ctx_.current_project->videos.get(id);
 			ctx_.reset_player_docking = true;
-			ctx_.current_project->videos.open_video(id);
+			//ctx_.current_project->videos.open_video(id);
 		};
 		init_options();
 		load_settings();
 		init_keybinds();
 		init_player();
 		fetch_themes();
+		load_accounts();
 		ctx_.scripts = fetch_scripts(ctx_.script_dir_filepath);
 
 		ctx_.project_selector.load_projects_file(ctx_.projects_list_filepath);
@@ -197,61 +197,9 @@ namespace vt
 		}
 	}
 
-	//TODO: Shouldn't this be a static array somewhere or at least constexpr?
-	static std::vector<std::string> valid_video_extensions()
-	{
-		return { "mp4", "mkv", "avi", "mov", "flv", "wmv", "webm", "m4v", "mpg", "mpeg", "3gp", "ogv", "vob", "mts", "m2ts", "mxf", "f4v", "divx", "rmvb", "asf", "swf" };
-	}
-
 	void main_window::on_import_videos()
 	{
-		if (!ctx_.current_project.has_value()) return;
-
-		static std::vector<std::string> vid_exts = valid_video_extensions();
-
-		static utils::dialog_filters filters
-		{
-			{ "Video", utils::filesystem::concat_extensions(vid_exts) },
-		};
-
-		auto result = utils::filesystem::get_files({}, filters);
-		if (result)
-		{
-			for (const auto& path : result.paths)
-			{
-				{
-					auto it = std::find_if(vid_exts.begin(), vid_exts.end(), [&path](const std::string& ext)
-					{
-						return utils::string::to_lowercase(path.extension().string()) == "." + ext;
-					});
-
-					if (it == vid_exts.end())
-					{
-						//TODO: Should probably display a popup
-						debug::error("Failed to import file {} - its not a valid video type", path.u8string());
-						continue;
-					}
-				}
-
-				const auto& videos = ctx_.current_project->videos;
-				{
-					auto it = std::find_if(videos.begin(), videos.end(), [path](const video_pool::iterator::value_type& video_data)
-					{
-						return video_data.second.path == path;
-					});
-
-					if (it == videos.end())
-					{
-						debug::log("Importing video {}", path.u8string());
-						ctx_.current_project->video_import_tasks.push_back(ctx_.current_project->import_video(path));
-					}
-					else
-					{
-						//TODO: Display message box
-					}
-				}
-			}
-		}
+		//TODO: implement
 	}
 
 	void main_window::on_delete()
@@ -267,6 +215,29 @@ namespace vt
 			ctx_.video_timeline.selected_segment->segments->erase(it);
 			ctx_.video_timeline.selected_segment.reset();
 		}
+	}
+
+	bool main_window::load_accounts()
+	{
+		if (!std::filesystem::exists(ctx_.accounts_filepath))
+		{
+			return false;
+		}
+
+		auto accounts_json = utils::json::load_from_file(ctx_.accounts_filepath);
+		for (auto& [service_id, service_accounts] : accounts_json.items())
+		{
+			if (ctx_.account_managers.count(service_id) == 0)
+			{
+				debug::log("Accounts file contains unsupported service: {}", service_id);
+				continue;
+			}
+
+			auto& manager = ctx_.account_managers.at(service_id);
+			manager->load(service_accounts);
+		}
+
+		return true;
 	}
 
 	bool main_window::load_settings()
@@ -773,6 +744,111 @@ namespace vt
 		{
 			display_keybinds_panel(ctx_.current_project->keybinds);
 		};
+
+		options("Storage Settings", "Accounts") = []()
+		{
+			//TODO: maybe make this a widget
+			
+			//TODO: move this somewhere so it can have a value per account
+			static bool login_in_progress = false;
+			bool modifed_account = false;
+
+			static std::map<std::string, std::future<bool>> retry_login_futures;
+
+			for (auto& [service_id, account_manager] : ctx_.account_managers)
+			{
+				ImGui::PushFont(ctx_.fonts["title"]);
+				ImGui::TextUnformatted(account_manager->service_display_name().c_str());
+				ImGui::PopFont();
+
+				auto account_status = account_manager->login_status();
+				if (!login_in_progress and (account_status == account_login_status::logged_in or account_status == account_login_status::refresh_failed))
+				{
+					std::string user_name = fmt::format("User: {}", account_manager->account_name());
+					ImGui::TextUnformatted(user_name.c_str());
+
+					if (account_status == account_login_status::logged_in)
+					{
+						ImGui::TextColored(ImVec4{ 0.0f, 0.9f, 0.0f, 1.0f }, "Logged in");
+
+						if (ImGui::Button("Remove account"))
+						{
+							account_manager->log_out();
+							modifed_account = true;
+						}
+					}
+					else
+					{
+						if (retry_login_futures.count(service_id))
+						{
+							ImGui::TextUnformatted("Retrying...");
+
+							auto& future = retry_login_futures.at(service_id);
+							if (future.wait_for(std::chrono::seconds{}) == std::future_status::ready)
+							{
+								retry_login_futures.erase(service_id);
+							}
+						}
+						else
+						{
+							ImGui::AlignTextToFramePadding();
+							ImGui::TextColored(ImVec4{ 0.9f, 0.0f, 0.0f, 1.0f }, "Login failed");
+
+							ImGui::SameLine();
+							if (widgets::icon_button(icons::retry))
+							{
+								retry_login_futures[service_id] = account_manager->retry_login();
+								modifed_account = true;
+							}
+
+
+							if (ImGui::Button("Remove account"))
+							{
+								account_manager->log_out();
+								modifed_account = true;
+							}
+						}
+					}
+				}
+				else
+				{
+					std::string popup_id = fmt::format("Log in to a {} account", account_manager->service_display_name());
+					if (ImGui::BeginPopupModal(popup_id.c_str(), nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoResize))
+					{
+						bool success{};
+						if (account_manager->draw_login_popup(success))
+						{
+							if (success)
+							{
+								modifed_account = true;
+							}
+
+							debug::log("Login popup success: {}", success);
+							ImGui::CloseCurrentPopup();
+							login_in_progress = false;
+						}
+						ImGui::EndPopup();
+					}
+					if (ImGui::Button("Log in"))
+					{
+						ImGui::OpenPopup(popup_id.c_str());
+						login_in_progress = true;
+					}
+				}
+
+				if (modifed_account)
+				{
+					nlohmann::ordered_json accounts_json;
+					for (auto& [service_id, manager] : ctx_.account_managers)
+					{
+						accounts_json[service_id] = *manager;
+					}
+
+					utils::json::write_to_file(accounts_json, ctx_.accounts_filepath);
+				}
+			}
+		};
+
 		options.set_active_tab("Application Settings", "General");
 	}
 
@@ -937,9 +1013,23 @@ namespace vt
 				std::string key_name = ctx_.lang.get(lang_pack_id::import_videos);
 				auto& kb = ctx_.keybinds.at(key_name);
 				std::string menu_name = fmt::format("{} {}", icons::import_, key_name);
-				if (ImGui::MenuItem(menu_name.c_str(), kb.name().c_str()))
+				if (ImGui::BeginMenu(menu_name.c_str()))
 				{
-					on_import_videos();
+					for (auto& [importer_id, importer] : ctx_.video_importers)
+					{
+						if (!importer->available())
+						{
+							continue;
+						}
+
+						std::string menu_importer_name = fmt::format("{} {}", importer->importer_display_icon(), importer->importer_display_name());
+						if (ImGui::MenuItem(menu_importer_name.c_str()))
+						{
+							ctx_.current_project->prepare_video_import(importer_id);
+						}
+					}
+
+					ImGui::EndMenu();
 				}
 				ImGui::Separator();
 				{
@@ -1427,29 +1517,104 @@ namespace vt
 		}
 
 		{
+			auto& tasks = ctx_.current_project->prepare_video_import_tasks;
+			for (auto it = tasks.begin(); it != tasks.end();)
+			{
+				auto& task = *it;
+				if (!task())
+				{
+					++it;
+					continue;
+				}
+
+				for (auto& import_data : task.import_data)
+				{
+					ctx_.current_project->schedule_video_import(task.importer_id, std::move(import_data), utils::uuid::get());
+				}
+				it = tasks.erase(it);
+
+				//TODO: set some frame time limit;
+				break;
+			}
+		}
+
+		{
 			auto& tasks = ctx_.current_project->video_import_tasks;
 			for (auto it = tasks.begin(); it != tasks.end();)
 			{
-				auto status = it->wait_for(std::chrono::nanoseconds(0));
-				if (status == std::future_status::ready)
+				auto& task = *it;
+				auto vid_resource = task();
+				if (vid_resource != nullptr)
 				{
-					auto result = it->get();
-					if (!result.success)
+					video_id_t video_id = vid_resource->id();
+					if (ctx_.current_project->import_video(std::move(vid_resource), task.group_id))
 					{
-						debug::error("Failed to import {}", result.video_path.u8string());
+						if (ctx_.app_settings.load_thumbnails)
+						{
+							ctx_.current_project->schedule_generate_thumbnail(video_id);
+						}
 					}
-					else if (ctx_.app_settings.load_thumbnails)
-					{
-						auto video_data = ctx_.current_project->videos.get(result.video_id);
-						video_data->update_thumbnail();
-					}
+				}
+				it = tasks.erase(it);
+				//TODO: set some frame time limit;
+				break;
+			}
+		}
 
-					it = tasks.erase(it);
-					break;
-					//continue;
+		{
+			auto& tasks = ctx_.current_project->generate_thumbnail_tasks;
+			for (auto it = tasks.begin(); it != tasks.end();)
+			{
+				auto& task = *it;
+				if (!task())
+				{
+					debug::error("Failed to generate thumbnail");
 				}
 
-				++it;
+				it = tasks.erase(it);
+				//TODO: set some frame time limit;
+				break;
+			}
+		}
+
+		{
+			auto& tasks = ctx_.current_project->make_available_tasks;
+			for (auto it = tasks.begin(); it != tasks.end();)
+			{
+				auto& task = *it;
+				if (!task.result.is_done())
+				{
+					++it;
+					continue;
+				}
+
+				auto status = task.result.result.get();
+				if (status == video_download_status::failure)
+				{
+					debug::error("Failed to download video {}", task.video_id);
+				}
+				else
+				{
+					debug::log("Downloaded file {}", task.video_id);
+					dynamic_cast<downloadable_video_resource&>(ctx_.current_project->videos.get(task.video_id)).set_file_path(task.result.data->download_path.u8string());
+				}
+
+				it = tasks.erase(it);
+			}
+		}
+
+		{
+			auto& tasks = ctx_.current_project->video_refresh_tasks;
+			for (auto it = tasks.begin(); it != tasks.end();)
+			{
+				auto& task = *it;
+				if (task.task.wait_for(std::chrono::seconds{}) != std::future_status::ready)
+				{
+					++it;
+					continue;
+				}
+
+				it = tasks.erase(it);
 			}
 		}
 
@@ -1541,12 +1706,11 @@ namespace vt
 			uint64_t vid_id{};
 			for (auto& video_data : ctx_.displayed_videos)
 			{
-				auto pool_data = ctx_.current_project->videos.get(video_data.id);
-				if (!pool_data->is_widget_open) continue;
-
 				bool timestamp_in_range = video_data.is_timestamp_in_range(ctx_.displayed_videos.current_timestamp());
 				auto selected_segment = ctx_.video_timeline.selected_segment;
 
+				//TODO: handle is_widget_open
+				bool is_widget_open = true;
 				ImVec2 point_pos{};
 				bool has_target = ctx_.gizmo_target != nullptr;
 				if (has_target)
@@ -1554,7 +1718,7 @@ namespace vt
 					point_pos = { (float)ctx_.gizmo_target->at(0), (float)ctx_.gizmo_target->at(1) };
 				}
 
-				widgets::draw_video_widget(*video_data.video, video_data.display_texture, timestamp_in_range, pool_data->is_widget_open, vid_id++, [&point_pos, has_selected_attribute, selected_attribute, is_shape, has_target, &video_data](ImVec2 pos, ImVec2 size, ImVec2 tex_size)
+				widgets::draw_video_widget(video_data.video, video_data.display_texture, timestamp_in_range, is_widget_open, vid_id++, [&point_pos, has_selected_attribute, selected_attribute, is_shape, has_target, &video_data](ImVec2 pos, ImVec2 size, ImVec2 tex_size)
 				{
 					static constexpr auto orange = tag_attribute::type_color(tag_attribute::type::shape); //0xFF30A0F0;
 					static auto from_tex_pos = [&pos, &tex_size, &size](const ImVec2 point) -> ImVec2

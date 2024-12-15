@@ -49,7 +49,6 @@ namespace vt
 		double fps() const;
 		std::chrono::nanoseconds frame_time() const;
 
-		//texture must be in yuv format, have streaming access and with and height the same as the video
 		void get_thumbnail(gl_texture& texture, std::optional<std::chrono::nanoseconds> timestamp = std::nullopt);
 
 		//TODO: should be somewhere in utils

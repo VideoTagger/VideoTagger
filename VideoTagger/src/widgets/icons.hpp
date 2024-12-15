@@ -13,6 +13,7 @@ namespace vt::icons
 	inline constexpr auto pause = "\xee\x80\xb4";
 	inline constexpr auto repeat = "\xee\x81\x80";
 	inline constexpr auto repeat_one = "\xee\x81\x81";
+	inline constexpr auto retry = "\xee\x81\x82";
 	inline constexpr auto shuffle = "\xee\x81\x83";
 	inline constexpr auto skip_next = "\xee\x81\x84";
 	inline constexpr auto skip_prev = "\xee\x81\x85";
@@ -32,6 +33,7 @@ namespace vt::icons
 	inline constexpr auto reset = "\xef\x81\x93";
 	inline constexpr auto folder = "\xee\x8b\x87";
 	inline constexpr auto folder_code = "\xef\x8f\x88";
+	inline constexpr auto file = "\xee\x99\xad";
 	inline constexpr auto label = "\xee\xa2\x92";
 	inline constexpr auto tags = "\xee\xa6\x8b";
 	inline constexpr auto add_tag = "\xee\x98\x89";
@@ -47,6 +49,14 @@ namespace vt::icons
 	inline constexpr auto video = "\xee\x80\xac";
 	inline constexpr auto search = "\xee\xa2\xb6";
 	inline constexpr auto terminal = "\xee\xae\x8e";
+	inline constexpr auto download = "\xef\x82\x90";									
+	inline constexpr auto download_off = "\xee\x93\xbe";
+	inline constexpr auto arrow_up = "\xee\x97\x98";
+	inline constexpr auto refresh = "\xee\x97\x95";
+	inline constexpr auto local_storage = "\xee\x87\x9b";
+	inline constexpr auto google_drive_add = "\xee\x99\x9c";
+	inline constexpr auto home = "\xee\xa2\x8a";
+
 	inline constexpr auto property = "\xef\x8e\xaa";
 	inline constexpr auto attribute = "\xee\xab\x93";
 	inline constexpr auto object = "\xef\x9c\xa0";
@@ -83,12 +93,13 @@ namespace vt::icons
 
 	inline std::vector<std::string> all
 	({
-		dots_hor, play, play_next, play_queue, pause, repeat, repeat_one, shuffle, skip_next, skip_prev, fast_back, fast_fwd,
-		save, save_as, import_, import_export, exit, close, back, visibility_on, visibility_off, add, delete_, reset, folder, folder_code, label, tags, add_tag, expand_less, expand_more,
+		dots_hor, play, play_next, play_queue, pause, repeat, repeat_one, retry, shuffle, skip_next, skip_prev, fast_back, fast_fwd,
+		save, save_as, import_, import_export, exit, close, back, visibility_on, visibility_off, add, delete_, reset, folder, folder_code, file, label, tags, add_tag, expand_less, expand_more,
 		toggle_less, toggle_more, link, link_off, edit, help, video_group, video, search, terminal, property, attribute, object, timeline, queue, database,
 		shape, shape_none, shape_circle, shape_rectangle, shape_polygon, interpolate,
 		align_horizontal_left, align_horizontal_right, align_horizontal_center, align_vertical_bottom, align_vertical_top, align_vertical_center, align_center,
 		info, warning, error, delete_on_run,
-		keyframe, keyframe_current, goto_keyframe, new_region, set_target
+		keyframe, keyframe_current, goto_keyframe, new_region, set_target,
+		download, download_off, arrow_up, refresh, local_storage, google_drive_add, home
 	});
 }

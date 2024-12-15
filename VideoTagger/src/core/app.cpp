@@ -99,6 +99,9 @@ namespace vt
 		io.ConfigFlags |= ImGuiConfigFlags_DockingEnable | ImGuiConfigFlags_ViewportsEnable;
 		io.ConfigWindowsMoveFromTitleBarOnly = true;
 
+		ctx_.register_account_managers();
+		ctx_.register_video_importers();
+
 		ctx_.main_window = std::make_unique<main_window>(main_config);
 		ImGui_ImplSDL2_InitForOpenGL(ctx_.main_window->window, ctx_.main_window->gl_ctx);
 		ImGui_ImplOpenGL3_Init(glsl_version);
@@ -106,8 +109,9 @@ namespace vt
 		ctx_.main_window->set_current();
 		SDL_GL_SetSwapInterval(1); //VSync
 
-
 		ctx_.script_eng.init();
+		ctx_.register_handlers();
+
 		ctx_.state_ = app_state::initialized;
 		return true;
 	}

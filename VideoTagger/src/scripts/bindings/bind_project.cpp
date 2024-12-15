@@ -2,6 +2,8 @@
 #include "bind_project.hpp"
 #include <core/app_context.hpp>
 #include "proxies.hpp"
+#include <video/local_video_resource.hpp>
+#include <video/local_video_importer.hpp>
 
 void vt::bindings::bind_project(pybind11::module_& module)
 {
@@ -17,7 +19,8 @@ void vt::bindings::bind_project(pybind11::module_& module)
 		result.reserve(p.ref.videos.size());
 		for (const auto& [k, v] : p.ref.videos)
 		{
-			result.push_back({ v.path, k, v.width, v.height });
+			const auto& metadata = v->metadata();
+			result.push_back({ v->file_path(), k, metadata.width.value_or(0), metadata.height.value_or(0) });
 		}
 		return result;
 	})
@@ -27,12 +30,16 @@ void vt::bindings::bind_project(pybind11::module_& module)
 	})
 	.def("import_video", [](vt_project& p, const std::string& path) -> std::optional<vt_video>
 	{
-		auto import_result = p.ref.import_video(path, 0, false).get();
-		if (!import_result.success) return std::nullopt;
-		auto vid_meta = p.ref.videos.get(import_result.video_id);
-		if (vid_meta == nullptr) return std::nullopt;
+		auto vid_resource_id = video_importer::generate_video_id();
+		auto vid_resource = ctx_.get_video_importer<local_video_importer>().import_video(vid_resource_id, std::filesystem::path(path));
+		if (vid_resource == nullptr) return std::nullopt;
 
-		return vt_video{ import_result.video_path, import_result.video_id, vid_meta->width, vid_meta->height };
+		if (!p.ref.import_video(std::move(vid_resource), std::nullopt)) return std::nullopt;
+
+		auto& vid = p.ref.videos.get<local_video_resource>(vid_resource_id);
+
+		const auto& metadata = vid.metadata();
+		return vt_video{ vid.file_path(), vid.id(), metadata.width.value_or(0), metadata.height.value_or(0) };
 	})
 	.def("find_group", [](const vt_project& p, const std::string& name) -> std::optional<video_group>
 	{

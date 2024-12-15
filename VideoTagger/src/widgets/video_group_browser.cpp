@@ -17,9 +17,11 @@ namespace vt::widgets
 	{
 		if (!ctx_.current_project.has_value()) return;
 
-		static auto draw_video_tile = [this](const video_pool::video_metadata& vmeta, ImVec2 tile_size, bool& open, bool& remove, bool& properties, GLuint image = 0)
+		//TODO: would be nice to just use the fucntion from video_browser
+		static auto draw_video_tile = [this](const video_resource& vid_resource, ImVec2 tile_size, bool& open, bool& remove, bool& properties, GLuint image = 0)
 		{
-			std::string label = vmeta.path.filename().u8string();
+			const auto& metadata = vid_resource.metadata();
+
 			ImVec2 image_tile_size{ tile_size.x * 0.9f, tile_size.x * 0.9f };
 
 			ImVec2 image_size = image_tile_size;
@@ -34,8 +36,8 @@ namespace vt::widgets
 			}
 			else
 			{
-				float scaled_width = vmeta.width * image_tile_size.y / vmeta.height;
-				float scaled_height = image_tile_size.x * vmeta.height / vmeta.width;
+				float scaled_width = *metadata.width * image_tile_size.y / *metadata.height;
+				float scaled_height = image_tile_size.x * *metadata.height / *metadata.width;
 
 				if (scaled_width < image_tile_size.x)
 				{
@@ -46,7 +48,8 @@ namespace vt::widgets
 					image_size.y = scaled_height;
 				}
 			}
-			open |= widgets::tile(label, tile_size, image_size, image,
+			std::string label = metadata.title.value_or("");
+			open |= widgets::tile(fmt::format("video{}", vid_resource.id()).c_str(), label, tile_size, image_size, image,
 			[&](const std::string& label)
 			{
 				//TODO: Temporarily disabled, enable this later
@@ -64,7 +67,9 @@ namespace vt::widgets
 				{
 					properties = true;
 				}
-			}, nullptr, uv0, uv1);
+			},
+			nullptr,
+			vid_resource.icon_custom_draw(), uv0, uv1);
 		};
 
 		static auto group_ctx_menu = [](bool& open, bool& remove, bool& enqueue, bool can_enqueue)
@@ -90,7 +95,7 @@ namespace vt::widgets
 			auto image = utils::thumbnail::font_texture();
 			auto glyph = utils::thumbnail::find_glyph(utils::thumbnail::video_group_icon);
 
-			open |= widgets::tile(vgroup.display_name, tile_size, tile_size, image,
+			open |= widgets::tile(fmt::format("group{}", gid).c_str(), vgroup.display_name, tile_size, tile_size, image,
 			[&](const std::string& label)
 			{
 				group_ctx_menu(open, remove, enqueue, can_enqueue);
@@ -131,7 +136,7 @@ namespace vt::widgets
 					ImGui::EndDragDropSource();
 				}
 			},
-			glyph.uv0, glyph.uv1);
+			nullptr, glyph.uv0, glyph.uv1);
 			ImGui::PopID();
 		};
 
@@ -421,8 +426,7 @@ namespace vt::widgets
 							auto& vgroup = ctx_.current_project->video_groups.at(current_video_group);
 							for (auto& vinfo : vgroup)
 							{
-								auto metadata = pool.get(vinfo.id);
-								if (metadata == nullptr) continue;
+								auto& vid_resource = pool.get(vinfo.id);
 
 								bool open_video{};
 								bool remove_video{};
@@ -434,7 +438,7 @@ namespace vt::widgets
 									for (const auto& token : tokens)
 									{
 										auto ttoken = utils::string::trim_whitespace(token);
-										std::string name = utils::string::to_lowercase(metadata->path.filename().u8string());
+										std::string name = utils::string::to_lowercase(vid_resource.metadata().title.value_or(""));
 										passes_filter &= name.find(ttoken) != std::string::npos;
 									}
 
@@ -443,7 +447,7 @@ namespace vt::widgets
 								}
 
 								ImGui::TableNextColumn();
-								draw_video_tile(*metadata, tile_size, open_video, remove_video, open_video_properties, metadata->thumbnail ? metadata->thumbnail->id() : 0);
+								draw_video_tile(vid_resource, tile_size, open_video, remove_video, open_video_properties, vid_resource.thumbnail() ? vid_resource.thumbnail()->id() : 0);
 								if (remove_video)
 								{
 									auto& vgroup = ctx_.current_project->video_groups.at(current_video_group);

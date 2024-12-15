@@ -60,14 +60,28 @@ namespace vt::widgets
 
 								if (payload.data.has_value())
 								{
+									auto& current_project = *ctx_.current_project;
+
 									bool is_delivery = payload.imgui_payload->IsDelivery();
 
 									bool already_contains = std::find(playlist.begin(), playlist.end(), payload.data.value()) != playlist.end();
-									if (!is_delivery and already_contains)
+									bool contains_unplayable = false;
+									for (auto& video : current_project.videos.get_group(current_project.video_groups.at(payload.data.value())))
+									{
+										if (video->playable())
+										{
+											continue;
+										}
+
+										contains_unplayable = true;
+										break;
+									}
+
+									if (!is_delivery and (already_contains or contains_unplayable))
 									{
 										ImGui::SetMouseCursor(ImGuiMouseCursor_NotAllowed);
 									}
-									else if (is_delivery and !already_contains)
+									else if (is_delivery and !(already_contains or contains_unplayable))
 									{
 										it = playlist.insert(it, payload.data.value());
 									}
@@ -99,7 +113,8 @@ namespace vt::widgets
 							ImGui::SameLine();
 							bool is_selected = current_group_id != 0 and current_group_id == group_id;
 
-							bool tile_active = tile(label, tile_size, image_tile_size, image, [&remove_group](const std::string& label)
+							bool tile_active = tile(fmt::format("group{}", group_id).c_str(), label, tile_size, image_tile_size, image,
+							[&remove_group](const std::string& label)
 							{
 								if (ImGui::MenuItem("Remove"))
 								{
@@ -121,8 +136,8 @@ namespace vt::widgets
 									ImGui::TextUnformatted(str.c_str());
 									ImGui::EndDragDropSource();
 								}
-							}, glyph.uv0, glyph.uv1, is_selected); 
-							
+							}, nullptr, glyph.uv0, glyph.uv1, is_selected);
+
 							if (tile_active)
 							{
 								clicked_group = it;
@@ -159,14 +174,28 @@ namespace vt::widgets
 
 								if (payload.data.has_value())
 								{
+									auto& current_project = *ctx_.current_project;
+									
 									bool is_delivery = payload.imgui_payload->IsDelivery();
 
 									bool already_contains = std::find(playlist.begin(), playlist.end(), payload.data.value()) != playlist.end();
-									if (!is_delivery and already_contains)
+									bool contains_unplayable = false;
+									for (auto& video : current_project.videos.get_group(current_project.video_groups.at(payload.data.value())))
+									{
+										if (video->playable())
+										{
+											continue;
+										}
+
+										contains_unplayable = true;
+										break;
+									}
+
+									if (!is_delivery and (already_contains or contains_unplayable))
 									{
 										ImGui::SetMouseCursor(ImGuiMouseCursor_NotAllowed);
 									}
-									else if (is_delivery and !already_contains)
+									else if (is_delivery and !(already_contains or contains_unplayable))
 									{
 										it = playlist.insert(it, payload.data.value());
 									}
