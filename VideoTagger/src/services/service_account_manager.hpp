@@ -17,6 +17,22 @@ namespace vt
 		expired
 	};
 
+	struct account_login_popup_field_data
+	{
+		std::string display_name;
+		std::string property_name;
+		std::string value;
+	};
+
+	struct account_login_popup_data
+	{
+		std::vector<account_login_popup_field_data> fields;
+		bool show_file_load_button = false;
+
+		//Don't assign
+		bool cancel_token = false;
+	};
+
 	class service_account_manager
 	{
 	public:
@@ -34,7 +50,8 @@ namespace vt
 		virtual nlohmann::ordered_json save() const = 0;
 		virtual void load(const nlohmann::ordered_json& json) = 0;
 
-		//TODO: maybe use std::any instead of nlohmann::json
+		virtual account_properties get_account_properties_from_file(const std::filesystem::path& file_path);
+
 		std::future<bool> log_in(const account_properties& properties, bool* cancel_token);
 
 		std::future<bool> retry_login();
@@ -47,9 +64,9 @@ namespace vt
 		virtual const account_properties& get_account_properties() const = 0;
 		virtual void set_account_properties(const account_properties& properties) = 0;
 
-		//TODO: maybe do the drawing in the parent class and let the children determine field names
-		//return true if the popup is ready to be closed
-		virtual bool draw_login_popup(bool& success) = 0;
+		virtual account_login_popup_data login_popup_data() = 0;
+
+		bool draw_login_popup(bool& success);
 
 	protected:
 		//It's safe to capture the arguments by reference
@@ -59,6 +76,8 @@ namespace vt
 	private:
 		std::string service_id_;
 		std::string service_display_name_;
+		std::future<bool> add_account_result_;
+		std::optional<account_login_popup_data> login_popup_data_;
 	};
 
 	inline void to_json(nlohmann::ordered_json& json, const service_account_manager& manager)

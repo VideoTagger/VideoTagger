@@ -747,6 +747,8 @@ namespace vt
 
 		options("Storage Settings", "Accounts") = []()
 		{
+			//TODO: maybe make this a widget
+			
 			//TODO: move this somewhere so it can have a value per account
 			static bool login_in_progress = false;
 			bool modifed_account = false;

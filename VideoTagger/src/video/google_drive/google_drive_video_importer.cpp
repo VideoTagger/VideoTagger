@@ -365,7 +365,8 @@ namespace vt
 		}
 
 		auto& manager = ctx_.get_account_manager<google_account_manager>();
-		return manager.login_status() == account_login_status::logged_in;
+		auto status = manager.login_status();
+		return status == account_login_status::logged_in or status == account_login_status::expired;
 	}
 
 }

@@ -43,6 +43,8 @@ namespace vt
 		nlohmann::ordered_json save() const override;
 		void load(const nlohmann::ordered_json& json) override;
 
+		account_properties get_account_properties_from_file(const std::filesystem::path& file_path) override;
+
 		std::string account_name() const;
 
 		void on_log_out() override;
@@ -53,7 +55,7 @@ namespace vt
 		const google_account_info& account_info() const;
 		account_login_status login_status() const override;
 
-		bool draw_login_popup(bool& success) override;
+		account_login_popup_data login_popup_data() override;
 
 		//TODO: error messages in the return value would be nice, would require something like std::expected
 		std::optional<obtain_token_result> obtain_access_token(const std::string& client_id, const std::string& client_secret, bool* cancel_token);
@@ -69,6 +71,5 @@ namespace vt
 	private:
 		static constexpr auto request_scope_ = { "https://www.googleapis.com/auth/drive.readonly", "https://www.googleapis.com/auth/userinfo.profile" };
 		google_account_info account_info_;
-		std::future<bool> add_account_result_;
 	};
 }
