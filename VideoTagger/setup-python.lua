@@ -42,7 +42,6 @@ end
 PythonPath = python_find_path()
 PythonIncludePath = python_get_include_path()
 PythonLibName, PythonLibPath = python_get_lib_name_and_path()
-PythonDllPath = PythonPath .. "/" .. PythonLibName .. ".dll"
 
 if PythonPath == "" then
     error("Failed to find Python path")

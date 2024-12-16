@@ -102,7 +102,6 @@ project "VideoTagger"
 			"{COPYFILE} vendor/SDL2/lib/%{cfg.architecture}/*.dll %{cfg.targetdir}",
 			"{COPYFILE} vendor/ffmpeg/lib/%{cfg.architecture}/*.dll %{cfg.targetdir}",
 			"{COPYFILE} vendor/openssl/lib/%{cfg.architecture}/*.dll %{cfg.targetdir}",
-			"{COPYFILE} \"%{PythonDllPath}\" %{cfg.targetdir}"
 		}
 
 		buildoptions
