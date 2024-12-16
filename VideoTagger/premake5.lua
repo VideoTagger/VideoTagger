@@ -156,14 +156,14 @@ project "VideoTagger"
 		defines { "NDEBUG" }
 		optimize "Speed"
 		runtime "Release"
-		flags { "LinkTimeOptimization" }
+		-- flags { "LinkTimeOptimization" }
 	
 	filter "configurations:Shipping"
 		kind "WindowedApp"
 		defines { "NDEBUG" }
 		optimize "Speed"
 		runtime "Release"
-		flags { "LinkTimeOptimization" }
+		-- flags { "LinkTimeOptimization" }
 		
 	filter "platforms:x86_64"
 		architecture "x86_64"
