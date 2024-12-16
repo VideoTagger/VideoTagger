@@ -51,9 +51,7 @@ project "VideoTagger"
 		"avcodec",
 		"avformat",
 		"avutil",
-		"swscale",
-		"libssl",
-		"libcrypto"
+		"swscale"
 	}
 
 	defines
@@ -114,6 +112,8 @@ project "VideoTagger"
 		links
 		{
 			"opengl32",
+			"libssl",
+			"libcrypto",
 			PythonLibName
 		}
 
