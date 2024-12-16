@@ -1588,15 +1588,23 @@ namespace vt
 					continue;
 				}
 
+				std::string video_name = "NAME_UNKNOWN";
+				if (ctx_.current_project->videos.contains(task.video_id))
+				{
+					video_name = ctx_.current_project->videos.get(task.video_id).metadata().title.value_or(video_name);
+				}
+
 				auto status = task.result.result.get();
 				if (status == video_download_status::failure)
 				{
-					debug::error("Failed to download video {}", task.video_id);
+					debug::error("Failed to download video {} ({})", video_name, task.video_id);
+					ctx_.console.add_entry(widgets::console::entry::flag_type::error, fmt::format("Failed to download video {} ({})", video_name, task.video_id));
 				}
 				else
 				{
-					debug::log("Downloaded file {}", task.video_id);
+					debug::log("Downloaded video {} ({})", video_name, task.video_id);
 					dynamic_cast<downloadable_video_resource&>(ctx_.current_project->videos.get(task.video_id)).set_file_path(task.result.data->download_path.u8string());
+					ctx_.console.add_entry(widgets::console::entry::flag_type::info, fmt::format("Downloaded video {} ({})", video_name, task.video_id));
 				}
 
 				it = tasks.erase(it);
