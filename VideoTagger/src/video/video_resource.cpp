@@ -44,9 +44,7 @@ namespace vt
 		return file_path_;
 	}
 
-	void video_resource::on_remove()
-	{
-	}
+	void video_resource::on_remove() {}
 
 	void video_resource::context_menu_items(std::vector<video_resource_context_menu_item>& items)
 	{
@@ -61,10 +59,7 @@ namespace vt
 		items.push_back(std::move(item));
 	}
 
-	std::function<void(ImDrawList&, ImRect, ImRect)> video_resource::icon_custom_draw() const
-	{
-		return std::function<void(ImDrawList&, ImRect, ImRect)>();
-	}
+	void video_resource::icon_custom_draw(ImDrawList&, ImRect, ImRect) const {}
 
 	std::function<void()> video_resource::on_refresh_task()
 	{

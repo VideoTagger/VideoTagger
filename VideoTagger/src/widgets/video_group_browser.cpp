@@ -69,7 +69,10 @@ namespace vt::widgets
 				}
 			},
 			nullptr,
-			vid_resource.icon_custom_draw(), uv0, uv1);
+			[&vid_resource](ImDrawList& draw_list, ImRect item_rect, ImRect image_rect)
+			{
+				vid_resource.icon_custom_draw(draw_list, item_rect, image_rect);
+			}, uv0, uv1);
 		};
 
 		static auto group_ctx_menu = [](bool& open, bool& remove, bool& enqueue, bool can_enqueue)

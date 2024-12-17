@@ -12,14 +12,14 @@ namespace vt
 		const std::string& file_id() const;
 
 		video_stream video() const override;
-		bool update_thumbnail() override;
+		std::function<bool()> update_thumbnail_task() override;
 		std::function<void()> on_refresh_task() override;
 		video_downloadable downloadable() const override;
 
 		void on_save(nlohmann::ordered_json& json) const override;
 	
 	protected:
-		std::function<video_download_status(std::shared_ptr<video_download_data>)> download_task() override;
+		video_download_status on_download(std::shared_ptr<video_download_data>) override;
 
 	private:
 		std::string file_id_;

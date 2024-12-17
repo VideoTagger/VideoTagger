@@ -46,19 +46,19 @@ namespace vt
 		virtual ~downloadable_video_resource() = default;
 
 		//local_path must be updated manually
-		video_download_result download();
+		video_download_result download_task();
 		std::optional<float> download_progress() const;
 
-		bool remove_downloaded();
+		bool remove_downloaded_file();
 
 		virtual video_downloadable downloadable() const = 0;
-		virtual bool playable() const;
+		virtual bool playable() const override;
+		virtual void context_menu_items(std::vector<video_resource_context_menu_item>& items) override;
+		virtual void icon_custom_draw(ImDrawList& draw_list, ImRect item_rect, ImRect image_rect) const override;
 		virtual void on_remove() override;
-		virtual void context_menu_items(std::vector<video_resource_context_menu_item>& items);
-		virtual std::function<void(ImDrawList&, ImRect, ImRect)> icon_custom_draw() const override;
 
 	protected:
-		virtual std::function<video_download_status(std::shared_ptr<video_download_data>)> download_task() = 0;
+		virtual video_download_status on_download(std::shared_ptr<video_download_data>) = 0;
 
 	private:
 		std::weak_ptr<video_download_data> download_data_;

@@ -61,19 +61,22 @@ namespace vt
 		return result;
 	}
 
-	bool local_video_resource::update_thumbnail()
+	std::function<bool()> local_video_resource::update_thumbnail_task()
 	{
-		video_stream video;
-		if (!video.open_file(file_path()))
+		return [this]()
 		{
-			debug::error("Failed to open video from path {}", file_path());
-			return false;
-		}
+			video_stream video;
+			if (!video.open_file(file_path()))
+			{
+				debug::error("Failed to open video from path {}", file_path());
+				return false;
+			}
 
-		gl_texture result(video.width() / 2, video.height() / 2, GL_RGB);
-		video.get_thumbnail(result);
-		set_thumbnail(std::move(result));
+			gl_texture result(video.width() / 2, video.height() / 2, GL_RGB);
+			video.get_thumbnail(result);
+			set_thumbnail(std::move(result));
 
-		return true;
+			return true;
+		};
 	}
 }

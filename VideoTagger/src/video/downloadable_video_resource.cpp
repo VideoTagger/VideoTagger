@@ -29,11 +29,17 @@ namespace vt
 	{
 	}
 
-	video_download_result downloadable_video_resource::download()
+	video_download_result downloadable_video_resource::download_task()
 	{
 		video_download_result result;
 		result.data = std::make_shared<video_download_data>();
-		result.result = std::async(std::launch::async, download_task(), result.data);
+
+		auto task = [this](std::shared_ptr<video_download_data> data)
+		{
+			return on_download(data);
+		};
+
+		result.result = std::async(std::launch::async, task, result.data);
 		download_data_ = result.data;
 		return result;
 	}
@@ -49,7 +55,7 @@ namespace vt
 		return ptr->progress;
 	}
 
-	bool downloadable_video_resource::remove_downloaded()
+	bool downloadable_video_resource::remove_downloaded_file()
 	{
 		if (!playable())
 		{
@@ -75,7 +81,7 @@ namespace vt
 
 	void downloadable_video_resource::on_remove()
 	{
-		remove_downloaded();
+		remove_downloaded_file();
 	}
 
 	void downloadable_video_resource::context_menu_items(std::vector<video_resource_context_menu_item>& items)
@@ -103,7 +109,7 @@ namespace vt
 					item.function = [this]()
 					{
 						//TODO: should be done through the project so it can remove it from displayed videos or something
-						remove_downloaded();
+						remove_downloaded_file();
 					};
 					items.push_back(std::move(item));
 				}
@@ -127,37 +133,34 @@ namespace vt
 		}
 	}
 
-	std::function<void(ImDrawList&, ImRect, ImRect)> downloadable_video_resource::icon_custom_draw() const
+	void downloadable_video_resource::icon_custom_draw(ImDrawList& draw_list, ImRect item_rect, ImRect image_rect) const
 	{
-		return [this](ImDrawList& draw_list, ImRect item_rect, ImRect image_rect)
+		auto& style = ImGui::GetStyle();
+
+		if (!playable())
 		{
-			auto& style = ImGui::GetStyle();
+			float border_size = style.ChildBorderSize;
+			ImVec2 progress_bar_size = { image_rect.GetWidth(), 5.f };
+			ImVec2 progress_bar_pos = image_rect.Max - progress_bar_size;
+			ImVec4 progress_bar_color = { 0.9f, 0.0f, 0.0f, 1.0f };
+			float progress_bar_fraction = 1.f;
 
-			if (!playable())
+			auto download_prog = download_progress();
+			if (download_prog.has_value())
 			{
-				float border_size = style.ChildBorderSize;
-				ImVec2 progress_bar_size = { image_rect.GetWidth(), 5.f };
-				ImVec2 progress_bar_pos = image_rect.Max - progress_bar_size;
-				ImVec4 progress_bar_color = { 0.9f, 0.0f, 0.0f, 1.0f };
-				float progress_bar_fraction = 1.f;
-
-				auto download_prog = download_progress();
-				if (download_prog.has_value())
-				{
-					progress_bar_color = { 0.0f, 0.9f, 0.0f, 1.0f };
-					progress_bar_fraction = download_prog.value();
-				}
-
-				ImGui::SetCursorScreenPos(progress_bar_pos);
-
-				ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, border_size);
-				ImGui::PushStyleColor(ImGuiCol_PlotHistogram, progress_bar_color);
-				
-				ImGui::ProgressBar(progress_bar_fraction, progress_bar_size, "");
-				
-				ImGui::PopStyleColor();
-				ImGui::PopStyleVar();
+				progress_bar_color = { 0.0f, 0.9f, 0.0f, 1.0f };
+				progress_bar_fraction = download_prog.value();
 			}
-		};
+
+			ImGui::SetCursorScreenPos(progress_bar_pos);
+
+			ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, border_size);
+			ImGui::PushStyleColor(ImGuiCol_PlotHistogram, progress_bar_color);
+			
+			ImGui::ProgressBar(progress_bar_fraction, progress_bar_size, "");
+			
+			ImGui::PopStyleColor();
+			ImGui::PopStyleVar();
+		}
 	}
 }

@@ -55,7 +55,7 @@ namespace vt
 
 	struct generate_thumbnail_task
 	{
-		video_id_t video_id;
+		video_id_t video_id{};
 		std::function<bool()> task;
 
 		bool operator()();
@@ -63,13 +63,13 @@ namespace vt
 
 	struct video_download_task
 	{
-		video_id_t video_id;
-		video_download_result result;
+		video_id_t video_id{};
+		video_download_result task;
 	};
 
 	struct video_refresh_task
 	{
-		video_id_t video_id;
+		video_id_t video_id{};
 		std::future<void> task;
 	};
 
@@ -88,7 +88,7 @@ namespace vt
 		std::vector<prepare_video_import_task> prepare_video_import_tasks;
 		std::vector<video_import_task> video_import_tasks;
 		std::vector<generate_thumbnail_task> generate_thumbnail_tasks;
-		std::vector<video_download_task> make_available_tasks;
+		std::vector<video_download_task> video_download_tasks;
 		std::vector<video_refresh_task> video_refresh_tasks;
 
 		project() = default;

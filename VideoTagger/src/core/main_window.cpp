@@ -115,6 +115,14 @@ namespace vt
 			return false;
 		}
 
+		if (ctx_.current_project.has_value())
+		{
+			for (auto& download_task : ctx_.current_project->video_download_tasks)
+			{
+				download_task.task.cancel();
+			}
+		}
+
 		ctx_.gizmo_target = nullptr;
 		ctx_.last_focused_video = std::nullopt;
 		ctx_.registry.execute<set_selected_attribute_command>(nullptr);
@@ -1578,11 +1586,11 @@ namespace vt
 		}
 
 		{
-			auto& tasks = ctx_.current_project->make_available_tasks;
+			auto& tasks = ctx_.current_project->video_download_tasks;
 			for (auto it = tasks.begin(); it != tasks.end();)
 			{
 				auto& task = *it;
-				if (!task.result.is_done())
+				if (!task.task.is_done())
 				{
 					++it;
 					continue;
@@ -1594,7 +1602,7 @@ namespace vt
 					video_name = ctx_.current_project->videos.get(task.video_id).metadata().title.value_or(video_name);
 				}
 
-				auto status = task.result.result.get();
+				auto status = task.task.result.get();
 				if (status == video_download_status::failure)
 				{
 					debug::error("Failed to download video {} ({})", video_name, task.video_id);
@@ -1603,7 +1611,7 @@ namespace vt
 				else
 				{
 					debug::log("Downloaded video {} ({})", video_name, task.video_id);
-					dynamic_cast<downloadable_video_resource&>(ctx_.current_project->videos.get(task.video_id)).set_file_path(task.result.data->download_path.u8string());
+					dynamic_cast<downloadable_video_resource&>(ctx_.current_project->videos.get(task.video_id)).set_file_path(task.task.data->download_path.u8string());
 					ctx_.console.add_entry(widgets::console::entry::flag_type::info, fmt::format("Downloaded video {} ({})", video_name, task.video_id));
 				}
 

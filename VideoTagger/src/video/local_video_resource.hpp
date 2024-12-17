@@ -14,6 +14,6 @@ namespace vt
 
 		bool playable() const override;
 		video_stream video() const override;
-		bool update_thumbnail() override;
+		std::function<bool()> update_thumbnail_task() override;
 	};
 }

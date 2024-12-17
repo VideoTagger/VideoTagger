@@ -146,9 +146,9 @@ namespace vt
 
 		video_download_task task;
 		task.video_id = video_id;
-		task.result = vid_resource->download();
+		task.task = vid_resource->download_task();
 
-		make_available_tasks.push_back(std::move(task));
+		video_download_tasks.push_back(std::move(task));
 	}
 
 	void project::schedule_generate_thumbnail(video_id_t video_id)
@@ -159,10 +159,7 @@ namespace vt
 		}
 
 		generate_thumbnail_task task;
-		task.task = [vid_resource = &videos.get(video_id)]()
-		{
-			return vid_resource->update_thumbnail();
-		};
+		task.task = videos.get(video_id).update_thumbnail_task();
 		task.video_id = video_id;
 		generate_thumbnail_tasks.push_back(std::move(task));
 	}
@@ -472,12 +469,12 @@ namespace vt
 		}
 		
 		{
-			auto it = std::find_if(make_available_tasks.begin(), make_available_tasks.end(), [id](const auto& task) { return task.video_id == id; });
-			if (it != make_available_tasks.end())
+			auto it = std::find_if(video_download_tasks.begin(), video_download_tasks.end(), [id](const auto& task) { return task.video_id == id; });
+			if (it != video_download_tasks.end())
 			{
-				it->result.cancel();
-				it->result.result.get();
-				make_available_tasks.erase(it);
+				it->task.cancel();
+				it->task.result.get();
+				video_download_tasks.erase(it);
 			}
 		}
 
