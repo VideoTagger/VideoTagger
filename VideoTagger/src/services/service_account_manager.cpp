@@ -16,19 +16,6 @@ namespace vt
 		return fmt::format(failure_page, reason);
 	}
 
-	service_account_manager::service_account_manager(std::string service_id, std::string service_display_name) :
-		service_id_{ std::move(service_id) }, service_display_name_{ std::move(service_display_name) } {}
-
-	const std::string& service_account_manager::service_id() const
-	{
-		return service_id_;
-	}
-
-	const std::string& service_account_manager::service_display_name() const
-	{
-		return service_display_name_;
-	}
-
 	account_properties service_account_manager::get_account_properties_from_file(const std::filesystem::path& file_path)
 	{
 		return account_properties();

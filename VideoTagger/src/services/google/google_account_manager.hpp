@@ -38,14 +38,17 @@ namespace vt
 		static constexpr auto static_service_display_name = "Google";
 		static constexpr auto static_service_id = "google";
 
-		google_account_manager();
+		google_account_manager() = default;
+
+		std::string service_id() const override;
+		std::string service_display_name() const override;
 
 		nlohmann::ordered_json save() const override;
 		void load(const nlohmann::ordered_json& json) override;
 
 		account_properties get_account_properties_from_file(const std::filesystem::path& file_path) override;
 
-		std::string account_name() const;
+		std::string account_name() const override;
 
 		void on_log_out() override;
 

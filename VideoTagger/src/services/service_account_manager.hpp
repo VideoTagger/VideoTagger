@@ -39,11 +39,11 @@ namespace vt
 		static std::string success_page();
 		static std::string failure_page(std::string_view reason);
 
-		service_account_manager(std::string service_id, std::string service_display_name);
+		service_account_manager() = default;
 		virtual ~service_account_manager() = default;
 
-		const std::string& service_id() const;
-		const std::string& service_display_name() const;
+		virtual std::string service_id() const = 0;
+		virtual std::string service_display_name() const = 0;
 
 		virtual std::string account_name() const = 0;
 
@@ -74,8 +74,6 @@ namespace vt
 		virtual bool on_retry_login() = 0;
 	
 	private:
-		std::string service_id_;
-		std::string service_display_name_;
 		std::future<bool> add_account_result_;
 		std::optional<account_login_popup_data> login_popup_data_;
 	};

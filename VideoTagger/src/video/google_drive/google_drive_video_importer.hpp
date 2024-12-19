@@ -16,7 +16,9 @@ namespace vt
 		static constexpr auto static_importer_display_name = "Google Drive";
 		static constexpr auto static_importer_display_icon = icons::google_drive_add;
 
-		google_drive_video_importer();
+		std::string importer_id() const override;
+		std::string importer_display_name() const override;
+		std::string importer_display_icon() const override;
 
 		std::unique_ptr<video_resource> import_video(video_id_t id, std::any data) override;
 		std::unique_ptr<video_resource> import_video(video_id_t id, const std::string& file_id);

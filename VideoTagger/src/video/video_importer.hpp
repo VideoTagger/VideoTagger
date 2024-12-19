@@ -16,13 +16,12 @@ namespace vt
 
 		static video_id_t generate_video_id();
 
-		video_importer(std::string importer_id, std::string importer_display_name, std::string importer_display_icon);
+		video_importer() = default;
 		virtual ~video_importer() = default;
 
-		//TODO: maybe make this virtual
-		const std::string& importer_id() const;
-		const std::string& importer_display_name() const;
-		const std::string& importer_display_icon() const;
+		virtual std::string importer_id() const = 0;
+		virtual std::string importer_display_name() const = 0;
+		virtual std::string importer_display_icon() const = 0;
 
 		//TODO: maybe return an std::future
 		virtual std::unique_ptr<video_resource> import_video(video_id_t id, std::any data) = 0;
@@ -32,10 +31,5 @@ namespace vt
 		virtual std::function<bool(std::vector<std::any>&)> prepare_video_import_task() = 0;
 
 		virtual bool available() = 0;
-	
-	private:
-		std::string importer_id_;
-		std::string importer_display_name_;
-		std::string importer_display_icon_;
 	};
 }

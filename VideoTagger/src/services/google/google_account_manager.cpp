@@ -60,9 +60,14 @@ namespace vt
 		return properties.contains("refresh_token");
 	}
 
-	google_account_manager::google_account_manager() :
-		service_account_manager(static_service_id, static_service_display_name)
+	std::string google_account_manager::service_id() const
 	{
+		return static_service_id;
+	}
+
+	std::string google_account_manager::service_display_name() const
+	{
+		return static_service_display_name;
 	}
 
 	nlohmann::ordered_json google_account_manager::save() const

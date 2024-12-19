@@ -8,9 +8,19 @@
 
 namespace vt
 {
-	local_video_importer::local_video_importer() :
-		video_importer(static_importer_id, static_importer_display_name, static_importer_display_icon)
+	std::string local_video_importer::importer_id() const
 	{
+		return static_importer_id;
+	}
+
+	std::string local_video_importer::importer_display_name() const
+	{
+		return static_importer_display_name;
+	}
+
+	std::string local_video_importer::importer_display_icon() const
+	{
+		return static_importer_display_icon;
 	}
 
 	std::unique_ptr<video_resource> local_video_importer::import_video(video_id_t id, std::any data)
