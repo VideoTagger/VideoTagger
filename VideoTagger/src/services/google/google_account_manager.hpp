@@ -35,8 +35,8 @@ namespace vt
 	class google_account_manager : public service_account_manager
 	{
 	public:
-		static constexpr auto static_service_display_name = "Google";
 		static constexpr auto static_service_id = "google";
+		static constexpr auto static_service_display_name = "Google";
 
 		google_account_manager() = default;
 

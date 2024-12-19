@@ -8,12 +8,13 @@
 
 namespace vt
 {
+	/**
+	 * Define: static constexpr auto static_importer_id = "importer_id" in derived class
+	 * to make app_context::get_video_importer and app_context::is_video_importer_registered template funtions work.
+	 */
 	class video_importer
 	{
 	public:
-		//static constexpr auto static_importer_id = "importer_id";
-		//static constexpr auto static_importer_display_name = "Importer Name";
-
 		static video_id_t generate_video_id();
 
 		video_importer() = default;
@@ -25,7 +26,7 @@ namespace vt
 
 		//TODO: maybe return an std::future
 		virtual std::unique_ptr<video_resource> import_video(video_id_t id, std::any data) = 0;
-		virtual std::unique_ptr<video_resource> import_video_from_json(const nlohmann::ordered_json& json) = 0;
+		virtual std::unique_ptr<video_resource> import_video(const nlohmann::ordered_json& json) = 0;
 
 		//return true when import_data is ready
 		virtual std::function<bool(std::vector<std::any>&)> prepare_video_import_task() = 0;

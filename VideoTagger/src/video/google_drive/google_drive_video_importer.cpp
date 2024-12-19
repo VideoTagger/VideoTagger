@@ -53,7 +53,7 @@ namespace vt
 		}
 	}
 
-	std::unique_ptr<video_resource> google_drive_video_importer::import_video_from_json(const nlohmann::ordered_json& json)
+	std::unique_ptr<video_resource> google_drive_video_importer::import_video(const nlohmann::ordered_json& json)
 	{
 		try
 		{

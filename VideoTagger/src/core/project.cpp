@@ -659,7 +659,7 @@ namespace vt
 
 					for (auto& video_json : videos_json.at(importer_id))
 					{
-						auto vid_resource = importer->import_video_from_json(video_json);
+						auto vid_resource = importer->import_video(video_json);
 						if (vid_resource == nullptr)
 						{
 							continue;
