@@ -43,6 +43,10 @@ namespace vt
 	local_video_resource::local_video_resource(const nlohmann::ordered_json& json) :
 		video_resource(local_video_importer::static_importer_id, json)
 	{
+		if (json.contains("file-path"))
+		{
+			set_metadata(make_video_metadata_from_path(file_path()));
+		}
 	}
 
 	bool local_video_resource::playable() const
