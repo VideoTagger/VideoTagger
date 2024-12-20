@@ -307,34 +307,42 @@ namespace vt
 					py::object sys = py::module::import("sys");
 
 					py::tuple exc_info = sys.attr("exc_info")();
-					py::object exc_type = ex.type();
-					py::object exc_value = ex.value();
-					py::object exc_traceback = ex.trace();
+					py::object exc_type = exc_info[0];
+					py::object exc_value = exc_info[1];
+					py::object exc_traceback = exc_info[2];
 
 					std::string exception_message = py::str(exc_value);
-					py::object tb_frame = exc_traceback.attr("tb_frame");
-					std::string file_name = py::str(tb_frame.attr("f_code").attr("co_filename"));
-					int64_t lineno = py::int_(exc_traceback.attr("tb_lineno"));
-					std::string exception_type = py::str(exc_type.attr("__name__"));
-
 					std::string message = utils::string::trim_whitespace(ex.what());
+					if (!exc_traceback.is_none())
+					{
+						py::object tb_frame = exc_traceback.attr("tb_frame");
+						std::string file_name = py::str(tb_frame.attr("f_code").attr("co_filename"));
+						int64_t lineno = py::int_(exc_traceback.attr("tb_lineno"));
+						std::string exception_type = py::str(exc_type.attr("__name__"));
 
-					if (ex.matches(PyExc_InterruptedError))
-					{
-						auto sys = py::module_::import("sys");
-						try
+
+						if (ex.matches(PyExc_InterruptedError))
 						{
-							sys.attr("exit")(py::int_(-1));
+							auto sys = py::module_::import("sys");
+							try
+							{
+								sys.attr("exit")(py::int_(-1));
+							}
+							catch (...) {}
+							debug::log_source(fmt::format("{}:{}", std::filesystem::relative(file_name, ctx_.script_dir_filepath).string(), lineno), "Info", "{}", "Script interrupted");
+							ctx_.console.add_entry(widgets::console::entry::flag_type::info, "Script interrupted", widgets::console::entry::source_info{ file_name, lineno });
+							return false;
 						}
-						catch (...) {}
-						debug::log_source(fmt::format("{}:{}", std::filesystem::relative(file_name, ctx_.script_dir_filepath).string(), lineno), "Info", "{}", "Script interrupted");
-						ctx_.console.add_entry(widgets::console::entry::flag_type::info, "Script interrupted", widgets::console::entry::source_info{ file_name, lineno });
-						return false;
+						else if (!message.empty())
+						{
+							debug::log_source(fmt::format("{}:{}", std::filesystem::relative(file_name, ctx_.script_dir_filepath).string(), lineno), "Error", "{}", message);
+							ctx_.console.add_entry(widgets::console::entry::flag_type::error, message, widgets::console::entry::source_info{ file_name, lineno });
+						}
 					}
-					else if (!message.empty())
+					else
 					{
-						debug::log_source(fmt::format("{}:{}", std::filesystem::relative(file_name, ctx_.script_dir_filepath).string(), lineno), "Error", "{}", message);
-						ctx_.console.add_entry(widgets::console::entry::flag_type::error, message, widgets::console::entry::source_info{ file_name, lineno });
+						debug::error("{}", message);
+						ctx_.console.add_entry(widgets::console::entry::flag_type::error, message, widgets::console::entry::source_info{ "VideoTagger", -1});
 					}
 				}
 				catch (const std::exception& iex)
