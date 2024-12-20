@@ -67,6 +67,7 @@ namespace vt
 		bool load_thumbnails = true;
 		bool clear_console_on_run = true;
 		bool enable_undocking = true;
+		bool enable_gizmo_scaling = false;
 	};
 
 	struct window_config

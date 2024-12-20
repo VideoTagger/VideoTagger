@@ -325,6 +325,10 @@ namespace vt
 			{
 				ctx_.app_settings.enable_undocking = ctx_.settings.at("enable-undocking");
 			}
+			if (ctx_.settings.contains("enable-gizmo-scaling"))
+			{
+				ctx_.app_settings.enable_gizmo_scaling = ctx_.settings.at("enable-gizmo-scaling");
+			}
 		}
 		else
 		{
@@ -742,6 +746,13 @@ namespace vt
 			ImGui::SeparatorText("Debug Only");
 			ImGui::DragFloat("Font Scale", &io.FontGlobalScale, 0.005f, 0.5f, 2.0f, "%.2f", ImGuiSliderFlags_AlwaysClamp);
 #endif
+			ImGui::SeparatorText("UI");
+			ImGui::TextUnformatted("Scale Gizmos");
+			ImGui::SameLine();
+			if (ImGui::Checkbox("##GizmoScalingCheckbox", &ctx_.app_settings.enable_gizmo_scaling))
+			{
+				ctx_.settings["enable-gizmo-scaling"] = ctx_.app_settings.enable_gizmo_scaling;
+			}
 		};
 		options("Application Settings", "Keybinds") = []()
 		{
@@ -2084,7 +2095,12 @@ namespace vt
 						widgets::tooltip(tooltip.c_str());
 					}
 
-					if (last_focused and has_target)
+					if (!is_keyframe and has_target)
+					{
+						ctx_.gizmo_target = nullptr;
+					}
+
+					if (last_focused and has_target and is_keyframe)
 					{
 						auto wpos = ImGui::GetWindowPos();
 						auto wsize = ImGui::GetWindowSize();
@@ -2121,7 +2137,7 @@ namespace vt
 						gizmo_style.Colors[ImGuizmo::COLOR::SELECTION] = ImGui::ColorConvertU32ToFloat4(orange);
 
 
-						gizmo_style.CenterCircleSize = from_pixels(5);
+						gizmo_style.CenterCircleSize = ctx_.app_settings.enable_gizmo_scaling ? from_pixels(5) : 5.f;
 						gizmo_style.ScaleLineCircleSize = gizmo_style.CenterCircleSize;
 						gizmo_style.TranslationLineThickness = 2.f * gizmo_style.CenterCircleSize / 3.f;
 						gizmo_style.TranslationLineArrowSize = 1.5f * gizmo_style.TranslationLineThickness;
