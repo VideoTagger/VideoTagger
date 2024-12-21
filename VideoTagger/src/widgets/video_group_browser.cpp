@@ -281,11 +281,11 @@ namespace vt::widgets
 							//TODO: Refactor this so this isn't duplicated in 2 places
 							if (remove)
 							{
-								ctx_.current_project->remove_video_group(gid);
 								if (current_video_group == gid)
 								{
-									current_video_group = 0;
+									current_video_group = invalid_video_group_id;
 								}
+								ctx_.current_project->remove_video_group(gid);
 								break;
 							}
 
@@ -381,11 +381,11 @@ namespace vt::widgets
 								draw_group_tile(group, gid, tile_size, open_group, remove_group, enqueue_group, can_enqueue);
 								if (remove_group)
 								{
-									ctx_.current_project->remove_video_group(gid);
-									if (current_video_group = gid)
+									if (current_video_group == gid)
 									{
-										current_video_group = 0;
+										current_video_group = invalid_video_group_id;
 									}
+									ctx_.current_project->remove_video_group(gid);
 									break;
 								}
 

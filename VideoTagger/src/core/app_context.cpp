@@ -117,8 +117,6 @@ namespace vt
 				continue;
 			}
 
-			debug::log("Download finished");
-
 			displayed_videos.insert(vid_resource.id(), vid_resource.video(), group_inf.offset, *metadata.width, *metadata.height);
 		}
 
