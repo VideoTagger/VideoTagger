@@ -11,7 +11,7 @@
 
 namespace vt::widgets
 {
-	void draw_video_widget(video_stream& video, SDL_Texture* video_texture, bool is_video_active, bool& is_open, uint64_t id)
+	void draw_video_widget(video_stream& video, const gl_texture& video_texture, bool is_video_active, bool& is_open, uint64_t id, const std::function<void(ImVec2, ImVec2, ImVec2)>& draw_overlay)
 	{
 		auto& io = ImGui::GetIO();
 		ImGuiWindowFlags flags = ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoSavedSettings;
@@ -22,7 +22,14 @@ namespace vt::widgets
 		float button_size = 25 * io.FontGlobalScale;
 		std::string str_id = std::to_string(id);
 		std::string title = "Video##" + str_id;
-		if (ImGui::Begin(title.c_str(), &is_open, flags))
+
+		const auto& style = ImGui::GetStyle();
+
+		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2{});
+		ImGui::Begin(title.c_str(), &is_open, flags);
+		ImGui::PopStyleVar();
+
+		if (is_open)
 		{
 			bool show_controls = true;
 			auto video_window = ImGui::GetCurrentWindow();
@@ -48,7 +55,7 @@ namespace vt::widgets
 				image_avail_size.y -= button_size + 2 * imgui_style.ItemSpacing.y + ImGui::GetTextLineHeightWithSpacing() * io.FontGlobalScale;
 			}
 
-			if (video_texture != nullptr)
+			if (video_texture.id() != 0)
 			{
 				int video_width = video.width();
 				int video_height = video.height();
@@ -68,18 +75,17 @@ namespace vt::widgets
 
 				ImVec2 video_cursor_pos = { (image_avail_size.x - image_size.x) / 2, (image_avail_size.y - image_size.y) / 2 };
 
-				ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, { 0, 0 });
 				ImGui::SetCursorPos({ video_cursor_pos });
 
 				auto video_screen_pos = ImGui::GetCursorScreenPos();
 
-				ImGui::Image((ImTextureID)video_texture, image_size);
+				ImGui::Image(reinterpret_cast<ImTextureID>((uintptr_t)video_texture.id()), image_size);
 
 				if (!is_video_active)
 				{
 					//TODO: tweak colors
-					auto border_color = ImGui::ColorConvertFloat4ToU32({ 0.2, 0.2, 0.2, 1 });
-					auto overlay_color = ImGui::ColorConvertFloat4ToU32({ 0.3, 0.3, 0.3, 0.8 });
+					auto border_color = ImGui::ColorConvertFloat4ToU32({ 0.2f, 0.2f, 0.2f, 1.0f });
+					auto overlay_color = ImGui::ColorConvertFloat4ToU32({ 0.3f, 0.3f, 0.3f, 0.8f });
 					float border_thickness = 2.0f;
 
 					ImVec2 top_left = { video_screen_pos.x, video_screen_pos.y };
@@ -93,13 +99,15 @@ namespace vt::widgets
 					draw_list->AddLine(top_left, bottom_right, border_color, border_thickness);
 					draw_list->AddLine(top_right, bottom_left, border_color, border_thickness);
 				}
-
-				ImGui::PopStyleVar();
+				else
+				{
+					draw_overlay(video_screen_pos, image_size, { (float)video_texture.width(), (float)video_texture.height() });
+				}
 
 				auto video_ts = video.current_timestamp();
 				auto duration_ts = video.duration();
-				timestamp current_time{ std::chrono::duration_cast<std::chrono::seconds>(video_ts) };
-				timestamp duration{ std::chrono::duration_cast<std::chrono::seconds>(duration_ts) };
+				timestamp current_time{ std::chrono::duration_cast<std::chrono::milliseconds>(video_ts) };
+				timestamp duration{ std::chrono::duration_cast<std::chrono::milliseconds>(duration_ts) };
 				decltype(video_ts) min_ts{};
 
 				if (show_controls)

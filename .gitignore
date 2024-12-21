@@ -1,4 +1,6 @@
 build/
+scripts/embeds/
+__pycache__/
 *.log
 
 # Premake generated files

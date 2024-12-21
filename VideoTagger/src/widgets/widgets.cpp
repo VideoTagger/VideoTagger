@@ -19,11 +19,11 @@ namespace vt::widgets
 	};
 	
 
-	void draw_tag_manager_widget(tag_storage& tags, std::optional<tag_rename_data>& tag_rename, bool& dirty_flag, bool& open)
+	void draw_tag_manager_widget(tag_storage& tags, std::optional<tag_rename_data>& tag_rename, std::optional<tag_delete_data>& tag_delete, bool& dirty_flag, bool& open)
 	{
-		if (ImGui::Begin("Tag Manager", &open, ImGuiWindowFlags_NoScrollbar))
+		if (ImGui::Begin(tag_manager_window_name().c_str(), &open, ImGuiWindowFlags_NoScrollbar))
 		{
-			widgets::tag_manager(tags, tag_rename, dirty_flag);
+			widgets::tag_manager(tags, tag_rename, tag_delete, dirty_flag);
 		}
 		ImGui::End();
 	}

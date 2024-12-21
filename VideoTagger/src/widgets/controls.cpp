@@ -16,15 +16,20 @@ namespace vt::widgets
 		return result;
 	}
 
-	bool icon_button(const char* label, const ImVec2& size)
+	bool icon_button(const char* label, const ImVec2& size, const ImVec4& color)
 	{
 		ImGui::PushStyleColor(ImGuiCol_Button, ImVec4{});
+		ImGui::PushStyleColor(ImGuiCol_Text, color);
 		bool result = ImGui::Button(label, size);
-		ImGui::PopStyleColor();
+		ImGui::PopStyleColor(2);
+		if (!is_item_disabled() and ImGui::IsItemHovered())
+		{
+			ImGui::SetMouseCursor(ImGuiMouseCursor_Hand);
+		}
 		return result;
 	}
 
-	void icon_tooltip(const char* text)
+	void tooltip(const char* text)
 	{
 		if (ImGui::IsItemHovered(ImGuiHoveredFlags_ForTooltip | ImGuiHoveredFlags_DelayNormal) and ImGui::BeginTooltip())
 		{
@@ -33,11 +38,13 @@ namespace vt::widgets
 		}
 	}
 
-	bool icon_toggle_button(const char* label, bool is_toggled, const ImVec2& size)
+	bool icon_toggle_button(const char* label, bool is_toggled, const ImVec2& size, const ImVec4& color)
 	{
-		if (!is_toggled) ImGui::PushStyleColor(ImGuiCol_Text, ImGui::GetStyleColorVec4(ImGuiCol_TextDisabled));
-		bool result = icon_button(label, size);
-		if (!is_toggled) ImGui::PopStyleColor();
+		bool result = icon_button(label, size, is_toggled ? color : ImGui::GetStyleColorVec4(ImGuiCol_TextDisabled));
+		if (!is_item_disabled() and ImGui::IsItemHovered())
+		{
+			ImGui::SetMouseCursor(ImGuiMouseCursor_Hand);
+		}
 		return result;
 	}
 
@@ -59,9 +66,9 @@ namespace vt::widgets
 		auto px = ImGui::GetCursorPosX();
 		ImGui::SetCursorPosX(px - (px - cx) + style.ItemInnerSpacing.x);
 		//ImGui::SameLine(ImGui::GetTreeNodeToLabelSpacing());
-		ImGui::Text(label);
+		ImGui::TextUnformatted(label);
 		ImGui::SameLine(ImGui::GetContentRegionMax().x - style.FramePadding.x - ImGui::CalcTextSize(icon).x);
-		ImGui::Text(icon);
+		ImGui::TextUnformatted(icon);
 		return result;
 	}
 
@@ -91,14 +98,28 @@ namespace vt::widgets
 		ImVec2 size(20, button_size.y);
 		bool pressed = ImGui::Button("##", size);
 
+		bool is_popup_open = ImGui::IsPopupOpen(label);
 		// Arrow
 		ImVec2 center(window->Pos.x + cursor_pos.x + 10, window->Pos.y + cursor_pos.y + button_size.y / 2);
-		float r = 8.f;
-		center.y -= r * 0.25f;
-		ImVec2 a = center + ImVec2(0, 1) * r;
-		ImVec2 b = center + ImVec2(-0.866f, -0.5f) * r;
-		ImVec2 c = center + ImVec2(0.866f, -0.5f) * r;
+		float r = 5.f;
+		//center.y -= r * 0.25f;
 
+		ImVec2 a;
+		ImVec2 b;
+		ImVec2 c;
+
+		if (!is_popup_open)
+		{
+			a = center + ImVec2(0, 1) * r;
+			b = center + ImVec2(-0.866f, -0.5f) * r;
+			c = center + ImVec2(0.866f, -0.5f) * r;
+		}
+		else
+		{
+			b = center + ImVec2(0, -1) * r;
+			a = center + ImVec2(-0.866f, 0.5f) * r;
+			c = center + ImVec2(0.866f, 0.5f) * r;
+		}
 		window->DrawList->AddTriangleFilled(a, b, c, ImGui::GetColorU32(ImGuiCol_Text));
 
 		// Popup
@@ -150,13 +171,14 @@ namespace vt::widgets
 		ImGui::PopStyleVar();
 	}
 	
-	void centered_text(const char* text, ImVec2 avail_area)
+	void centered_text(const char* text, ImVec2 avail_area, ImVec2 offset)
 	{
+		//auto half_text_size = ImGui::CalcTextSize(text, nullptr, false, 3 * avail_area.x / 4) / 2;
 		auto half_text_size = ImGui::CalcTextSize(text, nullptr, false, 3 * avail_area.x / 4) / 2;
 		auto cpos = ImGui::GetCursorPos();
-		ImGui::SetCursorPos(avail_area / 2 - half_text_size);
+		ImGui::SetCursorPos(offset + avail_area / 2 - half_text_size);
 		ImGui::BeginDisabled();
-		ImGui::TextWrapped(text);
+		ImGui::TextWrapped("%s", text);
 		ImGui::EndDisabled();
 		ImGui::SetCursorPos(cpos);
 	}
@@ -174,7 +196,7 @@ namespace vt::widgets
 		std::string str = text;
 		if (text_size.x <= avail_area.x and text_size.y <= avail_area.y)
 		{
-			ImGui::TextWrapped(text);
+			ImGui::TextWrapped("%s", text);
 			return;
 		}
 
@@ -188,8 +210,18 @@ namespace vt::widgets
 		if (!str.empty())
 		{
 			std::string temp = str + "...";
-			ImGui::TextWrapped(temp.c_str());
+			ImGui::TextWrapped("%s", temp.c_str());
 		}
+	}
+
+	void text_with_size(const char* text, ImVec2 size)
+	{
+		auto text_size = ImGui::CalcTextSize(text);
+		size.x = std::max(size.x, text_size.x);
+		size.y = std::max(size.y, text_size.y);
+
+		ImGui::SetCursorPos(ImGui::GetCursorPos() + (size - text_size) / 2);
+		ImGui::TextUnformatted(text);
 	}
 	
 	bool timestamp_control(const std::string& name, timestamp& timestamp, uint64_t min_timestamp, uint64_t max_timestamp, bool* was_activated, bool* was_released, bool fill_area)
@@ -262,15 +294,23 @@ namespace vt::widgets
 		return tile_size + style.FramePadding + text_size;
 	}
 
-	bool tile(const std::string& label, ImVec2 tile_size, ImVec2 image_size, SDL_Texture* image, const std::function<void(const std::string&)> context_menu, const std::function<void(const std::string&)> drag_drop, ImVec2 uv0, ImVec2 uv1, bool is_selected)
+	bool tile(
+		const char* id, const std::string& label, ImVec2 tile_size, ImVec2 image_size, GLuint image,
+		const std::function<void(const std::string&)> context_menu, const std::function<void(const std::string&)> drag_drop,
+		std::function<void(ImDrawList&, ImRect, ImRect)> custom_draw, ImVec2 uv0, ImVec2 uv1, bool is_selected
+	)
 	{
 		bool result{};
 		ImVec2 image_tile_size = ImVec2{ tile_size.x, tile_size.x } * 0.9f;
 
+		if (id == nullptr)
+		{
+			id = label.c_str();
+		}
+
 		auto& style = ImGui::GetStyle();
 		ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2{});
-		ImTextureID imgui_tex = static_cast<ImTextureID>(image);
-		const char* id = label.c_str();
+		auto imgui_tex = reinterpret_cast<ImTextureID>((uintptr_t)image);
 		ImGui::PushID(id);
 		auto text_size = ImVec2{ 0, 2 * ImGui::GetTextLineHeight() };
 		auto selectable_size = tile_size + style.FramePadding + text_size;
@@ -287,13 +327,13 @@ namespace vt::widgets
 			std::invoke(drag_drop, label);
 		}
 		auto char_size = ImGui::CalcTextSize("A");
-		auto max_chars = std::floor(text_size.y / char_size.y) * static_cast<size_t>(selectable_size.x / char_size.x);
-		bool is_shortened = strlen(id) > max_chars;
-		std::string short_label = is_shortened ? std::string(id, max_chars) + "..." : label;
+		size_t max_chars = static_cast<size_t>(std::floor(text_size.y / char_size.y) * static_cast<size_t>(selectable_size.x / char_size.x));
+		bool is_shortened = label.size() > max_chars;
+		std::string short_label = is_shortened ? label.substr(0, max_chars) + "..." : label;
 
 		if (is_shortened and ImGui::IsItemHovered(ImGuiHoveredFlags_ForTooltip | ImGuiHoveredFlags_DelayNormal) and ImGui::BeginTooltip())
 		{
-			ImGui::Text("%s", id);
+			ImGui::Text("%s", label.c_str());
 			ImGui::EndTooltip();
 		}
 
@@ -305,6 +345,7 @@ namespace vt::widgets
 
 		ImGui::SetCursorPos(std::exchange(cpos, ImGui::GetCursorPos()));
 		ImGui::Image(imgui_tex, image_size, uv0, uv1);
+		ImRect image_rect = { ImGui::GetItemRectMin(), ImGui::GetItemRectMax() };
 		ImGui::Dummy({ 0, (image_tile_size.y - image_size.y) / 2.f });
 		//widgets::clipped_text(id, { tile_size.x, text_size.y });
 		//TODO: Text clipping, change widgets::clipped_text into this
@@ -312,7 +353,7 @@ namespace vt::widgets
 		{
 			ImGui::TableNextRow();
 			ImGui::TableNextColumn();
-			ImGui::TextWrapped(short_label.c_str());
+			ImGui::TextWrapped("%s", short_label.c_str());
 			ImGui::EndTable();
 		}
 		ImGui::EndGroup();
@@ -320,6 +361,13 @@ namespace vt::widgets
 		ImGui::SetCursorPos(cpos);
 		ImGui::PopID();
 		ImGui::PopStyleVar();
+
+		ImRect item_rect = { ImGui::GetItemRectMin(), ImGui::GetItemRectMax() };
+		auto* draw_list = ImGui::GetWindowDrawList();
+		if (custom_draw != nullptr)
+		{
+			custom_draw(*draw_list, item_rect, image_rect);
+		}
 
 		return result;
 	}
@@ -352,5 +400,131 @@ namespace vt::widgets
 			}
 		}
 		return ImGui::IsMouseReleased(mouse_button) and valid;
+	}
+
+    void color_indicator(float thickness, uint32_t color)
+    {
+		auto& style = ImGui::GetStyle();
+		float sz = ImGui::GetTextLineHeight();
+		auto* window = ImGui::GetCurrentWindow();
+		const ImRect rect{ window->DC.CursorPos, window->DC.CursorPos + ImVec2{ thickness, sz + style.FramePadding.y * 2.0f } };
+		ImGui::Dummy(ImVec2{ thickness - style.ItemSpacing.x, sz });
+
+		ImGui::RenderFrame(rect.Min, rect.Max, color, false, style.FrameRounding);
+    }
+
+	bool begin_collapsible(const std::string& id, const std::string& label, ImGuiTreeNodeFlags flags, const char* icon, const std::optional<ImVec4>& icon_color, const std::function<void(void)>& on_dragdrop, const std::optional<size_t>& index)
+	{
+		const auto& style = ImGui::GetStyle();
+		flags |= ImGuiTreeNodeFlags_Framed | ImGuiTreeNodeFlags_SpanFullWidth | ImGuiTreeNodeFlags_FramePadding | ImGuiTreeNodeFlags_ClipLabelForTrailingButton;
+
+		ImGui::BeginGroup();
+		if (icon != nullptr)
+		{
+			ImGui::SetCursorPosX(ImGui::GetCursorPosX() + style.ItemSpacing.x * 0.5f);
+			ImGui::AlignTextToFramePadding();
+			ImGui::TextColored(icon_color.has_value() ? icon_color.value() : style.Colors[ImGuiCol_Text], icon);
+			ImGui::SameLine();
+		}
+
+		ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2{});
+		ImGui::PushStyleColor(ImGuiCol_Text, ImVec4{});
+		bool node_open = ImGui::TreeNodeEx(id.c_str(), flags);
+		ImGui::PopStyleColor();
+		ImGui::PopStyleVar();
+
+		if (on_dragdrop != nullptr)
+		{
+			on_dragdrop();
+		}
+
+		auto suffix_icon = node_open ? icons::expand_less : icons::expand_more;
+
+		ImGui::SameLine(ImGui::GetTreeNodeToLabelSpacing());
+		ImGui::TextUnformatted(label.c_str());
+		if (index.has_value())
+		{
+			ImGui::SameLine();
+			ImGui::TextDisabled("[%zu]", index.value());
+		}
+		ImGui::SameLine(ImGui::GetContentRegionMax().x - style.ItemSpacing.x - ImGui::CalcTextSize(suffix_icon).x);
+		ImGui::TextUnformatted(suffix_icon);
+		ImGui::Unindent();
+		ImGui::EndGroup();
+
+		return node_open;
+	}
+
+	void end_collapsible()
+	{
+		ImGui::Indent();
+		ImGui::TreePop();
+	}
+
+	bool is_item_disabled()
+	{
+		ImGuiContext& g = *GImGui;
+		return (g.CurrentItemFlags & ImGuiItemFlags_Disabled) != 0;
+	}
+
+	bool table_hovered_row_style()
+	{
+		bool row_hovered = ImGui::TableGetHoveredRow() == ImGui::TableGetRowIndex();
+		if (row_hovered)
+		{
+			ImGui::TableSetBgColor(ImGuiTableBgTarget_RowBg0, ImGui::ColorConvertFloat4ToU32(ImGui::GetStyleColorVec4(ImGuiCol_TableRowBgAlt)));
+		}
+		return row_hovered;
+	}
+
+	bool positon_control(utils::vec2<uint32_t>& pos, const utils::vec2<uint32_t>& max_size)
+	{
+		bool result{};
+		const auto& style = ImGui::GetStyle();
+
+		ImGui::PushStyleVar(ImGuiStyleVar_CellPadding, ImVec2{ style.ItemSpacing.x / 2, style.CellPadding.y });
+		ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2{});
+
+		float line_height = GImGui->Font->FontSize + GImGui->Style.FramePadding.y * 2.0f;
+		ImVec2 xysize = { line_height + 3.0f, line_height };
+
+		ImGui::PushID(&pos);
+		if (ImGui::BeginTable("##PositionControl", 2))
+		{
+			ImGui::TableNextColumn();
+			if (ImGui::Button("X", xysize))
+			{
+				pos[0] = 0;
+				result = true;
+			}
+			ImGui::SameLine();
+
+			ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
+			float x = (float)pos[0];
+			if (ImGui::DragScalar("##x", ImGuiDataType_U32, &pos[0], 1.f, 0, &max_size[0], "%d", ImGuiSliderFlags_AlwaysClamp))
+			{
+				pos[0] = std::clamp(pos[0], 0u, max_size[0]);
+				result = true;
+			}
+
+			ImGui::TableNextColumn();
+			if (ImGui::Button("Y", xysize))
+			{
+				pos[1] = 0;
+				result = true;
+			}
+			ImGui::SameLine();
+
+			ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
+			if (ImGui::DragScalar("##y", ImGuiDataType_U32, &pos[1], 1.f, 0, &max_size[1], "%d", ImGuiSliderFlags_AlwaysClamp))
+			{
+				pos[1] = std::clamp(pos[1], 0u, max_size[1]);
+				result = true;
+			}
+			ImGui::EndTable();
+		}
+		ImGui::PopID();
+		ImGui::PopStyleVar(2);
+		return result;
 	}
 }

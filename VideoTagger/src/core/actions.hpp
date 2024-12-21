@@ -1,12 +1,13 @@
 #pragma once
 #include <vector>
 #include <memory>
-#include "keybind_action.hpp"
+#include "actions/keybind_action.hpp"
 #include "actions/builtin_action.hpp"
 #include "actions/no_action.hpp"
 #include "actions/timeline_actions.hpp"
 #include "actions/toggle_window_action.hpp"
 #include "actions/player_actions.hpp"
+#include "actions/run_script_action.hpp"
 
 namespace vt
 {
@@ -24,6 +25,7 @@ namespace vt
 		if (json_name == no_action::action_name) action = std::make_shared<no_action>();
 		else if (json_name == timestamp_action::action_name) action = std::make_shared<timestamp_action>();
 		else if (json_name == segment_action::action_name) action = std::make_shared<segment_action>();
+		else if (json_name == run_script_action::action_name) action = std::make_shared<run_script_action>();
 
 		if (action != nullptr and json.contains("data"))
 		{

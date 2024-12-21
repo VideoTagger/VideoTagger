@@ -8,6 +8,8 @@
 #include <utils/hash.hpp>
 #include <utils/filesystem.hpp>
 #include "app_context.hpp"
+#include <video/downloadable_video_resource.hpp>
+#include <video/video_resource.hpp>
 
 static std::chrono::system_clock::time_point to_sys_time(const std::filesystem::file_time_type& ftime)
 {
@@ -81,50 +83,177 @@ namespace vt
 		return result;
 	}
 
-	std::future<project_import_video_result> project::import_video(const std::filesystem::path& filepath, video_id_t id, bool create_group)
+	bool prepare_video_import_task::operator()()
 	{
-		static std::mutex videos_mutex;
-		static std::mutex groups_mutex;
+		return task(import_data);
+	}
 
-		auto task = [filepath, id, create_group, this]() mutable
+	std::unique_ptr<video_resource> video_import_task::operator()()
+	{
+		return task();
+	}
+
+	bool generate_thumbnail_task::operator()()
+	{
+		return task();
+	}
+
+	void project::prepare_video_import(const std::string& importer_id)
+	{
+		if (!ctx_.is_video_importer_registered(importer_id))
 		{
-			if (id == 0)
-			{
-				id = utils::hash::fnv_hash(filepath); //utils::uuid::get()
-			}
+			debug::error("Video importer {} is not registered", importer_id);
+			return;
+		}
 
-			{
-				std::scoped_lock lock(videos_mutex);
-				if (!videos.insert(id, filepath))
-				{
-					return project_import_video_result{ false, 0, filepath };
-				}
-			}
+		auto& importer = ctx_.get_video_importer(importer_id);
+		prepare_video_import_task task;
+		task.importer_id = importer_id;
+		task.task = importer.prepare_video_import_task();
+		prepare_video_import_tasks.push_back(std::move(task));
+	}
 
-			if (create_group)
-			{
-				video_group::video_info group_info{};
-				group_info.id = id;
+	void project::schedule_video_import(const std::string& importer_id, std::any import_data, std::optional<video_group_id_t> group_id)
+	{
+		if (!ctx_.is_video_importer_registered(importer_id))
+		{
+			debug::error("Video importer is {} not registered", importer_id);
+			return;
+		}
 
-				auto gid = (ctx_.current_video_group_id() == invalid_video_group_id) ? utils::uuid::get() : ctx_.current_video_group_id();
-				
-				std::scoped_lock lock(groups_mutex);
-				auto& group = video_groups[gid];
-				group.display_name = filepath.stem().u8string();
-				group.insert(group_info);
-			}
+		auto& importer = ctx_.get_video_importer(importer_id);
+		video_import_task task;
+		task.group_id = group_id;
+		task.task = [&importer, import_data = std::move(import_data)]()
+		{
+			return importer.import_video(video_importer::generate_video_id(), std::move(import_data));
+		};
+		video_import_tasks.push_back(std::move(task));
+	}
 
-			{
-				std::scoped_lock lock(videos_mutex);
-				videos.get(id)->update_data();
-			}
+	void project::schedule_video_download(video_id_t video_id)
+	{
+		if (!videos.contains(video_id))
+		{
+			return;
+		}
 
-			ctx_.is_project_dirty = create_group;
-			return project_import_video_result{ true, id, filepath };
+		auto* vid_resource = dynamic_cast<downloadable_video_resource*>(&videos.get(video_id));
+		if (vid_resource == nullptr or vid_resource->playable())
+		{
+			return;
+		}
+
+		video_download_task task;
+		task.video_id = video_id;
+		task.task = vid_resource->download_task();
+
+		video_download_tasks.push_back(std::move(task));
+	}
+
+	void project::schedule_generate_thumbnail(video_id_t video_id)
+	{
+		if (!videos.contains(video_id))
+		{
+			return;
+		}
+
+		generate_thumbnail_task task;
+		task.task = videos.get(video_id).update_thumbnail_task();
+		task.video_id = video_id;
+		generate_thumbnail_tasks.push_back(std::move(task));
+	}
+
+	void project::schedule_video_refresh(video_id_t video_id)
+	{
+		if (!videos.contains(video_id))
+		{
+			return;
+		}
+
+		auto refresh_task = videos.get(video_id).on_refresh_task();
+		if (refresh_task == nullptr)
+		{
+			return;
+		}
+
+		video_refresh_task task;
+		task.task = std::async(std::launch::async, refresh_task);
+		task.video_id = video_id;
+		video_refresh_tasks.push_back(std::move(task));
+	}
+
+	void project::schedule_remove_video(video_id_t video_id)
+	{
+		if (!videos.contains(video_id))
+		{
+			return;
+		}
+
+		auto remove_task = [this, video_id]()
+		{
+			remove_video(video_id);
 		};
 
+		remove_video_task task;
+		task.task = std::async(std::launch::deferred, remove_task);
+		task.video_id = video_id;
+		remove_video_tasks.push_back(std::move(task));
+	}
+
+	bool project::import_video(std::unique_ptr<video_resource>&& vid_resource, std::optional<video_group_id_t> group_id, bool check_hash, bool set_project_dirty)
+	{
+		if (vid_resource == nullptr)
+		{
+			debug::error("Failed to import video");
+			return false;
+		}
+
+		const auto& metadata = vid_resource->metadata();
+
+		if (check_hash and vid_resource->metadata().sha256.has_value())
+		{
+			for (auto& [id, video] : videos)
+			{
+				const auto& hash = *video->metadata().sha256;
+				if (hash == vid_resource->metadata().sha256)
+				{
+					debug::warn("Video with hash: {} is already imported", utils::hash::bytes_to_hex(hash, utils::hash::string_case::lower));
+					return false;
+				}
+			}
+		}
+
+		video_group::video_info group_info{};
+		group_info.id = vid_resource->id();
 		
-		return std::async(std::launch::async, task);
+		if (!videos.insert(std::move(vid_resource)))
+		{
+			return false;
+		}
+
+		if (group_id.has_value())
+		{
+			auto group_it = video_groups.find(*group_id);
+			if (group_it == video_groups.end())
+			{
+				auto& group = video_groups[*group_id];
+				group.display_name = metadata.title.has_value() ? *metadata.title : fmt::format("Untitled Group {}", group_info.id);
+				group.insert(group_info);
+			}
+			else
+			{
+				auto& group = video_groups.at(*group_id);
+				group.insert(group_info);
+			}
+		}
+
+		if (set_project_dirty)
+		{
+			ctx_.is_project_dirty = true;
+		}
+
+		return true;
 	}
 
 	bool project::export_segments(const std::filesystem::path& filepath, std::vector<video_group_id_t> group_ids) const
@@ -142,15 +271,13 @@ namespace vt
 		for (const auto& group_id : group_ids)
 		{
 			auto group_it = video_groups.find(group_id);
-			auto segments_it = segments.find(group_id);
-			if (group_it == video_groups.end() or segments_it == segments.end())
+			if (group_it == video_groups.end())
 			{
 				//TODO: Should this do something?
 				continue;
 			}
 
 			auto& group = group_it->second;
-			auto& group_segments = segments_it->second;
 
 			nlohmann::ordered_json json_group;
 
@@ -162,16 +289,16 @@ namespace vt
 				json_group_videos = nlohmann::ordered_json::array();
 				for (auto& group_video_info : group)
 				{
-					auto* video_metadata = videos.get(group_video_info.id);
-					if (video_metadata == nullptr)
-					{
-						//TODO: Should this do something?
-						continue;
-					}
+					auto& vid_resource = videos.get(group_video_info.id);
+					const auto& metadata = vid_resource.metadata();
 
 					auto json_video = nlohmann::ordered_json::object();
-					json_video["name"] = video_metadata->path.filename().u8string(); //TODO: Should this be the filename
-					json_video["id"] = std::to_string(group_video_info.id);
+
+					json_video["title"] = metadata.title.has_value() ? *metadata.title : "UNKNOWN";
+					if (metadata.sha256.has_value())
+					{
+						json_video["sha256"] = utils::hash::bytes_to_hex(*metadata.sha256, utils::hash::string_case::lower);
+					}
 					json_group_videos.push_back(json_video);
 				}
 			}
@@ -179,7 +306,7 @@ namespace vt
 			{
 				auto& json_tags = json_group["tags"];
 				json_tags = nlohmann::ordered_json::array();
-				for (auto& [tag_name, _] : group_segments)
+				for (auto& [tag_name, _] : group.segments())
 				{
 					json_tags.push_back(tag_name);
 				}
@@ -192,7 +319,7 @@ namespace vt
 				{
 					auto& json_video_segments = json_group_segments[std::to_string(group_video_info.id)];
 					json_video_segments = nlohmann::ordered_json::array();
-					for (auto& [tag_name, tag_segments] : group_segments)
+					for (auto& [tag_name, tag_segments] : group.segments())
 					{
 						auto json_tag_data = nlohmann::ordered_json::object();
 						json_tag_data["tag"] = tag_name;
@@ -201,8 +328,8 @@ namespace vt
 						json_tag_segments = nlohmann::ordered_json::array();
 						for (tag_segment segment : tag_segments) //copy is intended
 						{
-							segment.start -= timestamp{ std::chrono::duration_cast<std::chrono::seconds>(group_video_info.offset) };
-							segment.end -= timestamp{ std::chrono::duration_cast<std::chrono::seconds>(group_video_info.offset) };
+							segment.start -= timestamp{ std::chrono::duration_cast<std::chrono::milliseconds>(group_video_info.offset) };
+							segment.end -= timestamp{ std::chrono::duration_cast<std::chrono::milliseconds>(group_video_info.offset) };
 
 							bool clipped_start = false;
 							bool clipped_end = false;
@@ -250,34 +377,18 @@ namespace vt
 		auto& json_tags = json["tags"];
 		json_tags = tags;
 
-		auto& json_segments = json["segments"];
-		json_segments = nlohmann::json::array();
-
-		if (!segments.empty())
-		{
-			for (auto& [group_id, group_segments] : segments)
-			{
-				nlohmann::ordered_json json_group_segments_data;
-				json_group_segments_data["group-id"] = group_id;
-				auto& json_group_segments = json_group_segments_data["group-segments"];
-				json_group_segments = group_segments;
-				json_segments.push_back(json_group_segments_data);
-			}
-		}
-
 		if (!videos.empty())
 		{
 			auto& json_videos = json["videos"];
-			json_videos = nlohmann::json::array();
-			for (auto& [id, metadata] : videos)
+
+			for (const auto& [id, vid_resource] : videos)
 			{
-				nlohmann::ordered_json vid;
-				vid["id"] = id;
+				if (!json_videos.contains(vid_resource->importer_id()))
+				{
+					json_videos[vid_resource->importer_id()] = nlohmann::json::array();
+				}
 
-				std::string vid_path = utils::filesystem::normalize(std::filesystem::relative(metadata.path));
-
-				vid["path"] = vid_path;
-				json_videos.push_back(vid);
+				json_videos.at(vid_resource->importer_id()).push_back(vid_resource->save());
 			}
 		}
 
@@ -299,6 +410,9 @@ namespace vt
 					group_video["offset"] = utils::time::time_to_string(video.offset.count());
 					group_videos.push_back(group_video);
 				}
+
+				json_group["segments"] = group.segments();
+
 				json_groups.push_back(json_group);
 			}
 		}
@@ -316,12 +430,9 @@ namespace vt
 		auto& json_video_timeline = json["video-timeline"];
 		auto& json_displayed_tags = json_video_timeline["displayed-tags"];
 		json_displayed_tags = nlohmann::ordered_json::array();
-		for (auto& [group_id, displayed_tags] : ctx_.video_timeline.displayed_tags_per_group())
+		for (auto& tag_name : displayed_tags)
 		{
-			auto json_group_tags = nlohmann::ordered_json::object();
-			json_group_tags["group-id"] = group_id;
-			json_group_tags["tags"] = displayed_tags;
-			json_displayed_tags.push_back(json_group_tags);
+			json_displayed_tags.push_back(tag_name);
 		}
 
 		//TODO: This probably shouldnt be done
@@ -339,6 +450,184 @@ namespace vt
 	{
 		path = filepath;
 		save();
+	}
+
+	void project::remove_video(video_id_t id)
+	{
+		debug::log("Removing video with id: {}", id);
+
+		std::vector<video_group_id_t> groups_to_remove;
+
+		for (auto& [group_id, group] : video_groups)
+		{
+			if (!group.contains(id))
+			{
+				continue;
+			}
+
+			group.erase(id);
+
+			if (group.empty())
+			{
+				groups_to_remove.push_back(group_id);
+			}
+		}
+
+		for (auto& group_id : groups_to_remove)
+		{
+			remove_video_group(group_id);
+		}
+
+		ctx_.displayed_videos.erase(id);
+
+		{
+			auto it = std::find_if(generate_thumbnail_tasks.begin(), generate_thumbnail_tasks.end(), [id](const auto& task) { return task.video_id == id; });
+			if (it != generate_thumbnail_tasks.end())
+			{
+				generate_thumbnail_tasks.erase(it);
+			}
+		}
+		
+		{
+			auto it = std::find_if(video_download_tasks.begin(), video_download_tasks.end(), [id](const auto& task) { return task.video_id == id; });
+			if (it != video_download_tasks.end())
+			{
+				it->task.cancel();
+				it->task.result.get();
+				video_download_tasks.erase(it);
+			}
+		}
+
+		if (videos.erase(id))
+		{
+			ctx_.is_project_dirty = true;
+		}
+	}
+
+	void project::remove_video_group(video_group_id_t id)
+	{
+		if (ctx_.current_video_group_id() == id)
+		{
+			ctx_.reset_current_video_group();
+		}
+
+		auto playlist_it = std::find(video_group_playlist.begin(), video_group_playlist.end(), id);
+		if (playlist_it != video_group_playlist.end())
+		{
+			video_group_playlist.erase(playlist_it);
+		}
+
+		video_groups.erase(id);
+
+		ctx_.is_project_dirty = true;
+	}
+
+	tag_rename_result project::rename_tag(const std::string& old_name, const std::string& new_name)
+	{
+		
+		auto rename_result = tags.rename(old_name, new_name);
+
+		if (!rename_result.inserted)
+		{
+			return rename_result;
+		}
+
+		ctx_.is_project_dirty = true;
+
+		if (auto it = find_displayed_tag(old_name); it != displayed_tags.end())
+		{
+			displayed_tags.erase(it);
+			add_displayed_tag(new_name);
+		}
+
+		//TODO: maybe handle selected and moving segment but it may not be necessary
+
+		for (auto& [group_id, group] : video_groups)
+		{
+			auto& segments = group.segments();
+			auto node_handle = segments.extract(old_name);
+			if (!node_handle.empty())
+			{
+				node_handle.key() = new_name;
+				segments.insert(std::move(node_handle));
+				ctx_.is_project_dirty = true;
+			}
+		}
+
+		//TODO: consider renaming tags in keybinds
+
+		return rename_result;
+	}
+
+	void project::delete_tag(const std::string& tag_name)
+	{
+		if (!tags.contains(tag_name))
+		{
+			return;
+		}
+
+		ctx_.is_project_dirty = true;
+
+		auto& selected_segment = ctx_.video_timeline.selected_segment;
+		if (selected_segment.has_value() and selected_segment->tag->name == tag_name)
+		{
+			selected_segment.reset();
+		}
+
+		auto& moving_segment = ctx_.video_timeline.moving_segment;
+		if (moving_segment.has_value() and moving_segment->tag->name == tag_name)
+		{
+			moving_segment.reset();
+		}
+
+		remove_displayed_tag(tag_name);
+
+		for (auto& [group_id, group] :video_groups)
+		{
+			auto& group_segments = group.segments();
+			auto segments_it = group_segments.find(tag_name);
+			if (segments_it != group_segments.end())
+			{
+				group_segments.erase(segments_it);
+			}
+		}
+
+		tags.erase(tag_name);
+	}
+
+	bool project::add_displayed_tag(const std::string& tag_name)
+	{
+		auto it = std::lower_bound(displayed_tags.begin(), displayed_tags.end(), tag_name);
+		if (it != displayed_tags.end() and *it == tag_name)
+		{
+			return false;
+		}
+
+		displayed_tags.insert(it, tag_name);
+		return true;
+	}
+
+	bool project::remove_displayed_tag(const std::string& tag_name)
+	{
+		auto it = std::lower_bound(displayed_tags.begin(), displayed_tags.end(), tag_name);
+		if (it != displayed_tags.end() or *it != tag_name)
+		{
+			return false;
+		}
+
+		displayed_tags.erase(it);
+		return true;
+	}
+
+	std::vector<std::string>::iterator project::find_displayed_tag(const std::string& tag_name)
+	{
+		auto it = std::lower_bound(displayed_tags.begin(), displayed_tags.end(), tag_name);
+		if (it == displayed_tags.end() or *it != tag_name)
+		{
+			return displayed_tags.end();
+		}
+		
+		return it;
 	}
 	
 	project project::load_from_file(const std::filesystem::path& filepath)
@@ -378,53 +667,32 @@ namespace vt
 				result.tags = json["tags"];
 			}
 
-			if (json.contains("segments") and json.at("segments").is_array())
+			if (json.contains("videos") and json.at("videos").is_object())
 			{
-				for (auto& json_segments : json["segments"])
+				const auto& videos_json = json["videos"];
+				for (auto& [importer_id, importer] : ctx_.video_importers)
 				{
-					if (!json_segments.contains("group-id"))
+					if (!videos_json.contains(importer_id))
 					{
-						debug::error("Missing group id");
-						continue;
-					}
-					if (!json_segments.contains("group-segments"))
-					{
-						debug::error("Missing group segments");
 						continue;
 					}
 
-					video_group_id_t group_id = json_segments["group-id"];
-					auto& group_segments = result.segments[group_id];
-					group_segments = json_segments["group-segments"];
-				}
-			}
-
-			if (json.contains("videos") and json.at("videos").is_array())
-			{
-				const auto& videos = json["videos"];
-				for (const auto& video : videos)
-				{
-					if (!video.contains("id"))
+					for (auto& video_json : videos_json.at(importer_id))
 					{
-						debug::error("Project's video doesn't contain id, skipping...");
-						continue;
-					}
+						auto vid_resource = importer->import_video(video_json);
+						if (vid_resource == nullptr)
+						{
+							continue;
+						}
 
-					if (!video.contains("path"))
-					{
-						debug::error("Project's video doesn't contain a filepath, skipping...");
-						continue;
-					}
-
-					video_id_t id = video["id"];
-					std::filesystem::path path = video["path"];
-
-					//TODO: Can't be async because result is later moved
-					result.import_video(path, id, false);
-					auto pool_data = result.videos.get(id);
-					if (pool_data != nullptr and ctx_.app_settings.load_thumbnails)
-					{
-						pool_data->update_thumbnail(ctx_.renderer);
+						video_id_t video_id = vid_resource->id();
+						if (result.import_video(std::move(vid_resource), std::nullopt, false, false))
+						{
+							if (ctx_.app_settings.load_thumbnails)
+							{
+								result.schedule_generate_thumbnail(video_id);
+							}
+						}
 					}
 				}
 			}
@@ -432,33 +700,33 @@ namespace vt
 			if (json.contains("groups") and json.at("groups").is_array())
 			{
 				const auto& json_groups = json["groups"];
-				for (auto& group : json_groups)
+				for (auto& json_group : json_groups)
 				{
 					video_group vgroup;
-					if (!group.contains("id"))
+					if (!json_group.contains("id"))
 					{
 						debug::error("Project's video group doesn't contain id, skipping...");
 						continue;
 					}
 
 
-					video_group_id_t id = group["id"];
-					if (!group.contains("videos") or !json["videos"].is_array())
+					video_group_id_t id = json_group["id"];
+					if (!json_group.contains("videos") or !json_group.at("videos").is_array())
 					{
 						debug::error("Project's video group's videos format was invalid, skipping...");
 						continue;
 					}
 					
-					if (group.contains("name"))
+					if (json_group.contains("name"))
 					{
-						vgroup.display_name = group["name"];
+						vgroup.display_name = json_group["name"];
 					}
 					else
 					{
 						vgroup.display_name = std::to_string(id);
 					}
 
-					const auto& group_videos = group["videos"];
+					const auto& group_videos = json_group.at("videos");
 					for (const auto& group_video : group_videos)
 					{
 						if (!group_video.contains("id") or !group_video.contains("offset"))
@@ -469,9 +737,15 @@ namespace vt
 
 						video_group::video_info vinfo;
 						vinfo.id = group_video["id"];
-						vinfo.offset = (decltype(vinfo.offset))utils::time::parse_time_to_sec(group_video["offset"]);
+						vinfo.offset = (decltype(vinfo.offset))utils::time::parse_time_to_ms(group_video["offset"]);
 						vgroup.insert(vinfo);
 					}
+
+					if (json_group.contains("segments") and json_group.at("segments").is_array())
+					{
+						from_json(json_group["segments"], vgroup.segments(), result.tags);
+					}
+
 					result.video_groups.insert({ id, vgroup });
 				}
 			}
@@ -489,15 +763,11 @@ namespace vt
 			if (json.contains("video-timeline"))
 			{
 				auto& json_video_timeline = json.at("video-timeline");
-				if (json_video_timeline.contains("displayed-tags"))
+				if (json_video_timeline.contains("displayed-tags") and json_video_timeline.at("displayed-tags").is_array())
 				{
-					for (auto& json_group_tags : json_video_timeline.at("displayed-tags"))
+					for (auto& tag_name : json_video_timeline.at("displayed-tags"))
 					{
-						auto& timeline_displayed_tags = ctx_.video_timeline.displayed_tags_per_group();
-						if (json_group_tags.contains("group-id") and json_group_tags.contains("tags"))
-						{
-							timeline_displayed_tags[json_group_tags.at("group-id")] = json_group_tags.at("tags");
-						}
+						result.add_displayed_tag(tag_name);
 					}
 				}
 			}

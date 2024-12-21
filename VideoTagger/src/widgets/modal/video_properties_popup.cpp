@@ -73,12 +73,12 @@ namespace vt
 
 		if (is_open)
 		{
-			timestamp ts(std::chrono::duration_cast<std::chrono::seconds>(offset));
+			timestamp ts(std::chrono::duration_cast<std::chrono::milliseconds>(offset));
 			ImGui::AlignTextToFramePadding();
 			ImGui::TextUnformatted("Offset");
 			ImGui::SameLine();
 			widgets::time_input("##VideoOffsetInput", &ts);
-			offset = std::chrono::duration_cast<std::chrono::nanoseconds>(ts.seconds_total);
+			offset = std::chrono::duration_cast<std::chrono::nanoseconds>(ts.total_milliseconds);
 
 			ImGui::Dummy(style.ItemSpacing);
 			if (ImGui::Button("OK"))

@@ -9,6 +9,7 @@ namespace vt
 	class video_group_playlist
 	{
 	public:
+		using value_type = video_group_id_t;
 		using iterator = std::vector<video_group_id_t>::iterator;
 		using const_iterator = std::vector<video_group_id_t>::const_iterator;
 
@@ -57,6 +58,8 @@ namespace vt
 		size_t size() const;
 		bool empty() const;
 
+		const std::vector<video_group_id_t>& groups() const;
+
 		iterator begin();
 		const_iterator begin() const;
 		const_iterator cbegin() const;
@@ -65,7 +68,7 @@ namespace vt
 		const_iterator cend() const;
 
 	private:
-		std::vector<video_group_id_t> videos_;
+		std::vector<video_group_id_t> groups_;
 		std::vector<size_t> shuffled_indices_;
 		std::stack<size_t> shuffled_history_next;
 		std::stack<size_t> shuffled_history_previous;

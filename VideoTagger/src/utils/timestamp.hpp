@@ -6,51 +6,64 @@ namespace vt
 {
 	struct timestamp
 	{
-		std::chrono::seconds seconds_total;
+		std::chrono::milliseconds total_milliseconds;
 
-		constexpr timestamp() : seconds_total{} {}
-		constexpr explicit timestamp(std::chrono::seconds seconds_total) : seconds_total{ seconds_total } {}
-		constexpr explicit timestamp(uint64_t seconds) : timestamp(std::chrono::seconds(seconds)) {}
+		constexpr timestamp() : total_milliseconds{} {}
+		constexpr explicit timestamp(std::chrono::milliseconds total_milliseconds) : total_milliseconds{ total_milliseconds } {}
+		constexpr explicit timestamp(int64_t milliseconds) : timestamp(std::chrono::milliseconds(milliseconds)) {}
 
-		constexpr timestamp(uint32_t hours, uint16_t minutes, uint16_t seconds) : seconds_total{ std::chrono::seconds(seconds) + std::chrono::minutes(minutes) + std::chrono::hours(hours) } {}
+		constexpr timestamp(int64_t hours, int64_t minutes, int64_t seconds, int64_t milliseconds) :
+			total_milliseconds{ std::chrono::milliseconds(milliseconds) + std::chrono::seconds(seconds) + std::chrono::minutes(minutes) + std::chrono::hours(hours) } {}
 
-		constexpr void set(uint32_t hours, uint16_t minutes, uint16_t seconds)
+		constexpr void set(int64_t hours, int64_t minutes, int64_t seconds, int64_t milliseconds)
 		{
+			milliseconds %= 1000;
 			seconds %= 60;
 			minutes %= 60;
-			seconds_total = std::chrono::seconds(seconds) + std::chrono::minutes(minutes) + std::chrono::hours(hours);
+			total_milliseconds = std::chrono::milliseconds(milliseconds) + std::chrono::seconds(seconds) + std::chrono::minutes(minutes) + std::chrono::hours(hours);
 		}
 
-		constexpr void set_hours(uint64_t value)
+		constexpr void set_hours(int64_t value)
 		{
-			seconds_total = seconds_total - std::chrono::hours(hours()) + std::chrono::hours(value);
+			total_milliseconds = total_milliseconds - std::chrono::hours(hours()) + std::chrono::hours(value);
 		}
 
-		constexpr void set_minutes(uint64_t value)
-		{
-			value %= 60;
-			seconds_total = seconds_total - std::chrono::minutes(minutes()) + std::chrono::minutes(value);
-		}
-
-		constexpr void set_seconds(uint64_t value)
+		constexpr void set_minutes(int64_t value)
 		{
 			value %= 60;
-			seconds_total = seconds_total - std::chrono::seconds(seconds()) + std::chrono::seconds(value);
+			total_milliseconds = total_milliseconds - std::chrono::minutes(minutes()) + std::chrono::minutes(value);
 		}
 
-		[[nodiscard]] constexpr uint64_t hours() const
+		constexpr void set_seconds(int64_t value)
 		{
-			return std::chrono::duration_cast<std::chrono::hours>(seconds_total).count();
+			value %= 60;
+			total_milliseconds = total_milliseconds - std::chrono::seconds(seconds()) + std::chrono::seconds(value);
 		}
 
-		[[nodiscard]] constexpr uint64_t minutes() const
+		constexpr void set_milliseconds(int64_t value)
 		{
-			return std::chrono::duration_cast<std::chrono::minutes>(seconds_total).count() % 60;
+			value %= 1000;
+			total_milliseconds = total_milliseconds - std::chrono::milliseconds(milliseconds()) + std::chrono::milliseconds(value);
 		}
 
-		[[nodiscard]] constexpr uint64_t seconds() const
+		[[nodiscard]] constexpr int64_t hours() const
 		{
-			return seconds_total.count() % 60;
+			return std::chrono::duration_cast<std::chrono::hours>(total_milliseconds).count();
+		}
+
+		[[nodiscard]] constexpr int64_t minutes() const
+		{
+			return std::chrono::duration_cast<std::chrono::minutes>(total_milliseconds).count() % 60;
+		}
+
+		[[nodiscard]] constexpr int64_t seconds() const
+		{
+			return std::chrono::duration_cast<std::chrono::seconds>(total_milliseconds).count() % 60;
+		}
+
+		[[nodiscard]] constexpr int64_t milliseconds() const
+		{
+			return total_milliseconds.count() % 1000;
 		}
 
 		static constexpr timestamp zero()
@@ -60,29 +73,29 @@ namespace vt
 
 		constexpr timestamp operator+(const timestamp& other) const
 		{
-			return timestamp(seconds_total + other.seconds_total);
+			return timestamp(total_milliseconds + other.total_milliseconds);
 		}
 
 		constexpr timestamp& operator+=(const timestamp& other)
 		{
-			seconds_total += other.seconds_total;
+			total_milliseconds += other.total_milliseconds;
 			return *this;
 		}
 
 		constexpr timestamp operator-(const timestamp& other) const
 		{
-			return timestamp(seconds_total - other.seconds_total);
+			return timestamp(total_milliseconds - other.total_milliseconds);
 		}
 
 		constexpr timestamp& operator-=(const timestamp& other)
 		{
-			seconds_total -= other.seconds_total;
+			total_milliseconds -= other.total_milliseconds;
 			return *this;
 		}
 
 		constexpr bool operator==(const timestamp& rhs) const
 		{
-			return seconds_total == rhs.seconds_total;
+			return total_milliseconds == rhs.total_milliseconds;
 		}
 
 		constexpr bool operator!=(const timestamp& rhs) const
@@ -92,22 +105,22 @@ namespace vt
 
 		constexpr bool operator<(const timestamp& rhs) const
 		{
-			return seconds_total < rhs.seconds_total;
+			return total_milliseconds < rhs.total_milliseconds;
 		}
 
 		constexpr bool operator<=(const timestamp& rhs) const
 		{
-			return seconds_total <= rhs.seconds_total;
+			return total_milliseconds <= rhs.total_milliseconds;
 		}
 
 		constexpr bool operator>(const timestamp& rhs) const
 		{
-			return seconds_total > rhs.seconds_total;
+			return total_milliseconds > rhs.total_milliseconds;
 		}
 
 		constexpr bool operator>=(const timestamp& rhs) const
 		{
-			return seconds_total >= rhs.seconds_total;
+			return total_milliseconds >= rhs.total_milliseconds;
 		}
 	};
 }

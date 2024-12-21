@@ -2,7 +2,9 @@
 #include "debug.hpp"
 
 #define NOMINMAX
-#define WIN32_LEAN_AND_MEAN
+#ifndef WIN32_LEAN_AND_MEAN
+	#define WIN32_LEAN_AND_MEAN
+#endif
 #ifdef _WIN32
 	#include <Windows.h>
 #endif

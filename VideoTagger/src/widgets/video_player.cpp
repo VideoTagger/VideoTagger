@@ -6,13 +6,11 @@
 #include "controls.hpp"
 #include "icons.hpp"
 #include "time_input.hpp"
+#include <core/app_context.hpp>
 
 namespace vt::widgets
 {
-	video_player::video_player() : dock_window_count_{}, speed_{ 1.0f }, is_visible_{}, is_playing_ {}, loop_mode_{}
-    {
-
-    }
+	video_player::video_player() : dock_window_count_{}, speed_{ 1.0f }, is_visible_{}, is_playing_ {}, loop_mode_{} {}
 
 	void video_player::update_data(video_player_data data, bool is_playing)
 	{
@@ -97,8 +95,8 @@ namespace vt::widgets
 			}
 			ImGui::EndChild();
 
-			timestamp current_time{ std::chrono::duration_cast<std::chrono::seconds>(data_.current_ts) };
-			timestamp duration{ std::chrono::duration_cast<std::chrono::seconds>(data_.end_ts) };
+			timestamp current_time{ std::chrono::duration_cast<std::chrono::milliseconds>(data_.current_ts) };
+			timestamp duration{ std::chrono::duration_cast<std::chrono::milliseconds>(data_.end_ts) };
 			decltype(data_.current_ts) min_ts{};
 
 			ImGui::BeginGroup();
@@ -119,21 +117,21 @@ namespace vt::widgets
 			ImGui::Columns(3);
 			{
 				auto avail_size = ImGui::GetContentRegionAvail();
-				auto time_size = ImGui::CalcTextSize("00:00:00");
-				auto total_size = ImGui::CalcTextSize("00:00:00 | 00:00:00");
+				auto time_size = ImGui::CalcTextSize("00:00:00:000");
+				auto total_size = ImGui::CalcTextSize("00:00:00:000 | 00:00:00:000");
 
 				ImGui::SetCursorPos({ avail_size.x - total_size.x, ImGui::GetCursorPosY() + total_size.y / 4 });
 				ImGui::SetNextItemWidth(time_size.x);
 				ImGui::PushStyleColor(ImGuiCol_FrameBg, { 0, 0, 0, 0 });
-				if (widgets::time_input("##TimeInput", &current_time, 1, 0, duration.seconds_total.count()))
+				if (widgets::time_input("##TimeInput", &current_time, 1, 0, duration.total_milliseconds.count()))
 				{
-					callbacks.on_seek(current_time.seconds_total);
+					callbacks.on_seek(current_time.total_milliseconds);
 				}
 				ImGui::PopStyleColor();
 				ImGui::SameLine();
-				ImGui::Text("| %02d:%02d:%02d",
-					duration.hours(), duration.minutes(), duration.seconds()
-				);
+
+				std::string video_duration = fmt::format("| {}", utils::time::time_to_string(duration.total_milliseconds.count()));
+				ImGui::TextUnformatted(video_duration.c_str());
 			}
 
 			ImGui::NextColumn();
@@ -150,21 +148,18 @@ namespace vt::widgets
 				ImGui::SameLine();
 				if (icon_button(icons::fast_back, { button_size, button_size }))
 				{
-					is_playing_ = false;
-					std::invoke(callbacks.on_set_playing, is_playing_);
+					set_playing(false);
 					std::invoke(callbacks.on_seek, std::chrono::nanoseconds{});
 				}
 				ImGui::SameLine();
 				if (icon_button(is_playing_ ? icons::pause : icons::play, { button_size, button_size }))
 				{
-					is_playing_ = !is_playing_;
-					std::invoke(callbacks.on_set_playing, is_playing_);
+					set_playing(!is_playing_);
 				}
 				ImGui::SameLine();
 				if (icon_button(icons::fast_fwd, { button_size, button_size }))
 				{
-					is_playing_ = false;
-					std::invoke(callbacks.on_set_playing, is_playing_);
+					set_playing(false);
 					std::invoke(callbacks.on_seek, std::chrono::nanoseconds(data_.end_ts));
 				}
 				ImGui::SameLine();
@@ -176,6 +171,17 @@ namespace vt::widgets
 
 			ImGui::NextColumn();
 			{
+				if (icon_toggle_button(icons::play_next, ctx_.app_settings.autoplay, { button_size, button_size }))
+				{
+					ctx_.app_settings.autoplay = !ctx_.app_settings.autoplay;
+					ctx_.settings["autoplay"] = ctx_.app_settings.autoplay;
+				}
+				if (has_child_videos)
+				{
+					tooltip(ctx_.app_settings.autoplay ? "Autoplay: On" : "Autoplay: Off");
+				}
+
+				ImGui::SameLine();
 				bool looping = loop_mode_ != loop_mode::off;
 
 				auto loop_icon = loop_mode_ != loop_mode::one ? icons::repeat : icons::repeat_one;
@@ -189,6 +195,15 @@ namespace vt::widgets
 					}
 
 					std::invoke(callbacks.on_set_looping, loop_mode_);
+				}
+				if (has_child_videos)
+				{
+					switch (loop_mode_)
+					{
+					case loop_mode::off: tooltip("Loop: Off"); break;
+					case loop_mode::all: tooltip("Loop: All"); break;
+					case loop_mode::one: tooltip("Loop: One"); break;
+					}
 				}
 				ImGui::SameLine();
 
@@ -268,6 +283,12 @@ namespace vt::widgets
 	void video_player::set_loop_mode(vt::loop_mode value)
 	{
 		loop_mode_ = value;
+	}
+
+	void video_player::set_playing(bool value)
+	{
+		is_playing_ = value;
+		std::invoke(callbacks.on_set_playing, is_playing_);
 	}
 
 	bool video_player::is_visible() const

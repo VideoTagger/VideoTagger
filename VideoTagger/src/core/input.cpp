@@ -37,7 +37,7 @@ namespace vt
 		return key_code == other.key_code and modifiers.ctrl == other.modifiers.ctrl and modifiers.shift == other.modifiers.shift and modifiers.alt == other.modifiers.alt;
 	}
 
-	void input::process_event(SDL_Event& event, const keybind_storage& app_keybinds, keybind_storage* project_keybinds)
+	void input::process_event(const SDL_Event& event, const keybind_storage& app_keybinds, keybind_storage* project_keybinds)
 	{
 		if (event.type != SDL_KEYDOWN) return;
 		static constexpr auto key_blacklist =

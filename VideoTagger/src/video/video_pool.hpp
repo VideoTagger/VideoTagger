@@ -2,15 +2,15 @@
 #include <unordered_map>
 
 #include <SDL.h>
+#include <SDL_opengl.h>
 
 #include "video_stream.hpp"
 #include <utils/uuid.hpp>
+#include "video_resource.hpp"
+#include <tags/tag_timeline.hpp>
 
 namespace vt
 {
-	using video_id_t = uint64_t;
-	using video_group_id_t = uint64_t;
-
 	//TODO: use this instead of just 0
 	inline constexpr auto invalid_video_group_id = video_group_id_t{ 0 };
 
@@ -30,13 +30,14 @@ namespace vt
 		std::string display_name;
 
 		video_group() = default;
-		video_group(std::string name, std::vector<video_info> video_infos);
+		video_group(const std::string& name, const std::vector<video_info>& video_infos);
 
 		bool insert(video_info video_info);
 		bool erase(video_id_t video_id);
 
 		bool contains(video_id_t video_id) const;
 		size_t size() const;
+		bool empty() const;
 
 		iterator find(video_id_t video_id);
 		const_iterator find(video_id_t video_id) const;
@@ -47,6 +48,10 @@ namespace vt
 		video_info& operator[](size_t index);
 		const video_info& operator[](size_t index) const;
 
+		segment_storage& segments();
+		const segment_storage& segments() const;
+		const container& videos() const;
+
 		iterator begin();
 		const_iterator begin() const;
 		const_iterator cbegin() const;
@@ -56,41 +61,13 @@ namespace vt
 
 	private:
 		container video_ids_;
+		segment_storage segments_;
 	};
 
 	class video_pool
 	{
 	public:
-		struct video_metadata
-		{
-			video_metadata() = default;
-			video_metadata(const video_metadata&) = delete;
-			video_metadata(video_metadata&&) = default;
-			~video_metadata();
-
-			video_metadata& operator=(const video_metadata&) = delete;
-			video_metadata& operator=(video_metadata&&) = default;
-
-			std::filesystem::path path;
-			video_stream video;
-			bool is_widget_open{};
-			SDL_Texture* thumbnail{};
-
-			int width{};
-			int height{};
-			double fps{};
-			std::chrono::nanoseconds duration{};
-
-			//TODO: Store video resolution, duration, etc.
-
-			bool update_data();
-			bool update_thumbnail(SDL_Renderer* renderer);
-
-			bool open_video();
-			void close_video();
-		};
-
-		using container = std::unordered_map<video_id_t, video_metadata>;
+		using container = std::unordered_map<video_id_t, std::unique_ptr<video_resource>>;
 		using iterator = container::iterator;
 		using const_iterator = container::const_iterator;
 
@@ -101,26 +78,25 @@ namespace vt
 		video_pool& operator=(const video_pool&) = delete;
 		video_pool& operator=(video_pool&&) = default;
 
-		bool insert(video_id_t video_id, const std::filesystem::path& video_path);
+		bool insert(std::unique_ptr<video_resource>&& vid_resource);
 		bool erase(video_id_t video_id);
 
-		bool open_video(video_id_t video_id);
-		bool close_video(video_id_t video_id);
-		//return ids which failed to open
-		std::vector<video_id_t> open_group(const video_group& group);
-		//return ids which failed to close (<- is this necessary???)
-		std::vector<video_id_t> close_group(const video_group& group);
+		video_resource& get(video_id_t video_id);
+		const video_resource& get(video_id_t video_id) const;
+		template<typename video_type>
+		video_type& get(video_id_t video_id);
+		template<typename video_type>
+		const video_type& get(video_id_t video_id) const;
 
-		video_metadata* get(video_id_t video_id);
-		const video_metadata* get(video_id_t video_id) const;
-		
-		//TODO: consider taking a vector as an argument instead of returning. This could allow to avoid unnecessary allocations
-		std::vector<video_metadata*> get_group(const video_group& group);
-		//TODO: consider taking a vector as an argument instead of returning. This could allow to avoid unnecessary allocations
-		std::vector<const video_metadata*> get_group(const video_group& group) const;
+		template<typename video_type>
+		bool is_video_of_type(video_id_t video_id) const;
 
-		bool is_open(video_id_t video_id) const;
-		bool exists(video_id_t video_id) const;
+		//TODO: consider taking a vector as an argument instead of returning. This could allow to avoid unnecessary allocations
+		std::vector<video_resource*> get_group(const video_group& group);
+		//TODO: consider taking a vector as an argument instead of returning. This could allow to avoid unnecessary allocations
+		std::vector<const video_resource*> get_group(const video_group& group) const;
+
+		bool contains(video_id_t video_id) const;
 		size_t size() const;
 		bool empty() const;
 
@@ -134,4 +110,22 @@ namespace vt
 	private:
 		container videos_;
 	};
+
+	template<typename video_type>
+	inline video_type& video_pool::get(video_id_t video_id)
+	{
+		return dynamic_cast<video_type&>(get(video_id));
+	}
+
+	template<typename video_type>
+	inline const video_type& video_pool::get(video_id_t video_id) const
+	{
+		return dynamic_cast<video_type&>(get(video_id));
+	}
+
+	template<typename video_type>
+	inline bool video_pool::is_video_of_type(video_id_t video_id) const
+	{
+		return dynamic_cast<video_type*>(&get(video_id)) != nullptr;
+	}
 }

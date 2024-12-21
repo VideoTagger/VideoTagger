@@ -23,13 +23,23 @@ namespace vt
 			case player_action_type::forwards:
 			{
 				if (callbacks.on_seek == nullptr) break;
-				callbacks.on_seek(player.data().end_ts);
+				if (callbacks.on_set_playing != nullptr)
+				{
+					callbacks.on_set_playing(false);
+				}
+				std::chrono::nanoseconds seek_duration = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::duration<double>(1.f / ctx_.displayed_videos.max_framerate()));
+				callbacks.on_seek(player.data().current_ts + seek_duration);
 			}
 			break;
 			case player_action_type::backwards:
 			{
 				if (callbacks.on_seek == nullptr) break;
-				callbacks.on_seek(player.data().start_ts);
+				if (callbacks.on_set_playing != nullptr)
+				{
+					callbacks.on_set_playing(false);
+				}
+				std::chrono::nanoseconds seek_duration = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::duration<double>(1.f / ctx_.displayed_videos.max_framerate()));
+				callbacks.on_seek(player.data().current_ts - seek_duration);
 			}
 			break;
 			case player_action_type::skip_next:

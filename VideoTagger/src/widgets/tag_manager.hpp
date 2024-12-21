@@ -6,6 +6,8 @@
 
 namespace vt::widgets
 {
+	//TODO: probably should be a class like every other widget
+
 	enum class tag_manager_flags
 	{
 		none = 0,
@@ -29,10 +31,17 @@ namespace vt::widgets
 	
 	struct tag_rename_data
 	{
+		bool processed = false;
 		bool ready = false;
 		std::string old_name;
 		std::string new_name;
 	};
 
-	bool tag_manager(tag_storage& tags, std::optional<tag_rename_data>& tag_rename, bool& dirty_flag, tag_manager_flags flags = tag_manager_flags::none);
+	struct tag_delete_data
+	{
+		bool ready = false;
+		std::string tag;
+	};
+
+	bool tag_manager(tag_storage& tags, std::optional<tag_rename_data>& tag_rename, std::optional<tag_delete_data>& tag_delete, bool& dirty_flag, tag_manager_flags flags = tag_manager_flags::none);
 }

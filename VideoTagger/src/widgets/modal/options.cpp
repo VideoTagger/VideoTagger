@@ -6,9 +6,7 @@
 
 namespace vt::widgets::modal
 {
-	options::options() : active_tab{}
-	{
-	}
+	options::options() : active_tab{} {}
 
 	bool options::render(bool* open)
 	{

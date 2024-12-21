@@ -6,8 +6,7 @@
 
 namespace vt::widgets
 {
-	bool insert_segment_popup(const char* id, timestamp& start, timestamp& end, tag_segment_type segment_type,
-		uint64_t min_timestamp, uint64_t max_timestamp, const std::vector<std::string>& tags, int& selected_tag, bool& selected_ok)
+	bool insert_segment_popup(const char* id, timestamp& start, timestamp& end, tag_segment_type segment_type, uint64_t min_timestamp, uint64_t max_timestamp, const std::vector<std::string>& tags, int& selected_tag, bool& selected_ok)
 	{
 		bool result = false;
 		auto& style = ImGui::GetStyle();
@@ -36,7 +35,7 @@ namespace vt::widgets
 			else
 			{
 				widgets::timestamp_control("Start", start, min_timestamp, max_timestamp, nullptr, nullptr);
-				widgets::timestamp_control("End", end, min_timestamp, max_timestamp, nullptr, nullptr);
+				widgets::timestamp_control("End", end, (start.total_milliseconds + tag_segment::min_segment_size).count(), max_timestamp, nullptr, nullptr);
 			}
 
 			if (start > end)

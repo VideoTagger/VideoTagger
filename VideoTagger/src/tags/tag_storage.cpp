@@ -3,7 +3,12 @@
 
 namespace vt
 {
-	std::pair<tag_storage::iterator, bool> tag_storage::insert(const std::string& name, uint32_t color)
+    std::pair<tag_storage::iterator, bool> tag_storage::insert(const tag& tag)
+    {
+		return tags_.try_emplace(tag.name, tag);
+    }
+
+    std::pair<tag_storage::iterator, bool> tag_storage::insert(const std::string& name, uint32_t color)
 	{
 		if (name.empty())
 		{
@@ -33,6 +38,11 @@ namespace vt
 	{
 		return iterator{ tags_.erase(it.unwrapped()) };
 	}
+
+    void tag_storage::clear()
+    {
+		tags_.clear();
+    }
 
 	tag_rename_result tag_storage::rename(const std::string& current_name, const std::string& new_name)
 	{
@@ -166,10 +176,7 @@ namespace vt
 		return end();
 	}
 
-	tag_storage_const_iterator::tag_storage_const_iterator(unwrapped_it it)
-		: it{ it }
-	{
-	}
+	tag_storage_const_iterator::tag_storage_const_iterator(unwrapped_it it) : it{ it } {}
 
 	tag_storage_const_iterator& tag_storage_const_iterator::operator++()
 	{
@@ -211,10 +218,7 @@ namespace vt
 		return it;
 	}
 
-	tag_storage_iterator::tag_storage_iterator(unwrapped_it it)
-		: it{ it }
-	{
-	}
+	tag_storage_iterator::tag_storage_iterator(unwrapped_it it) : it{ it } {}
 
 	tag_storage_iterator& tag_storage_iterator::operator++()
 	{

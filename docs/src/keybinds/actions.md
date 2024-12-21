@@ -11,4 +11,4 @@ Keybinds support multiple actions, where each one of them can have multiple attr
         - `Start` will only start the segment if it wasn't started before
         - `End` will only end the segment if it was started before
 
-![Keybind Actions Preview](/images/preview1.png)
+![Keybind Actions Preview](./images/preview1.png)

@@ -1,3 +1,5 @@
+include "setup-python"
+
 project "VideoTagger"
 	language "C++"
 	targetdir (ProjectTargetDir)
@@ -17,10 +19,11 @@ project "VideoTagger"
 		"vendor/ImGui/misc/cpp/*.cpp",
 		"vendor/ImGui/backends/imgui_impl_sdl2.h",
 		"vendor/ImGui/backends/imgui_impl_sdl2.cpp",
-		"vendor/ImGui/backends/imgui_impl_sdlrenderer2.h",
-		"vendor/ImGui/backends/imgui_impl_sdlrenderer2.cpp",
+		"vendor/ImGui/backends/imgui_impl_opengl3.h",
+		"vendor/ImGui/backends/imgui_impl_opengl3.cpp",
 		"vendor/ImGuizmo/ImSequencer.h",
-		"vendor/ImGuizmo/ImSequencer.cpp"
+		"vendor/ImGuizmo/ImSequencer.cpp",
+		"vendor/ImGuizmo/ImGuizmo.cpp",
 	}
 
 	includedirs
@@ -32,7 +35,9 @@ project "VideoTagger"
 		"vendor/nativefiledialog-extended/src/include",
 		"vendor/fmt/include",
 		"vendor/nlohmann/single_include",
-		"vendor/utf8"
+		"vendor/utf8",
+		"vendor/pybind11/include",
+		"vendor/cpp-httplib"
 	}
 
 	pchheader "pch.hpp"
@@ -45,7 +50,8 @@ project "VideoTagger"
 		"SDL2main",
 		"avcodec",
 		"avformat",
-		"avutil"
+		"avutil",
+		"swscale"
 	}
 
 	defines
@@ -60,9 +66,12 @@ project "VideoTagger"
 
 	postbuildcommands
 	{
-		"{COPY} assets %{cfg.targetdir}/assets"
+		"{COPYDIR} assets %{cfg.targetdir}/assets"
 	}
 
+	filter {}
+	filter "files:src/embeds/**.cpp"
+		flags { "NoPCH" }
 	filter "files:vendor/ImGuizmo/**.cpp"
 		flags { "NoPCH" }
 	filter "files:vendor/ImGui/**.cpp"
@@ -72,21 +81,27 @@ project "VideoTagger"
 		externalincludedirs
 		{
 			"vendor/SDL2/include",
-			"vendor/ffmpeg/include/libavcodec",
-			"vendor/ffmpeg/include/libavformat",
-			"vendor/ffmpeg/include"
+			"vendor/FFmpeg/include/libavcodec",
+			"vendor/FFmpeg/include/libavformat",
+			"vendor/FFmpeg/include/libswscale",
+			"vendor/FFmpeg/include",
+			"vendor/openssl/include",
+			PythonIncludePath
 		}
 
 		libdirs
 		{
 			"vendor/SDL2/lib/%{cfg.architecture}",
-			"vendor/ffmpeg/lib/%{cfg.architecture}"
+			"vendor/FFmpeg/lib/%{cfg.architecture}",
+			"vendor/openssl/lib/%{cfg.architecture}",
+			PythonLibPath
 		}
 
 		postbuildcommands
 		{
 			"{COPYFILE} vendor/SDL2/lib/%{cfg.architecture}/*.dll %{cfg.targetdir}",
-			"{COPYFILE} vendor/ffmpeg/lib/%{cfg.architecture}/*.dll %{cfg.targetdir}"
+			"{COPYFILE} vendor/FFmpeg/lib/%{cfg.architecture}/*.dll %{cfg.targetdir}",
+			"{COPYFILE} vendor/openssl/lib/%{cfg.architecture}/*.dll %{cfg.targetdir}",
 		}
 
 		buildoptions
@@ -94,32 +109,41 @@ project "VideoTagger"
 			"/utf-8"
 		}
 
+		links
+		{
+			"opengl32",
+			"libssl",
+			"libcrypto",
+			PythonLibName
+		}
+
 	filter "system:linux"
 		buildoptions
 		{
-			"`pkg-config --cflags libavcodec libavformat sdl2 gtk+-3.0 glib-2.0`"
+			"`pkg-config --cflags libavcodec libavformat libswscale sdl2 opengl gtk+-3.0 glib-2.0 openssl`",
+			"`python3-config --cflags`",
+			"-fpermissive"
 		}
 
 		linkoptions
 		{
-			"`pkg-config --libs libavcodec libavformat sdl2 gtk+-3.0 glib-2.0`"
+			"`pkg-config --libs libavcodec libavformat libswscale sdl2 opengl gtk+-3.0 glib-2.0 openssl`",
+			"`python3-config --embed --ldflags`"
 		}
+
 	filter "system:macosx"
 		buildoptions
 		{
-			"`pkg-config --cflags libavcodec libavformat sdl2`"
+			"`pkg-config --cflags libavcodec libavformat libswscale sdl2 opengl openssl`",
+			"-framework AppKit",
+            "-framework UniformTypeIdentifiers",
+			"-fpermissive"
 		}
 
 		linkoptions
 		{
-			"`pkg-config --libs libavcodec libavformat sdl2`"
+			"`pkg-config --libs libavcodec libavformat libswscale sdl2 opengl openssl`"
 		}
-
-        links
-		{
-            "AppKit.framework",
-            "UniformTypeIdentifiers.framework"
-        }
 	
 	filter "configurations:Debug"
 		kind "ConsoleApp"
@@ -132,14 +156,14 @@ project "VideoTagger"
 		defines { "NDEBUG" }
 		optimize "Speed"
 		runtime "Release"
-		flags { "LinkTimeOptimization" }
+		-- flags { "LinkTimeOptimization" }
 	
 	filter "configurations:Shipping"
 		kind "WindowedApp"
 		defines { "NDEBUG" }
 		optimize "Speed"
 		runtime "Release"
-		flags { "LinkTimeOptimization" }
+		-- flags { "LinkTimeOptimization" }
 		
 	filter "platforms:x86_64"
 		architecture "x86_64"

@@ -11,7 +11,9 @@
 #include <tags/tag_storage.hpp>
 #include <tags/tag_timeline.hpp>
 #include <video/video_pool.hpp>
+#include <video/downloadable_video_resource.hpp>
 #include <video/video_group_playlist.hpp>
+#include <video/video_importer.hpp>
 #include <core/input.hpp>
 
 namespace vt
@@ -34,26 +36,68 @@ namespace vt
 		static project_info load_from_file(const std::filesystem::path& filepath);
 	};
 
-	struct project_import_video_result
+	struct prepare_video_import_task
 	{
-		bool success{};
+		std::string importer_id;
+		std::vector<std::any> import_data;
+		std::function<bool(std::vector<std::any>&)> task;
+
+		bool operator()();
+	};
+
+	struct video_import_task
+	{
+		std::optional<video_group_id_t> group_id;
+		std::function<std::unique_ptr<video_resource>()> task;
+
+		std::unique_ptr<video_resource> operator()();
+	};
+
+	struct generate_thumbnail_task
+	{
 		video_id_t video_id{};
-		std::filesystem::path video_path;
+		std::function<bool()> task;
+
+		bool operator()();
+	};
+
+	struct video_download_task
+	{
+		video_id_t video_id{};
+		video_download_result task;
+	};
+
+	struct video_refresh_task
+	{
+		video_id_t video_id{};
+		std::future<void> task;
+	};
+
+	struct remove_video_task
+	{
+		video_id_t video_id{};
+		std::future<void> task;
 	};
 
 	struct project : public project_info
 	{
-		using segment_storage_map = std::unordered_map<video_group_id_t, segment_storage>;
 		using video_group_map = std::unordered_map<video_group_id_t, video_group>;
 
 		video_group_playlist video_group_playlist;
-		segment_storage_map segments;
 		video_group_map video_groups;
-		std::vector<std::future<project_import_video_result>> video_import_tasks;
 		video_pool videos;
 		tag_storage tags;
 		keybind_storage keybinds;
+		std::vector<std::string> displayed_tags;
 
+		//TODO: maybe use async
+		//TODO: add generic task class
+		std::vector<prepare_video_import_task> prepare_video_import_tasks;
+		std::vector<video_import_task> video_import_tasks;
+		std::vector<generate_thumbnail_task> generate_thumbnail_tasks;
+		std::vector<video_download_task> video_download_tasks;
+		std::vector<video_refresh_task> video_refresh_tasks;
+		std::vector<remove_video_task> remove_video_tasks;
 
 		project() = default;
 		project(const project&) = delete;
@@ -62,13 +106,49 @@ namespace vt
 		project& operator=(const project&) = delete;
 		project& operator=(project&&) = default;
 
-		std::future<project_import_video_result> import_video(const std::filesystem::path& filepath, video_id_t id = 0, bool create_group = true);
+		template<typename video_importer>
+		void prepare_video_import();
+		void prepare_video_import(const std::string& importer_id);
+
+		template<typename video_importer>
+		void schedule_video_import(typename video_importer::import_data import_data, std::optional<video_group_id_t> group_id);
+		void schedule_video_import(const std::string& importer_id, std::any import_data, std::optional<video_group_id_t> group_id);
+		void schedule_video_download(video_id_t video_id);
+		void schedule_generate_thumbnail(video_id_t video_id);
+		void schedule_video_refresh(video_id_t video_id);
+		void schedule_remove_video(video_id_t video_id);
+
+		//TODO: maybe return the imported video or the video with the same hash if it exist and bool inserted
+		bool import_video(std::unique_ptr<video_resource>&& vid_resource, std::optional<video_group_id_t> group_id, bool check_hash = true, bool set_project_dirty = true);
+
 		bool export_segments(const std::filesystem::path& filepath, std::vector<video_group_id_t> group_ids) const;
 
 		//TODO: save tags displayed on the timeline in the project file
 		void save() const;
 		void save_as(const std::filesystem::path& filepath);
 
+		void remove_video(video_id_t id);
+		void remove_video_group(video_group_id_t id);
+
+		tag_rename_result rename_tag(const std::string& old_name, const std::string& new_name);
+		void delete_tag(const std::string& tag_name);
+
+		bool add_displayed_tag(const std::string& tag_name);
+		bool remove_displayed_tag(const std::string& tag_name);
+		std::vector<std::string>::iterator find_displayed_tag(const std::string& tag_name);
+
 		static project load_from_file(const std::filesystem::path& filepath);
 	};
+
+	template<typename video_importer>
+	inline void project::prepare_video_import()
+	{
+		return prepare_video_import(video_importer::static_importer_id);
+	}
+
+	template<typename video_importer>
+	inline void project::schedule_video_import(typename video_importer::import_data import_data, std::optional<video_group_id_t> group_id)
+	{
+		return schedule_video_import(video_importer::static_importer_id, std::move(import_data), group_id);
+	}
 }

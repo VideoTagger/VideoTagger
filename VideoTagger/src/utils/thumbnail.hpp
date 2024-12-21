@@ -1,5 +1,6 @@
 #pragma once
 #include <SDL.h>
+#include <SDL_opengl.h>
 #include <imgui.h>
 
 namespace vt::utils
@@ -15,11 +16,14 @@ namespace vt::utils
 
 		thumbnail() = delete;
 
-		static SDL_Texture* font_texture();
+		static GLuint font_texture();
 		static const font_glyph find_glyph(ImWchar c);
 		
 		static constexpr ImWchar video_group_icon{ 0xE04A };
 		static constexpr ImWchar video_icon{ 0xE02C };
+		static constexpr ImWchar download_icon{ 0xF090 };
+		static constexpr ImWchar file_icon{ 0xE66D };
+		static constexpr ImWchar folder_icon{ 0xE2C7 };
 	};
 
 }

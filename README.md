@@ -1,8 +1,9 @@
 # VideoTagger
-![VideoTagger Preview](./resources/images/preview.png?raw=true)
+
+![VideoTagger](/resources/images/preview.png?raw=true "VideoTagger")
 
 ## Getting started
-To download the repository use `git clone --recursive https://github.com/Vexte/VideoTagger`.
+To download the repository use `git clone --recursive https://github.com/VideoTagger/VideoTagger`.
 
 If the repository was cloned non-recursively use `git submodule update --init` to clone the submodules.
 
@@ -41,4 +42,5 @@ To build the projects, open the Xcode file and build the projects with chosen co
 - [fmt](https://github.com/fmtlib/fmt)
 - [Nlohmann Json](https://github.com/nlohmann/json)
 - [utf8.h](https://github.com/sheredom/utf8.h)
-- [ffmpeg](https://ffmpeg.org/)
+- [pybind11](https://github.com/pybind/pybind11)
+- [FFmpeg](https://ffmpeg.org/)

@@ -36,11 +36,14 @@ namespace vt
 		static constexpr std::string_view forbidden_characters = "\t\n\r\a\b\v\f\"\'\\/<>|:?*";
 		static constexpr std::string_view forbidden_edge_characters = " "; // tag name can't contain these characters at the very start or end
 
+		std::pair<iterator, bool> insert(const tag& tag);
 		std::pair<iterator, bool> insert(const std::string& name, uint32_t color);
 		std::pair<iterator, bool> insert(const std::string& name);
 		bool erase(const std::string& name);
 		iterator erase(iterator it);
 		iterator erase(const_iterator it);
+		void clear();
+
 		// returns:
 		//	if current_name doesn't exist: { end, false }
 		//	if new_name already exists: { iterator-to-new_name, false }
@@ -142,12 +145,9 @@ namespace vt
 	inline void to_json(nlohmann::ordered_json& json, const tag_storage& ts)
 	{
 		json = nlohmann::json::array();
-		for (auto& tag : ts)
+		for (const auto& tag : ts)
 		{
-			nlohmann::ordered_json json_tag_data;
-			json_tag_data["name"] = tag.name;
-			json_tag_data["color"] = utils::color::to_string(tag.color);
-			json.push_back(json_tag_data);
+			json.push_back(tag);
 		}
 	}
 
@@ -155,15 +155,11 @@ namespace vt
 	{
 		for (const auto& tag_data : json)
 		{
-			if (!tag_data.contains("name") or !tag_data.contains("color")) continue;
-
-			auto [tag_it, success] = ts.insert(tag_data["name"]);
-			auto col_str = tag_data["color"].get<std::string>();
-			uint32_t color{};
-			if (utils::color::parse_string(col_str, color))
-			{
-				tag_it->color = color;
-			}
+			tag tag("", 0);
+			from_json(tag_data, tag);
+			
+			if (tag.name.empty()) continue;
+			ts.insert(tag);
 		}
 	}
 }

@@ -1,11 +1,10 @@
 #include "pch.hpp"
 #include "video_pool.hpp"
+#include <core/debug.hpp>
 
 namespace vt
 {
-	video_group::video_group(std::string name, std::vector<video_info> video_ids)
-		: display_name{ std::move(name) }, video_ids_(video_ids)
-	{}
+	video_group::video_group(const std::string& name, const std::vector<video_info>& video_ids) : display_name{ std::move(name) }, video_ids_(video_ids) {}
 
 	bool video_group::insert(video_info video_info)
 	{
@@ -38,6 +37,11 @@ namespace vt
 	size_t video_group::size() const
 	{
 		return video_ids_.size();
+	}
+
+	bool video_group::empty() const
+	{
+		return video_ids_.empty();
 	}
 
 	video_group::iterator video_group::find(video_id_t video_id)
@@ -86,6 +90,21 @@ namespace vt
 		return video_ids_[index];
 	}
 
+	segment_storage& video_group::segments()
+	{
+		return segments_;
+	}
+
+	const segment_storage& video_group::segments() const
+	{
+		return segments_;
+	}
+
+    const video_group::container& video_group::videos() const
+    {
+		return video_ids_;
+    }
+
 	video_group::iterator video_group::begin()
 	{
 		return video_ids_.begin();
@@ -116,20 +135,14 @@ namespace vt
 		return video_ids_.cend();
 	}
 
-	bool video_pool::insert(video_id_t video_id, const std::filesystem::path& video_path)
+	bool video_pool::insert(std::unique_ptr<video_resource>&& vid_resource)
 	{
+		if (vid_resource == nullptr)
 		{
-			//TODO: maybe add a function to check if a file is a video file
-			// some files don't fail to open despite not being a video
-			video_decoder decoder;
-			if (!decoder.open(video_path))
-			{
-				return false;
-			}
+			return false;
 		}
 
-		video_metadata video_info = { video_path, video_stream() };
-		auto[_, inserted] = videos_.try_emplace(video_id, std::move(video_info));
+		auto[_, inserted] = videos_.try_emplace(vid_resource->id(), std::move(vid_resource));
 		return inserted;
 	}
 
@@ -145,116 +158,43 @@ namespace vt
 		return true;
 	}
 
-	bool video_pool::open_video(video_id_t video_id)
+	video_resource& video_pool::get(video_id_t video_id)
 	{
-		auto it = videos_.find(video_id);
-		if (it == videos_.end())
-		{
-			return false;
-		}
-
-		video_metadata& video_info = it->second;
-		return video_info.open_video();
+		return const_cast<video_resource&>(std::as_const(*this).get(video_id));
 	}
 
-	bool video_pool::close_video(video_id_t video_id)
+	const video_resource& video_pool::get(video_id_t video_id) const
 	{
-		auto it = videos_.find(video_id);
-		if (it == videos_.end())
-		{
-			return false;
-		}
-
-		video_metadata& video_info = it->second;
-		video_info.close_video();
-		return true;
+		return *videos_.at(video_id);
 	}
 
-	std::vector<video_id_t> video_pool::open_group(const video_group& group)
+	std::vector<video_resource*> video_pool::get_group(const video_group& group)
 	{
-		std::vector<video_id_t> result;
-
-		for (auto& vi : group)
-		{
-			if (!open_video(vi.id))
-			{
-				result.push_back(vi.id);
-			}
-		}
-
-		return result;
-	}
-
-	std::vector<video_id_t> video_pool::close_group(const video_group& group)
-	{
-		std::vector<video_id_t> result;
-
-		for (auto& vi : group)
-		{
-			if (!close_video(vi.id))
-			{
-				result.push_back(vi.id);
-			}
-		}
-
-		return result;
-	}
-
-	video_pool::video_metadata* video_pool::get(video_id_t video_id)
-	{
-		return const_cast<video_metadata*>(std::as_const(*this).get(video_id));
-	}
-
-	const video_pool::video_metadata* video_pool::get(video_id_t video_id) const
-	{
-		auto it = videos_.find(video_id);
-		if (it == videos_.end())
-		{
-			return nullptr;
-		}
-
-		return &it->second;
-	}
-
-	std::vector<video_pool::video_metadata*> video_pool::get_group(const video_group& group)
-	{
-		std::vector<video_metadata*> result;
+		std::vector<video_resource*> result;
 		result.reserve(group.size());
 
 		for (auto& vi : group)
 		{
-			result.push_back(get(vi.id));
+			result.push_back(&get(vi.id));
 		}
 
 		return result;
 	}
 
-	std::vector<const video_pool::video_metadata*> video_pool::get_group(const video_group& group) const
+	std::vector<const video_resource*> video_pool::get_group(const video_group& group) const
 	{
-		std::vector<const video_metadata*> result;
+		std::vector<const video_resource*> result;
 		result.reserve(group.size());
 
 		for (auto& vi : group)
 		{
-			result.push_back(get(vi.id));
+			result.push_back(&get(vi.id));
 		}
 
 		return result;
 	}
 
-	bool video_pool::is_open(video_id_t video_id) const
-	{
-		auto it = videos_.find(video_id);
-		if (it == videos_.end())
-		{
-			return false;
-		}
-
-		const video_metadata& video_info = it->second;
-		return video_info.video.is_open();
-	}
-
-	bool video_pool::exists(video_id_t video_id) const
+	bool video_pool::contains(video_id_t video_id) const
 	{
 		return videos_.count(video_id) != 0;
 	}
@@ -297,98 +237,5 @@ namespace vt
 	video_pool::const_iterator video_pool::cend() const
 	{
 		return videos_.cend();
-	}
-
-
-	video_pool::video_metadata::~video_metadata()
-	{
-		if (thumbnail != nullptr)
-		{
-			SDL_DestroyTexture(thumbnail);
-		}
-	}
-
-	bool video_pool::video_metadata::update_data()
-	{
-		bool was_open = video.is_open();
-		if (!was_open)
-		{
-			if (!video.open_file(path))
-			{
-				return false;
-			}
-		}
-
-		width = video.width();
-		height = video.height();
-		duration = video.duration();
-		fps = video.fps();
-		//update_thumbnail(renderer);
-
-		if (!was_open)
-		{
-			video.close();
-		}
-
-		return true;
-	}
-
-	bool video_pool::video_metadata::update_thumbnail(SDL_Renderer* renderer)
-	{
-		bool was_open = video.is_open();
-		if (!was_open)
-		{
-			if (!video.open_file(path))
-			{
-				return false;
-			}
-		}
-
-		if (thumbnail != nullptr)
-		{
-			SDL_DestroyTexture(thumbnail);
-			thumbnail = nullptr;
-		}
-
-		SDL_Texture* tmp_texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_YV12, SDL_TEXTUREACCESS_STREAMING, video.width(), video.height());
-		if (tmp_texture == nullptr)
-		{
-			return false;
-		}
-		
-		//TODO: probably should have some max dimensions not just half of video
-		thumbnail = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGB888, SDL_TEXTUREACCESS_TARGET, video.width() / 2, video.height() / 2);
-		if (thumbnail == nullptr)
-		{
-			SDL_DestroyTexture(tmp_texture);
-			return false;
-		}
-
-		video.get_thumbnail(tmp_texture);
-
-		SDL_Texture* target = SDL_GetRenderTarget(renderer);
-		SDL_SetRenderTarget(renderer, thumbnail);
-		SDL_RenderCopy(renderer, tmp_texture, NULL, NULL);
-		SDL_RenderPresent(renderer);
-		SDL_SetRenderTarget(renderer, target);
-
-		SDL_DestroyTexture(tmp_texture);
-
-		if (!was_open)
-		{
-			video.close();
-		}
-
-		return true;
-	}
-
-	bool video_pool::video_metadata::open_video()
-	{
-		return video.open_file(path);
-	}
-
-	void video_pool::video_metadata::close_video()
-	{
-		video.close();
 	}
 }

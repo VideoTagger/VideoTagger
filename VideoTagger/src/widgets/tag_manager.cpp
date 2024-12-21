@@ -6,6 +6,7 @@
 #include "icons.hpp"
 #include <core/app_context.hpp>
 #include <utils/drag_drop.hpp>
+#include <utils/string.hpp>
 
 namespace vt::widgets
 {
@@ -34,7 +35,7 @@ namespace vt::widgets
 
 			if (is_appearing)
 			{
-				auto hue = utils::random::get<float>();
+				auto hue = utils::random::get_from_zero<float>();
 				auto value = utils::random::get<float>(0.5f, 1.0f);
 				ImGui::ColorConvertHSVtoRGB(hue, 0.75f, value, color.x, color.y, color.z);
 			}
@@ -78,11 +79,13 @@ namespace vt::widgets
 			ImGui::BeginDisabled(valid_tag_name != tag_validate_result::ok);
 			if (ImGui::Button("Done"))
 			{
+				//TODO: inserting maybe should be done outside the widget (like renaming and removing)
 				auto [it, inserted] = tags.insert(tag_name);
 				if (inserted)
 				{
 					return_value = true;
 					it->color = ImGui::ColorConvertFloat4ToU32(color);
+
 					added_entry = it;
 				}
 				
@@ -108,7 +111,7 @@ namespace vt::widgets
 		return return_value;
 	}
 
-	bool rename_tag_popup(const std::string& id, const tag_rename_data& data, bool& pressed_button)
+	static bool rename_tag_popup(const std::string& id, const tag_rename_data& data, bool& pressed_button)
 	{
 		//TODO: improve layout
 
@@ -125,8 +128,6 @@ namespace vt::widgets
 		if (ImGui::BeginPopupModal(id.c_str(), nullptr, flags))
 		{
 			ImGui::Text("Are you sure you want to rename the tag \"%s\" to \"%s\"?", data.old_name.c_str(), data.new_name.c_str());
-			//TODO: CHANGE THIS
-			ImGui::TextDisabled("ONE SHALL NOT PERFORM SUCH ACTION CARELESSLY FOR IT COULD BRING DIRE CONSEQUENCES");
 			ImGui::NewLine();
 			auto area_size = ImGui::GetWindowSize();
 
@@ -154,7 +155,7 @@ namespace vt::widgets
 		return return_value;
 	}
 
-	bool rename_failed_popup(const std::string& id, const tag_rename_data& data, tag_validate_result fail_reason)
+	static bool delete_popup(const std::string& id, const std::string& tag_name, bool& pressed_yes)
 	{
 		static constexpr ImVec2 button_size = { 55, 30 };
 
@@ -168,24 +169,24 @@ namespace vt::widgets
 
 		if (ImGui::BeginPopupModal(id.c_str(), nullptr, flags))
 		{
-			ImGui::Text("Failed to rename tag \"%s\" to \"%s\"", data.old_name.c_str(), data.new_name.c_str());
+			ImGui::Text("Are you sure you want to delete tag \"%s\"", tag_name.c_str());
 
-			std::string error_text;
-			switch (fail_reason)
-			{
-			case vt::tag_validate_result::already_exists: error_text = fmt::format("Tag \"{}\" already exists", data.new_name); break;
-			case vt::tag_validate_result::invalid_name: error_text = "Invalid name"; break;
-			case vt::tag_validate_result::too_long: error_text = fmt::format("Name can be at most {} characters long", tag_storage::max_tag_name_length); break;
-			default: error_text = "Invalid name"; break;
-			}
-			ImGui::TextDisabled(error_text.c_str());
+			ImGui::TextColored({ 1.f, 170.f / 255.f, 50.f / 255.f, 1.f }, "All segments associated with this tag will be deleted as well!");
 			ImGui::NewLine();
 			auto area_size = ImGui::GetWindowSize();
 
-			ImGui::SetCursorPosX(area_size.x / 2 - button_size.x / 2);
-			if (ImGui::Button("OK", button_size))
+			ImGui::SetCursorPosX(area_size.x / 2 - button_size.x - style.ItemSpacing.x);
+			if (ImGui::Button("Yes", button_size))
 			{
 				return_value = true;
+				pressed_yes = true;
+				ImGui::CloseCurrentPopup();
+			}
+			ImGui::SameLine();
+			if (ImGui::Button("No", button_size))
+			{
+				return_value = true;
+				pressed_yes = false;
 				ImGui::CloseCurrentPopup();
 			}
 			ImGui::EndPopup();
@@ -196,7 +197,139 @@ namespace vt::widgets
 		return return_value;
 	}
 
-	bool tag_manager(tag_storage& tags, std::optional<tag_rename_data>& tag_rename, bool& dirty_flag, tag_manager_flags flags)
+	static bool add_tag_attribute(const std::string& id, std::string& attribute_name, tag_attribute& attribute)
+	{
+		bool result{};
+		auto& style = ImGui::GetStyle();
+		ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 7);
+		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, style.WindowPadding * 2);
+		ImGui::SetNextWindowPos(ImGui::GetMainViewport()->GetCenter(), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
+		ImGui::SetNextWindowSize({ ImGui::GetMainViewport()->Size.x * 0.25f, 0.f }, ImGuiCond_Always);
+		auto flags = ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoMove;
+
+		if (ImGui::BeginPopupModal(id.c_str(), nullptr, flags))
+		{
+			int current_type = (int)attribute.type_;
+			if (ImGui::BeginTable("##TagAttributePopupFields", 2, ImGuiTableFlags_NoSavedSettings))
+			{
+				ImGui::TableSetupColumn(nullptr, ImGuiTableColumnFlags_WidthFixed);
+				ImGui::TableSetupColumn(nullptr, ImGuiTableColumnFlags_WidthStretch);
+
+				ImGui::TableNextRow();
+				ImGui::TableNextColumn();
+				ImGui::AlignTextToFramePadding();
+				ImGui::TextUnformatted("Name");
+
+				ImGui::TableNextColumn();
+				ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
+				ImGui::InputTextWithHint("##TagAttributePopupName", "Attribute Name...", &attribute_name);
+				
+				ImGui::TableNextRow();
+				ImGui::TableNextColumn();
+				ImGui::AlignTextToFramePadding();
+				ImGui::TextUnformatted("Type");
+				
+				ImGui::TableNextColumn();
+				ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
+				if (ImGui::Combo("##TagAttributePopupType", &current_type, tag_attribute::types_str, (int)tag_attribute::type_count))
+				{
+					attribute.type_ = (tag_attribute::type)current_type;
+				}
+				ImGui::EndTable();
+			}
+
+			auto avail_area = ImGui::GetContentRegionAvail();
+			float button_width1 = ImGui::CalcTextSize("Add").x + style.FramePadding.x * 2.f;
+			float button_width2 = ImGui::CalcTextSize("Cancel").x + style.FramePadding.x * 2.f;
+			ImGui::SetCursorPosX(avail_area.x - button_width1 - button_width2);
+			ImGui::BeginDisabled(attribute_name.empty());
+			if (ImGui::Button("Add", { button_width1, 0 }))
+			{
+				result = true;
+				ImGui::CloseCurrentPopup();
+			}
+			ImGui::EndDisabled();
+
+			ImGui::SameLine();
+			if (ImGui::Button("Cancel", { button_width2, 0 }))
+			{
+				ImGui::CloseCurrentPopup();
+			}
+			ImGui::EndPopup();
+		}
+
+		ImGui::PopStyleVar(2);
+		return result;
+	}
+
+	static void draw_tag_attribute(const std::string& name, tag_attribute& attr, const std::function<void(const std::string&)>& on_name_change, const std::function<void(tag_attribute::type)>& on_type_change, const std::function<void()>& on_delete)
+	{
+		const auto& style = ImGui::GetStyle();
+
+		bool selected{};
+		bool row_hovered = table_hovered_row_style();
+
+		ImGui::PushID(&attr);
+		ImGui::TableNextColumn();
+		ImGui::BeginGroup();
+		color_indicator(3.f, tag_attribute::type_color(attr.type_));
+		ImGui::SameLine();
+		ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
+		std::string new_name = name;
+		if (ImGui::InputText("##TagAttributeName", &new_name, ImGuiInputTextFlags_AutoSelectAll | ImGuiInputTextFlags_EnterReturnsTrue))
+		{
+			on_name_change(new_name);
+		}
+		ImGui::TableNextColumn();
+
+		int current_type = (int)attr.type_;
+		ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
+		if (ImGui::Combo("##TagAttributeType", &current_type, tag_attribute::types_str, (int)tag_attribute::type_count))
+		{
+			on_type_change((tag_attribute::type)current_type);
+		}
+
+		switch (attr.type_)
+		{
+			case tag_attribute::type::bool_: tooltip("Value: True/False"); break;
+			case tag_attribute::type::float_: tooltip("Value: Float (64 bit)"); break;
+			case tag_attribute::type::integer: tooltip("Value: Integer (64 bit)"); break;
+			case tag_attribute::type::string: tooltip("Value: Text"); break;
+			case tag_attribute::type::shape:
+			{
+				std::string shapes;
+				size_t i{};
+				for (auto type : shape::types)
+				{
+					shapes += utils::string::to_titlecase(shape::type_str(type));
+					if (++i < shape::types.size())
+					{
+						shapes += "/";
+					}
+				}
+				tooltip(fmt::format("Value: {}", shapes).c_str());
+			}
+			break;
+		}
+
+		ImGui::EndGroup();
+		if (ImGui::BeginPopupContextItem("##TagAttributeCtxMenu"))
+		{
+			std::string menu_name = fmt::format("{} Delete", icons::delete_);
+			if (ImGui::MenuItem(menu_name.c_str()))
+			{
+				on_delete();
+			}
+			ImGui::EndPopup();
+		}
+		if (row_hovered and ImGui::IsMouseClicked(1))
+		{
+			ImGui::OpenPopup("##TagAttributeCtxMenu");
+		}
+		ImGui::PopID();
+	}
+
+	bool tag_manager(tag_storage& tags, std::optional<tag_rename_data>& tag_rename, std::optional<tag_delete_data>& tag_delete, bool& dirty_flag, tag_manager_flags flags)
 	{
 		//TODO: Maybe extract some stuff into separate functions for better readability
 
@@ -205,10 +338,12 @@ namespace vt::widgets
 
 		bool open_add_tag_popup = false;
 		bool open_rename_tag_popup = false;
+		bool open_delete_tag_popup = false;
+		bool open_add_attribute_popup = false;
 		bool update_all = false;
 		bool update_state = false;
 
-		if (true /*ImGui::BeginTable("##TagManager", 2)*/)
+
 		{
 			static constexpr float tag_column_width = 100;
 
@@ -221,11 +356,11 @@ namespace vt::widgets
 			}
 
 			ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2{});
-			if (icon_button(icons::add))
+			if (icon_button(icons::add_tag))
 			{
 				open_add_tag_popup = true;
 			}
-			icon_tooltip("Add Tag");
+			tooltip("Add Tag");
 			ImGui::SameLine();
 			search_bar("##VideoGroupBrowserSearch", "Search...", filter, ImGui::GetContentRegionAvail().x - 2 * (ImGui::CalcTextSize(icons::toggle_less).x + 2 * style.FramePadding.x));
 			ImGui::SameLine();
@@ -234,7 +369,7 @@ namespace vt::widgets
 				update_state = true;
 				update_all = true;
 			}
-			icon_tooltip("Expand All");
+			tooltip("Expand All");
 			ImGui::SameLine();
 			ImGui::PopStyleVar();
 			if (icon_button(icons::toggle_less))
@@ -242,8 +377,14 @@ namespace vt::widgets
 				update_state = false;
 				update_all = true;
 			}
-			icon_tooltip("Collapse All");
+			tooltip("Collapse All");
 			ImGui::Separator();
+
+			std::vector<std::string> tokens;
+			if (!filter.empty())
+			{
+				tokens = utils::string::split(utils::string::to_lowercase(utils::string::trim_whitespace(filter)), ' ');
+			}
 
 			//ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2{});
 			bool is_scrollable_list_open = ImGui::BeginChild("##ScrollableTagList", ImGui::GetContentRegionAvail());
@@ -251,15 +392,32 @@ namespace vt::widgets
 			//ImGui::PopStyleVar();
 			if (is_scrollable_list_open)
 			{
+				size_t filter_passes{};
 				static auto color_ref = tags.end();
 				int id{};
-
-				auto node_flags = ImGuiTreeNodeFlags_Framed | ImGuiTreeNodeFlags_SpanFullWidth;
 				
 				static std::string tag_name;
+				static std::string tag_attr_name;
+
 				for (auto it = tags.begin(); it != tags.end();)
 				{
 					auto& tag = *it;
+
+					bool passes_filter = true;
+					for (const auto& token : tokens)
+					{
+						auto ttoken = utils::string::trim_whitespace(token);
+						std::string name = utils::string::to_lowercase(tag.name);
+						passes_filter &= name.find(ttoken) != std::string::npos;
+					}
+
+					if (!passes_filter)
+					{
+						++it;
+						continue;
+					}
+					++filter_passes;
+
 
 					//ImGui::TableNextColumn();
 					ImGui::PushID(id++);
@@ -273,13 +431,7 @@ namespace vt::widgets
 						break;
 					}
 					*/
-					auto color = ImGui::ColorConvertU32ToFloat4(tag.color);
-					ImGui::SetCursorPosX(ImGui::GetCursorPosX() + style.ItemSpacing.x * 0.5f);
-					ImGui::AlignTextToFramePadding();
-					ImGui::TextColored(color, icons::label);
-					ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2{});
-					ImGui::SameLine();
-					
+					auto color = ImGui::ColorConvertU32ToFloat4(tag.color);					
 					bool open_color_picker = false;
 
 					if (update_all)
@@ -288,27 +440,29 @@ namespace vt::widgets
 					}
 
 					//A bit of a hack to not render the arrow
-					ImGui::PushStyleColor(ImGuiCol_Text, ImVec4{});
-					bool node_open = ImGui::TreeNodeEx("##TagManagerNode", node_flags);
-					ImGui::PopStyleColor();
-					ImGui::PopStyleVar();
-
-					if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_SourceNoHoldToOpenOthers))
+					bool node_open = begin_collapsible("##TagManagerNode", tag.name, 0, icons::label, color,
+					[&color, &tag]()
 					{
-						utils::drag_drop::set_payload("Tag", tag.name.c_str());
-						ImGui::TextColored(color, icons::label);
-						ImGui::SameLine();
-						ImGui::TextUnformatted(tag.name.c_str());
-						ImGui::EndDragDropSource();
-					}
+						if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_SourceNoHoldToOpenOthers))
+						{
+							utils::drag_drop::set_payload("Tag", tag.name.c_str());
+							ImGui::TextColored(color, icons::label);
+							ImGui::SameLine();
+							ImGui::TextUnformatted(tag.name.c_str());
+							ImGui::EndDragDropSource();
+						}
+					});					
 
-					bool delete_tag = false;
 					if (ImGui::BeginPopupContextItem("##TagCtxMenu"))
 					{
-						std::string menu_name = std::string(icons::delete_) + " Delete";
+						std::string menu_name = fmt::format("{} Delete", icons::delete_);
 						if (ImGui::MenuItem(menu_name.c_str()))
 						{
-							delete_tag = true;
+							tag_delete_data delete_data;
+							delete_data.tag = it->name;
+							tag_delete = delete_data;
+
+							open_delete_tag_popup = true;
 						}
 						ImGui::EndPopup();
 					}
@@ -317,16 +471,8 @@ namespace vt::widgets
 						ImGui::OpenPopup("##TagCtxMenu");
 					}
 
-					auto icon = node_open ? icons::expand_less : icons::expand_more;
-
-					ImGui::SameLine(ImGui::GetTreeNodeToLabelSpacing());
-					ImGui::TextUnformatted(tag.name.c_str());
-					ImGui::SameLine(ImGui::GetContentRegionMax().x - style.ItemSpacing.x - ImGui::CalcTextSize(icon).x);
-					ImGui::TextUnformatted(icon);
-
 					if (node_open)
 					{
-						ImGui::Unindent();
 						ImGui::PushStyleColor(ImGuiCol_TableRowBg, style.Colors[ImGuiCol_MenuBarBg]);
 						if (ImGui::BeginTable("##Background", 1, ImGuiTableFlags_RowBg))
 						{
@@ -341,23 +487,110 @@ namespace vt::widgets
 							tag_name = tag.name;
 							if (ImGui::InputText("##TagNameInput", &tag_name, ImGuiInputTextFlags_AutoSelectAll | ImGuiInputTextFlags_EnterReturnsTrue))
 							{
-								tag_rename = tag_rename_data{ false, tag.name, tag_name };
+								tag_rename = tag_rename_data{ false, false, tag.name, tag_name };
 								open_rename_tag_popup = true;
 							}
 							ImGui::NextColumn();
-							ImGui::Text("Color");
+							ImGui::TextUnformatted("Color");
 							ImGui::NextColumn();
 							if (ImGui::ColorButton("##ColorButton", color, color_button_flags))
 							{
 								color_ref = it;
 								open_color_picker = true;
 							}
+							if (ImGui::IsItemHovered())
+							{
+								ImGui::SetMouseCursor(ImGuiMouseCursor_Hand);
+							}
 							ImGui::Columns();
+
+
+							// Attributes
+							{
+								ImGui::Separator();				
+
+								static constexpr float table_border_size = 1.f; //FIXME: This is currently hardcoded in ImGui, change this when ImGui uses different border size
+								if (ImGui::BeginTable("##Attributes", 2, ImGuiTableFlags_BordersOuter, { ImGui::GetContentRegionAvail().x - table_border_size, 0 }))
+								{
+									ImGui::TableSetupColumn("Name");
+									ImGui::TableSetupColumn("Type");
+
+									ImGui::TableNextColumn();
+									if (icon_button(icons::add))
+									{
+										tag_attr_name = tag_name;
+										open_add_attribute_popup = true;
+									}
+									ImGui::SameLine();
+									ImGui::AlignTextToFramePadding();
+									ImGui::TextUnformatted("Attributes");
+
+									if (!tag.attributes.empty())
+									{
+										ImGui::BeginDisabled();
+										ImGui::TableHeadersRow();
+										ImGui::EndDisabled();
+									}
+									std::string new_name_candidate;
+									std::string new_name;
+									for (auto it = tag.attributes.begin(); it != tag.attributes.end();)
+									{
+										bool next = true;
+										auto& [name, attr] = *it;
+										ImGui::TableNextRow();
+										draw_tag_attribute(name, attr,
+										[&new_name_candidate, &new_name, &name](const std::string& nname)
+										{
+											new_name_candidate = name;
+											new_name = nname;
+										},
+										[&attr](const tag_attribute::type new_type)
+										{
+											attr.type_ = new_type;
+										},
+										[&tag, &it, &name, &next]()
+										{
+											it = tag.attributes.erase(it);
+											next = false;
+											ctx_.is_project_dirty = true;
+										});
+
+										if (next)
+										{
+											++it;
+										}
+									}
+
+									if (!new_name_candidate.empty())
+									{
+										auto node = tag.attributes.extract(new_name_candidate);
+										node.key() = new_name;
+										tag.attributes.insert(std::move(node));
+									}
+									ImGui::EndTable();
+								}								
+							}
+
 							ImGui::EndTable();
 						}		
 						ImGui::PopStyleColor();
-						ImGui::Indent();
-						ImGui::TreePop();
+						end_collapsible();
+					}
+
+					static std::string attribute_name_buf;
+					static tag_attribute attribute_buf;
+
+					if (open_add_attribute_popup)
+					{
+						attribute_name_buf.clear();
+						attribute_buf = {};
+						ImGui::OpenPopup("Add Attribute");
+					}
+
+					if (add_tag_attribute("Add Attribute", attribute_name_buf, attribute_buf))
+					{
+						ctx_.current_project->tags.at(tag_attr_name).attributes.insert({ attribute_name_buf, attribute_buf });
+						dirty_flag = true;
 					}
 					ImGui::PopID();
 
@@ -371,15 +604,15 @@ namespace vt::widgets
 						//color_copy = ImGui::ColorConvertU32ToFloat4(tag.color);
 					}
 
-					if (delete_tag)
-					{
-						it = tags.erase(it);
-						ctx_.is_project_dirty = true;
-					}
 					if (it != tags.end())
 					{
 						++it;
 					}
+				}
+
+				if (filter_passes == 0)
+				{
+					centered_text("No matching tags found...", ImGui::GetContentRegionAvail());
 				}
 
 				if (ctx_.color_picker.render("##TagColorPicker") and color_ref != tags.end())
@@ -389,113 +622,8 @@ namespace vt::widgets
 				}
 			}
 			ImGui::EndChild();
-
-			//ImGui::Dummy(ImGui::GetStyle().ItemSpacing);
-			/*
-			if (ImGui::Button("Add Tag", button_size))
-			{
-				open_add_tag_popup = true;
-			}
-			*/
-			
-			//ImGui::EndTable();
 		}
 		
-
-		/*
-		if (ImGui::BeginTable("##TagManager", 2))
-		{
-			static constexpr float tag_column_width = 100;
-			float button_region_width = button_size.x + style.CellPadding.x;
-
-			ImGui::TableSetupColumn(nullptr, ImGuiTableColumnFlags_WidthStretch, tag_column_width);
-			ImGui::TableSetupColumn(nullptr, ImGuiTableColumnFlags_WidthFixed, button_region_width);
-
-			if (ImGui::TableNextColumn())
-			{
-				if (ImGui::BeginTable("##TagManagerList", 2, ImGuiTableFlags_Borders | ImGuiTableFlags_ScrollY))
-				{
-					static float color_column_width = ImGui::CalcTextSize("Color").x;
-					static float name_column_width = tag_column_width - color_column_width;
-
-					ImGui::TableSetupColumn("Name", ImGuiTableColumnFlags_WidthStretch, name_column_width);
-					ImGui::TableSetupColumn("Color", ImGuiTableColumnFlags_WidthFixed, color_column_width);
-					ImGui::TableHeadersRow();
-
-					for (auto it = tags.begin(); it != tags.end(); ++it)
-					{
-						ImGui::TableNextColumn();
-
-						if (ImGui::Selectable(it->name.c_str(), selected_entry == it, 0, { 0, color_picker_size.y }))
-						{
-							return_value = selected_entry != it;
-							selected_entry = it;
-						}
-						
-						ImGui::TableNextColumn();
-						std::string color_button_id = std::string("##Tag_") + it->name + "_ColorButton";
-						std::string color_picker_id = std::string("##Tag_") + it->name + "_ColorPicker";
-						ImVec4 color = ImGui::ColorConvertU32ToFloat4(it->color);
-												
-						//I don't know if it's safe for this to be static
-						static ImVec4 backup_color;
-						open_color_picker_popup = ImGui::ColorButton(color_button_id.c_str(), color, color_button_flags, { ImGui::GetContentRegionAvail().x, color_picker_size.y });
-						if (open_color_picker_popup)
-						{
-							ImGui::OpenPopup(color_picker_id.c_str());
-							backup_color = color;
-						}
-
-						if (ImGui::BeginPopup(color_picker_id.c_str()))
-						{
-							ImGui::ColorPicker3("##ColorPicker", &backup_color.x, ImGuiColorEditFlags_NoAlpha | ImGuiColorEditFlags_NoSidePreview | ImGuiColorEditFlags_NoSmallPreview);
-							if (ImGui::Button("Done"))
-							{
-								it->color = ImGui::ColorConvertFloat4ToU32(backup_color);
-								ImGui::CloseCurrentPopup();
-							}
-							ImGui::SameLine();
-							if (ImGui::Button("Cancel"))
-							{
-								ImGui::CloseCurrentPopup();
-							}
-							ImGui::EndPopup();
-						}
-						
-					}
-
-					ImGui::EndTable();
-				}
-			}
-
-			if (ImGui::TableNextColumn())
-			{
-				auto button_region_size = ImGui::GetContentRegionAvail();
-
-				if (!(flags & tag_manager_flags::no_add))
-				{
-					ImGui::SetCursorPosX(ImGui::GetCursorPosX() + (button_region_size.x / 2 - button_size.x / 2));
-					if (ImGui::Button("Add", button_size))
-					{
-						open_add_tag_popup = true;
-
-					}
-				}
-				if (!(flags & tag_manager_flags::no_remove))
-				{
-					ImGui::SetCursorPosX(ImGui::GetCursorPosX() + (button_region_size.x / 2 - button_size.x / 2));
-					if (ImGui::Button("Remove", button_size) and selected_entry != tags.end())
-					{
-						tags.erase(selected_entry);
-						selected_entry = tags.end();
-					}
-				}
-			}
-
-			ImGui::EndTable();
-		}
-		*/
-
 		if (open_add_tag_popup)
 		{
 			ImGui::OpenPopup("Add New Tag");
@@ -506,31 +634,26 @@ namespace vt::widgets
 			ImGui::OpenPopup("Rename Tag");
 		}
 
+		if (open_delete_tag_popup)
+		{
+			ImGui::OpenPopup("Delete Tag");
+		}		
+
 		tag_storage::iterator added_entry = tags.end();
 		if (add_tag_popup(tags, added_entry))
 		{
+			ctx_.current_project->add_displayed_tag(added_entry->name);
 			dirty_flag = true;
 		}
 
 		//TODO: do this in app.cpp
 		bool pressed_button{};
-		static tag_validate_result fail_reason{};
+		
 		if (tag_rename.has_value() and rename_tag_popup("Rename Tag", *tag_rename, pressed_button))
 		{
 			if (pressed_button == true)
 			{
-				auto [it, inserted, validate_result] = ctx_.current_project->tags.rename(tag_rename->old_name, tag_rename->new_name);
-				if (!inserted)
-				{
-					//TODO: Display popup
-					ImGui::OpenPopup("Rename Failed");
-					fail_reason = validate_result;
-				}
-				else
-				{
-					tag_rename->ready = true;
-					ctx_.is_project_dirty = true;
-				}
+				tag_rename->ready = true;
 			}
 			else
 			{
@@ -538,9 +661,17 @@ namespace vt::widgets
 			}
 		}
 
-		if (tag_rename.has_value() and rename_failed_popup("Rename Failed", *tag_rename, fail_reason))
+		static bool pressed_yes = false;
+		if (tag_delete.has_value() and delete_popup("Delete Tag", tag_delete->tag, pressed_yes))
 		{
-			tag_rename.reset();
+			if (pressed_yes)
+			{
+				tag_delete->ready = true;
+			}
+			else
+			{
+				tag_delete.reset();
+			}
 		}
 
 		return return_value;

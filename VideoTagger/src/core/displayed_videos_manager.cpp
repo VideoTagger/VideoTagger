@@ -3,52 +3,38 @@
 
 namespace vt
 {
-	displayed_video_data::displayed_video_data(video_id_t id, video_stream* video, std::chrono::nanoseconds offset, int video_width, int video_height, SDL_Renderer* renderer)
-		: id{ id }, video{ video }, offset{ offset }, display_texture{}
+	displayed_video_data::displayed_video_data(video_id_t id, video_stream&& video, std::chrono::nanoseconds offset, int video_width, int video_height) :
+		id{ id }, video{ std::move(video) }, offset{ offset }, display_texture(video_width, video_height, GL_RGB)
 	{
-		display_texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_YV12, SDL_TEXTUREACCESS_STREAMING, video_width, video_height);
-		video_stream::clear_yuv_texture(display_texture, 0, 0, 0);
 	}
 
-	displayed_video_data::displayed_video_data(displayed_video_data&& other) noexcept
-		: id{ other.id }, video{ other.video }, offset{ other.offset }, display_texture{ other.display_texture }
+	displayed_video_data::displayed_video_data(displayed_video_data&& other) noexcept :
+		id{ other.id }, video{ std::move(other.video) }, offset{ other.offset }, display_texture{ std::move(other.display_texture) }
 	{
 		other.id = {};
-		other.video = {};
 		other.offset = {};
-		other.display_texture = {};
 	}
 
 	displayed_video_data::~displayed_video_data()
 	{
-		if (display_texture != nullptr)
-		{
-			SDL_DestroyTexture(display_texture);
-		}
 	}
 
 	displayed_video_data& displayed_video_data::operator=(displayed_video_data&& other) noexcept
 	{
 		id = other.id;
-		video = other.video;
+		video = std::move(other.video);
 		offset = other.offset;
-		if (display_texture != nullptr)
-		{
-			SDL_DestroyTexture(display_texture);
-		}
-		display_texture = other.display_texture;
+		display_texture = std::move(other.display_texture);
 
 		other.id = {};
-		other.video = {};
 		other.offset = {};
-		other.display_texture = {};
 
 		return *this;
 	}
 
 	bool displayed_video_data::is_timestamp_in_range(std::chrono::nanoseconds timestamp) const
 	{
-		return offset <= timestamp and timestamp <= offset + video->duration();
+		return offset <= timestamp and timestamp <= offset + video.duration();
 	}
 
 	void displayed_videos_manager::update()
@@ -74,18 +60,13 @@ namespace vt
 
 		for (auto& video_data : videos_)
 		{
-			if (video_data.video == nullptr)
-			{
-				continue;
-			}
-			
 			bool timestamp_in_range = video_data.is_timestamp_in_range(current_timestamp_);
-			video_data.video->set_playing(timestamp_in_range);
-			video_data.video->update(current_timestamp_ - video_data.offset);
+			video_data.video.set_playing(timestamp_in_range);
+			video_data.video.update(current_timestamp_ - video_data.offset);
 
 			if (timestamp_in_range)
 			{
-				video_data.video->get_frame(video_data.display_texture);
+				video_data.video.get_frame(video_data.display_texture);
 			}
 			//else
 			//{
@@ -107,17 +88,12 @@ namespace vt
 	{
 		for (auto& video_data : videos_)
 		{
-			if (video_data.video == nullptr)
-			{
-				continue;
-			}
-
 			if (!video_data.is_timestamp_in_range(current_timestamp_))
 			{
 				continue;
 			}
 
-			video_data.video->set_playing(value);
+			video_data.video.set_playing(value);
 		}
 
 		if (!is_playing_ and value)
@@ -135,24 +111,20 @@ namespace vt
 
 	void displayed_videos_manager::seek(std::chrono::nanoseconds timestamp)
 	{
-		std::for_each(std::execution::par, videos_.begin(), videos_.end(), [timestamp, this](displayed_video_data& video_data)
+		std::for_each(std::execution::seq, videos_.begin(), videos_.end(), [timestamp, this](displayed_video_data& video_data)
 		{
-			if (video_data.video == nullptr)
-			{
-				return;
-			}
-
 			std::chrono::nanoseconds video_ts = timestamp - video_data.offset;
-			std::chrono::nanoseconds clamped_video_ts = std::clamp(video_ts, std::chrono::nanoseconds{ 0 }, video_data.video->duration());
-			video_data.video->seek(clamped_video_ts);
+			std::chrono::nanoseconds clamped_video_ts = std::clamp(video_ts, std::chrono::nanoseconds{ 0 }, video_data.video.duration());
+			video_data.video.seek(clamped_video_ts);
+			video_data.video.get_frame(video_data.display_texture);
 
 			if (video_ts < std::chrono::nanoseconds{ 0 })
 			{
-				video_data.video->set_playing(false);
+				video_data.video.set_playing(false);
 			}
 			if (is_playing() and video_ts == clamped_video_ts)
 			{
-				video_data.video->set_playing(true);
+				video_data.video.set_playing(true);
 			}
 		});
 
@@ -164,31 +136,19 @@ namespace vt
 		}
 	}
 
-	std::pair<displayed_videos_manager::iterator, bool> displayed_videos_manager::insert(video_id_t id, video_stream* video, std::chrono::nanoseconds offset, int video_width, int video_height, SDL_Renderer* renderer, bool update)
+	std::pair<displayed_videos_manager::iterator, bool> displayed_videos_manager::insert(video_id_t id, video_stream&& video, std::chrono::nanoseconds offset, int video_width, int video_height, bool update)
 	{
 		if (auto it = find(id); it != end())
 		{
 			if (update)
 			{
-				if (it->video != video)
-				{
-					*it = displayed_video_data(id, video, offset, video_width, video_height, renderer);
-				}
-				//else
-				//{
-				//	if (it->offset != offset)
-				//	{
-				//		it->offset = offset;
-				//		it->video->seek(current_timestamp_ - offset);
-				//		it->video->get_frame(it->display_texture);
-				//	}
-				//}
+				*it = displayed_video_data(id, std::move(video), offset, video_width, video_height);
 			}
 			
 			return std::make_pair(it, false);
 		}
 
-		videos_.emplace_back(id, video, offset, video_width, video_height, renderer);
+		videos_.emplace_back(id, std::move(video), offset, video_width, video_height);
 		return std::make_pair(videos_.end() - 1, true);
 	}
 
@@ -259,12 +219,7 @@ namespace vt
 		std::chrono::nanoseconds group_duration{};
 		for (auto& video_data : videos_)
 		{
-			if (video_data.video == nullptr)
-			{
-				continue;
-			}
-
-			auto video_duration = video_data.offset + video_data.video->duration();
+			auto video_duration = video_data.offset + video_data.video.duration();
 			if (group_duration < video_duration)
 			{
 				group_duration = video_duration;
@@ -287,6 +242,17 @@ namespace vt
 	bool displayed_videos_manager::empty() const
 	{
 		return videos_.empty();
+	}
+
+	double displayed_videos_manager::max_framerate() const
+	{
+		double return_value = -std::numeric_limits<float>::infinity();
+		for (auto& video : videos_)
+		{
+			return_value = std::max(return_value, video.video.fps());
+		}
+
+		return return_value;
 	}
 
 	displayed_videos_manager::iterator displayed_videos_manager::begin()

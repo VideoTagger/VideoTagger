@@ -5,9 +5,10 @@ import zipfile, tarfile
 from enum import Enum
 from sys import platform
 
+
 class UnpackAction(Enum):
-	Nothing = 0,
-	UnpackZip = 1,
+	Nothing = 0
+	UnpackZip = 1
 	UnpackTar = 2
 
 
@@ -34,62 +35,40 @@ DOXYGEN_MAC_URL = f"https://github.com/doxygen/doxygen/releases/download/Release
 
 tools = {
 	"mdbook": [
-		{
-			"url": MDBOOK_WIN_URL,
-			"unpack-action": UnpackAction.UnpackZip
-		},
-		{
-			"url": MDBOOK_LINUX_URL,
-			"unpack-action": UnpackAction.UnpackTar
-		},
-		{
-			"url": MDBOOK_MAC_URL,
-			"unpack-action": UnpackAction.UnpackTar
-		}
+		{"url": MDBOOK_WIN_URL, "unpack-action": UnpackAction.UnpackZip},
+		{"url": MDBOOK_LINUX_URL, "unpack-action": UnpackAction.UnpackTar},
+		{"url": MDBOOK_MAC_URL, "unpack-action": UnpackAction.UnpackTar},
 	],
 	"premake5": [
-		{
-			"url": PREMAKE_WIN_URL,
-			"unpack-action": UnpackAction.UnpackZip
-		},
-		{
-			"url": PREMAKE_LINUX_URL,
-			"unpack-action": UnpackAction.UnpackTar
-		},
-		{
-			"url": PREMAKE_MAC_URL,
-			"unpack-action": UnpackAction.UnpackTar
-		}
+		{"url": PREMAKE_WIN_URL, "unpack-action": UnpackAction.UnpackZip},
+		{"url": PREMAKE_LINUX_URL, "unpack-action": UnpackAction.UnpackTar},
+		{"url": PREMAKE_MAC_URL, "unpack-action": UnpackAction.UnpackTar},
 	],
 	"doxygen": [
-		{
-			"url": DOXYGEN_WIN_URL,
-			"unpack-action": UnpackAction.UnpackZip
-		},
-		{
-			"url": DOXYGEN_LINUX_URL,
-			"unpack-action": UnpackAction.UnpackTar
-		},
-		{
-			"url": DOXYGEN_MAC_URL,
-			"unpack-action": UnpackAction.Nothing
-		}
-	]
+		{"url": DOXYGEN_WIN_URL, "unpack-action": UnpackAction.UnpackZip},
+		{"url": DOXYGEN_LINUX_URL, "unpack-action": UnpackAction.UnpackTar},
+		{"url": DOXYGEN_MAC_URL, "unpack-action": UnpackAction.Nothing},
+	],
 }
+
 
 def eprint(*args, **kwargs):
 	print(*args, file=sys.stderr, **kwargs)
 
+
 def download_file(url: str, path: str = ""):
 	return urllib.request.urlretrieve(url, path)[0]
 
+
 def zip_extract_all_files(path: str, target_dir: str):
-	with zipfile.ZipFile(path, 'r') as zip_ref:
+	with zipfile.ZipFile(path, "r") as zip_ref:
 		zip_ref.extractall(target_dir)
 
+
 def tar_extract_all_files(path: str, target_dir: str):
-	tar_ref = tarfile.open(path, 'r')
+	tar_ref = tarfile.open(path, "r")
 	tar_ref.extractall(target_dir)
+
 
 if __name__ == "__main__":
 	try:
@@ -104,6 +83,8 @@ if __name__ == "__main__":
 			tool_path = os.path.join(TOOL_DIR, f"{tool_name}{EXECUTABLE_EXT}")
 			if not os.path.exists(tool_path):
 				tool = tools[tool_name]
+
+				os_tool = None
 
 				if platform == "win32":
 					os_tool = tool[0]
@@ -131,4 +112,3 @@ if __name__ == "__main__":
 	except Exception as ex:
 		eprint(f"An error occurred: {ex}")
 		exit(1)
-

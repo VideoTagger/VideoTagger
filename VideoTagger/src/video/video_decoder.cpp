@@ -1,6 +1,11 @@
 #include "pch.hpp"
 #include "video_decoder.hpp"
 
+extern "C"
+{
+	#include <libavutil/pixdesc.h>
+}
+
 #define CALC_FFMPEG_VERSION(a,b,c) ( a<<16 | b<<8 | c )
 
 namespace vt
@@ -19,10 +24,7 @@ namespace vt
 		}
 	}
 
-	video_plane::video_plane(uint8_t* data, size_t size, int pitch)
-		: data_{ data }, size_{ size }, pitch_{ pitch }
-	{
-	}
+	video_plane::video_plane(uint8_t* data, size_t size, int pitch) : data_{ data }, size_{ size }, pitch_{ pitch } {}
 
 	uint8_t* video_plane::data()
 	{
@@ -44,8 +46,7 @@ namespace vt
 		return size_;
 	}
 
-	video_frame::video_frame()
-		: frame_{ av_frame_alloc() }
+	video_frame::video_frame() : frame_{ av_frame_alloc() }
 	{
 		if (frame_ == nullptr)
 		{
@@ -53,8 +54,7 @@ namespace vt
 		}
 	}
 
-	video_frame::video_frame(video_frame&& other) noexcept
-		: frame_{other.frame_}
+	video_frame::video_frame(video_frame&& other) noexcept : frame_{ other.frame_ }
 	{
 		other.frame_ = nullptr;
 	}
@@ -79,23 +79,9 @@ namespace vt
 		return *this;
 	}
 
-	video_plane video_frame::get_plane(video_plane_channel channel) const
+	video_plane video_frame::get_plane(size_t plane_index) const
 	{
-		size_t plane_index = static_cast<size_t>(channel);
-
-		//"frame_->linesize[plane_index] * frame_->height" This works but I'm not sure if it's how it should be done or whether it will work in every case.
-		//May not work with different pixel formats
 		return video_plane(frame_->data[plane_index], int64_t(frame_->linesize[plane_index]) * frame_->height, frame_->linesize[plane_index]);
-	}
-
-	video_planes video_frame::get_planes() const
-	{
-		return video_planes
-		{
-			get_plane(vt::video_plane_channel::y),
-			get_plane(vt::video_plane_channel::u),
-			get_plane(vt::video_plane_channel::v)
-		};
 	}
 
 	int video_frame::width() const
@@ -128,13 +114,22 @@ namespace vt
 		return std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::duration<double>(frame_->duration * av_q2d(frame_->time_base)));
 	}
 
+	size_t video_frame::planes_count() const
+	{
+		return av_pix_fmt_count_planes(pixel_format());
+	}
+
+	AVPixelFormat video_frame::pixel_format() const
+	{
+		return static_cast<AVPixelFormat>(frame_->format);
+	}
+
 	bool video_frame::is_keyframe() const
 	{
 		return frame_->flags & AV_FRAME_FLAG_KEY;
 	}
 
-	std::optional<typename stream_type_traits<stream_type::video>::decoded_packet_type>
-		stream_type_traits<stream_type::video>::decode(AVCodecContext* codec_context, class packet_wrapper& packet)
+	std::optional<typename stream_type_traits<stream_type::video>::decoded_packet_type> stream_type_traits<stream_type::video>::decode(AVCodecContext* codec_context, class packet_wrapper& packet)
 	{
 		AVPacket* unwrapped_packet = packet.unwrapped();
 
@@ -158,8 +153,7 @@ namespace vt
 		return frame;
 	}
 
-	packet_wrapper::packet_wrapper()
-		: packet_{ av_packet_alloc() }, type_{ stream_type::unknown }
+	packet_wrapper::packet_wrapper() : packet_{ av_packet_alloc() }, type_{ stream_type::unknown }
 	{
 		if (packet_ == nullptr)
 		{
@@ -167,8 +161,7 @@ namespace vt
 		}
 	}
 
-	packet_wrapper::packet_wrapper(packet_wrapper&& other) noexcept
-		: packet_{ other.packet_ }, type_{other.type_}
+	packet_wrapper::packet_wrapper(packet_wrapper&& other) noexcept : packet_{ other.packet_ }, type_{other.type_}
 	{
 		other.packet_ = nullptr;
 		other.type_ = stream_type::unknown;
@@ -237,10 +230,7 @@ namespace vt
 		return packet_->flags & AV_PKT_FLAG_KEY;
 	}
 
-	packet_queue::packet_queue()
-		: stream_index_{ -1 }
-	{
-	}
+	packet_queue::packet_queue() : stream_index_{ -1 } {}
 
 	bool packet_queue::push_front(packet_wrapper&& packet)
 	{
@@ -306,21 +296,13 @@ namespace vt
 
 	void packet_queue::pop_front()
 	{
-		if (empty())
-		{
-			return;
-		}
-
+		if (empty()) return;
 		return packets_.pop_front();
 	}
 
 	void packet_queue::pop_back()
 	{
-		if (empty())
-		{
-			return;
-		}
-
+		if (empty()) return;
 		return packets_.pop_back();
 	}
 
@@ -386,10 +368,7 @@ namespace vt
 
 	packet_queue& packet_queue::operator>>(packet_wrapper& rhs)
 	{
-		if (empty())
-		{
-			return *this;
-		}
+		if (empty()) return *this;
 
 		rhs = std::move(front());
 		pop_front();
@@ -404,16 +383,16 @@ namespace vt
 		return *this;
 	}
 
-	video_decoder::video_decoder()
-		: format_context_{ nullptr }, stream_indices_{}, codec_contexts_{}, packet_queues_{}, last_read_packet_type_{ stream_type::unknown },
-		eof_{ false }//, current_frame_number_{ 0 }
+	video_decoder::video_decoder() :
+		format_context_{ nullptr }, stream_indices_{}, codec_contexts_{}, packet_queues_{},
+		last_read_packet_type_{ stream_type::unknown }, eof_{ false }, pixel_format_{} //, current_frame_number_{ 0 }
 	{
 		std::fill(stream_indices_.begin(), stream_indices_.end(), -1);
 	}
 
-	video_decoder::video_decoder(video_decoder&& other) noexcept
-		: format_context_{ other.format_context_ }, stream_indices_(other.stream_indices_), codec_contexts_(other.codec_contexts_),
-		packet_queues_(std::move(other.packet_queues_)), last_read_packet_type_{ other.last_read_packet_type_ }, eof_{ other.eof_ }
+	video_decoder::video_decoder(video_decoder&& other) noexcept :
+		format_context_{ other.format_context_ }, stream_indices_(other.stream_indices_), codec_contexts_(other.codec_contexts_),
+		packet_queues_(std::move(other.packet_queues_)), last_read_packet_type_{ other.last_read_packet_type_ }, eof_{ other.eof_ }, pixel_format_{}
 	{
 		for (auto& codec_context : other.codec_contexts_)
 		{
@@ -423,7 +402,7 @@ namespace vt
 		other.format_context_ = nullptr;
 	}
 
-	vt::video_decoder::~video_decoder()
+	video_decoder::~video_decoder()
 	{
 		close();
 	}
@@ -579,6 +558,10 @@ namespace vt
 			{
 				continue;
 			}
+			else if (read_frame_result == AVERROR(EAGAIN))
+			{
+				continue;
+			}
 			else if (read_frame_result != 0)
 			{
 				//TODO: Do something
@@ -688,6 +671,8 @@ namespace vt
 
 	void video_decoder::seek_keyframe(std::chrono::nanoseconds timestamp)
 	{
+		//TODO https://github.com/bmewj/video-app/blob/master/src/video_reader.cpp write this like here
+
 		//TODO: handle invalid timestamp
 
 		auto video_stream_index = stream_indices_[static_cast<size_t>(stream_type::video)];
@@ -733,7 +718,7 @@ namespace vt
 #if LIBAVCODEC_BUILD >= CALC_FFMPEG_VERSION(54, 1, 0) or LIBAVFORMAT_BUILD >= CALC_FFMPEG_VERSION(52, 111, 0)
 			fps = av_q2d(video_stream->avg_frame_rate);
 #else
-			metadata.fps = av_q2d(video_stream->r_frame_rate);
+			fps = av_q2d(video_stream->r_frame_rate);
 #endif
 
 #if LIBAVFORMAT_BUILD >= CALC_FFMPEG_VERSION(55, 1, 100) and LIBAVFORMAT_VERSION_MICRO >= 100
@@ -788,9 +773,15 @@ namespace vt
 	{
 		return packet_queues_.at(static_cast<size_t>(type));
 	}
+
 	const packet_queue& video_decoder::get_packet_queue(stream_type type) const
 	{
 		return packet_queues_.at(static_cast<size_t>(type));
+	}
+
+	AVPixelFormat video_decoder::pixel_format() const
+	{
+		return static_cast<AVPixelFormat>(format_context_->streams[stream_indices_[static_cast<size_t>(stream_type::video)]]->codecpar->format);
 	}
 
 	AVFormatContext* video_decoder::av_format_context()
