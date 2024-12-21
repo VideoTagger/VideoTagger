@@ -36,6 +36,7 @@ namespace vt
 			separator_pos = ImGui::GetCursorPos() - ImVec2{ 0.f, style.ItemSpacing.y / 2 + 0.5f };
 			ImGui::TableNextColumn();
 
+			auto deleted_it = vertices.end();
 			for (size_t i = 0; i < vertices.size(); ++i)
 			{
 				ImGui::PushID(&vertices[i]);
@@ -45,6 +46,14 @@ namespace vt
 				if (ImGui::Selectable("##VertexSelectable", selected, ImGuiSelectableFlags_AllowItemOverlap | ImGuiSelectableFlags_AllowOverlap | ImGuiSelectableFlags_SpanAllColumns, { 0.f, ImGui::GetTextLineHeightWithSpacing() + 2 * style.FramePadding.y }))
 				{
 					on_select(vertices[i]);
+				}
+				if (modifiable and ImGui::BeginPopupContextItem("##VertexSelectableCtxMenu"))
+				{
+					if (ImGui::MenuItem(fmt::format("{} Delete", icons::delete_).c_str()))
+					{
+						deleted_it = vertices.begin() + i;
+					}
+					ImGui::EndPopup();
 				}
 				ImGui::SetCursorPos(cpos);
 
@@ -67,6 +76,11 @@ namespace vt
 			{
 				ImGui::SetCursorPos(separator_pos);
 				ImGui::Separator();
+			}
+
+			if (deleted_it != vertices.end())
+			{
+				vertices.erase(deleted_it);
 			}
 		}
 	}
