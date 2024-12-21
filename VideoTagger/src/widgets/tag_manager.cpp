@@ -397,6 +397,7 @@ namespace vt::widgets
 				int id{};
 				
 				static std::string tag_name;
+				static std::string tag_attr_name;
 
 				for (auto it = tags.begin(); it != tags.end();)
 				{
@@ -517,6 +518,7 @@ namespace vt::widgets
 									ImGui::TableNextColumn();
 									if (icon_button(icons::add))
 									{
+										tag_attr_name = tag_name;
 										open_add_attribute_popup = true;
 									}
 									ImGui::SameLine();
@@ -578,17 +580,16 @@ namespace vt::widgets
 					static std::string attribute_name_buf;
 					static tag_attribute attribute_buf;
 
-					auto popup_name = fmt::format("Add Attribute ({})", tag_name);
 					if (open_add_attribute_popup)
 					{
 						attribute_name_buf.clear();
 						attribute_buf = {};
-						ImGui::OpenPopup(popup_name.c_str());
+						ImGui::OpenPopup("Add Attribute");
 					}
 
-					if (add_tag_attribute(popup_name, attribute_name_buf, attribute_buf))
+					if (add_tag_attribute("Add Attribute", attribute_name_buf, attribute_buf))
 					{
-						ctx_.current_project->tags.at(tag_name).attributes.insert({ attribute_name_buf, attribute_buf });
+						ctx_.current_project->tags.at(tag_attr_name).attributes.insert({ attribute_name_buf, attribute_buf });
 						dirty_flag = true;
 					}
 					ImGui::PopID();
