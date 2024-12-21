@@ -28,7 +28,7 @@ namespace vt
 			}
 			if (modifiable)
 			{
-				widgets::tooltip("Add Keyframe");
+				widgets::tooltip("Add Vertex");
 			}
 			ImGui::SameLine();
 			ImGui::AlignTextToFramePadding();
@@ -119,11 +119,12 @@ namespace vt
 				const auto& [keyframe_next, regions_next] = it_next.has_value() ? *it_next.value() : *it_prev.value();
 				auto size_next = regions_next.size();
 
-				float alpha = ((float)(current_ts - keyframe_prev).total_milliseconds.count()) / (keyframe_next - keyframe_prev).total_milliseconds.count();
+				float duration = static_cast<float>((keyframe_next - keyframe_prev).total_milliseconds.count());
+				float alpha = (duration > 0) ? static_cast<float>((current_ts - keyframe_prev).total_milliseconds.count()) / duration : 0.0f;
 				
-				//if region size changed then dont lerp those shapes
 				if (interpolate)
 				{
+					//if region size changed then dont lerp those shapes
 					for (size_t i = 0; i < std::min(size_prev, size_next); ++i)
 					{
 						draw_circle(utils::lerp(regions_prev[i], regions_next[i], alpha), i);
@@ -181,11 +182,12 @@ namespace vt
 				const auto& [keyframe_next, regions_next] = it_next.has_value() ? *it_next.value() : *it_prev.value();
 				auto size_next = regions_next.size();
 
-				float alpha = ((float)(current_ts - keyframe_prev).total_milliseconds.count()) / (keyframe_next - keyframe_prev).total_milliseconds.count();
+				float duration = static_cast<float>((keyframe_next - keyframe_prev).total_milliseconds.count());
+				float alpha = (duration > 0) ? static_cast<float>((current_ts - keyframe_prev).total_milliseconds.count()) / duration : 0.0f;
 
-				//if region size changed then dont lerp those shapes
 				if (interpolate)
 				{
+					//if region size changed then dont lerp those shapes
 					for (size_t i = 0; i < std::min(size_prev, size_next); ++i)
 					{
 						draw_rect(utils::lerp(regions_prev[i], regions_next[i], alpha), i);
@@ -244,11 +246,12 @@ namespace vt
 				const auto& [keyframe_next, regions_next] = it_next.has_value() ? *it_next.value() : *it_prev.value();
 				auto size_next = regions_next.size();
 
-				float alpha = ((float)(current_ts - keyframe_prev).total_milliseconds.count()) / (keyframe_next - keyframe_prev).total_milliseconds.count();
+				float duration = static_cast<float>((keyframe_next - keyframe_prev).total_milliseconds.count());
+				float alpha = (duration > 0) ? static_cast<float>((current_ts - keyframe_prev).total_milliseconds.count()) / duration : 0.0f;
 
-				//if region size changed then dont lerp those shapes
 				if (interpolate)
 				{
+					//if region size changed then dont lerp those shapes
 					for (size_t i = 0; i < std::min(size_prev, size_next); ++i)
 					{
 						draw_poly(utils::lerp(regions_prev[i], regions_next[i], alpha), i);
@@ -278,7 +281,22 @@ namespace vt
 		ImVec2 separator_pos;
 		if (is_ts_modifiable and widgets::icon_button(icons::add))
 		{
-			map[ts].push_back({});
+			if constexpr (!std::is_same_v<std::monostate, std::remove_const_t<std::remove_reference_t<decltype(map)>>>)
+			{
+				auto it = map.lower_bound(ts);
+				if (map.empty())
+				{
+					map[ts].push_back({});
+				}
+				else
+				{
+					if (it != map.begin() and it->first != ts)
+					{
+						--it;
+					}
+					map[ts] = it->second;
+				}
+			}
 			on_vec_modified();
 		}
 		if (is_ts_modifiable)

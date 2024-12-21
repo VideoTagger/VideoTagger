@@ -1842,11 +1842,23 @@ namespace vt
 
 						if (ImGui::MenuItem(fmt::format("{} Add Keyframe", icons::keyframe).c_str(), nullptr, nullptr, !is_keyframe))
 						{
-							shape.visit([current_ts, &is_keyframe](auto& map)
+							shape.visit([current_ts, &is_keyframe, &shape](auto& map)
 							{
 								if constexpr (!std::is_same_v<std::monostate, std::remove_const_t<std::remove_reference_t<decltype(map)>>>)
 								{
-									map[current_ts].push_back({});
+									auto it = map.lower_bound(current_ts);
+									if (map.empty())
+									{
+										map[current_ts].push_back({});
+									}
+									else
+									{
+										if (it != map.begin() and it->first != current_ts)
+										{
+											--it;
+										}
+										map[current_ts] = it->second;
+									}
 									is_keyframe = true;
 									ctx_.is_project_dirty = true;
 								}
