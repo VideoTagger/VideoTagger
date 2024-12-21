@@ -81,10 +81,10 @@ project "VideoTagger"
 		externalincludedirs
 		{
 			"vendor/SDL2/include",
-			"vendor/ffmpeg/include/libavcodec",
-			"vendor/ffmpeg/include/libavformat",
-			"vendor/ffmpeg/include/libswscale",
-			"vendor/ffmpeg/include",
+			"vendor/FFmpeg/include/libavcodec",
+			"vendor/FFmpeg/include/libavformat",
+			"vendor/FFmpeg/include/libswscale",
+			"vendor/FFmpeg/include",
 			"vendor/openssl/include",
 			PythonIncludePath
 		}
@@ -92,7 +92,7 @@ project "VideoTagger"
 		libdirs
 		{
 			"vendor/SDL2/lib/%{cfg.architecture}",
-			"vendor/ffmpeg/lib/%{cfg.architecture}",
+			"vendor/FFmpeg/lib/%{cfg.architecture}",
 			"vendor/openssl/lib/%{cfg.architecture}",
 			PythonLibPath
 		}
@@ -100,7 +100,7 @@ project "VideoTagger"
 		postbuildcommands
 		{
 			"{COPYFILE} vendor/SDL2/lib/%{cfg.architecture}/*.dll %{cfg.targetdir}",
-			"{COPYFILE} vendor/ffmpeg/lib/%{cfg.architecture}/*.dll %{cfg.targetdir}",
+			"{COPYFILE} vendor/FFmpeg/lib/%{cfg.architecture}/*.dll %{cfg.targetdir}",
 			"{COPYFILE} vendor/openssl/lib/%{cfg.architecture}/*.dll %{cfg.targetdir}",
 		}
 
