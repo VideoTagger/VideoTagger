@@ -1645,6 +1645,17 @@ namespace vt
 			}
 		}
 
+		{
+			auto& tasks = ctx_.current_project->remove_video_tasks;
+			for (auto it = tasks.begin(); it != tasks.end();)
+			{
+				auto& task = *it;
+				task.task.get();
+
+				it = tasks.erase(it);
+			}
+		}
+
 		handle_insert_segment();
 
 		//TODO: probably should be done somewhere else

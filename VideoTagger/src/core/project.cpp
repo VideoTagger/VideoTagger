@@ -183,6 +183,24 @@ namespace vt
 		video_refresh_tasks.push_back(std::move(task));
 	}
 
+	void project::schedule_remove_video(video_id_t video_id)
+	{
+		if (!videos.contains(video_id))
+		{
+			return;
+		}
+
+		auto remove_task = [this, video_id]()
+		{
+			remove_video(video_id);
+		};
+
+		remove_video_task task;
+		task.task = std::async(std::launch::deferred, remove_task);
+		task.video_id = video_id;
+		remove_video_tasks.push_back(std::move(task));
+	}
+
 	bool project::import_video(std::unique_ptr<video_resource>&& vid_resource, std::optional<video_group_id_t> group_id, bool check_hash, bool set_project_dirty)
 	{
 		if (vid_resource == nullptr)
@@ -436,6 +454,8 @@ namespace vt
 
 	void project::remove_video(video_id_t id)
 	{
+		debug::log("Removing video with id: {}", id);
+
 		std::vector<video_group_id_t> groups_to_remove;
 
 		for (auto& [group_id, group] : video_groups)

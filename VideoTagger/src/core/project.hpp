@@ -73,6 +73,12 @@ namespace vt
 		std::future<void> task;
 	};
 
+	struct remove_video_task
+	{
+		video_id_t video_id{};
+		std::future<void> task;
+	};
+
 	struct project : public project_info
 	{
 		using video_group_map = std::unordered_map<video_group_id_t, video_group>;
@@ -85,11 +91,13 @@ namespace vt
 		std::vector<std::string> displayed_tags;
 
 		//TODO: maybe use async
+		//TODO: add generic task class
 		std::vector<prepare_video_import_task> prepare_video_import_tasks;
 		std::vector<video_import_task> video_import_tasks;
 		std::vector<generate_thumbnail_task> generate_thumbnail_tasks;
 		std::vector<video_download_task> video_download_tasks;
 		std::vector<video_refresh_task> video_refresh_tasks;
+		std::vector<remove_video_task> remove_video_tasks;
 
 		project() = default;
 		project(const project&) = delete;
@@ -105,12 +113,10 @@ namespace vt
 		template<typename video_importer>
 		void schedule_video_import(typename video_importer::import_data import_data, std::optional<video_group_id_t> group_id);
 		void schedule_video_import(const std::string& importer_id, std::any import_data, std::optional<video_group_id_t> group_id);
-
 		void schedule_video_download(video_id_t video_id);
-
 		void schedule_generate_thumbnail(video_id_t video_id);
-
 		void schedule_video_refresh(video_id_t video_id);
+		void schedule_remove_video(video_id_t video_id);
 
 		//TODO: maybe return the imported video or the video with the same hash if it exist and bool inserted
 		bool import_video(std::unique_ptr<video_resource>&& vid_resource, std::optional<video_group_id_t> group_id, bool check_hash = true, bool set_project_dirty = true);

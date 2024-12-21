@@ -70,6 +70,7 @@ namespace vt
 			return false;
 		}
 
+		ctx_.is_project_dirty = true;
 		set_file_path("");
 		return true;
 	}
@@ -102,17 +103,19 @@ namespace vt
 			}
 			else
 			{
-				if (!ctx_.displayed_videos.contains(id()))
+				video_resource_context_menu_item item;
+				item.function = [this]()
 				{
-					video_resource_context_menu_item item;
-					item.name = fmt::format("{} Remove Local File", icons::delete_);
-					item.function = [this]()
-					{
-						//TODO: should be done through the project so it can remove it from displayed videos or something
-						remove_downloaded_file();
-					};
-					items.push_back(std::move(item));
+					//TODO: should be done through the project so it can remove it from displayed videos or something
+					remove_downloaded_file();
+				};
+				item.name = fmt::format("{} Remove Local File", icons::delete_);
+				item.disabled = ctx_.displayed_videos.contains(id());
+				if (item.disabled)
+				{
+					item.tooltip = "Can't remove video file while it's being played";
 				}
+				items.push_back(std::move(item));
 			}
 		}
 		else

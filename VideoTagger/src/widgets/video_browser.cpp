@@ -15,7 +15,7 @@ namespace vt::widgets
 	{
 		if (!ctx_.current_project.has_value()) return;
 
-		static auto draw_video_tile = [this](video_id_t id, video_resource& vid_resource, ImVec2 tile_size, bool& open, bool& remove, GLuint image = 0)
+		static auto draw_video_tile = [this](video_id_t id, video_resource& vid_resource, ImVec2 tile_size, bool& open, GLuint image = 0)
 		{
 			const auto& metadata = vid_resource.metadata();
 			std::string label = metadata.title.value_or("");
@@ -50,22 +50,22 @@ namespace vt::widgets
 			open = widgets::tile(fmt::format("video{}", id).c_str(), label, tile_size, image_size, image,
 			[&](const std::string& label)
 			{
-				if (!ctx_.displayed_videos.contains(id))
-				{
-					std::string item_string = fmt::format("{} Remove", icons::delete_);
-					if (ImGui::MenuItem(item_string.c_str()))
-					{
-						remove = true;
-					}
-				}
-				
 				std::vector<video_resource_context_menu_item> context_items;
 				vid_resource.context_menu_items(context_items);
 				for (auto& item : context_items)
 				{
+					if (item.disabled) ImGui::BeginDisabled(item.disabled);
+
 					if (ImGui::MenuItem(item.name.c_str()))
 					{
 						item.function();
+					}
+
+					if (item.disabled) ImGui::EndDisabled();
+
+					if (!item.tooltip.empty())
+					{
+						widgets::tooltip(item.tooltip.c_str());
 					}
 				}
 			},
@@ -127,19 +127,11 @@ namespace vt::widgets
 								for (auto& vid_resource : vid_resources)
 								{
 									bool open_video{};
-									bool remove_video{};
 
 									ImGui::TableNextColumn();
-									draw_video_tile(vid_resource->id(), *vid_resource, tile_size, open_video, remove_video, vid_resource->thumbnail() ? vid_resource->thumbnail()->id() : 0);
+									draw_video_tile(vid_resource->id(), *vid_resource, tile_size, open_video, vid_resource->thumbnail() ? vid_resource->thumbnail()->id() : 0);
 									
 									any_item_hovered = any_item_hovered or ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenBlockedByPopup);
-									
-									if (remove_video)
-									{
-										debug::log("Removing video with id: {}", vid_resource->id());
-										ctx_.current_project->remove_video(vid_resource->id());
-										break;
-									}
 								}
 
 								//ImGui::EndTable();

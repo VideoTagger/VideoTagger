@@ -24,13 +24,31 @@ namespace vt
 		std::optional<std::array<uint8_t, utils::hash::sha256_byte_count>> sha256;
 	};
 
-	extern video_resource_metadata make_video_metadata_from_json(const nlohmann::ordered_json& json);
+	struct make_metadata_include_fields
+	{
+		constexpr make_metadata_include_fields() :
+			title{ true }, width{ true }, height{ true }, fps{ true }, duration{ true }, sha256{ true } {}
+
+		bool title : 1;
+		bool width : 1;
+		bool height : 1;
+		bool fps : 1;
+		bool duration : 1;
+		bool sha256 : 1;
+	};
+
+	constexpr void write_metadata_fields(video_resource_metadata& target, const video_resource_metadata& source, make_metadata_include_fields fields);
+
+	extern video_resource_metadata make_video_metadata_from_json(const nlohmann::ordered_json& json, make_metadata_include_fields = {});
+	extern video_resource_metadata make_video_metadata_from_path(const std::filesystem::path& path, make_metadata_include_fields = {});
 	extern video_id_t make_video_id_from_json(const nlohmann::ordered_json& json);
 
 	struct video_resource_context_menu_item
 	{
 		std::string name;
 		std::function<void()> function;
+		bool disabled = false;
+		std::string tooltip;
 	};
 
 	//TODO: maybe put local file path in this class
@@ -72,4 +90,32 @@ namespace vt
 		std::optional<gl_texture> thumbnail_;
 		std::string file_path_;
 	};
+
+	inline constexpr void write_metadata_fields(video_resource_metadata& target, const video_resource_metadata& source, make_metadata_include_fields fields)
+	{
+		if (fields.title)
+		{
+			target.title = source.title;
+		}
+		if (fields.width)
+		{
+			target.width = source.width;
+		}
+		if (fields.height)
+		{
+			target.height = source.height;
+		}
+		if (fields.fps)
+		{
+			target.fps = source.fps;
+		}
+		if (fields.duration)
+		{
+			target.duration = source.duration;
+		}
+		if (fields.sha256)
+		{
+			target.sha256 = source.sha256;
+		}
+	}
 }
