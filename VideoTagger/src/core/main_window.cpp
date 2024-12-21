@@ -1303,7 +1303,7 @@ namespace vt
 				}
 
 				menu_name = fmt::format("{} {}", icons::folder, "Open Scripts Folder");
-				if (ImGui::MenuItem(menu_name.c_str()))
+				if (ImGui::MenuItem(menu_name.c_str(), nullptr, nullptr, std::filesystem::exists(ctx_.script_dir_filepath)))
 				{
 					utils::filesystem::open_in_explorer(std::filesystem::absolute(ctx_.script_dir_filepath));
 				}
