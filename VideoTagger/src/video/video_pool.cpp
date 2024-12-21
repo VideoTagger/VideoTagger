@@ -100,6 +100,11 @@ namespace vt
 		return segments_;
 	}
 
+    const video_group::container& video_group::videos() const
+    {
+		return video_ids_;
+    }
+
 	video_group::iterator video_group::begin()
 	{
 		return video_ids_.begin();

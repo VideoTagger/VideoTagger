@@ -50,8 +50,13 @@ void vt::bindings::bind_tags(pybind11::module_& module)
 		}
 		tags.clear();
 	})
-	.def_property_readonly("list", [](const tag_storage& tags) -> std::vector<tag>
+	.def_property_readonly("list", [](const tag_storage& tags) -> std::vector<tag*>
 	{
-		return { tags.begin(), tags.end() };
-	});
+		std::vector<tag*> result;
+		for (auto& tag : tags)
+		{
+			result.push_back((vt::tag*)&tag);
+		}
+		return result;
+	}, py::return_value_policy::reference_internal);
 }

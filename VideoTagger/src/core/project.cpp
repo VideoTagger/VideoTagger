@@ -218,7 +218,7 @@ namespace vt
 				const auto& hash = *video->metadata().sha256;
 				if (hash == vid_resource->metadata().sha256)
 				{
-					debug::error("Video with hash: {} is already imported", utils::hash::bytes_to_hex(hash, utils::hash::string_case::lower));
+					debug::warn("Video with hash: {} is already imported", utils::hash::bytes_to_hex(hash, utils::hash::string_case::lower));
 					return false;
 				}
 			}

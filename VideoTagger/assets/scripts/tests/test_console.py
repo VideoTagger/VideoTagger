@@ -1,13 +1,11 @@
-from sys import stderr
 import vt
-import time
 
 
 class test_console(vt.Script):
 	def has_progress(self: vt.Script) -> bool:
 		return False
 
-	def on_run(self: vt.Script) -> None:
+	def on_run(self) -> None:
 		project = vt.current_project()
 		if project is None:
 			return

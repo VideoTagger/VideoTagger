@@ -50,6 +50,7 @@ namespace vt
 
 		segment_storage& segments();
 		const segment_storage& segments() const;
+		const container& videos() const;
 
 		iterator begin();
 		const_iterator begin() const;

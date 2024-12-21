@@ -164,7 +164,7 @@ namespace vt
 			current_index += 1;
 		}
 
-		auto result = videos_.insert(where, group_id);
+		auto result = groups_.insert(where, group_id);
 		current_element_ = begin() + current_index;
 
 		reshuffle();
@@ -201,7 +201,7 @@ namespace vt
 		}
 
 		bool erased_current = where == current_element_;
-		auto result = videos_.erase(where);
+		auto result = groups_.erase(where);
 
 		current_element_ = begin() + current_index;
 
@@ -212,7 +212,7 @@ namespace vt
 
 	void video_group_playlist::clear()
 	{
-		videos_.clear();
+		groups_.clear();
 		shuffled_indices_.clear();
 		current_element_ = end();
 		shuffled_history_next = {};
@@ -221,20 +221,20 @@ namespace vt
 
 	void video_group_playlist::reshuffle()
 	{
-		if (videos_.empty()) return;
+		if (groups_.empty()) return;
 
 		shuffled_history_next = {};
 		shuffled_history_previous = {};
 
 		shuffled_indices_.clear();
-		shuffled_indices_.reserve(videos_.size());
+		shuffled_indices_.reserve(groups_.size());
 
 		if (current_element_ != end())
 		{
 			size_t current_index = current_element_ - begin();
 
 			shuffled_indices_.push_back(current_index);
-			for (size_t i = 0; i < videos_.size(); i++)
+			for (size_t i = 0; i < groups_.size(); i++)
 			{
 				if (i == current_index)
 				{
@@ -248,7 +248,7 @@ namespace vt
 		}
 		else
 		{
-			for (size_t i = 0; i < videos_.size(); i++)
+			for (size_t i = 0; i < groups_.size(); i++)
 			{
 				shuffled_indices_.push_back(i);
 			}
@@ -259,81 +259,86 @@ namespace vt
 
 	video_group_id_t& video_group_playlist::front()
 	{
-		return videos_.front();
+		return groups_.front();
 	}
 
 	const video_group_id_t& video_group_playlist::front() const
 	{
-		return videos_.front();
+		return groups_.front();
 	}
 
 	video_group_id_t& video_group_playlist::back()
 	{
-		return videos_.back();
+		return groups_.back();
 	}
 
 	const video_group_id_t& video_group_playlist::back() const
 	{
-		return videos_.back();
+		return groups_.back();
 	}
 
 	video_group_id_t& video_group_playlist::at(size_t position)
 	{
-		return videos_.at(position);
+		return groups_.at(position);
 	}
 
 	const video_group_id_t& video_group_playlist::at(size_t position) const
 	{
-		return videos_.at(position);
+		return groups_.at(position);
 	}
 
 	video_group_id_t& video_group_playlist::operator[](size_t position)
 	{
-		return videos_.operator[](position);
+		return groups_.operator[](position);
 	}
 
 	const video_group_id_t& video_group_playlist::operator[](size_t position) const
 	{
-		return videos_.operator[](position);
+		return groups_.operator[](position);
 	}
 
 	size_t video_group_playlist::size() const
 	{
-		return videos_.size();
+		return groups_.size();
 	}
 
 	bool video_group_playlist::empty() const
 	{
-		return videos_.empty();
+		return groups_.empty();
 	}
+
+    const std::vector<video_group_id_t>& video_group_playlist::groups() const
+    {
+		return groups_;
+    }
 
 	video_group_playlist::iterator video_group_playlist::begin()
 	{
-		return videos_.begin();
+		return groups_.begin();
 	}
 
 	video_group_playlist::const_iterator video_group_playlist::begin() const
 	{
-		return videos_.cbegin();
+		return groups_.cbegin();
 	}
 
 	video_group_playlist::const_iterator video_group_playlist::cbegin() const
 	{
-		return videos_.cbegin();
+		return groups_.cbegin();
 	}
 
 	video_group_playlist::iterator video_group_playlist::end()
 	{
-		return videos_.end();
+		return groups_.end();
 	}
 
 	video_group_playlist::const_iterator video_group_playlist::end() const
 	{
-		return videos_.cend();
+		return groups_.cend();
 	}
 
 	video_group_playlist::const_iterator video_group_playlist::cend() const
 	{
-		return videos_.cend();
+		return groups_.cend();
 	}
 }

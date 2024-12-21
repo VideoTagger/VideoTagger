@@ -41,6 +41,27 @@ void vt::bindings::bind_project(pybind11::module_& module)
 		const auto& metadata = vid.metadata();
 		return vt_video{ vid.file_path(), vid.id(), metadata.width.value_or(0), metadata.height.value_or(0) };
 	})
+	.def("get_video", [](vt_project& p, video_id_t id) -> std::optional<vt_video>
+	{
+		auto it = std::find_if(p.ref.videos.begin(), p.ref.videos.end(), [id](const decltype(p.ref.videos)::iterator::value_type& vit)
+		{
+			return vit.first == id;
+		});
+		if (it == p.ref.videos.end()) return std::nullopt;
+		auto& vid = it->second;
+		const auto& metadata = vid->metadata();
+		return vt_video{ vid->file_path(), it->first, metadata.width.value_or(0), metadata.height.value_or(0) };
+	})
+	.def("remove_video", [](vt_project& p, vt_video& v) -> bool
+	{
+		auto it = std::find_if(p.ref.videos.begin(), p.ref.videos.end(), [&v](const decltype(p.ref.videos)::iterator::value_type& vit)
+		{
+			return vit.first == v.id;
+		});
+		if (it == p.ref.videos.end()) return false;
+		p.ref.remove_video(v.id);
+		return true;
+	})
 	.def("find_group", [](const vt_project& p, const std::string& name) -> std::optional<video_group>
 	{
 		auto it = p.ref.video_groups.end();
