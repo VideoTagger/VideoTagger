@@ -578,14 +578,15 @@ namespace vt::widgets
 					static std::string attribute_name_buf;
 					static tag_attribute attribute_buf;
 
+					auto popup_name = fmt::format("Add Attribute ({})", tag_name);
 					if (open_add_attribute_popup)
 					{
 						attribute_name_buf.clear();
 						attribute_buf = {};
-						ImGui::OpenPopup("Add Attribute");
+						ImGui::OpenPopup(popup_name.c_str());
 					}
 
-					if (add_tag_attribute("Add Attribute", attribute_name_buf, attribute_buf))
+					if (add_tag_attribute(popup_name, attribute_name_buf, attribute_buf))
 					{
 						ctx_.current_project->tags.at(tag_name).attributes.insert({ attribute_name_buf, attribute_buf });
 						dirty_flag = true;
