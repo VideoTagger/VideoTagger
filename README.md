@@ -1,6 +1,6 @@
 # VideoTagger
 
-![VideoTagger](/resources/images/preview.png?raw=true "VideoTagger")
+![VideoTagger](https://raw.githubusercontent.com/VideoTagger/VideoTagger/refs/heads/main/resources/images/preview.png "VideoTagger")
 
 ## Getting started
 To download the repository use `git clone --recursive https://github.com/VideoTagger/VideoTagger`.

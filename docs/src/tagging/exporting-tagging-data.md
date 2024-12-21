@@ -2,7 +2,7 @@
 
 In order to export tagging data of the active video group (see [Video Management](../projects/video-management) for how to use video groups) select the `Export Segments` option from the `Import/Export` list in the `File` menu.
 
-![Export Segments](./images/export-segments.png)
+![Export Segments](/images/export-segments.png)
 
 The tagging data in saved in a JSON file with the following structure:
 
