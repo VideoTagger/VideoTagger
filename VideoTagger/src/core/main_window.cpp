@@ -1856,7 +1856,7 @@ namespace vt
 									}
 									else
 									{
-										if (it != map.begin() and it->first != current_ts)
+										if (it != map.begin() and (it == map.end() or it->first != current_ts))
 										{
 											--it;
 										}

@@ -304,7 +304,7 @@ namespace vt
 				}
 				else
 				{
-					if (it != map.begin() and it->first != ts)
+					if (it != map.begin() and (it == map.end() or it->first != ts))
 					{
 						--it;
 					}
