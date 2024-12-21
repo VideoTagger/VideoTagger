@@ -1006,18 +1006,21 @@ namespace vt
 	utils::file_node main_window::fetch_scripts(const std::filesystem::path& path)
 	{
 		utils::file_node result;
-		for (const auto& dir_entry : std::filesystem::directory_iterator(path))
+		if (std::filesystem::exists(path))
 		{
-			auto entry_path = dir_entry.path();
-			if (dir_entry.is_regular_file() and utils::string::to_lowercase(entry_path.extension().string()) == ".py")
+			for (const auto& dir_entry : std::filesystem::directory_iterator(path))
 			{
-				auto script_path = std::filesystem::relative(entry_path, ctx_.script_dir_filepath);
-				result.insert(script_path);
-			}
-			else if (dir_entry.is_directory() and !std::filesystem::is_empty(dir_entry))
-			{
-				auto key = std::filesystem::relative(entry_path, ctx_.script_dir_filepath);
-				result[key] = fetch_scripts(dir_entry.path());
+				auto entry_path = dir_entry.path();
+				if (dir_entry.is_regular_file() and utils::string::to_lowercase(entry_path.extension().string()) == ".py")
+				{
+					auto script_path = std::filesystem::relative(entry_path, ctx_.script_dir_filepath);
+					result.insert(script_path);
+				}
+				else if (dir_entry.is_directory() and !std::filesystem::is_empty(dir_entry))
+				{
+					auto key = std::filesystem::relative(entry_path, ctx_.script_dir_filepath);
+					result[key] = fetch_scripts(dir_entry.path());
+				}
 			}
 		}
 		return result;
