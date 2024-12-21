@@ -252,8 +252,8 @@ namespace vt::widgets
 				update_items();
 			}
 
-			ImGui::EndChild();
 		}
+		ImGui::EndChild();
 
 		ImGui::PopStyleVar();
 
@@ -307,8 +307,8 @@ namespace vt::widgets
 				{
 					widgets::centered_text("No items match the search query", ImGui::GetContentRegionMax());
 				}
-				ImGui::EndChild();
 			}
+			ImGui::EndChild();
 		}
 		else
 		{
