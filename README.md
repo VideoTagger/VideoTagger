@@ -14,8 +14,8 @@ If the repository was cloned non-recursively run:
 git submodule update --init
 ```
 
-## Requirements
-- Python (tested with versions 3.12.6 and 3.13.0)
+## Build Requirements
+- Python `3.12+` (tested with `3.12.6` and `3.13.0`)
 
 ## Building
 > [!Important]
