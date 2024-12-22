@@ -4,7 +4,7 @@
 
 ## Getting started
 
-Download the repository run:
+Download the repository with:
 ```shell
 git clone --recursive https://github.com/VideoTagger/VideoTagger
 ```
