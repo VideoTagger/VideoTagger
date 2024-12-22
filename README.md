@@ -1,6 +1,6 @@
 # VideoTagger
 
-![VideoTagger](https://raw.githubusercontent.com/VideoTagger/VideoTagger/refs/heads/main/resources/images/preview.png "VideoTagger")
+![VideoTagger](/resources/images/preview.png?raw=true "VideoTagger")
 
 ## Getting started
 
