@@ -215,7 +215,7 @@ namespace vt
 		std::string new_title = name_;
 		if (!subtitle.empty())
 		{
-			new_title = fmt::format("{} - {}", name_, new_title);
+			new_title = fmt::format("{} - {}", subtitle, new_title);
 		}
 		SDL_SetWindowTitle(window, new_title.c_str());
 	}

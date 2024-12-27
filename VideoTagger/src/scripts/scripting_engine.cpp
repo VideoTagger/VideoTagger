@@ -79,16 +79,6 @@ namespace vt
 		.def_property("progress_info", &script_base::progress_info, &script_base::set_progress_info)
 		.def("on_run", &script_base::on_run);
 
-		py::class_<widgets::video_timeline>(this_module, "Timeline")
-		.def_property_readonly("segment_count", [](const widgets::video_timeline&)
-		{
-			return ctx_.current_project->displayed_tags.size();
-		})
-		.def("__repr__", [](const widgets::video_timeline&)
-		{
-			return "<vt.Timeline>";
-		});
-
 		bindings::bind_timestamp(this_module);
 
 		py::class_<widgets::video_player>(this_module, "Player")
@@ -120,7 +110,6 @@ namespace vt
 			return player.is_playing();
 		});
 
-		this_module.attr("timeline") = &ctx_.video_timeline;
 		this_module.attr("player") = &ctx_.player;
 
 		bindings::bind_tags(this_module);
