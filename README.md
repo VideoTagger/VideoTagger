@@ -3,36 +3,63 @@
 ![VideoTagger](/resources/images/preview.png?raw=true "VideoTagger")
 
 ## Getting started
-To download the repository use `git clone --recursive https://github.com/VideoTagger/VideoTagger`.
 
-If the repository was cloned non-recursively use `git submodule update --init` to clone the submodules.
+Download the repository with:
+```shell
+git clone --recursive https://github.com/VideoTagger/VideoTagger
+```
 
+If the repository was cloned non-recursively run:
+```shell
+git submodule update --init
+```
 
-## Setting up the project
-### Visual Studio (Windows)
-Visual Studio 2019 or 2022 is recommended
-#### Generating project files
-In order to generate project files run `scripts/win-gen-projects.cmd`.
-#### Building
-To build the projects, open the `.sln` file in Visual Studio and build the projects with chosen configuration.
+## Build Requirements
+- Python 3.12+ (tested with 3.12.6 and 3.13.0)
+- Visual Studio 2022 (on Windows)
 
-### Makefile (Linux)
-In order to generate project files run `scripts/linux-gen-projects.sh`.
-#### Requirements
-- `SDL2` version 2.0.17 or later
-#### Building
-To build the projects run `make config=<config>`, where `<config>` is your desired configuration. Available configurations:
+> [!Important]
+> Both Linux and macOS require SDL2 version 2.0.17 or later to build properly.
+Windows comes with prebuilt binaries.
+
+## Windows - Visual Studio
+Generate project files with:
+```shell
+scripts/win-gen-projects.cmd
+```
+
+Build the projects by opening the `Visual Studio` solution file and building with desired configuration.
+
+## Linux - Makefile
+Install Required packages
+```
+build-essential pkg-config libsdl2-dev libavcodec-dev libavformat-dev libswscale-dev python3-dev libgtk-3-dev libglib2.0-dev libgtk2.0-dev
+```
+
+Generate project files with:
+```shell
+./scripts/linux-gen-projects.sh
+```
+
+Build the projects by running:
+```shell
+make config=<BUILD_CONFIG>
+```
+Replace `<BUILD_CONFIG>` with one of:
 - `debug_x86_64`
 - `release_x86_64`
 - `shipping_x86_64`
 
-### Xcode (MacOS)
-In order to generate project files run `scripts/macos-gen-projects.sh`.
-#### Requirements
-- `SDL2` version 2.0.17 or later
-#### Building
-To build the projects, open the Xcode file and build the projects with chosen configuration.
+## Xcode (macOS)
+> [!Warning]
+> Building on macOS is untested
 
+Generate project files with:
+```shell
+scripts/macos-gen-projects.sh
+```
+
+Build the projects by opening the `Xcode` project file and building with desired configuration.
 
 ## Third party libraries
 - [SDL2](https://github.com/libsdl-org/SDL)

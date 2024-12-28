@@ -378,7 +378,7 @@ TOC_INCLUDE_HEADINGS   = 5
 # The default value is: DOXYGEN.
 # This tag requires that the tag MARKDOWN_SUPPORT is set to YES.
 
-MARKDOWN_ID_STYLE      = DOXYGEN
+MARKDOWN_ID_STYLE      = GITHUB
 
 # When enabled doxygen tries to link words that correspond to documented
 # classes, or namespaces to their corresponding documentation. Such a link can
@@ -396,7 +396,7 @@ AUTOLINK_SUPPORT       = YES
 # diagrams that involve STL classes more complete and accurate.
 # The default value is: NO.
 
-BUILTIN_STL_SUPPORT    = NO
+BUILTIN_STL_SUPPORT    = YES
 
 # If you use Microsoft's C++/CLI language, you should set this option to YES to
 # enable parsing support.
@@ -992,7 +992,8 @@ INPUT_FILE_ENCODING    =
 
 FILE_PATTERNS          = *.cpp \
                          *.hpp \
-                         *.md
+                         *.md \
+						 *.pyi
 
 # The RECURSIVE tag can be used to specify whether or not subdirectories should
 # be searched for input files as well.
@@ -2396,16 +2397,17 @@ SEARCH_INCLUDES        = YES
 # RECURSIVE has no effect here.
 # This tag requires that the tag SEARCH_INCLUDES is set to YES.
 
-INCLUDE_PATH           = "../VideoTagger/vendor/ffmpeg/include" \
+INCLUDE_PATH           = "../VideoTagger/vendor/FFmpeg/include" \
                          "../VideoTagger/vendor/fmt/include" \
                          "../VideoTagger/vendor/ImGui" \
                          "../VideoTagger/vendor/ImGui/misc/cpp" \
                          "../VideoTagger/vendor/ImGuizmo" \
                          "../VideoTagger/vendor/nativefiledialog-extended/src/include" \
-                         "../VideoTagger/vendor/ffmpeg/include" \
                          "../VideoTagger/vendor/nlohmann/include" \
                          "../VideoTagger/vendor/SDL2/include" \
-                         "../VideoTagger/vendor/utf8"
+                         "../VideoTagger/vendor/utf8" \
+						 "../VideoTagger/vendor/pybind11/include" \
+						 "../VideoTagger/vendor/cpp-httplib"
 
 # You can use the INCLUDE_FILE_PATTERNS tag to specify one or more wildcard
 # patterns (like *.h and *.hpp) to filter out the header-files in the
