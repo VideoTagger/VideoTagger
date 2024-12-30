@@ -71,3 +71,14 @@ Build the projects by opening the `Xcode` project file and building with desired
 - [utf8.h](https://github.com/sheredom/utf8.h)
 - [pybind11](https://github.com/pybind/pybind11)
 - [FFmpeg](https://ffmpeg.org/)
+- [cpp-httplib](https://github.com/yhirose/cpp-httplib)
+- [OpenSSL](https://github.com/openssl/openssl)
+
+## License
+This software is licensed under the [MIT License](/LICENSE).
+
+This software uses LGPL-licensed libraries from the FFmpeg project.
+
+FFmpeg is an open-source framework licensed under the [GNU Lesser General Public License (LGPL) version 2.1](http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html) or later. However, FFmpeg incorporates several optional parts and optimizations that are covered by the [GNU General Public License (GPL) version 2](http://www.gnu.org/licenses/old-licenses/gpl-2.0.html) or later. If those parts get used the GPL applies to all of FFmpeg.
+
+For more information regarding FFmpeg license and legal considerations see https://www.ffmpeg.org/legal.html.

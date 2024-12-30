@@ -48,7 +48,7 @@ namespace vt::utils::hash
 	{
 		static constexpr size_t file_buffer_size = 4096;
 
-		std::ifstream in(filepath);
+		std::ifstream in(filepath, std::ios::binary);
 		if (!in.is_open())
 		{
 			return {};
@@ -60,7 +60,8 @@ namespace vt::utils::hash
 			return {};
 		}
 
-		if (EVP_DigestInit_ex(context, EVP_sha256(), nullptr) != 1) {
+		if (EVP_DigestInit_ex(context, EVP_sha256(), nullptr) != 1)
+		{
 			EVP_MD_CTX_free(context);
 			return {};
 		}

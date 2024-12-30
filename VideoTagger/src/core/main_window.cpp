@@ -18,6 +18,7 @@
 #include <widgets/modal/keybind_popup.hpp>
 #include <widgets/modal/keybind_options_popup.hpp>
 #include <widgets/insert_segment_popup.hpp>
+#include <embeds/about.hpp>
 
 #include <utils/filesystem.hpp>
 #include <editor/run_script_command.hpp>
@@ -29,8 +30,32 @@
 #include <editor/set_selected_attribute_command.hpp>
 #include <utils/string.hpp>
 
+extern "C"
+{
+	#include <libavutil/ffversion.h>
+}
+
+#include <openssl/opensslv.h>
+#include <pybind11/pybind11.h>
+
 namespace vt
 {
+	static void show_debug_info()
+	{
+		SDL_version compiled;
+		SDL_version linked;
+		SDL_VERSION(&compiled);
+		SDL_GetVersion(&linked);
+		debug::log("SDL Version (Header):  {}.{}.{}", compiled.major, compiled.minor, compiled.patch);
+		debug::log("SDL Version (Linked):  {}.{}.{}", linked.major, linked.minor, linked.patch);
+		debug::log("OpenGL Version: {}", (const char*)glGetString(GL_VERSION));
+		debug::log("ImGui Version: {}", IMGUI_VERSION);
+		debug::log("FFmpeg Version: {}", FFMPEG_VERSION);
+		debug::log("OpenSSL Version: {}", OPENSSL_FULL_VERSION_STR);
+		debug::log("Python Version: {}", PY_VERSION);
+		debug::log("pybind11 Version: {}.{}.{}", PYBIND11_VERSION_MAJOR, PYBIND11_VERSION_MINOR, PYBIND11_VERSION_PATCH);
+	}
+
 	main_window::main_window(const app_window_config& cfg) : app_window{ cfg }
 	{
 		ctx_.project_selector.on_click_project = [&](project_info& project_info)
@@ -96,6 +121,8 @@ namespace vt
 			ctx_.reset_player_docking = true;
 			//ctx_.current_project->videos.open_video(id);
 		};
+		show_debug_info();
+
 		init_options();
 		load_settings();
 		init_keybinds();
@@ -1366,24 +1393,79 @@ namespace vt
 
 		{
 			ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 7.0f);
-			auto flags = ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_AlwaysAutoResize;
-			ImGui::SetNextWindowSize(ImGui::GetContentRegionMax() * 0.2f, ImGuiCond_Appearing);
+			auto flags = ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar;
+			ImVec2 window_size = ImGui::GetContentRegionMax() * ImVec2 { 0.333f, 0.4f };
+			ImGui::SetNextWindowSize(window_size, ImGuiCond_Appearing);
 			ImGui::SetNextWindowPos(ImGui::GetMainViewport()->GetCenter(), ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
 			if (ImGui::BeginPopupModal("AboutPopup", &ctx_.win_cfg.show_about_window, flags))
 			{
 				const auto& style = ImGui::GetStyle();
 
 				ImGui::PushFont(ctx_.fonts["title"]);
-				ImGui::Text("About VideoTagger");
+				ImGui::TextUnformatted("About VideoTagger");
 				ImGui::Separator();
 				ImGui::Dummy(style.ItemSpacing);
 				ImGui::PopFont();
 
-				ImGui::TextDisabled("Version: %s", "1.0.0.0");
-				ImGui::Dummy(style.ItemSpacing);
+				ImVec2 child_size = ImGui::GetContentRegionAvail();
+				child_size.y -= ImGui::GetTextLineHeightWithSpacing() + style.WindowPadding.y;
+				if (ImGui::BeginChild("##AboutScrollableArea", child_size))
+				{
+					ImGui::BeginDisabled();
+
+					ImGui::Text("Version: %s", "1.0.0.0");
+					ImGui::Dummy(style.ItemSpacing);
+
+					ImGui::TextWrapped("%s", embed::app_description);
+
+#ifdef _DEBUG
+					ImGui::SeparatorText("Debug Only");
+
+					SDL_version compiled;
+					SDL_version linked;
+					SDL_VERSION(&compiled);
+					SDL_GetVersion(&linked);
+					ImGui::Text("SDL Version (Header):  %u.%u.%u", compiled.major, compiled.minor, compiled.patch);
+					ImGui::Text("SDL Version (Linked):  %u.%u.%u", linked.major, linked.minor, linked.patch);
+					ImGui::Text("OpenGL Version: %s", glGetString(GL_VERSION));
+					ImGui::Text("ImGui Version: %s", IMGUI_VERSION);
+					ImGui::Text("FFmpeg Version: %s", FFMPEG_VERSION);
+					ImGui::Text("OpenSSL Version: %s", OPENSSL_FULL_VERSION_STR);
+					ImGui::Text("Python Version: %s", PY_VERSION);
+					ImGui::Text("pybind11 Version: %u.%u.%u", PYBIND11_VERSION_MAJOR, PYBIND11_VERSION_MINOR, PYBIND11_VERSION_PATCH);
+#endif
+
+					ImGui::EndDisabled();
+
+					ImGui::Separator();
+					ImGui::PushFont(ctx_.fonts["title"]);
+					ImGui::TextUnformatted("Third Party Libraries");
+					ImGui::PopFont();
+
+					for (const auto& [name, license] : embed::third_party_licenses)
+					{
+						if (widgets::begin_collapsible(fmt::format("##{}", name), name, 0, icons::license))
+						{
+							ImGui::PushStyleColor(ImGuiCol_TableRowBg, style.Colors[ImGuiCol_WindowBg]);
+							if (ImGui::BeginTable("##Background", 1, ImGuiTableFlags_RowBg))
+							{
+								ImGui::TableNextColumn();
+
+								ImGui::PushStyleColor(ImGuiCol_Text, style.Colors[ImGuiCol_TextDisabled]);
+								ImGui::TextWrapped("%s", license.c_str());
+								ImGui::PopStyleColor();
+
+								ImGui::EndTable();
+							}
+							ImGui::PopStyleColor();
+							widgets::end_collapsible();
+						}
+					}
+				}
+				ImGui::EndChild();
 
 				auto button_size = ImVec2{ ImGui::GetContentRegionAvail().x, 0 };
-				if (ImGui::Button("Close", button_size) or (!ImGui::IsWindowHovered() and ImGui::IsMouseClicked(ImGuiMouseButton_Left)))
+				if (ImGui::Button("Close", button_size) or ImGui::IsKeyReleased(ImGuiKey_Escape))
 				{
 					ctx_.win_cfg.show_about_window = false;
 					ImGui::CloseCurrentPopup();

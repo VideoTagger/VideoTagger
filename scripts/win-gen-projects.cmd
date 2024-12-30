@@ -7,6 +7,17 @@ if %errorlevel% neq 0 (
 	echo Error: Setup failed
 	goto :error
 )
+call pip install -r scripts\requirements.txt
+if %errorlevel% neq 0 (
+	echo Error: Setup failed
+	goto :error
+)
+
+call python scripts\gen_about.py
+if %errorlevel% neq 0 (
+	echo Error: Setup failed
+	goto :error
+)
 
 if exist win-projects.buildcfg (
 	set cfg_loaded=1

@@ -29,3 +29,4 @@ Makefile
 *.vs
 
 **.buildcfg
+VideoTagger/src/embeds/about.*

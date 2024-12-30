@@ -66,7 +66,9 @@ project "VideoTagger"
 
 	postbuildcommands
 	{
-		"{COPYDIR} assets %{cfg.targetdir}/assets"
+		"{COPYFILE} ../LICENSE %{cfg.targetdir}/LICENSE",
+		"{COPYDIR} assets %{cfg.targetdir}/assets",
+		"{COPYDIR} licenses %{cfg.targetdir}/licenses"
 	}
 
 	filter {}
