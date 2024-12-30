@@ -8,6 +8,12 @@ if %errorlevel% neq 0 (
 	goto :error
 )
 
+call python scripts\gen_about.py
+if %errorlevel% neq 0 (
+	echo Error: Setup failed
+	goto :error
+)
+
 if exist win-projects.buildcfg (
 	set cfg_loaded=1
 	set /p vs_ver=<win-projects.buildcfg
