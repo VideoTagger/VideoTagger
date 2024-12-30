@@ -24,7 +24,7 @@ namespace vt::widgets
 		auto flags = ImGuiWindowFlags_NoResize; //ImGuiWindowFlags_AlwaysAutoResize;
 		auto& io = ImGui::GetIO();
 		ImGui::SetNextWindowPos(ImGui::GetMainViewport()->GetCenter(), ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
-		auto win_size = ImVec2{ 390, 110 };
+		auto win_size = ImVec2{ 390, 120 };
 		ImGui::SetNextWindowSize(win_size, ImGuiCond_Appearing);
 
 		if (ImGui::BeginPopupModal("Add New Tag", nullptr, flags))

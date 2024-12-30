@@ -6,7 +6,7 @@ import re
 import requests
 from setup import eprint, WORK_DIR
 
-SOURCE_DIR = os.path.join(WORK_DIR, os.pardir, "VideoTagger", "license")
+SOURCE_DIR = os.path.join(WORK_DIR, os.pardir, "VideoTagger", "licenses")
 EMBED_DIR = os.path.join(WORK_DIR, os.pardir, "VideoTagger", "src", "embeds")
 
 REPO_API_URL = "https://api.github.com/repos/VideoTagger/VideoTagger"
