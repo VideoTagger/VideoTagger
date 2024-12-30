@@ -1407,44 +1407,41 @@ namespace vt
 				ImGui::Dummy(style.ItemSpacing);
 				ImGui::PopFont();
 
-				ImGui::BeginDisabled();
-
-				ImGui::Text("Version: %s", "1.0.0.0");
-				ImGui::Dummy(style.ItemSpacing);
-
-				ImGui::TextWrapped("%s", embed::app_description);
-
-#ifdef _DEBUG
-				ImGui::SeparatorText("Debug Only");
-
-				SDL_version compiled;
-				SDL_version linked;
-				SDL_VERSION(&compiled);
-				SDL_GetVersion(&linked);
-				ImGui::Text("SDL Version (Header):  %u.%u.%u", compiled.major, compiled.minor, compiled.patch);
-				ImGui::Text("SDL Version (Linked):  %u.%u.%u", linked.major, linked.minor, linked.patch);
-				ImGui::Text("OpenGL Version: %s", glGetString(GL_VERSION));
-				ImGui::Text("ImGui Version: %s", IMGUI_VERSION);
-				ImGui::Text("FFmpeg Version: %s", FFMPEG_VERSION);
-				ImGui::Text("OpenSSL Version: %s", OPENSSL_FULL_VERSION_STR);
-				ImGui::Text("Python Version: %s", PY_VERSION);
-				ImGui::Text("pybind11 Version: %u.%u.%u", PYBIND11_VERSION_MAJOR, PYBIND11_VERSION_MINOR, PYBIND11_VERSION_PATCH);
-#endif
-
-				ImGui::EndDisabled();
-
-				ImGui::Separator();
-				ImGui::PushFont(ctx_.fonts["title"]);
-				ImGui::TextUnformatted("Third Party Libraries");
-				ImGui::PopFont();
-
 				ImVec2 child_size = ImGui::GetContentRegionAvail();
 				child_size.y -= ImGui::GetTextLineHeightWithSpacing() + style.WindowPadding.y;
-
-				ImGuiChildFlags child_flags = ImGuiChildFlags_None;
-
-				if (ImGui::BeginChild("##ThirdPartyArea", child_size, child_flags))
+				if (ImGui::BeginChild("##AboutScrollableArea", child_size))
 				{
+					ImGui::BeginDisabled();
+
+					ImGui::Text("Version: %s", "1.0.0.0");
+					ImGui::Dummy(style.ItemSpacing);
+
+					ImGui::TextWrapped("%s", embed::app_description);
+
+#ifdef _DEBUG
+					ImGui::SeparatorText("Debug Only");
+
+					SDL_version compiled;
+					SDL_version linked;
+					SDL_VERSION(&compiled);
+					SDL_GetVersion(&linked);
+					ImGui::Text("SDL Version (Header):  %u.%u.%u", compiled.major, compiled.minor, compiled.patch);
+					ImGui::Text("SDL Version (Linked):  %u.%u.%u", linked.major, linked.minor, linked.patch);
+					ImGui::Text("OpenGL Version: %s", glGetString(GL_VERSION));
+					ImGui::Text("ImGui Version: %s", IMGUI_VERSION);
+					ImGui::Text("FFmpeg Version: %s", FFMPEG_VERSION);
+					ImGui::Text("OpenSSL Version: %s", OPENSSL_FULL_VERSION_STR);
+					ImGui::Text("Python Version: %s", PY_VERSION);
+					ImGui::Text("pybind11 Version: %u.%u.%u", PYBIND11_VERSION_MAJOR, PYBIND11_VERSION_MINOR, PYBIND11_VERSION_PATCH);
+#endif
+
+					ImGui::EndDisabled();
+
+					ImGui::Separator();
+					ImGui::PushFont(ctx_.fonts["title"]);
+					ImGui::TextUnformatted("Third Party Libraries");
+					ImGui::PopFont();
+
 					for (const auto& [name, license] : embed::third_party_licenses)
 					{
 						if (widgets::begin_collapsible(fmt::format("##{}", name), name, 0, icons::license))
