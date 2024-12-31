@@ -80,6 +80,12 @@ project "VideoTagger"
 		flags { "NoPCH" }
 
 	filter "system:windows"
+		files { "src/resources/resource.rc", '**.ico' }
+		vpaths
+		{
+			["src/resources/*"] = { '*.rc', '**.ico' }
+		}
+
 		externalincludedirs
 		{
 			"vendor/SDL2/include",
