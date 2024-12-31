@@ -10,6 +10,12 @@
 
 namespace vt::widgets
 {
+	static size_t to_power_of2(size_t n)
+	{
+		if (n <= 1) return 1;
+		return static_cast<size_t>(std::pow(2, std::ceil(std::log2(n))));
+	}
+
 	video_player::video_player() : dock_window_count_{}, speed_{ 1.0f }, is_visible_{}, is_playing_ {}, loop_mode_{} {}
 
 	void video_player::update_data(video_player_data data, bool is_playing)
@@ -68,8 +74,13 @@ namespace vt::widgets
 						ImGui::DockBuilderSetNodeSize(dock_node_id, node_size);
 
 						ImGuiID temp_id = dock_node_id;
-						size_t rows = static_cast<size_t>(std::ceil(std::sqrt(dock_window_count_)));
-						size_t columns = (dock_window_count_ + rows - 1) / rows;
+						auto row_n = std::ceil(std::log2(dock_window_count_));
+						if (row_n <= 1)
+						{
+							row_n = 1;
+						}
+						size_t rows = static_cast<size_t>(row_n);
+						size_t columns = (dock_window_count_ + rows - 1) / std::max(rows, 1ull);
 
 						for (size_t y = 0; y < rows; ++y)
 						{

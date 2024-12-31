@@ -2280,8 +2280,12 @@ namespace vt
 
 		if (ctx_.reset_player_docking)
 		{
-			ctx_.player.dock_windows(4);
-			ctx_.reset_player_docking = false;
+			auto it = ctx_.current_project->video_groups.find(ctx_.current_video_group_id());
+			if (it != ctx_.current_project->video_groups.end())
+			{
+				ctx_.player.dock_windows(it->second.size());
+				ctx_.reset_player_docking = false;
+			}
 		}
 
 		if (ctx_.win_cfg.show_timeline_window/* and ctx_.current_video_group_id != 0*/)
