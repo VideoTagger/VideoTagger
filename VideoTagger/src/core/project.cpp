@@ -88,11 +88,6 @@ namespace vt
 		return task(import_data);
 	}
 
-	std::unique_ptr<video_resource> video_import_task::operator()()
-	{
-		return task();
-	}
-
 	bool generate_thumbnail_task::operator()()
 	{
 		return task();
@@ -124,10 +119,12 @@ namespace vt
 		auto& importer = ctx_.get_video_importer(importer_id);
 		video_import_task task;
 		task.group_id = group_id;
-		task.task = [&importer, import_data = std::move(import_data)]()
+		auto func = [&importer, import_data = std::move(import_data)]()
 		{
 			return importer.import_video(video_importer::generate_video_id(), std::move(import_data));
 		};
+
+		task.task = std::async(std::launch::async, func);
 		video_import_tasks.push_back(std::move(task));
 	}
 

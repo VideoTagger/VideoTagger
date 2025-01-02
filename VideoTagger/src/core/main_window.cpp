@@ -1636,9 +1636,6 @@ namespace vt
 					ctx_.current_project->schedule_video_import(task.importer_id, std::move(import_data), utils::uuid::get());
 				}
 				it = tasks.erase(it);
-
-				//TODO: set some frame time limit;
-				break;
 			}
 		}
 
@@ -1647,7 +1644,13 @@ namespace vt
 			for (auto it = tasks.begin(); it != tasks.end();)
 			{
 				auto& task = *it;
-				auto vid_resource = task();
+				if (task.task.wait_for(std::chrono::seconds{}) != std::future_status::ready)
+				{
+					++it;
+					continue;
+				}
+
+				auto vid_resource = task.task.get();
 				if (vid_resource != nullptr)
 				{
 					video_id_t video_id = vid_resource->id();
@@ -1660,8 +1663,6 @@ namespace vt
 					}
 				}
 				it = tasks.erase(it);
-				//TODO: set some frame time limit;
-				break;
 			}
 		}
 
