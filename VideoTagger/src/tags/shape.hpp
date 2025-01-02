@@ -432,10 +432,10 @@ namespace vt
 						for (const auto& [keyframe, regions] : json_regions.items())
 						{
 							auto ts = timestamp{ utils::time::parse_time_to_ms(keyframe) };
-							auto& keyframe = map[ts];
+							auto& kf = map[ts];
 							for (const auto& region : regions)
 							{
-								keyframe.push_back(region);
+								kf.push_back(region);
 							}
 						}
 					};
