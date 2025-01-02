@@ -30,11 +30,11 @@ namespace vt::widgets
 		if (ImGui::BeginPopupModal("Project Configuration", nullptr, flags))
 		{
 			ImGui::PushFont(ctx_.fonts["title"]);
-			ImGui::LabelText("##ProjectCfgTitle", ctx_.lang.get(lang_pack_id::project_configuration));
+			ImGui::LabelText("##ProjectCfgTitle", "%s", ctx_.lang.get(lang_pack_id::project_configuration));
 			ImGui::Separator();
 			ImGui::Dummy(style.ItemSpacing);
 			ImGui::PopFont();
-			ImGui::TextDisabled(ctx_.lang.get(lang_pack_id::name));
+			ImGui::TextDisabled("%s", ctx_.lang.get(lang_pack_id::name));
 
 			auto avail_size = ImGui::GetContentRegionAvail();
 			auto input_width = avail_size.x * 0.9f;
@@ -43,7 +43,7 @@ namespace vt::widgets
 			std::string proj_name_hint = fmt::format("{}...", ctx_.lang.get(lang_pack_id::project_name));
 			ImGui::InputTextWithHint("##ProjectCfgName", proj_name_hint.c_str(), &temp_project.name, ImGuiInputTextFlags_AutoSelectAll);
 
-			ImGui::TextDisabled(ctx_.lang.get(lang_pack_id::location));
+			ImGui::TextDisabled("%s", ctx_.lang.get(lang_pack_id::location));
 			std::string path = std::filesystem::absolute(temp_project.path).replace_extension().u8string();
 
 			int input_flags = ImGuiInputTextFlags_AutoSelectAll;
@@ -160,14 +160,14 @@ namespace vt::widgets
 
 		ImGui::BeginGroup();
 		std::string name = !project.name.empty() ? project.name : fmt::format("- {}! -", ctx_.lang.get(lang_pack_id::invalid_project));
-		ImGui::Text(name.c_str());
+		ImGui::TextUnformatted(name.c_str());
 		auto path = project.path;
 		std::optional<tm> mod_time = project.modification_time();
 		if (!path.empty() and std::filesystem::exists(path))
 		{
 			path = std::filesystem::absolute(path);
 		}
-		ImGui::TextDisabled(path.string().c_str());
+		ImGui::TextDisabled("%s", path.string().c_str());
 		tooltip(path.string().c_str());
 		ImGui::EndGroup();
 
@@ -188,10 +188,10 @@ namespace vt::widgets
 		}
 		
 		ImGui::AlignTextToFramePadding();
-		ImGui::Text(time_str.c_str());
+		ImGui::TextUnformatted(time_str.c_str());
 		if (!exact_time_str.empty())
 		{
-			ImGui::SetItemTooltip(exact_time_str.c_str());
+			ImGui::SetItemTooltip("%s", exact_time_str.c_str());
 		}
 
 		ImGui::TableNextColumn();
@@ -355,7 +355,7 @@ namespace vt::widgets
 				sort();
 			}
 			ImGui::PushFont(ctx_.fonts["title"]);
-			ImGui::LabelText("##ProjectSelectorTitle", ctx_.lang.get(lang_pack_id::projects));
+			ImGui::LabelText("##ProjectSelectorTitle", "%s", ctx_.lang.get(lang_pack_id::projects));
 			ImGui::PopFont();
 			ImGui::Dummy(ImGui::GetStyle().ItemSpacing);
 

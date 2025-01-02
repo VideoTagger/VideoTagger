@@ -190,7 +190,7 @@ namespace vt::widgets::modal
 									ImGui::Columns(2, "##TagColumnSeparator");
 									ImGui::Text("Name");
 									ImGui::NextColumn();
-									ImGui::Text(tag.name.c_str());
+									ImGui::TextUnformatted(tag.name.c_str());
 									ImGui::NextColumn();
 									ImGui::Text("Color");
 									ImGui::NextColumn();

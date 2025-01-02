@@ -2343,7 +2343,7 @@ namespace vt
 						case vt::tag_validate_result::too_long: error_text = fmt::format("Name can be at most {} characters long", tag_storage::max_tag_name_length); break;
 						default: error_text = "Invalid name"; break;
 						}
-						ImGui::TextDisabled(error_text.c_str());
+						ImGui::TextDisabled("%s", error_text.c_str());
 						ImGui::NewLine();
 						auto area_size = ImGui::GetWindowSize();
 
