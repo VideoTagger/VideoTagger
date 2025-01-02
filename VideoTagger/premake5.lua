@@ -130,7 +130,6 @@ project "VideoTagger"
 		{
 			"`pkg-config --cflags libavcodec libavformat libswscale sdl2 opengl gtk+-3.0 glib-2.0 openssl`",
 			"-fpermissive",
-			"`pkg-config --cflags libavcodec libavformat libswscale sdl2 opengl gtk+-3.0 glib-2.0`",
 			"`python3-config --cflags`",
 		}
 
@@ -145,7 +144,6 @@ project "VideoTagger"
 		{
 			"`pkg-config --cflags libavcodec libavformat libswscale sdl2 opengl openssl`",
 			"-fpermissive",
-			"`pkg-config --cflags libavcodec libavformat libswscale sdl2 opengl`",
 			"-framework AppKit",
             "-framework UniformTypeIdentifiers",
 		}
