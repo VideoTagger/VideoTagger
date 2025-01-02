@@ -80,7 +80,7 @@ namespace vt::widgets
 							row_n = 1;
 						}
 						size_t rows = static_cast<size_t>(row_n);
-						size_t columns = (dock_window_count_ + rows - 1) / std::max(rows, 1ull);
+						size_t columns = (dock_window_count_ + rows - 1) / std::max(rows, static_cast<size_t>(1));
 
 						for (size_t y = 0; y < rows; ++y)
 						{

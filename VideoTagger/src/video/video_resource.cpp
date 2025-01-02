@@ -32,7 +32,7 @@ namespace vt
 		if (include_fields.sha256 and json.contains("sha256"))
 		{
 			result.sha256 = std::array<uint8_t, utils::hash::sha256_byte_count>{};
-			auto bytes = utils::hash::hex_to_bytes(json.at("sha256"));
+			auto bytes = utils::hash::hex_to_bytes(json.at("sha256").get<std::string>());
 			std::copy_n(bytes.begin(), utils::hash::sha256_byte_count, result.sha256->begin());
 		}
 		return result;

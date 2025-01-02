@@ -128,14 +128,14 @@ project "VideoTagger"
 	filter "system:linux"
 		buildoptions
 		{
-			"`pkg-config --cflags libavcodec libavformat libswscale sdl2 opengl gtk+-3.0 glib-2.0 openssl`",
+			"`pkg-config --cflags libavcodec libavformat libswscale sdl2 opengl gtk+-3.0 glib-2.0 gobject-2.0 gio-2.0 openssl`",
 			"-fpermissive",
 			"`python3-config --cflags`",
 		}
 
 		linkoptions
 		{
-			"`pkg-config --libs libavcodec libavformat libswscale sdl2 opengl gtk+-3.0 glib-2.0 openssl`",
+			"`pkg-config --libs libavcodec libavformat libswscale sdl2 opengl gtk+-3.0 glib-2.0 gobject-2.0 gio-2.0 openssl`",
 			"`python3-config --embed --ldflags`"
 		}
 
