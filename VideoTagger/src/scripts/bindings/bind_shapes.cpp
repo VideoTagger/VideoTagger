@@ -18,7 +18,7 @@ void vt::bindings::bind_shapes(pybind11::module_& module)
 	},
 	[](circle& c, int64_t value)
 	{
-		c.radius = static_cast<uint32_t>(std::min(1ll, value));
+		c.radius = static_cast<uint32_t>(std::min(static_cast<int64_t>(1), value));
 	})
 	.def(py::self == py::self);
 
