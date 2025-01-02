@@ -11,6 +11,6 @@ class test_console(vt.Script):
 			return
 
 		for _ in range(5):
-			vt.log("Test infos")
+			vt.log("Test info")
 			vt.error("Test error")
 			vt.warn("Test multiline\nSecond Line\n\n4th Line")
