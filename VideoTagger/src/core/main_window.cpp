@@ -2230,7 +2230,7 @@ namespace vt
 						{
 							std::cos(cam_angle[1]) * std::cos(cam_angle[0]) * cam_distance,
 							std::sin(cam_angle[0]) * cam_distance,
-							std::sin(cam_angle[1]) * std::cosf(cam_angle[0]) * cam_distance
+							std::sin(cam_angle[1]) * std::cos(cam_angle[0]) * cam_distance
 						};
 						utils::matrix view_mat = (utils::matrix::look_at(eye, target));
 

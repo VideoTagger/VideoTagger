@@ -25,6 +25,13 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
+cd $(dirname $0)/../
+python3 scripts/gen_about.py
+if [ $? -ne 0 ]; then
+    echo "Error: File generation failed"
+    exit 1
+fi
+
 chmod +x tools/bin/premake5
 ./tools/bin/premake5 xcode4
 read -rsn1 -p "Press any key to continue . . ."
