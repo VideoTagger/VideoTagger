@@ -1,5 +1,8 @@
 #pragma once
 #include <array>
+#include <cmath>
+#include <cstdint>
+#include <cstddef>
 #include <utils/json.hpp>
 #include <utils/lerp.hpp>
 
