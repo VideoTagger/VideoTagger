@@ -49,11 +49,11 @@ namespace vt
 			auto metadata_json = response_json.at("videoMediaMetadata");
 			metadata.width = metadata_json.at("width");
 			metadata.height = metadata_json.at("height");
-			metadata.duration = std::chrono::milliseconds{ std::stoll(std::string(metadata_json.at("durationMillis"))) };
+			metadata.duration = std::chrono::milliseconds{ std::stoll(metadata_json.at("durationMillis").get<std::string>()) };
 		}
 
 		metadata.title = response_json.at("name");
-		auto hash_bytes = utils::hash::hex_to_bytes(response_json.at("sha256Checksum"));
+		auto hash_bytes = utils::hash::hex_to_bytes(response_json.at("sha256Checksum").get<std::string>());
 		metadata.sha256 = std::array<uint8_t, utils::hash::sha256_byte_count>{};
 		std::copy_n(hash_bytes.begin(), utils::hash::sha256_byte_count, metadata.sha256->begin());
 
