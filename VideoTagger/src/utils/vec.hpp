@@ -58,7 +58,7 @@ namespace vt::utils
 		template<typename = std::enable_if_t<dims >= 2>>
 		static constexpr float distance(const vec& left, const vec& right)
 		{
-			return std::sqrtf(std::powf((float)left[0] - right[0], 2) + std::powf((float)left[1] - right[1], 2));
+			return static_cast<float>(std::sqrt(std::pow((float)left[0] - right[0], 2.f) + std::pow((float)left[1] - right[1], 2.f)));
 		}
 
 		constexpr bool operator==(const vec& other) const
