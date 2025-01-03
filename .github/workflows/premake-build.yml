@@ -46,7 +46,7 @@ jobs:
       - name: Run Premake5
         run: |
             chmod +x ./premake5
-            pip3 install -r requirements.txt
+            pip3 install -r ./scripts/requirements.txt
             ./premake5 gmake2
       - name: Build with Makefile
         run: |
