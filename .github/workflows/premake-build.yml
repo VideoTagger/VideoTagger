@@ -2,8 +2,8 @@ name: Build With Premake
 on:
   push:
     branches: [ "main", "dev" ]
-  pull_request:
-    branches: [ "main", "dev" ]
+#   pull_request:
+#     branches: [ "main", "dev" ]
 jobs:
   build:
     runs-on: ubuntu-24.04
