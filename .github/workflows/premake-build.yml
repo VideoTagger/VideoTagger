@@ -6,7 +6,7 @@ on:
     branches: [ "main", "dev" ]
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: Cache Submodules
         id: cache-submodules
