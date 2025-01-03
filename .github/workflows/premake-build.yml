@@ -47,7 +47,7 @@ jobs:
         run: |
             chmod +x ./premake5
             pip3 install -r ./scripts/requirements.txt
-            ./premake5 gmake2
+            ./scripts/linux-gen-projects.sh
       - name: Build with Makefile
         run: |
             make config=shipping_x86_64
