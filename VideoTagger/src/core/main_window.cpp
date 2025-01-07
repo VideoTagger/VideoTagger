@@ -1842,7 +1842,7 @@ namespace vt
 					point_pos = { (float)ctx_.gizmo_target->at(0), (float)ctx_.gizmo_target->at(1) };
 				}
 
-				widgets::draw_video_widget(video_data.video, video_data.display_texture, timestamp_in_range, is_widget_open, vid_id++, [&point_pos, has_selected_attribute, selected_attribute, is_shape, has_target, &video_data](ImVec2 pos, ImVec2 size, ImVec2 tex_size)
+				widgets::draw_video_widget(video_data.video, video_data.display_texture, timestamp_in_range, is_widget_open, vid_id++, [&point_pos, has_selected_attribute, selected_attribute, is_shape, has_target, &video_data, &selected_segment](ImVec2 pos, ImVec2 size, ImVec2 tex_size)
 				{
 					static constexpr auto orange = tag_attribute::type_color(tag_attribute::type::shape); //0xFF30A0F0;
 					static auto from_tex_pos = [&pos, &tex_size, &size](const ImVec2 point) -> ImVec2
@@ -2185,7 +2185,7 @@ namespace vt
 										draw_list->PushClipRect(top_left, bottom_right, true);
 										shape.draw(current_ts, shape.interpolate, from_tex_pos, from_pixels, tex_size, size, is_selected ? orange : tag.color, fill_color, show_points, [&](size_t i)
 										{
-											if (ImGui::IsMouseClicked(0))
+											if (ImGui::IsMouseDown(0))
 											{
 												ctx_.video_timeline.selected_segment = widgets::selected_segment_data{ &tag, &segments, segment_it };
 												ctx_.registry.execute<set_selected_attribute_command>(&attr);
@@ -2269,7 +2269,7 @@ namespace vt
 					}
 
 					//window focus frame
-					if (is_shape and last_focused and ctx_.last_focused_video.has_value())
+					if (selected_segment.has_value() and last_focused and ctx_.last_focused_video.has_value())
 					{
 						draw_list->AddRect(top_left, bottom_right, orange, 0, 0, border_thickness);
 					}
