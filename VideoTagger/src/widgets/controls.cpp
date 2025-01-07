@@ -432,7 +432,7 @@ namespace vt::widgets
 		bool node_open = ImGui::TreeNodeEx(id.c_str(), flags);
 		ImGui::PopStyleColor();
 		ImGui::PopStyleVar();
-
+		
 		if (on_dragdrop != nullptr)
 		{
 			on_dragdrop();

@@ -21,7 +21,7 @@ class test_queue(Script):
 			project.group_queue.add_group(group)
 		group = project.group_queue.current_group()
 		if group is not None:
-			log(f"name: {group.name} videos: {len(group.video_infos)}")
+			log(f"Active group:\nname: {group.name} videos: {len(group.video_infos)}")
 
 		log("All groups:")
 		for group in project.group_queue.groups:

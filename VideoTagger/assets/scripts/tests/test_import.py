@@ -12,8 +12,15 @@ class test_import(Script):
 	def on_run(self) -> None:
 		project = current_project()
 		if project is None:
+			error("Failed to get current project")
 			return
 		video = project.import_video(self.vid_path)
 		if video is None:
+			error("Failed to import video")
 			return
-		project.remove_video(video)
+
+		log(
+			f"Video successfully imported from '{video.path}'\nVideo id: {video.id}\nVideo size: {video.size}"
+		)
+		if project.remove_video(video):
+			log("Video successfully removed")

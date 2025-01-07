@@ -1,16 +1,19 @@
-import vt
+import sys
+from vt import *
 
 
-class test_console(vt.Script):
-	def has_progress(self: vt.Script) -> bool:
+class test_console(Script):
+	def has_progress(self: Script) -> bool:
 		return False
 
 	def on_run(self) -> None:
-		project = vt.current_project()
+		project = current_project()
 		if project is None:
 			return
+		print("Testing stdout redirection")
+		print("Testing stderr redirection", file=sys.stderr)
 
 		for _ in range(5):
-			vt.log("Test info")
-			vt.error("Test error")
-			vt.warn("Test multiline\nSecond Line\n\n4th Line")
+			log("Test info")
+			error("Test error")
+			warn("Test multiline\nSecond Line\n\n4th Line")
