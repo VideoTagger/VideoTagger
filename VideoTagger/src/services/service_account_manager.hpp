@@ -35,7 +35,7 @@ namespace vt
 
 	/**
 	 * Define: static constexpr auto static_importer_id = "importer_id" in derived class
-	 * to make app_context::get_account_manager and app_context::is_account_manager_registered template funtions work.
+	 * to make app_context::register_account_manager, app_context::get_account_manager and app_context::is_account_manager_registered template funtions work.
 	 */
 	class service_account_manager
 	{

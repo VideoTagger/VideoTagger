@@ -1703,13 +1703,13 @@ namespace vt
 				if (status == video_download_status::failure)
 				{
 					debug::error("Failed to download video {} ({})", video_name, task.video_id);
-					ctx_.console.add_entry(widgets::console::entry::flag_type::error, fmt::format("Failed to download video {} ({})", video_name, task.video_id));
+					ctx_.console.add_entry(widgets::console::entry::flag_type::error, fmt::format("Failed to download video {} ({})", video_name, task.video_id), widgets::console::entry::source_info{ "VideoTagger", -1 });
 				}
 				else
 				{
 					debug::log("Downloaded video {} ({})", video_name, task.video_id);
 					dynamic_cast<downloadable_video_resource&>(ctx_.current_project->videos.get(task.video_id)).set_file_path(task.task.data->download_path.u8string());
-					ctx_.console.add_entry(widgets::console::entry::flag_type::info, fmt::format("Downloaded video {} ({})", video_name, task.video_id));
+					ctx_.console.add_entry(widgets::console::entry::flag_type::info, fmt::format("Downloaded video {} ({})", video_name, task.video_id), widgets::console::entry::source_info{ "VideoTagger", -1 });
 				}
 
 				it = tasks.erase(it);
