@@ -370,6 +370,7 @@ namespace vt
 		if (json.contains("vertices"))
 		{
 			const auto& json_vertices = json.at("vertices");
+			p.vertices.resize(json_vertices.size());
 			for (size_t i = 0; i < p.vertices.size(); ++i)
 			{
 				p.vertices[i] = json_vertices[i];
