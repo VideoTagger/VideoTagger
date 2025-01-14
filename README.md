@@ -33,12 +33,12 @@ Build the projects by opening the `Visual Studio` solution file and building wit
 ## Linux - Makefile
 Install Required packages
 ```
-build-essential pkg-config libsdl2-dev libavcodec-dev libavformat-dev libswscale-dev python3-dev libgtk-3-dev libglib2.0-dev libgtk2.0-dev
+build-essential pkg-config libsdl2-dev libavcodec-dev libavformat-dev libswscale-dev python3-dev libgtk-3-dev libglib2.0-dev libgtk2.0-dev libssl-dev
 ```
 
 Generate project files with:
 ```shell
-./scripts/linux-gen-projects.sh
+chmod +x ./scripts/linux-gen-projects.sh && ./scripts/linux-gen-projects.sh
 ```
 
 Build the projects by running:

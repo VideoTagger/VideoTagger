@@ -1,5 +1,11 @@
 -- Original code https://github.com/DennyLindberg/basic-pybind11-cpp-module/blob/master/premake5.lua
 
+if os.host() == "windows" then
+	python_cmd = "python"
+else
+	python_cmd = "python3"
+end
+
 function sys_invoke(command)
 	local success, handle = pcall(io.popen, command)
 	if not success then 
@@ -13,7 +19,7 @@ function sys_invoke(command)
 end
 
 function python_find_path()
-	local path = sys_invoke('python -c "import sys; import os; print(os.path.dirname(sys.executable))"')
+	local path = sys_invoke(python_cmd .. ' -c "import sys; import os; print(os.path.dirname(sys.executable))"')
 
 	path = string.gsub(path, "\\\\", "\\")
 	path = string.gsub(path, "\\", "/")
@@ -24,17 +30,17 @@ function python_get_include_path()
 	if os.host() == "windows" then
 		return python_find_path() .. "/include"
 	else
-		return sys_invoke('python -c "from sysconfig import get_paths as gp; print(gp()[\'include\'])"')
+		return sys_invoke(python_cmd .. ' -c "from sysconfig import get_paths as gp; print(gp()[\'include\'])"')
 	end
 end
 
 function python_get_lib_name_and_path()
 	if os.host() == "windows" then
-		local lib_name =  sys_invoke("python -c \"import sys; import os; import glob; path = os.path.dirname(sys.executable); libs = glob.glob(path + '/libs/python*'); print(os.path.splitext(os.path.basename(libs[-1]))[0]);\"")
+		local lib_name =  sys_invoke(python_cmd .. " -c \"import sys; import os; import glob; path = os.path.dirname(sys.executable); libs = glob.glob(path + '/libs/python*'); print(os.path.splitext(os.path.basename(libs[-1]))[0]);\"")
 		return lib_name, python_find_path() .. "/libs"
 	else
-		local lib_name = sys_invoke('python -c "import sysconfig; print(sysconfig.get_config_var(\'LDLIBRARY\'))"')
-		local lib_path = sys_invoke('python -c "from sysconfig import get_config_var as gcv; print(gcv(\'LIBDIR\') or gcv(\'LIBPL\'))"')
+		local lib_name = sys_invoke(python_cmd .. ' -c "import sysconfig; print(sysconfig.get_config_var(\'LDLIBRARY\'))"')
+		local lib_path = sys_invoke(python_cmd .. ' -c "from sysconfig import get_config_var as gcv; print(gcv(\'LIBDIR\') or gcv(\'LIBPL\'))"')
 		return lib_name, lib_path
 	end
 end

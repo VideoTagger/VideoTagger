@@ -48,9 +48,7 @@ namespace vt
 	struct video_import_task
 	{
 		std::optional<video_group_id_t> group_id;
-		std::function<std::unique_ptr<video_resource>()> task;
-
-		std::unique_ptr<video_resource> operator()();
+		std::future<std::unique_ptr<video_resource>> task;
 	};
 
 	struct generate_thumbnail_task

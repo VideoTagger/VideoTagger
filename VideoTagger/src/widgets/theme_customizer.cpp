@@ -58,11 +58,11 @@ namespace vt::widgets
 					auto& color = temp_theme.style.Colors[col_id];
 					ImGui::TableNextRow();
 					ImGui::TableNextColumn(); ImGui::ColorEdit4(color_label.c_str(), (float*)&color, color_flags);
-					ImGui::SameLine(); ImGui::Text(label.c_str());
+					ImGui::SameLine(); ImGui::TextUnformatted(label.c_str());
 					if (!info.empty())
 					{
 						info = "(" + info + ")";
-						ImGui::SameLine(); ImGui::TextDisabled(info.c_str());
+						ImGui::SameLine(); ImGui::TextDisabled("%s", info.c_str());
 					}
 					ImGui::TableNextColumn();
 				};
@@ -96,11 +96,11 @@ namespace vt::widgets
 						auto& color = temp_theme.style.Colors[col_id];
 						ImGui::TableNextRow();
 						ImGui::TableNextColumn(); ImGui::ColorEdit4(color_label.c_str(), (float*)&color, color_flags);
-						ImGui::SameLine(); ImGui::Text(label.c_str());
+						ImGui::SameLine(); ImGui::TextUnformatted(label.c_str());
 						if (!info.empty())
 						{
 							info = "(" + info + ")";
-							ImGui::SameLine(); ImGui::TextDisabled(info.c_str());
+							ImGui::SameLine(); ImGui::TextDisabled("%s", info.c_str());
 						}
 						ImGui::TableNextColumn(); ImGui::TextColored(color, "Text");
 					};
@@ -125,11 +125,11 @@ namespace vt::widgets
 						ImGui::PushStyleColor(ImGuiCol_Button, color);
 						ImGui::PushStyleColor(ImGuiCol_ButtonHovered, color);
 						ImGui::PushStyleColor(ImGuiCol_ButtonActive, color);
-						ImGui::SameLine(); ImGui::Text(label.c_str());
+						ImGui::SameLine(); ImGui::TextUnformatted(label.c_str());
 						if (!info.empty())
 						{
 							info = "(" + info + ")";
-							ImGui::SameLine(); ImGui::TextDisabled(info.c_str());
+							ImGui::SameLine(); ImGui::TextDisabled("%s", info.c_str());
 						}
 						ImGui::TableNextColumn(); ImGui::Button("Button");
 						ImGui::PopStyleColor(3);
@@ -144,11 +144,11 @@ namespace vt::widgets
 						ImGui::PushStyleColor(ImGuiCol_CheckMark, color);
 						ImGui::PushStyleColor(ImGuiCol_FrameBgHovered, ref.Colors[ImGuiCol_FrameBg]);
 						ImGui::PushStyleColor(ImGuiCol_FrameBgActive, ref.Colors[ImGuiCol_FrameBg]);
-						ImGui::SameLine(); ImGui::Text(label.c_str());
+						ImGui::SameLine(); ImGui::TextUnformatted(label.c_str());
 						if (!info.empty())
 						{
 							info = "(" + info + ")";
-							ImGui::SameLine(); ImGui::TextDisabled(info.c_str());
+							ImGui::SameLine(); ImGui::TextDisabled("%s", info.c_str());
 						}
 						std::string check_label = color_label + "Checkbox";
 						bool value = true;
@@ -182,11 +182,11 @@ namespace vt::widgets
 						ImGui::PushStyleColor(ImGuiCol_TabActive, color);
 						ImGui::PushStyleColor(ImGuiCol_TabUnfocused, color);
 						ImGui::PushStyleColor(ImGuiCol_TabUnfocusedActive, color);
-						ImGui::SameLine(); ImGui::Text(label.c_str());
+						ImGui::SameLine(); ImGui::TextUnformatted(label.c_str());
 						if (!info.empty())
 						{
 							info = "(" + info + ")";
-							ImGui::SameLine(); ImGui::TextDisabled(info.c_str());
+							ImGui::SameLine(); ImGui::TextDisabled("%s", info.c_str());
 						}
 						ImGui::TableNextColumn();
 						std::string tab_bar_label = color_label + "TabBar";
@@ -224,11 +224,11 @@ namespace vt::widgets
 						ImGui::PushStyleColor(ImGuiCol_Header, color);
 						ImGui::PushStyleColor(ImGuiCol_HeaderHovered, color);
 						ImGui::PushStyleColor(ImGuiCol_HeaderActive, color);
-						ImGui::SameLine(); ImGui::Text(label.c_str());
+						ImGui::SameLine(); ImGui::TextUnformatted(label.c_str());
 						if (!info.empty())
 						{
 							info = "(" + info + ")";
-							ImGui::SameLine(); ImGui::TextDisabled(info.c_str());
+							ImGui::SameLine(); ImGui::TextDisabled("%s", info.c_str());
 						}
 						std::string header_label = color_label + "Header";
 						ImGui::SetNextItemOpen(false);
@@ -245,11 +245,11 @@ namespace vt::widgets
 						ImGui::PushStyleColor(ImGuiCol_Separator, color);
 						ImGui::PushStyleColor(ImGuiCol_SeparatorHovered, color);
 						ImGui::PushStyleColor(ImGuiCol_SeparatorActive, color);
-						ImGui::SameLine(); ImGui::Text(label.c_str());
+						ImGui::SameLine(); ImGui::TextUnformatted(label.c_str());
 						if (!info.empty())
 						{
 							info = "(" + info + ")";
-							ImGui::SameLine(); ImGui::TextDisabled(info.c_str());
+							ImGui::SameLine(); ImGui::TextDisabled("%s", info.c_str());
 						}
 						ImGui::TableNextColumn(); ImGui::SeparatorEx(ImGuiSeparatorFlags_Horizontal, 5.0f);
 						ImGui::PopStyleColor(3);

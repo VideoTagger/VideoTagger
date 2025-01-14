@@ -127,7 +127,7 @@ namespace vt
 		},
 		[](utils::vec2<uint32_t>& v, int64_t value)
 		{
-			v[0] = static_cast<uint32_t>(std::min(0ll, value));
+			v[0] = static_cast<uint32_t>(std::min(static_cast<int64_t>(0), value));
 		})
 		.def_property("y",
 		[](const utils::vec2<uint32_t>& v)
@@ -136,7 +136,7 @@ namespace vt
 		},
 		[](utils::vec2<uint32_t>& v, int64_t value)
 		{
-			v[1] = static_cast<uint32_t>(std::min(0ll, value));
+			v[1] = static_cast<uint32_t>(std::min(static_cast<int64_t>(0), value));
 		})
 		.def(py::self == py::self);
 

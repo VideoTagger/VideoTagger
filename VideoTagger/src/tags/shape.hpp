@@ -370,6 +370,7 @@ namespace vt
 		if (json.contains("vertices"))
 		{
 			const auto& json_vertices = json.at("vertices");
+			p.vertices.resize(json_vertices.size());
 			for (size_t i = 0; i < p.vertices.size(); ++i)
 			{
 				p.vertices[i] = json_vertices[i];
@@ -432,10 +433,10 @@ namespace vt
 						for (const auto& [keyframe, regions] : json_regions.items())
 						{
 							auto ts = timestamp{ utils::time::parse_time_to_ms(keyframe) };
-							auto& keyframe = map[ts];
+							auto& kf = map[ts];
 							for (const auto& region : regions)
 							{
-								keyframe.push_back(region);
+								kf.push_back(region);
 							}
 						}
 					};

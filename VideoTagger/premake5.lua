@@ -37,7 +37,7 @@ project "VideoTagger"
 		"vendor/nlohmann/single_include",
 		"vendor/utf8",
 		"vendor/pybind11/include",
-		"vendor/cpp-httplib"
+		"vendor/cpp-httplib",
 	}
 
 	pchheader "pch.hpp"
@@ -46,12 +46,6 @@ project "VideoTagger"
 	links
 	{
 		"nativefiledialog-extended",
-		"SDL2",
-		"SDL2main",
-		"avcodec",
-		"avformat",
-		"avutil",
-		"swscale"
 	}
 
 	defines
@@ -80,6 +74,12 @@ project "VideoTagger"
 		flags { "NoPCH" }
 
 	filter "system:windows"
+		files { "src/resources/resource.rc", '**.ico' }
+		vpaths
+		{
+			["src/resources/*"] = { '*.rc', '**.ico' }
+		}
+
 		externalincludedirs
 		{
 			"vendor/SDL2/include",
@@ -116,35 +116,43 @@ project "VideoTagger"
 			"opengl32",
 			"libssl",
 			"libcrypto",
-			PythonLibName
+			"SDL2",
+			"SDL2main",
+			"avcodec",
+			"avformat",
+			"avutil",
+			"swscale",
+			PythonLibName,
 		}
 
 	filter "system:linux"
 		buildoptions
 		{
-			"`pkg-config --cflags libavcodec libavformat libswscale sdl2 opengl gtk+-3.0 glib-2.0 openssl`",
+			"`pkg-config --cflags libavcodec libavformat libavutil libswscale sdl2 opengl gtk+-3.0 glib-2.0 gobject-2.0 gio-2.0 openssl`",
+			"-fpermissive",
 			"`python3-config --cflags`",
-			"-fpermissive"
 		}
 
 		linkoptions
 		{
-			"`pkg-config --libs libavcodec libavformat libswscale sdl2 opengl gtk+-3.0 glib-2.0 openssl`",
-			"`python3-config --embed --ldflags`"
+			"`pkg-config --libs libavcodec libavformat libavutil libswscale sdl2 opengl gtk+-3.0 glib-2.0 gobject-2.0 gio-2.0 openssl`",
+			"`python3-config --embed --ldflags`",
 		}
 
 	filter "system:macosx"
 		buildoptions
 		{
-			"`pkg-config --cflags libavcodec libavformat libswscale sdl2 opengl openssl`",
+			"`pkg-config --cflags libavcodec libavformat libavutil libswscale sdl2 opengl openssl`",
+			"-fpermissive",
 			"-framework AppKit",
             "-framework UniformTypeIdentifiers",
-			"-fpermissive"
+			"`python3-config --cflags`",
 		}
 
 		linkoptions
 		{
-			"`pkg-config --libs libavcodec libavformat libswscale sdl2 opengl openssl`"
+			"`pkg-config --libs libavcodec libavformat libavutil libswscale sdl2 opengl openssl`",
+			"`python3-config --embed --ldflags`",
 		}
 	
 	filter "configurations:Debug"

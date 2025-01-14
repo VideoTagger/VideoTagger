@@ -1,4 +1,8 @@
 #pragma once
+#include <cstdint>
+#include <cstddef>
+#include <cmath>
+#include <cstring>
 
 namespace vt::utils
 {
@@ -25,7 +29,7 @@ namespace vt::utils
 			return mat;
 		}
 
-		static matrix look_at(float* eye, float* target, const float* up = up)
+		static matrix look_at(float* eye, float* target, const float* up = matrix::up)
 		{
 			float z[3] = { eye[0] - target[0], eye[1] - target[1], eye[2] - target[2] };
 			normalize(z);
@@ -207,7 +211,7 @@ namespace vt::utils
 
 		static void normalize(float* v)
 		{
-			float il = 1.f / (std::sqrtf(dot(v, v)) + FLT_EPSILON);
+			float il = 1.f / (std::sqrt(dot(v, v)) + FLT_EPSILON);
 			v[0] = v[0] * il;
 			v[1] = v[1] * il;
 			v[2] = v[2] * il;

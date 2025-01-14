@@ -30,3 +30,4 @@ Makefile
 
 **.buildcfg
 VideoTagger/src/embeds/about.*
+*.aps

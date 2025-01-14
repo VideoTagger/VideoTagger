@@ -12,10 +12,23 @@ then
     exit 1
 fi
 
+if ! command -v python3-config &> /dev/null
+then
+    echo "Error: python3-config could not be found"
+    exit 1
+fi
+
 cd $(dirname $0)/../
 python3 scripts/setup.py
-if [ $? -neq 0 ]; then
+if [ $? -ne 0 ]; then
     echo "Error: Setup failed"
+    exit 1
+fi
+
+cd $(dirname $0)/../
+python3 scripts/gen_about.py
+if [ $? -ne 0 ]; then
+    echo "Error: File generation failed"
     exit 1
 fi
 

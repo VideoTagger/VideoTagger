@@ -173,7 +173,7 @@ namespace vt::widgets
 					//color_indicator(3.f, flag_color(entry.flag));
 					//ImGui::SameLine(2 * style.ItemSpacing.x + 3.f);
 					ImGui::AlignTextToFramePadding();
-					ImGui::TextColored(ImGui::ColorConvertU32ToFloat4(flag_color(entry.flag)), flag_icon(entry.flag));
+					ImGui::TextColored(ImGui::ColorConvertU32ToFloat4(flag_color(entry.flag)), "%s", flag_icon(entry.flag));
 					
 					/*ImGui::SameLine();
 					ImGui::AlignTextToFramePadding();

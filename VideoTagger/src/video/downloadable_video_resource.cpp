@@ -121,7 +121,7 @@ namespace vt
 		else
 		{
 			video_resource_context_menu_item item;
-			item.name = fmt::format("{} Cancel download", icons::download_off);
+			item.name = fmt::format("{} Cancel Download", icons::download_off);
 			item.function = [this]()
 			{
 				auto ptr = download_data_.lock();

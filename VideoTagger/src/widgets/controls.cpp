@@ -423,7 +423,7 @@ namespace vt::widgets
 		{
 			ImGui::SetCursorPosX(ImGui::GetCursorPosX() + style.ItemSpacing.x * 0.5f);
 			ImGui::AlignTextToFramePadding();
-			ImGui::TextColored(icon_color.has_value() ? icon_color.value() : style.Colors[ImGuiCol_Text], icon);
+			ImGui::TextColored(icon_color.has_value() ? icon_color.value() : style.Colors[ImGuiCol_Text], "%s", icon);
 			ImGui::SameLine();
 		}
 
@@ -432,7 +432,7 @@ namespace vt::widgets
 		bool node_open = ImGui::TreeNodeEx(id.c_str(), flags);
 		ImGui::PopStyleColor();
 		ImGui::PopStyleVar();
-
+		
 		if (on_dragdrop != nullptr)
 		{
 			on_dragdrop();

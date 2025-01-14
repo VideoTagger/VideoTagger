@@ -1,8 +1,8 @@
 from collections import defaultdict
-from email.policy import default
 import os
 from pathlib import Path
 import re
+import filecmp
 import requests
 from setup import eprint, WORK_DIR
 
@@ -31,7 +31,10 @@ def embed_about(
 	target_name = Path(target).stem
 	namespace = "namespace vt::embed"
 
-	with open(os.path.join(target_dir, f"{target_name}.hpp"), mode="w") as f:
+	target_hpp = os.path.join(target_dir, f"{target_name}.hpp")
+	temp_hpp = target_hpp + ".tmp"
+
+	with open(temp_hpp, mode="w") as f:
 		f.write("#pragma once\n")
 		for include in ["<string>", "<map>"]:
 			f.write(f"#include {include}\n")
@@ -42,7 +45,19 @@ def embed_about(
 		)
 		f.write(f"}}\n")
 
-	with open(os.path.join(target_dir, f"{target_name}.cpp"), mode="w") as f:
+	if os.path.exists(target_hpp):
+		if not filecmp.cmp(target_hpp, temp_hpp):
+			os.remove(target_hpp)
+			os.rename(temp_hpp, target_hpp)
+		else:
+			os.remove(temp_hpp)
+	else:
+		os.rename(temp_hpp, target_hpp)
+
+	target_cpp = os.path.join(target_dir, f"{target_name}.cpp")
+	temp_cpp = target_cpp + ".tmp"
+
+	with open(temp_cpp, mode="w") as f:
 		for include in [f'"{target_name}.hpp"']:
 			f.write(f"#include {include}\n")
 		app_description = get_app_description()
@@ -57,6 +72,15 @@ def embed_about(
 
 		f.write(f"\t}};\n")
 		f.write(f"}}\n")
+
+	if os.path.exists(target_cpp):
+		if not filecmp.cmp(target_cpp, temp_cpp):
+			os.remove(target_cpp)
+			os.rename(temp_cpp, target_cpp)
+		else:
+			os.remove(temp_cpp)
+	else:
+		os.rename(temp_cpp, target_cpp)
 
 
 def gen_about() -> None:

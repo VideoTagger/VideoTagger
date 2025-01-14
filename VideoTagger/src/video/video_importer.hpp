@@ -10,7 +10,7 @@ namespace vt
 {
 	/**
 	 * Define: static constexpr auto static_importer_id = "importer_id" in derived class
-	 * to make app_context::get_video_importer and app_context::is_video_importer_registered template funtions work.
+	 * to make app_context::register_video_importer, app_context::get_video_importer and app_context::is_video_importer_registered template funtions work.
 	 */
 	class video_importer
 	{

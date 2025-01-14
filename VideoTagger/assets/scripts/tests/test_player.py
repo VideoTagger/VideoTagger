@@ -1,11 +1,19 @@
-import vt
+from vt import *
 
 
-class test_player(vt.Script):
-	def has_progress(self: vt.Script) -> bool:
+class test_player(Script):
+	def has_progress(self: Script) -> bool:
 		return False
 
 	def on_run(self) -> None:
-		if vt.player.is_playing:
-			vt.player.pause()
-			vt.player.seek(vt.Timestamp(0))
+		seek_pos = Timestamp(0)
+		log(f"Player is {'' if player.is_playing else 'not '}playing")
+		if player.is_playing:
+			log(f"Current timestamp: {player.current_timestamp}")
+			log("Pausing...")
+			player.pause()
+			log(f"Seeking to: {seek_pos}")
+			player.seek(seek_pos)
+		else:
+			log("Unpausing...")
+			player.play()

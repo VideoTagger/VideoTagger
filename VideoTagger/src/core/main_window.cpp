@@ -1636,9 +1636,6 @@ namespace vt
 					ctx_.current_project->schedule_video_import(task.importer_id, std::move(import_data), utils::uuid::get());
 				}
 				it = tasks.erase(it);
-
-				//TODO: set some frame time limit;
-				break;
 			}
 		}
 
@@ -1647,7 +1644,13 @@ namespace vt
 			for (auto it = tasks.begin(); it != tasks.end();)
 			{
 				auto& task = *it;
-				auto vid_resource = task();
+				if (task.task.wait_for(std::chrono::seconds{}) != std::future_status::ready)
+				{
+					++it;
+					continue;
+				}
+
+				auto vid_resource = task.task.get();
 				if (vid_resource != nullptr)
 				{
 					video_id_t video_id = vid_resource->id();
@@ -1660,8 +1663,6 @@ namespace vt
 					}
 				}
 				it = tasks.erase(it);
-				//TODO: set some frame time limit;
-				break;
 			}
 		}
 
@@ -1702,13 +1703,13 @@ namespace vt
 				if (status == video_download_status::failure)
 				{
 					debug::error("Failed to download video {} ({})", video_name, task.video_id);
-					ctx_.console.add_entry(widgets::console::entry::flag_type::error, fmt::format("Failed to download video {} ({})", video_name, task.video_id));
+					ctx_.console.add_entry(widgets::console::entry::flag_type::error, fmt::format("Failed to download video {} ({})", video_name, task.video_id), widgets::console::entry::source_info{ "VideoTagger", -1 });
 				}
 				else
 				{
 					debug::log("Downloaded video {} ({})", video_name, task.video_id);
 					dynamic_cast<downloadable_video_resource&>(ctx_.current_project->videos.get(task.video_id)).set_file_path(task.task.data->download_path.u8string());
-					ctx_.console.add_entry(widgets::console::entry::flag_type::info, fmt::format("Downloaded video {} ({})", video_name, task.video_id));
+					ctx_.console.add_entry(widgets::console::entry::flag_type::info, fmt::format("Downloaded video {} ({})", video_name, task.video_id), widgets::console::entry::source_info{ "VideoTagger", -1 });
 				}
 
 				it = tasks.erase(it);
@@ -1841,7 +1842,7 @@ namespace vt
 					point_pos = { (float)ctx_.gizmo_target->at(0), (float)ctx_.gizmo_target->at(1) };
 				}
 
-				widgets::draw_video_widget(video_data.video, video_data.display_texture, timestamp_in_range, is_widget_open, vid_id++, [&point_pos, has_selected_attribute, selected_attribute, is_shape, has_target, &video_data](ImVec2 pos, ImVec2 size, ImVec2 tex_size)
+				widgets::draw_video_widget(video_data.video, video_data.display_texture, timestamp_in_range, is_widget_open, vid_id++, [&point_pos, has_selected_attribute, selected_attribute, is_shape, has_target, &video_data, &selected_segment](ImVec2 pos, ImVec2 size, ImVec2 tex_size)
 				{
 					static constexpr auto orange = tag_attribute::type_color(tag_attribute::type::shape); //0xFF30A0F0;
 					static auto from_tex_pos = [&pos, &tex_size, &size](const ImVec2 point) -> ImVec2
@@ -2184,7 +2185,7 @@ namespace vt
 										draw_list->PushClipRect(top_left, bottom_right, true);
 										shape.draw(current_ts, shape.interpolate, from_tex_pos, from_pixels, tex_size, size, is_selected ? orange : tag.color, fill_color, show_points, [&](size_t i)
 										{
-											if (ImGui::IsMouseClicked(0))
+											if (ImGui::IsMouseDown(0))
 											{
 												ctx_.video_timeline.selected_segment = widgets::selected_segment_data{ &tag, &segments, segment_it };
 												ctx_.registry.execute<set_selected_attribute_command>(&attr);
@@ -2230,7 +2231,7 @@ namespace vt
 						{
 							std::cos(cam_angle[1]) * std::cos(cam_angle[0]) * cam_distance,
 							std::sin(cam_angle[0]) * cam_distance,
-							std::sin(cam_angle[1]) * std::cosf(cam_angle[0]) * cam_distance
+							std::sin(cam_angle[1]) * std::cos(cam_angle[0]) * cam_distance
 						};
 						utils::matrix view_mat = (utils::matrix::look_at(eye, target));
 
@@ -2268,7 +2269,7 @@ namespace vt
 					}
 
 					//window focus frame
-					if (is_shape and last_focused and ctx_.last_focused_video.has_value())
+					if (selected_segment.has_value() and last_focused and ctx_.last_focused_video.has_value())
 					{
 						draw_list->AddRect(top_left, bottom_right, orange, 0, 0, border_thickness);
 					}
@@ -2280,8 +2281,12 @@ namespace vt
 
 		if (ctx_.reset_player_docking)
 		{
-			ctx_.player.dock_windows(4);
-			ctx_.reset_player_docking = false;
+			auto it = ctx_.current_project->video_groups.find(ctx_.current_video_group_id());
+			if (it != ctx_.current_project->video_groups.end())
+			{
+				ctx_.player.dock_windows(it->second.size());
+				ctx_.reset_player_docking = false;
+			}
 		}
 
 		if (ctx_.win_cfg.show_timeline_window/* and ctx_.current_video_group_id != 0*/)
@@ -2338,7 +2343,7 @@ namespace vt
 						case vt::tag_validate_result::too_long: error_text = fmt::format("Name can be at most {} characters long", tag_storage::max_tag_name_length); break;
 						default: error_text = "Invalid name"; break;
 						}
-						ImGui::TextDisabled(error_text.c_str());
+						ImGui::TextDisabled("%s", error_text.c_str());
 						ImGui::NewLine();
 						auto area_size = ImGui::GetWindowSize();
 

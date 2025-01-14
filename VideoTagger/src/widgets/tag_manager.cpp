@@ -101,7 +101,7 @@ namespace vt::widgets
 				ImGui::CloseCurrentPopup();
 			}
 			ImGui::SameLine();
-			ImGui::TextColored({ 0.9f, 0.05f, 0.05f, 1.0f }, error_text.c_str());
+			ImGui::TextColored({ 0.9f, 0.05f, 0.05f, 1.0f }, "%s", error_text.c_str());
 		
 			ImGui::EndPopup();
 		}
