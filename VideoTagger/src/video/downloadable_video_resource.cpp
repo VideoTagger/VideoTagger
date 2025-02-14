@@ -62,11 +62,12 @@ namespace vt
 			return false;
 		}
 
-		//TODO: check error
+		std::filesystem::path path = std::filesystem::absolute(file_path());
+
 		std::error_code error;
-		if (!std::filesystem::remove(file_path(), error))
+		if (!std::filesystem::remove(path, error))
 		{
-			debug::error(error.message());
+			debug::error("Failed to remove file {}: {}", path.u8string(), error.message());
 			return false;
 		}
 
