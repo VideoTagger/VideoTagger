@@ -18,6 +18,7 @@
 #include <widgets/modal/keybind_popup.hpp>
 #include <widgets/modal/keybind_options_popup.hpp>
 #include <widgets/insert_segment_popup.hpp>
+#include <widgets/timeline.hpp>
 #include <embeds/about.hpp>
 
 #include <utils/filesystem.hpp>
@@ -2451,6 +2452,10 @@ namespace vt
 			ctx_.script_progress.open();
 			ctx_.script_progress.render(ctx_.win_cfg.show_script_progress);
 		}
+
+		static widgets::timeline temp_timeline;
+		bool v = true;
+		temp_timeline.render(v);
 		//ImGui::ShowDemoWindow();
 		//ImGui::OpenPopup("Script Progress");
 	}
