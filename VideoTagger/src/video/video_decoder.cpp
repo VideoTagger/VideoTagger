@@ -431,7 +431,7 @@ namespace vt
 		{
 			close();
 		}
-
+		
 		format_context_ = avformat_alloc_context();
 		if (avformat_open_input(&format_context_, path.u8string().c_str(), NULL, NULL) < 0)
 		{
@@ -529,11 +529,7 @@ namespace vt
 			}
 		}
 
-		if (format_context_ != nullptr)
-		{
-			avformat_free_context(format_context_);
-			format_context_ = nullptr;
-		}
+		avformat_close_input(&format_context_);
 
 		eof_ = false;
 		last_read_packet_type_ = stream_type::unknown;
