@@ -124,6 +124,10 @@ namespace vt
 		};
 		show_debug_info();
 
+		if (!ctx_.load_lang_pack())
+		{
+			debug::error("Lang pack failed to load");
+		}
 		init_options();
 		load_settings();
 		init_keybinds();
@@ -419,28 +423,28 @@ namespace vt
 		ctx_.keybinds.clear();
 
 		keybind_flags flags(true, false, false);
-		ctx_.keybinds.insert(ctx_.lang.get(lang_pack_id::save_project), keybind(SDLK_s, keybind_modifiers{ true }, flags,
+		ctx_.keybinds.insert(ctx_.lang->get("project.save").c_str(), keybind(SDLK_s, keybind_modifiers{true}, flags,
 		builtin_action([this]()
 		{
 			if (ImGui::IsPopupOpen(nullptr, ImGuiPopupFlags_AnyPopup)) return;
 			on_save();
 		})));
 
-		ctx_.keybinds.insert(ctx_.lang.get(lang_pack_id::save_project_as), keybind(SDLK_s, keybind_modifiers{ true, true }, flags,
+		ctx_.keybinds.insert(ctx_.lang->get("project.save_as").c_str(), keybind(SDLK_s, keybind_modifiers{true, true}, flags,
 		builtin_action([this]()
 		{
 			if (ImGui::IsPopupOpen(nullptr, ImGuiPopupFlags_AnyPopup)) return;
 			on_save_as();
 		})));
 
-		ctx_.keybinds.insert(ctx_.lang.get(lang_pack_id::show_in_explorer), keybind(SDLK_o, keybind_modifiers{ true, false, true }, flags,
+		ctx_.keybinds.insert(ctx_.lang->get("show_in_explorer").c_str(), keybind(SDLK_o, keybind_modifiers{true, false, true}, flags,
 		builtin_action([this]()
 		{
 			if (ImGui::IsPopupOpen(nullptr, ImGuiPopupFlags_AnyPopup)) return;
 			on_show_in_explorer();
 		})));
 
-		ctx_.keybinds.insert(ctx_.lang.get(lang_pack_id::import_videos), keybind(SDLK_i, keybind_modifiers{ true }, flags,
+		ctx_.keybinds.insert(ctx_.lang->get("import_videos").c_str(), keybind(SDLK_i, keybind_modifiers{true}, flags,
 		builtin_action([this]()
 		{
 			if (ImGui::IsPopupOpen(nullptr, ImGuiPopupFlags_AnyPopup)) return;
@@ -454,14 +458,14 @@ namespace vt
 			on_delete();
 		})));
 
-		ctx_.keybinds.insert(ctx_.lang.get(lang_pack_id::close_project), keybind(SDLK_F4, keybind_modifiers{ true }, flags,
+		ctx_.keybinds.insert(ctx_.lang->get("project.close").c_str(), keybind(SDLK_F4, keybind_modifiers{true}, flags,
 		builtin_action([this]()
 		{
 			if (ImGui::IsPopupOpen(nullptr, ImGuiPopupFlags_AnyPopup)) return;
 			close_project();
 		})));
 
-		ctx_.keybinds.insert(ctx_.lang.get(lang_pack_id::exit), keybind(SDLK_F4, keybind_modifiers{ false, false, true }, flags,
+		ctx_.keybinds.insert(ctx_.lang->get("exit").c_str(), keybind(SDLK_F4, keybind_modifiers{false, false, true}, flags,
 		builtin_action([this]()
 		{
 			if (ImGui::IsPopupOpen(nullptr, ImGuiPopupFlags_AnyPopup)) return;
@@ -1058,9 +1062,9 @@ namespace vt
 	{
 		if (ImGui::BeginMainMenuBar())
 		{
-			if (ImGui::BeginMenu(ctx_.lang.get(lang_pack_id::file)))
+			if (ImGui::BeginMenu(ctx_.lang->get("menu_bar.file").c_str()))
 			{
-				std::string key_name = ctx_.lang.get(lang_pack_id::import_videos);
+				std::string key_name = ctx_.lang->get("import_videos").c_str();
 				auto& kb = ctx_.keybinds.at(key_name);
 				std::string menu_name = fmt::format("{} {}", icons::import_, key_name);
 				if (ImGui::BeginMenu(menu_name.c_str()))
@@ -1083,7 +1087,7 @@ namespace vt
 				}
 				ImGui::Separator();
 				{
-					std::string key_name = ctx_.lang.get(lang_pack_id::save_project);
+					std::string key_name = ctx_.lang->get("project.save").c_str();
 					auto& kb = ctx_.keybinds.at(key_name);
 					std::string menu_item = fmt::format("{} {}", icons::save, key_name);
 					if (ImGui::MenuItem(menu_item.c_str(), kb.name().c_str()))
@@ -1094,7 +1098,7 @@ namespace vt
 
 				{
 
-					std::string key_name = ctx_.lang.get(lang_pack_id::save_project_as);
+					std::string key_name = ctx_.lang->get("project.save_as").c_str();
 					auto& kb = ctx_.keybinds.at(key_name);
 					std::string menu_item = fmt::format("{} {}", icons::save_as, key_name);
 					if (ImGui::MenuItem(menu_item.c_str(), kb.name().c_str()))
@@ -1105,9 +1109,9 @@ namespace vt
 				ImGui::Separator();
 				{
 					{
-						std::string key_name = ctx_.lang.get(lang_pack_id::show_in_explorer);
+						std::string key_name = ctx_.lang->get("show_in_explorer").c_str();
 						auto& kb = ctx_.keybinds.at(key_name);
-						std::string menu_name = fmt::format("{} {}", icons::folder, ctx_.lang.get(lang_pack_id::show_in_explorer));
+						std::string menu_name = fmt::format("{} {}", icons::folder, ctx_.lang->get("show_in_explorer").c_str());
 						if (ImGui::MenuItem(menu_name.c_str(), kb.name().c_str()))
 						{
 							on_show_in_explorer();
@@ -1115,7 +1119,7 @@ namespace vt
 					}
 
 					{
-						std::string menu_name = fmt::format("{} {}", icons::import_export, ctx_.lang.get(lang_pack_id::import_export));
+						std::string menu_name = fmt::format("{} {}", icons::import_export, ctx_.lang->get("import_export").c_str());
 						if (ImGui::BeginMenu(menu_name.c_str()))
 						{
 							if (ImGui::MenuItem("Import Tags", nullptr, &ctx_.win_cfg.show_tag_importer_window))
@@ -1168,7 +1172,7 @@ namespace vt
 				{
 					std::string key_name = "Close Project";
 					auto& kb = ctx_.keybinds.at(key_name);
-					std::string menu_item = std::string(icons::close) + ' ' + ctx_.lang.get(lang_pack_id::close_project);
+					std::string menu_item = std::string(icons::close) + ' ' + ctx_.lang->get("project.close").c_str();
 					if (ImGui::MenuItem(menu_item.c_str(), kb.name().c_str()))
 					{
 						close_project();
@@ -1178,7 +1182,7 @@ namespace vt
 				{
 					std::string key_name = "Exit";
 					auto& kb = ctx_.keybinds.at(key_name);
-					std::string menu_item = std::string(icons::exit) + ' ' + ctx_.lang.get(lang_pack_id::exit);
+					std::string menu_item = std::string(icons::exit) + ' ' + ctx_.lang->get("exit").c_str();
 					if (ImGui::MenuItem(menu_item.c_str(), kb.name().c_str()))
 					{
 						on_close_project(true);
@@ -1187,21 +1191,22 @@ namespace vt
 				ImGui::EndMenu();
 			}
 
-			if (ImGui::BeginMenu(ctx_.lang.get(lang_pack_id::edit)))
+			//TODO: Enable this when undo/redo is implemented
+			/*if (ImGui::BeginMenu(ctx_.lang->get_cstr("menu_bar.edit")))
 			{
-				if (ImGui::MenuItem(ctx_.lang.get(lang_pack_id::undo), nullptr, nullptr, false))
+				if (ImGui::MenuItem(ctx_.lang->get_cstr("menu_bar.edit.undo"), nullptr, nullptr, false))
 				{
 
 				}
 
-				if (ImGui::MenuItem(ctx_.lang.get(lang_pack_id::redo), nullptr, nullptr, false))
+				if (ImGui::MenuItem(ctx_.lang->get_cstr("menu_bar.edit.redo"), nullptr, nullptr, false))
 				{
 
 				}
 				ImGui::EndMenu();
-			}
+			}*/
 
-			if (ImGui::BeginMenu(ctx_.lang.get(lang_pack_id::window)))
+			if (ImGui::BeginMenu(ctx_.lang->get("menu_bar.window").c_str()))
 			{
 				auto& windows = ctx_.settings["show-windows"];
 
@@ -1260,18 +1265,18 @@ namespace vt
 					save_settings();
 					enable_undocking(ctx_.app_settings.enable_undocking);
 				}
-				if (ImGui::MenuItem(ctx_.lang.get(lang_pack_id::redock_videos)))
+				if (ImGui::MenuItem(ctx_.lang->get("redock_videos").c_str()))
 				{
 					ctx_.reset_player_docking = true;
 				}
-				if (ImGui::MenuItem(ctx_.lang.get(lang_pack_id::reset_layout)))
+				if (ImGui::MenuItem(ctx_.lang->get("reset_layout").c_str()))
 				{
 					ctx_.reset_layout = true;
 				}
 				ImGui::EndMenu();
 			}
 
-			if (ImGui::BeginMenu(ctx_.lang.get(lang_pack_id::run)))
+			if (ImGui::BeginMenu(ctx_.lang->get("menu_bar.run").c_str()))
 			{
 				std::function<bool(const std::filesystem::path&)> has_scripts = [&has_scripts](const std::filesystem::path& path)
 				{
@@ -1338,7 +1343,7 @@ namespace vt
 				ImGui::EndMenu();
 			}
 
-			if (ImGui::BeginMenu(ctx_.lang.get(lang_pack_id::tools)))
+			if (ImGui::BeginMenu(ctx_.lang->get("menu_bar.tools").c_str()))
 			{
 				if (ImGui::BeginMenu("Themes"))
 				{
@@ -1362,15 +1367,15 @@ namespace vt
 				}
 				ImGui::MenuItem("Theme Customizer", nullptr, &ctx_.win_cfg.show_theme_customizer_window);
 				ImGui::Separator();
-				if (ImGui::MenuItem(ctx_.lang.get(lang_pack_id::options)))
+				if (ImGui::MenuItem(ctx_.lang->get("menu_bar.tool.options").c_str()))
 				{
 					ctx_.win_cfg.show_options_window = true;
 				}
 				ImGui::EndMenu();
 			}
-			if (ImGui::BeginMenu(ctx_.lang.get(lang_pack_id::help)))
+			if (ImGui::BeginMenu(ctx_.lang->get("menu_bar.help").c_str()))
 			{
-				if (ImGui::MenuItem(ctx_.lang.get(lang_pack_id::about)))
+				if (ImGui::MenuItem(ctx_.lang->get("menu_bar.help.about").c_str()))
 				{
 					ctx_.win_cfg.show_about_window = true;
 				}
@@ -2434,6 +2439,14 @@ namespace vt
 		if (ctx_.win_cfg.show_theme_customizer_window)
 		{
 			ctx_.theme_customizer.render(ctx_.win_cfg.show_theme_customizer_window);
+		}
+
+		//TODO: implement config saving
+		if (true)
+		{
+			bool is_open = true;
+			std::vector<std::shared_ptr<lang_pack>> langs{ ctx_.lang };
+			ctx_.localization_editor.render(is_open, langs);
 		}
 
 		if (ctx_.win_cfg.show_console_window)

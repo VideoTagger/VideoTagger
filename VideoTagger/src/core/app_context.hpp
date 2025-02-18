@@ -14,7 +14,7 @@
 #include "input.hpp"
 #include "keybind_storage.hpp"
 #include "theme.hpp"
-#include "eng_lang_pack.hpp"
+#include "localization/lang_pack.hpp"
 
 #include "main_window.hpp"
 
@@ -32,6 +32,7 @@
 #include <widgets/modal/options.hpp>
 #include <widgets/modal/tag_importer.hpp>
 #include <widgets/modal/script_progress.hpp>
+#include <widgets/localization_editor.hpp>
 #include "displayed_videos_manager.hpp"
 #include <utils/json.hpp>
 #include <utils/vec.hpp>
@@ -104,6 +105,7 @@ namespace vt
 		widgets::theme_customizer theme_customizer;
 		widgets::shape_attributes shape_attributes;
 		widgets::console console;
+		widgets::localization_editor localization_editor;
 		widgets::modal::options options;
 		widgets::modal::script_progress script_progress;
 		widgets::color_picker color_picker;
@@ -115,6 +117,7 @@ namespace vt
 		std::filesystem::path app_settings_filepath = std::filesystem::path("settings").replace_extension("json");
 		std::filesystem::path accounts_filepath = std::filesystem::path("accounts").replace_extension("json");
 		std::filesystem::path script_dir_filepath = std::filesystem::path("assets") / "scripts";
+		std::filesystem::path lang_dir_filepath = std::filesystem::path("assets") / "lang";
 		std::filesystem::path theme_dir_filepath = "themes";
 		std::filesystem::path downloads_dir_filepath = "downloads";
 		registry registry;
@@ -137,7 +140,7 @@ namespace vt
 		widgets::insert_segment_data_container insert_segment_data;
 
 		app_settings app_settings;
-		lang_pack<lang_pack_id> lang{ eng_lang_data };
+		std::shared_ptr<lang_pack> lang = nullptr;
 		std::unique_ptr<main_window> main_window{};
 
 		app_state state_ = app_state::uninitialized;
@@ -177,6 +180,8 @@ namespace vt
 	
 		void set_current_video_group_id(video_group_id_t id);
 		video_group_id_t current_video_group_id() const;
+
+		bool load_lang_pack(const std::string& name = "en_US");
 
 	private:
 		video_group_id_t current_video_group_id_{};

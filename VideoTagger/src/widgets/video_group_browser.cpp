@@ -250,7 +250,7 @@ namespace vt::widgets
 					}
 					if (!can_back_out) ImGui::EndDisabled();
 					ImGui::SameLine();
-					search_bar("##VideoGroupBrowserSearch", "Search...", filter);
+					search_bar("##VideoGroupBrowserSearch", ctx_.lang->get("search_hint").c_str(), filter);
 					ImGui::PopStyleVar();
 
 					ImGui::TableNextRow();

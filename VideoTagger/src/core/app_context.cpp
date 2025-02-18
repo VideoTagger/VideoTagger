@@ -127,4 +127,19 @@ namespace vt
 	{
 		return current_video_group_id_;
 	}
+
+	bool app_context::load_lang_pack(const std::string& name)
+	{
+		auto path = lang_dir_filepath / (name + ".lang");
+		debug::log("Loading lang pack with name: '{}' from path: '{}'", name, path.u8string());
+		if (!std::filesystem::exists(path))
+		{
+			debug::error("Lang pack with name: '{}' not found", name);
+			return false;
+		}
+		auto new_lang = lang_pack::load_from_file(path);
+		if (!new_lang.has_value()) return false;
+		lang = std::make_shared<lang_pack>(new_lang.value());
+		return true;
+	}
 }

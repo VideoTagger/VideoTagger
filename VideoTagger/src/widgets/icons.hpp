@@ -57,6 +57,7 @@ namespace vt::icons
 	inline constexpr auto google_drive_add = "\xee\x99\x9c";
 	inline constexpr auto home = "\xee\xa2\x8a";
 	inline constexpr auto license = "\xee\xae\x81";
+	inline constexpr auto translate = "\xee\xa3\xa2";
 
 	inline constexpr auto property = "\xef\x8e\xaa";
 	inline constexpr auto attribute = "\xee\xab\x93";
@@ -101,6 +102,6 @@ namespace vt::icons
 		align_horizontal_left, align_horizontal_right, align_horizontal_center, align_vertical_bottom, align_vertical_top, align_vertical_center, align_center,
 		info, warning, error, delete_on_run,
 		keyframe, keyframe_current, goto_keyframe, new_region, set_target,
-		download, download_off, arrow_up, refresh, local_storage, google_drive_add, home, license
+		download, download_off, arrow_up, refresh, local_storage, google_drive_add, home, license, translate
 	});
 }

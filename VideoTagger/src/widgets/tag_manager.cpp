@@ -362,7 +362,7 @@ namespace vt::widgets
 			}
 			tooltip("Add Tag");
 			ImGui::SameLine();
-			search_bar("##VideoGroupBrowserSearch", "Search...", filter, ImGui::GetContentRegionAvail().x - 2 * (ImGui::CalcTextSize(icons::toggle_less).x + 2 * style.FramePadding.x));
+			search_bar("##VideoGroupBrowserSearch", ctx_.lang->get("search_hint").c_str(), filter, ImGui::GetContentRegionAvail().x - 2 * (ImGui::CalcTextSize(icons::toggle_less).x + 2 * style.FramePadding.x));
 			ImGui::SameLine();
 			if (icon_button(icons::toggle_more))
 			{

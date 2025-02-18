@@ -259,7 +259,7 @@ namespace vt::widgets
 
 		ImGui::SameLine();
 
-		widgets::search_bar("##SearchBar", "Search...", search_query_, search_bar_width);
+		widgets::search_bar("##SearchBar", ctx_.lang->get("search_hint").c_str(), search_query_, search_bar_width);
 
 		ImGui::Separator();
 
