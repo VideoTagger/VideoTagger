@@ -173,7 +173,12 @@ namespace vt::widgets
 		return utils::lerp<int64_t>(base_interval, time_length / 10, zoom_);
 	}
 
-	void timeline::render(bool& is_open)
+	timeline_state& timeline::state()
+	{
+		return state_;
+	}
+
+	void timeline::render(bool& is_open, segment_storage& segments)
 	{
 		auto& style = ImGui::GetStyle();
 
@@ -215,24 +220,20 @@ namespace vt::widgets
 				draw_cell_debug_rect(zoom_);
 				draw_time_intervals();
 				
-
-				for (size_t i = 0; i < 50; ++i)
+				for (auto& [tag, timeline] : segments)
 				{
 					ImGui::TableNextRow();
 					table_hovered_row_style();
 					//Left panel
 					ImGui::TableNextColumn();
-					ImGui::TextUnformatted("Tag Name");
+					ImGui::TextUnformatted(tag.c_str());
 
 					//Right panel
 					ImGui::TableNextColumn();
-					if (i & 1)
+					for (auto& segment : timeline)
 					{
-						draw_segment(state_.min_ts, state_.current_ts, IM_COL32(150, 0, 0, 0xFF), false);
-					}
-					else
-					{
-						draw_segment(state_.current_ts, state_.max_ts, IM_COL32(0, 150, 0, 0xFF), false);
+						draw_segment(segment.start, segment.end, IM_COL32(150, 0, 0, 0xFF), false);
+						ImGui::SameLine();
 					}
 				}
 				draw_marker();
@@ -251,5 +252,20 @@ namespace vt::widgets
 	int64_t timeline_state::time_length() const
 	{
 		return (max_ts - min_ts).total_milliseconds.count();
+	}
+
+	void timeline_state::set_current_timestamp(timestamp ts)
+	{
+		current_ts = ts;
+	}
+
+	void timeline_state::set_min_timestamp(timestamp ts)
+	{
+		min_ts = ts;
+	}
+
+	void timeline_state::set_max_timestamp(timestamp ts)
+	{
+		max_ts = ts;
 	}
 }

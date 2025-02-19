@@ -1,16 +1,20 @@
 #pragma once
 #include <string>
 #include <utils/timestamp.hpp>
+#include <tags/tag_timeline.hpp>
 
 namespace vt::widgets
 {
 	struct timeline_state
 	{
-		timestamp current_ts{ 1000 * 60 * 60 / 2 };
+		timestamp current_ts{};
 		timestamp min_ts{};
-		timestamp max_ts{ 1000 * 60 * 60 };
+		timestamp max_ts{};
 
 		int64_t time_length() const;
+		void set_current_timestamp(timestamp ts);
+		void set_min_timestamp(timestamp ts);
+		void set_max_timestamp(timestamp ts);
 	};
 
 	struct timeline
@@ -28,7 +32,8 @@ namespace vt::widgets
 		int64_t interval_time() const;
 
 	public:
-		void render(bool& is_open);
+		void render(bool& is_open, segment_storage& segments);
+		timeline_state& state();
 
 		static std::string window_name();
 	};

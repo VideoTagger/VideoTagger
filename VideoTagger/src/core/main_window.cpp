@@ -2468,7 +2468,17 @@ namespace vt
 
 		static widgets::timeline temp_timeline;
 		bool v = true;
-		temp_timeline.render(v);
+
+		if (ctx_.current_video_group_id() != invalid_video_group_id)
+		{
+			auto group_duration = ctx_.displayed_videos.duration();
+
+			auto& state = temp_timeline.state();
+			state.set_min_timestamp(timestamp::zero());
+			state.set_max_timestamp(timestamp(std::chrono::duration_cast<std::chrono::milliseconds>(group_duration)));
+			state.set_current_timestamp(timestamp{ std::chrono::duration_cast<std::chrono::milliseconds>(ctx_.displayed_videos.current_timestamp()) });
+			temp_timeline.render(v, ctx_.current_project->video_groups.at(ctx_.current_video_group_id()).segments());
+		}
 		//ImGui::ShowDemoWindow();
 		//ImGui::OpenPopup("Script Progress");
 	}
