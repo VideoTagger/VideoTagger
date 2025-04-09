@@ -121,4 +121,13 @@ namespace vt::utils
 		}
 		return result;
 	}
+	std::filesystem::path filesystem::get_storage_path(const std::string& organization, const std::string& app_name)
+	{
+		auto buf = SDL_GetPrefPath(organization.c_str(), app_name.c_str());
+		if (buf == nullptr) return {};
+
+		std::string result = buf;
+		SDL_free(buf);
+		return result;
+	}
 }

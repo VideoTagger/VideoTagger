@@ -16,6 +16,7 @@ namespace vt
 		void on_show_in_explorer();
 		void on_import_videos();
 		void on_delete();
+		void on_first_launch();
 
 		bool load_accounts();
 		bool load_settings();
@@ -23,6 +24,8 @@ namespace vt
 		void save_project();
 		void save_project_as(const std::filesystem::path& filepath);
 		void close_project();
+
+		void copy_app_assets();
 
 		void init_keybinds();
 		void init_player();
