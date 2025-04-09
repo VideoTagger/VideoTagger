@@ -9,6 +9,7 @@
 #include <core/actions.hpp>
 
 #include <utils/string.hpp>
+#include <utils/filesystem.hpp>
 #include <scripts/scripting_engine.hpp>
 #include <ImGuizmo.h>
 
@@ -45,8 +46,6 @@ namespace vt
 	bool app::init(const app_window_config& main_config)
 	{
 		debug::init();
-		//Clears the log file
-		if (debug::log_filepath != "") std::ofstream{ debug::log_filepath };
 
 		SDL_SetHint(SDL_HINT_WINDOWS_NO_CLOSE_ON_ALT_F4, "1");
 		SDL_SetHint(SDL_HINT_IME_SHOW_UI, "1");
@@ -95,7 +94,8 @@ namespace vt
 		
 		ImGuiIO& io = ImGui::GetIO();
 		ImGuiStyle& style = ImGui::GetStyle();
-		io.IniFilename = "layout.ini";
+		static auto layout_path = utils::filesystem::normalize((ctx_.storage_path() / "layout.ini"));
+		io.IniFilename = layout_path.c_str();
 		io.ConfigFlags |= ImGuiConfigFlags_DockingEnable | ImGuiConfigFlags_ViewportsEnable;
 		io.ConfigWindowsMoveFromTitleBarOnly = true;
 
@@ -111,6 +111,9 @@ namespace vt
 
 		ctx_.script_eng.init();
 		ctx_.register_handlers();
+
+		auto storage_path = std::filesystem::absolute(app_context::storage_path()).u8string();
+		debug::log("Storage Path: \x1b]8;;file://{}\033\\{}\033]8;;\033\\", storage_path, storage_path);
 
 		ctx_.state_ = app_state::initialized;
 		return true;

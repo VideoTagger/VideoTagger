@@ -20,7 +20,6 @@ namespace vt
 			full = console | file
 		};
 
-		static constexpr const char* log_filepath = "app.log";
 		static logging_mode log_mode;
 
 		static void init();
@@ -57,6 +56,14 @@ namespace vt
 			}
 			if (static_cast<uint8_t>(log_mode) & static_cast<uint8_t>(debug::logging_mode::file))
 			{
+				auto logs_dir = logs_filepath();
+				if (!std::filesystem::exists(logs_dir))
+				{
+					std::filesystem::create_directories(logs_dir);
+				}
+
+				auto log_filepath = logs_dir / "app.log";
+
 				std::ofstream log(log_filepath, std::ios::app);
 				if (log.is_open()) log << timestamp << flag << msg;
 			}
@@ -88,5 +95,7 @@ namespace vt
 		{
 			log_source("main", "Panic!", format, std::forward<args_t&&>(args)...);
 		}
+
+		static std::filesystem::path logs_filepath();
 	};
 }

@@ -322,7 +322,7 @@ namespace vt::widgets
 		std::vector<std::filesystem::path> project_paths(projects_.size());
 		for (size_t i = 0; i < projects_.size(); ++i)
 		{
-			project_paths[i] = std::filesystem::relative(projects_[i].path);
+			project_paths[i] = std::filesystem::absolute(projects_[i].path);
 		}
 		projects = project_paths;
 		utils::json::write_to_file(json, filepath);

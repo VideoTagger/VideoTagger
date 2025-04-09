@@ -1,6 +1,7 @@
 #include "pch.hpp"
 #include "app_context.hpp"
 #include <core/debug.hpp>
+#include <utils/filesystem.hpp>
 #include <services/google/google_account_manager.hpp>
 #include <video/local_video_importer.hpp>
 #include <video/google_drive/google_drive_video_importer.hpp>
@@ -142,4 +143,25 @@ namespace vt
 		lang = std::make_shared<lang_pack>(new_lang.value());
 		return true;
 	}
+
+	bool app_context::load_or_create_lang_pack(const std::string& name, const std::string& filename)
+	{
+		auto path = lang_dir_filepath / (filename + ".lang");
+		debug::log("Loading lang pack with name: '{}' from path: '{}'", name, path.u8string());
+		if (!std::filesystem::exists(path))
+		{
+			debug::error("Lang pack with name: '{}' not found, creating new lang pack...", name);
+			lang = std::make_shared<lang_pack>(name, filename);
+			return true;
+		}
+		auto new_lang = lang_pack::load_from_file(path);
+		if (!new_lang.has_value()) return false;
+		lang = std::make_shared<lang_pack>(new_lang.value());
+		return true;
+	}
+
+    std::filesystem::path app_context::storage_path()
+    {
+        return utils::filesystem::get_storage_path("VideoTagger", "VideoTagger");
+    }
 }

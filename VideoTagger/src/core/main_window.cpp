@@ -113,7 +113,7 @@ namespace vt
 		{
 			ctx_.project_selector.sort();
 			ctx_.project_selector.save_projects_file(ctx_.projects_list_filepath);
-			debug::log("Saving projects list to {}", std::filesystem::relative(ctx_.projects_list_filepath).u8string());
+			debug::log("Saving projects list to {}", std::filesystem::absolute(ctx_.projects_list_filepath).u8string());
 		};
 
 		ctx_.group_browser.on_open_video = [this](video_id_t id)
@@ -124,18 +124,22 @@ namespace vt
 		};
 		show_debug_info();
 
-		if (!ctx_.load_lang_pack())
-		{
-			debug::error("Lang pack failed to load");
-		}
 		init_options();
 		load_settings();
+		if (ctx_.first_launch)
+		{
+			on_first_launch();
+		}
+		if (!ctx_.load_or_create_lang_pack("English", "en_US"))
+		{
+			debug::panic("Lang pack failed to load");
+		}
 		init_keybinds();
 		init_player();
 		fetch_themes();
 		load_accounts();
-		ctx_.scripts = fetch_scripts(ctx_.script_dir_filepath);
 
+		ctx_.scripts = fetch_scripts(ctx_.script_dir_filepath);
 		ctx_.project_selector.load_projects_file(ctx_.projects_list_filepath);
 	}
 
@@ -257,6 +261,13 @@ namespace vt
 		}
 	}
 
+	void main_window::on_first_launch()
+	{
+		ctx_.reset_layout = true;
+		copy_app_assets();
+		ctx_.settings["first-launch"] = false;
+	}
+
 	bool main_window::load_accounts()
 	{
 		if (!std::filesystem::exists(ctx_.accounts_filepath))
@@ -321,11 +332,7 @@ namespace vt
 			}
 			if (ctx_.settings.contains("first-launch"))
 			{
-				ctx_.first_launch = ctx_.settings["first-launch"];
-				if (ctx_.first_launch)
-				{
-					ctx_.reset_layout = true;
-				}
+				ctx_.first_launch = ctx_.settings["first-launch"];				
 			}
 			if (ctx_.settings.contains("show-windows"))
 			{
@@ -372,7 +379,6 @@ namespace vt
 		{
 			ctx_.reset_layout = true;
 		}
-		ctx_.settings["first-launch"] = false;
 		build_fonts(font_size);
 		return result;
 	}
@@ -415,6 +421,27 @@ namespace vt
 			ctx_.video_timeline.selected_segment = std::nullopt;
 			ctx_.is_project_dirty = false;
 			set_subtitle();
+		}
+	}
+
+	void main_window::copy_app_assets()
+	{
+		std::filesystem::path assets_path = "assets";
+		auto lang_path = assets_path / "lang";
+		debug::log("Copying builtin assets...");
+
+		if (!std::filesystem::exists(ctx_.lang_dir_filepath))
+		{
+			std::filesystem::create_directories(ctx_.lang_dir_filepath);
+		}
+
+		for (const auto& entry : std::filesystem::directory_iterator(lang_path))
+		{
+			if (entry.is_directory()) continue;
+			auto source = entry.path();
+			auto target = ctx_.lang_dir_filepath / source.filename();
+			debug::log("Copied asset {} -> {}", source.u8string(), target.u8string());
+			std::filesystem::copy_file(source, target, std::filesystem::copy_options::overwrite_existing);
 		}
 	}
 
@@ -2550,6 +2577,7 @@ namespace vt
 			ImGui::DockBuilderDockWindow(widgets::shape_attributes::window_name().c_str(), main_dock_right);
 			ImGui::DockBuilderDockWindow(widgets::video_group_queue::window_name().c_str(), main_dock_down);
 			ImGui::DockBuilderDockWindow("Video Player", main_dock_up);
+			ImGui::DockBuilderDockWindow(widgets::localization_editor::window_name().c_str(), main_dock_up);
 			ImGui::DockBuilderDockWindow(widgets::video_browser::window_name().c_str(), main_dock_up_left);
 			ImGui::DockBuilderDockWindow("Theme Customizer", main_dock_up);
 			ImGui::DockBuilderDockWindow(widgets::console::window_name().c_str(), dockspace_id_copy);

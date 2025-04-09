@@ -26,12 +26,15 @@ namespace vt
 		std::string& name();
 		const std::string& name() const;
 		std::vector<std::string> keys() const;
+		bool is_dirty() const;
 
 		std::string get(const std::string& id);
 		std::string& at(const std::string& id);
 		const std::string& at(const std::string& id) const;
 		std::string& operator[](const std::string& id);
 		const std::string& operator[](const std::string& id) const;
+
+		void save(const std::filesystem::path& dir);
 
 		static std::optional<lang_pack> load_from_file(const std::filesystem::path& path);
 	};

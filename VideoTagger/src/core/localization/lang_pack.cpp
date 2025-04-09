@@ -33,6 +33,11 @@ namespace vt
 		return result;
 	}
 
+	bool lang_pack::is_dirty() const
+	{
+		return is_dirty_;
+	}
+
 	std::string lang_pack::get(const std::string& id)
 	{
 		auto it = data_.find(id);
@@ -62,6 +67,26 @@ namespace vt
 	{
 		return at(id);
 	}
+
+    void lang_pack::save(const std::filesystem::path& dir)
+    {
+		if (!std::filesystem::exists(dir))
+		{
+			std::filesystem::create_directories(dir);
+		}
+
+		auto path = dir / (filename_ + ".lang");
+		nlohmann::ordered_json json;
+		auto& meta = json["@meta"];
+		meta["name"] = name_;
+		meta["editable"] = editable_;
+		for (const auto& [key, value] : data_)
+		{
+			json[key] = value;
+		}
+
+		utils::json::write_to_file(json, path);
+    }
 
 	std::optional<lang_pack> lang_pack::load_from_file(const std::filesystem::path& path)
 	{

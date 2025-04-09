@@ -1,5 +1,6 @@
 #include "pch.hpp"
 #include "debug.hpp"
+#include <core/app_context.hpp>
 
 #define NOMINMAX
 #ifndef WIN32_LEAN_AND_MEAN
@@ -27,4 +28,9 @@ namespace vt
 		}
 #endif
 	}
+
+    std::filesystem::path debug::logs_filepath()
+    {
+        return ctx_.storage_path() / "logs";
+    }
 }

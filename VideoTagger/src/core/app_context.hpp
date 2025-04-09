@@ -113,15 +113,15 @@ namespace vt
 
 		static constexpr auto valid_video_extensions = std::array{ "mp4", "mkv", "avi", "mov", "flv", "wmv", "webm", "m4v", "mpg", "mpeg", "3gp", "ogv", "vob", "mts", "m2ts", "mxf", "f4v", "divx", "rmvb", "asf", "swf" };
 
-		std::filesystem::path projects_list_filepath = std::filesystem::path("projects").replace_extension("json");
-		std::filesystem::path app_settings_filepath = std::filesystem::path("settings").replace_extension("json");
-		std::filesystem::path accounts_filepath = std::filesystem::path("accounts").replace_extension("json");
+		std::filesystem::path projects_list_filepath = storage_path() / std::filesystem::path("projects").replace_extension("json");
+		std::filesystem::path app_settings_filepath = storage_path() / std::filesystem::path("settings").replace_extension("json");
+		std::filesystem::path accounts_filepath = storage_path() / std::filesystem::path("accounts").replace_extension("json");
 		std::filesystem::path script_dir_filepath = std::filesystem::path("assets") / "scripts";
-		std::filesystem::path lang_dir_filepath = std::filesystem::path("assets") / "lang";
-		std::filesystem::path cache_dir_filepath = std::filesystem::path("cache");
+		std::filesystem::path lang_dir_filepath = storage_path() / "lang";
+		std::filesystem::path theme_dir_filepath = storage_path() / "themes";
+		std::filesystem::path downloads_dir_filepath = storage_path() / "downloads";
+		std::filesystem::path cache_dir_filepath = storage_path() / std::filesystem::path("cache");
 		std::filesystem::path thumbnail_dir_filepath = cache_dir_filepath / "thumbnails";
-		std::filesystem::path theme_dir_filepath = "themes";
-		std::filesystem::path downloads_dir_filepath = "downloads";
 		registry registry;
 		nlohmann::ordered_json settings;
 		window_config win_cfg;
@@ -184,6 +184,9 @@ namespace vt
 		video_group_id_t current_video_group_id() const;
 
 		bool load_lang_pack(const std::string& name = "en_US");
+		bool load_or_create_lang_pack(const std::string& name, const std::string& filename);
+
+		static std::filesystem::path storage_path();
 
 	private:
 		video_group_id_t current_video_group_id_{};
