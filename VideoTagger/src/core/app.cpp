@@ -8,6 +8,7 @@
 #include <core/debug.hpp>
 #include <core/actions.hpp>
 
+#include "audio.hpp"
 #include <utils/string.hpp>
 #include <utils/filesystem.hpp>
 #include <scripts/scripting_engine.hpp>
@@ -49,7 +50,7 @@ namespace vt
 
 		SDL_SetHint(SDL_HINT_WINDOWS_NO_CLOSE_ON_ALT_F4, "1");
 		SDL_SetHint(SDL_HINT_IME_SHOW_UI, "1");
-		if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS) < 0)
+		if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS | SDL_INIT_AUDIO) < 0)
 		{
 			debug::error("SDL failed to initialize with error: {}", SDL_GetError());
 			return false;
@@ -114,6 +115,7 @@ namespace vt
 
 		auto storage_path = std::filesystem::absolute(app_context::storage_path()).u8string();
 		debug::log("Storage Path: \x1b]8;;file://{}\033\\{}\033]8;;\033\\", storage_path, storage_path);
+		audio::init();
 
 		ctx_.state_ = app_state::initialized;
 		return true;
@@ -162,6 +164,7 @@ namespace vt
 		ImGui_ImplSDL2_Shutdown();
 		ImGui::DestroyContext();
 
+		audio::shutdown();
 		NFD::Quit();
 		SDL_Quit();
 		ctx_.state_ = app_state::uninitialized;
