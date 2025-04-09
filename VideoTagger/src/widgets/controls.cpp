@@ -269,29 +269,19 @@ namespace vt::widgets
 		return result;
 	}
 
-    bool frame_dragger(int64_t& frame, int64_t min_frame, int64_t max_frame, bool& is_dragging)
+    bool frame_dragger(int64_t& frame, bool& is_dragging)
     {
 		const auto& style = ImGui::GetStyle();
 		bool result{};
 		ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2{ 0, style.ItemSpacing.y });
 
-		if (is_dragging ? icon_button_no_cursor(icons::chevron_left) : icon_button(icons::chevron_left))
+		if (is_dragging)
 		{
-			auto new_frame = std::max(frame - 1, min_frame);
-			if (frame != new_frame)
+			frame = (int64_t)(ImGui::GetIO().MouseDelta.x);
+			if (frame != 0)
 			{
 				result = true;
 			}
-			frame = new_frame;
-		}
-		ImGui::SameLine();
-		is_dragging ? ImGui::TextUnformatted(icons::bullet) : ImGui::TextDisabled("%s", icons::bullet);
-		
-		if (is_dragging)
-		{
-			static constexpr float speed = 0.1f;
-			auto delta = (int64_t)(ImGui::GetIO().MouseDelta.x * speed);
-			frame = std::clamp(delta, min_frame, max_frame);
 			ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeEW);
 
 			if (ImGui::IsMouseReleased(0))
@@ -299,25 +289,46 @@ namespace vt::widgets
 				is_dragging = false;
 			}
 		}
-		else if (ImGui::IsItemClicked(0))
-		{
-			is_dragging = true;
-		}
-		else if (ImGui::IsItemHovered())
-		{
-			ImGui::SetMouseCursor(ImGuiMouseCursor_Hand);
-		}
 
-		ImGui::SameLine();
-		if (is_dragging ? icon_button_no_cursor(icons::chevron_right) : icon_button(icons::chevron_right))
+		ImGui::BeginDisabled(is_dragging and frame >= 0);
+		if (is_dragging ? icon_button_no_cursor(icons::chevron_left) : icon_button(icons::chevron_left))
 		{
-			auto new_frame = std::min(frame + 1, max_frame);
+			auto new_frame = frame - 1;
 			if (frame != new_frame)
 			{
 				result = true;
 			}
 			frame = new_frame;
 		}
+		ImGui::EndDisabled();
+		ImGui::SameLine();
+		is_dragging ? ImGui::TextUnformatted(icons::bullet) : ImGui::TextDisabled("%s", icons::bullet);
+	
+		if (!is_dragging)
+		{
+			if (ImGui::IsItemClicked(0))
+			{
+				is_dragging = true;
+			}
+			else if (ImGui::IsItemHovered())
+			{
+				ImGui::SetMouseCursor(ImGuiMouseCursor_Hand);
+			}
+		}
+		
+
+		ImGui::SameLine();
+		ImGui::BeginDisabled(is_dragging and frame <= 0);
+		if (is_dragging ? icon_button_no_cursor(icons::chevron_right) : icon_button(icons::chevron_right))
+		{
+			auto new_frame = frame + 1;
+			if (frame != new_frame)
+			{
+				result = true;
+			}
+			frame = new_frame;
+		}
+		ImGui::EndDisabled();
 		ImGui::PopStyleVar();
 		return result;
     }

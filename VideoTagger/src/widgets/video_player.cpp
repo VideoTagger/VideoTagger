@@ -127,20 +127,22 @@ namespace vt::widgets
 			if (!has_child_videos) ImGui::BeginDisabled();
 			ImGui::Columns(3);
 			{
-				int64_t current_frame{};
+				int64_t frame{};
 				static bool is_frame_dragging = false;
-				ImGui::AlignTextToFramePadding();
-				if (frame_dragger(current_frame, 0, 100, is_frame_dragging))
+				if (callbacks.on_seek != nullptr and frame_dragger(frame, is_frame_dragging))
 				{
-					//TODO: Skip to current_frame
+					if (callbacks.on_set_playing != nullptr)
+					{
+						callbacks.on_set_playing(false);
+					}
+					std::chrono::nanoseconds seek_duration = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::duration<double>(1.f / ctx_.displayed_videos.max_framerate()));
+					callbacks.on_seek(data().current_ts + frame * seek_duration);
 				}
 				ImGui::SameLine();
 
 				auto avail_size = ImGui::GetContentRegionAvail();
 				auto time_size = ImGui::CalcTextSize("00:00:00:000");
-				auto total_size = ImGui::CalcTextSize("00:00:00:000 | 00:00:00:000");
 
-				ImGui::SetCursorPos({ avail_size.x - total_size.x, ImGui::GetCursorPosY() });
 				ImGui::SetNextItemWidth(time_size.x);
 				ImGui::PushStyleColor(ImGuiCol_FrameBg, { 0, 0, 0, 0 });
 				if (widgets::time_input("##TimeInput", &current_time, 1, 0, duration.total_milliseconds.count()))
