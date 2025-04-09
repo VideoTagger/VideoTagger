@@ -29,6 +29,15 @@ namespace vt::widgets
 		return result;
 	}
 
+	bool icon_button_no_cursor(const char* label, const ImVec2& size, const ImVec4& color)
+	{
+		ImGui::PushStyleColor(ImGuiCol_Button, ImVec4{});
+		ImGui::PushStyleColor(ImGuiCol_Text, color);
+		bool result = ImGui::Button(label, size);
+		ImGui::PopStyleColor(2);
+		return result;
+	}
+
 	void tooltip(const char* text)
 	{
 		if (ImGui::IsItemHovered(ImGuiHoveredFlags_ForTooltip | ImGuiHoveredFlags_DelayNormal) and ImGui::BeginTooltip())
@@ -259,6 +268,58 @@ namespace vt::widgets
 		}
 		return result;
 	}
+
+    bool frame_dragger(uint64_t& frame, uint64_t min_frame, uint64_t max_frame, bool& is_dragging)
+    {
+		const auto& style = ImGui::GetStyle();
+		bool result{};
+		ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2{ 0, style.ItemSpacing.y });
+
+		if (is_dragging ? icon_button_no_cursor(icons::chevron_left) : icon_button(icons::chevron_left))
+		{
+			auto new_frame = std::max(frame - 1, min_frame);
+			if (frame != new_frame)
+			{
+				result = true;
+			}
+			frame = new_frame;
+		}
+		ImGui::SameLine();
+		is_dragging ? ImGui::TextUnformatted(icons::bullet) : ImGui::TextDisabled("%s", icons::bullet);
+		
+		if (is_dragging)
+		{
+			static constexpr float speed = 0.1f;
+			auto delta = ImGui::GetIO().MouseDelta.x * speed;
+			ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeEW);
+
+			if (ImGui::IsMouseReleased(0))
+			{
+				is_dragging = false;
+			}
+		}
+		else if (ImGui::IsItemClicked(0))
+		{
+			is_dragging = true;
+		}
+		else if (ImGui::IsItemHovered())
+		{
+			ImGui::SetMouseCursor(ImGuiMouseCursor_Hand);
+		}
+
+		ImGui::SameLine();
+		if (is_dragging ? icon_button_no_cursor(icons::chevron_right) : icon_button(icons::chevron_right))
+		{
+			auto new_frame = std::min(frame + 1, max_frame);
+			if (frame != new_frame)
+			{
+				result = true;
+			}
+			frame = new_frame;
+		}
+		ImGui::PopStyleVar();
+		return result;
+    }
 
 	extern bool search_bar(const char* label, const char* hint, std::string& buffer, float width, bool enable_button, ImGuiInputTextFlags flags)
 	{

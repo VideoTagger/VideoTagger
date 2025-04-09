@@ -11,6 +11,7 @@ namespace vt::widgets
 {
 	extern bool checkbox(const char* label, bool* value);
 	extern bool icon_button(const char* label, const ImVec2& size = ImVec2{}, const ImVec4& color = ImGui::GetStyleColorVec4(ImGuiCol_Text));
+	extern bool icon_button_no_cursor(const char* label, const ImVec2& size = ImVec2{}, const ImVec4& color = ImGui::GetStyleColorVec4(ImGuiCol_Text));
 	extern void tooltip(const char* text);
 	extern bool icon_toggle_button(const char* label, bool is_toggled, const ImVec2& size = ImVec2{}, const ImVec4& color = ImGui::GetStyleColorVec4(ImGuiCol_Text));
 
@@ -26,6 +27,7 @@ namespace vt::widgets
 	extern void text_with_size(const char* text, ImVec2 size = { 0.f, 0.f });
 
 	extern bool timestamp_control(const std::string& name, timestamp& timestamp, uint64_t min_timestamp, uint64_t max_timestamp, bool* was_activated, bool* was_released, bool fill_area = true);
+	extern bool frame_dragger(uint64_t& frame, uint64_t min_frame, uint64_t max_frame, bool& is_dragging);
 	
 	extern bool search_bar(const char* label, const char* hint, std::string& buffer, float width = 0.0f, bool enable_button = true, ImGuiInputTextFlags flags = ImGuiInputTextFlags_AutoSelectAll | ImGuiInputTextFlags_EscapeClearsAll | ImGuiInputTextFlags_EnterReturnsTrue);
 

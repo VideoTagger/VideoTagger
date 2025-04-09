@@ -65,6 +65,10 @@ namespace vt::icons
 	inline constexpr auto timeline = "\xef\x90\xb2";
 	inline constexpr auto queue = "\xee\x81\xa4";
 	inline constexpr auto database = "\xef\x88\x8e";
+	
+	inline constexpr auto bullet = "\xee\x81\xa1";
+	inline constexpr auto chevron_left = "\xee\x97\x8b";
+	inline constexpr auto chevron_right = "\xee\x97\x8c";
 
 	inline constexpr auto shape = "\xee\x95\xb4";
 	inline constexpr auto shape_none = "\xef\x80\xa3";
@@ -98,6 +102,7 @@ namespace vt::icons
 		dots_hor, play, play_next, play_queue, pause, repeat, repeat_one, retry, shuffle, skip_next, skip_prev, fast_back, fast_fwd,
 		save, save_as, import_, import_export, exit, close, back, visibility_on, visibility_off, add, delete_, reset, folder, folder_code, file, label, tags, add_tag, expand_less, expand_more,
 		toggle_less, toggle_more, link, link_off, edit, help, video_group, video, search, terminal, property, attribute, object, timeline, queue, database,
+		bullet, chevron_left, chevron_right,
 		shape, shape_none, shape_circle, shape_rectangle, shape_polygon, interpolate,
 		align_horizontal_left, align_horizontal_right, align_horizontal_center, align_vertical_bottom, align_vertical_top, align_vertical_center, align_center,
 		info, warning, error, delete_on_run,
