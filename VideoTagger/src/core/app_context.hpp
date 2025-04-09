@@ -118,6 +118,8 @@ namespace vt
 		std::filesystem::path accounts_filepath = std::filesystem::path("accounts").replace_extension("json");
 		std::filesystem::path script_dir_filepath = std::filesystem::path("assets") / "scripts";
 		std::filesystem::path lang_dir_filepath = std::filesystem::path("assets") / "lang";
+		std::filesystem::path cache_dir_filepath = std::filesystem::path("cache");
+		std::filesystem::path thumbnail_dir_filepath = cache_dir_filepath / "thumbnails";
 		std::filesystem::path theme_dir_filepath = "themes";
 		std::filesystem::path downloads_dir_filepath = "downloads";
 		registry registry;

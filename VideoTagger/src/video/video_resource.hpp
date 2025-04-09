@@ -22,6 +22,17 @@ namespace vt
 		std::optional<double> fps;
 		std::optional<std::chrono::nanoseconds> duration;
 		std::optional<std::array<uint8_t, utils::hash::sha256_byte_count>> sha256;
+
+		std::string sha256_string() const;
+	};
+
+	struct video_resource_thumbnail
+	{
+		std::vector<uint8_t> pixels;
+		int width;
+		int height;
+		
+		gl_texture texture() const;
 	};
 
 	struct make_metadata_include_fields
@@ -71,7 +82,9 @@ namespace vt
 		virtual void icon_custom_draw(ImDrawList& draw_list, ImRect item_rect, ImRect image_rect) const;
 		virtual void on_remove();
 		
-		virtual std::function<bool()> update_thumbnail_task() = 0; //TODO: use a task class
+		//TODO: size as argument
+		virtual std::optional<video_resource_thumbnail> generate_thumbnail() = 0;
+
 		virtual std::function<void()> on_refresh_task(); //TODO: use a task class
 
 		void set_metadata(const video_resource_metadata& metadata);

@@ -12,7 +12,7 @@ namespace vt
 		const std::string& file_id() const;
 
 		video_stream video() const override;
-		std::function<bool()> update_thumbnail_task() override;
+		std::optional<video_resource_thumbnail> generate_thumbnail() override;
 		std::function<void()> on_refresh_task() override;
 		video_downloadable downloadable() const override;
 

@@ -256,7 +256,7 @@ namespace vt
 		}
 		if (metadata_.sha256.has_value())
 		{
-			result["sha256"] = utils::hash::bytes_to_hex(*metadata_.sha256, utils::hash::string_case::lower);
+			result["sha256"] = metadata_.sha256_string();
 		}
 
 		on_save(result);
@@ -270,5 +270,20 @@ namespace vt
 		{
 			json["file-path"] = file_path_;
 		}
+	}
+
+	std::string video_resource_metadata::sha256_string() const
+	{
+		if (!sha256.has_value())
+		{
+			return std::string();
+		}
+
+		return utils::hash::bytes_to_hex(*sha256, utils::hash::string_case::lower);
+	}
+
+	gl_texture video_resource_thumbnail::texture() const
+	{
+		return gl_texture(width, height, GL_RGB, pixels.data());
 	}
 }

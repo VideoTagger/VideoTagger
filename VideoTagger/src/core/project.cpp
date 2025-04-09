@@ -88,7 +88,7 @@ namespace vt
 		return task(import_data);
 	}
 
-	bool generate_thumbnail_task::operator()()
+	bool load_thumbnail_task::operator()()
 	{
 		return task();
 	}
@@ -148,17 +148,68 @@ namespace vt
 		video_download_tasks.push_back(std::move(task));
 	}
 
-	void project::schedule_generate_thumbnail(video_id_t video_id)
+	void project::schedule_load_thumbnail(video_id_t video_id, bool force_generate, bool cache_result)
 	{
 		if (!videos.contains(video_id))
 		{
 			return;
 		}
 
-		generate_thumbnail_task task;
-		task.task = videos.get(video_id).update_thumbnail_task();
+		load_thumbnail_task task;
+		task.task = [video = &videos.get(video_id), force_generate, cache_result]()
+		{
+			std::filesystem::path filepath = ctx_.thumbnail_dir_filepath / video->metadata().sha256_string();
+			
+			//TODO: use stb_image
+			if (!force_generate)
+			{
+				SDL_Surface* surface = SDL_LoadBMP(filepath.u8string().c_str());
+				if (surface != nullptr)
+				{
+					//if (surface->format->format != SDL_PIXELFORMAT_RGB888)
+					//{
+					//	auto target_format = SDL_AllocFormat(SDL_PIXELFORMAT_RGB888);
+					//	auto tmp_surface = SDL_ConvertSurface(surface, target_format, 0);
+					//	SDL_FreeSurface(surface);
+					//	surface = tmp_surface;
+					//}
+
+					SDL_LockSurface(surface);
+					video->set_thumbnail(gl_texture(surface->w, surface->h, GL_RGB, surface->pixels));
+					SDL_UnlockSurface(surface);
+
+					SDL_FreeSurface(surface);
+
+					return true;
+				}
+			}
+
+			auto thumbnail = video->generate_thumbnail();
+			if (!thumbnail.has_value())
+			{
+				debug::error("Failed to generate thumbnail for video {}", video->id());
+				return false;
+			}
+
+			video->set_thumbnail(thumbnail->texture());
+			if (cache_result)
+			{
+				SDL_Surface* surface = SDL_CreateRGBSurfaceFrom(thumbnail->pixels.data(), thumbnail->width, thumbnail->height, 24, thumbnail->width * 3, 0, 0, 0, 0);
+				if (surface == nullptr)
+				{
+					debug::error("Failed to create surface for thumbnail");
+					return false;
+				}
+
+				std::filesystem::create_directories(ctx_.thumbnail_dir_filepath);
+				SDL_SaveBMP(surface, filepath.u8string().c_str());
+				SDL_FreeSurface(surface);
+			}
+			return true;
+		};
+			
 		task.video_id = video_id;
-		generate_thumbnail_tasks.push_back(std::move(task));
+		load_thumbnail_tasks.push_back(std::move(task));
 	}
 
 	void project::schedule_video_refresh(video_id_t video_id)
@@ -478,10 +529,10 @@ namespace vt
 		ctx_.displayed_videos.erase(id);
 
 		{
-			auto it = std::find_if(generate_thumbnail_tasks.begin(), generate_thumbnail_tasks.end(), [id](const auto& task) { return task.video_id == id; });
-			if (it != generate_thumbnail_tasks.end())
+			auto it = std::find_if(load_thumbnail_tasks.begin(), load_thumbnail_tasks.end(), [id](const auto& task) { return task.video_id == id; });
+			if (it != load_thumbnail_tasks.end())
 			{
-				generate_thumbnail_tasks.erase(it);
+				load_thumbnail_tasks.erase(it);
 			}
 		}
 		
@@ -687,7 +738,7 @@ namespace vt
 						{
 							if (ctx_.app_settings.load_thumbnails)
 							{
-								result.schedule_generate_thumbnail(video_id);
+								result.schedule_load_thumbnail(video_id);
 							}
 						}
 					}

@@ -1664,7 +1664,7 @@ namespace vt
 					{
 						if (ctx_.app_settings.load_thumbnails)
 						{
-							ctx_.current_project->schedule_generate_thumbnail(video_id);
+							ctx_.current_project->schedule_load_thumbnail(video_id);
 						}
 					}
 				}
@@ -1673,7 +1673,7 @@ namespace vt
 		}
 
 		{
-			auto& tasks = ctx_.current_project->generate_thumbnail_tasks;
+			auto& tasks = ctx_.current_project->load_thumbnail_tasks;
 			for (auto it = tasks.begin(); it != tasks.end();)
 			{
 				auto& task = *it;

@@ -91,14 +91,11 @@ namespace vt
 		return result;
 	}
 
-	std::function<bool()> google_drive_video_resource::update_thumbnail_task()
+	std::optional<video_resource_thumbnail> google_drive_video_resource::generate_thumbnail()
 	{
-		return []()
-		{
-			//TODO: implement
-			debug::error("Google drive thumbnail download is not yet implemented");
-			return false;
-		};
+		//TODO: implement
+		debug::error("Google drive thumbnail download is not yet implemented");
+		return std::nullopt;
 	}
 
 	std::function<void()> google_drive_video_resource::on_refresh_task()

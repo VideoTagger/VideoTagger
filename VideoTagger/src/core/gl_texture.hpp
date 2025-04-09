@@ -7,7 +7,7 @@ namespace vt
 	class gl_texture
 	{
 	public:
-		gl_texture(GLsizei width, GLsizei height, GLenum format, void* pixels = nullptr);
+		gl_texture(GLsizei width, GLsizei height, GLenum format, const void* pixels = nullptr);
 		gl_texture(const gl_texture&) = delete;
 		gl_texture(gl_texture&&) noexcept;
 

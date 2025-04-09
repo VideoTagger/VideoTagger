@@ -51,7 +51,7 @@ namespace vt
 		std::future<std::unique_ptr<video_resource>> task;
 	};
 
-	struct generate_thumbnail_task
+	struct load_thumbnail_task
 	{
 		video_id_t video_id{};
 		std::function<bool()> task;
@@ -92,7 +92,7 @@ namespace vt
 		//TODO: add generic task class
 		std::vector<prepare_video_import_task> prepare_video_import_tasks;
 		std::vector<video_import_task> video_import_tasks;
-		std::vector<generate_thumbnail_task> generate_thumbnail_tasks;
+		std::vector<load_thumbnail_task> load_thumbnail_tasks;
 		std::vector<video_download_task> video_download_tasks;
 		std::vector<video_refresh_task> video_refresh_tasks;
 		std::vector<remove_video_task> remove_video_tasks;
@@ -112,7 +112,7 @@ namespace vt
 		void schedule_video_import(typename video_importer::import_data import_data, std::optional<video_group_id_t> group_id);
 		void schedule_video_import(const std::string& importer_id, std::any import_data, std::optional<video_group_id_t> group_id);
 		void schedule_video_download(video_id_t video_id);
-		void schedule_generate_thumbnail(video_id_t video_id);
+		void schedule_load_thumbnail(video_id_t video_id, bool force_generate = false, bool cache_result = true);
 		void schedule_video_refresh(video_id_t video_id);
 		void schedule_remove_video(video_id_t video_id);
 

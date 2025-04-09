@@ -3,7 +3,7 @@
 
 namespace vt
 {
-	gl_texture::gl_texture(GLsizei width, GLsizei height, GLenum format, void* pixels) : id_{}, width_{ width }, height_{ height }, format_{ format }
+	gl_texture::gl_texture(GLsizei width, GLsizei height, GLenum format, const void* pixels) : id_{}, width_{ width }, height_{ height }, format_{ format }
 	{
 		glGenTextures(1, &id_);
 		glBindTexture(GL_TEXTURE_2D, id_);

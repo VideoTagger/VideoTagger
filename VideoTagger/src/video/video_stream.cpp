@@ -173,6 +173,15 @@ namespace vt
 
 	void video_stream::get_frame(gl_texture& texture)
 	{
+		static std::vector<uint8_t> conversion_buffer;
+		
+		get_frame(conversion_buffer, texture.width(), texture.height());
+
+		texture.set_pixels(conversion_buffer.data());
+	}
+
+	void video_stream::get_frame(std::vector<uint8_t>& pixels, int width, int height)
+	{
 		if (!last_frame.has_value())
 		{
 			return;
@@ -180,14 +189,12 @@ namespace vt
 
 		auto& frame = *last_frame;
 
-		if (frame_converter_ == std::nullopt or frame_converter_->destination_width() != texture.width() or frame_converter_->destination_height() != texture.height())
+		if (frame_converter_ == std::nullopt or frame_converter_->destination_width() != width or frame_converter_->destination_height() != height)
 		{
-			frame_converter_ = frame_converter(width_, height_, frame.pixel_format(), texture.width(), texture.height(), AV_PIX_FMT_RGB24);
+			frame_converter_ = frame_converter(width_, height_, frame.pixel_format(), width, height, AV_PIX_FMT_RGB24);
 		}
 
-		frame_converter_->convert_frame(frame, conversion_buffer);
-
-		texture.set_pixels(conversion_buffer.data());
+		frame_converter_->convert_frame(frame, pixels);
 	}
 
 	bool video_stream::is_open() const
@@ -246,6 +253,20 @@ namespace vt
 
 		seek(*timestamp);
 		get_frame(texture);
+		seek(start_timestamp);
+	}
+
+	void video_stream::get_thumbnail(std::vector<uint8_t>& pixels, int width, int height, std::optional<std::chrono::nanoseconds> timestamp)
+	{
+		auto start_timestamp = current_timestamp();
+
+		if (!timestamp.has_value())
+		{
+			timestamp = duration() / 2;
+		}
+
+		seek(*timestamp);
+		get_frame(pixels, width, height);
 		seek(start_timestamp);
 	}
 
