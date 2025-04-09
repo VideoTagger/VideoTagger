@@ -27,7 +27,7 @@ namespace vt::widgets
 	extern void text_with_size(const char* text, ImVec2 size = { 0.f, 0.f });
 
 	extern bool timestamp_control(const std::string& name, timestamp& timestamp, uint64_t min_timestamp, uint64_t max_timestamp, bool* was_activated, bool* was_released, bool fill_area = true);
-	extern bool frame_dragger(uint64_t& frame, uint64_t min_frame, uint64_t max_frame, bool& is_dragging);
+	extern bool frame_dragger(int64_t& frame, int64_t min_frame, int64_t max_frame, bool& is_dragging);
 	
 	extern bool search_bar(const char* label, const char* hint, std::string& buffer, float width = 0.0f, bool enable_button = true, ImGuiInputTextFlags flags = ImGuiInputTextFlags_AutoSelectAll | ImGuiInputTextFlags_EscapeClearsAll | ImGuiInputTextFlags_EnterReturnsTrue);
 

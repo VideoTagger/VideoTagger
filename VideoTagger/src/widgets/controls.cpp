@@ -269,7 +269,7 @@ namespace vt::widgets
 		return result;
 	}
 
-    bool frame_dragger(uint64_t& frame, uint64_t min_frame, uint64_t max_frame, bool& is_dragging)
+    bool frame_dragger(int64_t& frame, int64_t min_frame, int64_t max_frame, bool& is_dragging)
     {
 		const auto& style = ImGui::GetStyle();
 		bool result{};
@@ -290,7 +290,8 @@ namespace vt::widgets
 		if (is_dragging)
 		{
 			static constexpr float speed = 0.1f;
-			auto delta = ImGui::GetIO().MouseDelta.x * speed;
+			auto delta = (int64_t)(ImGui::GetIO().MouseDelta.x * speed);
+			frame = std::clamp(delta, min_frame, max_frame);
 			ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeEW);
 
 			if (ImGui::IsMouseReleased(0))

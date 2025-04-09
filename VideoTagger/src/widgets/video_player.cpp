@@ -127,7 +127,7 @@ namespace vt::widgets
 			if (!has_child_videos) ImGui::BeginDisabled();
 			ImGui::Columns(3);
 			{
-				uint64_t current_frame{};
+				int64_t current_frame{};
 				static bool is_frame_dragging = false;
 				ImGui::AlignTextToFramePadding();
 				if (frame_dragger(current_frame, 0, 100, is_frame_dragging))
