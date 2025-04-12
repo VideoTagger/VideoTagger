@@ -20,8 +20,10 @@ namespace vt::widgets
 	{
 		ImGui::PushStyleColor(ImGuiCol_Button, ImVec4{});
 		ImGui::PushStyleColor(ImGuiCol_Text, color);
+		ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 2.5f);
 		bool result = ImGui::Button(label, size);
 		ImGui::PopStyleColor(2);
+		ImGui::PopStyleVar();
 		if (!is_item_disabled() and ImGui::IsItemHovered())
 		{
 			ImGui::SetMouseCursor(ImGuiMouseCursor_Hand);
@@ -33,8 +35,10 @@ namespace vt::widgets
 	{
 		ImGui::PushStyleColor(ImGuiCol_Button, ImVec4{});
 		ImGui::PushStyleColor(ImGuiCol_Text, color);
+		ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 2.5f);
 		bool result = ImGui::Button(label, size);
 		ImGui::PopStyleColor(2);
+		ImGui::PopStyleVar();
 		return result;
 	}
 
@@ -164,6 +168,24 @@ namespace vt::widgets
 	{
 		ImGui::PopStyleColor(3);
 		ImGui::EndPopup();
+	}
+
+	void item_spacer()
+	{
+		const auto& style = ImGui::GetStyle();
+		ImGui::Dummy(style.ItemSpacing);
+	}
+
+	void vertical_item_spacer()
+	{
+		const auto& style = ImGui::GetStyle();
+		ImGui::Dummy({ 0.f, style.ItemSpacing.y});
+	}
+
+	void horizontal_item_spacer()
+	{
+		const auto& style = ImGui::GetStyle();
+		ImGui::Dummy({ style.ItemSpacing.x, 0.f });
 	}
 
 	void help_marker(const char* description)

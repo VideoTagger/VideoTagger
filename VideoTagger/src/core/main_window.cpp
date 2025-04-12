@@ -130,10 +130,8 @@ namespace vt
 		{
 			on_first_launch();
 		}
-		if (!ctx_.load_or_create_lang_pack("English", "en_US"))
-		{
-			debug::panic("Lang pack failed to load");
-		}
+		ctx_.load_lang_packs("en_US");
+
 		init_keybinds();
 		init_player();
 		fetch_themes();
@@ -2472,8 +2470,7 @@ namespace vt
 		if (true)
 		{
 			bool is_open = true;
-			std::vector<std::shared_ptr<lang_pack>> langs{ ctx_.lang };
-			ctx_.localization_editor.render(is_open, langs);
+			ctx_.localization_editor.render(is_open, ctx_.lang_packs);
 		}
 
 		if (ctx_.win_cfg.show_console_window)

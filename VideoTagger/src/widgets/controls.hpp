@@ -21,6 +21,9 @@ namespace vt::widgets
 	extern bool begin_button_dropdown(const char* label, ImVec2 button_size, float popup_height = 0.0f);
 	extern void end_button_dropdown();
 
+	extern void item_spacer();
+	extern void vertical_item_spacer();
+	extern void horizontal_item_spacer();
 	extern void help_marker(const char* description);
 	extern void centered_text(const char* text, ImVec2 avail_area, ImVec2 offset = {});
 	extern void clipped_text(const char* text, ImVec2 avail_area);

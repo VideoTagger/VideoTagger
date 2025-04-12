@@ -143,6 +143,7 @@ namespace vt
 
 		app_settings app_settings;
 		std::shared_ptr<lang_pack> lang = nullptr;
+		std::vector<std::shared_ptr<lang_pack>> lang_packs;
 		std::unique_ptr<main_window> main_window{};
 
 		app_state state_ = app_state::uninitialized;
@@ -183,8 +184,10 @@ namespace vt
 		void set_current_video_group_id(video_group_id_t id);
 		video_group_id_t current_video_group_id() const;
 
-		bool load_lang_pack(const std::string& name = "en_US");
-		bool load_or_create_lang_pack(const std::string& name, const std::string& filename);
+		std::shared_ptr<lang_pack> load_lang_pack(const std::string& name = "en_US");
+		std::shared_ptr<lang_pack> load_or_create_lang_pack(const std::string& name, const std::string& filename);
+		void instert_lang_pack(std::shared_ptr<lang_pack> pack);
+		void load_lang_packs(const std::string& desired_lang);
 
 		static std::filesystem::path storage_path();
 
