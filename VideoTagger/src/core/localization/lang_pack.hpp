@@ -11,6 +11,8 @@ namespace vt
 	class lang_pack
 	{
 	public:
+		static constexpr const char* extension = "vtlang";
+
 		lang_pack(const std::string& name, const std::string& filename, const lang_pack_data& data = {}, bool editable = true);
 
 	private:
@@ -25,6 +27,8 @@ namespace vt
 
 		std::string& name();
 		const std::string& name() const;
+		std::string& filename();
+		const std::string& filename() const;
 		std::vector<std::string> keys() const;
 		bool is_dirty() const;
 

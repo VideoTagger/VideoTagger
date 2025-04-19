@@ -88,7 +88,7 @@ namespace vt
 		style.GrabMinSize = 10;
 		style.WindowBorderSize = 1;
 		style.ChildBorderSize = 1;
-		//style.PopupBorderSize = 1;
+		style.PopupBorderSize = 1;
 		style.FrameBorderSize = 0;
 		style.TabBorderSize = 1;
 		style.WindowRounding = 0;//style.WindowRounding = 7;

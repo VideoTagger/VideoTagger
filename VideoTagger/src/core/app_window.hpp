@@ -2,6 +2,9 @@
 #include <SDL.h>
 #include <SDL_opengl.h>
 #include <imgui.h>
+#include <memory>
+#include <type_traits>
+#include <ui/popup.hpp>
 
 namespace vt
 {

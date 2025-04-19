@@ -49,7 +49,8 @@ namespace vt::icons
 	inline constexpr auto video = "\xee\x80\xac";
 	inline constexpr auto search = "\xee\xa2\xb6";
 	inline constexpr auto terminal = "\xee\xae\x8e";
-	inline constexpr auto download = "\xef\x82\x90";									
+	inline constexpr auto download = "\xef\x82\x90";
+	inline constexpr auto upload = "\xef\x82\x9b";
 	inline constexpr auto download_off = "\xee\x93\xbe";
 	inline constexpr auto arrow_up = "\xee\x97\x98";
 	inline constexpr auto refresh = "\xee\x97\x95";
@@ -107,6 +108,6 @@ namespace vt::icons
 		align_horizontal_left, align_horizontal_right, align_horizontal_center, align_vertical_bottom, align_vertical_top, align_vertical_center, align_center,
 		info, warning, error, delete_on_run,
 		keyframe, keyframe_current, goto_keyframe, new_region, set_target,
-		download, download_off, arrow_up, refresh, local_storage, google_drive_add, home, license, translate
+		download, upload, download_off, arrow_up, refresh, local_storage, google_drive_add, home, license, translate
 	});
 }

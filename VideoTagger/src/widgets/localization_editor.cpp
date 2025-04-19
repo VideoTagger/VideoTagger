@@ -2,11 +2,15 @@
 #include "localization_editor.hpp"
 #include "icons.hpp"
 #include "controls.hpp"
+
 #include <core/app_context.hpp>
+#include <utils/filesystem.hpp>
 
 
 namespace vt::widgets
 {
+	localization_editor::localization_editor() : new_lang_popup_{ ui::new_popup<ui::new_language_popup>() } {}
+
 	void localization_editor::render(bool& is_open, std::vector<std::shared_ptr<lang_pack>>& langs)
 	{
 		const auto& style = ImGui::GetStyle();
@@ -16,15 +20,11 @@ namespace vt::widgets
 		{
 			size_t lang_count = langs.size();
 
-			static constexpr int table_flags = ImGuiTableFlags_SizingStretchProp | ImGuiTableFlags_BordersInner | ImGuiTableFlags_RowBg | ImGuiTableFlags_NoSavedSettings | ImGuiTableFlags_ScrollX | ImGuiTableFlags_ScrollY | ImGuiTableFlags_Resizable;
+			static constexpr int table_flags = ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_BordersInner | ImGuiTableFlags_RowBg | ImGuiTableFlags_NoSavedSettings | ImGuiTableFlags_ScrollX | ImGuiTableFlags_ScrollY | ImGuiTableFlags_Resizable;
 
 			ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2{ 0.f, style.ItemSpacing.y });
-			ImGui::BeginDisabled();
-			if (icon_button(icons::add))
-			{
+			bool add_lang = icon_button(icons::add);
 
-			}
-			ImGui::EndDisabled();
 			tooltip("Add Language");
 			ImGui::SameLine();
 			if (icon_button(icons::save))
@@ -37,6 +37,39 @@ namespace vt::widgets
 				}
 			}
 			tooltip("Save");
+			ImGui::SameLine();
+			if (icon_button(icons::download))
+			{
+				utils::dialog_filters filters{ utils::dialog_filter{ "VideoTagger Lang Pack", lang_pack::extension } };
+
+				auto input_files = utils::filesystem::get_files({}, filters);
+				if (input_files)
+				{
+					for (const auto& file : input_files.paths)
+					{
+						auto lang = lang_pack::load_from_file(file);
+						if (lang.has_value())
+						{
+							ctx_.instert_lang_pack(std::make_shared<lang_pack>(lang.value()));
+						}
+					}
+				}
+			}
+			tooltip("Import");
+			ImGui::SameLine();
+			if (icon_button(icons::upload))
+			{
+				auto output_dir = utils::filesystem::get_folder();
+				if (output_dir)
+				{
+					debug::log("Exporting languages to: {}", output_dir.path.u8string());
+					for (const auto& lang : langs)
+					{
+						lang->save(output_dir.path);
+					}
+				}
+			}
+			tooltip("Export");
 			ImGui::PopStyleVar();
 
 			if (lang_count > 0 and ImGui::BeginTable("##Languages", static_cast<int>(lang_count + 1), table_flags))
@@ -47,7 +80,16 @@ namespace vt::widgets
 				ImGui::TableSetupColumn("Key", ImGuiTableColumnFlags_WidthFixed);
 				for (const auto& lang : langs)
 				{
-					ImGui::TableSetupColumn(lang->name().c_str());
+					float max_width{};
+					for (const auto& key : keys)
+					{
+						auto width = ImGui::CalcTextSize(lang->get(key).c_str()).x;
+						if (width > max_width)
+						{
+							max_width = width;
+						}
+					}
+					ImGui::TableSetupColumn(lang->name().c_str(), 0, max_width);
 				}
 
 				ImGui::TableSetupScrollFreeze(1, 1);
@@ -71,6 +113,12 @@ namespace vt::widgets
 				}
 				ImGui::EndTable();
 			}
+
+			if (add_lang)
+			{
+				new_lang_popup_->open();
+			}
+			new_lang_popup_->render();
 		}
 		ImGui::End();
 	}

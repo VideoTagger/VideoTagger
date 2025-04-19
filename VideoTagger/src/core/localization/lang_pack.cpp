@@ -22,6 +22,16 @@ namespace vt
 		return name_;
 	}
 
+    std::string& lang_pack::filename()
+    {
+		return filename_;
+    }
+
+	const std::string& lang_pack::filename() const
+	{
+		return filename_;
+	}
+
 	std::vector<std::string> lang_pack::keys() const
 	{
 		std::vector<std::string> result;
@@ -75,7 +85,7 @@ namespace vt
 			std::filesystem::create_directories(dir);
 		}
 
-		auto path = dir / (filename_ + ".lang");
+		auto path = dir / (filename_ + "." + extension);
 		nlohmann::ordered_json json;
 		auto& meta = json["@meta"];
 		meta["name"] = name_;

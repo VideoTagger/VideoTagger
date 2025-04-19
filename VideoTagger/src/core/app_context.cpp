@@ -129,35 +129,71 @@ namespace vt
 		return current_video_group_id_;
 	}
 
-	bool app_context::load_lang_pack(const std::string& name)
+	std::shared_ptr<lang_pack> app_context::load_lang_pack(const std::string& name)
 	{
-		auto path = lang_dir_filepath / (name + ".lang");
+		auto path = lang_dir_filepath / (name + "." + lang_pack::extension);
 		debug::log("Loading lang pack with name: '{}' from path: '{}'", name, path.u8string());
 		if (!std::filesystem::exists(path))
 		{
 			debug::error("Lang pack with name: '{}' not found", name);
-			return false;
+			return nullptr;
 		}
 		auto new_lang = lang_pack::load_from_file(path);
-		if (!new_lang.has_value()) return false;
-		lang = std::make_shared<lang_pack>(new_lang.value());
-		return true;
+		if (!new_lang.has_value()) return nullptr;
+		return std::make_shared<lang_pack>(new_lang.value());
 	}
 
-	bool app_context::load_or_create_lang_pack(const std::string& name, const std::string& filename)
+	std::shared_ptr<lang_pack> app_context::load_or_create_lang_pack(const std::string& name, const std::string& filename)
 	{
-		auto path = lang_dir_filepath / (filename + ".lang");
+		auto path = lang_dir_filepath / (filename + "." + lang_pack::extension);
 		debug::log("Loading lang pack with name: '{}' from path: '{}'", name, path.u8string());
 		if (!std::filesystem::exists(path))
 		{
 			debug::error("Lang pack with name: '{}' not found, creating new lang pack...", name);
-			lang = std::make_shared<lang_pack>(name, filename);
-			return true;
+			return std::make_shared<lang_pack>(name, filename);
 		}
 		auto new_lang = lang_pack::load_from_file(path);
-		if (!new_lang.has_value()) return false;
-		lang = std::make_shared<lang_pack>(new_lang.value());
-		return true;
+		if (!new_lang.has_value()) return nullptr;
+		return std::make_shared<lang_pack>(new_lang.value());
+	}
+
+    void app_context::instert_lang_pack(std::shared_ptr<lang_pack> pack)
+    {
+		lang_packs.push_back(pack);
+    }
+
+	void app_context::load_lang_packs(const std::string& desired_lang)
+	{
+		ctx_.lang_packs.clear();
+		for (const auto& entry : std::filesystem::directory_iterator{ ctx_.lang_dir_filepath })
+		{
+			auto path = entry.path();
+			if (entry.is_directory() or path.extension() != std::string(".") + lang_pack::extension) continue;
+			auto lang = lang_pack::load_from_file(path);
+			if (!lang.has_value()) continue;
+			ctx_.lang_packs.push_back(std::make_shared<lang_pack>(lang.value()));
+		}
+
+		if (ctx_.lang_packs.empty())
+		{
+			debug::error("No lang packs found, creating default lang pack...");
+			auto lang = std::make_shared<lang_pack>("English", "en_US");
+			ctx_.lang_packs.push_back(lang);
+		}
+
+		auto it = std::find_if(ctx_.lang_packs.begin(), ctx_.lang_packs.end(), [&](const auto& lang)
+		{
+			return lang->filename() == desired_lang;
+		});
+
+		if (it != ctx_.lang_packs.end())
+		{
+			ctx_.lang = *it;
+		}
+		else
+		{
+			ctx_.lang = ctx_.lang_packs.front();
+		}
 	}
 
     std::filesystem::path app_context::storage_path()
