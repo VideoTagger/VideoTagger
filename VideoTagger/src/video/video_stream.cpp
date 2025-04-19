@@ -1,6 +1,7 @@
 #include "pch.hpp"
 #include "video_stream.hpp"
 #include <core/debug.hpp>
+#include <core/app_context.hpp>
 
 namespace vt
 {
@@ -76,9 +77,33 @@ namespace vt
 					continue;
 				}
 
-				if (decoder_.last_read_packet_type() != stream_type::video)
+				auto packet_type = decoder_.last_read_packet_type();
+				if (packet_type != stream_type::video)
 				{
-					decoder_.discard_last_read_packet();
+					if (packet_type == stream_type::audio)
+					{
+						auto decode = decoder_.decode_next_packet<stream_type::audio>();
+						if (decode)
+						{
+							std::scoped_lock lock(ctx_.SOUND_mutex);
+
+							auto format = decode->format();
+							auto sample_rate = decode->sample_rate();
+							ctx_.SOUND.clear();
+							for (size_t j = 0; j < decode->channel_size() / sizeof(float); ++j)
+							{
+								for (size_t i = 0; i < decode->channel_count(); i++)
+								{
+									float v = ((float*)(decode->get_channel(i)))[j];
+									ctx_.SOUND.push_back(v);
+								}
+							}
+						}
+					}
+					else
+					{
+						decoder_.discard_last_read_packet();
+					}
 					continue;
 				}
 				//---

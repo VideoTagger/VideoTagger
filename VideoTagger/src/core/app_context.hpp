@@ -40,6 +40,7 @@
 #include <scripts/scripting_engine.hpp>
 #include <services/service_account_manager.hpp>
 #include <video/video_importer.hpp>
+#include <core/audio.hpp>
 
 #include <editor/registry.hpp>
 
@@ -142,10 +143,15 @@ namespace vt
 		widgets::insert_segment_data_container insert_segment_data;
 
 		app_settings app_settings;
+		audio audio;
 		std::shared_ptr<lang_pack> lang = nullptr;
 		std::unique_ptr<main_window> main_window{};
 
 		app_state state_ = app_state::uninitialized;
+
+		//TODO: TMP
+		std::vector<float> SOUND;
+		std::mutex SOUND_mutex;
 
 		bool is_project_dirty{};
 		bool first_launch = true;

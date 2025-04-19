@@ -22,6 +22,7 @@
 #include <embeds/about.hpp>
 
 #include <utils/filesystem.hpp>
+#include <utils/random.hpp>
 #include <editor/run_script_command.hpp>
 #include <editor/selected_attribute_query.hpp>
 #include <ImGuizmo.h>
@@ -999,6 +1000,7 @@ namespace vt
 				ctx_.set_current_video_group_id(*it);
 				ctx_.displayed_videos.set_playing(is_playing);
 			}
+			ctx_.SOUND.clear();
 		};
 
 		ctx_.player.callbacks.on_seek = [](std::chrono::nanoseconds ts)
@@ -1372,6 +1374,55 @@ namespace vt
 
 			if (ImGui::BeginMenu(ctx_.lang->get("menu_bar.tools").c_str()))
 			{
+				if (ImGui::BeginMenu("Audio"))
+				{
+					bool v = ctx_.audio.is_paused();
+					if (ImGui::MenuItem("Pause", nullptr, &v))
+					{
+						ctx_.audio.set_callback([](audio& audio, uint8_t* stream, int length)
+						{
+							std::scoped_lock lock(ctx_.SOUND_mutex);
+
+							float* buffer = (float*)stream;
+							size_t samples = (size_t)(length / sizeof(float));
+							for (size_t i = 0; i < std::min(samples, ctx_.SOUND.size()); i++)
+							{
+								buffer[i] = ctx_.SOUND[i];
+							}
+							ctx_.SOUND.erase(ctx_.SOUND.begin(), ctx_.SOUND.begin() + std::min(samples, ctx_.SOUND.size()));
+							//ctx_.SOUND.clear();
+							return;
+
+							static double phase = 0.0;
+							static double amp_phase = 0.0;
+
+							
+
+							constexpr double tone_freq = 240.0;
+							constexpr double amp_freq = 0.25;
+							constexpr double two_pi = 2.0 * M_PI;
+							constexpr double max_amplitude = 0.6 * std::numeric_limits<int16_t>::max();
+
+							for (int i = 0; i < samples; ++i)
+							{
+								double amplitude = (std::sin(amp_phase) * 0.5 + 0.5) * max_amplitude;
+
+								//buffer[i] = static_cast<int16_t>(amplitude * std::sin(phase) * audio.volume());
+								buffer[i] = (int16_t)(amplitude * utils::random::get<int16_t>() * std::sin(phase) * audio.volume());
+								auto& data = audio.data();
+								phase += two_pi * tone_freq / data.spec.freq;
+								amp_phase += two_pi * amp_freq / data.spec.freq;
+
+								if (phase >= two_pi)
+								{
+									phase -= two_pi;
+								}
+							}
+						});
+						ctx_.audio.set_paused(v);
+					}
+					ImGui::EndMenu();
+				}
 				if (ImGui::BeginMenu("Themes"))
 				{
 					if (ImGui::MenuItem("Reload"))

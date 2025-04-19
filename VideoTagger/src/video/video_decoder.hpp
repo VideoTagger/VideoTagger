@@ -41,7 +41,7 @@ namespace vt
 		~video_frame();
 
 		video_frame& operator=(const video_frame&) = delete;
-		video_frame& operator=(video_frame&& rhs) noexcept;
+		video_frame& operator=(video_frame&& other) noexcept;
 
 		[[nodiscard]] video_plane get_plane(size_t plane_index) const;
 
@@ -60,7 +60,56 @@ namespace vt
 		[[nodiscard]] AVFrame* unwrapped();
 		[[nodiscard]] const AVFrame* unwrapped() const;
 
-		//TODO: get timestamp
+	private:
+		AVFrame* frame_;
+	};
+
+	enum audio_format
+	{
+		unknown = -1,
+
+		u8,
+		s16,
+		s32,
+		s64,
+		f32,
+		f64,
+		u8p,
+		s16p,
+		s32p,
+		s64p,
+		f32p,
+		f64p,
+
+		size // enum element count
+	};
+
+	class audio_chunk
+	{
+	public:
+		audio_chunk();
+		audio_chunk(const audio_chunk&) = delete;
+		audio_chunk(audio_chunk&& other) noexcept;
+		~audio_chunk();
+
+		audio_chunk& operator=(const audio_chunk&) = delete;
+		audio_chunk& operator=(audio_chunk&& other) noexcept;
+
+		[[nodiscard]] int channel_count() const;
+		[[nodiscard]] int sample_rate() const;
+		[[nodiscard]] audio_format format() const;
+		[[nodiscard]] size_t samples_count() const;
+
+		size_t channel_size() const;
+
+		[[nodiscard]] std::chrono::nanoseconds timestamp() const;
+		[[nodiscard]] std::chrono::nanoseconds duration() const;
+
+		[[nodiscard]] uint8_t* get_channel(size_t channel_index);
+		[[nodiscard]] const uint8_t* get_channel(size_t channel_index) const;
+
+		[[nodiscard]] AVFrame* unwrapped();
+		[[nodiscard]] const AVFrame* unwrapped() const;
 
 	private:
 		AVFrame* frame_;
@@ -73,21 +122,28 @@ namespace vt
 		video,
 		audio,
 
-		size // don't use
+		size // enum element count
+	};
+
+	template<stream_type type>
+	struct decoded_packet_type;
+
+	template<>
+	struct decoded_packet_type<stream_type::video>
+	{
+		using type = video_frame;
+	};
+
+	template<>
+	struct decoded_packet_type<stream_type::audio>
+	{
+		using type = audio_chunk;
 	};
 
 	template<stream_type type>
 	struct stream_type_traits
 	{
-		using decoded_packet_type = void;
-
-		static std::optional<decoded_packet_type> decode(AVCodecContext* codec_context, class packet_wrapper& packet);
-	};
-
-	template<>
-	struct stream_type_traits<stream_type::video>
-	{
-		using decoded_packet_type = video_frame;
+		using decoded_packet_type = typename decoded_packet_type<type>::type;
 
 		static std::optional<decoded_packet_type> decode(AVCodecContext* codec_context, class packet_wrapper& packet);
 	};
@@ -280,5 +336,32 @@ namespace vt
 		AVCodecContext* codec_context = codec_contexts_[static_cast<size_t>(type)];
 
 		return stream_type_traits<type>::decode(codec_context, packet);
+	}
+
+	template<stream_type type>
+	std::optional<typename stream_type_traits<type>::decoded_packet_type> stream_type_traits<type>::decode(AVCodecContext* codec_context, class packet_wrapper& packet)
+	{
+		using decoded_packet_type = typename stream_type_traits<type>::decoded_packet_type;
+
+		AVPacket* unwrapped_packet = packet.unwrapped();
+
+		if (avcodec_send_packet(codec_context, unwrapped_packet) != 0)
+		{
+			//TODO: some better error handling
+			return std::nullopt;
+		}
+
+		std::optional<decoded_packet_type> frame = decoded_packet_type();
+		AVFrame* unwrapped_frame = frame.value().unwrapped();
+
+		if (avcodec_receive_frame(codec_context, unwrapped_frame) != 0)
+		{
+			//TODO: some better error handling
+			return std::nullopt;
+		}
+
+		unwrapped_frame->time_base = unwrapped_packet->time_base;
+
+		return frame;
 	}
 }

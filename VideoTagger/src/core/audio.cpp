@@ -7,32 +7,33 @@
 
 namespace vt
 {
-	audio_data audio::data_{};
-
-	bool audio::init()
+	audio::audio() : volume_{ 1.f }, is_paused_{ true }
 	{
 		debug::log("Initializing audio...");
+		if (SDL_InitSubSystem(SDL_INIT_AUDIO) < 0)
+		{
+			debug::error("SDL failed to initialize audio subsystem: {}", SDL_GetError());
+		}
 		SDL_AudioSpec desired_spec{};
 		desired_spec.callback = callback;
-		desired_spec.freq = 48000;
-		desired_spec.samples = 4096;
+		desired_spec.userdata = this;
+		desired_spec.freq = 44100;
+		desired_spec.samples = 2048;
 		desired_spec.channels = 2;
-		desired_spec.format = AUDIO_S16SYS;
+		desired_spec.format = AUDIO_F32SYS;
 
 		SDL_AudioSpec obtained_spec{};
-		auto audio_device = SDL_OpenAudioDevice(nullptr, false, &desired_spec, &obtained_spec, SDL_AUDIO_ALLOW_CHANNELS_CHANGE);
+		auto audio_device = SDL_OpenAudioDevice(nullptr, false, &desired_spec, &obtained_spec, 0);
 		if (audio_device == 0)
 		{
 			debug::error("Failed to open audio device: {}", SDL_GetError());
-			return false;
 		}
 
 		data_.device = audio_device;
 		data_.spec = obtained_spec;
-		return true;
 	}
-	
-	void audio::shutdown()
+
+	audio::~audio()
 	{
 		if (data_.device == 0) return;
 		SDL_CloseAudioDevice(data_.device);
@@ -42,34 +43,35 @@ namespace vt
 	{
 		if (data_.device == 0) return;
 		SDL_PauseAudioDevice(data_.device, value);
+		is_paused_ = value;
+	}
+
+	bool audio::is_paused() const
+	{
+		return is_paused_;
+	}
+
+	float audio::volume() const
+	{
+		return volume_;
+	}
+
+	audio_data& audio::data()
+	{
+		return data_;
+	}
+
+	void audio::set_callback(const std::function<void(audio& instance, uint8_t* stream, int length)>& callback)
+	{
+		callback_ = callback;
 	}
 
 	void audio::callback(void* user_data, uint8_t* stream, int length)
 	{
-		static double phase = 0.0;
-		static double amp_phase = 0.0;
-
-		int16_t* buffer = (int16_t*)stream;
-		int samples = length / sizeof(int16_t);
-
-		constexpr float volume = 0.25f;
-		constexpr double tone_freq = 240.0;
-		constexpr double amp_freq = 0.25;
-		constexpr double two_pi = 2.0 * M_PI;
-		constexpr double max_amplitude = 0.6 * std::numeric_limits<int16_t>::max();
-
-		for (int i = 0; i < samples; ++i)
+		auto* audio_instance = static_cast<audio*>(user_data);
+		if (audio_instance->callback_ != nullptr)
 		{
-			double amplitude = (std::sin(amp_phase) * 0.5 + 0.5) * max_amplitude;
-
-			buffer[i] = static_cast<int16_t>(amplitude * std::sin(phase) * volume);
-			phase += two_pi * tone_freq / data_.spec.freq;
-			amp_phase += two_pi * amp_freq / data_.spec.freq;
-
-			if (phase >= two_pi)
-			{
-				phase -= two_pi;
-			}
+			audio_instance->callback_(*audio_instance, stream, length);
 		}
 	}
 }

@@ -67,14 +67,14 @@ namespace vt
 		}
 	}
 
-	video_frame& video_frame::operator=(video_frame&& rhs) noexcept
+	video_frame& video_frame::operator=(video_frame&& other) noexcept
 	{
 		if (frame_ != nullptr)
 		{
 			av_frame_free(&frame_);
 		}
-		frame_ = rhs.frame_;
-		rhs.frame_ = nullptr;
+		frame_ = other.frame_;
+		other.frame_ = nullptr;
 
 		return *this;
 	}
@@ -92,16 +92,6 @@ namespace vt
 	int video_frame::height() const
 	{
 		return frame_->height;
-	}
-
-	AVFrame* video_frame::unwrapped()
-	{
-		return frame_;
-	}
-
-	const AVFrame* video_frame::unwrapped() const
-	{
-		return frame_;
 	}
 
 	std::chrono::nanoseconds video_frame::timestamp() const
@@ -129,28 +119,116 @@ namespace vt
 		return frame_->flags & AV_FRAME_FLAG_KEY;
 	}
 
-	std::optional<typename stream_type_traits<stream_type::video>::decoded_packet_type> stream_type_traits<stream_type::video>::decode(AVCodecContext* codec_context, class packet_wrapper& packet)
+	AVFrame* video_frame::unwrapped()
 	{
-		AVPacket* unwrapped_packet = packet.unwrapped();
+		return frame_;
+	}
 
-		if (avcodec_send_packet(codec_context, unwrapped_packet) != 0)
+	const AVFrame* video_frame::unwrapped() const
+	{
+		return frame_;
+	}
+
+	audio_chunk::audio_chunk() : frame_{ av_frame_alloc() }
+	{
+		if (frame_ == nullptr)
 		{
-			//TODO: some better error handling
-			return std::nullopt;
+			throw std::bad_alloc();
 		}
+	}
 
-		std::optional<video_frame> frame = video_frame();
-		AVFrame* unwrapped_frame = frame.value().unwrapped();
+	audio_chunk::audio_chunk(audio_chunk&& other) noexcept : frame_{ other.frame_ }
+	{
+		other.frame_ = nullptr;
+	}
 
-		if (avcodec_receive_frame(codec_context, unwrapped_frame) != 0)
+	audio_chunk::~audio_chunk()
+	{
+		if (frame_ != nullptr)
 		{
-			//TODO: some better error handling
-			return std::nullopt;
+			av_frame_free(&frame_);
 		}
+	}
 
-		unwrapped_frame->time_base = unwrapped_packet->time_base;
+	int audio_chunk::channel_count() const
+	{
+		return frame_->ch_layout.nb_channels;
+	}
 
-		return frame;
+	int audio_chunk::sample_rate() const
+	{
+		return frame_->sample_rate;
+	}
+
+	audio_format audio_chunk::format() const
+	{
+		switch (frame_->format)
+		{
+		case AV_SAMPLE_FMT_U8:		return audio_format::u8;
+		case AV_SAMPLE_FMT_S16:		return audio_format::s16;
+		case AV_SAMPLE_FMT_S32:		return audio_format::s32;
+		case AV_SAMPLE_FMT_S64:		return audio_format::s64;
+		case AV_SAMPLE_FMT_FLT:		return audio_format::f32;
+		case AV_SAMPLE_FMT_FLTP:	return audio_format::f32p;
+		case AV_SAMPLE_FMT_DBL:		return audio_format::f64;
+		case AV_SAMPLE_FMT_DBLP:	return audio_format::f64p;
+		case AV_SAMPLE_FMT_U8P:		return audio_format::u8p;
+		case AV_SAMPLE_FMT_S16P:	return audio_format::s16p;
+		case AV_SAMPLE_FMT_S32P:	return audio_format::s32p;
+		case AV_SAMPLE_FMT_S64P:	return audio_format::s64p;
+		default: 					return audio_format::unknown;
+		}
+	}
+
+	size_t audio_chunk::samples_count() const
+	{
+		return frame_->nb_samples;
+	}
+
+	size_t audio_chunk::channel_size() const
+	{
+		return frame_->linesize[0];
+	}
+
+	std::chrono::nanoseconds audio_chunk::timestamp() const
+	{
+		return std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::duration<double>(frame_->pts * av_q2d(frame_->time_base)));
+	}
+
+	std::chrono::nanoseconds audio_chunk::duration() const
+	{
+		return std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::duration<double>(frame_->duration * av_q2d(frame_->time_base)));
+	}
+
+	uint8_t* audio_chunk::get_channel(size_t channel_index)
+	{
+		return frame_->data[channel_index];
+	}
+
+	const uint8_t* audio_chunk::get_channel(size_t channel_index) const
+	{
+		return frame_->data[channel_index];
+	}
+
+	AVFrame* audio_chunk::unwrapped()
+	{
+		return frame_;
+	}
+
+	const AVFrame* audio_chunk::unwrapped() const
+	{
+		return frame_;
+	}
+
+	audio_chunk& audio_chunk::operator=(audio_chunk&& other) noexcept
+	{
+		if (frame_ != nullptr)
+		{
+			av_frame_free(&frame_);
+		}
+		frame_ = other.frame_;
+		other.frame_ = nullptr;
+		return *this;
 	}
 
 	packet_wrapper::packet_wrapper() : packet_{ av_packet_alloc() }, type_{ stream_type::unknown }

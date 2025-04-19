@@ -1,5 +1,6 @@
 #pragma once
 #include <SDL.h>
+#include <functional>
 
 namespace vt
 {
@@ -12,16 +13,23 @@ namespace vt
 	struct audio
 	{
 	public:
-		audio() = delete;
+		audio();
+		~audio();
 
 	private:
-		static audio_data data_;
+		audio_data data_;
+		float volume_;
+		bool is_paused_;
+		std::function<void(audio& instance, uint8_t* stream, int length)> callback_;
 
 	public:
-		static bool init();
-		static void shutdown();
-		static void set_paused(bool value);
+		void set_paused(bool value);
+		bool is_paused() const;
+		float volume() const;
+		audio_data& data();
 
+		void set_callback(const std::function<void(audio& instance, uint8_t* stream, int length)>& callback);
+	private:
 		static void callback(void* user_data, uint8_t* stream, int length);
 	};
 }
