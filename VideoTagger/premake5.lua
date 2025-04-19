@@ -101,6 +101,7 @@ project "VideoTagger"
 
 		postbuildcommands
 		{
+			"{COPYFILE} " .. PythonPath .. "/" .. string.lower(PythonLibName) .. ".dll %{cfg.targetdir}",
 			"{COPYFILE} vendor/SDL2/lib/%{cfg.architecture}/*.dll %{cfg.targetdir}",
 			"{COPYFILE} vendor/FFmpeg/lib/%{cfg.architecture}/*.dll %{cfg.targetdir}",
 			"{COPYFILE} vendor/openssl/lib/%{cfg.architecture}/*.dll %{cfg.targetdir}",
