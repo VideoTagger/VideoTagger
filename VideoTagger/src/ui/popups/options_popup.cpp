@@ -65,11 +65,11 @@ namespace vt::ui
 				auto it = groups_.find(active_group_);
 				if (it != groups_.end())
 				{
-					const auto& tabs = it->second;
+					auto& tabs = it->second;
 					auto tab = tabs.find(active_tab_);
 					if (tab != tabs.end())
 					{
-						std::invoke(tab->second);
+						tab->second.render();
 					}
 				}
 				ImGui::EndChild();
@@ -90,7 +90,7 @@ namespace vt::ui
 		active_tab_ = name;
 	}
 
-	std::function<void()>& options_popup::operator()(const std::string& group, const std::string& name)
+	settings_panel& options_popup::operator()(const std::string& group, const std::string& name)
 	{
 		return groups_[group][name];
 	}

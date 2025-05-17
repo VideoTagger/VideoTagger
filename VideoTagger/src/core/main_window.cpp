@@ -766,7 +766,7 @@ namespace vt
 			}
 		};
 
-		options("Application Settings", "General") = [this]()
+		options("Application Settings", "General").add_raw([this]()
 		{
 			widgets::label("Font Size");
 			ImGui::SameLine();
@@ -789,48 +789,41 @@ namespace vt
 			{
 				ctx_.settings["thumbnail-size"] = ctx_.app_settings.thumbnail_size;
 			}
-
-			//TODO: Move this into settings widget class, this shouldn't be static
-			static ui::settings_expander exp("Load Thumbnails", "Specifies whether to load thumbnails when opening a project", [](float height)
-			{
-				float offset_y = (height - ui::toggle_height()) * 0.5f;
-				if (offset_y > 0.0f)
-				{
-					ImGui::SetCursorPosY(ImGui::GetCursorPosY() + offset_y);
-				}
-
-				if (ui::toggle("##LoadThumbnailsToggle", ctx_.app_settings.load_thumbnails))
-				{
-					ctx_.settings["load-thumbnails"] = ctx_.app_settings.load_thumbnails;
-				}
-			});
-			exp.render();
-			//TODO: Add theme selection
-
+			return true;
+		})
+		.add_toggle("Load Thumbnails", "Specifies whether to load thumbnails when opening a project", ctx_.app_settings.load_thumbnails, [&](bool value)
+		{
+			ctx_.settings["load-thumbnails"] = ctx_.app_settings.load_thumbnails;
+		})
+		.add_label_spacer("UI")
+		.add_toggle("Scale Gizmos", "Scales gizmos size based on viewport size", ctx_.app_settings.enable_gizmo_scaling, [&](bool value)
+		{
+			ctx_.settings["enable-gizmo-scaling"] = ctx_.app_settings.enable_gizmo_scaling;
+		})
 #ifdef _DEBUG
+		.add_label_spacer("Debug Only")
+		.add_raw([]()
+		{
 			auto& io = ImGui::GetIO();
-			ImGui::SeparatorText("Debug Only");
 			ImGui::DragFloat("Font Scale", &io.FontGlobalScale, 0.005f, 0.5f, 2.0f, "%.2f", ImGuiSliderFlags_AlwaysClamp);
+			return true;
+		})
 #endif
-			ImGui::SeparatorText("UI");
-			ImGui::TextUnformatted("Scale Gizmos");
-			ImGui::SameLine();
-			if (ImGui::Checkbox("##GizmoScalingCheckbox", &ctx_.app_settings.enable_gizmo_scaling))
-			{
-				ctx_.settings["enable-gizmo-scaling"] = ctx_.app_settings.enable_gizmo_scaling;
-			}
-		};
-		options("Application Settings", "Keybinds") = []()
+		;
+
+		options("Application Settings", "Keybinds").add_raw([]()
 		{
 			display_keybinds_panel(ctx_.keybinds, false, false, false);
-		};
+			return true;
+		});
 
-		options("Project Settings", "Keybinds") = []()
+		options("Project Settings", "Keybinds").add_raw([]()
 		{
 			display_keybinds_panel(ctx_.current_project->keybinds);
-		};
+			return true;
+		});
 
-		options("Storage Settings", "Accounts") = []()
+		options("Storage Settings", "Accounts").add_raw([]()
 		{
 			//TODO: maybe make this a widget
 			
@@ -932,7 +925,8 @@ namespace vt
 					utils::json::write_to_file(accounts_json, ctx_.accounts_filepath);
 				}
 			}
-		};
+			return true;
+		});
 
 		options.set_active_tab("Application Settings", "General");
 	}
