@@ -12,13 +12,13 @@
 #include <widgets/theme_customizer.hpp>
 #include <widgets/time_input.hpp>
 #include <widgets/inspector.hpp>
-#include <widgets/modal/options.hpp>
-#include <widgets/icons.hpp>
+#include <ui/popups/options_popup.hpp>
 #include <widgets/controls.hpp>
 #include <widgets/modal/keybind_popup.hpp>
 #include <widgets/modal/keybind_options_popup.hpp>
 #include <widgets/insert_segment_popup.hpp>
 #include <widgets/timeline.hpp>
+#include <ui/icons.hpp>
 #include <embeds/about.hpp>
 
 #include <utils/filesystem.hpp>
@@ -1424,7 +1424,7 @@ namespace vt
 		}
 		if (ctx_.win_cfg.show_options_window)
 		{
-			ImGui::OpenPopup("Options");
+			ctx_.options.open();
 		}
 		if (ctx_.win_cfg.show_tag_importer_window and !ctx_.tag_importer.is_open())
 		{
@@ -2441,7 +2441,7 @@ namespace vt
 
 		if (ctx_.win_cfg.show_options_window)
 		{
-			ctx_.options.render(&ctx_.win_cfg.show_options_window);
+			ctx_.options.render();
 		}
 
 		if (ctx_.win_cfg.show_inspector_window)

@@ -6,6 +6,7 @@
 
 namespace vt::ui
 {
+	//TODO: Add expandible area
 	struct settings_expander : public widget
 	{
 	public:

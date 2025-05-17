@@ -6,7 +6,7 @@
 #include <services/google/google_account_manager.hpp>
 #include <widgets/google_drive_browser.hpp>
 #include <widgets/controls.hpp>
-#include <widgets/icons.hpp>
+#include <ui/icons.hpp>
 
 #define CPPHTTPLIB_OPENSSL_SUPPORT
 #include <httplib.h>

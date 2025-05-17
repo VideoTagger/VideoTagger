@@ -8,7 +8,7 @@
 #include <utils/string.hpp>
 #include "modal/create_group_popup.hpp"
 #include "modal/video_properties_popup.hpp"
-#include "icons.hpp"
+#include <ui/icons.hpp>
 #include "controls.hpp"
 
 namespace vt::widgets

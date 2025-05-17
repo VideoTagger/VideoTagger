@@ -1,6 +1,6 @@
 #include "pch.hpp"
 #include "localization_editor.hpp"
-#include "icons.hpp"
+#include <ui/icons.hpp>
 #include "controls.hpp"
 
 #include <core/app_context.hpp>

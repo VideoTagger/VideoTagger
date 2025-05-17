@@ -4,7 +4,7 @@
 #include <core/debug.hpp>
 #include "slider.hpp"
 #include "controls.hpp"
-#include "icons.hpp"
+#include <ui/icons.hpp>
 #include "time_input.hpp"
 #include <core/app_context.hpp>
 

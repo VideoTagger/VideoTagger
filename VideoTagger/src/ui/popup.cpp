@@ -53,10 +53,13 @@ namespace vt::ui
 
 			if (flags() & ImGuiWindowFlags_NoTitleBar)
 			{
+				const auto& style = ImGui::GetStyle();
+
 				ImGui::PushFont(ctx_.fonts["title"]);
 				ImGui::TextUnformatted(id().c_str());
-				widgets::vertical_item_spacer(ImGui::GetTextLineHeight() * 0.75f);
 				ImGui::PopFont();
+				post_title_render();
+				widgets::vertical_item_spacer(ImGui::GetTextLineHeight() * 0.75f);
 			}
 			on_render();
 			post_render();
@@ -71,6 +74,11 @@ namespace vt::ui
 	void popup::post_render()
 	{
 		ImGui::EndPopup();
+	}
+
+	void popup::post_title_render()
+	{
+
 	}
 
 	modal_popup::modal_popup(const std::string& id, std::optional<bool*> open, ImGuiWindowFlags flags) : open_state_{ open }, popup{ id, flags } {}
@@ -121,5 +129,18 @@ namespace vt::ui
 		}
 		ImGui::PopStyleVar(2);
 		return result;
+	}
+
+	void modal_popup::post_title_render()
+	{
+		if (!open_state_.has_value()) return;
+
+		const auto& style = ImGui::GetStyle();
+		auto icon = icons::exit;
+		ImGui::SameLine(ImGui::GetWindowWidth() - ImGui::CalcTextSize(icon).x - 2 * (style.WindowPadding.x - style.WindowRounding));
+		if (widgets::icon_button(icon))
+		{
+			close();
+		}
 	}
 }

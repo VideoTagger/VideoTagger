@@ -1,6 +1,6 @@
 #include "pch.hpp"
 #include "controls.hpp"
-#include "icons.hpp"
+#include <ui/icons.hpp>
 #include "time_input.hpp"
 
 namespace vt::widgets

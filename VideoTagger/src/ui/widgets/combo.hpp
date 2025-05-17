@@ -6,7 +6,7 @@
 #include <functional>
 
 #include <widgets/controls.hpp>
-#include <widgets/icons.hpp>
+#include <ui/icons.hpp>
 #include <ui/widget.hpp>
 #include <ui/widget_state.hpp>
 

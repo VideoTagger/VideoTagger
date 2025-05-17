@@ -1,9 +1,10 @@
 #include "pch.hpp"
-#include "timeline.hpp"
-#include "icons.hpp"
-#include "controls.hpp"
 #include <limits>
 #include <optional>
+
+#include "timeline.hpp"
+#include "controls.hpp"
+#include <ui/icons.hpp>
 #include <core/debug.hpp>
 #include <utils/math.hpp>
 

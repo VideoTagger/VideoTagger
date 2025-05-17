@@ -2,7 +2,7 @@
 #include "text_input.hpp"
 #include <widgets/controls.hpp>
 #include <utils/string.hpp>
-#include <widgets/icons.hpp>
+#include <ui/icons.hpp>
 #include <core/app_context.hpp>
 
 namespace vt::ui
