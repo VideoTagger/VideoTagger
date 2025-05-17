@@ -571,6 +571,11 @@ namespace vt::widgets
 		ImGui::Unindent();
 		ImGui::EndGroup();
 
+		if (ImGui::IsItemHovered())
+		{
+			ImGui::SetMouseCursor(ImGuiMouseCursor_Hand);
+		}
+
 		/*if (node_open)
 		{
 			ImGui::SetCursorPosY(ImGui::GetCursorPosY() - style.ItemSpacing.y);
