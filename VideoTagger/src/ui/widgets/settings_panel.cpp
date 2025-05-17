@@ -9,7 +9,7 @@ namespace vt::ui
 {
 	settings_panel& settings_panel::add_toggle(const std::string& label, const std::string& description, bool& value, const std::function<void(bool value)>& on_toggle)
 	{
-		add<settings_expander>(label, description, [label, &value, &on_toggle](float height)
+		add<settings_expander>(label, description, [label, &value, on_toggle](float height)
 		{
 			float offset_y = (height - ui::toggle_height()) * 0.5f;
 			if (offset_y > 0.0f)
