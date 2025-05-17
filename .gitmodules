@@ -27,3 +27,6 @@
 [submodule "VideoTagger/vendor/cpp-httplib"]
 	path = VideoTagger/vendor/cpp-httplib
 	url = https://github.com/yhirose/cpp-httplib.git
+[submodule "VideoTagger/vendor/imgui_toggle"]
+	path = VideoTagger/vendor/imgui_toggle
+	url = https://github.com/cmdwtf/imgui_toggle.git

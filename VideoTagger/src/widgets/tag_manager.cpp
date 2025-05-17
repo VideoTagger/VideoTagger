@@ -272,7 +272,7 @@ namespace vt::widgets
 		ImGui::PushID(&attr);
 		ImGui::TableNextColumn();
 		ImGui::BeginGroup();
-		color_indicator(3.f, tag_attribute::type_color(attr.type_));
+		frame_color_indicator(3.f, tag_attribute::type_color(attr.type_));
 		ImGui::SameLine();
 		ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
 		std::string new_name = name;
@@ -431,7 +431,7 @@ namespace vt::widgets
 						break;
 					}
 					*/
-					auto color = ImGui::ColorConvertU32ToFloat4(tag.color);					
+					auto color = ImGui::ColorConvertU32ToFloat4(tag.color);
 					bool open_color_picker = false;
 
 					if (update_all)
@@ -439,7 +439,6 @@ namespace vt::widgets
 						ImGui::SetNextItemOpen(update_state);
 					}
 
-					//A bit of a hack to not render the arrow
 					bool node_open = begin_collapsible("##TagManagerNode", tag.name, 0, icons::label, color,
 					[&color, &tag]()
 					{
@@ -473,7 +472,8 @@ namespace vt::widgets
 
 					if (node_open)
 					{
-						ImGui::PushStyleColor(ImGuiCol_TableRowBg, style.Colors[ImGuiCol_MenuBarBg]);
+						ImVec4 bg_color{ 50 / 255.f, 50 / 255.f, 50 / 255.f, 0.5f };
+						ImGui::PushStyleColor(ImGuiCol_TableRowBg, bg_color/*style.Colors[ImGuiCol_MenuBarBg]*/);
 						if (ImGui::BeginTable("##Background", 1, ImGuiTableFlags_RowBg))
 						{
 							ImGui::TableNextColumn();

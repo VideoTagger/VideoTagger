@@ -22,6 +22,8 @@
 #include <utility>
 #include <vector>
 #include <execution>
+#include <unordered_set>
+#include <unordered_map>
 
 #include <SDL.h>
 #include <SDL_opengl.h>

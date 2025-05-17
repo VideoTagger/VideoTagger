@@ -90,6 +90,7 @@ namespace vt::icons
 	inline constexpr auto warning = "\xee\x80\x82";
 	//inline constexpr auto error = "\xee\x80\x80";
 	inline constexpr auto error = "\xee\x85\xa0";
+	inline constexpr auto exclamation = "\xee\x99\x85";
 	inline constexpr auto delete_on_run = "\xee\x85\xac";
 
 	inline constexpr auto keyframe = "\xee\x9a\x97";
@@ -106,7 +107,7 @@ namespace vt::icons
 		bullet, chevron_left, chevron_right,
 		shape, shape_none, shape_circle, shape_rectangle, shape_polygon, interpolate,
 		align_horizontal_left, align_horizontal_right, align_horizontal_center, align_vertical_bottom, align_vertical_top, align_vertical_center, align_center,
-		info, warning, error, delete_on_run,
+		info, warning, error, exclamation, delete_on_run,
 		keyframe, keyframe_current, goto_keyframe, new_region, set_target,
 		download, upload, download_off, arrow_up, refresh, local_storage, google_drive_add, home, license, translate
 	});

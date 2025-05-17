@@ -21,9 +21,9 @@ namespace vt::widgets
 	extern bool begin_button_dropdown(const char* label, ImVec2 button_size, float popup_height = 0.0f);
 	extern void end_button_dropdown();
 
-	extern void item_spacer();
-	extern void vertical_item_spacer();
-	extern void horizontal_item_spacer();
+	extern void item_spacer(const ImVec2& size = {});
+	extern void vertical_item_spacer(float height = 0.f);
+	extern void horizontal_item_spacer(float width = 0.f);
 	extern void help_marker(const char* description);
 	extern void centered_text(const char* text, ImVec2 avail_area, ImVec2 offset = {});
 	extern void clipped_text(const char* text, ImVec2 avail_area);
@@ -46,7 +46,8 @@ namespace vt::widgets
 
 	extern bool selection_area(ImVec2& start_pos, ImVec2& end_pos, ImGuiMouseButton mouse_button = ImGuiMouseButton_Left);
 
-	extern void color_indicator(float thickness, uint32_t color);
+	extern void color_indicator(float thickness, uint32_t color, float height_scale = 1.f, float height = 0.f);
+	extern void frame_color_indicator(float thickness, uint32_t color, float height_scale = 1.f, float height = 0.f);
 	extern bool begin_collapsible(const std::string& id, const std::string& label, ImGuiTreeNodeFlags flags = 0, const char* icon = nullptr, const std::optional<ImVec4>& icon_color = std::nullopt, const std::function<void(void)>& on_dragdrop = nullptr, const std::optional<size_t>& index = std::nullopt);
 	extern void end_collapsible();
 

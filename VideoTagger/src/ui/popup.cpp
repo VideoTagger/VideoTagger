@@ -1,6 +1,9 @@
 #include "pch.hpp"
 #include "popup.hpp"
 
+#include <core/app_context.hpp>
+#include <widgets/controls.hpp>
+
 namespace vt::ui
 {
 	popup::popup(const std::string& id, ImGuiWindowFlags flags) : id_{ id }, flags_{ flags } {}
@@ -25,10 +28,36 @@ namespace vt::ui
 		return flags_;
 	}
 
-	void popup::render()
+	void popup::on_display()
+	{
+
+	}
+
+    void popup::open_and_render(bool condition, ImGuiPopupFlags flags)
+    {
+		if (condition)
+		{
+			open(flags);
+		}
+		render();
+    }
+
+    void popup::render()
 	{
 		if (pre_render())
 		{
+			if (ImGui::IsWindowAppearing())
+			{
+				on_display();
+			}
+
+			if (flags() & ImGuiWindowFlags_NoTitleBar)
+			{
+				ImGui::PushFont(ctx_.fonts["title"]);
+				ImGui::TextUnformatted(id().c_str());
+				widgets::vertical_item_spacer(ImGui::GetTextLineHeight() * 0.75f);
+				ImGui::PopFont();
+			}
 			on_render();
 			post_render();
 		}
@@ -72,7 +101,7 @@ namespace vt::ui
 		bool result{};
 		const char* id_cstr = id().c_str();
 		const auto& style = ImGui::GetStyle();
-		ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 7);
+		ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 8.f);
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, style.WindowPadding * 2);
 		ImGui::SetNextWindowPos(ImGui::GetMainViewport()->GetCenter(), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
 		auto flags_ = flags() | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoMove;

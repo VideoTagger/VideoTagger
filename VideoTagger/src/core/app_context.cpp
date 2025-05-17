@@ -162,6 +162,31 @@ namespace vt
 		lang_packs.push_back(pack);
     }
 
+	void app_context::remove_lang_pack(const std::string& name)
+	{
+		auto it = std::find_if(lang_packs.begin(), lang_packs.end(), [&](const auto& lang)
+		{
+			return lang->name() == name;
+		});
+		if (it != lang_packs.end())
+		{
+			auto path = lang_dir_filepath / (it->get()->filename() + "." + lang_pack::extension);
+			if (std::filesystem::remove(path))
+			{
+				debug::log("Removed lang pack with name: '{}'", name);
+			}
+			else
+			{
+				debug::error("Failed to remove lang pack with name: '{}'", name);
+			}
+			lang_packs.erase(it);
+		}
+		else
+		{
+			debug::error("Lang pack with name: '{}' not found", name);
+		}
+	}
+
 	void app_context::load_lang_packs(const std::string& desired_lang)
 	{
 		ctx_.lang_packs.clear();
@@ -194,6 +219,17 @@ namespace vt
 		{
 			ctx_.lang = ctx_.lang_packs.front();
 		}
+	}
+
+	std::vector<std::string> app_context::lang_names() const
+	{
+		std::vector<std::string> result;
+		result.reserve(ctx_.lang_packs.size());
+		for (const auto& lang : ctx_.lang_packs)
+		{
+			result.push_back(lang->name());
+		}
+		return result;
 	}
 
     std::filesystem::path app_context::storage_path()

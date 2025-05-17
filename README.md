@@ -65,6 +65,7 @@ Build the projects by opening the `Xcode` project file and building with desired
 - [SDL2](https://github.com/libsdl-org/SDL)
 - [ImGui](https://github.com/ocornut/imgui)
 - [ImGuizmo](https://github.com/CedricGuillemet/ImGuizmo)
+- [imgui_toggle](https://github.com/cmdwtf/imgui_toggle)
 - [Native File Dialog Extended](https://github.com/btzy/nativefiledialog-extended/tree/master)
 - [fmt](https://github.com/fmtlib/fmt)
 - [Nlohmann Json](https://github.com/nlohmann/json)

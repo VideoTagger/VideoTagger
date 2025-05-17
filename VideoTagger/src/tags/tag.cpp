@@ -17,13 +17,13 @@ namespace vt
 		bool selected = (ctx_.registry.execute_query<selected_attribute_query>() == this);
 
 		auto cpos = ImGui::GetCursorPos();
-		if (ImGui::Selectable("##TagAttributeInstanceSelectable", selected, ImGuiSelectableFlags_AllowItemOverlap | ImGuiSelectableFlags_AllowOverlap | ImGuiSelectableFlags_SpanAllColumns, { 0.f, ImGui::GetTextLineHeightWithSpacing() }))
+		if (ImGui::Selectable("##TagAttributeInstanceSelectable", selected, ImGuiSelectableFlags_AllowItemOverlap | ImGuiSelectableFlags_AllowOverlap | ImGuiSelectableFlags_SpanAllColumns, { 0.f, ImGui::GetTextLineHeightWithSpacing() + style.ItemSpacing.y }))
 		{
 			ctx_.registry.execute<set_selected_attribute_command>(this);
 		}
 		ImGui::SetCursorPos(cpos);
 
-		widgets::color_indicator(3.f, tag_attribute::type_color(attribute.type_));
+		widgets::frame_color_indicator(3.f, tag_attribute::type_color(attribute.type_));
 		ImGui::SameLine(style.ItemSpacing.x);
 		//ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
 		//ImGui::InputText("##AttributeName", (std::string*)&name, ImGuiInputTextFlags_ReadOnly);
@@ -120,6 +120,7 @@ namespace vt
 				ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2{});
 				float button_width = ImGui::CalcTextSize(shape::type_icon(shape::type::none)).x;
 				ImGui::PushStyleVar(ImGuiStyleVar_CellPadding, ImVec2{});
+				ImGui::SetCursorPosY(ImGui::GetCursorPosY() + style.ItemSpacing.y);
 				if (ImGui::BeginTable("##ShapeAttributeType", 2, ImGuiTableFlags_BordersOuter | ImGuiTableFlags_BordersInnerV))
 				{
 					ImGui::TableSetupColumn(nullptr, ImGuiTableColumnFlags_WidthStretch);
@@ -186,7 +187,7 @@ namespace vt
 		ImGui::PushID(&attr);
 		ImGui::TableNextColumn();
 		ImGui::BeginGroup();
-		widgets::color_indicator(3.f, tag_attribute::type_color(attr.type_));
+		widgets::color_indicator(3.f, tag_attribute::type_color(attr.type_), 1.f);
 		ImGui::SameLine();
 		ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
 		std::string new_name = name;

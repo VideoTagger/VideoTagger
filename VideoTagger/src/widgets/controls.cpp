@@ -170,22 +170,22 @@ namespace vt::widgets
 		ImGui::EndPopup();
 	}
 
-	void item_spacer()
+	void item_spacer(const ImVec2& size)
 	{
 		const auto& style = ImGui::GetStyle();
-		ImGui::Dummy(style.ItemSpacing);
+		ImGui::Dummy({ size.x == 0.f ? style.ItemSpacing.x : size.x, size.y == 0.f ? style.ItemSpacing.y : size.y});
 	}
 
-	void vertical_item_spacer()
+	void vertical_item_spacer(float height)
 	{
 		const auto& style = ImGui::GetStyle();
-		ImGui::Dummy({ 0.f, style.ItemSpacing.y});
+		ImGui::Dummy({ 0.f, height == 0.f ? style.ItemSpacing.y : height });
 	}
 
-	void horizontal_item_spacer()
+	void horizontal_item_spacer(float width)
 	{
 		const auto& style = ImGui::GetStyle();
-		ImGui::Dummy({ style.ItemSpacing.x, 0.f });
+		ImGui::Dummy({ width == 0.f ? style.ItemSpacing.x : width, 0.f });
 	}
 
 	void help_marker(const char* description)
@@ -497,16 +497,39 @@ namespace vt::widgets
 		return ImGui::IsMouseReleased(mouse_button) and valid;
 	}
 
-    void color_indicator(float thickness, uint32_t color)
+    void color_indicator(float thickness, uint32_t color, float height_scale, float height)
     {
 		auto& style = ImGui::GetStyle();
-		float sz = ImGui::GetTextLineHeight();
+		float line_height = (height == 0 ? ImGui::GetTextLineHeight() : height);
+		float sz = line_height;
+		float scaled_sz = line_height * height_scale;
 		auto* window = ImGui::GetCurrentWindow();
-		const ImRect rect{ window->DC.CursorPos, window->DC.CursorPos + ImVec2{ thickness, sz + style.FramePadding.y * 2.0f } };
-		ImGui::Dummy(ImVec2{ thickness - style.ItemSpacing.x, sz });
+		float y_offset = std::max(0.f, (sz - scaled_sz) * 0.5f) - style.FramePadding.y * 0.5f;
+		auto cpos = window->DC.CursorPos;
+		ImRect rect{ cpos, cpos + ImVec2{ thickness, scaled_sz } };
+		rect.Min.y += y_offset;
+		rect.Max.y += y_offset;
 
+		ImGui::Dummy(ImVec2{ std::max(0.f, rect.GetWidth() - style.ItemSpacing.x), rect.GetHeight()});
 		ImGui::RenderFrame(rect.Min, rect.Max, color, false, style.FrameRounding);
     }
+
+	void frame_color_indicator(float thickness, uint32_t color, float height_scale, float height)
+	{
+		auto& style = ImGui::GetStyle();
+		float line_height = (height == 0 ? ImGui::GetFrameHeight() : height);
+		float sz = line_height;
+		float scaled_sz = line_height * height_scale;
+		auto* window = ImGui::GetCurrentWindow();
+		float y_offset = std::max(0.f, (sz - scaled_sz) * 0.5f);
+		auto cpos = window->DC.CursorPos;
+		ImRect rect{ cpos, cpos + ImVec2{ thickness, scaled_sz } };
+		rect.Min.y += y_offset;
+		rect.Max.y += y_offset;
+
+		ImGui::Dummy(ImVec2{ std::max(0.f, rect.GetWidth() - style.ItemSpacing.x), rect.GetHeight() });
+		ImGui::RenderFrame(rect.Min, rect.Max, color, false, style.FrameRounding);
+	}
 
 	bool begin_collapsible(const std::string& id, const std::string& label, ImGuiTreeNodeFlags flags, const char* icon, const std::optional<ImVec4>& icon_color, const std::function<void(void)>& on_dragdrop, const std::optional<size_t>& index)
 	{
@@ -523,10 +546,11 @@ namespace vt::widgets
 		}
 
 		ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2{});
+		ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 3.f);
 		ImGui::PushStyleColor(ImGuiCol_Text, ImVec4{});
 		bool node_open = ImGui::TreeNodeEx(id.c_str(), flags);
 		ImGui::PopStyleColor();
-		ImGui::PopStyleVar();
+		ImGui::PopStyleVar(2);
 		
 		if (on_dragdrop != nullptr)
 		{
@@ -547,6 +571,11 @@ namespace vt::widgets
 		ImGui::Unindent();
 		ImGui::EndGroup();
 
+		/*if (node_open)
+		{
+			ImGui::SetCursorPosY(ImGui::GetCursorPosY() - style.ItemSpacing.y);
+		}*/
+		
 		return node_open;
 	}
 

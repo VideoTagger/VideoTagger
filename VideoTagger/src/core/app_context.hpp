@@ -187,7 +187,9 @@ namespace vt
 		std::shared_ptr<lang_pack> load_lang_pack(const std::string& name = "en_US");
 		std::shared_ptr<lang_pack> load_or_create_lang_pack(const std::string& name, const std::string& filename);
 		void instert_lang_pack(std::shared_ptr<lang_pack> pack);
+		void remove_lang_pack(const std::string& name);
 		void load_lang_packs(const std::string& desired_lang);
+		std::vector<std::string> lang_names() const;
 
 		static std::filesystem::path storage_path();
 

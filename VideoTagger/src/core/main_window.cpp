@@ -30,6 +30,8 @@
 #include <utils/intersection.hpp>
 #include <editor/set_selected_attribute_command.hpp>
 #include <utils/string.hpp>
+#include <ui/widgets/common.hpp>
+#include <ui/widgets/settings_expander.hpp>
 
 extern "C"
 {
@@ -788,14 +790,21 @@ namespace vt
 				ctx_.settings["thumbnail-size"] = ctx_.app_settings.thumbnail_size;
 			}
 
-			ImGui::AlignTextToFramePadding();
-			ImGui::TextUnformatted("Load Thumbnails");
-			ImGui::SameLine();
-			if (ImGui::Checkbox("##LoadThumbnailsCheckbox", &ctx_.app_settings.load_thumbnails))
+			//TODO: Move this into settings widget class, this shouldn't be static
+			static ui::settings_expander exp("Load Thumbnails", "Specifies whether to load thumbnails when opening a project", [](float height)
 			{
-				ctx_.settings["load-thumbnails"] = ctx_.app_settings.load_thumbnails;
-			}
+				float offset_y = (height - ui::toggle_height()) * 0.5f;
+				if (offset_y > 0.0f)
+				{
+					ImGui::SetCursorPosY(ImGui::GetCursorPosY() + offset_y);
+				}
 
+				if (ui::toggle("##LoadThumbnailsToggle", ctx_.app_settings.load_thumbnails))
+				{
+					ctx_.settings["load-thumbnails"] = ctx_.app_settings.load_thumbnails;
+				}
+			});
+			exp.render();
 			//TODO: Add theme selection
 
 #ifdef _DEBUG
@@ -1087,12 +1096,12 @@ namespace vt
 	{
 		if (ImGui::BeginMainMenuBar())
 		{
-			if (ImGui::BeginMenu(ctx_.lang->get("menu_bar.file").c_str()))
+			if (ui::begin_main_menu(ctx_.lang->get("menu_bar.file").c_str()))
 			{
 				std::string key_name = ctx_.lang->get("import_videos").c_str();
 				auto& kb = ctx_.keybinds.at(key_name);
 				std::string menu_name = fmt::format("{} {}", icons::import_, key_name);
-				if (ImGui::BeginMenu(menu_name.c_str()))
+				if (ui::begin_menu(menu_name.c_str()))
 				{
 					for (auto& [importer_id, importer] : ctx_.video_importers)
 					{
@@ -1108,7 +1117,7 @@ namespace vt
 						}
 					}
 
-					ImGui::EndMenu();
+					ui::end_menu();
 				}
 				ImGui::Separator();
 				{
@@ -1145,7 +1154,7 @@ namespace vt
 
 					{
 						std::string menu_name = fmt::format("{} {}", icons::import_export, ctx_.lang->get("import_export").c_str());
-						if (ImGui::BeginMenu(menu_name.c_str()))
+						if (ui::begin_menu(menu_name.c_str()))
 						{
 							if (ImGui::MenuItem("Import Tags", nullptr, &ctx_.win_cfg.show_tag_importer_window))
 							{
@@ -1189,7 +1198,7 @@ namespace vt
 
 								}
 							}
-							ImGui::EndMenu();
+							ui::end_menu();
 						}
 					}
 				}
@@ -1213,7 +1222,7 @@ namespace vt
 						on_close_project(true);
 					}
 				}
-				ImGui::EndMenu();
+				ui::end_menu();
 			}
 
 			//TODO: Enable this when undo/redo is implemented
@@ -1231,7 +1240,7 @@ namespace vt
 				ImGui::EndMenu();
 			}*/
 
-			if (ImGui::BeginMenu(ctx_.lang->get("menu_bar.window").c_str()))
+			if (ui::begin_main_menu(ctx_.lang->get("menu_bar.window").c_str()))
 			{
 				auto& windows = ctx_.settings["show-windows"];
 
@@ -1249,19 +1258,19 @@ namespace vt
 
 				//TODO: This could be done in a better way
 				for (auto& [name, keybind_name, settings_name, value] :
-					{
-						win_toggles{ "Show Video Player", "Toggle Video Player", "video-player", &ctx_.win_cfg.show_video_player_window },
-						win_toggles{ "Show Video Browser", "Toggle Video Browser", "video-browser", &ctx_.win_cfg.show_video_browser_window },
-						win_toggles{ "Show Video Group Browser", "Toggle Video Group Browser", "video-group-browser", &ctx_.win_cfg.show_video_group_browser_window },
-						win_toggles{ "Show Video Group Queue", "Toggle Video Group Queue", "video-group-queue", &ctx_.win_cfg.show_video_group_queue_window },
-						win_toggles{},
-						win_toggles{ "Show Inspector", "Toggle Inspector", "inspector", &ctx_.win_cfg.show_inspector_window },
-						win_toggles{ "Show Shape Attributes", "Toggle Shape Attributes", "shape-attributes", &ctx_.win_cfg.show_shape_attributes_window },
-						win_toggles{ "Show Tag Manager", "Toggle Tag Manager", "tag-manager", &ctx_.win_cfg.show_tag_manager_window },
-						win_toggles{ "Show Timeline", "Toggle Timeline", "timeline", &ctx_.win_cfg.show_timeline_window },
-						win_toggles{ "Show Console", "Toggle Console", "console", &ctx_.win_cfg.show_console_window},
+				{
+					win_toggles{ "Show Video Player", "Toggle Video Player", "video-player", &ctx_.win_cfg.show_video_player_window },
+					win_toggles{ "Show Video Browser", "Toggle Video Browser", "video-browser", &ctx_.win_cfg.show_video_browser_window },
+					win_toggles{ "Show Video Group Browser", "Toggle Video Group Browser", "video-group-browser", &ctx_.win_cfg.show_video_group_browser_window },
+					win_toggles{ "Show Video Group Queue", "Toggle Video Group Queue", "video-group-queue", &ctx_.win_cfg.show_video_group_queue_window },
+					win_toggles{},
+					win_toggles{ "Show Inspector", "Toggle Inspector", "inspector", &ctx_.win_cfg.show_inspector_window },
+					win_toggles{ "Show Shape Attributes", "Toggle Shape Attributes", "shape-attributes", &ctx_.win_cfg.show_shape_attributes_window },
+					win_toggles{ "Show Tag Manager", "Toggle Tag Manager", "tag-manager", &ctx_.win_cfg.show_tag_manager_window },
+					win_toggles{ "Show Timeline", "Toggle Timeline", "timeline", &ctx_.win_cfg.show_timeline_window },
+					win_toggles{ "Show Console", "Toggle Console", "console", &ctx_.win_cfg.show_console_window},
 
-					})
+				})
 				{
 					if (name == nullptr)
 					{
@@ -1298,10 +1307,10 @@ namespace vt
 				{
 					ctx_.reset_layout = true;
 				}
-				ImGui::EndMenu();
+				ui::end_menu();
 			}
 
-			if (ImGui::BeginMenu(ctx_.lang->get("menu_bar.run").c_str()))
+			if (ui::begin_main_menu(ctx_.lang->get("menu_bar.run").c_str()))
 			{
 				std::function<bool(const std::filesystem::path&)> has_scripts = [&has_scripts](const std::filesystem::path& path)
 				{
@@ -1326,17 +1335,17 @@ namespace vt
 					ctx_.scripts = fetch_scripts(ctx_.script_dir_filepath);
 				}
 
-				if (ImGui::BeginMenu(menu_name.c_str(), !ctx_.scripts.empty()))
+				if (ui::begin_menu(menu_name.c_str(), !ctx_.scripts.empty()))
 				{
 					std::function<void(const utils::file_node&)> draw_folder = [&draw_folder, &has_scripts](const utils::file_node& node)
 					{
 						for (const auto& [path, folder] : node)
 						{
 							auto dir_name = fmt::format("{} {}", icons::folder_code, path.stem().string());
-							if (!folder.empty() and ImGui::BeginMenu(dir_name.c_str()))
+							if (!folder.empty() and ui::begin_menu(dir_name.c_str()))
 							{
 								draw_folder(folder);
-								ImGui::EndMenu();
+								ui::end_menu();
 							}
 						}
 
@@ -1357,7 +1366,7 @@ namespace vt
 					};
 
 					draw_folder(ctx_.scripts);
-					ImGui::EndMenu();
+					ui::end_menu();
 				}
 
 				menu_name = fmt::format("{} {}", icons::folder, "Open Scripts Folder");
@@ -1365,12 +1374,12 @@ namespace vt
 				{
 					utils::filesystem::open_in_explorer(std::filesystem::absolute(ctx_.script_dir_filepath));
 				}
-				ImGui::EndMenu();
+				ui::end_menu();
 			}
 
-			if (ImGui::BeginMenu(ctx_.lang->get("menu_bar.tools").c_str()))
+			if (ui::begin_main_menu(ctx_.lang->get("menu_bar.tools").c_str()))
 			{
-				if (ImGui::BeginMenu("Themes"))
+				if (ui::begin_menu("Themes"))
 				{
 					if (ImGui::MenuItem("Reload"))
 					{
@@ -1388,7 +1397,7 @@ namespace vt
 							ImGui::GetStyle() = theme.style;
 						}
 					}
-					ImGui::EndMenu();
+					ui::end_menu();
 				}
 				ImGui::MenuItem("Theme Customizer", nullptr, &ctx_.win_cfg.show_theme_customizer_window);
 				ImGui::Separator();
@@ -1396,15 +1405,15 @@ namespace vt
 				{
 					ctx_.win_cfg.show_options_window = true;
 				}
-				ImGui::EndMenu();
+				ui::end_menu();
 			}
-			if (ImGui::BeginMenu(ctx_.lang->get("menu_bar.help").c_str()))
+			if (ui::begin_main_menu(ctx_.lang->get("menu_bar.help").c_str()))
 			{
 				if (ImGui::MenuItem(ctx_.lang->get("menu_bar.help.about").c_str()))
 				{
 					ctx_.win_cfg.show_about_window = true;
 				}
-				ImGui::EndMenu();
+				ui::end_menu();
 			}
 			ImGui::EndMainMenuBar();
 		}

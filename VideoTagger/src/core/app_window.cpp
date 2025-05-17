@@ -20,10 +20,14 @@ namespace vt
 		ImVec4* colors = style.Colors;
 		colors[ImGuiCol_Text] = ImVec4(1.00f, 1.00f, 1.00f, 1.00f);
 		colors[ImGuiCol_TextDisabled] = ImVec4(0.50f, 0.50f, 0.50f, 1.00f);
-		colors[ImGuiCol_WindowBg] = ImVec4(0.14f, 0.14f, 0.14f, 1.00f);
+		//colors[ImGuiCol_WindowBg] = ImVec4(0.14f, 0.14f, 0.14f, 1.00f);
+		colors[ImGuiCol_WindowBg] = ImVec4(0.1255f, 0.1255f, 0.1255f, 1.0f);
 		colors[ImGuiCol_ChildBg] = ImVec4(0.00f, 0.00f, 0.00f, 0.00f);
-		colors[ImGuiCol_PopupBg] = ImVec4(0.16f, 0.16f, 0.16f, 0.95f);
-		colors[ImGuiCol_Border] = ImVec4(0.19f, 0.19f, 0.19f, 0.60f);
+		//colors[ImGuiCol_PopupBg] = ImVec4(0.16f, 0.16f, 0.16f, 0.95f);
+		//colors[ImGuiCol_PopupBg] = ImVec4(0.1686f, 0.1686f, 0.1686f, 0.95f);
+		colors[ImGuiCol_PopupBg] = ImVec4(0.1255f, 0.1255f, 0.1255f, 0.975f);
+		//colors[ImGuiCol_Border] = ImVec4(0.19f, 0.19f, 0.19f, 0.60f);
+		colors[ImGuiCol_Border] = ImVec4(0.2588f, 0.2588f, 0.2588f, 0.5f);
 		colors[ImGuiCol_BorderShadow] = ImVec4(0.00f, 0.00f, 0.00f, 0.24f);
 		colors[ImGuiCol_FrameBg] = ImVec4(0.25f, 0.25f, 0.25f, 0.63f);
 		colors[ImGuiCol_FrameBgHovered] = ImVec4(0.35f, 0.35f, 0.35f, 0.54f);
@@ -31,7 +35,8 @@ namespace vt
 		colors[ImGuiCol_TitleBg] = ImVec4(0.10f, 0.10f, 0.10f, 1.00f);
 		colors[ImGuiCol_TitleBgActive] = ImVec4(0.12f, 0.12f, 0.12f, 1.00f);
 		colors[ImGuiCol_TitleBgCollapsed] = ImVec4(0.09f, 0.09f, 0.09f, 1.00f);
-		colors[ImGuiCol_MenuBarBg] = ImVec4(0.16f, 0.16f, 0.16f, 1.00f);
+		//colors[ImGuiCol_MenuBarBg] = ImVec4(0.16f, 0.16f, 0.16f, 1.00f);
+		colors[ImGuiCol_MenuBarBg] = ImVec4(0.1255f, 0.1255f, 0.1255f, 1.0f);
 		colors[ImGuiCol_ScrollbarBg] = ImVec4(0.05f, 0.05f, 0.05f, 0.54f);
 		colors[ImGuiCol_ScrollbarGrab] = ImVec4(0.34f, 0.34f, 0.34f, 0.54f);
 		colors[ImGuiCol_ScrollbarGrabHovered] = ImVec4(0.40f, 0.40f, 0.40f, 0.54f);
@@ -67,7 +72,8 @@ namespace vt
 		colors[ImGuiCol_TableBorderLight] = ImVec4(0.28f, 0.28f, 0.28f, 0.29f);
 		colors[ImGuiCol_TableRowBg] = ImVec4(0.00f, 0.00f, 0.00f, 0.00f);
 		colors[ImGuiCol_TableRowBgAlt] = ImVec4(1.00f, 1.00f, 1.00f, 0.06f);
-		colors[ImGuiCol_TextSelectedBg] = ImVec4(0.32f, 0.34f, 0.35f, 1.00f);
+		//colors[ImGuiCol_TextSelectedBg] = ImVec4(0.32f, 0.34f, 0.35f, 1.00f);
+		colors[ImGuiCol_TextSelectedBg] = ImVec4(0.0f, 0.4706f, 0.8314f, 0.75f);
 		//colors[ImGuiCol_DragDropTarget] = ImVec4(0.33f, 0.67f, 0.86f, 1.00f);
 		colors[ImGuiCol_DragDropTarget] = ImVec4(1.00f, 0.64f, 0.00f, 1.00f);
 		colors[ImGuiCol_NavHighlight] = ImVec4(1.00f, 0.00f, 0.00f, 1.00f);
@@ -98,7 +104,7 @@ namespace vt
 		style.ScrollbarRounding = 5;
 		style.GrabRounding = 3;
 		style.LogSliderDeadzone = 4;
-		style.TabRounding = 0; //style.TabRounding = 4;
+		style.TabRounding = 3; //style.TabRounding = 4;
 
 		if (light)
 		{

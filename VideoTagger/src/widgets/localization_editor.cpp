@@ -9,7 +9,7 @@
 
 namespace vt::widgets
 {
-	localization_editor::localization_editor() : new_lang_popup_{ ui::new_popup<ui::new_language_popup>() } {}
+	localization_editor::localization_editor() : new_lang_popup_{ ui::new_popup<ui::new_language_popup>() }, remove_lang_popup_{ ui::new_popup<ui::remove_language_popup>() } {}
 
 	void localization_editor::render(bool& is_open, std::vector<std::shared_ptr<lang_pack>>& langs)
 	{
@@ -70,18 +70,20 @@ namespace vt::widgets
 				}
 			}
 			tooltip("Export");
+			ImGui::SameLine();
+			bool remove_lang = icon_button(icons::delete_);
+			tooltip("Delete");
 			ImGui::PopStyleVar();
 
 			if (lang_count > 0 and ImGui::BeginTable("##Languages", static_cast<int>(lang_count + 1), table_flags))
 			{
-				std::vector<std::string> keys = langs.front()->keys();
-				std::sort(keys.begin(), keys.end());
+				auto keys_ = keys(langs);
 				
 				ImGui::TableSetupColumn("Key", ImGuiTableColumnFlags_WidthFixed);
 				for (const auto& lang : langs)
 				{
 					float max_width{};
-					for (const auto& key : keys)
+					for (const auto& key : keys_)
 					{
 						auto width = ImGui::CalcTextSize(lang->get(key).c_str()).x;
 						if (width > max_width)
@@ -95,7 +97,7 @@ namespace vt::widgets
 				ImGui::TableSetupScrollFreeze(1, 1);
 				ImGui::TableHeadersRow();
 
-				for (const auto& key : keys)
+				for (const auto& key : keys_)
 				{
 					ImGui::TableNextRow();
 					ImGui::TableNextColumn();
@@ -114,11 +116,8 @@ namespace vt::widgets
 				ImGui::EndTable();
 			}
 
-			if (add_lang)
-			{
-				new_lang_popup_->open();
-			}
-			new_lang_popup_->render();
+			new_lang_popup_->open_and_render(add_lang);
+			remove_lang_popup_->open_and_render(remove_lang);
 		}
 		ImGui::End();
 	}
@@ -126,5 +125,18 @@ namespace vt::widgets
 	std::string localization_editor::window_name()
 	{
 		return fmt::format("{} Localization Editor##Localization Editor", icons::translate);
+	}
+
+	std::vector<std::string> localization_editor::keys(const std::vector<std::shared_ptr<lang_pack>>& langs) const
+	{
+		std::unordered_set<std::string> key_set;
+		for (const auto& lang : langs)
+		{
+			auto lang_keys = lang->keys();
+			key_set.insert(lang_keys.begin(), lang_keys.end());
+		}
+		std::vector<std::string> keys(key_set.begin(), key_set.end());
+		std::sort(keys.begin(), keys.end());
+		return keys;
 	}
 }

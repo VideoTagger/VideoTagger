@@ -24,6 +24,9 @@ project "VideoTagger"
 		"vendor/ImGuizmo/ImSequencer.h",
 		"vendor/ImGuizmo/ImSequencer.cpp",
 		"vendor/ImGuizmo/ImGuizmo.cpp",
+		"vendor/imgui_toggle/imgui_toggle.cpp",
+		"vendor/imgui_toggle/imgui_toggle_palette.cpp",
+		"vendor/imgui_toggle/imgui_toggle_renderer.cpp",
 	}
 
 	includedirs
@@ -32,6 +35,7 @@ project "VideoTagger"
 		"vendor/ImGui",
 		"vendor/ImGui/misc/cpp/",
 		"vendor/ImGuizmo",
+		"vendor/imgui_toggle",
 		"vendor/nativefiledialog-extended/src/include",
 		"vendor/fmt/include",
 		"vendor/nlohmann/single_include",
@@ -69,6 +73,8 @@ project "VideoTagger"
 	filter "files:src/embeds/**.cpp"
 		flags { "NoPCH" }
 	filter "files:vendor/ImGuizmo/**.cpp"
+		flags { "NoPCH" }
+		filter "files:vendor/imgui_toggle/**.cpp"
 		flags { "NoPCH" }
 	filter "files:vendor/ImGui/**.cpp"
 		flags { "NoPCH" }
