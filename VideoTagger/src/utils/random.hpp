@@ -14,7 +14,7 @@ namespace vt::utils
 		static std::mt19937_64 gen;
 
 	public:
-		template<typename type> static type get(type min = std::numeric_limits<type>::min(), type max = std::numeric_limits<type>::min())
+		template<typename type> static type get(type min = std::numeric_limits<type>::min(), type max = std::numeric_limits<type>::max())
 		{
 			if constexpr (std::is_floating_point_v<type>)
 			{
