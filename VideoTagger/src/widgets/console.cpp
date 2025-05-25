@@ -1,6 +1,6 @@
 #include "pch.hpp"
 #include "console.hpp"
-#include "icons.hpp"
+#include <ui/icons.hpp>
 #include "controls.hpp"
 #include <core/debug.hpp>
 #include <utils/string.hpp>

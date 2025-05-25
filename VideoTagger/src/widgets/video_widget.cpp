@@ -4,7 +4,7 @@
 #include <utils/timestamp.hpp>
 #include "slider.hpp"
 #include "controls.hpp"
-#include "icons.hpp"
+#include <ui/icons.hpp>
 #include <core/debug.hpp>
 
 #include <core/app.hpp>

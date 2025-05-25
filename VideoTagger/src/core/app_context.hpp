@@ -29,7 +29,7 @@
 #include <widgets/theme_customizer.hpp>
 #include <widgets/shape_attributes.hpp>
 #include <widgets/console.hpp>
-#include <widgets/modal/options.hpp>
+#include <ui/popups/options_popup.hpp>
 #include <widgets/modal/tag_importer.hpp>
 #include <widgets/modal/script_progress.hpp>
 #include <widgets/localization_editor.hpp>
@@ -106,7 +106,7 @@ namespace vt
 		widgets::shape_attributes shape_attributes;
 		widgets::console console;
 		widgets::localization_editor localization_editor;
-		widgets::modal::options options;
+		ui::options_popup options{ &win_cfg.show_options_window };
 		widgets::modal::script_progress script_progress;
 		widgets::color_picker color_picker;
 		widgets::modal::tag_importer tag_importer;

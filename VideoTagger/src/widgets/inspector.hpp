@@ -1,7 +1,7 @@
 #pragma once
 #include <optional>
 #include <limits>
-#include "icons.hpp"
+#include <ui/icons.hpp>
 #include <fmt/format.h>
 #include "video_timeline.hpp"
 

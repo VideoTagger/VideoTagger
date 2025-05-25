@@ -2,7 +2,7 @@
 #include "app_window.hpp"
 #include "app_context.hpp"
 #include "debug.hpp"
-#include <widgets/icons.hpp>
+#include <ui/icons.hpp>
 #include <embeds/MaterialSymbolsSharp_Filled_Regular.hpp>
 #include <embeds/NotoSans_Regular.hpp>
 

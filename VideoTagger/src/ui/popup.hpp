@@ -47,14 +47,16 @@ namespace vt::ui
 		void open_and_render(bool condition, ImGuiPopupFlags flags = 0);
 		void render();
 
-	private:
+	protected:
 		/**
 		 * @brief Begins the popup rendering context
 		 * @return true if the popup is open and should be rendered, false otherwise
 		 */
 		virtual bool pre_render();
 		/// @brief Ends the popup rendering context
-		void post_render();
+		virtual void post_render();
+		/// @brief Renders content after the window title is rendered
+		virtual void post_title_render();
 	};
 
 	///@brief Base class for a modal popup
@@ -80,9 +82,11 @@ namespace vt::ui
 		virtual void close() override;
 		///@brief Makes the Escape key close the popup when pressed
 		void close_on_escape();
-	private:
+	protected:
 		///@brief Applies the default modal popup style and begins the popup rendering context
 		virtual bool pre_render() override;
+
+		virtual void post_title_render() override;
 	};
 
 	/**

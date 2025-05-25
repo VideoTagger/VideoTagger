@@ -2,7 +2,7 @@
 #include "downloadable_video_resource.hpp"
 #include <core/app_context.hpp>
 #include <utils/thumbnail.hpp>
-#include <widgets/icons.hpp>
+#include <ui/icons.hpp>
 
 namespace vt
 {

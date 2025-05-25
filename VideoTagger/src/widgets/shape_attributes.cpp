@@ -4,7 +4,7 @@
 #include <editor/active_video_tex_size_query.hpp>
 #include <editor/selected_attribute_query.hpp>
 #include "controls.hpp"
-#include "icons.hpp"
+#include <ui/icons.hpp>
 
 namespace vt::widgets
 {

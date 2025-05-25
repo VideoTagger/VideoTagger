@@ -2,7 +2,7 @@
 #include "tag_importer.hpp"
 #include <core/app_context.hpp>
 #include <widgets/controls.hpp>
-#include <widgets/icons.hpp>
+#include <ui/icons.hpp>
 #include <utils/filesystem.hpp>
 
 namespace vt::widgets::modal

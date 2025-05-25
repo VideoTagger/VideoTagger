@@ -5,7 +5,7 @@
 #include "controls.hpp"
 #include <tags/tag_timeline.hpp>
 #include <utils/time.hpp>
-#include "icons.hpp"
+#include <ui/icons.hpp>
 #include <core/debug.hpp>
 
 #include "video_timeline.hpp"

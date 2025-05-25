@@ -1,6 +1,6 @@
 #pragma once
 #include <video/video_importer.hpp>
-#include <widgets/icons.hpp>
+#include <ui/icons.hpp>
 
 namespace vt
 {

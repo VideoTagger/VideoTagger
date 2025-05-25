@@ -1,7 +1,7 @@
 #include "pch.hpp"
 #include "video_resource.hpp"
 #include <core/app_context.hpp>
-#include <widgets/icons.hpp>
+#include <ui/icons.hpp>
 
 namespace vt
 {

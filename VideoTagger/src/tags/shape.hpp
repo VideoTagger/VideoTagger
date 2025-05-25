@@ -4,7 +4,7 @@
 #include <variant>
 #include <type_traits>
 #include <utils/json.hpp>
-#include <widgets/icons.hpp>
+#include <ui/icons.hpp>
 #include <imgui.h>
 #include <core/debug.hpp>
 #include <utils/vec.hpp>

@@ -6,8 +6,7 @@
 #include <utils/drag_drop.hpp>
 #include <utils/thumbnail.hpp>
 #include <widgets/controls.hpp>
-#include "controls.hpp"
-#include "icons.hpp"
+#include <ui/icons.hpp>
 
 namespace vt::widgets
 {

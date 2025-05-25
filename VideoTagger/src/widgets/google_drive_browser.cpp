@@ -9,7 +9,7 @@
 #include <httplib.h>
 #include <services/google/google_account_manager.hpp>
 #include <core/app_context.hpp>
-#include <widgets/icons.hpp>
+#include <ui/icons.hpp>
 
 namespace vt::widgets
 {

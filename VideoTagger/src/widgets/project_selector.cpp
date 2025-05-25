@@ -6,7 +6,7 @@
 #include <utils/json.hpp>
 #include <utils/string.hpp>
 #include <utils/time.hpp>
-#include "icons.hpp"
+#include <ui/icons.hpp>
 #include "controls.hpp"
 
 #include <core/app.hpp>

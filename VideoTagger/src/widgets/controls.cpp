@@ -1,6 +1,6 @@
 #include "pch.hpp"
 #include "controls.hpp"
-#include "icons.hpp"
+#include <ui/icons.hpp>
 #include "time_input.hpp"
 
 namespace vt::widgets
@@ -570,6 +570,11 @@ namespace vt::widgets
 		ImGui::TextUnformatted(suffix_icon);
 		ImGui::Unindent();
 		ImGui::EndGroup();
+
+		if (ImGui::IsItemHovered())
+		{
+			ImGui::SetMouseCursor(ImGuiMouseCursor_Hand);
+		}
 
 		/*if (node_open)
 		{
