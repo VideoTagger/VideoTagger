@@ -535,6 +535,13 @@ namespace vt::widgets
 	{
 		const auto& style = ImGui::GetStyle();
 		flags |= ImGuiTreeNodeFlags_Framed | ImGuiTreeNodeFlags_SpanFullWidth | ImGuiTreeNodeFlags_FramePadding | ImGuiTreeNodeFlags_ClipLabelForTrailingButton;
+		std::optional<bool> open_state;
+
+		ImGuiContext& g = *GImGui;
+		if (g.NextItemData.Flags & ImGuiNextItemDataFlags_HasOpen)
+		{
+			open_state = g.NextItemData.OpenVal;
+		}
 
 		ImGui::BeginGroup();
 		if (icon != nullptr)
@@ -548,6 +555,10 @@ namespace vt::widgets
 		ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2{});
 		ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 3.f);
 		ImGui::PushStyleColor(ImGuiCol_Text, ImVec4{});
+		if (open_state.has_value())
+		{
+			ImGui::SetNextItemOpen(open_state.value());
+		}
 		bool node_open = ImGui::TreeNodeEx(id.c_str(), flags);
 		ImGui::PopStyleColor();
 		ImGui::PopStyleVar(2);
