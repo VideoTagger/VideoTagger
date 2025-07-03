@@ -22,8 +22,8 @@ namespace vt::widgets
 		ImGui::PushStyleColor(ImGuiCol_Text, color);
 		ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 2.5f);
 		bool result = ImGui::Button(label, size);
-		ImGui::PopStyleColor(2);
 		ImGui::PopStyleVar();
+		ImGui::PopStyleColor(2);
 		if (!is_item_disabled() and ImGui::IsItemHovered())
 		{
 			ImGui::SetMouseCursor(ImGuiMouseCursor_Hand);
@@ -44,11 +44,13 @@ namespace vt::widgets
 
 	void tooltip(const char* text)
 	{
+		ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 4.f);
 		if (ImGui::IsItemHovered(ImGuiHoveredFlags_ForTooltip | ImGuiHoveredFlags_DelayNormal) and ImGui::BeginTooltip())
 		{
 			ImGui::TextUnformatted(text);
 			ImGui::EndTooltip();
 		}
+		ImGui::PopStyleVar();
 	}
 
 	bool icon_toggle_button(const char* label, bool is_toggled, const ImVec2& size, const ImVec4& color)
@@ -190,7 +192,7 @@ namespace vt::widgets
 
 	void help_marker(const char* description)
 	{
-		ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
+		ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 4.0f);
 		ImGui::TextDisabled(icons::help);
 		if (ImGui::BeginItemTooltip())
 		{
@@ -357,6 +359,7 @@ namespace vt::widgets
 
 	extern bool search_bar(const char* label, const char* hint, std::string& buffer, float width, bool enable_button, ImGuiInputTextFlags flags)
 	{
+		//TODO: Something here messes up with tooltip rounding, fix this
 		bool empty = buffer.empty();
 		bool result = !empty;
 		if (width == 0)
@@ -426,10 +429,9 @@ namespace vt::widgets
 		bool is_shortened = label.size() > max_chars;
 		std::string short_label = is_shortened ? label.substr(0, max_chars) + "..." : label;
 
-		if (is_shortened and ImGui::IsItemHovered(ImGuiHoveredFlags_ForTooltip | ImGuiHoveredFlags_DelayNormal) and ImGui::BeginTooltip())
+		if (is_shortened)
 		{
-			ImGui::Text("%s", label.c_str());
-			ImGui::EndTooltip();
+			tooltip(label.c_str());
 		}
 
 		if (context_menu != nullptr and ImGui::BeginPopupContextItem("##TileCtxMenu"))
