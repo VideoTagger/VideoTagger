@@ -262,8 +262,7 @@
 				"lhs": "${hostSystemName}",
 				"rhs": "Windows"
 			},
-			"configFile": "CPackConfig.cmake",
-			"packageVersion": "0.1.0.0"
+			"configFile": "CPackConfig.cmake"
 		},
 		{
 			"name": "linux-x64-shipping",
@@ -284,8 +283,7 @@
 				"lhs": "${hostSystemName}",
 				"rhs": "Linux"
 			},
-			"configFile": "CPackConfig.cmake",
-			"packageVersion": "0.1.0.0"
+			"configFile": "CPackConfig.cmake"
 		},
 		{
 			"name": "macos-x64-shipping",
@@ -306,8 +304,7 @@
 				"lhs": "${hostSystemName}",
 				"rhs": "Darwin"
 			},
-			"configFile": "CPackConfig.cmake",
-			"packageVersion": "0.1.0.0"
+			"configFile": "CPackConfig.cmake"
 		}
 	]
 }

@@ -1,4 +1,12 @@
 include "setup-python"
+print(WorkspaceDir)
+local VT_VERSION = io.readfile(WorkspaceDir .. "/VERSION")
+if VT_VERSION then
+	VT_VERSION = VT_VERSION:gsub("%s+", "")
+	print("VT_VERSION: " .. VT_VERSION)
+else
+	error("Could not read version from VERSION file.")
+end
 
 project "VideoTagger"
 	language "C++"
@@ -50,7 +58,8 @@ project "VideoTagger"
 
 	defines
 	{
-		"_CRT_SECURE_NO_WARNINGS"
+		"_CRT_SECURE_NO_WARNINGS",
+		"VT_VERSION=\"" .. VT_VERSION .. "\"",
 	}
 
 	flags

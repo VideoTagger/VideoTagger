@@ -7,6 +7,10 @@ project("VideoTagger")
 set(NFD_BUILD_TESTS "OFF")
 set(NFD_INSTALL "OFF")
 
+file(READ "${CMAKE_SOURCE_DIR}/VERSION" VT_VERSION)
+string(STRIP "${VT_VERSION}" VT_VERSION)
+message(STATUS "VT_VERSION: ${VT_VERSION}")
+
 # TODO: Add tests and install targets if needed.
 file(GLOB_RECURSE source_files CONFIGURE_DEPENDS 
 	"${PROJECT_SOURCE_DIR}/src/*.hpp"
@@ -72,7 +76,10 @@ else()
 	target_compile_options(${PROJECT_NAME} PRIVATE -fpermissive)
 endif()
 
-target_compile_definitions(${PROJECT_NAME} PRIVATE _CRT_SECURE_NO_WARNINGS)
+target_compile_definitions(${PROJECT_NAME} PRIVATE
+	_CRT_SECURE_NO_WARNINGS
+	VT_VERSION="${VT_VERSION}"
+)
 
 add_subdirectory("${PROJECT_SOURCE_DIR}/vendor/nativefiledialog-extended")
 target_link_libraries(${PROJECT_NAME} PRIVATE nfd)
@@ -219,7 +226,7 @@ install(TARGETS ${PROJECT_NAME} RUNTIME
 
 set(CPACK_GENERATOR "ZIP")
 set(CPACK_PACKAGE_NAME ${PROJECT_NAME})
-set(CPACK_PACKAGE_VERSION "0.1.0.0")
+set(CPACK_PACKAGE_VERSION "${VT_VERSION}")
 set(CPACK_PACKAGE_FILE_NAME "${CPACK_PACKAGE_NAME}-${CPACK_PACKAGE_VERSION}")
 set(CPACK_VERBATIM_VARIABLES TRUE)
 

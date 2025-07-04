@@ -31,6 +31,10 @@
 #include <editor/set_selected_attribute_command.hpp>
 #include <utils/string.hpp>
 
+#ifndef VT_VERSION
+	#error VT_VERSION is not defined
+#endif
+
 extern "C"
 {
 	#include <libavutil/ffversion.h>
@@ -1444,7 +1448,7 @@ namespace vt
 				{
 					ImGui::BeginDisabled();
 
-					ImGui::Text("Version: %s", "1.0.0.0");
+					ImGui::Text("Version: %s", VT_VERSION);
 					ImGui::Dummy(style.ItemSpacing);
 
 					ImGui::TextWrapped("%s", embed::app_description);
