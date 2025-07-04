@@ -71,7 +71,7 @@ if (MSVC)
 	# Enable UTF-8 source encoding for MSVC
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /utf-8")
 	# Optional: Set debug dir (Visual Studio only)
-	set_property(TARGET ${PROJECT_NAME} PROPERTY VS_DEBUGGER_WORKING_DIRECTORY "${OUTPUT_DIR}")
+	set_property(TARGET ${PROJECT_NAME} PROPERTY VS_DEBUGGER_WORKING_DIRECTORY "${PROJECT_BINARY_DIR}")
 else()
 	target_compile_options(${PROJECT_NAME} PRIVATE -fpermissive)
 endif()
@@ -159,7 +159,7 @@ if (WIN32)
 	string(TOLOWER "${PythonLibName}" PythonLibNameLower)
 
 	add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-		COMMAND ${CMAKE_COMMAND} -E copy_if_different "${PythonPath}/${PythonLibNameLower}.dll" "${OUTPUT_DIR}/${PythonLibNameLower}.dll"
+		COMMAND ${CMAKE_COMMAND} -E copy_if_different "${PythonPath}/${PythonLibNameLower}.dll" "${PROJECT_BINARY_DIR}/${PythonLibNameLower}.dll"
 	)
 
 	file(GLOB DLL_FILES
