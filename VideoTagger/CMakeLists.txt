@@ -38,14 +38,14 @@ list(APPEND source_files ${vendor_files})
 add_executable(${PROJECT_NAME} ${source_files})
 
 file(GLOB_RECURSE no_pch_files
-    "${PROJECT_SOURCE_DIR}/src/embeds/*.cpp"
+	"${PROJECT_SOURCE_DIR}/src/embeds/*.cpp"
 	"${PROJECT_SOURCE_DIR}/vendor/ImGuizmo/*.cpp"
 	"${PROJECT_SOURCE_DIR}/vendor/ImGui/*.cpp"
 )
 
 # Mark each file with the SKIP_PRECOMPILE_HEADERS property
 foreach(file IN LISTS no_pch_files)
-    set_source_files_properties(${file} PROPERTIES SKIP_PRECOMPILE_HEADERS ON)
+	set_source_files_properties(${file} PROPERTIES SKIP_PRECOMPILE_HEADERS ON)
 endforeach()
 
 target_precompile_headers(${PROJECT_NAME} PRIVATE src/pch.hpp)
@@ -185,6 +185,70 @@ if (WIN32)
 		FILES "${PythonPath}/${PythonLibNameLower}.dll"
 		DESTINATION "."
 	)
+elseif(UNIX AND NOT APPLE)
+	execute_process(
+		COMMAND "pkg-config --cflags libavcodec libavformat libavutil libswscale sdl2 opengl gtk+-3.0 glib-2.0 gobject-2.0 gio-2.0 openssl"
+		OUTPUT_VARIABLE PKG_CFLAGS
+		OUTPUT_STRIP_TRAILING_WHITESPACE
+	)
+
+	execute_process(
+		COMMAND "python3-config --cflags"
+		OUTPUT_VARIABLE PYTHON_CFLAGS
+		OUTPUT_STRIP_TRAILING_WHITESPACE
+	)
+
+	execute_process(
+		COMMAND "pkg-config --libs libavcodec libavformat libavutil libswscale sdl2 opengl gtk+-3.0 glib-2.0 gobject-2.0 gio-2.0 openssl"
+		OUTPUT_VARIABLE PKG_LIBS
+		OUTPUT_STRIP_TRAILING_WHITESPACE
+	)
+
+	execute_process(
+		COMMAND "python3-config --embed --ldflags"
+		OUTPUT_VARIABLE PYTHON_LDFLAGS
+		OUTPUT_STRIP_TRAILING_WHITESPACE
+	)
+
+	target_link_options(${PROJECT_NAME} PRIVATE ${PKG_LIBS} ${PYTHON_LDFLAGS})
+elseif(APPLE)
+	execute_process(
+		COMMAND "pkg-config --cflags libavcodec libavformat libavutil libswscale sdl2 opengl openssl"
+		OUTPUT_VARIABLE PKG_CFLAGS
+		OUTPUT_STRIP_TRAILING_WHITESPACE
+	)
+
+	execute_process(
+		COMMAND "python3-config --cflags"
+		OUTPUT_VARIABLE PYTHON_CFLAGS
+		OUTPUT_STRIP_TRAILING_WHITESPACE
+	)
+
+	execute_process(
+		COMMAND "pkg-config --libs libavcodec libavformat libavutil libswscale sdl2 opengl openssl"
+		OUTPUT_VARIABLE PKG_LIBS
+		OUTPUT_STRIP_TRAILING_WHITESPACE
+	)
+
+	execute_process(
+		COMMAND "python3-config --embed --ldflags"
+		OUTPUT_VARIABLE PYTHON_LDFLAGS
+		OUTPUT_STRIP_TRAILING_WHITESPACE
+	)
+
+	find_library(APPKIT_FRAMEWORK AppKit)
+	find_library(UTI_FRAMEWORK UniformTypeIdentifiers)
+	if(APPKIT_FRAMEWORK)
+		list(APPEND EXTRA_LIBS ${APPKIT_FRAMEWORK})
+	endif()
+	if(UTI_FRAMEWORK)
+		list(APPEND EXTRA_LIBS ${UTI_FRAMEWORK})
+	endif()
+
+	set(EXTRA_LINK_FLAGS "${PKG_LIBS} ${PYTHON_LDFLAGS}")
+
+	target_link_libraries(${PROJECT_NAME} PRIVATE ${EXTRA_LIBS})
+	target_link_options(${PROJECT_NAME} PRIVATE ${EXTRA_LINK_FLAGS})
 endif()
 
 if (CMAKE_BUILD_TYPE STREQUAL "Debug")
