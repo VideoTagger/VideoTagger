@@ -47,7 +47,6 @@ namespace vt::widgets
 		vMax.y += win_pos.y;
 
 		auto x = win_pos.x + ImGui::GetCursorPosX() + math::normalize(state_.current_ts.total_milliseconds.count(), state_.min_ts.total_milliseconds.count(), state_.max_ts.total_milliseconds.count(), 0.f, zoom_ * ImGui::GetContentRegionAvail().x);
-
 		//draw_list->AddRect(vMin, vMax, marker_color);
 
 		ImVec2 top{ x, vMin.y + scroll_y };
@@ -116,6 +115,8 @@ namespace vt::widgets
 	{
 		static constexpr float rounding = 2.f;
 		static constexpr float outline_thickness = 2.0f;
+		bool is_hovered = false;
+
 
 		auto rect = get_cell_rect();
 		if (!rect.has_value()) return;
@@ -124,14 +125,14 @@ namespace vt::widgets
 		auto& style = ImGui::GetStyle();
 		auto width = rect->GetWidth();
 
-		auto min = ImVec2{ rect->Min.x + zoom_ * width * time_to_pos(start, state_.min_ts, state_.max_ts), rect->Min.y };
-		auto max = ImVec2{ rect->Min.x + zoom_ * width * time_to_pos(end, state_.min_ts, state_.max_ts), rect->Max.y };
+		auto min = ImVec2{ rect->Min.x + zoom_ * width * time_to_pos(start, state_.min_ts, state_.max_ts), rect->Min.y + style.CellPadding.y };
+		auto max = ImVec2{ rect->Min.x + zoom_ * width * time_to_pos(end, state_.min_ts, state_.max_ts), rect->Max.y + style.CellPadding.y };
 
 		ImRect segment_rect{ min, max };
 
 		auto win_pos = ImGui::GetWindowPos();
 		ImGui::SetCursorPosX(min.x - win_pos.x);
-		auto rect_size = segment_rect.GetSize() - style.CellPadding * 2.f;
+		auto rect_size = segment_rect.GetSize() /*- style.CellPadding * 2.f*/;
 
 		if (rect_size.x > 0.f and rect_size.y > 0.f)
 		{
@@ -141,22 +142,34 @@ namespace vt::widgets
 
 			}
 			ImGui::PopStyleVar();
-			if (ImGui::IsItemHovered())
-			{
-				ImGui::SetMouseCursor(ImGuiMouseCursor_Hand);
-			}
+			is_hovered = ImGui::IsItemHovered();
+		}
+
+		if (is_hovered)
+		{
+			ImGui::SetMouseCursor(ImGuiMouseCursor_Hand);
 		}
 		
 		auto rgba = ImGui::ColorConvertU32ToFloat4(color);
-		ImVec4 hsva;
+		ImVec4 dark_rgba = rgba;
+		ImVec4 hsva{};
 		hsva.w = 1.f;
 		ImGui::ColorConvertRGBtoHSV(rgba.x, rgba.y, rgba.z, hsva.x, hsva.y, hsva.z);
-		hsva.z = std::max(0.f, hsva.z * 0.3f);
-		ImGui::ColorConvertHSVtoRGB(hsva.x, hsva.y, hsva.z, rgba.x, rgba.y, rgba.z);
-		uint32_t darker_color = ImGui::ColorConvertFloat4ToU32(rgba);
+		if (is_hovered)
+		{
+			hsva.z = std::max(1.f, hsva.z * 1.25f);
+		}
 
-		draw_list->AddRectFilled(segment_rect.Min, segment_rect.Max, color, rounding);
-		draw_list->AddRect(segment_rect.Min, segment_rect.Max, is_selected ? IM_COL32(0xFF, 0xA5, 0, 0xFF) : darker_color, rounding, 0, outline_thickness);
+		ImVec4 dark_hsva = hsva;
+		dark_hsva.z = std::max(0.f, dark_hsva.z * 0.25f);
+		ImGui::ColorConvertHSVtoRGB(hsva.x, hsva.y, hsva.z, rgba.x, rgba.y, rgba.z);
+		ImGui::ColorConvertHSVtoRGB(dark_hsva.x, dark_hsva.y, dark_hsva.z, dark_rgba.x, dark_rgba.y, dark_rgba.z);
+
+		auto light_color = ImGui::ColorConvertFloat4ToU32(rgba);
+		auto dark_color = ImGui::ColorConvertFloat4ToU32(dark_rgba);
+
+		draw_list->AddRectFilled(segment_rect.Min, segment_rect.Max, light_color, rounding);
+		draw_list->AddRect(segment_rect.Min, segment_rect.Max, is_selected ? IM_COL32(0xFF, 0xA5, 0, 0xFF) : dark_color, rounding, 0, outline_thickness);
 	}
 
 	float timeline::time_to_pos(timestamp time, timestamp min, timestamp max) const
