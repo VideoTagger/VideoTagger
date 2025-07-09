@@ -96,6 +96,7 @@ target_include_directories(${PROJECT_NAME}
 	PRIVATE "${PROJECT_SOURCE_DIR}/vendor/utf8"
 	PRIVATE "${PROJECT_SOURCE_DIR}/vendor/pybind11/include"
 	PRIVATE "${PROJECT_SOURCE_DIR}/vendor/cpp-httplib"
+	PRIVATE "${PROJECT_SOURCE_DIR}/vendor/stb"
 )
 
 # Setup Python

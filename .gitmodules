@@ -27,3 +27,6 @@
 [submodule "VideoTagger/vendor/cpp-httplib"]
 	path = VideoTagger/vendor/cpp-httplib
 	url = https://github.com/yhirose/cpp-httplib.git
+[submodule "VideoTagger/vendor/stb"]
+	path = VideoTagger/vendor/stb
+	url = https://github.com/nothings/stb.git

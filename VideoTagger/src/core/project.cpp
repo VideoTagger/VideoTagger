@@ -11,6 +11,11 @@
 #include <video/downloadable_video_resource.hpp>
 #include <video/video_resource.hpp>
 
+#define STB_IMAGE_IMPLEMENTATION
+#include <stb_image.h>
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include <stb_image_write.h>
+
 static std::chrono::system_clock::time_point to_sys_time(const std::filesystem::file_time_type& ftime)
 {
 	using namespace std::chrono;
@@ -163,22 +168,21 @@ namespace vt
 			//TODO: use stb_image
 			if (!force_generate)
 			{
-				SDL_Surface* surface = SDL_LoadBMP(filepath.u8string().c_str());
-				if (surface != nullptr)
+				int image_width;
+				int image_height;
+				int image_channels;
+				unsigned char* image_data = stbi_load(filepath.u8string().c_str(), &image_width, &image_height, &image_channels, 3);
+				if (image_data != nullptr)
 				{
-					//if (surface->format->format != SDL_PIXELFORMAT_RGB888)
-					//{
-					//	auto target_format = SDL_AllocFormat(SDL_PIXELFORMAT_RGB888);
-					//	auto tmp_surface = SDL_ConvertSurface(surface, target_format, 0);
-					//	SDL_FreeSurface(surface);
-					//	surface = tmp_surface;
-					//}
+					if (image_channels != 3)
+					{
+						debug::error("Thumbnail image {} has invalid number of channels: {}", filepath.u8string(), image_channels);
+						stbi_image_free(image_data);
+						return false;
+					}
 
-					SDL_LockSurface(surface);
-					video->set_thumbnail(gl_texture(surface->w, surface->h, GL_RGB, surface->pixels));
-					SDL_UnlockSurface(surface);
-
-					SDL_FreeSurface(surface);
+					video->set_thumbnail(gl_texture(image_width, image_height, GL_RGB, image_data));
+					stbi_image_free(image_data);
 
 					return true;
 				}
@@ -194,16 +198,11 @@ namespace vt
 			video->set_thumbnail(thumbnail->texture());
 			if (cache_result)
 			{
-				SDL_Surface* surface = SDL_CreateRGBSurfaceFrom(thumbnail->pixels.data(), thumbnail->width, thumbnail->height, 24, thumbnail->width * 3, 0, 0, 0, 0);
-				if (surface == nullptr)
-				{
-					debug::error("Failed to create surface for thumbnail");
-					return false;
-				}
-
 				std::filesystem::create_directories(ctx_.thumbnail_dir_filepath);
-				SDL_SaveBMP(surface, filepath.u8string().c_str());
-				SDL_FreeSurface(surface);
+				if (!stbi_write_png(filepath.u8string().c_str(), thumbnail->width, thumbnail->height, 3, thumbnail->pixels.data(), thumbnail->width * 3))
+				{
+					debug::error("Failed to save thumbnail to {}", filepath.u8string());
+				}
 			}
 			return true;
 		};

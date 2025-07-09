@@ -799,6 +799,11 @@ namespace vt
 			{
 				ctx_.settings["load-thumbnails"] = ctx_.app_settings.load_thumbnails;
 			}
+			if (ImGui::Button("Clear cache"))
+			{
+				std::filesystem::remove_all(ctx_.cache_dir_filepath);
+				std::filesystem::create_directories(ctx_.cache_dir_filepath);
+			}
 
 			//TODO: Add theme selection
 

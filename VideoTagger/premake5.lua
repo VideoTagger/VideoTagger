@@ -46,6 +46,7 @@ project "VideoTagger"
 		"vendor/utf8",
 		"vendor/pybind11/include",
 		"vendor/cpp-httplib",
+		"vendor/stb",
 	}
 
 	pchheader "pch.hpp"
