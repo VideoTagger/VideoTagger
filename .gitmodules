@@ -30,3 +30,6 @@
 [submodule "VideoTagger/vendor/imgui_toggle"]
 	path = VideoTagger/vendor/imgui_toggle
 	url = https://github.com/cmdwtf/imgui_toggle.git
+[submodule "VideoTagger/vendor/stb"]
+	path = VideoTagger/vendor/stb
+	url = https://github.com/nothings/stb.git

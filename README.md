@@ -22,7 +22,7 @@ git submodule update --init
 > Both Linux and macOS require SDL2 version 2.0.17 or later to build properly.
 Windows comes with prebuilt binaries.
 
-## Windows - Visual Studio
+## Visual Studio (Windows)
 Generate project files with:
 ```shell
 scripts/win-gen-projects.cmd
@@ -30,7 +30,7 @@ scripts/win-gen-projects.cmd
 
 Build the projects by opening the `Visual Studio` solution file and building with desired configuration.
 
-## Linux - Makefile
+## Makefile (Linux)
 Install Required packages
 ```
 build-essential pkg-config libsdl2-dev libavcodec-dev libavformat-dev libswscale-dev python3-dev libgtk-3-dev libglib2.0-dev libgtk2.0-dev libssl-dev
@@ -60,6 +60,28 @@ scripts/macos-gen-projects.sh
 ```
 
 Build the projects by opening the `Xcode` project file and building with desired configuration.
+
+## CMake (Cross Platform)
+```shell
+# On Windows it might be necessary to activate the developer command prompt first, you can do it by running:
+/path/to/vcvars64.bat
+
+cmake --build --preset=<BUILD_PRESET>
+# To package
+cpack --preset=<BUILD_PRESET>
+```
+Replace `<BUILD_PRESET>` with one of the presets:
+- `<SYSTEM>-x64-debug`
+- `<SYSTEM>-x64-release`
+- `<SYSTEM>-x64-shipping`
+
+where `<SYSTEM>` is `windows`/`linux`/`macos`
+
+You can also show all available presets with
+```shell
+cmake --list-presets
+cpack --list-presets
+```
 
 ## Third party libraries
 - [SDL2](https://github.com/libsdl-org/SDL)

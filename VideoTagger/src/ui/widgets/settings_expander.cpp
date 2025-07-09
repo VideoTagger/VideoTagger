@@ -42,10 +42,11 @@ namespace vt::ui
 			widgets::horizontal_item_spacer(style.FramePadding.x);
 			ImGui::EndTable();
 		}
+		widgets::vertical_item_spacer(style.ItemSpacing.y);
 
 		auto end_pos = ImGui::GetCursorScreenPos();
 		end_pos.x += width - style.FramePadding.x;
-		table_size.y = end_pos.y - cpos.y;
+		table_size.y = end_pos.y - cpos.y - style.ItemSpacing.y;
 		size_ = table_size;
 		return true;
 	}

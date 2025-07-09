@@ -33,6 +33,10 @@
 #include <ui/widgets/common.hpp>
 #include <ui/widgets/settings_expander.hpp>
 
+#ifndef VT_VERSION
+	#error VT_VERSION is not defined
+#endif
+
 extern "C"
 {
 	#include <libavutil/ffversion.h>
@@ -795,11 +799,19 @@ namespace vt
 		{
 			ctx_.settings["load-thumbnails"] = ctx_.app_settings.load_thumbnails;
 		})
+		.add_button("Clear Thumbnails Cache", "Clears the thumbnails cache", "Clear", []()
+		{
+			std::filesystem::remove_all(ctx_.cache_dir_filepath);
+			std::filesystem::create_directories(ctx_.cache_dir_filepath);
+		})
 		.add_label_spacer("UI")
 		.add_toggle("Scale Gizmos", "Scales gizmos size based on viewport size", ctx_.app_settings.enable_gizmo_scaling, [&](bool value)
 		{
 			ctx_.settings["enable-gizmo-scaling"] = ctx_.app_settings.enable_gizmo_scaling;
 		})
+
+		//TODO: Add theme selection
+
 #ifdef _DEBUG
 		.add_label_spacer("Debug Only")
 		.add_raw([]()
@@ -1447,7 +1459,7 @@ namespace vt
 				{
 					ImGui::BeginDisabled();
 
-					ImGui::Text("Version: %s", "1.0.0.0");
+					ImGui::Text("Version: %s", VT_VERSION);
 					ImGui::Dummy(style.ItemSpacing);
 
 					ImGui::TextWrapped("%s", embed::app_description);

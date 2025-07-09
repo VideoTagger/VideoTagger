@@ -2,6 +2,7 @@ include "tools/premake/solution_items.lua"
 OutputDir = "%{cfg.system}-%{cfg.architecture}/%{cfg.buildcfg}"
 ProjectTargetDir = "%{wks.location}/build/" .. OutputDir .. "/%{prj.name}"
 ProjectObjDir = "%{wks.location}/build/temp/" .. OutputDir .. "/%{prj.name}"
+WorkspaceDir = os.getcwd()
 
 workspace "VideoTagger"
 	platforms

@@ -43,10 +43,24 @@ namespace vt
 			return std::nullopt;
 		}
 
-		gl_texture result(video.width() / 2, video.height() / 2, GL_RGB);
+		constexpr int target_thumbnail_size = 256; // Thumbnail size in pixels
+		float aspect_ratio = static_cast<float>(video.width()) / video.height();
+		int thumbnail_width = target_thumbnail_size;
+		int thumbnail_height = target_thumbnail_size;
+		if (video.width() > video.height())
+		{
+			thumbnail_height = static_cast<int>(target_thumbnail_size / aspect_ratio);
+		}
+		else
+		{
+			thumbnail_width = static_cast<int>(target_thumbnail_size * aspect_ratio);
+		}
+
+		//TODO: calculate size differently (so that every thumbnail has approximately the same same)
+		gl_texture result(thumbnail_width, thumbnail_height, GL_RGB);
 		video_resource_thumbnail thumbnail;
-		thumbnail.width = video.width() / 2;
-		thumbnail.height = video.height() / 2;
+		thumbnail.width = thumbnail_width;
+		thumbnail.height = thumbnail_height;
 		thumbnail.pixels.resize(thumbnail.width * thumbnail.height * 3);
 		video.get_thumbnail(thumbnail.pixels, thumbnail.width, thumbnail.height);
 
