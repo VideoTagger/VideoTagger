@@ -2505,7 +2505,12 @@ namespace vt
 			ctx_.script_progress.render(ctx_.win_cfg.show_script_progress);
 		}
 
+		//TODO: This is temporary, replace old timeline widget with this later
 		static widgets::timeline temp_timeline;
+		temp_timeline.set_ctx_menu_callback([](const tag_segment& segment, const tag& tag)
+		{
+			debug::log("(Segment Ctx) Start: {}, End: {}, Tag: {}", segment.start.total_milliseconds.count(), segment.end.total_milliseconds.count(), tag.name);
+		});
 		bool v = true;
 
 		if (ctx_.current_video_group_id() != invalid_video_group_id)
@@ -2516,7 +2521,7 @@ namespace vt
 			state.set_min_timestamp(timestamp::zero());
 			state.set_max_timestamp(timestamp(std::chrono::duration_cast<std::chrono::milliseconds>(group_duration)));
 			state.set_current_timestamp(timestamp{ std::chrono::duration_cast<std::chrono::milliseconds>(ctx_.displayed_videos.current_timestamp()) });
-			temp_timeline.render(v, ctx_.current_project->video_groups.at(ctx_.current_video_group_id()).segments());
+			temp_timeline.render(v, ctx_.current_project->video_groups.at(ctx_.current_video_group_id()).segments(), ctx_.current_project->tags);
 		}
 		//ImGui::ShowDemoWindow();
 		//ImGui::OpenPopup("Script Progress");

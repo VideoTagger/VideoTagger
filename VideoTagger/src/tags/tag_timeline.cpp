@@ -28,6 +28,11 @@ namespace vt
 		return start == end ? tag_segment_type::timestamp : tag_segment_type::segment;
 	}
 
+    bool tag_segment::is_timestamp() const
+    {
+        return type() == tag_segment_type::timestamp;
+    }
+
 	std::pair<tag_timeline::iterator, bool> tag_timeline::insert(timestamp time_start, timestamp time_end, const tag_segment::attribute_instance_container& attributes)
 	{
 		auto prepare_result = prepare_insert(time_start, time_end);

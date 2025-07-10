@@ -43,6 +43,8 @@ namespace vt
 
 		std::chrono::nanoseconds duration() const;
 		tag_segment_type type() const;
+
+		bool is_timestamp() const;
 	};
 
 	class tag_timeline

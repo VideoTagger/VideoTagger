@@ -1,10 +1,19 @@
 #pragma once
 #include <string>
+#include <functional>
 #include <utils/timestamp.hpp>
 #include <tags/tag_timeline.hpp>
 
 namespace vt::widgets
 {
+	enum class segment_hover_type
+	{
+		none,
+		start,
+		middle,
+		end,
+	};
+
 	struct timeline_state
 	{
 		timestamp current_ts{};
@@ -23,16 +32,24 @@ namespace vt::widgets
 		float zoom_ = 1.f;
 		bool enabled_ = true;
 		timeline_state state_;
+		//TODO: segment shouldn't be const
+		std::function<void(const tag_segment& segment, const tag& tag)> on_ctx_menu_;
+		std::function<void(const tag_segment& segment, const tag& tag)> on_draw_tooltip_;
 
 	private:
 		void draw_marker() const;
 		void draw_time_intervals() const;
-		void draw_segment(timestamp start, timestamp end, uint32_t color, bool is_selected);
+		//TODO: segment shouldn't be const
+		void draw_segment(const tag_segment& segment, const tag& tag, bool is_selected, bool is_dragged);
 		float time_to_pos(timestamp time, timestamp min, timestamp max) const;
 		int64_t interval_time() const;
 
 	public:
-		void render(bool& is_open, segment_storage& segments);
+		void render(bool& is_open, segment_storage& segments, tag_storage& tags);
+		//TODO: segment shouldn't be const
+		void set_ctx_menu_callback(const std::function<void(const tag_segment& segment, const tag& tag)>& callback);
+		void set_draw_tooltip_callback(const std::function<void(const tag_segment& segment, const tag& tag)>& callback);
+
 		timeline_state& state();
 
 		static std::string window_name();

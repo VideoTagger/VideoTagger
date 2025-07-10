@@ -116,12 +116,18 @@ namespace vt::widgets
 		}
 	}
 
-	void timeline::draw_segment(timestamp start, timestamp end, uint32_t color, bool is_selected)
+	void timeline::draw_segment(const tag_segment& segment, const tag& tag, bool is_selected, bool is_dragged)
 	{
-		static constexpr float rounding = 2.f;
-		static constexpr float outline_thickness = 2.0f;
-		bool is_hovered = false;
+		auto start = segment.start;
+		auto end = segment.end;
 
+		static constexpr float rounding = 3.0f;
+		static constexpr float outline_thickness = 2.0f;
+		static constexpr float height_padding = 2.5f;
+		static constexpr float grab_width = 1.0f;
+
+		segment_hover_type hover_type = segment_hover_type::none;
+		bool is_timestamp = segment.is_timestamp();
 
 		auto cell_rect = get_cell_rect();
 		if (!cell_rect.has_value()) return;
@@ -134,8 +140,8 @@ namespace vt::widgets
 		auto scaled_end = time_to_pos(end, state_.min_ts, state_.max_ts) * avail_width;
 
 		auto scaled_width = (scaled_end - scaled_start);
-		auto min = ImVec2{ cell_rect->Min.x + scaled_start, cell_rect->Min.y + style.CellPadding.y };
-		auto max = ImVec2{ cell_rect->Min.x + scaled_end, cell_rect->Max.y + style.CellPadding.y };
+		auto min = ImVec2{ cell_rect->Min.x + scaled_start, cell_rect->Min.y + style.CellPadding.y + height_padding };
+		auto max = ImVec2{ cell_rect->Min.x + scaled_end, cell_rect->Max.y - style.CellPadding.y - height_padding };
 
 		ImRect segment_rect{ min, max };
 
@@ -143,33 +149,123 @@ namespace vt::widgets
 		ImGui::SetCursorPosX(min.x - win_pos.x);
 		auto rect_size = segment_rect.GetSize() /*- style.CellPadding * 2.f*/;
 
-		if (rect_size.x > 0.f and rect_size.y > 0.f)
+		auto scaled_grab_width = grab_width * zoom_;
+		ImVec2 grab_size{ scaled_grab_width, rect_size.y };
+
+		//Only used for timestamps
+		auto ts_radius = segment_rect.GetHeight() / 2.f * 0.9f;
+		ts_radius = std::min(ts_radius, ts_radius * zoom_);
+
+		bool is_hovered{};
+		bool is_grab_hovered{};
+
+		//Hit area for the segment
 		{
+			ImGui::PushID(&segment);
 			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2{});
-			if (ImGui::InvisibleButton("##Segment", rect_size))
+			auto cpos_x = ImGui::GetCursorPosX();
+
+			if (is_timestamp)
 			{
+				ImGui::SetCursorPosX(cpos_x - ts_radius);
+				if (ImGui::InvisibleButton("##Segment", ImVec2{ ts_radius, ts_radius } * 2.f))
+				{
 
+				}
+				if (ImGui::IsItemHovered())
+				{
+					hover_type = segment_hover_type::middle;
+				}
 			}
-			ImGui::PopStyleVar();
-			is_hovered = ImGui::IsItemHovered();
-		}
+			else if (rect_size.x > 0.f and rect_size.y > 0.f)
+			{
+				ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2{});
+				ImGui::BeginGroup();
+				{
+					if (ImGui::InvisibleButton("##SegmentGrabLeft", grab_size))
+					{
 
-		if (is_hovered)
-		{
-			ImGui::SetMouseCursor(ImGuiMouseCursor_Hand);
+					}
+					if (ImGui::IsItemHovered())
+					{
+						hover_type = segment_hover_type::start;
+					}
+					ImGui::SameLine();
+					if (ImGui::InvisibleButton("##Segment", { rect_size.x - scaled_grab_width * 2.f, rect_size.y }))
+					{
+
+					}
+					if (ImGui::IsItemHovered())
+					{
+						hover_type = segment_hover_type::middle;
+					}
+					
+					ImGui::SameLine();
+					if (ImGui::InvisibleButton("##SegmentGrabRight", grab_size))
+					{
+
+					}
+					if (ImGui::IsItemHovered())
+					{
+						hover_type = segment_hover_type::end;
+					}
+				}
+				ImGui::EndGroup();
+				ImGui::PopStyleVar();
+			}
+			ImGui::SetCursorPosX(cpos_x);
+			ImGui::PopStyleVar();
+
+			is_hovered = enabled_ and (hover_type != segment_hover_type::none);
+			is_grab_hovered = enabled_ and (hover_type == segment_hover_type::start or hover_type == segment_hover_type::end);
+			
+			if (is_hovered)
+			{
+				if (ImGui::IsMouseDragging(0))
+				{
+					is_dragged = true;
+				}
+				else if (ImGui::IsItemClicked(1) and on_ctx_menu_ != nullptr)
+				{
+					on_ctx_menu_(segment, tag);
+				}
+
+				if (!is_dragged)
+				{
+					ImGui::SetMouseCursor(is_grab_hovered ? ImGuiMouseCursor_ResizeEW : ImGuiMouseCursor_Hand);
+				}
+			}
+			ImGui::PopID();
 		}
 		
-		auto rgba = ImGui::ColorConvertU32ToFloat4(color);
+		auto rgba = ImGui::ColorConvertU32ToFloat4(tag.color);
+		if (is_dragged)
+		{
+			rgba.w *= 0.25f;
+		}
+
 		ImVec4 dark_rgba = rgba;
 		ImVec4 hsva{};
-		hsva.w = 1.f;
+		hsva.w = rgba.w;
 		ImGui::ColorConvertRGBtoHSV(rgba.x, rgba.y, rgba.z, hsva.x, hsva.y, hsva.z);
-		if (is_hovered)
+		if (!enabled_)
+		{
+			hsva.y *= 0.75f;
+			hsva.z *= 0.5f;
+		}
+
+		if (is_dragged)
+		{
+			hsva.y *= 0.95f;
+		}
+
+		if (enabled_ and is_hovered)
 		{
 			hsva.z = std::max(1.f, hsva.z * 1.25f);
 		}
 
 		ImVec4 dark_hsva = hsva;
+		dark_hsva.w *= 0.25f;
 		dark_hsva.z = std::max(0.f, dark_hsva.z * 0.25f);
 		ImGui::ColorConvertHSVtoRGB(hsva.x, hsva.y, hsva.z, rgba.x, rgba.y, rgba.z);
 		ImGui::ColorConvertHSVtoRGB(dark_hsva.x, dark_hsva.y, dark_hsva.z, dark_rgba.x, dark_rgba.y, dark_rgba.z);
@@ -177,8 +273,18 @@ namespace vt::widgets
 		auto light_color = ImGui::ColorConvertFloat4ToU32(rgba);
 		auto dark_color = ImGui::ColorConvertFloat4ToU32(dark_rgba);
 
-		draw_list->AddRectFilled(segment_rect.Min, segment_rect.Max, light_color, rounding);
-		draw_list->AddRect(segment_rect.Min, segment_rect.Max, is_selected ? IM_COL32(0xFF, 0xA5, 0, 0xFF) : dark_color, rounding, 0, outline_thickness);
+		auto outline_color = is_selected ? IM_COL32(0xFF, 0xA5, 0, 0xFF) : dark_color;
+
+		if (is_timestamp)
+		{
+			draw_list->AddCircleFilled(segment_rect.GetCenter(), ts_radius, light_color);
+			draw_list->AddCircle(segment_rect.GetCenter(), ts_radius, outline_color, 0, outline_thickness);
+		}
+		else
+		{
+			draw_list->AddRectFilled(segment_rect.Min, segment_rect.Max, light_color, rounding);
+			draw_list->AddRect(segment_rect.Min, segment_rect.Max, outline_color, rounding, 0, outline_thickness);
+		}
 	}
 
 	float timeline::time_to_pos(timestamp time, timestamp min, timestamp max) const
@@ -201,7 +307,7 @@ namespace vt::widgets
 		return state_;
 	}
 
-	void timeline::render(bool& is_open, segment_storage& segments)
+	void timeline::render(bool& is_open, segment_storage& segments, tag_storage& tags)
 	{
 		auto& style = ImGui::GetStyle();
 
@@ -235,18 +341,31 @@ namespace vt::widgets
 				auto cell_rect = get_cell_rect();
 				//ImGui::TextUnformatted("00:00:00");
 				ImGui::InvisibleButton("##TimelineIntervalBar", cell_rect->GetSize());
-				if (ImGui::IsItemHovered() and ImGui::IsMouseDown(0))
+				if (enabled_ and ImGui::IsItemHovered() and ImGui::IsMouseDown(0))
 				{
 					auto x = ImGui::GetMousePos().x;
+					//TODO: This should only scale with the current visible timestamp range, not the whole timespan
 					state_.current_ts = timestamp{ math::normalize(x, cell_rect->Min.x, cell_rect->Max.x, state_.min_ts.total_milliseconds.count(), state_.max_ts.total_milliseconds.count()) };
 				}
 				draw_cell_debug_rect(zoom_);
 				draw_time_intervals();
+				//The marker has to be drawn two times, since it won't be visible on the interval bar when tags are scrolled otherwise
+				draw_marker();
 				
 				for (auto& [tag, timeline] : segments)
 				{
+					auto tag_it = tags.find(tag);
+					if (tag_it == tags.end())
+					{
+						//TODO: Should that tag be discarded?
+						continue;
+					}
+
 					ImGui::TableNextRow();
-					table_hovered_row_style();
+					if (enabled_)
+					{
+						table_hovered_row_style();
+					}
 					//Left panel
 					ImGui::TableNextColumn();
 					ImGui::AlignTextToFramePadding();
@@ -254,9 +373,14 @@ namespace vt::widgets
 
 					//Right panel
 					ImGui::TableNextColumn();
-					for (auto& segment : timeline)
+
+					//TODO: segment shouldn't be const
+					for (const auto& segment : timeline)
 					{
-						draw_segment(segment.start, segment.end, IM_COL32(150, 0, 0, 0xFF), false);
+						bool is_selected = false;
+						bool is_dragged = false;
+
+						draw_segment(segment, *tag_it, is_selected, is_dragged);
 						ImGui::SameLine();
 					}
 				}
@@ -266,6 +390,16 @@ namespace vt::widgets
 		}
 		ImGui::End();
 
+	}
+
+	void timeline::set_ctx_menu_callback(const std::function<void(const tag_segment& segment, const tag& tag)>& callback)
+	{
+		on_ctx_menu_ = callback;
+	}
+
+	void timeline::set_draw_tooltip_callback(const std::function<void(const tag_segment& segment, const tag& tag)>& callback)
+	{
+		on_draw_tooltip_ = callback;
 	}
 
 	std::string timeline::window_name()
