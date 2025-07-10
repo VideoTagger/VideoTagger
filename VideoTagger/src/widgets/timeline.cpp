@@ -35,19 +35,25 @@ namespace vt::widgets
 
 	void timeline::draw_marker() const
 	{
+		ImU32 marker_color = enabled_ ? 0xFF3E36FF : 0xFF3E3E3E; //0xA02A2AFF
+
 		auto draw_list = ImGui::GetWindowDrawList();
+		auto cell_rect = get_cell_rect();
 		ImVec2 vMin = ImGui::GetWindowContentRegionMin();
 		ImVec2 vMax = ImGui::GetWindowContentRegionMax();
 
 		auto win_pos = ImGui::GetWindowPos();
 		auto scroll_y = ImGui::GetScrollY();
-		vMin.x += win_pos.x;
+		vMin.x = cell_rect->Min.x;
 		vMin.y += win_pos.y;
-		vMax.x += win_pos.x;
+		vMax.x = cell_rect->Max.x;
 		vMax.y += win_pos.y;
 
-		auto x = win_pos.x + ImGui::GetCursorPosX() + math::normalize(state_.current_ts.total_milliseconds.count(), state_.min_ts.total_milliseconds.count(), state_.max_ts.total_milliseconds.count(), 0.f, zoom_ * ImGui::GetContentRegionAvail().x);
-		//draw_list->AddRect(vMin, vMax, marker_color);
+		auto avail_width = (vMax.x - vMin.x);
+		auto scaled_width = math::normalize(state_.current_ts.total_milliseconds.count(), state_.min_ts.total_milliseconds.count(), state_.max_ts.total_milliseconds.count(), 0.f, avail_width) * zoom_;
+		//auto x = win_pos.x + ImGui::GetCursorPosX() + time_to_pos(state_.current_ts, state_.min_ts, state_.max_ts) * scaled_width;
+		auto x = vMin.x + time_to_pos(state_.current_ts, state_.min_ts, state_.max_ts) * scaled_width;
+		draw_list->AddRect(vMin, vMax, marker_color);
 
 		ImVec2 top{ x, vMin.y + scroll_y };
 		ImVec2 bottom{ x, vMax.y + scroll_y };
@@ -58,7 +64,6 @@ namespace vt::widgets
 		auto item_height = ImGui::GetTextLineHeightWithSpacing();
 		auto marker_pos = x;
 
-		ImU32 marker_color = enabled_ ? 0xFF3E36FF : 0xFF3E3E3E; //0xA02A2AFF
 		auto marker_line_offset = ImVec2{ outline_width + marker_width / 2.f, 0.f };
 		auto line_offset = ImVec2{ 0.f, triangle_span / 2.f };
 		
@@ -118,15 +123,19 @@ namespace vt::widgets
 		bool is_hovered = false;
 
 
-		auto rect = get_cell_rect();
-		if (!rect.has_value()) return;
+		auto cell_rect = get_cell_rect();
+		if (!cell_rect.has_value()) return;
 
 		auto draw_list = ImGui::GetWindowDrawList();
 		auto& style = ImGui::GetStyle();
-		auto width = rect->GetWidth();
+		auto avail_width = zoom_ * cell_rect->GetWidth();
 
-		auto min = ImVec2{ rect->Min.x + zoom_ * width * time_to_pos(start, state_.min_ts, state_.max_ts), rect->Min.y + style.CellPadding.y };
-		auto max = ImVec2{ rect->Min.x + zoom_ * width * time_to_pos(end, state_.min_ts, state_.max_ts), rect->Max.y + style.CellPadding.y };
+		auto scaled_start = time_to_pos(start, state_.min_ts, state_.max_ts) * avail_width;
+		auto scaled_end = time_to_pos(end, state_.min_ts, state_.max_ts) * avail_width;
+
+		auto scaled_width = (scaled_end - scaled_start);
+		auto min = ImVec2{ cell_rect->Min.x + scaled_start, cell_rect->Min.y + style.CellPadding.y };
+		auto max = ImVec2{ cell_rect->Min.x + scaled_end, cell_rect->Max.y + style.CellPadding.y };
 
 		ImRect segment_rect{ min, max };
 
@@ -209,7 +218,7 @@ namespace vt::widgets
 			ImGui::SameLine();
 			ImGui::Checkbox("Enabled", &enabled_);
 			ImGui::SameLine();
-			ImGui::SliderFloat("Zoom", &zoom_, 0.15f, 0.95f);
+			ImGui::SliderFloat("Zoom", &zoom_, 0.15f, 4.95f);
 			ImGui::Separator();
 
 			if (ImGui::BeginTable("##TimelineSplitter", 2, ImGuiTableFlags_NoSavedSettings | ImGuiTableFlags_Resizable | ImGuiTableFlags_BordersInner | ImGuiTableFlags_ScrollY, ImGui::GetContentRegionAvail()))
@@ -223,13 +232,13 @@ namespace vt::widgets
 				widgets::icon_button(icons::add);
 
 				ImGui::TableNextColumn();
-				auto rect = get_cell_rect();
+				auto cell_rect = get_cell_rect();
 				//ImGui::TextUnformatted("00:00:00");
-				ImGui::InvisibleButton("##TimelineIntervalBar", rect->GetSize());
+				ImGui::InvisibleButton("##TimelineIntervalBar", cell_rect->GetSize());
 				if (ImGui::IsItemHovered() and ImGui::IsMouseDown(0))
 				{
 					auto x = ImGui::GetMousePos().x;
-					state_.current_ts = timestamp{ math::normalize(x, rect->Min.x, rect->Max.x, state_.min_ts.total_milliseconds.count(), state_.max_ts.total_milliseconds.count()) };
+					state_.current_ts = timestamp{ math::normalize(x, cell_rect->Min.x, cell_rect->Max.x, state_.min_ts.total_milliseconds.count(), state_.max_ts.total_milliseconds.count()) };
 				}
 				draw_cell_debug_rect(zoom_);
 				draw_time_intervals();
@@ -240,6 +249,7 @@ namespace vt::widgets
 					table_hovered_row_style();
 					//Left panel
 					ImGui::TableNextColumn();
+					ImGui::AlignTextToFramePadding();
 					ImGui::TextUnformatted(tag.c_str());
 
 					//Right panel
