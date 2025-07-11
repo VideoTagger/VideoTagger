@@ -50,10 +50,9 @@ namespace vt::widgets
 		vMax.y += win_pos.y;
 
 		auto avail_width = (vMax.x - vMin.x);
-		auto scaled_width = math::normalize(state_.current_ts.total_milliseconds.count(), state_.min_ts.total_milliseconds.count(), state_.max_ts.total_milliseconds.count(), 0.f, avail_width) * zoom_;
+		auto scaled_width = avail_width * zoom_;
 		//auto x = win_pos.x + ImGui::GetCursorPosX() + time_to_pos(state_.current_ts, state_.min_ts, state_.max_ts) * scaled_width;
 		auto x = vMin.x + time_to_pos(state_.current_ts, state_.min_ts, state_.max_ts) * scaled_width;
-		draw_list->AddRect(vMin, vMax, marker_color);
 
 		ImVec2 top{ x, vMin.y + scroll_y };
 		ImVec2 bottom{ x, vMax.y + scroll_y };
@@ -93,6 +92,7 @@ namespace vt::widgets
 		auto rect = get_cell_rect();
 		if (rect.has_value())
 		{
+			ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, ImGui::GetColorU32(ImGuiCol_TableHeaderBg));
 			auto draw_list = ImGui::GetWindowDrawList();
 			bool enabled = true;
 			auto rect_size = rect->GetSize();
@@ -347,7 +347,7 @@ namespace vt::widgets
 					//TODO: This should only scale with the current visible timestamp range, not the whole timespan
 					state_.current_ts = timestamp{ math::normalize(x, cell_rect->Min.x, cell_rect->Max.x, state_.min_ts.total_milliseconds.count(), state_.max_ts.total_milliseconds.count()) };
 				}
-				draw_cell_debug_rect(zoom_);
+				//draw_cell_debug_rect(zoom_);
 				draw_time_intervals();
 				//The marker has to be drawn two times, since it won't be visible on the interval bar when tags are scrolled otherwise
 				draw_marker();
