@@ -2,6 +2,7 @@
 #include <string>
 #include <functional>
 #include <utils/timestamp.hpp>
+#include <utils/timestamp_span.hpp>
 #include <tags/tag_timeline.hpp>
 
 namespace vt::widgets
@@ -50,6 +51,7 @@ namespace vt::widgets
 		void set_ctx_menu_callback(const std::function<void(const tag_segment& segment, const tag& tag)>& callback);
 		void set_draw_tooltip_callback(const std::function<void(const tag_segment& segment, const tag& tag)>& callback);
 
+		utils::timestamp_span visible_time_span() const;
 		timeline_state& state();
 
 		static std::string window_name();

@@ -302,6 +302,18 @@ namespace vt::widgets
 		return utils::lerp<int64_t>(base_interval, time_length / 10, zoom_);
 	}
 
+	//TODO: This
+	/*
+	utils::timestamp_span timeline::visible_time_span() const
+	{
+		auto time_length = state_.time_length();
+		auto interval = interval_time();
+		auto visible_time_length = time_length / zoom_;
+
+		return utils::timestamp_span{ timestamp{ start }, timestamp{ end } };
+	}
+	*/
+
 	timeline_state& timeline::state()
 	{
 		return state_;
@@ -333,6 +345,7 @@ namespace vt::widgets
 				ImGui::TableSetupColumn(nullptr, ImGuiTableColumnFlags_WidthStretch);
 				ImGui::TableSetupScrollFreeze(1, 1);
 
+				ImGui::PushStyleVar(ImGuiStyleVar_CellPadding, ImVec2{});
 				ImGui::TableNextRow();
 				ImGui::TableNextColumn();
 				widgets::icon_button(icons::add);
@@ -344,13 +357,17 @@ namespace vt::widgets
 				if (enabled_ and ImGui::IsItemHovered() and ImGui::IsMouseDown(0))
 				{
 					auto x = ImGui::GetMousePos().x;
+
+					//auto [start, end] = visible_time_span();
 					//TODO: This should only scale with the current visible timestamp range, not the whole timespan
 					state_.current_ts = timestamp{ math::normalize(x, cell_rect->Min.x, cell_rect->Max.x, state_.min_ts.total_milliseconds.count(), state_.max_ts.total_milliseconds.count()) };
+					//state_.current_ts = timestamp{ math::normalize(x, cell_rect->Min.x, cell_rect->Max.x, start.total_milliseconds.count(), end.total_milliseconds.count()) };
 				}
 				//draw_cell_debug_rect(zoom_);
 				draw_time_intervals();
 				//The marker has to be drawn two times, since it won't be visible on the interval bar when tags are scrolled otherwise
 				draw_marker();
+				ImGui::PopStyleVar();
 				
 				for (auto& [tag, timeline] : segments)
 				{
