@@ -27,6 +27,10 @@ jobs:
         with:
           submodules: true
           fetch-depth: 0
+      - name: Setup Documentation
+        run: |
+          chmod +x ./scripts/linux-runner-setup-docs.sh
+          ./scripts/linux-runner-setup-docs.sh
 
       - name: Run Doxygen
         uses: mattnotmitt/doxygen-action@1.9.8

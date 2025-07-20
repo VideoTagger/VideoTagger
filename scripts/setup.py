@@ -16,17 +16,12 @@ EXECUTABLE_EXT = ".exe" if platform == "win32" else ""
 WORK_DIR = os.path.dirname(os.path.realpath(sys.argv[0]))
 TOOL_DIR = os.path.join(WORK_DIR, os.pardir, "tools", "bin")
 
-MDBOOK_VER = "0.4.37"
-MDBOOK_WIN_URL = f"https://github.com/rust-lang/mdBook/releases/download/v{MDBOOK_VER}/mdbook-v{MDBOOK_VER}-x86_64-pc-windows-msvc.zip"
-MDBOOK_LINUX_URL = f"https://github.com/rust-lang/mdBook/releases/download/v{MDBOOK_VER}/mdbook-v{MDBOOK_VER}-x86_64-unknown-linux-musl.tar.gz"
-MDBOOK_MAC_URL = f"https://github.com/rust-lang/mdBook/releases/download/v{MDBOOK_VER}/mdbook-v{MDBOOK_VER}-x86_64-apple-darwin.tar.gz"
-
 PREMAKE_VER = "5.0.0-beta2"
 PREMAKE_WIN_URL = f"https://github.com/premake/premake-core/releases/download/v{PREMAKE_VER}/premake-{PREMAKE_VER}-windows.zip"
 PREMAKE_LINUX_URL = f"https://github.com/premake/premake-core/releases/download/v{PREMAKE_VER}/premake-{PREMAKE_VER}-linux.tar.gz"
 PREMAKE_MAC_URL = f"https://github.com/premake/premake-core/releases/download/v{PREMAKE_VER}/premake-{PREMAKE_VER}-macosx.tar.gz"
 
-DOXYGEN_VER = "1.10.0"
+DOXYGEN_VER = "1.12.0"
 DOXYGEN_SAFE_VER = DOXYGEN_VER.replace(".", "_")
 DOXYGEN_WIN_URL = f"https://github.com/doxygen/doxygen/releases/download/Release_{DOXYGEN_SAFE_VER}/doxygen-{DOXYGEN_VER}.windows.x64.bin.zip"
 DOXYGEN_LINUX_URL = f"https://github.com/doxygen/doxygen/releases/download/Release_{DOXYGEN_SAFE_VER}/doxygen-{DOXYGEN_VER}.linux.bin.tar.gz"
@@ -34,11 +29,6 @@ DOXYGEN_MAC_URL = f"https://github.com/doxygen/doxygen/releases/download/Release
 
 
 tools = {
-	"mdbook": [
-		{"url": MDBOOK_WIN_URL, "unpack-action": UnpackAction.UnpackZip},
-		{"url": MDBOOK_LINUX_URL, "unpack-action": UnpackAction.UnpackTar},
-		{"url": MDBOOK_MAC_URL, "unpack-action": UnpackAction.UnpackTar},
-	],
 	"premake5": [
 		{"url": PREMAKE_WIN_URL, "unpack-action": UnpackAction.UnpackZip},
 		{"url": PREMAKE_LINUX_URL, "unpack-action": UnpackAction.UnpackTar},

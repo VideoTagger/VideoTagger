@@ -1,6 +1,6 @@
 # VideoTagger
 
-![VideoTagger](/resources/images/preview.png?raw=true "VideoTagger")
+![VideoTagger](/resources/images/preview.png "VideoTagger")
 
 ## Getting started
 
