@@ -36,16 +36,6 @@ jobs:
         uses: mattnotmitt/doxygen-action@1.9.8
         with:
           working-directory: 'docs/'
-              
-      - name: Setup mdBook
-        uses: peaceiris/actions-mdbook@v2
-        with:
-          mdbook-version: '0.4.37'
-              
-      - name: Run mdBook
-        run: |
-          cd docs
-          mdbook build
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
