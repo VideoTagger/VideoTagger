@@ -65,7 +65,6 @@ jobs:
           python3 ./scripts/setup_docs_version_selector.py
           mv ./build/web/public/docs/version_selector.html ./docs/version_selector.html
           rm -f ./VERSION
-          rm -rf docs
           rm -rf build
           rm -rf scripts
 
