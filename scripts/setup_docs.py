@@ -4,7 +4,6 @@ import sys
 from docs import *
 
 INDEX_PATH = os.path.join(ROOT, "docs", "src", "index.html")
-VERSION_SELECTOR_PATH = os.path.join(ROOT, "docs", "src", "version_selector.html")
 
 
 def preprocess_index_html(version: str):

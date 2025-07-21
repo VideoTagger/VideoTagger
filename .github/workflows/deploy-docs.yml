@@ -53,6 +53,8 @@ jobs:
           cp ./VERSION ./gh-pages/
           cp ./scripts/docs.py ./gh-pages/scripts/
           cp ./scripts/setup_docs_version_selector.py ./gh-pages/scripts/
+          mkdir -p ./gh-pages/scripts/docs/src
+          cp ./docs/src/version_selector.html ./gh-pages/scripts/docs/src/
           cp -r /tmp/new_docs/* ./gh-pages/
 
       - name: Update version selector
@@ -61,6 +63,7 @@ jobs:
           python3 ./scripts/setup_docs_version_selector.py
           rm -f ./VERSION
           rm -rf scripts
+          rm -rf docs/src
 
       - name: Deploy to GitHub Pages
         uses: EndBug/add-and-commit@v9
