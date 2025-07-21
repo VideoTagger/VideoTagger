@@ -45,18 +45,23 @@ jobs:
         uses: actions/checkout@v4
         with:
           ref: gh-pages
+          path: gh-pages
 
-      - name: Copy docs to working directory
+      - name: Copy files to working directory
         run: |
-          cp -r /tmp/new_docs/* .
+          cp ./scripts/setup_docs_version_selector.py ./gh-pages/scripts/setup_docs_version_selector.py
+          cp -r /tmp/new_docs/* ./gh-pages/
 
       - name: Update version selector
         run: |
+          cd gh-pages
           python3 ./scripts/setup_docs_version_selector.py
+          rm -rf scripts
 
       - name: Deploy to GitHub Pages
         uses: EndBug/add-and-commit@v9
         with:
+          cwd: ./gh-pages
           add: --all
           author_name: VideoTagger Docs
           message: Deployed documentation
