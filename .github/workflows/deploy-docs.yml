@@ -41,7 +41,7 @@ jobs:
       - name: Save documentation
         run: |
           mkdir -p /tmp/new_docs
-          cp -r build/docs/public/* /tmp/new_docs/
+          cp -r build/web/public/* /tmp/new_docs/
 
       - name: Checkout gh-pages branch
         uses: actions/checkout@v4
