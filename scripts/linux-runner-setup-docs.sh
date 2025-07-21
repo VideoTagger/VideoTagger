@@ -25,6 +25,6 @@ echo >> src/README.autogen.md
 echo "[TOC]" >> src/README.autogen.md
 echo >> src/README.autogen.md
 
-chmod +x ../tools/bin/doxygen
+python3 ../scripts/setup_docs.py
 popd || exit
 exit 0

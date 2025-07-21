@@ -23,6 +23,16 @@ echo. >> "src\README.autogen.md"
 echo [TOC] >> "src\README.autogen.md"
 echo. >> "src\README.autogen.md"
 
+call ..\scripts\setup_docs.py
+if errorlevel 1 (
+	echo Error: Failed to set up documentation.
+	exit /b 1
+)
+call ..\scripts\setup_docs_version_selector.py
+if errorlevel 1 (
+	echo Error: Failed to set up version selector.
+	exit /b 1
+)
 call ..\tools\bin\doxygen Doxyfile
 endlocal
 popd

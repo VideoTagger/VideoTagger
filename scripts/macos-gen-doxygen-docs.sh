@@ -24,6 +24,9 @@ echo >> src/README.autogen.md
 echo "[TOC]" >> src/README.autogen.md
 echo >> src/README.autogen.md
 
+python3 ../scripts/setup_docs.py
+python3 ../scripts/setup_docs_version_selector.py
+
 chmod +x ../tools/bin/doxygen
 ../tools/bin/doxygen Doxyfile
 

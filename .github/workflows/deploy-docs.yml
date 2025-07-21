@@ -3,11 +3,10 @@ name: Deploy Documentation
 on:
   push:
     branches: ["main"]
-
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
   pages: write
   id-token: write
 
@@ -16,10 +15,7 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  deploy:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+  publish:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -27,7 +23,7 @@ jobs:
         with:
           submodules: true
           fetch-depth: 0
-      - name: Setup Documentation
+      - name: Setup Runner VT_VERSION
         run: |
           chmod +x ./scripts/linux-runner-setup-docs.sh
           ./scripts/linux-runner-setup-docs.sh
@@ -40,11 +36,27 @@ jobs:
       - name: Setup Pages
         uses: actions/configure-pages@v5
 
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
+      - name: Save documentation
+        run: |
+          mkdir -p /tmp/new_docs
+          cp -r build/docs/public/* /tmp/new_docs/
+
+      - name: Checkout gh-pages branch
+        uses: actions/checkout@v4
         with:
-          path: './docs/build'
+          ref: gh-pages
+
+      - name: Copy docs to working directory
+        run: |
+          cp -r /tmp/new_docs/* .
+
+      - name: Update version selector
+        run: |
+          python3 ./scripts/setup_docs_version_selector.py
 
       - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+        uses: EndBug/add-and-commit@v9
+        with:
+          add: --all
+          author_name: VideoTagger Docs
+          message: Deployed documentation

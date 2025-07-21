@@ -74,7 +74,7 @@ PROJECT_ICON           = "../VideoTagger/src/resources/icon.ico"
 # entered, it will be relative to the location where doxygen was started. If
 # left blank the current directory will be used.
 
-OUTPUT_DIRECTORY       = "src/auto-generated"
+OUTPUT_DIRECTORY       = "../build/docs/public/docs"
 
 # If the CREATE_SUBDIRS tag is set to YES then doxygen will create up to 4096
 # sub-directories (in 2 levels) under the output directory of each output format
@@ -1294,7 +1294,7 @@ GENERATE_HTML          = YES
 # The default directory is: html.
 # This tag requires that the tag GENERATE_HTML is set to YES.
 
-HTML_OUTPUT            = html
+HTML_OUTPUT            = $(VT_VERSION)
 
 # The HTML_FILE_EXTENSION tag can be used to specify the file extension for each
 # generated HTML page (for example: .htm, .php, .asp).
@@ -1361,7 +1361,8 @@ HTML_STYLESHEET        =
 # documentation.
 # This tag requires that the tag GENERATE_HTML is set to YES.
 
-HTML_EXTRA_STYLESHEET  = "vendor/doxygen-awesome-css/doxygen-awesome.css"
+HTML_EXTRA_STYLESHEET  = "vendor/doxygen-awesome-css/doxygen-awesome.css" \
+						 "styles.css"
 
 # The HTML_EXTRA_FILES tag can be used to specify one or more extra images or
 # other source files which should be copied to the HTML output directory. Note
@@ -1374,7 +1375,8 @@ HTML_EXTRA_STYLESHEET  = "vendor/doxygen-awesome-css/doxygen-awesome.css"
 HTML_EXTRA_FILES       = "vendor/doxygen-awesome-css/doxygen-awesome-darkmode-toggle.js" \
                          "vendor/doxygen-awesome-css/doxygen-awesome-fragment-copy-button.js" \
                          "vendor/doxygen-awesome-css/doxygen-awesome-paragraph-link.js" \
-                         "vendor/doxygen-awesome-css/doxygen-awesome-interactive-toc.js"
+                         "vendor/doxygen-awesome-css/doxygen-awesome-interactive-toc.js" \
+						 "src/version_selector.js"
 
 # The HTML_COLORSTYLE tag can be used to specify if the generated HTML output
 # should be rendered with a dark or light theme.
@@ -1593,7 +1595,7 @@ BINARY_TOC             = YES
 # The default value is: NO.
 # This tag requires that the tag GENERATE_HTMLHELP is set to YES.
 
-TOC_EXPAND             = NO
+TOC_EXPAND             = YES
 
 # The SITEMAP_URL tag is used to specify the full URL of the place where the
 # generated documentation will be placed on the server by the user during the
@@ -2405,11 +2407,13 @@ INCLUDE_PATH           = "../VideoTagger/vendor/FFmpeg/include" \
                          "../VideoTagger/vendor/ImGui/misc/cpp" \
                          "../VideoTagger/vendor/ImGuizmo" \
                          "../VideoTagger/vendor/nativefiledialog-extended/src/include" \
-                         "../VideoTagger/vendor/nlohmann/include" \
+                         "../VideoTagger/vendor/nlohmann/single_include" \
                          "../VideoTagger/vendor/SDL2/include" \
                          "../VideoTagger/vendor/utf8" \
 						 "../VideoTagger/vendor/pybind11/include" \
-						 "../VideoTagger/vendor/cpp-httplib"
+						 "../VideoTagger/vendor/cpp-httplib" \
+						 "../VideoTagger/vendor/imgui_toggle" \
+						 "../VideoTagger/vendor/stb"
 
 # You can use the INCLUDE_FILE_PATTERNS tag to specify one or more wildcard
 # patterns (like *.h and *.hpp) to filter out the header-files in the
