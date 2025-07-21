@@ -23,7 +23,7 @@ jobs:
         with:
           submodules: true
           fetch-depth: 0
-      - name: Setup Runner VT_VERSION
+      - name: Setup runner
         run: |
           chmod +x ./scripts/linux-runner-setup-docs.sh
           ./scripts/linux-runner-setup-docs.sh
@@ -33,7 +33,7 @@ jobs:
         with:
           working-directory: 'docs/'
 
-      - name: Setup Pages
+      - name: Setup pages
         uses: actions/configure-pages@v5
 
       - name: Save documentation
@@ -50,6 +50,7 @@ jobs:
       - name: Copy files to working directory
         run: |
           mkdir -p ./gh-pages/scripts
+          cp ./VERSION ./gh-pages/
           cp ./scripts/docs.py ./gh-pages/scripts/
           cp ./scripts/setup_docs_version_selector.py ./gh-pages/scripts/
           cp -r /tmp/new_docs/* ./gh-pages/
@@ -58,6 +59,7 @@ jobs:
         run: |
           cd gh-pages
           python3 ./scripts/setup_docs_version_selector.py
+          rm -f ./VERSION
           rm -rf scripts
 
       - name: Deploy to GitHub Pages
