@@ -21,6 +21,8 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
+          #TODO: Remove this when the main branch is updated
+          ref: ui
           submodules: true
           fetch-depth: 0
       - name: Setup runner
@@ -61,9 +63,11 @@ jobs:
         run: |
           cd gh-pages
           python3 ./scripts/setup_docs_version_selector.py
+          mv ./build/web/public/docs/version_selector.html ./docs/version_selector.html
           rm -f ./VERSION
+          rm -rf docs
+          rm -rf build
           rm -rf scripts
-          rm -rf docs/src
 
       - name: Deploy to GitHub Pages
         uses: EndBug/add-and-commit@v9

@@ -3,7 +3,7 @@ import sys
 
 WORK_DIR = os.path.dirname(os.path.realpath(sys.argv[0]))
 ROOT = os.path.dirname(WORK_DIR)
-DOCS_PATH = os.path.join(ROOT, "build", "docs", "public", "docs")
+DOCS_PATH = os.path.join(ROOT, "build", "web", "public", "docs")
 VERSION_PATH = os.path.join(ROOT, "VERSION")
 
 
