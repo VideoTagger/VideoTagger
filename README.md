@@ -22,6 +22,16 @@ git submodule update --init
 > Both Linux and macOS require SDL2 version 2.0.17 or later to build properly.
 Windows comes with prebuilt binaries.
 
+## Initial setup
+In the root directory run:
+```shell
+cd scripts
+pip install -r requirements.txt
+# on linux use python3
+python setup.py
+python gen_about.py
+```
+
 ## Visual Studio (Windows)
 Generate project files with:
 ```shell
