@@ -21,8 +21,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          #TODO: Remove this when the main branch is updated
-          ref: ui
           submodules: true
           fetch-depth: 0
       - name: Setup runner
@@ -66,6 +64,7 @@ jobs:
           mv ./build/web/public/docs/version_selector.html ./docs/version_selector.html
           rm -f ./VERSION
           rm -rf build
+          rm -rf docs/src
           rm -rf scripts
 
       - name: Deploy to GitHub Pages
