@@ -49,7 +49,7 @@ jobs:
 
       - name: Copy files to working directory
         run: |
-          cp ./scripts/setup_docs_version_selector.py ./gh-pages/scripts/setup_docs_version_selector.py
+          cp ./scripts/setup_docs_version_selector.py ./gh-pages/scripts/
           cp -r /tmp/new_docs/* ./gh-pages/
 
       - name: Update version selector
