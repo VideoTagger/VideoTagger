@@ -1,0 +1,22 @@
+var searchData=
+[
+  ['path_0',['path',['../structvt_1_1bindings_1_1vt__video.html#ac4d88ab70e1c9edaf453fc6d8c7260b1',1,'vt::bindings::vt_video::path'],['../structvt_1_1utils_1_1dialog__result.html#aafe480d6ee1c3f7ab24e4139e8b4ed27',1,'vt::utils::dialog_result::path'],['../structvt_1_1local__video__importer_1_1import__arguments.html#a50014b83fabca8de692dd1a6b4f6f571',1,'vt::local_video_importer::import_arguments::path'],['../structvt_1_1widgets_1_1console_1_1entry_1_1source__info.html#ab4864851d0c035ad622f03a5a856e124',1,'vt::widgets::console::entry::source_info::path'],['../structvt_1_1project__info.html#a9c98a9e4e25961f88c54b1aa38aca13d',1,'vt::project_info::path']]],
+  ['paths_1',['paths',['../structvt_1_1utils_1_1dialog__results.html#adad01f998019a16ccdf25b949a171712',1,'vt::utils::dialog_results']]],
+  ['pause_2',['pause',['../namespacevt_1_1icons.html#a1ba327e0ba527fd569c0a8c2cba37cbb',1,'vt::icons']]],
+  ['pause_5fplayer_3',['pause_player',['../structvt_1_1app__context.html#ad38c58f7f20b46942625b7bd975d570e',1,'vt::app_context']]],
+  ['pixels_4',['pixels',['../structvt_1_1video__resource__thumbnail.html#a63f425e13c2d9698fc273e77da22f576',1,'vt::video_resource_thumbnail']]],
+  ['play_5',['play',['../namespacevt_1_1icons.html#a41d4732d1d8137f4b1c35030cc218155',1,'vt::icons']]],
+  ['play_5fnext_6',['play_next',['../namespacevt_1_1icons.html#a7c8c87f5aa1bb5bf60585027585c85bf',1,'vt::icons']]],
+  ['play_5fqueue_7',['play_queue',['../namespacevt_1_1icons.html#a12ca9b1035e51d4be4b0abdea58c9840',1,'vt::icons']]],
+  ['player_8',['player',['../structvt_1_1app__context.html#ac838c2e20f01e723f73d8446e220aef9',1,'vt::app_context']]],
+  ['popup_5fid_9',['popup_id',['../structvt_1_1widgets_1_1modal_1_1tag__importer.html#aea17b4330776df10750218b4277f4c0f',1,'vt::widgets::modal::tag_importer']]],
+  ['pos_10',['pos',['../structvt_1_1circle.html#a1e336eda0f0bc206e0e5ba0f37c37b34',1,'vt::circle']]],
+  ['prepare_5fvideo_5fimport_5ftasks_11',['prepare_video_import_tasks',['../structvt_1_1project.html#a27c67f23024875791297a4ed23d1aaf3',1,'vt::project']]],
+  ['processed_12',['processed',['../structvt_1_1widgets_1_1tag__rename__data.html#ad1bbaf0a99ab091febceccdeb091786f',1,'vt::widgets::tag_rename_data']]],
+  ['progress_13',['progress',['../structvt_1_1video__download__data.html#afcd114dede5ada347cb6b1330d7dd00d',1,'vt::video_download_data']]],
+  ['project_5fselector_14',['project_selector',['../structvt_1_1app__context.html#ae0194c6a9b58ec2b582b2cc26075188c',1,'vt::app_context']]],
+  ['projects_5flist_5ffilepath_15',['projects_list_filepath',['../structvt_1_1app__context.html#a63f1b5302cafc93ce44fe471c4aefd88',1,'vt::app_context']]],
+  ['properties_16',['properties',['../structvt_1_1google__account__info.html#ab08e5573b91b64943ab6e09371265f2a',1,'vt::google_account_info']]],
+  ['property_17',['property',['../namespacevt_1_1icons.html#ad04848901a81d9a8f2e0f0c5301d9bae',1,'vt::icons']]],
+  ['property_5fname_18',['property_name',['../structvt_1_1account__login__popup__field__data.html#ae0d2687a4b03b72b61c0e9a1e4cc2241',1,'vt::account_login_popup_field_data']]]
+];
