@@ -2506,22 +2506,28 @@ namespace vt
 		}
 
 		//TODO: This is temporary, replace old timeline widget with this later
-		static widgets::timeline temp_timeline;
-		temp_timeline.set_ctx_menu_callback([](const tag_segment& segment, const tag& tag)
+		
+		ctx_.timeline.set_ctx_menu_callback([](const tag_segment& segment, const tag& tag)
 		{
 			debug::log("(Segment Ctx) Start: {}, End: {}, Tag: {}", segment.start.total_milliseconds.count(), segment.end.total_milliseconds.count(), tag.name);
 		});
+		ctx_.timeline.set_on_seek_callback([](timestamp ts)
+		{
+			if (ts.total_milliseconds != std::chrono::duration_cast<std::chrono::milliseconds>(ctx_.displayed_videos.current_timestamp()))
+			{
+				ctx_.displayed_videos.seek(ts.total_milliseconds);
+			}
+		});
 		bool v = true;
-
 		if (ctx_.current_video_group_id() != invalid_video_group_id)
 		{
 			auto group_duration = ctx_.displayed_videos.duration();
 
-			auto& state = temp_timeline.state();
+			auto& state = ctx_.timeline.state();
 			state.set_min_timestamp(timestamp::zero());
 			state.set_max_timestamp(timestamp(std::chrono::duration_cast<std::chrono::milliseconds>(group_duration)));
 			state.set_current_timestamp(timestamp{ std::chrono::duration_cast<std::chrono::milliseconds>(ctx_.displayed_videos.current_timestamp()) });
-			temp_timeline.render(v, ctx_.current_project->video_groups.at(ctx_.current_video_group_id()).segments(), ctx_.current_project->tags);
+			ctx_.timeline.render(v, ctx_.current_project->video_groups.at(ctx_.current_video_group_id()).segments(), ctx_.current_project->tags);
 		}
 		//ImGui::ShowDemoWindow();
 		//ImGui::OpenPopup("Script Progress");

@@ -52,7 +52,7 @@ namespace vt::widgets
 		auto avail_width = (vMax.x - vMin.x);
 		auto scaled_width = avail_width * zoom_;
 		//auto x = win_pos.x + ImGui::GetCursorPosX() + time_to_pos(state_.current_ts, state_.min_ts, state_.max_ts) * scaled_width;
-		auto x = vMin.x + time_to_pos(state_.current_ts, state_.min_ts, state_.max_ts) * scaled_width;
+		auto x = vMin.x + to_timeline_pos(state_.current_ts) * scaled_width;
 
 		ImVec2 top{ x, vMin.y + scroll_y };
 		ImVec2 bottom{ x, vMax.y + scroll_y };
@@ -105,7 +105,7 @@ namespace vt::widgets
 			auto tick_count = (time_length / 2) / mpt;
 
 			//size_t tick_count = std::max<size_t>(6, (size_t)(zoom_ * 100));
-			for (int64_t i = 1; i < tick_count; i++)
+			for (int64_t i = 1; i < tick_count; ++i)
 			{
 				auto offset = (i & 1) ? rect_size.y / 6.f : 0.f;
 				auto start = rect->Min + ImVec2{ (float)i * rect_size.x / (float)tick_count, tick_thickness };
@@ -136,8 +136,8 @@ namespace vt::widgets
 		auto& style = ImGui::GetStyle();
 		auto avail_width = zoom_ * cell_rect->GetWidth();
 
-		auto scaled_start = time_to_pos(start, state_.min_ts, state_.max_ts) * avail_width;
-		auto scaled_end = time_to_pos(end, state_.min_ts, state_.max_ts) * avail_width;
+		auto scaled_start = to_timeline_pos(start) * avail_width;
+		auto scaled_end = to_timeline_pos(end) * avail_width;
 
 		auto scaled_width = (scaled_end - scaled_start);
 		auto min = ImVec2{ cell_rect->Min.x + scaled_start, cell_rect->Min.y + style.CellPadding.y + height_padding };
@@ -292,6 +292,11 @@ namespace vt::widgets
 		return math::normalize(time.total_milliseconds.count(), min.total_milliseconds.count(), max.total_milliseconds.count(), 0.0f, 1.0f);
 	}
 
+	float timeline::to_timeline_pos(timestamp time) const
+	{
+		return math::normalize((time - view_ts_).total_milliseconds.count(), state_.min_ts.total_milliseconds.count(), state_.max_ts.total_milliseconds.count(), 0.0f, 1.0f);
+	}
+
 	int64_t timeline::interval_time() const
 	{
 		static constexpr int64_t base_interval = 1;
@@ -313,6 +318,11 @@ namespace vt::widgets
 		return utils::timestamp_span{ timestamp{ start }, timestamp{ end } };
 	}
 	*/
+
+	utils::timestamp_span timeline::visible_time_span() const
+	{
+		return utils::timestamp_span(view_ts_, view_ts_ + timestamp(state_.time_length() / zoom_));
+	}
 
 	timeline_state& timeline::state()
 	{
@@ -337,6 +347,16 @@ namespace vt::widgets
 			ImGui::Checkbox("Enabled", &enabled_);
 			ImGui::SameLine();
 			ImGui::SliderFloat("Zoom", &zoom_, 0.15f, 4.95f);
+			//ImGui::SameLine();
+			//TODO: Remove this
+			auto [visible_min, visible_max] = visible_time_span();
+			int visible_length = visible_max.total_milliseconds.count() - visible_min.total_milliseconds.count();
+			int view_ts = view_ts_.total_milliseconds.count();
+			int scroll_min = state_.min_ts.total_milliseconds.count();
+			int scroll_max = std::max(int(state_.max_ts.total_milliseconds.count()) - visible_length, 0);
+			ImGui::SliderInt("Scroll", &view_ts, scroll_min, scroll_max);
+			view_ts_ = timestamp{ view_ts };
+			//-------------
 			ImGui::Separator();
 
 			if (ImGui::BeginTable("##TimelineSplitter", 2, ImGuiTableFlags_NoSavedSettings | ImGuiTableFlags_Resizable | ImGuiTableFlags_BordersInner | ImGuiTableFlags_ScrollY, ImGui::GetContentRegionAvail()))
@@ -358,10 +378,14 @@ namespace vt::widgets
 				{
 					auto x = ImGui::GetMousePos().x;
 
-					//auto [start, end] = visible_time_span();
+					auto [start, end] = visible_time_span();
 					//TODO: This should only scale with the current visible timestamp range, not the whole timespan
-					state_.current_ts = timestamp{ math::normalize(x, cell_rect->Min.x, cell_rect->Max.x, state_.min_ts.total_milliseconds.count(), state_.max_ts.total_milliseconds.count()) };
-					//state_.current_ts = timestamp{ math::normalize(x, cell_rect->Min.x, cell_rect->Max.x, start.total_milliseconds.count(), end.total_milliseconds.count()) };
+					//state_.current_ts = timestamp{ math::normalize(x, cell_rect->Min.x, cell_rect->Max.x, state_.min_ts.total_milliseconds.count(), state_.max_ts.total_milliseconds.count()) };
+					state_.current_ts = timestamp{ math::normalize(x, cell_rect->Min.x, cell_rect->Max.x, start.total_milliseconds.count(), end.total_milliseconds.count()) };
+					if (on_seek_ != nullptr)
+					{
+						on_seek_(state_.current_ts);
+					}
 				}
 				//draw_cell_debug_rect(zoom_);
 				draw_time_intervals();
@@ -407,6 +431,11 @@ namespace vt::widgets
 		}
 		ImGui::End();
 
+	}
+
+	void timeline::set_on_seek_callback(const std::function<void(timestamp ts)>& callback)
+	{
+		on_seek_ = callback;
 	}
 
 	void timeline::set_ctx_menu_callback(const std::function<void(const tag_segment& segment, const tag& tag)>& callback)

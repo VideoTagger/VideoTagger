@@ -21,6 +21,7 @@
 #include <video/video_stream.hpp>
 #include <widgets/project_selector.hpp>
 #include <widgets/video_timeline.hpp>
+#include <widgets/timeline.hpp>
 #include <widgets/video_player.hpp>
 #include <widgets/color_picker.hpp>
 #include <widgets/video_browser.hpp>
@@ -97,6 +98,7 @@ namespace vt
 	{
 		std::optional<project> current_project;
 		widgets::video_timeline video_timeline;
+		widgets::timeline timeline;
 		widgets::project_selector project_selector;
 		widgets::video_player player;
 		widgets::video_browser browser;
