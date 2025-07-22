@@ -3,11 +3,10 @@ name: Deploy Documentation
 on:
   push:
     branches: ["main"]
-
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
   pages: write
   id-token: write
 
@@ -16,10 +15,7 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  deploy:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+  publish:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -27,30 +23,54 @@ jobs:
         with:
           submodules: true
           fetch-depth: 0
+      - name: Setup runner
+        run: |
+          chmod +x ./scripts/linux-runner-setup-docs.sh
+          ./scripts/linux-runner-setup-docs.sh
 
       - name: Run Doxygen
         uses: mattnotmitt/doxygen-action@1.9.8
         with:
           working-directory: 'docs/'
-              
-      - name: Setup mdBook
-        uses: peaceiris/actions-mdbook@v2
-        with:
-          mdbook-version: '0.4.37'
-              
-      - name: Run mdBook
-        run: |
-          cd docs
-          mdbook build
 
-      - name: Setup Pages
+      - name: Setup pages
         uses: actions/configure-pages@v5
 
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
+      - name: Save documentation
+        run: |
+          mkdir -p /tmp/new_docs
+          cp -r build/web/public/* /tmp/new_docs/
+
+      - name: Checkout gh-pages branch
+        uses: actions/checkout@v4
         with:
-          path: './docs/build'
+          ref: gh-pages
+          path: gh-pages
+
+      - name: Copy files to working directory
+        run: |
+          mkdir -p ./gh-pages/scripts
+          cp ./VERSION ./gh-pages/
+          cp ./scripts/docs.py ./gh-pages/scripts/
+          cp ./scripts/setup_docs_version_selector.py ./gh-pages/scripts/
+          mkdir -p ./gh-pages/docs/src
+          cp ./docs/src/version_selector.html ./gh-pages/docs/src/
+          cp -r /tmp/new_docs/* ./gh-pages/
+
+      - name: Update version selector
+        run: |
+          cd gh-pages
+          python3 ./scripts/setup_docs_version_selector.py
+          mv ./build/web/public/docs/version_selector.html ./docs/version_selector.html
+          rm -f ./VERSION
+          rm -rf build
+          rm -rf docs/src
+          rm -rf scripts
 
       - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+        uses: EndBug/add-and-commit@v9
+        with:
+          cwd: ./gh-pages
+          add: --all
+          author_name: VideoTagger Docs
+          message: Deployed documentation
