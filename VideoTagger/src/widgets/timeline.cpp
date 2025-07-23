@@ -287,6 +287,125 @@ namespace vt::widgets
 		}
 	}
 
+	void timeline::draw_segment_preview(const tag_segment& segment, const tag& tag, float scaled_height, bool is_selected, bool is_dragged) const
+	{
+		static constexpr float height_padding = 0.5f;
+		static constexpr float rounding = 1.0f;
+
+		auto avail_width = ImGui::GetContentRegionAvail().x;
+
+		auto scaled_start = time_to_pos(segment.start, state_.min_ts, state_.max_ts) * avail_width;
+		auto scaled_end = time_to_pos(segment.end, state_.min_ts, state_.max_ts) * avail_width;
+
+		auto cell_rect = get_cell_rect();
+		if (!cell_rect.has_value()) return;
+
+		auto& style = ImGui::GetStyle();
+		//cell_rect->Min.y += style.FramePadding.y;
+		cell_rect->Max.y = cell_rect->Min.y + scaled_height;
+
+		auto draw_list = ImGui::GetWindowDrawList();
+
+		auto scaled_width = (scaled_end - scaled_start);
+		auto min = ImVec2{ cell_rect->Min.x + scaled_start, cell_rect->Min.y + style.CellPadding.y + height_padding };
+		auto max = ImVec2{ cell_rect->Min.x + scaled_end, cell_rect->Max.y - style.CellPadding.y - height_padding };
+
+		ImRect segment_rect{ min, max };
+
+		draw_list->AddRectFilled(segment_rect.Min, segment_rect.Max, tag.color, rounding);
+	}
+
+	void timeline::draw_timespan_preview(float scaled_height) const
+	{
+		static constexpr float height_padding = 0.5f;
+
+		auto avail_width = ImGui::GetContentRegionAvail().x;
+
+		auto [start, end] = visible_time_span();
+		auto scaled_start = time_to_pos(start, state_.min_ts, state_.max_ts) * avail_width;
+		auto scaled_end = time_to_pos(end, state_.min_ts, state_.max_ts) * avail_width;
+
+		auto cell_rect = get_cell_rect();
+		if (!cell_rect.has_value()) return;
+
+		auto& style = ImGui::GetStyle();
+		//cell_rect->Min.y += style.FramePadding.y;
+		cell_rect->Max.y = cell_rect->Min.y + scaled_height;
+
+		auto draw_list = ImGui::GetWindowDrawList();
+
+		auto scaled_width = (scaled_end - scaled_start);
+		auto min = ImVec2{ cell_rect->Min.x + scaled_start, cell_rect->Min.y + style.CellPadding.y + height_padding };
+		auto max = ImVec2{ cell_rect->Min.x + scaled_end, cell_rect->Max.y - style.CellPadding.y - height_padding };
+
+		ImRect segment_rect{ min, max };
+
+		draw_list->AddRectFilled(segment_rect.Min, segment_rect.Max, IM_COL32(36, 36, 36, 128), 0.f);
+		draw_list->AddRect(segment_rect.Min, segment_rect.Max, IM_COL32(128, 128, 128, 240), 0.f);
+		//draw_list->AddRectFilled(segment_rect.Min, segment_rect.Max, IM_COL32(0xFF, 0xFF, 0xFF, 128), 0.f);
+	}
+
+	void timeline::draw_scrollbar(segment_storage& segments, tag_storage& tags)
+	{
+		auto [visible_min, visible_max] = visible_time_span();
+		auto visible_length = visible_max.total_milliseconds.count() - visible_min.total_milliseconds.count();
+		int64_t view_ts = view_ts_.total_milliseconds.count();
+		int64_t scroll_min = state_.min_ts.total_milliseconds.count();
+		int64_t scroll_max = std::max(int64_t(state_.max_ts.total_milliseconds.count()) - visible_length, (int64_t)0);
+
+		auto cpos = ImGui::GetCursorPos();
+
+		auto tag_count = segments.size();
+		auto avail_height = ImGui::GetFrameHeight();
+		auto scaled_height = avail_height / tag_count;
+
+		ImGui::PushStyleVar(ImGuiStyleVar_CellPadding, ImVec2{});
+		ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2{});
+		if (ImGui::BeginTable("##TimelineSegments", 1, ImGuiTableFlags_NoSavedSettings, { ImGui::GetContentRegionAvail().x, avail_height }))
+		{
+			ImGui::TableNextRow();
+			ImGui::TableNextColumn();
+			draw_timespan_preview(avail_height);
+
+			for (auto& [tag, timeline] : segments)
+			{
+				auto tag_it = tags.find(tag);
+				if (tag_it == tags.end())
+				{
+					//TODO: Should that tag be discarded?
+					continue;
+				}
+
+				ImGui::TableNextRow();
+				ImGui::TableNextColumn();
+				ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, ImGui::GetColorU32(ImGuiCol_TableHeaderBg));
+				widgets::vertical_item_spacer(scaled_height);
+				ImGui::SameLine();
+
+				//draw_cell_debug_rect(1.f);
+				for (auto it = timeline.begin(); it != timeline.end(); ++it)
+				{
+					const auto& segment = *it;
+					bool is_selected = false;
+					bool is_dragged = false;
+
+					draw_segment_preview(segment, *tag_it, scaled_height, is_selected, is_dragged);
+				}
+			}
+			ImGui::EndTable();
+		}
+		ImGui::PopStyleVar(2);
+
+		ImGui::SetCursorPos(cpos);
+		ImGui::PushStyleColor(ImGuiCol_FrameBg, ImVec4{});
+		ImGui::PushStyleColor(ImGuiCol_FrameBgActive, ImVec4{});
+		ImGui::PushStyleColor(ImGuiCol_FrameBgHovered, ImVec4{});
+		ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
+		ImGui::SliderScalar("##TimelineScroll", ImGuiDataType_S64, &view_ts, &scroll_min, &scroll_max, "");
+		ImGui::PopStyleColor(3);
+		view_ts_ = timestamp{ view_ts };
+	}
+
 	float timeline::time_to_pos(timestamp time, timestamp min, timestamp max) const
 	{
 		return math::normalize(time.total_milliseconds.count(), min.total_milliseconds.count(), max.total_milliseconds.count(), 0.0f, 1.0f);
@@ -346,19 +465,10 @@ namespace vt::widgets
 			ImGui::SameLine();
 			ImGui::Checkbox("Enabled", &enabled_);
 			ImGui::SameLine();
-			ImGui::SliderFloat("Zoom", &zoom_, 0.15f, 4.95f);
-			//ImGui::SameLine();
-			//TODO: Remove this
-			auto [visible_min, visible_max] = visible_time_span();
-			auto visible_length = visible_max.total_milliseconds.count() - visible_min.total_milliseconds.count();
-			int64_t view_ts = view_ts_.total_milliseconds.count();
-			int64_t scroll_min = state_.min_ts.total_milliseconds.count();
-			int64_t scroll_max = std::max(int64_t(state_.max_ts.total_milliseconds.count()) - visible_length, (int64_t)0);
-			ImGui::PushStyleColor(ImGuiCol_FrameBg, ImVec4{});
-			ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
-			ImGui::SliderScalar("##TimelineScroll", ImGuiDataType_S64, &view_ts, &scroll_min, &scroll_max);
-			ImGui::PopStyleColor();
-			view_ts_ = timestamp{ view_ts };
+			ImGui::SliderFloat("Zoom", &zoom_, 1.f, 5.f);
+			ImGui::BeginDisabled(zoom_ <= 1.f);
+			draw_scrollbar(segments, tags);
+			ImGui::EndDisabled();
 			//-------------
 			ImGui::Separator();
 
