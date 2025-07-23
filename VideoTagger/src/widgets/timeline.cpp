@@ -350,11 +350,14 @@ namespace vt::widgets
 			//ImGui::SameLine();
 			//TODO: Remove this
 			auto [visible_min, visible_max] = visible_time_span();
-			int visible_length = visible_max.total_milliseconds.count() - visible_min.total_milliseconds.count();
-			int view_ts = view_ts_.total_milliseconds.count();
-			int scroll_min = state_.min_ts.total_milliseconds.count();
-			int scroll_max = std::max(int(state_.max_ts.total_milliseconds.count()) - visible_length, 0);
-			ImGui::SliderInt("Scroll", &view_ts, scroll_min, scroll_max);
+			auto visible_length = visible_max.total_milliseconds.count() - visible_min.total_milliseconds.count();
+			int64_t view_ts = view_ts_.total_milliseconds.count();
+			int64_t scroll_min = state_.min_ts.total_milliseconds.count();
+			int64_t scroll_max = std::max(int64_t(state_.max_ts.total_milliseconds.count()) - visible_length, (int64_t)0);
+			ImGui::PushStyleColor(ImGuiCol_FrameBg, ImVec4{});
+			ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
+			ImGui::SliderScalar("##TimelineScroll", ImGuiDataType_S64, &view_ts, &scroll_min, &scroll_max);
+			ImGui::PopStyleColor();
 			view_ts_ = timestamp{ view_ts };
 			//-------------
 			ImGui::Separator();

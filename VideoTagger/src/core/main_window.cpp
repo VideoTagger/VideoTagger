@@ -53,6 +53,7 @@ namespace vt
 		SDL_version linked;
 		SDL_VERSION(&compiled);
 		SDL_GetVersion(&linked);
+		debug::log("VideoTagger Version: {}", VT_VERSION);
 		debug::log("SDL Version (Header):  {}.{}.{}", compiled.major, compiled.minor, compiled.patch);
 		debug::log("SDL Version (Linked):  {}.{}.{}", linked.major, linked.minor, linked.patch);
 		debug::log("OpenGL Version: {}", (const char*)glGetString(GL_VERSION));
