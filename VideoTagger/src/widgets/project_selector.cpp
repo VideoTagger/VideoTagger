@@ -167,7 +167,9 @@ namespace vt::widgets
 		{
 			path = std::filesystem::absolute(path);
 		}
+		ImGui::PushFont(ctx_.get_font(font_type::h5));
 		ImGui::TextDisabled("%s", path.string().c_str());
+		ImGui::PopFont();
 		tooltip(path.string().c_str());
 		ImGui::EndGroup();
 

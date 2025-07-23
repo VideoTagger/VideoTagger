@@ -9,12 +9,13 @@ namespace vt::ui
 
 	bool settings_expander::render()
 	{
+		static constexpr float rounding = 4.0f;
+
 		const auto& style = ImGui::GetStyle();
 
 		auto cpos = ImGui::GetCursorScreenPos();
 		cpos.x += style.FramePadding.x;
 
-		float rounding = 4.0f;
 		ImGui::GetWindowDrawList()->AddRectFilled(cpos, cpos + size_, IM_COL32(50, 50, 50, 100), rounding);
 
 		widgets::horizontal_item_spacer(style.FramePadding.x);
