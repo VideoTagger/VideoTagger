@@ -94,6 +94,18 @@ namespace vt
 		bool show_script_progress = false;
 	};
 
+	enum class font_type
+	{
+		h1,
+		h2,
+		h3,
+		h4,
+		h5,
+		h6,
+		thumbnail,
+		normal = h4,
+	};
+
 	struct app_context
 	{
 		std::optional<project> current_project;
@@ -127,7 +139,7 @@ namespace vt
 		registry registry;
 		nlohmann::ordered_json settings;
 		window_config win_cfg;
-		std::unordered_map<std::string, ImFont*> fonts;
+		std::unordered_map<font_type, ImFont*> fonts;
 		std::vector<std::filesystem::path> themes;
 		utils::file_node scripts;
 		keybind_storage keybinds;
@@ -192,6 +204,8 @@ namespace vt
 		void remove_lang_pack(const std::string& name);
 		void load_lang_packs(const std::string& desired_lang);
 		std::vector<std::string> lang_names() const;
+
+		ImFont* get_font(font_type type = font_type::normal) const;
 
 		static std::filesystem::path storage_path();
 

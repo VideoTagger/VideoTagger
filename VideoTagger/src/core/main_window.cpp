@@ -775,7 +775,7 @@ namespace vt
 		{
 			widgets::label("Font Size");
 			ImGui::SameLine();
-			int start_font_size = static_cast<int>(ctx_.fonts["default"]->FontSize);
+			int start_font_size = static_cast<int>(ctx_.get_font()->FontSize);
 			static int font_size = start_font_size;
 			ImGui::SetNextItemWidth(ImGui::CalcTextSize("000").x);
 			//TODO: Add messagebox informing that the changes will be applied only after restart
@@ -848,7 +848,7 @@ namespace vt
 
 			for (auto& [service_id, account_manager] : ctx_.account_managers)
 			{
-				ImGui::PushFont(ctx_.fonts["title"]);
+				ImGui::PushFont(ctx_.get_font(font_type::h3));
 				ImGui::TextUnformatted(account_manager->service_display_name().c_str());
 				ImGui::PopFont();
 
@@ -1448,7 +1448,7 @@ namespace vt
 			{
 				const auto& style = ImGui::GetStyle();
 
-				ImGui::PushFont(ctx_.fonts["title"]);
+				ImGui::PushFont(ctx_.get_font(font_type::h3));
 				ImGui::TextUnformatted("About VideoTagger");
 				ImGui::Separator();
 				ImGui::Dummy(style.ItemSpacing);
@@ -1485,7 +1485,7 @@ namespace vt
 					ImGui::EndDisabled();
 
 					ImGui::Separator();
-					ImGui::PushFont(ctx_.fonts["title"]);
+					ImGui::PushFont(ctx_.get_font(font_type::h3));
 					ImGui::TextUnformatted("Third Party Libraries");
 					ImGui::PopFont();
 

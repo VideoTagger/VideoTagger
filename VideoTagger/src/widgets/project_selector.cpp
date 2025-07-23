@@ -29,7 +29,7 @@ namespace vt::widgets
 
 		if (ImGui::BeginPopupModal("Project Configuration", nullptr, flags))
 		{
-			ImGui::PushFont(ctx_.fonts["title"]);
+			ImGui::PushFont(ctx_.get_font(font_type::h3));
 			ImGui::LabelText("##ProjectCfgTitle", "%s", ctx_.lang->get("project.configuration").c_str());
 			ImGui::Separator();
 			ImGui::Dummy(style.ItemSpacing);
@@ -354,7 +354,7 @@ namespace vt::widgets
 			{
 				sort();
 			}
-			ImGui::PushFont(ctx_.fonts["title"]);
+			ImGui::PushFont(ctx_.get_font(font_type::h3));
 			ImGui::LabelText("##ProjectSelectorTitle", "%s", ctx_.lang->get("projects").c_str());
 			ImGui::PopFont();
 			ImGui::Dummy(ImGui::GetStyle().ItemSpacing);

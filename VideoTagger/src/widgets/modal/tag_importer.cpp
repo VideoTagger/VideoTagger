@@ -64,7 +64,7 @@ namespace vt::widgets::modal
 			auto& style = ImGui::GetStyle();
 
 			auto icon = icons::exit;
-			ImGui::PushFont(ctx_.fonts["title"]);
+			ImGui::PushFont(ctx_.get_font(font_type::h3));
 			ImGui::Text("Import Tags");
 			ImGui::PopFont();
 			ImGui::SameLine(ImGui::GetWindowWidth() - ImGui::CalcTextSize(icon).x - style.WindowPadding.x - style.WindowRounding);
@@ -77,7 +77,7 @@ namespace vt::widgets::modal
 
 			if (imported_tags.empty())
 			{
-				ImGui::PushFont(ctx_.fonts["title"]);
+				ImGui::PushFont(ctx_.get_font(font_type::h3));
 				centered_text("There are no new tags to import", ImGui::GetContentRegionMax());
 				ImGui::PopFont();
 

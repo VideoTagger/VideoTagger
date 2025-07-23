@@ -1,6 +1,7 @@
 #include "pch.hpp"
 #include "settings_expander.hpp"
 #include <widgets/controls.hpp>
+#include <core/app_context.hpp>
 
 namespace vt::ui
 {
@@ -30,7 +31,9 @@ namespace vt::ui
 			ImGui::TextUnformatted(header_.c_str());
 			if (!description_.empty())
 			{
+				ImGui::PushFont(ctx_.get_font(font_type::h5));
 				ImGui::TextDisabled("%s", description_.c_str());
+				ImGui::PopFont();
 			}
 
 			ImGui::TableNextColumn();

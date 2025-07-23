@@ -281,12 +281,19 @@ namespace vt
 		thumbnail_font_builder.BuildRanges(&thumbnail_ranges);
 
 		builder.BuildRanges(&ranges);
-		ctx_.fonts["default"] = io.Fonts->AddFontFromMemoryTTF((void*)embed::NotoSans_Regular, static_cast<int>(embed::NotoSans_Regular_size), size, &def_config, default_ranges.Data);
+		ctx_.fonts[font_type::normal] = io.Fonts->AddFontFromMemoryTTF((void*)embed::NotoSans_Regular, static_cast<int>(embed::NotoSans_Regular_size), size, &def_config, default_ranges.Data);
 		io.Fonts->AddFontFromMemoryTTF((void*)embed::MaterialSymbolsSharp_Filled_Regular, static_cast<int>(embed::MaterialSymbolsSharp_Filled_Regular_size), size, &ico_config, ranges.Data);
 
 		ico_config.MergeMode = false;
-		ctx_.fonts["title"] = io.Fonts->AddFontFromMemoryTTF((void*)embed::NotoSans_Regular, static_cast<int>(embed::NotoSans_Regular_size), size * 1.25f, &def_config, default_ranges.Data);
-		ctx_.fonts["thumbnail"] = io.Fonts->AddFontFromMemoryTTF((void*)embed::MaterialSymbolsSharp_Filled_Regular, static_cast<int>(embed::MaterialSymbolsSharp_Filled_Regular_size), 256, &ico_config, thumbnail_ranges.Data);
+		ctx_.fonts[font_type::thumbnail] = io.Fonts->AddFontFromMemoryTTF((void*)embed::MaterialSymbolsSharp_Filled_Regular, static_cast<int>(embed::MaterialSymbolsSharp_Filled_Regular_size), 256, &ico_config, thumbnail_ranges.Data);
+		def_config.MergeMode = false;
+		ctx_.fonts[font_type::h1] = io.Fonts->AddFontFromMemoryTTF((void*)embed::NotoSans_Regular, static_cast<int>(embed::NotoSans_Regular_size), size * 2.00f, &def_config, default_ranges.Data);
+		ctx_.fonts[font_type::h2] = io.Fonts->AddFontFromMemoryTTF((void*)embed::NotoSans_Regular, static_cast<int>(embed::NotoSans_Regular_size), size * 1.50f, &def_config, default_ranges.Data);
+		ctx_.fonts[font_type::h3] = io.Fonts->AddFontFromMemoryTTF((void*)embed::NotoSans_Regular, static_cast<int>(embed::NotoSans_Regular_size), size * 1.25f, &def_config, default_ranges.Data);
+		//same as font_type::normal
+		//ctx_.fonts[font_type::h4] = io.Fonts->AddFontFromMemoryTTF((void*)embed::NotoSans_Regular, static_cast<int>(embed::NotoSans_Regular_size), size * 1.00f, &def_config, default_ranges.Data);
+		ctx_.fonts[font_type::h5] = io.Fonts->AddFontFromMemoryTTF((void*)embed::NotoSans_Regular, static_cast<int>(embed::NotoSans_Regular_size), size * 0.90f, &def_config, default_ranges.Data);
+		ctx_.fonts[font_type::h6] = io.Fonts->AddFontFromMemoryTTF((void*)embed::NotoSans_Regular, static_cast<int>(embed::NotoSans_Regular_size), size * 0.60f, &def_config, default_ranges.Data);
 		io.Fonts->Build();
 	}
 

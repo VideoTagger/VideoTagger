@@ -232,6 +232,11 @@ namespace vt
 		return result;
 	}
 
+    ImFont* app_context::get_font(font_type type) const
+    {
+		return fonts.at(type);
+    }
+
     std::filesystem::path app_context::storage_path()
     {
         return utils::filesystem::get_storage_path("VideoTagger", "VideoTagger");

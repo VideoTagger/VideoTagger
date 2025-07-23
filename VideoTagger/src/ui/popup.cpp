@@ -55,7 +55,7 @@ namespace vt::ui
 			{
 				const auto& style = ImGui::GetStyle();
 
-				ImGui::PushFont(ctx_.fonts["title"]);
+				ImGui::PushFont(ctx_.get_font(font_type::h3));
 				ImGui::TextUnformatted(id().c_str());
 				ImGui::PopFont();
 				post_title_render();
