@@ -43,6 +43,7 @@
 #include <video/video_importer.hpp>
 
 #include <editor/registry.hpp>
+#include <events/event_storage.hpp>
 
 namespace vt
 {
@@ -106,7 +107,7 @@ namespace vt
 		normal = h4,
 	};
 
-	struct app_context
+	struct app_context : public event_storage
 	{
 		std::optional<project> current_project;
 		widgets::video_timeline video_timeline;

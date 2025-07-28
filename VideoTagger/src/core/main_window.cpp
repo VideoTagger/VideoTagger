@@ -33,6 +33,8 @@
 #include <ui/widgets/common.hpp>
 #include <ui/widgets/settings_expander.hpp>
 
+#include <events/window/window_resize_event.hpp>
+
 #ifndef VT_VERSION
 	#error VT_VERSION is not defined
 #endif
@@ -146,6 +148,12 @@ namespace vt
 
 		ctx_.scripts = fetch_scripts(ctx_.script_dir_filepath);
 		ctx_.project_selector.load_projects_file(ctx_.projects_list_filepath);
+
+		//TODO: Remove this after testing
+		ctx_.add_listener<window_resize_event>([](const window_resize_event& event)
+		{
+			debug::log("Main window resized to {}x{}", event.width(), event.height());
+		});
 	}
 
 	bool main_window::on_close_project(bool should_shutdown)
@@ -2653,6 +2661,11 @@ namespace vt
 					case SDL_WINDOWEVENT_RESTORED:
 					{
 						ctx_.win_cfg.state = window_state::normal;
+					}
+					break;
+					case SDL_WINDOWEVENT_SIZE_CHANGED:
+					{
+						ctx_.dispatch<window_resize_event>(*this, utils::vec2<uint32_t>{ (uint32_t)event.window.data1, (uint32_t)event.window.data2 });
 					}
 					break;
 					case SDL_WINDOWEVENT_CLOSE:
