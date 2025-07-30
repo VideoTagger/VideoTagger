@@ -13,19 +13,19 @@ namespace vt
 		utils::vec2<uint32_t> size_;
 
 	public:
-		/// @return New size of the window
+		///@return New size of the window
 		constexpr utils::vec2<uint32_t> size() const
 		{
 			return size_;
 		}
 
-		/// @return New width of the window
+		///@return New width of the window
 		constexpr uint32_t width() const
 		{
 			return size_.at(0);
 		}
 
-		/// @return New height of the window
+		///@return New height of the window
 		constexpr uint32_t height() const
 		{
 			return size_.at(1);

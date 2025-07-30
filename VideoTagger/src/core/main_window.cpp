@@ -147,7 +147,7 @@ namespace vt
 		ctx_.project_selector.load_projects_file(ctx_.projects_list_filepath);
 
 		//TODO: Remove this after testing
-		ctx_.add_listener<window_resize_event>([](const window_resize_event& event)
+		ctx_.add_event_listener<window_resize_event>([](const window_resize_event& event)
 		{
 			debug::log("Main window resized to {}x{}", event.width(), event.height());
 		});
@@ -2661,7 +2661,7 @@ namespace vt
 					break;
 					case SDL_WINDOWEVENT_SIZE_CHANGED:
 					{
-						ctx_.dispatch<window_resize_event>(*this, utils::vec2<uint32_t>{ (uint32_t)event.window.data1, (uint32_t)event.window.data2 });
+						ctx_.dispatch_event<window_resize_event>(*this, utils::vec2<uint32_t>{ (uint32_t)event.window.data1, (uint32_t)event.window.data2 });
 					}
 					break;
 					case SDL_WINDOWEVENT_CLOSE:

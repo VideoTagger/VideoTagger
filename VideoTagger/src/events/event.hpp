@@ -7,5 +7,6 @@ namespace vt
 	{
 		constexpr event() = default;
 		constexpr event(const event&) = delete;
+		virtual ~event() = default;
 	};
 }

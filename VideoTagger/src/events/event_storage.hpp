@@ -30,7 +30,7 @@ namespace vt
 		 * @return A reference to the event dispatcher for the specified event type
 		 */
 		template<typename event_type, typename = std::enable_if_t<std::is_base_of_v<event, event_type>>>
-		constexpr event_dispatcher<event_type>& get_dispatcher()
+		constexpr event_dispatcher<event_type>& get_event_dispatcher()
 		{
 			auto id = typeid(event_type).hash_code();
 			auto it = dispatchers_.find(id);
@@ -48,14 +48,14 @@ namespace vt
 		 * @return A handle to the added listener
 		 */
 		template<typename event_type, typename = std::enable_if_t<std::is_base_of_v<event, event_type>>>
-		constexpr event_listener_handle add_listener(const std::function<void(const event_type&)>& callback)
+		constexpr event_listener_handle add_event_listener(const std::function<void(const event_type&)>& callback)
 		{
-			auto& dispatcher = get_dispatcher<event_type>();
-			return dispatcher.add_listener(callback);
+			auto& dispatcher = get_event_dispatcher<event_type>();
+			return dispatcher.add_event_listener(callback);
 		}
 
 		///@brief Clears all event dispatchers.
-		void clear_dispatchers()
+		void clear_event_dispatchers()
 		{
 			dispatchers_.clear();
 		}
@@ -64,10 +64,10 @@ namespace vt
 		 * @brief Dispatches an event of a specific type constructed from the provided arguments
 		 */
 		template<typename event_type, typename... arguments, typename = std::enable_if_t<std::is_constructible_v<event_type, arguments...> and std::is_base_of_v<event, event_type>>>
-		constexpr void dispatch(arguments&&... args)
+		constexpr void dispatch_event(arguments&&... args)
 		{
-			auto& dispatcher = get_dispatcher<event_type>();
-			dispatcher.dispatch(std::forward<arguments>(args)...);
+			auto& dispatcher = get_event_dispatcher<event_type>();
+			dispatcher.dispatch_event(std::forward<arguments>(args)...);
 		}
 	};
 }

@@ -75,7 +75,7 @@ namespace vt
 		 * 
 		 * @sa operator+=(const std::function<void(const event_type&)>& callback)
 		 */
-		constexpr event_listener_handle add_listener(const std::function<void(const event_type&)>& callback)
+		constexpr event_listener_handle add_event_listener(const std::function<void(const event_type&)>& callback)
 		{
 			auto handle = utils::random::get<event_listener_handle>(1);
 			listeners_.push_back(std::make_unique<event_callback>(handle, callback));
@@ -89,7 +89,7 @@ namespace vt
 		 * 
 		 * @sa operator-=(event_listener_handle handle)
 		 */
-		constexpr bool remove_listener(event_listener_handle handle)
+		constexpr bool remove_event_listener(event_listener_handle handle)
 		{
 			auto it = std::find_if(listeners_.begin(), listeners_.end(), [handle](const std::unique_ptr<event_callback>& callback)
 			{
@@ -109,7 +109,7 @@ namespace vt
 		 * @tparam arguments The types of arguments used to construct the event instance
 		 */
 		template<typename... arguments, typename = std::enable_if_t<std::is_constructible_v<event_type, arguments...>>>
-		constexpr void dispatch(arguments&&... args)
+		constexpr void dispatch_event(arguments&&... args)
 		{
 			event_type event_instance{ std::forward<arguments>(args)... };
 			for (const auto& ptr : listeners_)
@@ -124,11 +124,11 @@ namespace vt
 		 * @param[in] callback The function to be called when the event is dispatched
 		 * @return A handle to the added listener
 		 * 
-		 * @sa add_listener(const std::function<void(const event_type&)>& callback)
+		 * @sa add_event_listener(const std::function<void(const event_type&)>& callback)
 		 */
 		constexpr event_listener_handle operator+=(const std::function<void(const event_type&)>& listener)
 		{
-			return add_listener(listener);
+			return add_event_listener(listener);
 		}
 
 		/**
@@ -136,11 +136,11 @@ namespace vt
 		 * @param[in] handle The handle of the listener to remove
 		 * @return True if the listener was successfully removed, false otherwise
 		 * 
-		 * @sa remove_listener(event_listener_handle handle)
+		 * @sa remove_event_listener(event_listener_handle handle)
 		 */
 		constexpr bool operator-=(event_listener_handle handle)
 		{
-			return remove_listener(handle);
+			return remove_event_listener(handle);
 		}
 	};
 }
