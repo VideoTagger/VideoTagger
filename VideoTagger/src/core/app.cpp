@@ -111,7 +111,6 @@ namespace vt
 		SDL_GL_SetSwapInterval(1); //VSync
 
 		ctx_.script_eng.init();
-		ctx_.register_handlers();
 
 		auto storage_path = std::filesystem::absolute(app_context::storage_path()).u8string();
 		debug::log("Storage Path: \x1b]8;;file://{}\033\\{}\033]8;;\033\\", storage_path, storage_path);

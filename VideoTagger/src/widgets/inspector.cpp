@@ -10,8 +10,6 @@
 
 #include "video_timeline.hpp"
 #include <core/app_context.hpp>
-#include <editor/selected_attribute_query.hpp>
-#include <editor/active_video_tex_size_query.hpp>
 
 namespace vt::widgets
 {

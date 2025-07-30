@@ -42,7 +42,6 @@
 #include <services/service_account_manager.hpp>
 #include <video/video_importer.hpp>
 
-#include <editor/registry.hpp>
 #include <events/event_storage.hpp>
 
 namespace vt
@@ -137,7 +136,6 @@ namespace vt
 		std::filesystem::path downloads_dir_filepath = storage_path() / "downloads";
 		std::filesystem::path cache_dir_filepath = storage_path() / std::filesystem::path("cache");
 		std::filesystem::path thumbnail_dir_filepath = cache_dir_filepath / "thumbnails";
-		registry registry;
 		nlohmann::ordered_json settings;
 		window_config win_cfg;
 		std::unordered_map<font_type, ImFont*> fonts;
@@ -169,7 +167,7 @@ namespace vt
 		bool reset_player_docking{};
 
 		bool pause_player = false;
-
+		
 		template<typename service_account_manager_type>
 		void register_account_manager();
 		void register_account_managers();
@@ -190,7 +188,6 @@ namespace vt
 		bool is_video_importer_registered() const;
 		bool is_video_importer_registered(const std::string& importer_id) const;
 
-		void register_handlers();
 		void update_current_video_group();
 		void reset_current_video_group();
 
@@ -206,7 +203,12 @@ namespace vt
 		void load_lang_packs(const std::string& desired_lang);
 		std::vector<std::string> lang_names() const;
 
+		void run_script(const std::filesystem::path& script_path);
+		void set_selected_attribute(tag_attribute_instance* attribute);
+
 		ImFont* get_font(font_type type = font_type::normal) const;
+		std::optional<utils::vec2<uint32_t>> get_active_video_tex_size() const;
+		tag_attribute_instance* get_selected_attribute() const;
 
 		static std::filesystem::path storage_path();
 

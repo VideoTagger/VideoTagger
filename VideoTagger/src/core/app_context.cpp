@@ -6,11 +6,6 @@
 #include <video/local_video_importer.hpp>
 #include <video/google_drive/google_drive_video_importer.hpp>
 
-#include <editor/run_script_command.hpp>
-#include <editor/selected_attribute_query.hpp>
-#include <editor/set_selected_attribute_command.hpp>
-#include <editor/active_video_tex_size_query.hpp>
-
 namespace vt
 {
 	void app_context::register_account_managers()
@@ -42,15 +37,6 @@ namespace vt
 	bool app_context::is_video_importer_registered(const std::string& importer_id) const
 	{
 		return video_importers.count(importer_id) != 0;
-	}
-
-	void app_context::register_handlers()
-	{
-		registry.register_command_handler<run_script_command_handler>();
-		registry.register_command_handler<set_selected_attribute_command_handler>();
-		
-		registry.register_query_handler<selected_attribute_query_handler>();
-		registry.register_query_handler<active_video_tex_size_query_handler>();
 	}
 
 	void app_context::update_current_video_group()
@@ -232,10 +218,40 @@ namespace vt
 		return result;
 	}
 
+	void app_context::run_script(const std::filesystem::path& script_path)
+	{
+		if (ctx_.app_settings.clear_console_on_run)
+		{
+			ctx_.console.clear();
+		}
+		ctx_.script_eng.run(script_path);
+		ctx_.win_cfg.show_script_progress = true;
+	}
+
+	void app_context::set_selected_attribute(tag_attribute_instance* attribute)
+	{
+		ctx_.selected_attribute = attribute;
+	}
+
     ImFont* app_context::get_font(font_type type) const
     {
 		return fonts.at(type);
     }
+
+	std::optional<utils::vec2<uint32_t>> app_context::get_active_video_tex_size() const
+	{
+		auto focused_id = ctx_.last_focused_video;
+		if (!focused_id.has_value()) return std::nullopt;
+
+		auto it = ctx_.displayed_videos.find(focused_id.value());
+		if (it == ctx_.displayed_videos.end()) return std::nullopt;
+		return utils::vec2<uint32_t>{ (uint32_t)it->display_texture.width(), (uint32_t)it->display_texture.height() };
+	}
+
+	tag_attribute_instance* app_context::get_selected_attribute() const
+	{
+		return ctx_.selected_attribute;
+	}
 
     std::filesystem::path app_context::storage_path()
     {
