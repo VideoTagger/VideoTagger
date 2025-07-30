@@ -3,8 +3,6 @@
 
 #include <widgets/controls.hpp>
 #include "tag_timeline.hpp"
-#include <editor/selected_attribute_query.hpp>
-#include <editor/set_selected_attribute_command.hpp>
 #include <core/app_context.hpp>
 
 namespace vt
@@ -14,12 +12,12 @@ namespace vt
 		const auto& style = ImGui::GetStyle();
 		bool has_value = this->has_value();
 
-		bool selected = (ctx_.registry.execute_query<selected_attribute_query>() == this);
+		bool selected = (ctx_.get_selected_attribute() == this);
 
 		auto cpos = ImGui::GetCursorPos();
 		if (ImGui::Selectable("##TagAttributeInstanceSelectable", selected, ImGuiSelectableFlags_AllowItemOverlap | ImGuiSelectableFlags_AllowOverlap | ImGuiSelectableFlags_SpanAllColumns, { 0.f, ImGui::GetTextLineHeightWithSpacing() + style.ItemSpacing.y }))
 		{
-			ctx_.registry.execute<set_selected_attribute_command>(this);
+			ctx_.set_selected_attribute(this);
 		}
 		ImGui::SetCursorPos(cpos);
 
@@ -172,7 +170,7 @@ namespace vt
 
 		if (ImGui::IsWindowHovered() and ImGui::IsMouseClicked(0) and !ImGui::IsAnyItemHovered())
 		{
-			ctx_.registry.execute<set_selected_attribute_command>(nullptr);
+			ctx_.set_selected_attribute(nullptr);
 		}
 		ImGui::NextColumn();
 	}
@@ -328,7 +326,7 @@ namespace vt
 		bool visible = widgets::begin_collapsible("##Attributes", "Attributes", flags, icons::attribute);
 		if (visible)
 		{
-			auto selected_attr_inst = ctx_.registry.execute_query<selected_attribute_query>();
+			auto selected_attr_inst = ctx_.get_selected_attribute();
 
 			ImGui::PushStyleColor(ImGuiCol_TableRowBg, style.Colors[ImGuiCol_MenuBarBg]);
 			if (ImGui::BeginTable("##Background", 1, ImGuiTableFlags_RowBg))
@@ -355,7 +353,7 @@ namespace vt
 
 					if (selected_attr_inst != nullptr and !contains_selected_attr)
 					{
-						ctx_.registry.execute<set_selected_attribute_command>(nullptr);
+						ctx_.set_selected_attribute(nullptr);
 					}
 				}
 				ImGui::Columns();

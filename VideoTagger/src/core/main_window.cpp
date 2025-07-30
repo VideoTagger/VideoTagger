@@ -22,16 +22,15 @@
 #include <embeds/about.hpp>
 
 #include <utils/filesystem.hpp>
-#include <editor/run_script_command.hpp>
-#include <editor/selected_attribute_query.hpp>
 #include <ImGuizmo.h>
 #include <utils/matrix.hpp>
 #include <utils/vec.hpp>
 #include <utils/intersection.hpp>
-#include <editor/set_selected_attribute_command.hpp>
 #include <utils/string.hpp>
 #include <ui/widgets/common.hpp>
 #include <ui/widgets/settings_expander.hpp>
+
+#include <events/window/window_resize_event.hpp>
 
 #ifndef VT_VERSION
 	#error VT_VERSION is not defined
@@ -146,6 +145,12 @@ namespace vt
 
 		ctx_.scripts = fetch_scripts(ctx_.script_dir_filepath);
 		ctx_.project_selector.load_projects_file(ctx_.projects_list_filepath);
+
+		//TODO: Remove this after testing
+		ctx_.add_event_listener<window_resize_event>([](const window_resize_event& event)
+		{
+			debug::log("Main window resized to {}x{}", event.width(), event.height());
+		});
 	}
 
 	bool main_window::on_close_project(bool should_shutdown)
@@ -166,7 +171,7 @@ namespace vt
 
 		ctx_.gizmo_target = nullptr;
 		ctx_.last_focused_video = std::nullopt;
-		ctx_.registry.execute<set_selected_attribute_command>(nullptr);
+		ctx_.set_selected_attribute(nullptr);
 
 		//Save window size & state
 		{
@@ -1367,7 +1372,7 @@ namespace vt
 							std::string script_menu_name = fmt::format("{} {}", icons::terminal, script_path);
 							if (ImGui::MenuItem(script_menu_name.c_str()))
 							{
-								ctx_.registry.execute<run_script_command>(child);
+								ctx_.run_script(child);
 							}
 						}
 					};
@@ -1858,14 +1863,14 @@ namespace vt
 		//TODO: This breaks when there are undocked videos
 		if (ctx_.player.is_visible())
 		{
-			tag_attribute_instance* selected_attribute = ctx_.registry.execute_query<selected_attribute_query>();
+			tag_attribute_instance* selected_attribute = ctx_.get_selected_attribute();
 			bool has_selected_attribute = selected_attribute != nullptr;
 
 			bool is_shape = has_selected_attribute and selected_attribute->has<shape>() and selected_attribute->get<shape>().get_type() != shape::type::none;
 			if (ctx_.last_focused_video.has_value() and ctx_.displayed_videos.find(ctx_.last_focused_video.value()) == ctx_.displayed_videos.end())
 			{
 				ctx_.last_focused_video = std::nullopt;
-				ctx_.registry.execute<set_selected_attribute_command>(nullptr);
+				ctx_.set_selected_attribute(nullptr);
 				ctx_.gizmo_target = nullptr;
 			}
 
@@ -2235,7 +2240,7 @@ namespace vt
 											if (ImGui::IsMouseDown(0))
 											{
 												ctx_.video_timeline.selected_segment = widgets::selected_segment_data{ &tag, &segments, segment_it };
-												ctx_.registry.execute<set_selected_attribute_command>(&attr);
+												ctx_.set_selected_attribute(&attr);
 											}
 											tooltip = fmt::format("Tag: {}\nAttribute: {}\nID: {}", tag.name, attr_name, i + 1);
 										});
@@ -2291,7 +2296,6 @@ namespace vt
 						gizmo_style.Colors[ImGuizmo::COLOR::DIRECTION_Y] = ImGui::ColorConvertU32ToFloat4(0xFF503CF0);
 						gizmo_style.Colors[ImGuizmo::COLOR::PLANE_Z] = ImGui::ColorConvertU32ToFloat4(0x80F08830);
 						gizmo_style.Colors[ImGuizmo::COLOR::SELECTION] = ImGui::ColorConvertU32ToFloat4(orange);
-
 
 						gizmo_style.CenterCircleSize = ctx_.app_settings.enable_gizmo_scaling ? from_pixels(5) : 5.f;
 						gizmo_style.ScaleLineCircleSize = gizmo_style.CenterCircleSize;
@@ -2653,6 +2657,11 @@ namespace vt
 					case SDL_WINDOWEVENT_RESTORED:
 					{
 						ctx_.win_cfg.state = window_state::normal;
+					}
+					break;
+					case SDL_WINDOWEVENT_SIZE_CHANGED:
+					{
+						ctx_.dispatch_event<window_resize_event>(*this, utils::vec2<uint32_t>{ (uint32_t)event.window.data1, (uint32_t)event.window.data2 });
 					}
 					break;
 					case SDL_WINDOWEVENT_CLOSE:

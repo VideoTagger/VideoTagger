@@ -1,8 +1,6 @@
 #include "pch.hpp"
 #include "shape_attributes.hpp"
 #include <core/app_context.hpp>
-#include <editor/active_video_tex_size_query.hpp>
-#include <editor/selected_attribute_query.hpp>
 #include "controls.hpp"
 #include <ui/icons.hpp>
 
@@ -16,8 +14,8 @@ namespace vt::widgets
 		{
 			if (ctx_.current_video_group_id() != invalid_video_group_id and ctx_.last_focused_video.has_value() and selected_segment.has_value())
 			{
-				auto selected_attr_inst = ctx_.registry.execute_query<selected_attribute_query>();
-				auto active_vid_size = ctx_.registry.execute_query<active_video_tex_size_query>();
+				auto selected_attr_inst = ctx_.get_selected_attribute();
+				auto active_vid_size = ctx_.get_active_video_tex_size();
 
 				auto current_ts = ctx_.video_timeline.current_timestamp();
 				bool is_on_screen = current_ts >= selected_segment->segment_it->start and current_ts <= selected_segment->segment_it->end;

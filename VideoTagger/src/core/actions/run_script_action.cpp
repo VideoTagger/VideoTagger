@@ -2,7 +2,6 @@
 #include "run_script_action.hpp"
 #include <core/app_context.hpp>
 #include <utils/filesystem.hpp>
-#include <editor/run_script_command.hpp>
 
 namespace vt
 {
@@ -19,7 +18,7 @@ namespace vt
 			ctx_.console.add_entry(widgets::console::entry::flag_type::warn, fmt::format("Failed to run script '{}', since it doesn't exist", script_path_.string()), widgets::console::entry::source_info{ "VideoTagger", 0 });
 			return;
 		}
-		ctx_.registry.execute<run_script_command>(script_path_.string());
+		ctx_.run_script(script_path_);
 	}
 
 	void run_script_action::to_json(nlohmann::ordered_json& json) const
