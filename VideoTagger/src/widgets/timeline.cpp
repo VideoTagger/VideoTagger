@@ -361,11 +361,23 @@ namespace vt::widgets
 
 		ImGui::PushStyleVar(ImGuiStyleVar_CellPadding, ImVec2{});
 		ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2{});
-		if (ImGui::BeginTable("##TimelineSegments", 1, ImGuiTableFlags_NoSavedSettings, { ImGui::GetContentRegionAvail().x, avail_height }))
+
+		auto cspos = ImGui::GetCursorScreenPos();
+		ImVec2 table_size{ ImGui::GetContentRegionAvail().x, avail_height };
+		ImRect table_rect{ cspos, ImVec2{ cspos.x + table_size.x, cspos.y + table_size.y } };
+		if (ImGui::BeginTable("##TimelineSegments", 1, ImGuiTableFlags_NoSavedSettings, table_size))
 		{
 			ImGui::TableNextRow();
 			ImGui::TableNextColumn();
-			draw_timespan_preview(avail_height);
+			auto cell_rect = get_cell_rect();
+			if (cell_rect.has_value())
+			{
+				cell_rect->Max.y = cell_rect->Min.y + scaled_height;
+				auto draw_list = ImGui::GetWindowDrawList();
+				draw_list->PushClipRect(table_rect.Min, table_rect.Max, true);
+				draw_timespan_preview(avail_height);
+				draw_list->PopClipRect();
+			}
 
 			for (auto& [tag, timeline] : segments)
 			{
