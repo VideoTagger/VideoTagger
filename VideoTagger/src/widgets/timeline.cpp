@@ -373,37 +373,39 @@ namespace vt::widgets
 			if (cell_rect.has_value())
 			{
 				cell_rect->Max.y = cell_rect->Min.y + scaled_height;
+
 				auto draw_list = ImGui::GetWindowDrawList();
 				draw_list->PushClipRect(table_rect.Min, table_rect.Max, true);
 				draw_timespan_preview(avail_height);
 				draw_list->PopClipRect();
+
+				for (auto& [tag, timeline] : segments)
+				{
+					auto tag_it = tags.find(tag);
+					if (tag_it == tags.end())
+					{
+						//TODO: Should that tag be discarded?
+						continue;
+					}
+
+					ImGui::TableNextRow();
+					ImGui::TableNextColumn();
+					ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, ImGui::GetColorU32(ImGuiCol_TableHeaderBg));
+					widgets::vertical_item_spacer(scaled_height);
+					ImGui::SameLine();
+
+					//draw_cell_debug_rect(1.f);
+					for (auto it = timeline.begin(); it != timeline.end(); ++it)
+					{
+						const auto& segment = *it;
+						bool is_selected = false;
+						bool is_dragged = false;
+
+						draw_segment_preview(segment, *tag_it, scaled_height, is_selected, is_dragged);
+					}
+				}
 			}
 
-			for (auto& [tag, timeline] : segments)
-			{
-				auto tag_it = tags.find(tag);
-				if (tag_it == tags.end())
-				{
-					//TODO: Should that tag be discarded?
-					continue;
-				}
-
-				ImGui::TableNextRow();
-				ImGui::TableNextColumn();
-				ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, ImGui::GetColorU32(ImGuiCol_TableHeaderBg));
-				widgets::vertical_item_spacer(scaled_height);
-				ImGui::SameLine();
-
-				//draw_cell_debug_rect(1.f);
-				for (auto it = timeline.begin(); it != timeline.end(); ++it)
-				{
-					const auto& segment = *it;
-					bool is_selected = false;
-					bool is_dragged = false;
-
-					draw_segment_preview(segment, *tag_it, scaled_height, is_selected, is_dragged);
-				}
-			}
 			ImGui::EndTable();
 		}
 		ImGui::PopStyleVar(2);
