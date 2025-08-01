@@ -353,7 +353,7 @@ namespace vt::widgets
 
 		ImRect timespan_rect{ min, max };
 
-		bool is_hovered = ImGui::IsMouseHoveringRect(timespan_rect.Min, timespan_rect.Max);
+		bool is_hovered = enabled_ and ImGui::IsMouseHoveringRect(timespan_rect.Min, timespan_rect.Max);
 
 		draw_list->AddRectFilled(timespan_rect.Min, timespan_rect.Max, IM_COL32(36, 36, 36, is_hovered ? 200 : 128), 0.f);
 		draw_list->AddRect(timespan_rect.Min, timespan_rect.Max, IM_COL32(128, 128, 128, is_hovered ? 255 : 240), 0.f);
