@@ -7,6 +7,7 @@
 #include <ui/icons.hpp>
 #include <core/debug.hpp>
 #include <utils/math.hpp>
+#include <ui/widgets/common.hpp>
 
 namespace vt::widgets
 {
@@ -425,13 +426,10 @@ namespace vt::widgets
 		ImGui::PopStyleVar(2);
 
 		ImGui::SetCursorPos(cpos);
-		if (enabled_)
-		{
-			preview_scrollbar_.set_range(scroll_min, scroll_max);
-			preview_scrollbar_.set_value(view_ts);
-			preview_scrollbar_.set_size(ImVec2{ ImGui::GetContentRegionAvail().x, ImGui::GetFrameHeight() });
-			preview_scrollbar_.render();
-		}		
+		preview_scrollbar_.set_range(scroll_min, scroll_max);
+		preview_scrollbar_.set_value(view_ts);
+		preview_scrollbar_.set_size(ImVec2{ ImGui::GetContentRegionAvail().x, ImGui::GetFrameHeight() });
+		preview_scrollbar_.render_disabled(!enabled_);
 
 		view_ts = preview_scrollbar_.value();
 		view_ts_ = timestamp{ view_ts };
@@ -498,9 +496,7 @@ namespace vt::widgets
 		{
 			auto win_pos = ImGui::GetWindowPos();
 
-			ImGui::Text("%s", "Test text");
-			ImGui::SameLine();
-			ImGui::Checkbox("Enabled", &enabled_);
+			ui::toggle("Enabled", enabled_);
 			ImGui::SameLine();
 			ImGui::SliderFloat("Zoom", &zoom_, 1.f, 5.f);
 			ImGui::BeginDisabled(zoom_ <= 1.f);
@@ -527,14 +523,11 @@ namespace vt::widgets
 				auto cell_rect = get_cell_rect();
 				//ImGui::TextUnformatted("00:00:00");
 
-				if (enabled_)
-				{
-					auto [start, end] = visible_time_span();
-					playback_scrollbar_.set_range(start.total_milliseconds.count(), end.total_milliseconds.count());
-					playback_scrollbar_.set_value(state_.current_ts.total_milliseconds.count());
-					playback_scrollbar_.set_size(cell_rect->GetSize());
-					playback_scrollbar_.render();
-				}
+				auto [start, end] = visible_time_span();
+				playback_scrollbar_.set_range(start.total_milliseconds.count(), end.total_milliseconds.count());
+				playback_scrollbar_.set_value(state_.current_ts.total_milliseconds.count());
+				playback_scrollbar_.set_size(cell_rect->GetSize());
+				playback_scrollbar_.render_disabled(!enabled_);
 
 				//draw_cell_debug_rect(zoom_);
 				draw_time_intervals();

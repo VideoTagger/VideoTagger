@@ -39,6 +39,9 @@ namespace vt::ui
 
 			pos_ = ImGui::GetCursorScreenPos();
 			ImGui::Dummy(size_);
+
+			if (!is_enabled()) return true;
+
 			if (ImGui::IsItemClicked())
 			{
 				is_dragged_ = true;
