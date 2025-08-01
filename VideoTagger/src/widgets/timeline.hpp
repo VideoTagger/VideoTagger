@@ -5,6 +5,8 @@
 #include <utils/timestamp_span.hpp>
 #include <tags/tag_timeline.hpp>
 
+#include <ui/widgets/raw_scrollbar.hpp>
+
 namespace vt::widgets
 {
 	enum class segment_hover_type
@@ -29,7 +31,12 @@ namespace vt::widgets
 
 	struct timeline
 	{
+	public:
+		timeline();
+
 	private:
+		ui::raw_scrollbar<int64_t> preview_scrollbar_;
+		ui::raw_scrollbar<int64_t> playback_scrollbar_;
 		float zoom_ = 1.f;
 		timestamp view_ts_{};
 		bool enabled_ = true;
@@ -49,6 +56,7 @@ namespace vt::widgets
 		void draw_scrollbar(segment_storage& segments, tag_storage& tags);
 		float time_to_pos(timestamp time, timestamp min, timestamp max) const;
 		float to_timeline_pos(timestamp time) const;
+		float to_visible_timeline_pos(timestamp time) const;
 		int64_t interval_time() const;
 
 	public:

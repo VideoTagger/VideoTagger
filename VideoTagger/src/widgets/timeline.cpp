@@ -33,6 +33,18 @@ namespace vt::widgets
 		}
 	}
 
+	timeline::timeline()
+	{
+		preview_scrollbar_.set_pannable(true);
+		playback_scrollbar_.set_on_change_callback([this](int64_t ts)
+		{
+			if (on_seek_ != nullptr)
+			{
+				on_seek_(timestamp{ ts });
+			}
+		});
+	}
+
 	void timeline::draw_marker() const
 	{
 		ImU32 marker_color = enabled_ ? 0xFF3E36FF : 0xFF3E3E3E; //0xA02A2AFF
@@ -411,12 +423,15 @@ namespace vt::widgets
 		ImGui::PopStyleVar(2);
 
 		ImGui::SetCursorPos(cpos);
-		ImGui::PushStyleColor(ImGuiCol_FrameBg, ImVec4{});
-		ImGui::PushStyleColor(ImGuiCol_FrameBgActive, ImVec4{});
-		ImGui::PushStyleColor(ImGuiCol_FrameBgHovered, ImVec4{});
-		ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
-		ImGui::SliderScalar("##TimelineScroll", ImGuiDataType_S64, &view_ts, &scroll_min, &scroll_max, "");
-		ImGui::PopStyleColor(3);
+		if (enabled_)
+		{
+			preview_scrollbar_.set_range(scroll_min, scroll_max);
+			preview_scrollbar_.set_value(view_ts);
+			preview_scrollbar_.set_size(ImVec2{ ImGui::GetContentRegionAvail().x, ImGui::GetFrameHeight() });
+			preview_scrollbar_.render();
+		}		
+
+		view_ts = preview_scrollbar_.value();
 		view_ts_ = timestamp{ view_ts };
 	}
 
@@ -428,6 +443,12 @@ namespace vt::widgets
 	float timeline::to_timeline_pos(timestamp time) const
 	{
 		return math::normalize((time - view_ts_).total_milliseconds.count(), state_.min_ts.total_milliseconds.count(), state_.max_ts.total_milliseconds.count(), 0.0f, 1.0f);
+	}
+
+	float timeline::to_visible_timeline_pos(timestamp time) const
+	{
+		auto [start, end] = visible_time_span();
+		return math::normalize((time - view_ts_).total_milliseconds.count(), start.total_milliseconds.count(), end.total_milliseconds.count(), 0.0f, 1.0f);
 	}
 
 	int64_t timeline::interval_time() const
@@ -486,13 +507,16 @@ namespace vt::widgets
 			//-------------
 			ImGui::Separator();
 
-			if (ImGui::BeginTable("##TimelineSplitter", 2, ImGuiTableFlags_NoSavedSettings | ImGuiTableFlags_Resizable | ImGuiTableFlags_BordersInner | ImGuiTableFlags_ScrollY, ImGui::GetContentRegionAvail()))
+			ImGui::PushStyleVar(ImGuiStyleVar_CellPadding, ImVec2{});
+			auto is_open = ImGui::BeginTable("##TimelineSplitter", 2, ImGuiTableFlags_NoSavedSettings | ImGuiTableFlags_Resizable | ImGuiTableFlags_BordersInner | ImGuiTableFlags_ScrollY, ImGui::GetContentRegionAvail());
+			ImGui::PopStyleVar();
+
+			if (is_open)
 			{
 				ImGui::TableSetupColumn(nullptr, ImGuiTableColumnFlags_WidthStretch, 0.15f);
 				ImGui::TableSetupColumn(nullptr, ImGuiTableColumnFlags_WidthStretch);
 				ImGui::TableSetupScrollFreeze(1, 1);
 
-				ImGui::PushStyleVar(ImGuiStyleVar_CellPadding, ImVec2{});
 				ImGui::TableNextRow();
 				ImGui::TableNextColumn();
 				widgets::icon_button(icons::add);
@@ -500,25 +524,20 @@ namespace vt::widgets
 				ImGui::TableNextColumn();
 				auto cell_rect = get_cell_rect();
 				//ImGui::TextUnformatted("00:00:00");
-				ImGui::InvisibleButton("##TimelineIntervalBar", cell_rect->GetSize());
-				if (enabled_ and ImGui::IsItemHovered() and ImGui::IsMouseDown(0))
-				{
-					auto x = ImGui::GetMousePos().x;
 
+				if (enabled_)
+				{
 					auto [start, end] = visible_time_span();
-					//TODO: This should only scale with the current visible timestamp range, not the whole timespan
-					//state_.current_ts = timestamp{ math::normalize(x, cell_rect->Min.x, cell_rect->Max.x, state_.min_ts.total_milliseconds.count(), state_.max_ts.total_milliseconds.count()) };
-					state_.current_ts = timestamp{ math::normalize(x, cell_rect->Min.x, cell_rect->Max.x, start.total_milliseconds.count(), end.total_milliseconds.count()) };
-					if (on_seek_ != nullptr)
-					{
-						on_seek_(state_.current_ts);
-					}
+					playback_scrollbar_.set_range(start.total_milliseconds.count(), end.total_milliseconds.count());
+					playback_scrollbar_.set_value(state_.current_ts.total_milliseconds.count());
+					playback_scrollbar_.set_size(cell_rect->GetSize());
+					playback_scrollbar_.render();
 				}
+
 				//draw_cell_debug_rect(zoom_);
 				draw_time_intervals();
 				//The marker has to be drawn two times, since it won't be visible on the interval bar when tags are scrolled otherwise
 				draw_marker();
-				ImGui::PopStyleVar();
 				
 				for (auto& [tag, timeline] : segments)
 				{
