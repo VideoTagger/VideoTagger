@@ -350,11 +350,13 @@ namespace vt::widgets
 		auto min = ImVec2{ cell_rect->Min.x + scaled_start, cell_rect->Min.y + style.CellPadding.y + height_padding };
 		auto max = ImVec2{ cell_rect->Min.x + scaled_end, cell_rect->Max.y - style.CellPadding.y - height_padding };
 
-		ImRect segment_rect{ min, max };
+		ImRect timespan_rect{ min, max };
 
-		draw_list->AddRectFilled(segment_rect.Min, segment_rect.Max, IM_COL32(36, 36, 36, 128), 0.f);
-		draw_list->AddRect(segment_rect.Min, segment_rect.Max, IM_COL32(128, 128, 128, 240), 0.f);
-		//draw_list->AddRectFilled(segment_rect.Min, segment_rect.Max, IM_COL32(0xFF, 0xFF, 0xFF, 128), 0.f);
+		bool is_hovered = ImGui::IsMouseHoveringRect(timespan_rect.Min, timespan_rect.Max);
+
+		draw_list->AddRectFilled(timespan_rect.Min, timespan_rect.Max, IM_COL32(36, 36, 36, is_hovered ? 200 : 128), 0.f);
+		draw_list->AddRect(timespan_rect.Min, timespan_rect.Max, IM_COL32(128, 128, 128, is_hovered ? 255 : 240), 0.f);
+		//draw_list->AddRectFilled(timespan_rect.Min, timespan_rect.Max, IM_COL32(0xFF, 0xFF, 0xFF, 128), 0.f);
 	}
 
 	void timeline::draw_scrollbar(segment_storage& segments, tag_storage& tags)
