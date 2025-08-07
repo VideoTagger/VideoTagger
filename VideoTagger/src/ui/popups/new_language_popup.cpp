@@ -39,7 +39,7 @@ namespace vt::ui
 		filename_input.render_with_label(ctx_.lang->get("filename"));
 		close_on_escape();
 
-		widgets::vertical_item_spacer();
+		ui::vertical_item_spacer();
 
 		bool valid = name_input.is_valid() and filename_input.is_valid();
 

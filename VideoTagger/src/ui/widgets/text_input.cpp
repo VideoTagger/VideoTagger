@@ -3,6 +3,7 @@
 #include <widgets/controls.hpp>
 #include <utils/string.hpp>
 #include <ui/icons.hpp>
+#include <ui/widgets/common.hpp>
 #include <core/app_context.hpp>
 
 namespace vt::ui
@@ -88,7 +89,7 @@ namespace vt::ui
 			ImGui::SameLine();
 			ImGui::AlignTextToFramePadding();
 			ImGui::TextColored(ImGui::ColorConvertU32ToFloat4(0xFF3E36FF), "%s", icon);
-			widgets::tooltip(ctx_.lang->get("invalid_data").c_str());
+			ui::tooltip(ctx_.lang->get("invalid_data"));
 			ImGui::PopStyleVar();
 		}
 		else

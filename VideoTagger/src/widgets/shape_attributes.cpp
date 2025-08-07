@@ -3,6 +3,7 @@
 #include <core/app_context.hpp>
 #include "controls.hpp"
 #include <ui/icons.hpp>
+#include <ui/widgets/common.hpp>
 
 namespace vt::widgets
 {
@@ -40,18 +41,18 @@ namespace vt::widgets
 					}
 					else
 					{
-						centered_text("Select a proper shape to display its properties...", ImGui::GetContentRegionMax());
+						ui::centered_text("Select a proper shape to display its properties...", ImGui::GetContentRegionMax());
 					}
 				}
 				else
 				{
 					ctx_.gizmo_target = nullptr;
-					centered_text("Select a shape attribute in the inspector to display its properties...", ImGui::GetContentRegionMax());
+					ui::centered_text("Select a shape attribute in the inspector to display its properties...", ImGui::GetContentRegionMax());
 				}
 			}
 			else
 			{
-				centered_text("Select a shape attribute to display its properties...", ImGui::GetContentRegionMax());
+				ui::centered_text("Select a shape attribute to display its properties...", ImGui::GetContentRegionMax());
 			}
 		}
 		ImGui::End();

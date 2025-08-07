@@ -11,6 +11,8 @@
 #include <utils/math.hpp>
 #include <widgets/time_input.hpp>
 
+#include <ui/widgets/common.hpp>
+
 namespace vt
 {
 	void draw_vertex_list(std::vector<utils::vec2<uint32_t>>& vertices, const utils::vec2<uint32_t>& max_size, utils::vec2<uint32_t>*& gizmo_target, bool modifiable, const std::function<void(utils::vec2<uint32_t>&)>& on_select)
@@ -21,14 +23,14 @@ namespace vt
 		if (ImGui::BeginTable("##VertexList", 2, ImGuiTableFlags_BordersOuter))
 		{
 			ImGui::TableNextColumn();
-			if (modifiable and widgets::icon_button(icons::add))
+			if (modifiable and ui::icon_button(icons::add))
 			{
 				vertices.push_back({});
 				gizmo_target = nullptr;
 			}
 			if (modifiable)
 			{
-				widgets::tooltip("Add Vertex");
+				ui::tooltip("Add Vertex");
 			}
 			ImGui::SameLine();
 			ImGui::AlignTextToFramePadding();
@@ -293,7 +295,7 @@ namespace vt
 		bool is_ts_modifiable = is_modifiable and ((is_timestamp and map.empty()) or !is_timestamp);
 
 		ImVec2 separator_pos;
-		if (is_ts_modifiable and widgets::icon_button(icons::add))
+		if (is_ts_modifiable and ui::icon_button(icons::add))
 		{
 			if constexpr (!std::is_same_v<std::monostate, std::remove_const_t<std::remove_reference_t<decltype(map)>>>)
 			{
@@ -315,7 +317,7 @@ namespace vt
 		}
 		if (is_ts_modifiable)
 		{
-			widgets::tooltip("Add Keyframe");
+			ui::tooltip("Add Keyframe");
 		}
 		ImGui::SameLine();
 		ImGui::AlignTextToFramePadding();
@@ -376,12 +378,12 @@ namespace vt
 					ImGui::EndDisabled();
 					ImGui::Columns();
 
-					if (widgets::icon_button(icons::new_region))
+					if (ui::icon_button(icons::new_region))
 					{
 						map[keyframe].push_back({});
 						dirty_flag = true;
 					}
-					widgets::tooltip("Add Region");
+					ui::tooltip("Add Region");
 					ImGui::SameLine();
 					ImGui::SeparatorText("Regions");
 					if (ImGui::BeginTable(fmt::format("##Shape{}Regions", shape_name).c_str(), 1))

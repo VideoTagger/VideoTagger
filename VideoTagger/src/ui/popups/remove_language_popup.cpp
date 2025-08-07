@@ -4,6 +4,7 @@
 #include <core/debug.hpp>
 #include <core/app_context.hpp>
 #include <ui/widgets/button_bar.hpp>
+#include <ui/widgets/common.hpp>
 
 namespace vt::ui
 {
@@ -19,7 +20,7 @@ namespace vt::ui
 	{
 		languages_.render_with_label(ctx_.lang->get("language"));
 		close_on_escape();
-		widgets::vertical_item_spacer();
+		ui::vertical_item_spacer();
 
 		std::vector<std::pair<int, std::string>> buttons
 		{

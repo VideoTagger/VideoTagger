@@ -7,6 +7,7 @@
 #include "controls.hpp"
 #include <utils/thumbnail.hpp>
 #include <ui/icons.hpp>
+#include <ui/widgets/common.hpp>
 
 namespace vt::widgets
 {
@@ -215,7 +216,7 @@ namespace vt::widgets
 					auto cpos = ImGui::GetCursorPosX() + style.CellPadding.x;
 					ImGui::SetCursorPosX(cpos);
 					if (!can_play) ImGui::BeginDisabled();
-					if (icon_button(icons::play_queue))
+					if (ui::icon_button(icons::play_queue))
 					{
 						auto it = playlist.set_current(playlist.begin());
 						ctx_.set_current_video_group_id(*it);
@@ -223,23 +224,23 @@ namespace vt::widgets
 						auto& pool = ctx_.current_project->videos;
 					}
 					if (!can_play) ImGui::EndDisabled();
-					tooltip("Play");
+					ui::tooltip("Play");
 
 					ImGui::SetCursorPosX(cpos);
 					if (is_empty) ImGui::BeginDisabled();
-					if (icon_button(icons::delete_))
+					if (ui::icon_button(icons::delete_))
 					{
 						playlist.clear();
 					}
 					if (is_empty) ImGui::EndDisabled();
-					tooltip("Clear queue");
+					ui::tooltip("Clear queue");
 
 					ImGui::SetCursorPosX(cpos);
-					if (icon_toggle_button(icons::shuffle, is_shuffled))
+					if (ui::icon_toggle_button(icons::shuffle, is_shuffled))
 					{
 						playlist.set_shuffle(!is_shuffled);
 					}
-					tooltip(is_shuffled ? "Disable shuffling" : "Enable shuffling");
+					ui::tooltip(is_shuffled ? "Disable shuffling" : "Enable shuffling");
 				}
 				ImGui::EndTable();
 			}

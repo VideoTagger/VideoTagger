@@ -4,6 +4,7 @@
 #include <utils/random.hpp>
 #include "controls.hpp"
 #include <ui/icons.hpp>
+#include <ui/widgets/common.hpp>
 #include <core/app_context.hpp>
 #include <utils/drag_drop.hpp>
 #include <utils/string.hpp>
@@ -291,10 +292,10 @@ namespace vt::widgets
 
 		switch (attr.type_)
 		{
-			case tag_attribute::type::bool_: tooltip("Value: True/False"); break;
-			case tag_attribute::type::float_: tooltip("Value: Float (64 bit)"); break;
-			case tag_attribute::type::integer: tooltip("Value: Integer (64 bit)"); break;
-			case tag_attribute::type::string: tooltip("Value: Text"); break;
+			case tag_attribute::type::bool_: ui::tooltip("Value: True/False"); break;
+			case tag_attribute::type::float_: ui::tooltip("Value: Float (64 bit)"); break;
+			case tag_attribute::type::integer: ui::tooltip("Value: Integer (64 bit)"); break;
+			case tag_attribute::type::string: ui::tooltip("Value: Text"); break;
 			case tag_attribute::type::shape:
 			{
 				std::string shapes;
@@ -307,7 +308,7 @@ namespace vt::widgets
 						shapes += "/";
 					}
 				}
-				tooltip(fmt::format("Value: {}", shapes).c_str());
+				ui::tooltip(fmt::format("Value: {}", shapes).c_str());
 			}
 			break;
 		}
@@ -356,28 +357,28 @@ namespace vt::widgets
 			}
 
 			ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2{});
-			if (icon_button(icons::add_tag))
+			if (ui::icon_button(icons::add_tag))
 			{
 				open_add_tag_popup = true;
 			}
-			tooltip("Add Tag");
+			ui::tooltip("Add Tag");
 			ImGui::SameLine();
 			search_bar("##VideoGroupBrowserSearch", ctx_.lang->get("search_hint").c_str(), filter, ImGui::GetContentRegionAvail().x - 2 * (ImGui::CalcTextSize(icons::toggle_less).x + 2 * style.FramePadding.x));
 			ImGui::SameLine();
-			if (icon_button(icons::toggle_more))
+			if (ui::icon_button(icons::toggle_more))
 			{
 				update_state = true;
 				update_all = true;
 			}
-			tooltip("Expand All");
+			ui::tooltip("Expand All");
 			ImGui::SameLine();
 			ImGui::PopStyleVar();
-			if (icon_button(icons::toggle_less))
+			if (ui::icon_button(icons::toggle_less))
 			{
 				update_state = false;
 				update_all = true;
 			}
-			tooltip("Collapse All");
+			ui::tooltip("Collapse All");
 			ImGui::Separator();
 
 			std::vector<std::string> tokens;
@@ -516,7 +517,7 @@ namespace vt::widgets
 									ImGui::TableSetupColumn("Type");
 
 									ImGui::TableNextColumn();
-									if (icon_button(icons::add))
+									if (ui::icon_button(icons::add))
 									{
 										tag_attr_name = tag_name;
 										open_add_attribute_popup = true;
@@ -612,7 +613,7 @@ namespace vt::widgets
 
 				if (filter_passes == 0)
 				{
-					centered_text("No matching tags found...", ImGui::GetContentRegionAvail());
+					ui::centered_text("No matching tags found...", ImGui::GetContentRegionAvail());
 				}
 
 				if (ctx_.color_picker.render("##TagColorPicker") and color_ref != tags.end())

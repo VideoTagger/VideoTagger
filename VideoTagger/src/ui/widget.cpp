@@ -1,7 +1,7 @@
 #include "pch.hpp"
 #include "widget.hpp"
 
-#include <widgets/controls.hpp>
+#include <ui/widgets/common.hpp>
 
 namespace vt::ui
 {
@@ -30,6 +30,6 @@ namespace vt::ui
 
     bool widget::is_disabled() const
     {
-        return widgets::is_item_disabled();
+        return ui::is_item_disabled();
     }
 }

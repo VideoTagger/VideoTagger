@@ -7,6 +7,7 @@
 #include <utils/thumbnail.hpp>
 #include <widgets/controls.hpp>
 #include <ui/icons.hpp>
+#include <ui/widgets/common.hpp>
 
 namespace vt::widgets
 {
@@ -64,7 +65,7 @@ namespace vt::widgets
 
 					if (!item.tooltip.empty())
 					{
-						widgets::tooltip(item.tooltip.c_str());
+						ui::tooltip(item.tooltip);
 					}
 				}
 			},
@@ -146,7 +147,7 @@ namespace vt::widgets
 			else
 			{
 				window_hovered = ImGui::IsWindowHovered();
-				widgets::centered_text("Import videos to display them here...", ImGui::GetContentRegionMax());
+				ui::centered_text("Import videos to display them here...", ImGui::GetContentRegionMax());
 			}
 
 			if (!any_item_hovered and ImGui::IsMouseReleased(ImGuiMouseButton_Right) and window_hovered)

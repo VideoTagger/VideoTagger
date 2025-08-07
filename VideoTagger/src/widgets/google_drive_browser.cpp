@@ -10,6 +10,7 @@
 #include <services/google/google_account_manager.hpp>
 #include <core/app_context.hpp>
 #include <ui/icons.hpp>
+#include <ui/widgets/common.hpp>
 
 namespace vt::widgets
 {
@@ -196,7 +197,7 @@ namespace vt::widgets
 			if (parent_folder_disabled) ImGui::BeginDisabled();
 
 			//TODO: tooltip
-			if (widgets::icon_button(icons::arrow_up, icon_button_size))
+			if (ui::icon_button(icons::arrow_up, icon_button_size))
 			{
 				pop_folder();
 				update_items();
@@ -207,7 +208,7 @@ namespace vt::widgets
 
 		ImGui::SameLine();
 		//TODO: tooltip
-		if (widgets::icon_button(icons::refresh, icon_button_size))
+		if (ui::icon_button(icons::refresh, icon_button_size))
 		{
 			update_items();
 		}
@@ -224,25 +225,25 @@ namespace vt::widgets
 			
 			std::optional<size_t> folder_index;
 
-			if (widgets::icon_button(icons::home, icon_button_size))
+			if (ui::icon_button(icons::home, icon_button_size))
 			{
 				folder_index = 0;
 			}
 
 			ImGui::SameLine();
-			widgets::text_with_size("/", { 0.f, icon_button_size.y });
+			ui::text_with_size("/", { 0.f, icon_button_size.y });
 
 			{
 				for (size_t i = 0; i < current_path_.size(); ++i)
 				{
 					ImGui::SameLine();
-					if (widgets::icon_button(current_path_[i].name.c_str(), { 0.f, icon_button_size.y }))
+					if (ui::icon_button(current_path_[i].name, { 0.f, icon_button_size.y }))
 					{
 						folder_index = i + 1;
 					}
 
 					ImGui::SameLine();
-					widgets::text_with_size("/", { 0.f, icon_button_size.y });
+					ui::text_with_size("/", { 0.f, icon_button_size.y });
 				}
 			}
 
@@ -301,11 +302,11 @@ namespace vt::widgets
 			{
 				if (items_.empty())
 				{
-					widgets::centered_text("This folder doesn't contain any videos", ImGui::GetContentRegionMax());
+					ui::centered_text("This folder doesn't contain any videos", ImGui::GetContentRegionMax());
 				}
 				else
 				{
-					widgets::centered_text("No items match the search query", ImGui::GetContentRegionMax());
+					ui::centered_text("No items match the search query", ImGui::GetContentRegionMax());
 				}
 			}
 			ImGui::EndChild();

@@ -406,7 +406,7 @@ namespace vt::widgets
 					ImGui::TableNextRow();
 					ImGui::TableNextColumn();
 					ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, ImGui::GetColorU32(ImGuiCol_TableHeaderBg));
-					widgets::vertical_item_spacer(scaled_height);
+					ui::vertical_item_spacer(scaled_height);
 					ImGui::SameLine();
 
 					//draw_cell_debug_rect(1.f);
@@ -517,7 +517,7 @@ namespace vt::widgets
 
 				ImGui::TableNextRow();
 				ImGui::TableNextColumn();
-				widgets::icon_button(icons::add);
+				ui::icon_button(icons::add);
 
 				ImGui::TableNextColumn();
 				auto cell_rect = get_cell_rect();

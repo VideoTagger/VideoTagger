@@ -9,6 +9,7 @@
 #include "modal/create_group_popup.hpp"
 #include "modal/video_properties_popup.hpp"
 #include <ui/icons.hpp>
+#include <ui/widgets/common.hpp>
 #include "controls.hpp"
 
 namespace vt::widgets
@@ -229,7 +230,7 @@ namespace vt::widgets
 					ImGui::TableNextColumn();
 					
 					ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize(icons::add).x);
-					if (icon_button(icons::add))
+					if (ui::icon_button(icons::add))
 					{
 						open_create_group_popup = true;
 					}
@@ -244,7 +245,7 @@ namespace vt::widgets
 					ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2{});
 					bool can_back_out = current_video_group != 0;
 					if (!can_back_out) ImGui::BeginDisabled();
-					if (icon_button(icons::back))
+					if (ui::icon_button(icons::back))
 					{
 						current_video_group = 0;
 					}
@@ -501,7 +502,7 @@ namespace vt::widgets
 						{
 							bool is_group_view = (current_video_group == invalid_video_group_id);
 
-							centered_text(is_group_view ? "No matching groups found..." : "No matching videos found...", inner_rect.GetSize(), table_start_cpos);
+							ui::centered_text(is_group_view ? "No matching groups found..." : "No matching videos found...", inner_rect.GetSize(), table_start_cpos);
 						}
 
 						if (ImGui::BeginDragDropTargetCustom(inner_rect, ImGui::GetID("GroupDragDropPanel")))
@@ -544,7 +545,7 @@ namespace vt::widgets
 			}
 			else
 			{
-				widgets::centered_text("Add groups to display them here...", ImGui::GetContentRegionMax());
+				ui::centered_text("Add groups to display them here...", ImGui::GetContentRegionMax());
 			}
 			
 			static std::string group_name;

@@ -2,6 +2,7 @@
 #include "timeline_actions.hpp"
 #include <core/app_context.hpp>
 #include <widgets/controls.hpp>
+#include <ui/widgets/common.hpp>
 
 namespace vt
 {
@@ -78,7 +79,7 @@ namespace vt
 		}
 
 		ImGui::SameLine();
-		widgets::help_marker("Choosing \"Ask Later\" will display a window, where you will have to select the tag");
+		ui::help_marker("Choosing \"Ask Later\" will display a window, where you will have to select the tag");
 	}
 
 	segment_action::segment_action() : keybind_action(action_name), type_{ segment_action_type::auto_ } {}
@@ -187,7 +188,7 @@ namespace vt
 		}
 
 		ImGui::SameLine();
-		widgets::help_marker("Choosing \"Ask Later\" will display a window, where you will have to select the tag");
+		ui::help_marker("Choosing \"Ask Later\" will display a window, where you will have to select the tag");
 
 		ImGui::TableNextColumn();
 		ImGui::Text("Type");
@@ -198,6 +199,6 @@ namespace vt
 		ImGui::Combo("##Type", selected_type, types, sizeof(types) / sizeof(types[0]));
 
 		ImGui::SameLine();
-		widgets::help_marker("Choosing \"Auto\" will automatically detect whether the segment should start or end");
+		ui::help_marker("Choosing \"Auto\" will automatically detect whether the segment should start or end");
 	}
 }

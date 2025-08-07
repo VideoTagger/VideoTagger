@@ -3,6 +3,7 @@
 #include <core/app_context.hpp>
 #include <widgets/controls.hpp>
 #include <ui/icons.hpp>
+#include <ui/widgets/common.hpp>
 #include <utils/filesystem.hpp>
 
 namespace vt::widgets::modal
@@ -68,7 +69,7 @@ namespace vt::widgets::modal
 			ImGui::Text("Import Tags");
 			ImGui::PopFont();
 			ImGui::SameLine(ImGui::GetWindowWidth() - ImGui::CalcTextSize(icon).x - style.WindowPadding.x - style.WindowRounding);
-			if (icon_button(icon))
+			if (ui::icon_button(icon))
 			{
 				is_open = false;
 				ImGui::CloseCurrentPopup();
@@ -78,7 +79,7 @@ namespace vt::widgets::modal
 			if (imported_tags.empty())
 			{
 				ImGui::PushFont(ctx_.get_font(font_type::h3));
-				centered_text("There are no new tags to import", ImGui::GetContentRegionMax());
+				ui::centered_text("There are no new tags to import", ImGui::GetContentRegionMax());
 				ImGui::PopFont();
 
 				ImVec2 dummy_size = ImGui::GetContentRegionAvail();
@@ -93,20 +94,20 @@ namespace vt::widgets::modal
 				ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2{});
 
 				ImGui::BeginDisabled(imported_tags.empty());
-				if (icon_button(vt::icons::toggle_more))
+				if (ui::icon_button(vt::icons::toggle_more))
 				{
 					update_state = true;
 					update_all = true;
 				}
-				tooltip("Expand All");
+				ui::tooltip("Expand All");
 				ImGui::SameLine();
 				ImGui::PopStyleVar();
-				if (icon_button(icons::toggle_less))
+				if (ui::icon_button(icons::toggle_less))
 				{
 					update_state = false;
 					update_all = true;
 				}
-				tooltip("Collapse All");
+				ui::tooltip("Collapse All");
 				ImGui::EndDisabled();
 
 				static constexpr float tag_column_width = 100;
@@ -144,7 +145,7 @@ namespace vt::widgets::modal
 							//TODO: better checkbox position
 
 							std::string checkbox_id = "##CheckBox" + it->tag.name;
-							checkbox(checkbox_id.c_str(), &it->selected);
+							ui::checkbox(checkbox_id, it->selected);
 
 							ImGui::TableNextColumn();
 							auto color = ImGui::ColorConvertU32ToFloat4(tag.color);

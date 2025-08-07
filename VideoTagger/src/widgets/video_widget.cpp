@@ -5,6 +5,7 @@
 #include "slider.hpp"
 #include "controls.hpp"
 #include <ui/icons.hpp>
+#include <ui/widgets/common.hpp>
 #include <core/debug.hpp>
 
 #include <core/app.hpp>
@@ -152,24 +153,24 @@ namespace vt::widgets
 						auto button_pos_x = avail_size.x / 2 - (button_size + imgui_style.ItemSpacing.x) * 5.f / 2;
 
 						ImGui::SetCursorPosX(cursor_pos.x + button_pos_x);
-						if (icon_button(icons::skip_prev, { button_size, button_size })) {}
+						if (ui::icon_button(icons::skip_prev, { button_size, button_size })) {}
 						ImGui::SameLine();
-						if (icon_button(icons::fast_back, { button_size, button_size }))
+						if (ui::icon_button(icons::fast_back, { button_size, button_size }))
 						{
 							video.seek({});
 						}
 						ImGui::SameLine();
-						if (icon_button(is_playing ? icons::pause : icons::play, { button_size, button_size }))
+						if (ui::icon_button(is_playing ? icons::pause : icons::play, { button_size, button_size }))
 						{
 							video.set_playing(!is_playing);
 						}
 						ImGui::SameLine();
-						if (icon_button(icons::fast_fwd, { button_size, button_size }))
+						if (ui::icon_button(icons::fast_fwd, { button_size, button_size }))
 						{
 							video.seek(std::chrono::nanoseconds(video.duration()));
 						}
 						ImGui::SameLine();
-						if (icon_button(icons::skip_next, { button_size, button_size })) {}
+						if (ui::icon_button(icons::skip_next, { button_size, button_size })) {}
 					}
 
 					ImGui::NextColumn();

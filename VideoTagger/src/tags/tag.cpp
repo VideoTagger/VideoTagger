@@ -2,6 +2,7 @@
 #include "tag.hpp"
 
 #include <widgets/controls.hpp>
+#include <ui/widgets/common.hpp>
 #include "tag_timeline.hpp"
 #include <core/app_context.hpp>
 
@@ -44,7 +45,7 @@ namespace vt
 		}
 
 		std::string var_tooltip = fmt::format("Type: {}", utils::string::to_titlecase(tag_attribute::type_str(attribute.type_)));
-		widgets::tooltip(var_tooltip.c_str());
+		ui::tooltip(var_tooltip);
 		ImGui::NextColumn();
 
 		switch (attribute.type_)
@@ -133,7 +134,7 @@ namespace vt
 						for (size_t i = 0; i < shapes.size(); ++i)
 						{
 							auto type = (shape::type)i;
-							if (widgets::icon_toggle_button(fmt::format("{}", shape::type_icon(type)).c_str(), v.get_type() == type))
+							if (ui::icon_toggle_button(fmt::format("{}", shape::type_icon(type)), v.get_type() == type))
 							{
 								if (v.get_type() != type)
 								{
@@ -143,7 +144,7 @@ namespace vt
 								}
 							}
 							std::string btn_tooltip = utils::string::to_titlecase(shape::type_str(type));
-							widgets::tooltip(btn_tooltip.c_str());
+							ui::tooltip(btn_tooltip);
 							if (i + 1 < shapes.size())
 							{
 								ImGui::SameLine();
@@ -154,13 +155,13 @@ namespace vt
 					ImGui::PopStyleVar();
 
 					ImGui::TableNextColumn();
-					if (widgets::icon_toggle_button(icons::interpolate, v.interpolate))
+					if (ui::icon_toggle_button(icons::interpolate, v.interpolate))
 					{
 						v.interpolate = !v.interpolate;
 						*this = v;
 						dirty_flag = true;
 					}
-					widgets::tooltip(v.interpolate ? "Interpolation: On" : "Interpolation: Off");
+					ui::tooltip(v.interpolate ? "Interpolation: On" : "Interpolation: Off");
 					ImGui::EndTable();
 				}
 				ImGui::PopStyleVar(2);
@@ -204,10 +205,10 @@ namespace vt
 
 		switch (attr.type_)
 		{
-			case tag_attribute::type::bool_: widgets::tooltip("Value: True/False"); break;
-			case tag_attribute::type::float_: widgets::tooltip("Value: Float (64 bit)"); break;
-			case tag_attribute::type::integer: widgets::tooltip("Value: Integer (64 bit)"); break;
-			case tag_attribute::type::string: widgets::tooltip("Value: Text"); break;
+			case tag_attribute::type::bool_: ui::tooltip("Value: True/False"); break;
+			case tag_attribute::type::float_: ui::tooltip("Value: Float (64 bit)"); break;
+			case tag_attribute::type::integer: ui::tooltip("Value: Integer (64 bit)"); break;
+			case tag_attribute::type::string: ui::tooltip("Value: Text"); break;
 			case tag_attribute::type::shape:
 			{
 				std::string shapes;
@@ -220,7 +221,7 @@ namespace vt
 						shapes += "/";
 					}
 				}
-				widgets::tooltip(fmt::format("Value: {}", shapes).c_str());
+				ui::tooltip(fmt::format("Value: {}", shapes));
 			}
 			break;
 		}
@@ -244,7 +245,7 @@ namespace vt
 
 	bool tag::draw_attributes(bool& dirty_flag, const std::function<void()>& on_add_new)
 	{
-		bool modifiable = !widgets::is_item_disabled();
+		bool modifiable = !ui::is_item_disabled();
 
 		static constexpr float table_border_size = 1.f; //FIXME: This is currently hardcoded in ImGui, change this when ImGui uses different border size
 		if (ImGui::BeginTable("##Attributes", 2, ImGuiTableFlags_BordersOuter, { ImGui::GetContentRegionAvail().x - table_border_size, 0 }))
@@ -255,7 +256,7 @@ namespace vt
 			ImGui::TableNextColumn();
 			if (modifiable)
 			{
-				if (widgets::icon_button(icons::add))
+				if (ui::icon_button(icons::add))
 				{
 					on_add_new();
 				}
@@ -318,8 +319,8 @@ namespace vt
 	bool tag::draw_attribute_instances(const tag_segment& selected_segment, video_id_t video_id, bool& dirty_flag) const
 	{
 		const auto& style = ImGui::GetStyle();
-		auto flags = widgets::is_item_disabled() ? 0 : ImGuiTreeNodeFlags_DefaultOpen;
-		if (widgets::is_item_disabled())
+		auto flags = ui::is_item_disabled() ? 0 : ImGuiTreeNodeFlags_DefaultOpen;
+		if (ui::is_item_disabled())
 		{
 			ImGui::SetNextItemOpen(false, ImGuiCond_Appearing);
 		}

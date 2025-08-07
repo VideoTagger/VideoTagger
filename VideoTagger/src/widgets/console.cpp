@@ -1,6 +1,7 @@
 #include "pch.hpp"
 #include "console.hpp"
 #include <ui/icons.hpp>
+#include <ui/widgets/common.hpp>
 #include "controls.hpp"
 #include <core/debug.hpp>
 #include <utils/string.hpp>
@@ -99,38 +100,38 @@ namespace vt::widgets
 
 			bool has_entries = !filtered_entries.empty();
 			ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2{});
-			if (icon_toggle_button(fmt::format("{}{}", icons::error, errors).c_str(), show_errors, {}, ImGui::ColorConvertU32ToFloat4(flag_color(console::entry::flag_type::error))))
+			if (ui::icon_toggle_button(fmt::format("{}{}", icons::error, errors), show_errors, {}, ImGui::ColorConvertU32ToFloat4(flag_color(console::entry::flag_type::error))))
 			{
 				show_errors = !show_errors;
 			}
-			tooltip(show_errors ? "Error: On" : "Error: Off");
+			ui::tooltip(show_errors ? "Error: On" : "Error: Off");
 
 			ImGui::SameLine();
-			if (icon_toggle_button(fmt::format("{}{}", icons::warning, warns).c_str(), show_warns, {}, ImGui::ColorConvertU32ToFloat4(flag_color(console::entry::flag_type::warn))))
+			if (ui::icon_toggle_button(fmt::format("{}{}", icons::warning, warns), show_warns, {}, ImGui::ColorConvertU32ToFloat4(flag_color(console::entry::flag_type::warn))))
 			{
 				show_warns = !show_warns;
 			}
-			tooltip(show_warns ? "Warn: On" : "Warn: Off");
+			ui::tooltip(show_warns ? "Warn: On" : "Warn: Off");
 
 			ImGui::SameLine();
-			if (icon_toggle_button(fmt::format("{}{}", icons::info, infos).c_str(), show_infos, {}, ImGui::ColorConvertU32ToFloat4(flag_color(console::entry::flag_type::info))))
+			if (ui::icon_toggle_button(fmt::format("{}{}", icons::info, infos), show_infos, {}, ImGui::ColorConvertU32ToFloat4(flag_color(console::entry::flag_type::info))))
 			{
 				show_infos = !show_infos;
 			}
-			tooltip(show_infos ? "Info: On" : "Info: Off");
+			ui::tooltip(show_infos ? "Info: On" : "Info: Off");
 
 			ImGui::SameLine();
-			if (icon_button(icons::delete_))
+			if (ui::icon_button(icons::delete_))
 			{
 				clear();
 			}
-			tooltip("Clear");
+			ui::tooltip("Clear");
 			ImGui::SameLine();
-			if (icon_toggle_button(icons::delete_on_run, clear_on_run))
+			if (ui::icon_toggle_button(icons::delete_on_run, clear_on_run))
 			{
 				clear_on_run = !clear_on_run;
 			}
-			tooltip(clear_on_run ? "Clear On Run: On" : "Clear On Run: Off");
+			ui::tooltip(clear_on_run ? "Clear On Run: On" : "Clear On Run: Off");
 
 			ImGui::PopStyleVar();
 			ImGui::SameLine();
@@ -148,7 +149,7 @@ namespace vt::widgets
 			if (!has_entries)
 			{
 				auto avail = ImGui::GetContentRegionAvail();
-				centered_text("Nothing to display...", avail, ImVec2{ 0.f, ImGui::GetCursorPosY() });
+				ui::centered_text("Nothing to display...", avail, ImVec2{ 0.f, ImGui::GetCursorPosY() });
 			}
 
 			if (table_open)
@@ -204,7 +205,7 @@ namespace vt::widgets
 							{
 								SDL_SetClipboardText(abs_path.c_str());
 							}
-							tooltip(abs_path.c_str());
+							ui::tooltip(abs_path);
 						}
 					}
 					

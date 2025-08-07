@@ -8,6 +8,7 @@
 #include <widgets/controls.hpp>
 #include <ui/icons.hpp>
 #include <ui/widget.hpp>
+#include <ui/widgets/common.hpp>
 #include <ui/widget_state.hpp>
 
 #include <ui/impl/resettable.hpp>
@@ -83,7 +84,7 @@ namespace vt::ui
 					
 					auto cpos = ImGui::GetCursorPos();
 
-					widgets::horizontal_item_spacer(3.f);
+					ui::horizontal_item_spacer(3.f);
 					ImGui::SameLine();
 					if (ImGui::Selectable(label.c_str(), selected, ImGuiSelectableFlags_AllowOverlap | ImGuiSelectableFlags_SpanAllColumns | ImGuiSelectableFlags_SpanAvailWidth))
 					{
