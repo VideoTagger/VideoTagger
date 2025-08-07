@@ -3,11 +3,10 @@
 #include <memory>
 #include <ui/widget.hpp>
 #include <ui/widgets/raw_widget.hpp>
-#include <ui/impl/renderable.hpp>
 
 namespace vt::ui
 {
-	struct widget_list : public impl::renderable
+	struct widget_list : public widget
 	{
 	public:
 		widget_list() = default;

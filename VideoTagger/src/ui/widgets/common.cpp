@@ -10,7 +10,7 @@
 
 namespace vt::ui
 {
-	//TODO: Get this out of theme struct (not hard coded)
+	//TODO: Move this to theme struct (not hard coded)
 	static constexpr auto accent_color = ImVec4{ 0.2588f, 0.6f, 0.8784f, 1.f };
 	static constexpr auto accent_color_hover = ImVec4{ 0.2f, 0.5098f, 0.7804f, 1.f };
 	static constexpr auto accent_color_active = ImVec4{ 0.1608f, 0.4353f, 0.6863f, 1.f };
@@ -21,6 +21,8 @@ namespace vt::ui
 
 	void tooltip(const std::string& text)
 	{
+		if (text.empty()) return;
+
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 4.f);
 		if (ImGui::IsItemHovered(ImGuiHoveredFlags_ForTooltip | ImGuiHoveredFlags_DelayNormal) and ImGui::BeginTooltip())
 		{

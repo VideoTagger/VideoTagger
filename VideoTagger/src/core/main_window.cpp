@@ -559,7 +559,7 @@ namespace vt
 			{
 				auto& io = ImGui::GetIO();
 				auto avail = ImGui::GetContentRegionAvail();
-				if (ImGui::Button("Add Keybind", { avail.x, ImGui::GetTextLineHeightWithSpacing() * 1.5f * io.FontGlobalScale }))
+				if (ui::button("Add Keybind", { avail.x, ImGui::GetTextLineHeightWithSpacing() * 1.5f * io.FontGlobalScale }))
 				{
 					ImGui::OpenPopup("##KeybindCreationPopup");
 				}

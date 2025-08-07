@@ -10,7 +10,7 @@ namespace vt::ui
 		ImGui::TextUnformatted(label.c_str());
 		if (sameline)
 		{
-			ImGui::SameLine();
+			this->sameline();
 		}
 		return render();
 	}
@@ -21,6 +21,11 @@ namespace vt::ui
 		bool result = render();
 		ImGui::EndDisabled();
 		return result;
+	}
+
+	void widget::sameline() const
+	{
+		ImGui::SameLine();
 	}
 
 	bool widget::is_enabled() const
