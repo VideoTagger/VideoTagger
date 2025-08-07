@@ -8,7 +8,7 @@
 #include <imgui.h>
 #include <core/debug.hpp>
 #include <utils/vec.hpp>
-#include <utils/lerp.hpp>
+#include <utils/math.hpp>
 
 namespace vt
 {
@@ -470,34 +470,34 @@ namespace vt
 	}
 
 	template<>
-	inline constexpr circle utils::lerp(const circle& start, const circle& end, float alpha)
+	inline constexpr circle math::lerp(const circle& start, const circle& end, float alpha)
 	{
 		return circle
 		{
-			lerp(start.pos, end.pos, alpha), //pos lerp
-			lerp(start.radius, end.radius, alpha) //radius lerp
+			math::lerp(start.pos, end.pos, alpha), //pos lerp
+			math::lerp(start.radius, end.radius, alpha) //radius lerp
 		};
 	}
 
 	template<>
-	inline rectangle utils::lerp(const rectangle& start, const rectangle& end, float alpha)
+	inline rectangle math::lerp(const rectangle& start, const rectangle& end, float alpha)
 	{
 		rectangle rect;
 		for (size_t i = 0; i < rect.vertices.size(); ++i)
 		{
-			rect.vertices[i] = lerp(start.vertices[i], end.vertices[i], alpha);
+			rect.vertices[i] = math::lerp(start.vertices[i], end.vertices[i], alpha);
 		}
 		return rect;
 	}
 
 	template<>
-	inline polygon utils::lerp(const polygon& start, const polygon& end, float alpha)
+	inline polygon math::lerp(const polygon& start, const polygon& end, float alpha)
 	{
 		polygon poly;
 		poly.vertices.resize(std::min(start.vertices.size(), end.vertices.size()));
 		for (size_t i = 0; i < poly.vertices.size(); ++i)
 		{
-			poly.vertices[i] = lerp(start.vertices[i], end.vertices[i], alpha);
+			poly.vertices[i] = math::lerp(start.vertices[i], end.vertices[i], alpha);
 		}
 		return poly;
 	}

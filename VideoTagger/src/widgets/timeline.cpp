@@ -458,7 +458,7 @@ namespace vt::widgets
 		//if (zoom_ <= 0.1f) return std::max<int64_t>(1, (int64_t)(math::rescale(zoom_, 0.0f, 0.1f, 0.0f, 1.0f) * 10)); //1m
 		
 		auto time_length = state_.time_length();
-		return utils::lerp<int64_t>(base_interval, time_length / 10, zoom_);
+		return math::lerp<int64_t>(base_interval, time_length / 10, zoom_);
 	}
 
 	//TODO: This

@@ -106,8 +106,11 @@ namespace vt
 		normal = h4,
 	};
 
+	///@brief Application context that holds all states and necessary data
 	struct app_context : public event_storage
 	{
+		static constexpr auto valid_video_extensions = std::array{ "mp4", "mkv", "avi", "mov", "flv", "wmv", "webm", "m4v", "mpg", "mpeg", "3gp", "ogv", "vob", "mts", "m2ts", "mxf", "f4v", "divx", "rmvb", "asf", "swf" };
+
 		std::optional<project> current_project;
 		widgets::video_timeline video_timeline;
 		widgets::timeline timeline;
@@ -124,8 +127,6 @@ namespace vt
 		widgets::modal::script_progress script_progress;
 		widgets::color_picker color_picker;
 		widgets::modal::tag_importer tag_importer;
-
-		static constexpr auto valid_video_extensions = std::array{ "mp4", "mkv", "avi", "mov", "flv", "wmv", "webm", "m4v", "mpg", "mpeg", "3gp", "ogv", "vob", "mts", "m2ts", "mxf", "f4v", "divx", "rmvb", "asf", "swf" };
 
 		std::filesystem::path projects_list_filepath = storage_path() / std::filesystem::path("projects").replace_extension("json");
 		std::filesystem::path app_settings_filepath = storage_path() / std::filesystem::path("settings").replace_extension("json");
@@ -216,6 +217,7 @@ namespace vt
 		video_group_id_t current_video_group_id_{};
 	};
 
+	///@brief Global application context instance
 	inline app_context ctx_;
 
 	template<typename service_account_manager_type>

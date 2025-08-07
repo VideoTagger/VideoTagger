@@ -1685,7 +1685,7 @@ namespace vt
 
 				for (auto& import_data : task.import_data)
 				{
-					ctx_.current_project->schedule_video_import(task.importer_id, std::move(import_data), utils::uuid::get());
+					ctx_.current_project->schedule_video_import(task.importer_id, std::move(import_data), utils::random::get_uuid());
 				}
 				it = tasks.erase(it);
 			}

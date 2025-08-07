@@ -555,7 +555,7 @@ namespace vt::widgets
 
 			if (widgets::modal::create_group_popup("Create New Group", group_name))
 			{
-				auto id = utils::uuid::get();
+				auto id = utils::random::get_uuid();
 				debug::log("Added video group with id: {}", id);
 				auto [it, inserted] = ctx_.current_project->video_groups.insert({ id, video_group{} });
 				if (inserted)

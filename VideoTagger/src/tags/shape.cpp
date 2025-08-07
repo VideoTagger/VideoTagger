@@ -8,7 +8,7 @@
 #include <utils/vec.hpp>
 #include <utils/intersection.hpp>
 #include <tags/tag.hpp>
-#include <utils/lerp.hpp>
+#include <utils/math.hpp>
 #include <widgets/time_input.hpp>
 
 namespace vt
@@ -141,7 +141,7 @@ namespace vt
 					//if region size changed then dont lerp those shapes
 					for (size_t i = 0; i < std::min(size_prev, size_next); ++i)
 					{
-						draw_circle(utils::lerp(regions_prev[i], regions_next[i], alpha), i);
+						draw_circle(math::lerp(regions_prev[i], regions_next[i], alpha), i);
 					}
 				}
 				else
@@ -204,7 +204,7 @@ namespace vt
 					//if region size changed then dont lerp those shapes
 					for (size_t i = 0; i < std::min(size_prev, size_next); ++i)
 					{
-						draw_rect(utils::lerp(regions_prev[i], regions_next[i], alpha), i);
+						draw_rect(math::lerp(regions_prev[i], regions_next[i], alpha), i);
 					}
 				}
 				else
@@ -268,7 +268,7 @@ namespace vt
 					//if region size changed then dont lerp those shapes
 					for (size_t i = 0; i < std::min(size_prev, size_next); ++i)
 					{
-						draw_poly(utils::lerp(regions_prev[i], regions_next[i], alpha), i);
+						draw_poly(math::lerp(regions_prev[i], regions_next[i], alpha), i);
 					}
 				}
 				else

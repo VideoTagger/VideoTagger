@@ -25,6 +25,11 @@ namespace vt::ui
 
 	bool widget::is_enabled() const
 	{
-		return !widgets::is_item_disabled();
+		return !is_disabled();
 	}
+
+    bool widget::is_disabled() const
+    {
+        return widgets::is_item_disabled();
+    }
 }

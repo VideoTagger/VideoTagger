@@ -9,5 +9,6 @@ namespace vt::ui
 		bool render_with_label(const std::string& label, bool sameline = false);
 		bool render_disabled(bool disabled = true);
 		bool is_enabled() const;
+		bool is_disabled() const;
 	};
 }
