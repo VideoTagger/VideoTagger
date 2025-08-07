@@ -9,14 +9,14 @@
 namespace vt::ui
 {
 	/**
-	 * @brief A raw scrollbar widget that allows for custom value types and rendering.
-	 * @tparam type Any numeric type of the value that the scrollbar will handle.
+	 * @brief A raw slider widget that allows for custom value types and rendering.
+	 * @tparam type Any numeric type of the value that the slider will handle.
 	 */
 	template<typename type>
-	struct raw_scrollbar : public widget
+	struct raw_slider : public widget
 	{
 	public:
-		constexpr raw_scrollbar(type min = std::numeric_limits<type>::min(), type max = std::numeric_limits<type>::max(), type value = {}, const ImVec2& size = {}) : min_{ min }, max_{ max }, value_{ value }, size_{ size } {}
+		constexpr raw_slider(type min = std::numeric_limits<type>::min(), type max = std::numeric_limits<type>::max(), type value = {}, const ImVec2& size = {}) : min_{ min }, max_{ max }, value_{ value }, size_{ size } {}
 
 	private:
 		std::function<void(type new_value)> on_change_;
