@@ -503,14 +503,12 @@ namespace vt::widgets
 						//TODO: consider using at() instead but then an entry would need to be created somewhere first
 						tag_timeline& segments = (*segments_)[tag_info.name];
 
-						for (auto segment_it = segments.begin(); segment_it != segments.end(); ++segment_it)
+						for (auto& [segment_id, tag_segment] : segments)
 						{
-							if (moving_segment.has_value() and *moving_segment->tag == tag_info and moving_segment->segment_it == segment_it)
+							if (moving_segment.has_value() and moving_segment->tag == tag_info.name and moving_segment->segment_id == segment_id)
 							{
 								continue;
 							}
-
-							auto& tag_segment = *segment_it;
 
 							int64_t start = tag_segment.start.total_milliseconds.count();
 							int64_t end = tag_segment.end.total_milliseconds.count();
@@ -526,7 +524,7 @@ namespace vt::widgets
 							uint32_t selection_color = ImGui::ColorConvertFloat4ToU32({ 1.f, 0xA5 / 255.f, 0.f, 1.f }); //0xFFA500FF
 							float selection_thickness = 2.0f;
 
-							bool is_selected = selected_segment.has_value() and selected_segment->segments == &segments and selected_segment->segment_it == segment_it;
+							bool is_selected = selected_segment.has_value() and selected_segment->tag == tag_info.name and selected_segment->segment_id == segment_id;
 
 							// Drawing
 							if (slot_p1.x <= (canvas_size.x + contentMin.x) and slot_p2.x >= (contentMin.x + legend_width))
@@ -585,9 +583,8 @@ namespace vt::widgets
 								{
 									selected_segment = selected_segment_data
 									{
-										&tag_info,
-										&segments,
-										segment_it
+										tag_info.name,
+										segment_id
 									};
 									ctx_.set_selected_attribute(nullptr);
 									moving_segment.reset();
@@ -606,7 +603,7 @@ namespace vt::widgets
 									if (!rc.Contains(io.MousePos))
 										continue;
 									ImGuiMouseCursor cursor = ImGui::GetMouseCursor();
-									if ((j == 0 or j == 1) and segment_it->type() != tag_segment_type::timestamp)
+									if ((j == 0 or j == 1) and tag_segment.type() != tag_segment_type::timestamp)
 									{
 										cursor = ImGuiMouseCursor_ResizeEW;
 									}
@@ -624,16 +621,16 @@ namespace vt::widgets
 										continue;
 									if (!ImRect(childFramePos, childFramePos + childFrameSize).Contains(io.MousePos))
 										continue;
-									if (ImGui::IsMouseClicked(0) and !moving_scroll_bar and !moving_time_marker and (segment_it->type() != tag_segment_type::timestamp or j == 2))
+									if (ImGui::IsMouseClicked(0) and !moving_scroll_bar and !moving_time_marker and (tag_segment.type() != tag_segment_type::timestamp or j == 2))
 									{
 										moving_segment = moving_segment_data
 										{
-											&tag_info,
-											segment_it,
+											tag_info.name,
+											segment_id,
 											static_cast<uint8_t>(j + 1),
 											mouse_pos_to_timestamp(io.MousePos.x),
-											segment_it->start,
-											segment_it->end
+											tag_segment.start,
+											tag_segment.end
 										};
 
 										//state->begin_edit(movingEntry);
@@ -654,9 +651,9 @@ namespace vt::widgets
 						}
 
 						// Moving timestamp drawing
-						if (moving_segment.has_value() and *moving_segment->tag == tag_info)
+						if (moving_segment.has_value() and moving_segment->tag == tag_info.name)
 						{
-							auto& tag_segment = *moving_segment->segment_it;
+							auto& tag_segment = segments.at(moving_segment->segment_id);
 
 							int64_t start = moving_segment->start.total_milliseconds.count();
 							int64_t end = moving_segment->end.total_milliseconds.count();
@@ -737,17 +734,17 @@ namespace vt::widgets
 
 						auto selected_timepoint = mouse_timestamp;
 
-						std::optional<tag_timeline::iterator> segment_it;
+						std::optional<segment_id> segment_id;
 						if (segments != nullptr)
 						{
-							segment_it = segments->find(selected_timepoint);
-							if (*segment_it == segments->end())
+							auto segment_it = segments->find(selected_timepoint);
+							if (segment_it != segments->end())
 							{
-								segment_it.reset();
+								segment_id = segment_it->id;
 							}
 						}
 
-						if (!segment_it.has_value())
+						if (!segment_id.has_value())
 						{
 							if (ImGui::MenuItem("Add timestamp"))
 							{
@@ -791,10 +788,10 @@ namespace vt::widgets
 						}
 						else
 						{
-							if (ImGui::MenuItem((*segment_it)->type() == tag_segment_type::timestamp ? "Delete timestamp" : "Delete segment"))
+							if (ImGui::MenuItem(segments->at(*segment_id).type() == tag_segment_type::timestamp ? "Delete timestamp" : "Delete segment"))
 							{
-								segments->erase(*segment_it);
-								if (selected_segment.has_value() and selected_segment->segments == segments and selected_segment->segment_it == *segment_it)
+								segments->erase(*segment_id);
+								if (selected_segment.has_value() and selected_segment->tag == tag_info->name and selected_segment->segment_id == *segment_id)
 								{
 									ctx_.set_selected_attribute(nullptr);
 									selected_segment.reset();
@@ -869,8 +866,9 @@ namespace vt::widgets
 						if (moving_segment->grab_part & 2 and moving_segment->end < moving_segment->start)
 							moving_segment->end = moving_segment->start;
 
+						const auto& segments = segments_->at(moving_segment->tag);
 						auto segment_size = std::abs((moving_segment->end - moving_segment->start).total_milliseconds.count());
-						if (segment_size < tag_segment::min_segment_size.count() and moving_segment->segment_it->type() != tag_segment_type::timestamp)
+						if (segment_size < tag_segment::min_segment_size.count() and segments.at(moving_segment->segment_id).type() != tag_segment_type::timestamp)
 						{
 							if (moving_segment->grab_part & 1)
 							{
@@ -885,7 +883,7 @@ namespace vt::widgets
 					}
 					if (ImGui::IsMouseReleased(ImGuiMouseButton_Left))
 					{
-						auto& segments = segments_->at(moving_segment->tag->name);
+						auto& segments = segments_->at(moving_segment->tag);
 
 						//No idea what this was supposed to be used for
 						//bool was_selected = selected_timestamp.has_value() and selected_timestamp->timestamp_timeline == &timeline and selected_timestamp->timestamp == segment_moving_data->segment;
@@ -895,9 +893,9 @@ namespace vt::widgets
 							auto overlapping = segments.find_range(moving_segment->start, moving_segment->end);
 
 							bool insert_now = true;
-							for (auto it = overlapping.begin(); it != overlapping.end(); ++it)
+							for (auto& [segment_id, segment] : overlapping)
 							{
-								if (it != selected_segment->segment_it)
+								if (segment_id != selected_segment->segment_id)
 								{
 									insert_now = false;
 								}
@@ -905,11 +903,12 @@ namespace vt::widgets
 
 							if (insert_now)
 							{
-								if (selected_segment->segment_it->start != moving_segment->start or selected_segment->segment_it->end != moving_segment->end)
+								const auto& selected_seg = segments.at(selected_segment->segment_id);
+								if (selected_seg.start != moving_segment->start or selected_seg.end != moving_segment->end)
 								{
-									selected_segment->segment_it = segments.replace
+									selected_segment->segment_id = segments.replace
 									(
-										selected_segment->segment_it,
+										selected_segment->segment_id,
 										moving_segment->start,
 										moving_segment->end
 									).first;
@@ -933,10 +932,10 @@ namespace vt::widgets
 				{
 					if (pressed_yes and moving_segment.has_value())
 					{
-						auto& segments = segments_->at(moving_segment->tag->name);
-						selected_segment->segment_it = segments.replace
+						auto& segments = segments_->at(moving_segment->tag);
+						selected_segment->segment_id = segments.replace
 						(
-							selected_segment->segment_it,
+							selected_segment->segment_id,
 							timestamp{ moving_segment->start },
 							timestamp{ moving_segment->end }
 						).first;

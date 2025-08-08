@@ -6,6 +6,7 @@
 #include <chrono>
 #include <unordered_map>
 #include <optional>
+#include <vector>
 
 #include <core/debug.hpp>
 #include <utils/json.hpp>
@@ -18,16 +19,21 @@
 
 namespace vt
 {
+	using segment_id = uint64_t;
+
 	enum class tag_segment_type
 	{
 		timestamp,
 		segment
 	};
 
+	///@brief A struct representing a segment or timestamp appearing on the timeline
 	struct tag_segment
 	{
 		using attribute_instance_container = std::unordered_map<video_id_t, std::unordered_map<std::string, tag_attribute_instance>>;
+		///@brief Minimum segment length in milliseconds
 		static constexpr auto min_segment_size = std::chrono::milliseconds{ 1 };
+		///@brief The default segment length in milliseconds used when creating a segment on the timeline
 		static constexpr auto default_segment_size = std::chrono::milliseconds{ 500 };
 
 		timestamp start{};
@@ -35,57 +41,123 @@ namespace vt
 
 		mutable attribute_instance_container attributes;
 
+		/**
+		 * @brief Construct a segment (tag_segment with different start and end). 
+		 * 
+		 * @param time_start Start time of the segment.
+		 * @param time_end End time of the segment.
+		 * @param attributes Optional attributes associated with the segment.
+		 */
 		tag_segment(timestamp time_start, timestamp time_end, const attribute_instance_container& attributes = {});
-		tag_segment(timestamp time_point, const attribute_instance_container& attributes = {});
 
+		/**
+		 * @brief Construct a timestamp (tag_segment with the same start and end).
+		 * 
+		 * @param ts Timestamp of the segment.
+		 * @param attributes Optional attributes associated with the segment.
+		 */
+		tag_segment(timestamp ts, const attribute_instance_container& attributes = {});
+
+		/**  
+		 * @brief Set the start and end time of the segment. If the tag_segment is currently a timestamp, it will become a segment.
+		 * If the start time is greater than the end time, they will be swapped.
+		 * 
+		 * @param time_start Start time of the segment.
+		 * @param time_end End time of the segment.
+		 */
 		void set(timestamp time_start, timestamp time_end);
-		void set(timestamp time_point);
 
-		std::chrono::nanoseconds duration() const;
+		/** 
+		 * @brief Set the start and end time of the segment to the same value (make it a timestamp).
+		 * @param ts Timestamp of the segment.
+		 */
+		void set(timestamp ts);
+
+		/** 
+		 * @brief Get the length of the segment in nanoseconds.
+		 * @return Duration of the segment.
+		 */
+		std::chrono::milliseconds duration() const;
+
+		/** 
+		 * @brief Get the type of the segment (either segment or timestamp).
+		 * @return Type of the segment.
+		 */
 		tag_segment_type type() const;
 
+		/** 
+		 * @brief Check if the segment is a timestamp (start and end are the same).
+		 * @return True if the segment is a timestamp, false otherwise.
+		 */
 		bool is_timestamp() const;
 	};
 
+	struct segment_with_id
+	{
+		segment_with_id(segment_id id, timestamp time_start, timestamp time_end, const tag_segment::attribute_instance_container& attributes = {}) :
+			id{ id }, segment{ time_start, time_end, attributes } {}
+		segment_with_id(segment_id id, timestamp ts, const tag_segment::attribute_instance_container& attributes = {}) :
+			id{ id }, segment{ ts, attributes } {}
+		segment_with_id(segment_id id, tag_segment&& segment) :
+			id{ id }, segment{ std::move(segment) } {}
+
+		segment_id id;
+		tag_segment segment;
+	};
+
+	/** 
+	 * @brief A container for tag segments, allowing insertion, deletion, and searching of segments by time.
+	 * 
+	 * Segments are accessed by their unique segment_id, which is generated automatically and remains valid until the segment is erased.
+	 * Segments can't be modified directly, but can be moved or erased.
+	 * Segment are stored in a sorted order by their start time.
+	 */
 	class tag_timeline
 	{
-		struct tag_timeline_set_comparator_
-		{
-			bool operator()(const tag_segment& lhs, const tag_segment& rhs) const
-			{
-				return lhs.start < rhs.start;
-			}
-		};
-
 	public:
-		using iterator = std::set<tag_segment, tag_timeline_set_comparator_>::iterator;
-		using reverse_iterator = std::set<tag_segment, tag_timeline_set_comparator_>::reverse_iterator;
+		using iterator = std::vector<segment_with_id>::const_iterator;
+		using reverse_iterator = std::vector<segment_with_id>::const_reverse_iterator;
 
-		std::pair<iterator, bool> insert(timestamp time_start, timestamp time_end, const tag_segment::attribute_instance_container& attributes = {});
-		std::pair<iterator, bool> insert(timestamp time_point, const tag_segment::attribute_instance_container& attributes = {});
+		/** 
+		 * @brief 
+		 */
+		std::pair<segment_id, bool> insert(timestamp time_start, timestamp time_end, const tag_segment::attribute_instance_container& attributes = {});
+		std::pair<segment_id, bool> insert(timestamp ts, const tag_segment::attribute_instance_container& attributes = {});
+		void erase(segment_id id);
 		iterator erase(iterator it);
+		iterator erase(iterator it_begin, iterator it_end);
+		template<typename Pred>
+		iterator erase_if(iterator it_begin, iterator it_end, Pred predicate);
 
-		//will invalidate it
-		std::pair<iterator, bool> replace(iterator it, timestamp new_start, timestamp new_end);
-		//will invalidate it
-		std::pair<iterator, bool> replace(iterator it, timestamp time_point);
+		std::pair<segment_id, bool> replace(segment_id id, timestamp new_start, timestamp new_end);
+		std::pair<segment_id, bool> replace(segment_id id, timestamp ts);
+
 
 		iterator_range<iterator> find_range(timestamp time_start, timestamp time_end) const;
-		iterator find(timestamp time_point) const;
+		iterator find(timestamp ts) const;
+		const tag_segment& at(segment_id id) const;
 
 		iterator begin() const;
-		reverse_iterator rbegin() const;
 		iterator end() const;
+		reverse_iterator rbegin() const;
 		reverse_iterator rend() const;
 
+		bool is_id_valid(segment_id id) const;
 		size_t size() const;
 		bool empty() const;
 
 	private:
-		std::set<tag_segment, tag_timeline_set_comparator_> segments_;
+		std::vector<segment_with_id> segments_;
+		std::unordered_map<segment_id, size_t> id_map_;
 
-		std::optional<std::pair<iterator_range<iterator>, bool>> prepare_insert(timestamp& time_start, timestamp& time_end);
-		std::optional<iterator> prepare_insert(timestamp ts);
+		std::optional<std::pair<iterator_range<iterator>, bool>> prepare_insert(timestamp& time_start, timestamp& time_end) const;
+		std::optional<iterator> prepare_insert(timestamp ts) const;
+		void insert_no_check(segment_id id, tag_segment&& segment);
+		iterator lower_bound(timestamp ts) const;
+		iterator lower_bound(iterator begin, timestamp ts) const;
+		iterator upper_bound(timestamp ts) const;
+		iterator upper_bound(iterator begin, timestamp ts) const;
+		void update_id_map(iterator update_begin, iterator update_end, ptrdiff_t offset);
 	};
 
 	//key: tag name
@@ -142,7 +214,7 @@ namespace vt
 			json_tag_segments_data["tag"] = tag_name;
 			auto& json_tag_segments = json_tag_segments_data["tag-segments"];
 			json_tag_segments = nlohmann::json::array();
-			for (auto& segment : tag_segments)
+			for (auto& [id, segment] : tag_segments)
 			{
 				json_tag_segments.push_back(segment);
 			}
@@ -214,5 +286,32 @@ namespace vt
 				}
 			}
 		}
+	}
+
+	template<typename Pred>
+	inline tag_timeline::iterator tag_timeline::erase_if(iterator it_begin, iterator it_end, Pred predicate)
+	{
+		ptrdiff_t erased_count = 0;
+		auto it = it_begin;
+		while (it != it_end)
+		{
+			if (!predicate(*it))
+			{
+				++it;
+				continue;
+			}
+
+			auto end_distance = std::distance(it, it_end);
+
+			id_map_.erase(it->id);
+			it = segments_.erase(it);
+			it_end = it + (end_distance - 1);
+			erased_count++;
+
+			update_id_map(it, it_end, -1);
+		}
+		update_id_map(it_end, segments_.end(), -erased_count);
+		return it;
+;
 	}
 }

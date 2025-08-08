@@ -263,10 +263,10 @@ namespace vt
 		if (!ctx_.video_timeline.selected_segment.has_value()) return;
 
 		ctx_.is_project_dirty = true;
-		auto it = ctx_.video_timeline.selected_segment->segments->find(ctx_.video_timeline.selected_segment->segment_it->start);
-		if (it != ctx_.video_timeline.selected_segment->segments->end())
+		auto& segments = ctx_.get_current_segment_storage().at(ctx_.video_timeline.selected_segment->tag);
+		if (segments.is_id_valid(ctx_.video_timeline.selected_segment->segment_id))
 		{
-			ctx_.video_timeline.selected_segment->segments->erase(it);
+			segments.erase(ctx_.video_timeline.selected_segment->segment_id);
 			ctx_.video_timeline.selected_segment.reset();
 		}
 	}
@@ -2217,9 +2217,8 @@ namespace vt
 						auto fill_color = (tag.color & ~0xFF000000) | 0x80000000;
 
 						auto& segments = it->second;
-						for (auto segment_it = segments.begin(); segment_it != segments.end(); ++segment_it)
+						for (auto [segment_id, segment] : segments)
 						{
-							auto& segment = *segment_it;
 							bool is_onscreen = current_ts >= segment.start and current_ts <= segment.end;
 							if (is_onscreen)
 							{
@@ -2239,7 +2238,7 @@ namespace vt
 										{
 											if (ImGui::IsMouseDown(0))
 											{
-												ctx_.video_timeline.selected_segment = widgets::selected_segment_data{ &tag, &segments, segment_it };
+												ctx_.video_timeline.selected_segment = widgets::selected_segment_data{ tag.name, segment_id };
 												ctx_.set_selected_attribute(&attr);
 											}
 											tooltip = fmt::format("Tag: {}\nAttribute: {}\nID: {}", tag.name, attr_name, i + 1);

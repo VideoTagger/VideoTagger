@@ -407,11 +407,10 @@ namespace vt::widgets
 					ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, ImGui::GetColorU32(ImGuiCol_TableHeaderBg));
 					widgets::vertical_item_spacer(scaled_height);
 					ImGui::SameLine();
-
+					
 					//draw_cell_debug_rect(1.f);
-					for (auto it = timeline.begin(); it != timeline.end(); ++it)
+					for (auto& [id, segment] : timeline)
 					{
-						const auto& segment = *it;
 						bool is_selected = false;
 						bool is_dragged = false;
 
@@ -477,7 +476,7 @@ namespace vt::widgets
 
 	utils::timestamp_span timeline::visible_time_span() const
 	{
-		return utils::timestamp_span(view_ts_, view_ts_ + timestamp(state_.time_length() / zoom_));
+		return utils::timestamp_span(view_ts_, view_ts_ + timestamp(static_cast<int64_t>(state_.time_length() / zoom_)));
 	}
 
 	timeline_state& timeline::state()
@@ -564,7 +563,7 @@ namespace vt::widgets
 					ImGui::TableNextColumn();
 
 					//TODO: segment shouldn't be const
-					for (const auto& segment : timeline)
+					for (const auto& [id, segment] : timeline)
 					{
 						bool is_selected = false;
 						bool is_dragged = false;

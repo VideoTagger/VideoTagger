@@ -43,17 +43,14 @@ namespace vt::widgets
 	//TODO: maybe should be moved somewhere else
 	struct selected_segment_data
 	{
-		//TODO: maybe store the tag name instead of a pointer
-		vt::tag* tag{};
-		tag_timeline* segments;
-		tag_timeline::iterator segment_it;
+		std::string tag;
+		segment_id segment_id;
 	};
 
 	struct moving_segment_data
 	{
-		//TODO: maybe store the tag name instead of a pointer
-		vt::tag* tag{};
-		tag_timeline::iterator segment_it{};
+		std::string tag;
+		segment_id segment_id;
 		uint8_t grab_part{};
 		timestamp grab_position{};
 		timestamp start{};

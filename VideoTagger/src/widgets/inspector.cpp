@@ -23,7 +23,9 @@ namespace vt::widgets
 			{
 				static timestamp popup_ts_start;
 				static timestamp popup_ts_end;
-				auto& ts = selected_segment->segment_it;
+				auto& segments = ctx_.get_current_segment_storage().at(selected_segment->tag);
+				const tag_segment* ts = &segments.at(selected_segment->segment_id);
+				auto ts_id = selected_segment->segment_id;
 				auto ts_start = ts->start;
 				auto ts_end = ts->end;
 
@@ -178,7 +180,7 @@ namespace vt::widgets
 					moving_segment = moving_segment_data
 					{
 						selected_segment->tag,
-						selected_segment->segment_it,
+						selected_segment->segment_id,
 						0, // grab_part,
 						grab_position,
 						ts_start,
@@ -195,13 +197,13 @@ namespace vt::widgets
 				if (finished_editing)
 				{
 					//TODO: All of this is just copied from video timeline. Probably should do something about this
-					auto& timeline = selected_segment->segments;
-					auto overlapping = timeline->find_range(ts_start, ts_end);
+					auto& timeline = ctx_.get_current_segment_storage().at(selected_segment->tag);
+					auto overlapping = timeline.find_range(ts_start, ts_end);
 
 					bool insert_now = true;
-					for (auto it = overlapping.begin(); it != overlapping.end(); ++it)
+					for (auto& [id, segment] : overlapping)
 					{
-						if (it != selected_segment->segment_it)
+						if (id != selected_segment->segment_id)
 						{
 							insert_now = false;
 						}
@@ -211,7 +213,8 @@ namespace vt::widgets
 					{
 						if (ts->start != ts_start or ts->end != ts_end)
 						{
-							ts = timeline->replace(ts, ts_start, ts_end).first;
+							ts_id = timeline.replace(ts_id, ts_start, ts_end).first;
+							ts = &timeline.at(ts_id);
 							dirty_flag = true;
 						}
 
@@ -230,8 +233,9 @@ namespace vt::widgets
 				{
 					if (pressed_yes)
 					{
-						auto& timeline = selected_segment->segments;
-						ts = timeline->replace(ts, popup_ts_start, popup_ts_end).first;
+						auto& timeline = ctx_.get_current_segment_storage().at(selected_segment->tag);
+						ts_id = timeline.replace(ts_id, popup_ts_start, popup_ts_end).first;
+						ts = &timeline.at(ts_id);
 
 						dirty_flag = true;
 					}
@@ -240,8 +244,10 @@ namespace vt::widgets
 
 				if (ctx_.current_video_group_id() != invalid_video_group_id and ctx_.last_focused_video.has_value())
 				{
-					ImGui::BeginDisabled(selected_segment->tag->attributes.empty());
-					selected_segment->tag->draw_attribute_instances(*selected_segment->segment_it, ctx_.last_focused_video.value(), ctx_.is_project_dirty);
+					auto& selected_tag = ctx_.current_project->tags.at(selected_segment->tag);
+					ImGui::BeginDisabled(selected_tag.attributes.empty());
+					auto& timeline = ctx_.get_current_segment_storage().at(selected_segment->tag);
+					selected_tag.draw_attribute_instances(timeline.at(selected_segment->segment_id), ctx_.last_focused_video.value(), ctx_.is_project_dirty);
 					ImGui::EndDisabled();
 				}
 			}

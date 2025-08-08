@@ -373,7 +373,7 @@ namespace vt
 
 						auto& json_tag_segments = json_tag_data["segments"];
 						json_tag_segments = nlohmann::ordered_json::array();
-						for (tag_segment segment : tag_segments) //copy is intended
+						for (auto [segment_id, segment] : tag_segments) //copy is intended
 						{
 							segment.start -= timestamp{ std::chrono::duration_cast<std::chrono::milliseconds>(group_video_info.offset) };
 							segment.end -= timestamp{ std::chrono::duration_cast<std::chrono::milliseconds>(group_video_info.offset) };
@@ -616,13 +616,13 @@ namespace vt
 		ctx_.is_project_dirty = true;
 
 		auto& selected_segment = ctx_.video_timeline.selected_segment;
-		if (selected_segment.has_value() and selected_segment->tag->name == tag_name)
+		if (selected_segment.has_value() and selected_segment->tag == tag_name)
 		{
 			selected_segment.reset();
 		}
 
 		auto& moving_segment = ctx_.video_timeline.moving_segment;
-		if (moving_segment.has_value() and moving_segment->tag->name == tag_name)
+		if (moving_segment.has_value() and moving_segment->tag == tag_name)
 		{
 			moving_segment.reset();
 		}

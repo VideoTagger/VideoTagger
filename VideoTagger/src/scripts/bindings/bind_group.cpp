@@ -30,19 +30,21 @@ void vt::bindings::bind_group(pybind11::module_& module)
 	})
 	.def("add_timestamp", [](video_group& group, tag& t, timestamp start) -> std::optional<vt_tag_segment>
 	{
-		auto it = group.segments()[t.name].insert(start);
-		if (it.second)
+		auto& segments = group.segments()[t.name];
+		auto [id, success] = segments.insert(start);
+		if (success)
 		{
-			return vt_tag_segment{ (tag_segment&)(*it.first), t };
+			return vt_tag_segment{ (tag_segment&)(segments.at(id)), t };
 		}
 		return std::nullopt;
 	})
 	.def("add_segment", [](video_group& group, tag& t, timestamp start, timestamp end) -> std::optional<vt_tag_segment>
 	{
-		auto it = group.segments()[t.name].insert(start, end);
-		if (it.second)
+		auto& segments = group.segments()[t.name];
+		auto [id, success] = segments.insert(start, end);
+		if (success)
 		{
-			return vt_tag_segment{ (tag_segment&)(*it.first), t };
+			return vt_tag_segment{ (tag_segment&)(segments.at(id)), t };
 		}
 		return std::nullopt;
 	})
