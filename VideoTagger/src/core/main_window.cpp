@@ -28,6 +28,7 @@
 #include <utils/intersection.hpp>
 #include <utils/string.hpp>
 #include <ui/widgets/common.hpp>
+#include <ui/widgets/slider.hpp>
 #include <ui/widgets/settings_expander.hpp>
 
 #include <events/window/window_resize_event.hpp>
@@ -559,7 +560,7 @@ namespace vt
 			{
 				auto& io = ImGui::GetIO();
 				auto avail = ImGui::GetContentRegionAvail();
-				if (ImGui::Button("Add Keybind", { avail.x, ImGui::GetTextLineHeightWithSpacing() * 1.5f * io.FontGlobalScale }))
+				if (ui::button("Add Keybind", { avail.x, ImGui::GetTextLineHeightWithSpacing() * 1.5f * io.FontGlobalScale }))
 				{
 					ImGui::OpenPopup("##KeybindCreationPopup");
 				}
@@ -627,7 +628,7 @@ namespace vt
 					{
 						ImGui::TableNextColumn();
 						bool enabled = keybind.flags.enabled;
-						if (widgets::checkbox(("##KeybindEnabled" + name).c_str(), &enabled))
+						if (ui::checkbox(("##KeybindEnabled" + name).c_str(), enabled))
 						{
 							keybind.flags.enabled = enabled;
 							ctx_.is_project_dirty = true;
@@ -637,7 +638,7 @@ namespace vt
 						ImGui::PushID(id);
 						if (!is_row_selected) ImGui::BeginDisabled();
 						std::string delete_kb_id = fmt::format("{}##DeleteKb{}", icons::delete_, name);
-						if (widgets::icon_button(delete_kb_id.c_str()))
+						if (ui::icon_button(delete_kb_id.c_str()))
 						{
 							delete_kb_name = name;
 						}
@@ -656,7 +657,7 @@ namespace vt
 						if (keybind.flags.rebindable and is_row_selected and ImGui::TableGetColumnIndex() == ImGui::TableGetHoveredColumn())
 						{
 							ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, { style.FramePadding.x * 0.5f, style.FramePadding.y });
-							if (widgets::icon_button(edit_id.c_str()))
+							if (ui::icon_button(edit_id.c_str()))
 							{
 								new_kb_name = name;
 								actions = get_all_keybind_actions();
@@ -692,7 +693,7 @@ namespace vt
 						if (is_row_selected and ImGui::TableGetColumnIndex() == ImGui::TableGetHoveredColumn())
 						{
 							ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, { style.FramePadding.x * 0.5f, style.FramePadding.y });
-							if (widgets::icon_button(edit_combination_id.c_str()))
+							if (ui::icon_button(edit_combination_id.c_str()))
 							{
 								//resets the last keybind
 								input::last_keybind.key_code = -1;
@@ -730,7 +731,7 @@ namespace vt
 							if (is_row_selected and ImGui::TableGetColumnIndex() == ImGui::TableGetHoveredColumn())
 							{
 								ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, { style.FramePadding.x * 0.5f, style.FramePadding.y });
-								if (widgets::icon_button(edit_kb_id.c_str()))
+								if (ui::icon_button(edit_kb_id.c_str()))
 								{
 									actions = get_all_keybind_actions();
 									ImGui::OpenPopup("##KeybindOptionsPopup");
@@ -778,7 +779,7 @@ namespace vt
 
 		options("Application Settings", "General").add_raw([this]()
 		{
-			widgets::label("Font Size");
+			ui::label("Font Size");
 			ImGui::SameLine();
 			int start_font_size = static_cast<int>(ctx_.get_font()->FontSize);
 			static int font_size = start_font_size;
@@ -823,7 +824,23 @@ namespace vt
 		.add_raw([]()
 		{
 			auto& io = ImGui::GetIO();
-			ImGui::DragFloat("Font Scale", &io.FontGlobalScale, 0.005f, 0.5f, 2.0f, "%.2f", ImGuiSliderFlags_AlwaysClamp);
+			static constexpr auto accent_color = ImVec4{ 0.2588f, 0.6f, 0.8784f, 1.f };
+			static constexpr auto accent_color_hover = ImVec4{ 0.2f, 0.5098f, 0.7804f, 1.f };
+
+			auto avail_area = ImGui::GetContentRegionAvail();
+
+			ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 4.f);
+			ImGui::PushStyleColor(ImGuiCol_SliderGrab, accent_color_hover);
+			ImGui::PushStyleColor(ImGuiCol_SliderGrabActive, accent_color);
+			static ui::slider<float> font_slider(0.5f, 2.0f, io.FontGlobalScale, { avail_area.x, ImGui::GetFrameHeight() });
+			font_slider.set_step(0.005f);
+			font_slider.render_with_label("Font Scale");
+			font_slider.set_on_change_callback([&io](float value)
+			{
+				io.FontGlobalScale = value;
+			});
+			ImGui::PopStyleVar();
+			ImGui::PopStyleColor(2);
 			return true;
 		})
 #endif
@@ -891,7 +908,7 @@ namespace vt
 							ImGui::TextColored(ImVec4{ 0.9f, 0.0f, 0.0f, 1.0f }, "Login failed");
 
 							ImGui::SameLine();
-							if (widgets::icon_button(icons::retry))
+							if (ui::icon_button(icons::retry))
 							{
 								retry_login_futures[service_id] = account_manager->retry_login();
 								modifed_account = true;
@@ -1685,7 +1702,7 @@ namespace vt
 
 				for (auto& import_data : task.import_data)
 				{
-					ctx_.current_project->schedule_video_import(task.importer_id, std::move(import_data), utils::uuid::get());
+					ctx_.current_project->schedule_video_import(task.importer_id, std::move(import_data), utils::random::get_uuid());
 				}
 				it = tasks.erase(it);
 			}
@@ -2025,58 +2042,58 @@ namespace vt
 							{
 								ImGui::TableNextRow();
 								ImGui::TableNextColumn();
-								if (widgets::icon_button(icons::align_horizontal_center))
+								if (ui::icon_button(icons::align_horizontal_center))
 								{
 									point_pos.x = tex_size.x / 2;
 									close = true;
 								}
-								widgets::tooltip("Align Horizontal Center");
+								ui::tooltip("Align Horizontal Center");
 								ImGui::TableNextColumn();
-								if (widgets::icon_button(icons::align_vertical_top))
+								if (ui::icon_button(icons::align_vertical_top))
 								{
 									point_pos.y = 0;
 									close = true;
 								}
-								widgets::tooltip("Align Vertical Top");
+								ui::tooltip("Align Vertical Top");
 
 								ImGui::TableNextRow();
 								ImGui::TableNextColumn();
-								if (widgets::icon_button(icons::align_horizontal_left))
+								if (ui::icon_button(icons::align_horizontal_left))
 								{
 									point_pos.x = 0;
 									close = true;
 								}
-								widgets::tooltip("Align Horizontal Left");
+								ui::tooltip("Align Horizontal Left");
 								ImGui::TableNextColumn();
-								if (widgets::icon_button(icons::align_center))
+								if (ui::icon_button(icons::align_center))
 								{
 									point_pos = tex_size / 2;
 									close = true;
 								}
-								widgets::tooltip("Align Center");
+								ui::tooltip("Align Center");
 								ImGui::TableNextColumn();
-								if (widgets::icon_button(icons::align_horizontal_right))
+								if (ui::icon_button(icons::align_horizontal_right))
 								{
 									point_pos.x = tex_size.x;
 									close = true;
 								}
-								widgets::tooltip("Align Horizontal Right");
+								ui::tooltip("Align Horizontal Right");
 
 								ImGui::TableNextRow();
 								ImGui::TableNextColumn();
-								if (widgets::icon_button(icons::align_vertical_center))
+								if (ui::icon_button(icons::align_vertical_center))
 								{
 									point_pos.y = tex_size.y / 2;
 									close = true;
 								}
-								widgets::tooltip("Align Vertical Center");
+								ui::tooltip("Align Vertical Center");
 								ImGui::TableNextColumn();
-								if (widgets::icon_button(icons::align_vertical_bottom))
+								if (ui::icon_button(icons::align_vertical_bottom))
 								{
 									point_pos.y = tex_size.y;
 									close = true;
 								}
-								widgets::tooltip("Align Vertical Bottom");
+								ui::tooltip("Align Vertical Bottom");
 
 								ImGui::EndTable();
 							}
@@ -2198,14 +2215,14 @@ namespace vt
 					ImVec2 top_right = { pos.x + size.x, pos.y };
 					ImVec2 bottom_left = { pos.x, pos.y + size.y };
 					ImVec2 bottom_right = { pos.x + size.x, pos.y + size.y };
-					
+
 					float left = 0.0f;
 					float right = tex_size.x;
 					float bottom = tex_size.y;
 					float top = 0.f;
 					float near_z = -1.0f;
 					float far_z = 1.0f;
-					
+
 					//shape drawing
 					std::string tooltip;
 					for (const auto& displayed_tag : ctx_.current_project->displayed_tags)
@@ -2252,7 +2269,7 @@ namespace vt
 					if (hovered and !tooltip.empty() and !ImGuizmo::IsOver())
 					{
 						ImGui::SetMouseCursor(ImGuiMouseCursor_Hand);
-						widgets::tooltip(tooltip.c_str());
+						ui::tooltip(tooltip);
 					}
 
 					if (!is_keyframe and has_target)

@@ -6,6 +6,7 @@
 #include <tags/tag_timeline.hpp>
 #include <utils/time.hpp>
 #include <ui/icons.hpp>
+#include <ui/widgets/common.hpp>
 #include <core/debug.hpp>
 
 #include "video_timeline.hpp"
@@ -119,7 +120,7 @@ namespace vt::widgets
 									drawlist->AddLine({ link_pos.x, start_pos.y - line_size / 2 }, link_pos - link_pos_offset, line_color, line_size);
 									drawlist->AddLine({ link_pos.x, end_pos.y + line_size / 2 }, link_pos + link_pos_offset, line_color, line_size);
 
-									if (icon_toggle_button(name.c_str(), link_start_end))
+									if (ui::icon_toggle_button(name, link_start_end))
 									{
 										link_start_end = !link_start_end;
 									}
@@ -253,7 +254,7 @@ namespace vt::widgets
 			}
 			else
 			{
-				centered_text("Select a segment to display its properties...", ImGui::GetContentRegionMax());
+				ui::centered_text("Select a segment to display its properties...", ImGui::GetContentRegionMax());
 			}
 			ImGui::EndChild();
 		}

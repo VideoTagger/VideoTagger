@@ -7,6 +7,7 @@
 #include <ui/icons.hpp>
 #include <core/debug.hpp>
 #include <utils/math.hpp>
+#include <ui/widgets/common.hpp>
 
 namespace vt::widgets
 {
@@ -352,7 +353,7 @@ namespace vt::widgets
 
 		ImRect timespan_rect{ min, max };
 
-		bool is_hovered = ImGui::IsMouseHoveringRect(timespan_rect.Min, timespan_rect.Max);
+		bool is_hovered = enabled_ and ImGui::IsMouseHoveringRect(timespan_rect.Min, timespan_rect.Max);
 
 		draw_list->AddRectFilled(timespan_rect.Min, timespan_rect.Max, IM_COL32(36, 36, 36, is_hovered ? 200 : 128), 0.f);
 		draw_list->AddRect(timespan_rect.Min, timespan_rect.Max, IM_COL32(128, 128, 128, is_hovered ? 255 : 240), 0.f);
@@ -405,7 +406,7 @@ namespace vt::widgets
 					ImGui::TableNextRow();
 					ImGui::TableNextColumn();
 					ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, ImGui::GetColorU32(ImGuiCol_TableHeaderBg));
-					widgets::vertical_item_spacer(scaled_height);
+					ui::vertical_item_spacer(scaled_height);
 					ImGui::SameLine();
 					
 					//draw_cell_debug_rect(1.f);
@@ -424,13 +425,10 @@ namespace vt::widgets
 		ImGui::PopStyleVar(2);
 
 		ImGui::SetCursorPos(cpos);
-		if (enabled_)
-		{
-			preview_scrollbar_.set_range(scroll_min, scroll_max);
-			preview_scrollbar_.set_value(view_ts);
-			preview_scrollbar_.set_size(ImVec2{ ImGui::GetContentRegionAvail().x, ImGui::GetFrameHeight() });
-			preview_scrollbar_.render();
-		}		
+		preview_scrollbar_.set_range(scroll_min, scroll_max);
+		preview_scrollbar_.set_value(view_ts);
+		preview_scrollbar_.set_size(ImVec2{ ImGui::GetContentRegionAvail().x, ImGui::GetFrameHeight() });
+		preview_scrollbar_.render_disabled(!enabled_);
 
 		view_ts = preview_scrollbar_.value();
 		view_ts_ = timestamp{ view_ts };
@@ -459,7 +457,7 @@ namespace vt::widgets
 		//if (zoom_ <= 0.1f) return std::max<int64_t>(1, (int64_t)(math::rescale(zoom_, 0.0f, 0.1f, 0.0f, 1.0f) * 10)); //1m
 		
 		auto time_length = state_.time_length();
-		return utils::lerp<int64_t>(base_interval, time_length / 10, zoom_);
+		return math::lerp<int64_t>(base_interval, time_length / 10, zoom_);
 	}
 
 	//TODO: This
@@ -497,9 +495,7 @@ namespace vt::widgets
 		{
 			auto win_pos = ImGui::GetWindowPos();
 
-			ImGui::Text("%s", "Test text");
-			ImGui::SameLine();
-			ImGui::Checkbox("Enabled", &enabled_);
+			ui::toggle("Enabled", enabled_);
 			ImGui::SameLine();
 			ImGui::SliderFloat("Zoom", &zoom_, 1.f, 5.f);
 			ImGui::BeginDisabled(zoom_ <= 1.f);
@@ -520,20 +516,17 @@ namespace vt::widgets
 
 				ImGui::TableNextRow();
 				ImGui::TableNextColumn();
-				widgets::icon_button(icons::add);
+				ui::icon_button(icons::add);
 
 				ImGui::TableNextColumn();
 				auto cell_rect = get_cell_rect();
 				//ImGui::TextUnformatted("00:00:00");
 
-				if (enabled_)
-				{
-					auto [start, end] = visible_time_span();
-					playback_scrollbar_.set_range(start.total_milliseconds.count(), end.total_milliseconds.count());
-					playback_scrollbar_.set_value(state_.current_ts.total_milliseconds.count());
-					playback_scrollbar_.set_size(cell_rect->GetSize());
-					playback_scrollbar_.render();
-				}
+				auto [start, end] = visible_time_span();
+				playback_scrollbar_.set_range(start.total_milliseconds.count(), end.total_milliseconds.count());
+				playback_scrollbar_.set_value(state_.current_ts.total_milliseconds.count());
+				playback_scrollbar_.set_size(cell_rect->GetSize());
+				playback_scrollbar_.render_disabled(!enabled_);
 
 				//draw_cell_debug_rect(zoom_);
 				draw_time_intervals();

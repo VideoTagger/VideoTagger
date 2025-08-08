@@ -74,7 +74,7 @@ void vt::bindings::bind_project(pybind11::module_& module)
 	.def("add_group", [](vt_project& p, const video_group& group) -> bool
 	{
 		auto segments = group.segments();
-		return p.ref.video_groups.insert({ utils::uuid::get(), group }).second;
+		return p.ref.video_groups.insert({ utils::random::get_uuid(), group }).second;
 	})
 	.def_property_readonly("group_queue", [](const vt_project& p) -> video_group_playlist&
 	{

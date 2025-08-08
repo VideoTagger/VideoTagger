@@ -4,7 +4,7 @@
 #include <cstdint>
 #include <cstddef>
 #include <utils/json.hpp>
-#include <utils/lerp.hpp>
+#include <utils/math.hpp>
 
 namespace vt::utils
 {
@@ -92,10 +92,14 @@ namespace vt::utils
 		}
 	}
 
+}
+
+namespace vt::math
+{
 	template<typename type, size_t dims>
-	constexpr vec<type, dims> lerp(const vec<type, dims>& start, const vec<type, dims>& end, float alpha)
+	constexpr vt::utils::vec<type, dims> lerp(const vt::utils::vec<type, dims>& start, const vt::utils::vec<type, dims>& end, float alpha)
 	{
-		vec<type, dims> result;
+		vt::utils::vec<type, dims> result;
 		for (size_t i = 0; i < dims; ++i)
 		{
 			result[i] = lerp(start[i], end[i], alpha);
@@ -103,3 +107,4 @@ namespace vt::utils
 		return result;
 	}
 }
+

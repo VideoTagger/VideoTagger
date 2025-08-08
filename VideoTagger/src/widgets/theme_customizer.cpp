@@ -7,6 +7,8 @@
 #include <utils/json.hpp>
 #include <utils/color.hpp>
 
+#include <ui/widgets/common.hpp>
+
 namespace vt::widgets
 {
 	theme_customizer::theme_customizer() : live_preview{ true } {}
@@ -67,7 +69,7 @@ namespace vt::widgets
 					ImGui::TableNextColumn();
 				};
 
-				if (collapsing_header("Windows, Frames and Popups"))
+				if (ui::collapsing_header("Windows, Frames and Popups"))
 				{
 					ImGui::PushStyleColor(ImGuiCol_TableRowBg, temp_theme.style.Colors[ImGuiCol_MenuBarBg]);
 					if (ImGui::BeginTable("##Background", 2, table_flags))
@@ -88,7 +90,7 @@ namespace vt::widgets
 					}
 					ImGui::PopStyleColor();
 				}
-				if (collapsing_header("Text"))
+				if (ui::collapsing_header("Text"))
 				{
 					static auto draw_text = [&](const std::string& label, std::string info, ImGuiCol_ col_id)
 					{
@@ -114,7 +116,7 @@ namespace vt::widgets
 					}
 					ImGui::PopStyleColor();
 				}
-				if (collapsing_header("Buttons"))
+				if (ui::collapsing_header("Buttons"))
 				{
 					static auto draw_button = [&](const std::string& label, std::string info, ImGuiCol_ col_id)
 					{
@@ -169,7 +171,7 @@ namespace vt::widgets
 					ImGui::PopStyleColor();
 				}
 
-				if (collapsing_header("Tabs"))
+				if (ui::collapsing_header("Tabs"))
 				{
 					static auto draw_tab = [&](const std::string& label, std::string info, ImGuiCol_ col_id)
 					{
@@ -213,7 +215,7 @@ namespace vt::widgets
 					ImGui::PopStyleColor();
 				}
 
-				if (collapsing_header("Scrollbars, Headers and Separators"))
+				if (ui::collapsing_header("Scrollbars, Headers and Separators"))
 				{
 					static auto draw_header = [&](const std::string& label, std::string info, ImGuiCol_ col_id)
 					{

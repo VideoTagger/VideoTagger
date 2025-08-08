@@ -1,103 +1,11 @@
 #include "pch.hpp"
 #include "controls.hpp"
 #include <ui/icons.hpp>
+#include <ui/widgets/common.hpp>
 #include "time_input.hpp"
 
 namespace vt::widgets
 {
-	bool checkbox(const char* label, bool* value)
-	{
-		auto& style = ImGui::GetStyle();
-
-		bool result{};
-		ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 3);
-		result = ImGui::Checkbox(label, value);
-		ImGui::PopStyleVar();
-		return result;
-	}
-
-	bool icon_button(const char* label, const ImVec2& size, const ImVec4& color)
-	{
-		ImGui::PushStyleColor(ImGuiCol_Button, ImVec4{});
-		ImGui::PushStyleColor(ImGuiCol_Text, color);
-		ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 2.5f);
-		bool result = ImGui::Button(label, size);
-		ImGui::PopStyleVar();
-		ImGui::PopStyleColor(2);
-		if (!is_item_disabled() and ImGui::IsItemHovered())
-		{
-			ImGui::SetMouseCursor(ImGuiMouseCursor_Hand);
-		}
-		return result;
-	}
-
-	bool icon_button_no_cursor(const char* label, const ImVec2& size, const ImVec4& color)
-	{
-		ImGui::PushStyleColor(ImGuiCol_Button, ImVec4{});
-		ImGui::PushStyleColor(ImGuiCol_Text, color);
-		ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 2.5f);
-		bool result = ImGui::Button(label, size);
-		ImGui::PopStyleColor(2);
-		ImGui::PopStyleVar();
-		return result;
-	}
-
-	void tooltip(const char* text)
-	{
-		ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 4.f);
-		if (ImGui::IsItemHovered(ImGuiHoveredFlags_ForTooltip | ImGuiHoveredFlags_DelayNormal) and ImGui::BeginTooltip())
-		{
-			ImGui::TextUnformatted(text);
-			ImGui::EndTooltip();
-		}
-		ImGui::PopStyleVar();
-	}
-
-	bool icon_toggle_button(const char* label, bool is_toggled, const ImVec2& size, const ImVec4& color)
-	{
-		bool result = icon_button(label, size, is_toggled ? color : ImGui::GetStyleColorVec4(ImGuiCol_TextDisabled));
-		if (!is_item_disabled() and ImGui::IsItemHovered())
-		{
-			ImGui::SetMouseCursor(ImGuiMouseCursor_Hand);
-		}
-		return result;
-	}
-
-	bool collapsing_header(const char* label, bool hide_background)
-	{
-		auto& style = ImGui::GetStyle();
-		if (hide_background) ImGui::PushStyleColor(ImGuiCol_Header, ImVec4{});
-		ImGui::PushStyleColor(ImGuiCol_Text, ImVec4{});
-		std::string node_id = "##Node" + std::string(label);
-		auto cx = ImGui::GetCursorPosX();
-		bool result = ImGui::TreeNodeEx(node_id.c_str(), ImGuiTreeNodeFlags_Framed | ImGuiTreeNodeFlags_SpanFullWidth | ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_NoTreePushOnOpen);
-		
-		int pop_count = 1;
-		if (hide_background) ++pop_count;
-		ImGui::PopStyleColor(pop_count);
-		auto icon = result ? icons::expand_less : icons::expand_more;
-
-		ImGui::SameLine();
-		auto px = ImGui::GetCursorPosX();
-		ImGui::SetCursorPosX(px - (px - cx) + style.ItemInnerSpacing.x);
-		//ImGui::SameLine(ImGui::GetTreeNodeToLabelSpacing());
-		ImGui::TextUnformatted(label);
-		ImGui::SameLine(ImGui::GetContentRegionMax().x - style.FramePadding.x - ImGui::CalcTextSize(icon).x);
-		ImGui::TextUnformatted(icon);
-		return result;
-	}
-
-	void label(const char* label)
-	{
-		ImGui::PushStyleColor(ImGuiCol_Button, {});
-		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, {});
-		ImGui::PushStyleColor(ImGuiCol_ButtonActive, {});
-		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2{ 0, ImGui::GetStyle().FramePadding.y });
-		ImGui::Button(label);
-		ImGui::PopStyleColor(3);
-		ImGui::PopStyleVar();
-	}
-
 	//Original Author: https://github.com/ocornut/imgui/issues/474#issuecomment-169480920
 	//This is a modified version
 	bool begin_button_dropdown(const char* label, ImVec2 button_size, float popup_height)
@@ -171,91 +79,6 @@ namespace vt::widgets
 		ImGui::PopStyleColor(3);
 		ImGui::EndPopup();
 	}
-
-	void item_spacer(const ImVec2& size)
-	{
-		const auto& style = ImGui::GetStyle();
-		ImGui::Dummy({ size.x == 0.f ? style.ItemSpacing.x : size.x, size.y == 0.f ? style.ItemSpacing.y : size.y});
-	}
-
-	void vertical_item_spacer(float height)
-	{
-		const auto& style = ImGui::GetStyle();
-		ImGui::Dummy({ 0.f, height == 0.f ? style.ItemSpacing.y : height });
-	}
-
-	void horizontal_item_spacer(float width)
-	{
-		const auto& style = ImGui::GetStyle();
-		ImGui::Dummy({ width == 0.f ? style.ItemSpacing.x : width, 0.f });
-	}
-
-	void help_marker(const char* description)
-	{
-		ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 4.0f);
-		ImGui::TextDisabled(icons::help);
-		if (ImGui::BeginItemTooltip())
-		{
-			ImGui::PushTextWrapPos(ImGui::GetFontSize() * 35.0f);
-			ImGui::TextUnformatted(description);
-			ImGui::PopTextWrapPos();
-			ImGui::EndTooltip();
-		}
-		ImGui::PopStyleVar();
-	}
-	
-	void centered_text(const char* text, ImVec2 avail_area, ImVec2 offset)
-	{
-		//auto half_text_size = ImGui::CalcTextSize(text, nullptr, false, 3 * avail_area.x / 4) / 2;
-		auto half_text_size = ImGui::CalcTextSize(text, nullptr, false, 3 * avail_area.x / 4) / 2;
-		auto cpos = ImGui::GetCursorPos();
-		ImGui::SetCursorPos(offset + avail_area / 2 - half_text_size);
-		ImGui::BeginDisabled();
-		ImGui::TextWrapped("%s", text);
-		ImGui::EndDisabled();
-		ImGui::SetCursorPos(cpos);
-	}
-
-	void clipped_text(const char* text, ImVec2 avail_area)
-	{
-		static auto get_text_size = [&](const char* text)
-		{
-			auto size = ImGui::CalcTextSize(text, nullptr, false, avail_area.x);
-			return size;
-		};
-
-		ImVec2 text_size = get_text_size(text);
-
-		std::string str = text;
-		if (text_size.x <= avail_area.x and text_size.y <= avail_area.y)
-		{
-			ImGui::TextWrapped("%s", text);
-			return;
-		}
-
-		while (!str.empty() and (text_size.x > avail_area.x or text_size.y > avail_area.y))
-		{
-			str.pop_back();
-			std::string temp = str + "...";
-			text_size = get_text_size(temp.c_str());
-		}
-
-		if (!str.empty())
-		{
-			std::string temp = str + "...";
-			ImGui::TextWrapped("%s", temp.c_str());
-		}
-	}
-
-	void text_with_size(const char* text, ImVec2 size)
-	{
-		auto text_size = ImGui::CalcTextSize(text);
-		size.x = std::max(size.x, text_size.x);
-		size.y = std::max(size.y, text_size.y);
-
-		ImGui::SetCursorPos(ImGui::GetCursorPos() + (size - text_size) / 2);
-		ImGui::TextUnformatted(text);
-	}
 	
 	bool timestamp_control(const std::string& name, timestamp& timestamp, uint64_t min_timestamp, uint64_t max_timestamp, bool* was_activated, bool* was_released, bool fill_area)
 	{
@@ -315,7 +138,7 @@ namespace vt::widgets
 		}
 
 		ImGui::BeginDisabled(is_dragging and frame >= 0);
-		if (is_dragging ? icon_button_no_cursor(icons::chevron_left) : icon_button(icons::chevron_left))
+		if (is_dragging ? ui::icon_button_no_cursor(icons::chevron_left) : ui::icon_button(icons::chevron_left))
 		{
 			auto new_frame = frame - 1;
 			if (frame != new_frame)
@@ -343,7 +166,7 @@ namespace vt::widgets
 
 		ImGui::SameLine();
 		ImGui::BeginDisabled(is_dragging and frame <= 0);
-		if (is_dragging ? icon_button_no_cursor(icons::chevron_right) : icon_button(icons::chevron_right))
+		if (is_dragging ? ui::icon_button_no_cursor(icons::chevron_right) : ui::icon_button(icons::chevron_right))
 		{
 			auto new_frame = frame + 1;
 			if (frame != new_frame)
@@ -431,7 +254,7 @@ namespace vt::widgets
 
 		if (is_shortened)
 		{
-			tooltip(label.c_str());
+			ui::tooltip(label);
 		}
 
 		if (context_menu != nullptr and ImGui::BeginPopupContextItem("##TileCtxMenu"))
@@ -601,12 +424,6 @@ namespace vt::widgets
 	{
 		ImGui::Indent();
 		ImGui::TreePop();
-	}
-
-	bool is_item_disabled()
-	{
-		ImGuiContext& g = *GImGui;
-		return (g.CurrentItemFlags & ImGuiItemFlags_Disabled) != 0;
 	}
 
 	bool table_hovered_row_style()

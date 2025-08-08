@@ -5,6 +5,7 @@
 #include "slider.hpp"
 #include "controls.hpp"
 #include <ui/icons.hpp>
+#include <ui/widgets/common.hpp>
 #include "time_input.hpp"
 #include <core/app_context.hpp>
 
@@ -163,29 +164,29 @@ namespace vt::widgets
 				auto button_pos_x = avail_size.x / 2 - (button_size + imgui_style.ItemSpacing.x) * 5.f / 2;
 
 				ImGui::SetCursorPosX(cursor_pos.x + button_pos_x);
-				if (icon_button(icons::skip_prev, { button_size, button_size })) 
+				if (ui::icon_button(icons::skip_prev, { button_size, button_size }))
 				{
 					std::invoke(callbacks.on_skip, -1, loop_mode_, is_playing_);
 				}
 				ImGui::SameLine();
-				if (icon_button(icons::fast_back, { button_size, button_size }))
+				if (ui::icon_button(icons::fast_back, { button_size, button_size }))
 				{
 					set_playing(false);
 					std::invoke(callbacks.on_seek, std::chrono::nanoseconds{});
 				}
 				ImGui::SameLine();
-				if (icon_button(is_playing_ ? icons::pause : icons::play, { button_size, button_size }))
+				if (ui::icon_button(is_playing_ ? icons::pause : icons::play, { button_size, button_size }))
 				{
 					set_playing(!is_playing_);
 				}
 				ImGui::SameLine();
-				if (icon_button(icons::fast_fwd, { button_size, button_size }))
+				if (ui::icon_button(icons::fast_fwd, { button_size, button_size }))
 				{
 					set_playing(false);
 					std::invoke(callbacks.on_seek, std::chrono::nanoseconds(data_.end_ts));
 				}
 				ImGui::SameLine();
-				if (icon_button(icons::skip_next, { button_size, button_size }))
+				if (ui::icon_button(icons::skip_next, { button_size, button_size }))
 				{
 					std::invoke(callbacks.on_skip, 1, loop_mode_, is_playing_);
 				}
@@ -193,21 +194,21 @@ namespace vt::widgets
 
 			ImGui::NextColumn();
 			{
-				if (icon_toggle_button(icons::play_next, ctx_.app_settings.autoplay, { button_size, button_size }))
+				if (ui::icon_toggle_button(icons::play_next, ctx_.app_settings.autoplay, { button_size, button_size }))
 				{
 					ctx_.app_settings.autoplay = !ctx_.app_settings.autoplay;
 					ctx_.settings["autoplay"] = ctx_.app_settings.autoplay;
 				}
 				if (has_child_videos)
 				{
-					tooltip(ctx_.app_settings.autoplay ? "Autoplay: On" : "Autoplay: Off");
+					ui::tooltip(ctx_.app_settings.autoplay ? "Autoplay: On" : "Autoplay: Off");
 				}
 
 				ImGui::SameLine();
 				bool looping = loop_mode_ != loop_mode::off;
 
 				auto loop_icon = loop_mode_ != loop_mode::one ? icons::repeat : icons::repeat_one;
-				if (icon_toggle_button(loop_icon, looping, { button_size, button_size }))
+				if (ui::icon_toggle_button(loop_icon, looping, { button_size, button_size }))
 				{
 					switch (loop_mode_)
 					{
@@ -222,9 +223,9 @@ namespace vt::widgets
 				{
 					switch (loop_mode_)
 					{
-					case loop_mode::off: tooltip("Loop: Off"); break;
-					case loop_mode::all: tooltip("Loop: All"); break;
-					case loop_mode::one: tooltip("Loop: One"); break;
+					case loop_mode::off: ui::tooltip("Loop: Off"); break;
+					case loop_mode::all: ui::tooltip("Loop: All"); break;
+					case loop_mode::one: ui::tooltip("Loop: One"); break;
 					}
 				}
 				ImGui::SameLine();

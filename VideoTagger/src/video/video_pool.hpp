@@ -5,7 +5,7 @@
 #include <SDL_opengl.h>
 
 #include "video_stream.hpp"
-#include <utils/uuid.hpp>
+#include <utils/random.hpp>
 #include "video_resource.hpp"
 #include <tags/tag_timeline.hpp>
 

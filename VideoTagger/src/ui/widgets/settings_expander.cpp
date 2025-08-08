@@ -2,6 +2,7 @@
 #include "settings_expander.hpp"
 #include <widgets/controls.hpp>
 #include <core/app_context.hpp>
+#include <ui/widgets/common.hpp>
 
 namespace vt::ui
 {
@@ -18,7 +19,7 @@ namespace vt::ui
 
 		ImGui::GetWindowDrawList()->AddRectFilled(cpos, cpos + size_, IM_COL32(50, 50, 50, 100), rounding);
 
-		widgets::horizontal_item_spacer(style.FramePadding.x);
+		ui::horizontal_item_spacer(style.FramePadding.x);
 		ImGui::SameLine();
 
 		float width = ImGui::GetContentRegionAvail().x;
@@ -43,10 +44,10 @@ namespace vt::ui
 				footer_content_(size_.y);
 			}
 			ImGui::SameLine();
-			widgets::horizontal_item_spacer(style.FramePadding.x);
+			ui::horizontal_item_spacer(style.FramePadding.x);
 			ImGui::EndTable();
 		}
-		widgets::vertical_item_spacer(style.ItemSpacing.y);
+		ui::vertical_item_spacer(style.ItemSpacing.y);
 
 		auto end_pos = ImGui::GetCursorScreenPos();
 		end_pos.x += width - style.FramePadding.x;

@@ -5,7 +5,7 @@
 #include <utils/timestamp_span.hpp>
 #include <tags/tag_timeline.hpp>
 
-#include <ui/widgets/raw_scrollbar.hpp>
+#include <ui/widgets/raw_slider.hpp>
 
 namespace vt::widgets
 {
@@ -35,8 +35,8 @@ namespace vt::widgets
 		timeline();
 
 	private:
-		ui::raw_scrollbar<int64_t> preview_scrollbar_;
-		ui::raw_scrollbar<int64_t> playback_scrollbar_;
+		ui::raw_slider<int64_t> preview_scrollbar_;
+		ui::raw_slider<int64_t> playback_scrollbar_;
 		float zoom_ = 1.f;
 		timestamp view_ts_{};
 		bool enabled_ = true;

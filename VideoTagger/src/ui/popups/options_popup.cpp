@@ -3,6 +3,7 @@
 
 #include <widgets/controls.hpp>
 #include <core/app_context.hpp>
+#include <ui/widgets/common.hpp>
 
 namespace vt::ui
 {
@@ -34,7 +35,7 @@ namespace vt::ui
 			{
 				for (auto& [group, tabs] : groups_)
 				{
-					if (widgets::collapsing_header(group.c_str(), true))
+					if (ui::collapsing_header(group, true))
 					{
 						for (auto& [name, body] : tabs)
 						{

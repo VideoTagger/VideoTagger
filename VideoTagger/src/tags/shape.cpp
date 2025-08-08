@@ -8,8 +8,10 @@
 #include <utils/vec.hpp>
 #include <utils/intersection.hpp>
 #include <tags/tag.hpp>
-#include <utils/lerp.hpp>
+#include <utils/math.hpp>
 #include <widgets/time_input.hpp>
+
+#include <ui/widgets/common.hpp>
 
 namespace vt
 {
@@ -21,14 +23,14 @@ namespace vt
 		if (ImGui::BeginTable("##VertexList", 2, ImGuiTableFlags_BordersOuter))
 		{
 			ImGui::TableNextColumn();
-			if (modifiable and widgets::icon_button(icons::add))
+			if (modifiable and ui::icon_button(icons::add))
 			{
 				vertices.push_back({});
 				gizmo_target = nullptr;
 			}
 			if (modifiable)
 			{
-				widgets::tooltip("Add Vertex");
+				ui::tooltip("Add Vertex");
 			}
 			ImGui::SameLine();
 			ImGui::AlignTextToFramePadding();
@@ -141,7 +143,7 @@ namespace vt
 					//if region size changed then dont lerp those shapes
 					for (size_t i = 0; i < std::min(size_prev, size_next); ++i)
 					{
-						draw_circle(utils::lerp(regions_prev[i], regions_next[i], alpha), i);
+						draw_circle(math::lerp(regions_prev[i], regions_next[i], alpha), i);
 					}
 				}
 				else
@@ -204,7 +206,7 @@ namespace vt
 					//if region size changed then dont lerp those shapes
 					for (size_t i = 0; i < std::min(size_prev, size_next); ++i)
 					{
-						draw_rect(utils::lerp(regions_prev[i], regions_next[i], alpha), i);
+						draw_rect(math::lerp(regions_prev[i], regions_next[i], alpha), i);
 					}
 				}
 				else
@@ -268,7 +270,7 @@ namespace vt
 					//if region size changed then dont lerp those shapes
 					for (size_t i = 0; i < std::min(size_prev, size_next); ++i)
 					{
-						draw_poly(utils::lerp(regions_prev[i], regions_next[i], alpha), i);
+						draw_poly(math::lerp(regions_prev[i], regions_next[i], alpha), i);
 					}
 				}
 				else
@@ -293,7 +295,7 @@ namespace vt
 		bool is_ts_modifiable = is_modifiable and ((is_timestamp and map.empty()) or !is_timestamp);
 
 		ImVec2 separator_pos;
-		if (is_ts_modifiable and widgets::icon_button(icons::add))
+		if (is_ts_modifiable and ui::icon_button(icons::add))
 		{
 			if constexpr (!std::is_same_v<std::monostate, std::remove_const_t<std::remove_reference_t<decltype(map)>>>)
 			{
@@ -315,7 +317,7 @@ namespace vt
 		}
 		if (is_ts_modifiable)
 		{
-			widgets::tooltip("Add Keyframe");
+			ui::tooltip("Add Keyframe");
 		}
 		ImGui::SameLine();
 		ImGui::AlignTextToFramePadding();
@@ -376,12 +378,12 @@ namespace vt
 					ImGui::EndDisabled();
 					ImGui::Columns();
 
-					if (widgets::icon_button(icons::new_region))
+					if (ui::icon_button(icons::new_region))
 					{
 						map[keyframe].push_back({});
 						dirty_flag = true;
 					}
-					widgets::tooltip("Add Region");
+					ui::tooltip("Add Region");
 					ImGui::SameLine();
 					ImGui::SeparatorText("Regions");
 					if (ImGui::BeginTable(fmt::format("##Shape{}Regions", shape_name).c_str(), 1))

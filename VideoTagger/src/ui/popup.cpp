@@ -3,6 +3,7 @@
 
 #include <core/app_context.hpp>
 #include <widgets/controls.hpp>
+#include <ui/widgets/common.hpp>
 
 namespace vt::ui
 {
@@ -59,7 +60,7 @@ namespace vt::ui
 				ImGui::TextUnformatted(id().c_str());
 				ImGui::PopFont();
 				post_title_render();
-				widgets::vertical_item_spacer(ImGui::GetTextLineHeight() * 0.75f);
+				ui::vertical_item_spacer(ImGui::GetTextLineHeight() * 0.75f);
 			}
 			on_render();
 			post_render();
@@ -138,7 +139,7 @@ namespace vt::ui
 		const auto& style = ImGui::GetStyle();
 		auto icon = icons::exit;
 		ImGui::SameLine(ImGui::GetWindowWidth() - ImGui::CalcTextSize(icon).x - 2 * (style.WindowPadding.x - style.WindowRounding));
-		if (widgets::icon_button(icon))
+		if (ui::icon_button(icon))
 		{
 			close();
 		}

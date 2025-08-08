@@ -50,6 +50,7 @@ namespace vt::ui
 	protected:
 		/**
 		 * @brief Begins the popup rendering context
+		 * 
 		 * @return true if the popup is open and should be rendered, false otherwise
 		 */
 		virtual bool pre_render();
@@ -92,6 +93,7 @@ namespace vt::ui
 	/**
 	 * @brief Creates a new popup of the given type
 	 * @param[in] args Constructor arguments for the popup
+	 * 
 	 * @return Created popup
 	 */
 	template<typename popup_type, typename... arguments, typename = std::enable_if_t<std::is_base_of_v<ui::popup, popup_type> and std::is_constructible_v<popup_type, arguments...>>>

@@ -7,6 +7,7 @@
 #include <widgets/google_drive_browser.hpp>
 #include <widgets/controls.hpp>
 #include <ui/icons.hpp>
+#include <ui/widgets/common.hpp>
 
 #define CPPHTTPLIB_OPENSSL_SUPPORT
 #include <httplib.h>
@@ -312,7 +313,7 @@ namespace vt
 							}
 						}
 
-						if (widgets::icon_button(icons::delete_, button_size))
+						if (ui::icon_button(icons::delete_, button_size))
 						{
 							remove_it = it;
 						}

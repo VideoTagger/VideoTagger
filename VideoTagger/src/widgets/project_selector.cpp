@@ -7,6 +7,7 @@
 #include <utils/string.hpp>
 #include <utils/time.hpp>
 #include <ui/icons.hpp>
+#include <ui/widgets/common.hpp>
 #include "controls.hpp"
 
 #include <core/app.hpp>
@@ -170,7 +171,7 @@ namespace vt::widgets
 		ImGui::PushFont(ctx_.get_font(font_type::h5));
 		ImGui::TextDisabled("%s", path.string().c_str());
 		ImGui::PopFont();
-		tooltip(path.string().c_str());
+		ui::tooltip(path.string());
 		ImGui::EndGroup();
 
 		ImGui::TableNextColumn();
@@ -198,7 +199,7 @@ namespace vt::widgets
 
 		ImGui::TableNextColumn();
 		ImGui::PushID(imgui_id);
-		if (widgets::icon_button(icons::dots_hor, size))
+		if (ui::icon_button(icons::dots_hor, size))
 		{
 			ImGui::OpenPopup("##ProjectCtxMenu");
 		}

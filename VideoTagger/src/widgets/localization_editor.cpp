@@ -1,11 +1,11 @@
 #include "pch.hpp"
 #include "localization_editor.hpp"
 #include <ui/icons.hpp>
+#include <ui/widgets/common.hpp>
 #include "controls.hpp"
 
 #include <core/app_context.hpp>
 #include <utils/filesystem.hpp>
-
 
 namespace vt::widgets
 {
@@ -23,11 +23,11 @@ namespace vt::widgets
 			static constexpr int table_flags = ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_BordersInner | ImGuiTableFlags_RowBg | ImGuiTableFlags_NoSavedSettings | ImGuiTableFlags_ScrollX | ImGuiTableFlags_ScrollY | ImGuiTableFlags_Resizable;
 
 			ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2{ 0.f, style.ItemSpacing.y });
-			bool add_lang = icon_button(icons::add);
+			bool add_lang = ui::icon_button(icons::add);
 
-			tooltip("Add Language");
+			ui::tooltip("Add Language");
 			ImGui::SameLine();
-			if (icon_button(icons::save))
+			if (ui::icon_button(icons::save))
 			{
 				for (auto& lang : langs)
 				{
@@ -36,9 +36,9 @@ namespace vt::widgets
 					lang->set_dirty(false);
 				}
 			}
-			tooltip("Save");
+			ui::tooltip("Save");
 			ImGui::SameLine();
-			if (icon_button(icons::download))
+			if (ui::icon_button(icons::download))
 			{
 				utils::dialog_filters filters{ utils::dialog_filter{ "VideoTagger Lang Pack", lang_pack::extension } };
 
@@ -55,9 +55,9 @@ namespace vt::widgets
 					}
 				}
 			}
-			tooltip("Import");
+			ui::tooltip("Import");
 			ImGui::SameLine();
-			if (icon_button(icons::upload))
+			if (ui::icon_button(icons::upload))
 			{
 				auto output_dir = utils::filesystem::get_folder();
 				if (output_dir)
@@ -69,10 +69,12 @@ namespace vt::widgets
 					}
 				}
 			}
-			tooltip("Export");
+			ui::tooltip("Export");
 			ImGui::SameLine();
-			bool remove_lang = icon_button(icons::delete_);
-			tooltip("Delete");
+			ImGui::BeginDisabled(lang_count <= 1);
+			bool remove_lang = ui::icon_button(icons::delete_);
+			ImGui::EndDisabled();
+			if (lang_count > 1) ui::tooltip("Delete");
 			ImGui::PopStyleVar();
 
 			if (lang_count > 0 and ImGui::BeginTable("##Languages", static_cast<int>(lang_count + 1), table_flags))
