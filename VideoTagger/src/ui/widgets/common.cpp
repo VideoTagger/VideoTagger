@@ -24,10 +24,29 @@ namespace vt::ui
 		if (text.empty()) return;
 
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 4.f);
+
 		if (ImGui::IsItemHovered(ImGuiHoveredFlags_ForTooltip | ImGuiHoveredFlags_DelayNormal) and ImGui::BeginTooltip())
 		{
 			ImGui::TextUnformatted(text.c_str());
 			ImGui::EndTooltip();
+		}
+		ImGui::PopStyleVar();
+	}
+
+	void tooltip(const std::string& text, ImVec2 pos)
+	{
+		if (text.empty()) return;
+
+		ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 4.f);
+
+		if (ImGui::IsItemHovered(ImGuiHoveredFlags_ForTooltip | ImGuiHoveredFlags_DelayNormal))
+		{
+			ImGui::SetNextWindowPos(pos);
+			if (ImGui::BeginTooltip())
+			{
+				ImGui::TextUnformatted(text.c_str());
+				ImGui::EndTooltip();
+			}
 		}
 		ImGui::PopStyleVar();
 	}
@@ -268,7 +287,12 @@ namespace vt::ui
     bool toggle(const std::string& label, bool& value)
     {
 		static auto config = toggle_config();
-		return ImGui::Toggle(label.c_str(), &value, config);
+		bool result = ImGui::Toggle(label.c_str(), &value, config);
+		if (!is_item_disabled() and ImGui::IsItemHovered())
+		{
+			ImGui::SetMouseCursor(ImGuiMouseCursor_Hand);
+		}
+		return result;
     }
 
 	bool checkbox(const std::string& label, bool& value)

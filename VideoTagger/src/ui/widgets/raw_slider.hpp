@@ -16,7 +16,7 @@ namespace vt::ui
 	struct raw_slider : public widget
 	{
 	public:
-		constexpr raw_slider(type min = std::numeric_limits<type>::min(), type max = std::numeric_limits<type>::max(), type value = {}, const ImVec2& size = {}) : min_{ min }, max_{ max }, value_{ value }, size_{ size } {}
+		constexpr raw_slider(type min = std::numeric_limits<type>::min(), type max = std::numeric_limits<type>::max(), type value = {}, const ImVec2& size = {}) : min_{ min }, max_{ max }, value_{ value }, step_{}, size_ { size } {}
 
 	private:
 		std::function<void(type new_value)> on_change_;
@@ -25,9 +25,11 @@ namespace vt::ui
 		type min_;
 		type max_;
 		type value_;
+		type step_;
 		float mouse_offset_x_{};
 		bool is_pannable_{};
 		bool is_dragged_{};
+		bool is_hovered_{};
 
 	public:
 		virtual bool render() override
@@ -41,6 +43,8 @@ namespace vt::ui
 			ImGui::Dummy(size_);
 
 			if (!is_enabled()) return true;
+
+			is_hovered_ = ImGui::IsItemHovered();
 
 			if (ImGui::IsItemClicked())
 			{
@@ -63,6 +67,10 @@ namespace vt::ui
 					mouse_pos.x += mouse_offset_x_;
 				}
 				value_ = math::normalize(mouse_pos.x, draw_rect.Min.x, draw_rect.Max.x, min_, max_);
+				if (step_ != 0)
+				{
+					value_ = std::round(value_ / step_) * step_;
+				}
 				if (on_change_ != nullptr)
 				{
 					on_change_(value_);
@@ -116,6 +124,11 @@ namespace vt::ui
 			on_change_ = callback;
 		}
 
+		constexpr void set_step(type step)
+		{
+			step_ = step;
+		}
+
 		constexpr type value() const
 		{
 			return value_;
@@ -131,9 +144,19 @@ namespace vt::ui
 			return max_;
 		}
 
+		constexpr type step() const
+		{
+			return step_;
+		}
+
 		constexpr bool is_dragged() const
 		{
 			return is_dragged_;
+		}
+
+		constexpr bool is_hovered() const
+		{
+			return is_hovered_;
 		}
 
 		constexpr ImRect rect() const

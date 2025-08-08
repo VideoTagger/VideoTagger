@@ -71,8 +71,10 @@ namespace vt::widgets
 			}
 			ui::tooltip("Export");
 			ImGui::SameLine();
+			ImGui::BeginDisabled(lang_count <= 1);
 			bool remove_lang = ui::icon_button(icons::delete_);
-			ui::tooltip("Delete");
+			ImGui::EndDisabled();
+			if (lang_count > 1) ui::tooltip("Delete");
 			ImGui::PopStyleVar();
 
 			if (lang_count > 0 and ImGui::BeginTable("##Languages", static_cast<int>(lang_count + 1), table_flags))

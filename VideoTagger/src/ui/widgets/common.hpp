@@ -5,6 +5,7 @@
 namespace vt::ui
 {
 	void tooltip(const std::string& text);
+	void tooltip(const std::string& text, ImVec2 pos);
 	void help_marker(const std::string& description);
 	
 	///@defgroup ui_text UI Text
