@@ -214,7 +214,7 @@ namespace vt::widgets
 					{
 						if (ts->start != ts_start or ts->end != ts_end)
 						{
-							ts_id = timeline.replace(ts_id, ts_start, ts_end).first;
+							ts_id = timeline.move(ts_id, ts_start, ts_end).first;
 							ts = &timeline.at(ts_id);
 							dirty_flag = true;
 						}
@@ -235,7 +235,7 @@ namespace vt::widgets
 					if (pressed_yes)
 					{
 						auto& timeline = ctx_.get_current_segment_storage().at(selected_segment->tag);
-						ts_id = timeline.replace(ts_id, popup_ts_start, popup_ts_end).first;
+						ts_id = timeline.move(ts_id, popup_ts_start, popup_ts_end).first;
 						ts = &timeline.at(ts_id);
 
 						dirty_flag = true;

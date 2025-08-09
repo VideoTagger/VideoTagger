@@ -101,11 +101,11 @@ namespace vt
 		return update_it;
 	}
 
-	std::pair<segment_id, bool> tag_timeline::replace(segment_id id, timestamp new_start, timestamp new_end)
+	std::pair<segment_id, bool> tag_timeline::move(segment_id id, timestamp new_start, timestamp new_end)
 	{
 		if (new_start == new_end)
 		{
-			return replace(id, new_start);
+			return move(id, new_start);
 		}
 
 		timestamp prepare_start = new_start;
@@ -116,6 +116,7 @@ namespace vt
 			auto& overlapping = prepare_result->first;
 			bool can_insert = prepare_result->second;
 
+			// If target location is fully contained in the overlapping segment and its not the moved segment, just remove the moved segment.
 			if (!can_insert and overlapping.begin()->id != id)
 			{
 				auto result_id = prepare_result->first.begin()->id;
@@ -123,12 +124,15 @@ namespace vt
 				return { result_id, false };
 			}
 
+			// If the target location isn't overlapping only with the moved segment
 			if (!(overlapping.size() == 1 and overlapping.begin()->id == id))
 			{
+				// If the first overlapping segment is the moved segment, we can't use its start as the new start.
 				if (overlapping.begin()->id == id)
 				{
 					new_end = prepare_end;
 				}
+				// If the last overlapping segment is the moved segment, we can't use its end as the new end.
 				else if (std::prev(overlapping.end())->id == id)
 				{
 					new_start = prepare_start;
@@ -154,7 +158,7 @@ namespace vt
 		return { id, true };
 	}
 
-	std::pair<segment_id, bool> tag_timeline::replace(segment_id id, timestamp ts)
+	std::pair<segment_id, bool> tag_timeline::move(segment_id id, timestamp ts)
 	{
 		auto prepare_result = prepare_insert(ts);
 		if (prepare_result.has_value())
@@ -268,7 +272,7 @@ namespace vt
 		{
 			const auto& first_segment = overlapping.begin()->segment;
 			const auto& last_segment = std::prev(overlapping.end())->segment;
-			// if there is only one segment and it is fully contained in the new segment.
+			// If there is only one segment and it is fully contained in the new segment.
 			if (&first_segment == &last_segment and first_segment.start <= time_start and time_end <= first_segment.end)
 			{
 				return std::make_pair(overlapping, false);

@@ -119,22 +119,129 @@ namespace vt
 		using reverse_iterator = std::vector<segment_with_id>::const_reverse_iterator;
 
 		/** 
-		 * @brief 
+		 * @brief Insert a new segment
+		 * 
+		 * Invalidates all iterators and references to the segments.
+		 * If the inserted segment overlaps with an existing segments the existing segments will be erased and the inserted segment will be merged with them.
+		 * If the inserted segment is fully contained in an existing segment, it won't be inserted.
+		 * 
+		 * @param time_start Start time of the segment.
+		 * @param time_end End time of the segment.
+		 * @param attributes Optional attributes associated with the segment.
+		 * @return A pair containing the segment_id of the inserted segment, or the segment that prevented insertion,
+		 * and a boolean indicating whether the segment was inserted (true) or it was fully covered by an exisitng segment and thus not inserted (false).
 		 */
 		std::pair<segment_id, bool> insert(timestamp time_start, timestamp time_end, const tag_segment::attribute_instance_container& attributes = {});
+
+		/**
+		 * @brief Insert a new timestamp segment.
+		 * 
+		 * Invalidates all iterators and references to the segments.
+		 * If the inserted segment overlaps with an existing segments it won't be inserted.
+		 * 
+		 * @param ts Position of the segment.
+		 * @param attributes Optional attributes associated with the segment.
+		 * @return A pair containing the segment_id of the inserted segment, or the segment that prevented insertion,
+		 * and a boolean indicating whether the segment was inserted (true) or an existing segment prevented insertion (false).
+		 */
 		std::pair<segment_id, bool> insert(timestamp ts, const tag_segment::attribute_instance_container& attributes = {});
+
+		/**
+		 * @brief Erase a segment by its id.
+		 * 
+		 * Invalidates all iterators and references to the segments after the erased segment.
+		 * 
+		 * @param id ID of the segment to erase.
+		 */
 		void erase(segment_id id);
+
+		/**
+		 * @brief Erase a segment by its iterator.
+		 * 
+		 * Invalidates all iterators and references to the segments after the erased segment.
+		 * 
+		 * @param it Iterator to the segment to erase.
+		 * @return Iterator to the next element after the erased one.
+		 */
 		iterator erase(iterator it);
+
+		/**
+		 * @brief Erase a range of segments.
+		 * 
+		 * Invalidates all iterators and references to the segments after the erased range.
+		 * 
+		 * @param it_begin Iterator to the first segment to erase.
+		 * @param it_end Iterator to the last segment to erase (exclusive).
+		 * @return Iterator to the next element after the erased range.
+		 */
 		iterator erase(iterator it_begin, iterator it_end);
+
+		/**
+		 * @brief Erase segments that match a predicate.
+		 * 
+		 * Invalidates all iterators and references to the segments after and within the given range.
+		 * Unless no segments are erased, in which case the iterators remain valid.
+		 * 
+		 * @tparam Pred Predicate type.
+		 * @param it_begin Iterator to the first segment to consider for erasure.
+		 * @param it_end Iterator to the last segment to consider for erasure (exclusive).
+		 * @param predicate Predicate which takes a const reference to segment_with_id and returns true if the segment should be erased. 
+		 * @return Iterator to the next element after the erased range.
+		 */
 		template<typename Pred>
 		iterator erase_if(iterator it_begin, iterator it_end, Pred predicate);
 
-		std::pair<segment_id, bool> replace(segment_id id, timestamp new_start, timestamp new_end);
-		std::pair<segment_id, bool> replace(segment_id id, timestamp ts);
+		/**
+		 * @brief Moves a segment to the given location, merging it with existing segments if necessary.
+		 * 
+		 * Invalidates all iterators and references to the segments after the moved segment.
+		 * If the new location overlaps with existing segments, they will be merged.
+		 * If the new location is fully contained in an existing segment, the moved segment will be erased.
+		 * 
+		 * @param id ID of the segment to move.
+		 * @param new_start New start time of the segment.
+		 * @param new_end New end time of the segment.
+		 * @return A pair containing the segment_id of the moved segment, or the segment that prevented the move,
+		 * and a boolean indicating whether the segment was moved (true) or it was fully covered by an exisitng segment and thus not moved (false).
+		 */
+		std::pair<segment_id, bool> move(segment_id id, timestamp new_start, timestamp new_end);
 
+		/**
+		 * @brief Moves a segment to the given location, merging it with existing segments if necessary.
+		 * 
+		 * Invalidates all iterators and references to the segments after the moved segment.
+		 * If the new location overlaps with existing segments, the moved segment will be erased.
+		 * 
+		 * \param id ID of the segment to move.
+		 * \param ts New Location of the segment.
+		 * \return A pair containing the segment_id of the moved segment, or the segment that prevented the move,
+		 * and a boolean indicating whether the segment was moved (true) or it was fully covered by an exisitng segment and thus not moved (false).
+		 */
+		std::pair<segment_id, bool> move(segment_id id, timestamp ts);
 
+		/**
+		 * @brief Find all segments that overlap with the given range.
+		 * 
+		 * \param time_start Start time of the range.
+		 * \param time_end End time of the range.
+		 * \return A range of the segments that overlap with the given range. If no segments overlap, the range will be empty (will contain two end iterators).
+		 */
 		iterator_range<iterator> find_range(timestamp time_start, timestamp time_end) const;
+
+		/**
+		 * @brief Find a segment that overlaps with the given timestamp.
+		 * 
+		 * \param ts Timestamp to search for.
+		 * \return An iterator to the segment that overlaps with the given timestamp. If no segment overlaps, the end iterator will be returned.
+		 */
 		iterator find(timestamp ts) const;
+
+		/**
+		 * @brief Get a segment by its id.
+		 * 
+		 * \param id ID of the segment to get.
+		 * \return A const reference to the segment with the given id.
+		 */
 		const tag_segment& at(segment_id id) const;
 
 		iterator begin() const;
@@ -142,8 +249,26 @@ namespace vt
 		reverse_iterator rbegin() const;
 		reverse_iterator rend() const;
 
+		/**
+		 * @brief Check if the given id is valid (exists in the timeline).
+		 * 
+		 * @param id ID to check.
+		 * @return True if the id is valid, false otherwise.
+		 */
 		bool is_id_valid(segment_id id) const;
+
+		/**
+		 * @brief Get the number of segments in the timeline.
+		 * 
+		 * \return The number of segments in the timeline.
+		 */
 		size_t size() const;
+
+		/**
+		 * @brief Check if the timeline is empty (contains no segments).
+		 * 
+		 * \return True if the timeline is empty, false otherwise.
+		 */
 		bool empty() const;
 
 	private:
@@ -163,6 +288,12 @@ namespace vt
 	//key: tag name
 	using segment_storage = std::unordered_map<std::string, tag_timeline>;
 
+	/**
+	 * @brief Serialize a tag_segment to JSON.
+	 * 
+	 * \param json JSON object to serialize to.
+	 * \param segment The tag_segment to serialize.
+	 */
 	inline void to_json(nlohmann::ordered_json& json, const tag_segment& segment)
 	{
 		switch (segment.type())
@@ -205,6 +336,12 @@ namespace vt
 		}
 	}
 
+	/**
+	 * @brief Serialize a segment_storage to JSON.
+	 * 
+	 * \param json JSON object to serialize to.
+	 * \param ss The segment_storage to serialize.
+	 */
 	inline void to_json(nlohmann::ordered_json& json, const segment_storage& ss)
 	{
 		json = nlohmann::json::array();
