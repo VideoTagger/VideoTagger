@@ -52,7 +52,7 @@ namespace vt::widgets
 		//TODO: segment shouldn't be const
 		void draw_segment(const tag_segment& segment, const tag& tag, bool is_selected, bool is_dragged);
 		void draw_segment_preview(const tag_segment& segment, const tag& tag, float scaled_height, bool is_selected, bool is_dragged) const;
-		void draw_timespan_preview(float scaled_height) const;
+		void draw_timespan_preview(float scaled_height, bool& is_hovered) const;
 		void draw_scrollbar(segment_storage& segments, tag_storage& tags);
 		float time_to_pos(timestamp time, timestamp min, timestamp max) const;
 		float to_timeline_pos(timestamp time) const;

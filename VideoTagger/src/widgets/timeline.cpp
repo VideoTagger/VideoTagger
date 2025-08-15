@@ -328,7 +328,7 @@ namespace vt::widgets
 		draw_list->AddRectFilled(segment_rect.Min, segment_rect.Max, tag.color, rounding);
 	}
 
-	void timeline::draw_timespan_preview(float scaled_height) const
+	void timeline::draw_timespan_preview(float scaled_height, bool& is_hovered) const
 	{
 		static constexpr float height_padding = 0.5f;
 
@@ -352,8 +352,7 @@ namespace vt::widgets
 		auto max = ImVec2{ cell_rect->Min.x + scaled_end, cell_rect->Max.y - style.CellPadding.y - height_padding };
 
 		ImRect timespan_rect{ min, max };
-
-		bool is_hovered = enabled_ and ImGui::IsMouseHoveringRect(timespan_rect.Min, timespan_rect.Max);
+		is_hovered = enabled_ and ImGui::IsMouseHoveringRect(timespan_rect.Min, timespan_rect.Max);
 
 		draw_list->AddRectFilled(timespan_rect.Min, timespan_rect.Max, IM_COL32(36, 36, 36, is_hovered ? 200 : 128), 0.f);
 		draw_list->AddRect(timespan_rect.Min, timespan_rect.Max, IM_COL32(128, 128, 128, is_hovered ? 255 : 240), 0.f);
@@ -391,8 +390,14 @@ namespace vt::widgets
 
 				auto draw_list = ImGui::GetWindowDrawList();
 				draw_list->PushClipRect(table_rect.Min, table_rect.Max, true);
-				draw_timespan_preview(avail_height);
+				bool is_timespan_hovered = false;
+				draw_timespan_preview(avail_height, is_timespan_hovered);
 				draw_list->PopClipRect();
+
+				if (is_timespan_hovered)
+				{
+					ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeEW);
+				}
 
 				for (auto& [tag, timeline] : segments)
 				{
