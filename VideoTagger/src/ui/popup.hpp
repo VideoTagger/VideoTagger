@@ -47,6 +47,9 @@ namespace vt::ui
 		void open_and_render(bool condition, ImGuiPopupFlags flags = 0);
 		void render();
 
+		///@return true if the popup is open, false otherwise
+		[[nodiscard]] bool is_open() const;
+
 	protected:
 		/**
 		 * @brief Begins the popup rendering context

@@ -2549,7 +2549,7 @@ namespace vt
 			state.set_min_timestamp(timestamp::zero());
 			state.set_max_timestamp(timestamp(std::chrono::duration_cast<std::chrono::milliseconds>(group_duration)));
 			state.set_current_timestamp(timestamp{ std::chrono::duration_cast<std::chrono::milliseconds>(ctx_.displayed_videos.current_timestamp()) });
-			ctx_.timeline.render(v, ctx_.current_project->video_groups.at(ctx_.current_video_group_id()).segments(), ctx_.current_project->tags);
+			ctx_.timeline.render(v, ctx_.current_project->video_groups.at(ctx_.current_video_group_id()).segments(), ctx_.current_project->tags, ctx_.current_project->displayed_tags);
 		}
 		//ImGui::ShowDemoWindow();
 		//ImGui::OpenPopup("Script Progress");

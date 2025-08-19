@@ -6,6 +6,7 @@
 #include <tags/tag_timeline.hpp>
 
 #include <ui/widgets/raw_slider.hpp>
+#include <ui/popups/timeline_menu_popup.hpp>
 
 namespace vt::widgets
 {
@@ -65,7 +66,7 @@ namespace vt::widgets
 		timeline();
 
 	public:
-		void render(bool& is_open, segment_storage& segments, tag_storage& tags);
+		void render(bool& is_open, segment_storage& segments, tag_storage& tags, std::vector<std::string>& visible_tags);
 		//TODO: segment shouldn't be const
 		void set_on_seek_callback(const std::function<void(timestamp ts)>& callback);
 		void set_ctx_menu_callback(const std::function<void(const segment_with_id& segment_and_id, const tag& tag)>& callback);
@@ -88,6 +89,7 @@ namespace vt::widgets
 	private:
 		ui::raw_slider<int64_t> preview_scrollbar_;
 		ui::raw_slider<int64_t> playback_scrollbar_;
+		std::unique_ptr<ui::timeline_menu_popup> menu_popup_;
 		float zoom_ = 1.f;
 		timestamp view_ts_{};
 		bool enabled_ = true;

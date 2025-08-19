@@ -67,6 +67,11 @@ namespace vt::ui
 		}
 	}
 
+	bool popup::is_open() const
+	{
+		return ImGui::IsPopupOpen(id_.c_str());
+	}
+
 	bool popup::pre_render()
 	{
 		return ImGui::BeginPopup(id_.c_str(), flags_);

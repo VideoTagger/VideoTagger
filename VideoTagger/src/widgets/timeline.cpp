@@ -44,6 +44,7 @@ namespace vt::widgets
 				on_seek_(timestamp{ ts });
 			}
 		});
+		menu_popup_ = ui::new_popup<ui::timeline_menu_popup>(nullptr);
 	}
 
 	void timeline::draw_marker() const
@@ -625,7 +626,7 @@ namespace vt::widgets
 		return state_;
 	}
 
-	void timeline::render(bool& is_open, segment_storage& segments, tag_storage& tags)
+	void timeline::render(bool& is_open, segment_storage& segments, tag_storage& tags, std::vector<std::string>& visible_tags)
 	{
 		auto& style = ImGui::GetStyle();
 
@@ -659,7 +660,22 @@ namespace vt::widgets
 
 				ImGui::TableNextRow();
 				ImGui::TableNextColumn();
-				ui::icon_button(icons::add);
+				
+				ImGui::BeginDisabled(menu_popup_->is_open());
+				if (ui::icon_button(icons::dots_hor))
+				{
+					menu_popup_->set_visible_tags(visible_tags);
+					menu_popup_->set_tag_storage(&tags);
+					menu_popup_->open();
+				}
+				ImGui::EndDisabled();
+
+				menu_popup_->render();
+				if (menu_popup_->tags_modified())
+				{
+					visible_tags = menu_popup_->visible_tags();
+					//TODO: Mark project dirty
+				}
 
 				ImGui::TableNextColumn();
 				auto cell_rect = get_cell_rect();
@@ -693,6 +709,8 @@ namespace vt::widgets
 				
 				for (auto& [tag, timeline] : segments)
 				{
+					if (std::find(visible_tags.begin(), visible_tags.end(), tag) == visible_tags.end()) continue;
+
 					auto tag_it = tags.find(tag);
 					if (tag_it == tags.end())
 					{
@@ -708,7 +726,11 @@ namespace vt::widgets
 					//Left panel
 					ImGui::TableNextColumn();
 					ImGui::AlignTextToFramePadding();
+
+					ImGui::BeginDisabled(timeline.empty());
 					ImGui::TextUnformatted(tag.c_str());
+					ImGui::EndDisabled();
+					ui::tooltip(fmt::format("{} segment{}", timeline.size(), timeline.size() != 1 ? "s" : ""));
 
 					//Right panel
 					ImGui::TableNextColumn();
