@@ -48,8 +48,6 @@ namespace vt::widgets
 
 	void timeline::draw_marker() const
 	{
-		ImU32 marker_color = enabled_ ? 0xFF3E36FF : 0xFF3E3E3E; //0xA02A2AFF
-
 		auto draw_list = ImGui::GetWindowDrawList();
 		auto cell_rect = get_cell_rect();
 		ImVec2 vMin = ImGui::GetWindowContentRegionMin();
@@ -82,11 +80,12 @@ namespace vt::widgets
 		//line outline
 		draw_list->AddLine(top + line_offset, bottom, 0xA5000000, marker_width + 2 * outline_width);
 		
+		auto mark_col = marker_color();
 		draw_list->AddTriangleFilled
 		(
 			ImVec2{ marker_pos - triangle_span, top.y },
 			ImVec2{ marker_pos, top.y + item_height * 0.5f },
-			ImVec2{ marker_pos + triangle_span, top.y }, marker_color
+			ImVec2{ marker_pos + triangle_span, top.y }, mark_col
 		);
 
 		//triangle outline
@@ -97,7 +96,7 @@ namespace vt::widgets
 			ImVec2{ marker_pos + triangle_span, top.y }, 0xA5000000, outline_width
 		);
 
-		draw_list->AddLine(top + line_offset, bottom, marker_color, marker_width);
+		draw_list->AddLine(top + line_offset, bottom, mark_col, marker_width);
 	}
 
 	void timeline::draw_time_intervals() const
@@ -372,35 +371,52 @@ namespace vt::widgets
 		draw_list->AddRectFilled(segment_rect.Min, segment_rect.Max, tag.color, rounding);
 	}
 
-	void timeline::draw_timespan_preview(float scaled_height, bool& is_hovered) const
+	void timeline::draw_marker_preview(const ImRect& table_rect) const
+	{
+		static constexpr float marker_width = 2.0f;
+
+		const auto& style = ImGui::GetStyle();
+		auto avail_width = ImGui::GetContentRegionAvail().x;
+		auto draw_list = ImGui::GetWindowDrawList();
+
+		auto marker_pos = time_to_pos(state_.current_ts, state_.min_ts, state_.max_ts) * avail_width;
+		auto marker_rect = ImRect{ table_rect.Min.x + marker_pos - marker_width / 2, table_rect.Min.y + style.CellPadding.y, table_rect.Min.x + marker_pos + marker_width / 2, table_rect.Max.y - style.CellPadding.y };
+
+		draw_list->PushClipRect(table_rect.Min, table_rect.Max, true);
+		draw_list->AddRectFilled(marker_rect.Min, marker_rect.Max, marker_color());		
+		draw_list->PopClipRect();
+	}
+
+	void timeline::draw_timespan_preview(const ImRect& table_rect, bool& is_hovered) const
 	{
 		static constexpr float height_padding = 0.5f;
 
+		const auto& style = ImGui::GetStyle();
 		auto avail_width = ImGui::GetContentRegionAvail().x;
+		auto draw_list = ImGui::GetWindowDrawList();
 
 		auto [start, end] = visible_time_span();
 		auto scaled_start = time_to_pos(start, state_.min_ts, state_.max_ts) * avail_width;
 		auto scaled_end = time_to_pos(end, state_.min_ts, state_.max_ts) * avail_width;
 
-		auto cell_rect = get_cell_rect();
-		if (!cell_rect.has_value()) return;
-
-		auto& style = ImGui::GetStyle();
-		//cell_rect->Min.y += style.FramePadding.y;
-		cell_rect->Max.y = cell_rect->Min.y + scaled_height;
-
-		auto draw_list = ImGui::GetWindowDrawList();
 
 		auto scaled_width = (scaled_end - scaled_start);
-		auto min = ImVec2{ cell_rect->Min.x + scaled_start, cell_rect->Min.y + style.CellPadding.y + height_padding };
-		auto max = ImVec2{ cell_rect->Min.x + scaled_end, cell_rect->Max.y - style.CellPadding.y - height_padding };
+		auto min = ImVec2{ table_rect.Min.x + scaled_start, table_rect.Min.y + style.CellPadding.y + height_padding };
+		auto max = ImVec2{ table_rect.Min.x + scaled_end, table_rect.Max.y - style.CellPadding.y - height_padding };
 
 		ImRect timespan_rect{ min, max };
 		is_hovered = enabled_ and ImGui::IsMouseHoveringRect(timespan_rect.Min, timespan_rect.Max);
 
-		draw_list->AddRectFilled(timespan_rect.Min, timespan_rect.Max, IM_COL32(36, 36, 36, is_hovered ? 200 : 128), 0.f);
+		draw_list->PushClipRect(table_rect.Min, table_rect.Max, true);
+		draw_list->AddRectFilled(timespan_rect.Min, timespan_rect.Max, IM_COL32(36, 36, 36, is_hovered ? 100 : 75), 0.f);
 		draw_list->AddRect(timespan_rect.Min, timespan_rect.Max, IM_COL32(128, 128, 128, is_hovered ? 255 : 240), 0.f);
+		draw_list->PopClipRect();
 		//draw_list->AddRectFilled(timespan_rect.Min, timespan_rect.Max, IM_COL32(0xFF, 0xFF, 0xFF, 128), 0.f);
+
+		if (is_hovered)
+		{
+			ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeEW);
+		}
 	}
 
 	void timeline::draw_scrollbar(segment_storage& segments, tag_storage& tags)
@@ -423,25 +439,18 @@ namespace vt::widgets
 		auto cspos = ImGui::GetCursorScreenPos();
 		ImVec2 table_size{ ImGui::GetContentRegionAvail().x, avail_height };
 		ImRect table_rect{ cspos, ImVec2{ cspos.x + table_size.x, cspos.y + table_size.y } };
+		
 		if (ImGui::BeginTable("##TimelineSegments", 1, ImGuiTableFlags_NoSavedSettings, table_size))
 		{
 			ImGui::TableNextRow();
 			ImGui::TableNextColumn();
 			auto cell_rect = get_cell_rect();
+
 			if (cell_rect.has_value())
 			{
 				cell_rect->Max.y = cell_rect->Min.y + scaled_height;
-
 				auto draw_list = ImGui::GetWindowDrawList();
 				draw_list->PushClipRect(table_rect.Min, table_rect.Max, true);
-				bool is_timespan_hovered = false;
-				draw_timespan_preview(avail_height, is_timespan_hovered);
-				draw_list->PopClipRect();
-
-				if (is_timespan_hovered)
-				{
-					ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeEW);
-				}
 
 				for (auto& [tag, timeline] : segments)
 				{
@@ -467,9 +476,14 @@ namespace vt::widgets
 						draw_segment_preview(segment_and_id, *tag_it, scaled_height, is_selected, is_dragged);
 					}
 				}
+				draw_list->PopClipRect();
 			}
 
 			ImGui::EndTable();
+			
+			bool is_timespan_hovered = false;
+			draw_timespan_preview(table_rect, is_timespan_hovered);
+			draw_marker_preview(table_rect);			
 		}
 		ImGui::PopStyleVar(2);
 
@@ -730,6 +744,11 @@ namespace vt::widgets
 	void timeline::set_draw_tooltip_callback(const std::function<void(const segment_with_id& segment_and_id, const tag& tag)>& callback)
 	{
 		on_draw_tooltip_ = callback;
+	}
+
+	uint32_t timeline::marker_color() const
+	{
+		return enabled_ ? 0xFF3E36FF : 0xFF3E3E3E; //0xA02A2AFF
 	}
 
 	void timeline::set_segment_selection(const std::string& tag, segment_id segment, bool is_selected)

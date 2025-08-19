@@ -77,6 +77,7 @@ namespace vt::widgets
 		void unselect_all_segments(const std::string& tag);
 		void unselect_all_segments();
 
+		uint32_t marker_color() const;
 		bool is_segment_selected(const std::string& tag, segment_id segment) const;
 
 		utils::timestamp_span visible_time_span() const;
@@ -104,7 +105,8 @@ namespace vt::widgets
 		//TODO: segment shouldn't be const
 		void draw_segment(segment_storage& segments, const segment_with_id& segment_and_id, const tag& tag, bool is_selected, bool is_dragged);
 		void draw_segment_preview(const segment_with_id& segment_and_id, const tag& tag, float scaled_height, bool is_selected, bool is_dragged) const;
-		void draw_timespan_preview(float scaled_height, bool& is_hovered) const;
+		void draw_marker_preview(const ImRect& table_rect) const;
+		void draw_timespan_preview(const ImRect& table_rect, bool& is_hovered) const;
 		void draw_scrollbar(segment_storage& segments, tag_storage& tags);
 
 		timestamp to_timestamp(float pos) const;
