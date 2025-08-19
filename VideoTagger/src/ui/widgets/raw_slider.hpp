@@ -69,7 +69,7 @@ namespace vt::ui
 				value_ = math::normalize(mouse_pos.x, draw_rect.Min.x, draw_rect.Max.x, min_, max_);
 				if (step_ != 0)
 				{
-					value_ = std::round(value_ / step_) * step_;
+					value_ = static_cast<type>(std::round(value_ / step_) * step_);
 				}
 				if (on_change_ != nullptr)
 				{

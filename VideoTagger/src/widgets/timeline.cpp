@@ -129,15 +129,34 @@ namespace vt::widgets
 		}
 	}
 
-	void timeline::draw_segment(const tag_segment& segment, const tag& tag, bool is_selected, bool is_dragged)
+	void timeline::draw_segment(segment_storage& segments, const segment_with_id& segment_and_id, const tag& tag, bool is_selected, bool is_dragged)
 	{
+		auto& [segment_id, segment] = segment_and_id;
+
 		auto start = segment.start;
 		auto end = segment.end;
+
+		if (is_dragged)
+		{
+			if (segment_drag_data_.grab_part & segment_grab_part::left)
+			{
+				start += segment_drag_data_.current_offset;
+			}
+			if (segment_drag_data_.grab_part & segment_grab_part::right)
+			{
+				end += segment_drag_data_.current_offset;
+			}
+
+			if (start > end)
+			{
+				std::swap(start, end);
+			}
+		}
 
 		static constexpr float rounding = 3.0f;
 		static constexpr float outline_thickness = 2.0f;
 		static constexpr float height_padding = 2.5f;
-		static constexpr float grab_width = 1.0f;
+		static constexpr float grab_width = 2.0f;
 
 		segment_hover_type hover_type = segment_hover_type::none;
 		bool is_timestamp = segment.is_timestamp();
@@ -178,6 +197,9 @@ namespace vt::widgets
 			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2{});
 			auto cpos_x = ImGui::GetCursorPosX();
 
+			float normalized_mouse_x = math::normalize(ImGui::GetMousePos().x, cell_rect->Min.x, cell_rect->Max.x, 0.f, 1.f);
+			timestamp mouse_timestamp = to_timestamp(normalized_mouse_x);
+
 			if (is_timestamp)
 			{
 				ImGui::SetCursorPosX(cpos_x - ts_radius);
@@ -188,6 +210,10 @@ namespace vt::widgets
 				if (ImGui::IsItemHovered())
 				{
 					hover_type = segment_hover_type::middle;
+					if (ImGui::IsMouseDragging(ImGuiMouseButton_Left, 1.f))
+					{
+						begin_segment_drag(segments, segment_grab_part::both, mouse_timestamp);
+					}
 				}
 			}
 			else if (rect_size.x > 0.f and rect_size.y > 0.f)
@@ -195,9 +221,9 @@ namespace vt::widgets
 				ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2{});
 				ImGui::BeginGroup();
 				{
-					if (ImGui::InvisibleButton("##SegmentGrabLeft", grab_size))
+					if (ImGui::InvisibleButton("##SegmentGrabLeft", grab_size, ImGuiButtonFlags_PressedOnClick))
 					{
-
+						begin_segment_drag(segments, segment_grab_part::left, mouse_timestamp);
 					}
 					if (ImGui::IsItemHovered())
 					{
@@ -211,12 +237,16 @@ namespace vt::widgets
 					if (ImGui::IsItemHovered())
 					{
 						hover_type = segment_hover_type::middle;
+						if (ImGui::IsMouseDragging(ImGuiMouseButton_Left))
+						{
+							begin_segment_drag(segments, segment_grab_part::both, mouse_timestamp);
+						}
 					}
 					
 					ImGui::SameLine();
-					if (ImGui::InvisibleButton("##SegmentGrabRight", grab_size))
+					if (ImGui::InvisibleButton("##SegmentGrabRight", grab_size, ImGuiButtonFlags_PressedOnClick))
 					{
-
+						begin_segment_drag(segments, segment_grab_part::right, mouse_timestamp);
 					}
 					if (ImGui::IsItemHovered())
 					{
@@ -234,13 +264,25 @@ namespace vt::widgets
 			
 			if (is_hovered)
 			{
-				if (ImGui::IsMouseDragging(0))
+				if (ImGui::IsItemClicked(ImGuiMouseButton_Right) and on_ctx_menu_ != nullptr)
 				{
-					is_dragged = true;
+					on_ctx_menu_(segment_and_id, tag);
 				}
-				else if (ImGui::IsItemClicked(1) and on_ctx_menu_ != nullptr)
+				else if (ImGui::IsItemHovered() and ImGui::IsMouseReleased(ImGuiMouseButton_Left))
 				{
-					on_ctx_menu_(segment, tag);
+					if (!(ImGui::IsKeyDown(ImGuiKey_ModCtrl)))
+					{
+						unselect_all_segments();
+					}
+
+					if (ImGui::IsKeyDown(ImGuiKey_ModCtrl) and is_segment_selected(tag.name, segment_id))
+					{
+						set_segment_selection(tag.name, segment_id, false);
+					}
+					else
+					{
+						set_segment_selection(tag.name, segment_id, true);
+					}
 				}
 
 				if (!is_dragged)
@@ -300,8 +342,10 @@ namespace vt::widgets
 		}
 	}
 
-	void timeline::draw_segment_preview(const tag_segment& segment, const tag& tag, float scaled_height, bool is_selected, bool is_dragged) const
+	void timeline::draw_segment_preview(const segment_with_id& segment_and_id, const tag& tag, float scaled_height, bool is_selected, bool is_dragged) const
 	{
+		auto& [segment_id, segment] = segment_and_id;
+
 		static constexpr float height_padding = 0.5f;
 		static constexpr float rounding = 1.0f;
 
@@ -415,12 +459,12 @@ namespace vt::widgets
 					ImGui::SameLine();
 					
 					//draw_cell_debug_rect(1.f);
-					for (auto& [id, segment] : timeline)
+					for (auto& segment_and_id : timeline)
 					{
 						bool is_selected = false;
 						bool is_dragged = false;
 
-						draw_segment_preview(segment, *tag_it, scaled_height, is_selected, is_dragged);
+						draw_segment_preview(segment_and_id, *tag_it, scaled_height, is_selected, is_dragged);
 					}
 				}
 			}
@@ -437,6 +481,12 @@ namespace vt::widgets
 
 		view_ts = preview_scrollbar_.value();
 		view_ts_ = timestamp{ view_ts };
+	}
+
+	timestamp timeline::to_timestamp(float pos) const
+	{
+		auto [start, end] = visible_time_span();
+		return timestamp(static_cast<int64_t>(math::lerp(static_cast<float>(start.total_milliseconds.count()), static_cast<float>(end.total_milliseconds.count()), pos)));
 	}
 
 	float timeline::time_to_pos(timestamp time, timestamp min, timestamp max) const
@@ -463,6 +513,80 @@ namespace vt::widgets
 		
 		auto time_length = state_.time_length();
 		return math::lerp<int64_t>(base_interval, time_length / 10, zoom_);
+	}
+
+	bool timeline::is_dragging_segment() const
+	{
+		return segment_drag_data_.grab_part != segment_grab_part::none;
+	}
+
+	void timeline::begin_segment_drag(segment_storage& segments, segment_grab_part grab_part, timestamp grab_start_position)
+	{
+		if (is_dragging_segment()) return;
+
+		segment_drag_data_.grab_part = grab_part;
+		segment_drag_data_.start_position = grab_start_position;
+		segment_drag_data_.current_offset = timestamp::zero();
+		segment_drag_data_.max_start_position = state_.min_ts;
+		segment_drag_data_.min_start_position = state_.max_ts;
+
+		for (auto& [tag, seleceted_segments] : selected_segments_)
+		{
+			auto& tag_segments = segments.at(tag);
+			for (auto& segment_id : seleceted_segments)
+			{
+				auto& segment = tag_segments.at(segment_id);
+				segment_drag_data_.max_start_position = std::max(segment_drag_data_.max_start_position, segment.end);
+				segment_drag_data_.min_start_position = std::min(segment_drag_data_.min_start_position, segment.start);
+			}
+		}
+	}
+
+	void timeline::update_segment_drag(segment_storage& segments, timestamp current_position)
+	{
+		if (!is_dragging_segment()) return;
+
+		auto new_offset = current_position - segment_drag_data_.start_position;
+		if (new_offset == segment_drag_data_.current_offset)
+		{
+			return;
+		}
+
+		segment_drag_data_.current_offset = current_position - segment_drag_data_.start_position;
+
+		if (segment_drag_data_.grab_part & segment_grab_part::left)
+		{
+			auto current_min_pos = segment_drag_data_.min_start_position + segment_drag_data_.current_offset;
+			
+			if (current_min_pos < state_.min_ts)
+			{
+				segment_drag_data_.current_offset -= current_min_pos - state_.min_ts;
+			}
+			else if (current_min_pos > state_.max_ts)
+			{
+				segment_drag_data_.current_offset -= current_min_pos - state_.max_ts;
+			}
+		}
+		if (segment_drag_data_.grab_part & segment_grab_part::right)
+		{
+			auto current_max_pos = segment_drag_data_.max_start_position + segment_drag_data_.current_offset;
+			if (current_max_pos < state_.min_ts)
+			{
+				segment_drag_data_.current_offset -= current_max_pos - state_.min_ts;
+			}
+			else if (current_max_pos > state_.max_ts)
+			{
+				segment_drag_data_.current_offset -= current_max_pos - state_.max_ts;
+			}
+		}
+	}
+
+	void timeline::end_segment_drag(segment_storage& segments)
+	{
+		if (!is_dragging_segment()) return;
+
+		segment_drag_data_.grab_part = segment_grab_part::none;
+		//TODO: Move segments
 	}
 
 	//TODO: This
@@ -533,6 +657,21 @@ namespace vt::widgets
 				playback_scrollbar_.set_size(cell_rect->GetSize());
 				playback_scrollbar_.render_disabled(!enabled_);
 
+				if (is_dragging_segment())
+				{
+					float normalized_mouse_x = math::normalize(ImGui::GetMousePos().x, cell_rect->Min.x, cell_rect->Max.x, 0.f, 1.f);
+					timestamp mouse_timestamp = to_timestamp(normalized_mouse_x);
+
+					if (ImGui::IsMouseReleased(ImGuiMouseButton_Left))
+					{
+						end_segment_drag(segments);
+					}
+					else
+					{
+						update_segment_drag(segments, mouse_timestamp);
+					}
+				}
+
 				//draw_cell_debug_rect(zoom_);
 				draw_time_intervals();
 				//The marker has to be drawn two times, since it won't be visible on the interval bar when tags are scrolled otherwise
@@ -561,12 +700,12 @@ namespace vt::widgets
 					ImGui::TableNextColumn();
 
 					//TODO: segment shouldn't be const
-					for (const auto& [id, segment] : timeline)
+					for (const auto& segment_and_id : timeline)
 					{
-						bool is_selected = false;
-						bool is_dragged = false;
+						bool is_selected = is_segment_selected(tag, segment_and_id.id);
+						bool is_dragged = is_selected and is_dragging_segment();
 
-						draw_segment(segment, *tag_it, is_selected, is_dragged);
+						draw_segment(segments, segment_and_id, *tag_it, is_selected, is_dragged);
 						ImGui::SameLine();
 					}
 				}
@@ -583,14 +722,81 @@ namespace vt::widgets
 		on_seek_ = callback;
 	}
 
-	void timeline::set_ctx_menu_callback(const std::function<void(const tag_segment& segment, const tag& tag)>& callback)
+	void timeline::set_ctx_menu_callback(const std::function<void(const segment_with_id& segment_and_id, const tag& tag)>& callback)
 	{
 		on_ctx_menu_ = callback;
 	}
 
-	void timeline::set_draw_tooltip_callback(const std::function<void(const tag_segment& segment, const tag& tag)>& callback)
+	void timeline::set_draw_tooltip_callback(const std::function<void(const segment_with_id& segment_and_id, const tag& tag)>& callback)
 	{
 		on_draw_tooltip_ = callback;
+	}
+
+	void timeline::set_segment_selection(const std::string& tag, segment_id segment, bool is_selected)
+	{
+		if (is_selected)
+		{
+			selected_segments_[tag].insert(segment);
+		}
+		else
+		{
+			auto it = selected_segments_.find(tag);
+			if (it != selected_segments_.end())
+			{
+				it->second.erase(segment);
+			}
+		}
+	}
+
+	void timeline::select_all_segments(segment_storage& segments, const std::string& tag)
+	{
+		auto it = segments.find(tag);
+		if (it != segments.end())
+		{
+			auto& tag_segments = selected_segments_[tag];
+
+			for (const auto& [id, segment] : it->second)
+			{
+				tag_segments.insert(id);
+			}
+		}
+	}
+
+	void timeline::select_all_segments(segment_storage& segments)
+	{
+		for (auto& [tag, tag_segments] : segments)
+		{
+			auto& selected_segments = selected_segments_[tag];
+			for (const auto& [id, segment] : tag_segments)
+			{
+				selected_segments.insert(id);
+			}
+		}
+	}
+
+	void timeline::unselect_all_segments(const std::string& tag)
+	{
+		auto it = selected_segments_.find(tag);
+		if (it != selected_segments_.end())
+		{
+			it->second.clear();
+		}
+	}
+
+	void timeline::unselect_all_segments()
+	{
+		selected_segments_.clear();
+	}
+
+	bool timeline::is_segment_selected(const std::string& tag, segment_id segment) const
+	{
+		auto it = selected_segments_.find(tag);
+		if (it == selected_segments_.end())
+		{
+			return false;
+		}
+
+		return it->second.count(segment) != 0;
 	}
 
 	std::string timeline::window_name()

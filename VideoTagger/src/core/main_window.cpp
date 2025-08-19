@@ -2528,8 +2528,9 @@ namespace vt
 
 		//TODO: This is temporary, replace old timeline widget with this later
 		
-		ctx_.timeline.set_ctx_menu_callback([](const tag_segment& segment, const tag& tag)
+		ctx_.timeline.set_ctx_menu_callback([](const segment_with_id& segment_and_id, const tag& tag)
 		{
+			auto& [segment_id, segment] = segment_and_id;
 			debug::log("(Segment Ctx) Start: {}, End: {}, Tag: {}", segment.start.total_milliseconds.count(), segment.end.total_milliseconds.count(), tag.name);
 		});
 		ctx_.timeline.set_on_seek_callback([](timestamp ts)

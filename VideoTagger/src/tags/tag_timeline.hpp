@@ -42,7 +42,7 @@ namespace vt
 		mutable attribute_instance_container attributes;
 
 		/**
-		 * @brief Construct a segment (tag_segment with different start and end). 
+		 * @brief Construct a segment (tag_segment with different start and end)
 		 * 
 		 * @param time_start Start time of the segment.
 		 * @param time_end End time of the segment.
@@ -51,7 +51,7 @@ namespace vt
 		tag_segment(timestamp time_start, timestamp time_end, const attribute_instance_container& attributes = {});
 
 		/**
-		 * @brief Construct a timestamp (tag_segment with the same start and end).
+		 * @brief Construct a timestamp (tag_segment with the same start and end)
 		 * 
 		 * @param ts Timestamp of the segment.
 		 * @param attributes Optional attributes associated with the segment.
@@ -59,7 +59,8 @@ namespace vt
 		tag_segment(timestamp ts, const attribute_instance_container& attributes = {});
 
 		/**  
-		 * @brief Set the start and end time of the segment. If the tag_segment is currently a timestamp, it will become a segment.
+		 * @brief Set the start and end time of the segment. If the tag_segment is currently a timestamp, it will become a segment
+		 * 
 		 * If the start time is greater than the end time, they will be swapped.
 		 * 
 		 * @param time_start Start time of the segment.
@@ -68,25 +69,25 @@ namespace vt
 		void set(timestamp time_start, timestamp time_end);
 
 		/** 
-		 * @brief Set the start and end time of the segment to the same value (make it a timestamp).
+		 * @brief Set the start and end time of the segment to the same value (make it a timestamp)
 		 * @param ts Timestamp of the segment.
 		 */
 		void set(timestamp ts);
 
 		/** 
-		 * @brief Get the length of the segment in nanoseconds.
+		 * @brief Get the length of the segment in nanoseconds
 		 * @return Duration of the segment.
 		 */
 		std::chrono::milliseconds duration() const;
 
 		/** 
-		 * @brief Get the type of the segment (either segment or timestamp).
+		 * @brief Get the type of the segment (either segment or timestamp)
 		 * @return Type of the segment.
 		 */
 		tag_segment_type type() const;
 
 		/** 
-		 * @brief Check if the segment is a timestamp (start and end are the same).
+		 * @brief Check if the segment is a timestamp (start and end are the same)
 		 * @return True if the segment is a timestamp, false otherwise.
 		 */
 		bool is_timestamp() const;
