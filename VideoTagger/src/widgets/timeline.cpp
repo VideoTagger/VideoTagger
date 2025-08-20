@@ -414,7 +414,7 @@ namespace vt::widgets
 		draw_list->PopClipRect();
 		//draw_list->AddRectFilled(timespan_rect.Min, timespan_rect.Max, IM_COL32(0xFF, 0xFF, 0xFF, 128), 0.f);
 
-		if (is_hovered)
+		if (is_hovered and ImGui::IsWindowHovered())
 		{
 			ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeEW);
 		}
@@ -422,6 +422,8 @@ namespace vt::widgets
 
 	void timeline::draw_scrollbar(segment_storage& segments, tag_storage& tags)
 	{
+		static constexpr float scrollbar_padding = 2.f;
+
 		auto [visible_min, visible_max] = visible_time_span();
 		auto visible_length = visible_max.total_milliseconds.count() - visible_min.total_milliseconds.count();
 		int64_t view_ts = view_ts_.total_milliseconds.count();
@@ -438,11 +440,16 @@ namespace vt::widgets
 		ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2{});
 
 		auto cspos = ImGui::GetCursorScreenPos();
-		ImVec2 table_size{ ImGui::GetContentRegionAvail().x, avail_height };
+		ImVec2 table_size{ ImGui::GetContentRegionAvail().x, avail_height + 2 * scrollbar_padding };
 		ImRect table_rect{ cspos, ImVec2{ cspos.x + table_size.x, cspos.y + table_size.y } };
 		
 		if (ImGui::BeginTable("##TimelineSegments", 1, ImGuiTableFlags_NoSavedSettings, table_size))
 		{
+			ImGui::TableNextRow();
+			ImGui::TableNextColumn();
+			ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, ImGui::GetColorU32(ImGuiCol_TableHeaderBg));
+			ui::vertical_item_spacer(scrollbar_padding);
+			
 			ImGui::TableNextRow();
 			ImGui::TableNextColumn();
 			auto cell_rect = get_cell_rect();
@@ -480,11 +487,16 @@ namespace vt::widgets
 				draw_list->PopClipRect();
 			}
 
+			ImGui::TableNextRow();
+			ImGui::TableNextColumn();
+			ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, ImGui::GetColorU32(ImGuiCol_TableHeaderBg));
+			ui::vertical_item_spacer(scrollbar_padding);
+
 			ImGui::EndTable();
 			
 			bool is_timespan_hovered = false;
 			draw_timespan_preview(table_rect, is_timespan_hovered);
-			draw_marker_preview(table_rect);			
+			draw_marker_preview(table_rect);		
 		}
 		ImGui::PopStyleVar(2);
 

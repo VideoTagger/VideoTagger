@@ -44,9 +44,9 @@ namespace vt::ui
 			{
 				if (std::find(visible_tags_.begin(), visible_tags_.end(), tag.name) != visible_tags_.end()) continue;
 				new_tags.push_back(tag.name);
-				tags_modified_ = true;
 			}
-			visible_tags_ = new_tags;
+			tags_modified_ = true;
+			set_visible_tags(new_tags);
 		}
 
 		if (ImGui::BeginChild("##TagList", { ImGui::GetContentRegionAvail().x, 150 }))
