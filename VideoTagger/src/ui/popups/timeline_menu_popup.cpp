@@ -57,8 +57,8 @@ namespace vt::ui
 				for (const auto& tag : *tags_)
 				{
 					ImGui::TableNextColumn();
-					auto it = std::find(visible_tags_.begin(), visible_tags_.end(), tag.name);
-					bool visible = it != visible_tags_.end();
+					auto it = std::lower_bound(visible_tags_.begin(), visible_tags_.end(), tag.name);
+					bool visible = it != visible_tags_.end() and *it == tag.name;
 
 					auto name = (visible ? icons::visibility_on : icons::visibility_off) + std::string(" ") + tag.name;
 					if (!visible) ImGui::PushStyleColor(ImGuiCol_Text, style.Colors[ImGuiCol_TextDisabled]);
@@ -71,7 +71,7 @@ namespace vt::ui
 						}
 						else
 						{
-							visible_tags_.push_back(tag.name);
+							visible_tags_.insert(it, tag.name);
 							tags_modified_ = true;
 						}
 					}

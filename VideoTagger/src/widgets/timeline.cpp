@@ -719,9 +719,9 @@ namespace vt::widgets
 				//The marker has to be drawn two times, since it won't be visible on the interval bar when tags are scrolled otherwise
 				draw_marker();
 				
-				for (auto& [tag, timeline] : segments)
+				for (auto& tag : visible_tags)
 				{
-					if (std::find(visible_tags.begin(), visible_tags.end(), tag) == visible_tags.end()) continue;
+					auto& timeline = segments[tag];
 
 					auto tag_it = tags.find(tag);
 					if (tag_it == tags.end())
