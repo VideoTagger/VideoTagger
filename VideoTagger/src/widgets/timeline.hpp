@@ -6,6 +6,7 @@
 #include <tags/tag_timeline.hpp>
 
 #include <ui/widgets/raw_slider.hpp>
+#include <ui/widgets/slider.hpp>
 #include <ui/popups/timeline_menu_popup.hpp>
 
 namespace vt::widgets
@@ -89,8 +90,8 @@ namespace vt::widgets
 	private:
 		ui::raw_slider<int64_t> preview_scrollbar_;
 		ui::raw_slider<int64_t> playback_scrollbar_;
+		ui::slider<float> zoom_slider_;
 		std::unique_ptr<ui::timeline_menu_popup> menu_popup_;
-		float zoom_ = 1.f;
 		timestamp view_ts_{};
 		bool enabled_ = true;
 		timeline_state state_;

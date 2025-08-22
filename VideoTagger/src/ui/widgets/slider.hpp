@@ -1,5 +1,6 @@
 #pragma once
 #include <ui/widgets/raw_slider.hpp>
+#include <ui/widgets/common.hpp>
 #include <utils/math.hpp>
 
 namespace vt::ui
@@ -10,8 +11,6 @@ namespace vt::ui
 	public:
 		constexpr slider(type min = std::numeric_limits<type>::min(), type max = std::numeric_limits<type>::max(), type value = {}, const ImVec2& size = {}) : raw_slider<type>{ min, max, value, size }, thickness_{}, is_tooltip_enabled_{ true }
 		{
-			const auto& style = ImGui::GetStyle();
-
 			auto draw_rect = raw_slider<type>::rect();
 			auto full_height = draw_rect.GetHeight();
 			auto circle_radius = 0.9f * full_height / 2.f;

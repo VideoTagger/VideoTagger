@@ -34,7 +34,7 @@ namespace vt::widgets
 		}
 	}
 
-	timeline::timeline()
+	timeline::timeline() : zoom_slider_{ 1.f, 5.f, 1.f }
 	{
 		preview_scrollbar_.set_pannable(true);
 		playback_scrollbar_.set_on_change_callback([this](int64_t ts)
@@ -45,6 +45,7 @@ namespace vt::widgets
 			}
 		});
 		menu_popup_ = ui::new_popup<ui::timeline_menu_popup>(nullptr);
+		zoom_slider_.set_step(0.005f);
 	}
 
 	void timeline::draw_marker() const
@@ -62,7 +63,7 @@ namespace vt::widgets
 		vMax.y += win_pos.y;
 
 		auto avail_width = (vMax.x - vMin.x);
-		auto scaled_width = avail_width * zoom_;
+		auto scaled_width = avail_width * zoom_slider_.value();
 		//auto x = win_pos.x + ImGui::GetCursorPosX() + time_to_pos(state_.current_ts, state_.min_ts, state_.max_ts) * scaled_width;
 		auto x = vMin.x + to_timeline_pos(state_.current_ts) * scaled_width;
 
@@ -166,7 +167,7 @@ namespace vt::widgets
 
 		auto draw_list = ImGui::GetWindowDrawList();
 		auto& style = ImGui::GetStyle();
-		auto avail_width = zoom_ * cell_rect->GetWidth();
+		auto avail_width = zoom_slider_.value() * cell_rect->GetWidth();
 
 		auto scaled_start = to_timeline_pos(start) * avail_width;
 		auto scaled_end = to_timeline_pos(end) * avail_width;
@@ -181,12 +182,12 @@ namespace vt::widgets
 		ImGui::SetCursorPosX(min.x - win_pos.x);
 		auto rect_size = segment_rect.GetSize() /*- style.CellPadding * 2.f*/;
 
-		auto scaled_grab_width = grab_width * zoom_;
+		auto scaled_grab_width = grab_width * zoom_slider_.value();
 		ImVec2 grab_size{ scaled_grab_width, rect_size.y };
 
 		//Only used for timestamps
 		auto ts_radius = segment_rect.GetHeight() / 2.f * 0.9f;
-		ts_radius = std::min(ts_radius, ts_radius * zoom_);
+		ts_radius = std::min(ts_radius, ts_radius * zoom_slider_.value());
 
 		bool is_hovered{};
 		bool is_grab_hovered{};
@@ -539,7 +540,7 @@ namespace vt::widgets
 		//if (zoom_ <= 0.1f) return std::max<int64_t>(1, (int64_t)(math::rescale(zoom_, 0.0f, 0.1f, 0.0f, 1.0f) * 10)); //1m
 		
 		auto time_length = state_.time_length();
-		return math::lerp<int64_t>(base_interval, time_length / 10, zoom_);
+		return math::lerp<int64_t>(base_interval, time_length / 10, zoom_slider_.value());
 	}
 
 	bool timeline::is_dragging_segment() const
@@ -630,7 +631,7 @@ namespace vt::widgets
 
 	utils::timestamp_span timeline::visible_time_span() const
 	{
-		return utils::timestamp_span(view_ts_, view_ts_ + timestamp(static_cast<int64_t>(state_.time_length() / zoom_)));
+		return utils::timestamp_span(view_ts_, view_ts_ + timestamp(static_cast<int64_t>(state_.time_length() / zoom_slider_.value())));
 	}
 
 	timeline_state& timeline::state()
@@ -640,7 +641,7 @@ namespace vt::widgets
 
 	void timeline::render(bool& is_open, segment_storage& segments, tag_storage& tags, std::vector<std::string>& visible_tags)
 	{
-		auto& style = ImGui::GetStyle();
+		const auto& style = ImGui::GetStyle();
 
 		auto win_name = window_name();
 		//ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2{ style.WindowPadding.x, 0.f });
@@ -653,8 +654,18 @@ namespace vt::widgets
 
 			ui::toggle("Enabled", enabled_);
 			ImGui::SameLine();
-			ImGui::SliderFloat("Zoom", &zoom_, 1.f, 5.f);
-			ImGui::BeginDisabled(zoom_ <= 1.f);
+
+			static constexpr auto accent_color = ImVec4{ 0.2588f, 0.6f, 0.8784f, 1.f };
+			static constexpr auto accent_color_hover = ImVec4{ 0.2f, 0.5098f, 0.7804f, 1.f };
+			ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 4.f);
+			ImGui::PushStyleColor(ImGuiCol_SliderGrab, accent_color_hover);
+			ImGui::PushStyleColor(ImGuiCol_SliderGrabActive, accent_color);
+			zoom_slider_.set_size({ ImGui::GetContentRegionAvail().x - 2 * style.WindowPadding.x, ImGui::GetFrameHeight() });
+			zoom_slider_.render();
+			ImGui::PopStyleVar();
+			ImGui::PopStyleColor(2);
+
+			ImGui::BeginDisabled(zoom_slider_.value() <= 1.f);
 			draw_scrollbar(segments, tags);
 			ImGui::EndDisabled();
 			//-------------
