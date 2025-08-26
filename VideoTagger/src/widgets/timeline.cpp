@@ -250,7 +250,7 @@ namespace vt::widgets
 						{
 							if (!ImGui::IsKeyDown(ImGuiKey_ModCtrl))
 							{
-								event_unselect_all_segments(storage);
+								event_deselect_all_segments(storage);
 							}
 
 							ctx_.dispatch_event<segment_select_event>(storage, tag.name, current_segment_id);
@@ -291,7 +291,7 @@ namespace vt::widgets
 							{
 								if (!ImGui::IsKeyDown(ImGuiKey_ModCtrl))
 								{
-									event_unselect_all_segments(storage);
+									event_deselect_all_segments(storage);
 								}
 
 								ctx_.dispatch_event<segment_select_event>(storage, tag.name, current_segment_id);
@@ -337,7 +337,7 @@ namespace vt::widgets
 				{
 					if (!ImGui::IsKeyDown(ImGuiKey_ModCtrl))
 					{
-						event_unselect_segments_if(storage, [&tag, &current_segment_id](const std::string& unselect_tag, segment_id unselect_id)
+						event_deselect_segments_if(storage, [&tag, &current_segment_id](const std::string& unselect_tag, segment_id unselect_id)
 						{
 							return !(tag.name == unselect_tag and current_segment_id == unselect_id);
 						});
@@ -686,7 +686,7 @@ namespace vt::widgets
 		ctx_.dispatch_event<segments_moved_event>(*segment_drag_data_.storage, dragged_segments_, segment_drag_data_.grab_part, final_offset);
 	}
 
-	void timeline::event_unselect_segments_if(segment_storage& storage, std::function<bool(const std::string&, segment_id)> predicate)
+	void timeline::event_deselect_segments_if(segment_storage& storage, const std::function<bool(const std::string&, segment_id)>& predicate)
 	{
 		for (const auto& [tag_name, segments] : selected_segments_)
 		{
@@ -705,7 +705,7 @@ namespace vt::widgets
 		}
 	}
 
-	void timeline::event_unselect_all_segments(segment_storage& storage)
+	void timeline::event_deselect_all_segments(segment_storage& storage)
 	{
 		for (const auto& [tag_name, segments] : selected_segments_)
 		{

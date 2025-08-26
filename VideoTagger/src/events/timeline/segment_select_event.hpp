@@ -4,9 +4,9 @@
 
 namespace vt
 {
-	/// @brief Event triggered when a segment is selected
+	///@brief Event triggered when a segment is selected
 	struct segment_select_event : public segment_event
 	{
-		segment_select_event(segment_storage& storage, const std::string& tag, segment_id id) : segment_event(storage, tag, id) {}
+		segment_select_event(segment_storage& storage, const std::string& tag, segment_id id) : segment_event{ storage, tag, id } {}
 	};
 }

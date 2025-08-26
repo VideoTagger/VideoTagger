@@ -101,6 +101,31 @@ namespace vt
 		return update_it;
 	}
 
+	tag_timeline::iterator tag_timeline::erase_if(iterator it_begin, iterator it_end, const std::function<bool(const segment_with_id& element)>& predicate)
+	{
+		ptrdiff_t erased_count = 0;
+		auto it = it_begin;
+		while (it != it_end)
+		{
+			if (!predicate(*it))
+			{
+				++it;
+				continue;
+			}
+
+			auto end_distance = std::distance(it, it_end);
+
+			id_map_.erase(it->id);
+			it = segments_.erase(it);
+			it_end = it + (end_distance - 1);
+			erased_count++;
+
+			update_id_map(it, it_end, -1);
+		}
+		update_id_map(it_end, segments_.end(), -erased_count);
+		return it;
+	}
+
 	std::pair<segment_id, bool> tag_timeline::move(segment_id id, timestamp new_start, timestamp new_end)
 	{
 		if (new_start == new_end)

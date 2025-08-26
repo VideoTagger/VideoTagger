@@ -9,8 +9,8 @@
 namespace vt::ui
 {
 	/**
-	 * @brief A raw slider widget that allows for custom value types and rendering.
-	 * @tparam type Any numeric type of the value that the slider will handle.
+	 * @brief A raw slider widget that allows for custom value types and rendering
+	 * @tparam type Any numeric type of the value that the slider will handle
 	 */
 	template<typename type>
 	struct raw_slider : public widget
