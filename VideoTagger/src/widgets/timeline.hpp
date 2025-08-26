@@ -19,34 +19,14 @@ namespace vt::widgets
 		end,
 	};
 
-	/// @brief Enum representing which part of the segment is being grabbed.
-	enum class segment_grab_part : uint8_t
-	{
-		none = 0b00,
-		left = 0b01,
-		right = 0b10,
-		both = left | right,
-	};
-
-	/**
-	 * @brief Check if lhs contains flag rhs.
-	 * 
-	 * \param lhs Value to check.
-	 * \param rhs Flag to check for.
-	 * \return true if lhs contains flag rhs, false otherwise.
-	 */
-	inline constexpr bool operator& (segment_grab_part lhs, segment_grab_part rhs)
-	{
-		return static_cast<uint8_t>(lhs) & static_cast<uint8_t>(rhs);
-	}
-
 	struct segment_drag_data
 	{
-		segment_grab_part grab_part{ segment_grab_part::none };
+		segment_part grab_part{ segment_part::none };
 		timestamp start_position{};
 		timestamp current_offset{};
 		timestamp min_start_position{};
 		timestamp max_start_position{};
+		segment_storage* storage{};
 	};
 
 	struct timeline_state
@@ -60,7 +40,7 @@ namespace vt::widgets
 		void set_min_timestamp(timestamp ts);
 		void set_max_timestamp(timestamp ts);
 	};
-
+	
 	struct timeline
 	{
 	public:
@@ -68,19 +48,15 @@ namespace vt::widgets
 
 	public:
 		void render(bool& is_open, segment_storage& segments, tag_storage& tags, std::vector<std::string>& visible_tags);
-		//TODO: segment shouldn't be const
+
 		void set_on_seek_callback(const std::function<void(timestamp ts)>& callback);
 		void set_ctx_menu_callback(const std::function<void(const segment_with_id& segment_and_id, const tag& tag)>& callback);
 		void set_draw_tooltip_callback(const std::function<void(const segment_with_id& segment_and_id, const tag& tag)>& callback);
 
-		void set_segment_selection(const std::string& tag, segment_id segment, bool is_selected);
-		void select_all_segments(segment_storage& segments, const std::string& tag);
-		void select_all_segments(segment_storage& segments);
-		void unselect_all_segments(const std::string& tag);
-		void unselect_all_segments();
-
 		uint32_t marker_color() const;
 		bool is_segment_selected(const std::string& tag, segment_id segment) const;
+		bool is_segment_dragged(const std::string& tag, segment_id segment) const;
+		bool is_dragging_any_segment() const;
 
 		utils::timestamp_span visible_time_span() const;
 		timeline_state& state();
@@ -99,7 +75,8 @@ namespace vt::widgets
 		//TODO: segment shouldn't be const
 		std::function<void(const segment_with_id& segment_and_id, const tag& tag)> on_ctx_menu_;
 		std::function<void(const segment_with_id& segment_and_id, const tag& tag)> on_draw_tooltip_;
-		std::unordered_map<std::string, std::set<segment_id>> selected_segments_;
+		segment_id_map selected_segments_;
+		segment_id_map dragged_segments_;
 		segment_drag_data segment_drag_data_{};
 
 	private:
@@ -119,10 +96,13 @@ namespace vt::widgets
 		
 		int64_t interval_time() const;
 
-		bool is_dragging_segment() const;
+		void set_segment_selection(const std::string& tag, segment_id segment, bool is_selected);
 
-		void begin_segment_drag(segment_storage& segments, segment_grab_part grab_part, timestamp grab_start_position);
-		void update_segment_drag(segment_storage& segments, timestamp current_position);
-		void end_segment_drag(segment_storage& segments);
+		void begin_segment_drag(segment_storage& storage, const segment_id_map& dragged_segments, segment_part grab_part, timestamp grab_start_position);
+		void update_segment_drag(timestamp new_offset);
+		void end_segment_drag(timestamp final_offset);
+
+		void event_unselect_segments_if(segment_storage& storage, std::function<bool(const std::string&, segment_id)> predicate);
+		void event_unselect_all_segments(segment_storage& storage);
 	};
 }

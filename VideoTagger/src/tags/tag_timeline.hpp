@@ -1,8 +1,8 @@
 #pragma once
 
 #include <string>
-#include <utility>
 #include <set>
+#include <utility>
 #include <chrono>
 #include <unordered_map>
 #include <optional>
@@ -20,12 +20,34 @@
 namespace vt
 {
 	using segment_id = uint64_t;
+	using segment_id_map = std::unordered_map<std::string, std::set<segment_id>>;
 
 	enum class tag_segment_type
 	{
 		timestamp,
 		segment
 	};
+
+	/// @brief Enum representing which part of the segment is being grabbed
+	enum class segment_part : uint8_t
+	{
+		none = 0b00,
+		left = 0b01,
+		right = 0b10,
+		both = left | right,
+	};
+
+	/**
+	 * @brief Check if lhs contains flag rhs
+	 *
+	 * @param lhs Value to check.
+	 * @param rhs Flag to check for.
+	 * @return true if lhs contains flag rhs, false otherwise.
+	 */
+	inline constexpr bool operator& (segment_part lhs, segment_part rhs)
+	{
+		return static_cast<uint8_t>(lhs) & static_cast<uint8_t>(rhs);
+	}
 
 	///@brief A struct representing a segment or timestamp appearing on the timeline
 	struct tag_segment
