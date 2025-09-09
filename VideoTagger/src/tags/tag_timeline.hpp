@@ -24,16 +24,16 @@ namespace vt
 	using segment_id_map = std::unordered_map<std::string, std::set<segment_id>>;
 	inline constexpr auto invalid_segment_id = segment_id{ 0 };
 
-	/// @brief Enum representing the type of a segment
+	///@brief Enum representing the type of a segment
 	enum class tag_segment_type
 	{
-		/// A point in time (i.e., start == end)
+		///A point in time (i.e., start == end)
 		timestamp,
-		/// A period of time (i.e., start != end)
+		///A period of time (i.e., start != end)
 		segment
 	};
 
-	/// @brief Enum representing which part of the segment is being grabbed
+	///@brief Enum representing which part of the segment is being grabbed
 	enum class segment_part : uint8_t
 	{
 		none = 0b00, //TODO: maybe remove none
@@ -42,25 +42,25 @@ namespace vt
 		both = left | right,
 	};
 
-	/// @brief Struct representing data needed to move a segment to a new location
+	///@brief Struct representing data needed to move a segment to a new location
 	struct segment_move_data
 	{
-		/// @brief ID of the segment to move
+		///@brief ID of the segment to move
 		segment_id id;
-		/// @brief New start time of the segment
+		///@brief New start time of the segment
 		timestamp new_start;
-		/// @brief New end time of the segment
+		///@brief New end time of the segment
 		timestamp new_end;
 	};
 
-	/// @brief Struct representing data needed to move a segment by an offset
+	///@brief Struct representing data needed to move a segment by an offset
 	struct segment_move_offset_data
 	{
-		/// @brief ID of the segment to move
+		///@brief ID of the segment to move
 		segment_id id;
-		/// @brief Which part of the segment to move
+		///@brief Which part of the segment to move
 		segment_part part;
-		/// @brief By how much to move the segment relative to its current position
+		///@brief By how much to move the segment relative to its current position
 		timestamp offset;
 	};
 
@@ -77,16 +77,16 @@ namespace vt
 		explicit tag_timeline_insert_result(segment_id preventing_segment);
 		tag_timeline_insert_result(segment_id inserted_segment, const std::vector<segment_id>& merged_segments);
 
-		/// @return ID of the segment which prevented insertion.
+		///@return ID of the segment which prevented insertion.
 		segment_id preventing_segment() const;
 
-		/// @return Vector of segment IDs which were merged.
+		///@return Vector of segment IDs which were merged.
 		const std::vector<segment_id>& merged_segments() const;
 
-		/// @return ID of the inserted segment.
+		///@return ID of the inserted segment.
 		segment_id inserted_segment() const;
 
-		/// @return True if the segment was inserted, false otherwise.
+		///@return True if the segment was inserted, false otherwise.
 		bool inserted() const;
 
 	private:
@@ -98,13 +98,13 @@ namespace vt
 	public:
 		tag_timeline_move_result(segment_id moved_id, const std::vector<segment_id>& merged_ids, segment_id resulting_id);
 
-		/// @return ID of the moved segment.
+		///@return ID of the moved segment.
 		segment_id moved_segment() const;
 
-		/// @return Vector of segment IDs that were merged.
+		///@return Vector of segment IDs that were merged.
 		const std::vector<segment_id>& merged_segments() const;
 
-		/// @return ID of the resulting segment.
+		///@return ID of the resulting segment.
 		segment_id resulting_segment() const;
 
 	private:
@@ -172,13 +172,13 @@ namespace vt
 		 */
 		void set(timestamp ts);
 
-		/// @return Duration of the segment in nanoseconds.
+		///@return Duration of the segment in nanoseconds.
 		std::chrono::milliseconds duration() const;
 
-		/// @return Type of the segment.
+		///@return Type of the segment.
 		tag_segment_type type() const;
 
-		/// @return True if the segment is a timestamp, false otherwise.
+		///@return True if the segment is a timestamp, false otherwise.
 		bool is_timestamp() const;
 	};
 
@@ -208,6 +208,13 @@ namespace vt
 		using iterator = std::vector<segment_with_id>::const_iterator;
 		using reverse_iterator = std::vector<segment_with_id>::const_reverse_iterator;
 
+		tag_timeline() = default;
+
+	private:
+		std::vector<segment_with_id> segments_;
+		std::unordered_map<segment_id, size_t> id_map_;
+
+	public:
 		/** 
 		 * @brief Insert a new segment
 		 * 
@@ -395,16 +402,13 @@ namespace vt
 		 */
 		bool is_id_valid(segment_id id) const;
 
-		/// @return The number of segments in the timeline.
+		///@return The number of segments in the timeline.
 		size_t size() const;
 
-		/// @return True if the timeline is empty, false otherwise.
+		///@return True if the timeline is empty, false otherwise.
 		bool empty() const;
 
 	private:
-		std::vector<segment_with_id> segments_;
-		std::unordered_map<segment_id, size_t> id_map_;
-
 		std::optional<std::pair<iterator_range<iterator>, bool>> prepare_insert_(timestamp time_start, timestamp time_end) const;
 		std::optional<iterator> prepare_insert_(timestamp ts) const;
 		tag_timeline_move_result move_(segment_id id, timestamp new_start, timestamp new_end, const std::set<segment_id>& ignored_segments);
