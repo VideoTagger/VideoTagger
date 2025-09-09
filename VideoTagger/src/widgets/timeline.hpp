@@ -102,7 +102,7 @@ namespace vt::widgets
 		void update_segment_drag(timestamp new_offset);
 		void end_segment_drag(timestamp final_offset);
 
-		void event_unselect_segments_if(segment_storage& storage, std::function<bool(const std::string&, segment_id)> predicate);
-		void event_unselect_all_segments(segment_storage& storage);
+		void event_deselect_segments_if(segment_storage& storage, const std::function<bool(const std::string&, segment_id)>& predicate);
+		void event_deselect_all_segments(segment_storage& storage);
 	};
 }

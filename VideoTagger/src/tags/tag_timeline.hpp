@@ -77,32 +77,16 @@ namespace vt
 		explicit tag_timeline_insert_result(segment_id preventing_segment);
 		tag_timeline_insert_result(segment_id inserted_segment, const std::vector<segment_id>& merged_segments);
 
-		/**
-		 * @brief Get the ID of the segment which prevented insertion; only valid when inserted() returns false
-		 * 
-		 * @return ID of the segment which prevented insertion. 
-		 */
+		/// @return ID of the segment which prevented insertion.
 		segment_id preventing_segment() const;
 
-		/**
-		 * @brief Get the IDs of all segments which were merged into the inserted segment; only valid when inserted() returns true
-		 * 
-		 * @return Vector of segment IDs which were merged.
-		 */
+		/// @return Vector of segment IDs which were merged.
 		const std::vector<segment_id>& merged_segments() const;
 
-		/**
-		 * @brief Get the ID of the inserted segment; only valid when inserted() returns true
-		 *
-		 * @return ID of the inserted segment.
-		 */
+		/// @return ID of the inserted segment.
 		segment_id inserted_segment() const;
 
-		/**
-		 * @brief Check if the segment was successfully inserted
-		 * 
-		 * \return True if the segment was inserted, false otherwise.
-		 */
+		/// @return True if the segment was inserted, false otherwise.
 		bool inserted() const;
 
 	private:
@@ -114,25 +98,13 @@ namespace vt
 	public:
 		tag_timeline_move_result(segment_id moved_id, const std::vector<segment_id>& merged_ids, segment_id resulting_id);
 
-		/**
-		 * @brief Get the ID of the segment that was moved
-		 * 
-		 * @return ID of the moved segment.
-		 */
+		/// @return ID of the moved segment.
 		segment_id moved_segment() const;
 
-		/**
-		 * @brief Get the IDs of all segments that were merged into the resulting segment (i.e. segments that were deleted)
-		 * 
-		 * @return Vector of segment IDs that were merged.
-		 */
+		/// @return Vector of segment IDs that were merged.
 		const std::vector<segment_id>& merged_segments() const;
 
-		/**
-		 * @brief Get the ID of the resulting segment after the move operation
-		 * 
-		 * @return ID of the resulting segment.
-		 */
+		/// @return ID of the resulting segment.
 		segment_id resulting_segment() const;
 
 	private:
@@ -200,22 +172,13 @@ namespace vt
 		 */
 		void set(timestamp ts);
 
-		/** 
-		 * @brief Get the length of the segment in nanoseconds
-		 * @return Duration of the segment.
-		 */
+		/// @return Duration of the segment in nanoseconds.
 		std::chrono::milliseconds duration() const;
 
-		/** 
-		 * @brief Get the type of the segment (either segment or timestamp)
-		 * @return Type of the segment.
-		 */
+		/// @return Type of the segment.
 		tag_segment_type type() const;
 
-		/** 
-		 * @brief Check if the segment is a timestamp (start and end are the same)
-		 * @return True if the segment is a timestamp, false otherwise.
-		 */
+		/// @return True if the segment is a timestamp, false otherwise.
 		bool is_timestamp() const;
 	};
 
@@ -432,18 +395,10 @@ namespace vt
 		 */
 		bool is_id_valid(segment_id id) const;
 
-		/**
-		 * @brief Get the number of segments in the timeline
-		 * 
-		 * @return The number of segments in the timeline.
-		 */
+		/// @return The number of segments in the timeline.
 		size_t size() const;
 
-		/**
-		 * @brief Check if the timeline is empty (contains no segments)
-		 * 
-		 * @return True if the timeline is empty, false otherwise.
-		 */
+		/// @return True if the timeline is empty, false otherwise.
 		bool empty() const;
 
 	private:
