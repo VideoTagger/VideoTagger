@@ -906,12 +906,14 @@ namespace vt::widgets
 								const auto& selected_seg = segments.at(selected_segment->segment_id);
 								if (selected_seg.start != moving_segment->start or selected_seg.end != moving_segment->end)
 								{
-									selected_segment->segment_id = segments.move
+									auto move_result = segments.move
 									(
 										selected_segment->segment_id,
 										moving_segment->start,
 										moving_segment->end
-									).first;
+									);
+
+									selected_segment->segment_id = move_result.resulting_segment();
 
 									ctx_.is_project_dirty = true;
 								}
@@ -933,12 +935,15 @@ namespace vt::widgets
 					if (pressed_yes and moving_segment.has_value())
 					{
 						auto& segments = segments_->at(moving_segment->tag);
-						selected_segment->segment_id = segments.move
+
+						auto move_result = segments.move
 						(
 							selected_segment->segment_id,
 							timestamp{ moving_segment->start },
 							timestamp{ moving_segment->end }
-						).first;
+						);
+
+						selected_segment->segment_id = move_result.resulting_segment();
 
 						ctx_.is_project_dirty = true;
 					}

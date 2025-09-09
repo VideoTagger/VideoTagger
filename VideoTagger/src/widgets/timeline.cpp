@@ -15,7 +15,8 @@
 #include <events/timeline/begin_segment_drag_event.hpp>
 #include <events/timeline/update_segment_drag_event.hpp>
 #include <events/timeline/end_segment_drag_event.hpp>
-#include <events/timeline/segment_moved_event.hpp>
+#include <events/timeline/segments_move_event.hpp>
+#include <events/timeline/segment_merge_event.hpp>
 
 namespace vt::widgets
 {
@@ -78,6 +79,18 @@ namespace vt::widgets
 		ctx_.add_event_listener<end_segment_drag_event>([this](const end_segment_drag_event& e)
 		{
 			end_segment_drag(e.final_offset());
+		});
+
+		ctx_.add_event_listener<segment_merge_event>([this](const segment_merge_event& e)
+		{
+			if (is_segment_selected(e.tag(), e.merged_id()))
+			{
+				ctx_.dispatch_event<segment_deselect_event>(e.storage(), e.tag(), e.merged_id());
+			}
+			if (!is_segment_selected(e.tag(), e.merged_into_id()))
+			{
+				ctx_.dispatch_event<segment_select_event>(e.storage(), e.tag(), e.merged_into_id());
+			}
 		});
 	}
 
@@ -681,9 +694,35 @@ namespace vt::widgets
 	{
 		if (!is_dragging_any_segment()) return;
 
+		if (segment_drag_data_.grab_part & segment_part::left)
+		{
+			auto current_min_pos = segment_drag_data_.min_start_position + final_offset;
+
+			if (current_min_pos < state_.min_ts)
+			{
+				final_offset -= current_min_pos - state_.min_ts;
+			}
+			else if (current_min_pos > state_.max_ts)
+			{
+				final_offset -= current_min_pos - state_.max_ts;
+			}
+		}
+		if (segment_drag_data_.grab_part & segment_part::right)
+		{
+			auto current_max_pos = segment_drag_data_.max_start_position + final_offset;
+			if (current_max_pos < state_.min_ts)
+			{
+				final_offset -= current_max_pos - state_.min_ts;
+			}
+			else if (current_max_pos > state_.max_ts)
+			{
+				final_offset -= current_max_pos - state_.max_ts;
+			}
+		}
+
+		ctx_.dispatch_event<segments_move_event>(*segment_drag_data_.storage, dragged_segments_, segment_drag_data_.grab_part, final_offset);
+
 		segment_drag_data_.grab_part = segment_part::none;
-		
-		ctx_.dispatch_event<segments_moved_event>(*segment_drag_data_.storage, dragged_segments_, segment_drag_data_.grab_part, final_offset);
 	}
 
 	void timeline::event_unselect_segments_if(segment_storage& storage, std::function<bool(const std::string&, segment_id)> predicate)

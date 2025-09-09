@@ -32,6 +32,8 @@
 #include <ui/widgets/settings_expander.hpp>
 
 #include <events/window/window_resize_event.hpp>
+#include <events/timeline/segments_move_event.hpp>
+#include <events/timeline/segment_merge_event.hpp>
 
 #ifndef VT_VERSION
 	#error VT_VERSION is not defined
@@ -151,6 +153,24 @@ namespace vt
 		ctx_.add_event_listener<window_resize_event>([](const window_resize_event& event)
 		{
 			debug::log("Main window resized to {}x{}", event.width(), event.height());
+		});
+
+		ctx_.add_event_listener<segments_move_event>([](const segments_move_event& event)
+		{
+			//TODO: Merge popup
+			auto& storage = ctx_.get_current_segment_storage();
+			for (const auto& [tag, segment_ids] : event.segments())
+			{
+				auto move_results = storage.at(tag).move_offset(segment_ids, event.move_part(), event.move_offset());
+
+				for (auto& move_result : move_results)
+				{
+					for (auto& merged_id : move_result.merged_segments())
+					{
+						ctx_.dispatch_event<segment_merge_event>(storage, tag, merged_id, move_result.resulting_segment());
+					}
+				}
+			}
 		});
 	}
 

@@ -5,9 +5,9 @@
 namespace vt
 {
 	/// @brief Event triggered when one or more segments have been moved
-	struct segments_moved_event : public multiple_segments_event
+	struct segments_move_event : public multiple_segments_event
 	{
-		segments_moved_event(segment_storage& storage, const segment_id_map& segments, segment_part move_part, timestamp move_offset) :
+		segments_move_event(segment_storage& storage, const segment_id_map& segments, segment_part move_part, timestamp move_offset) :
 			multiple_segments_event(storage, segments), move_part_{ move_part }, move_offset_{ move_offset } {}
 
 		/**
