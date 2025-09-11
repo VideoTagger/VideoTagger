@@ -171,6 +171,8 @@ namespace vt
 					}
 				}
 			}
+
+			ctx_.is_project_dirty = true;
 		});
 	}
 
