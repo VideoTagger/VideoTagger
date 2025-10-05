@@ -53,7 +53,7 @@ namespace vt::widgets
 		void set_ctx_menu_callback(const std::function<void(const segment_with_id& segment_and_id, const tag& tag)>& callback);
 		void set_draw_tooltip_callback(const std::function<void(const segment_with_id& segment_and_id, const tag& tag)>& callback);
 
-		uint32_t marker_color() const;
+		uint32_t playhead_color() const;
 		bool is_segment_selected(const std::string& tag, segment_id segment) const;
 		bool is_segment_dragged(const std::string& tag, segment_id segment) const;
 		bool is_dragging_any_segment() const;
@@ -80,12 +80,12 @@ namespace vt::widgets
 		segment_drag_data segment_drag_data_{};
 
 	private:
-		void draw_marker() const;
+		void draw_playhead() const;
 		void draw_time_intervals() const;
 		//TODO: segment shouldn't be const
 		void draw_segment(segment_storage& segments, const segment_with_id& segment_and_id, const tag& tag, bool is_selected, bool is_dragged);
 		void draw_segment_preview(const segment_with_id& segment_and_id, const tag& tag, float scaled_height, bool is_selected, bool is_dragged) const;
-		void draw_marker_preview(const ImRect& table_rect) const;
+		void draw_playhead_preview(const ImRect& table_rect) const;
 		void draw_timespan_preview(const ImRect& table_rect, bool& is_hovered) const;
 		void draw_scrollbar(segment_storage& segments, tag_storage& tags);
 

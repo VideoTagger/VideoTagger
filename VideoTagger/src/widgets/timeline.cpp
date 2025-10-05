@@ -38,8 +38,8 @@ namespace vt::widgets
 			const auto& style = ImGui::GetStyle();
 			auto draw_list = ImGui::GetWindowDrawList();
 			bool enabled = true;
-			ImU32 marker_color = enabled ? 0xFF3E36FF : 0xFF3E3E3E; //0xA02A2AFF
-			draw_list->AddRect(rect->Min, rect->Max, marker_color);
+			ImU32 playhead_color = enabled ? 0xFF3E36FF : 0xFF3E3E3E; //0xA02A2AFF
+			draw_list->AddRect(rect->Min, rect->Max, playhead_color);
 		}
 	}
 
@@ -94,7 +94,7 @@ namespace vt::widgets
 		});
 	}
 
-	void timeline::draw_marker() const
+	void timeline::draw_playhead() const
 	{
 		auto draw_list = ImGui::GetWindowDrawList();
 		auto cell_rect = get_cell_rect();
@@ -116,35 +116,35 @@ namespace vt::widgets
 		ImVec2 top{ x, vMin.y + scroll_y };
 		ImVec2 bottom{ x, vMax.y + scroll_y };
 
-		static constexpr float marker_width = 3.0f;
+		static constexpr float playhead_width = 3.0f;
 		static constexpr float outline_width = 1.25f;
-		static constexpr float triangle_span = marker_width * 3;
+		static constexpr float triangle_span = playhead_width * 3;
 		auto item_height = ImGui::GetTextLineHeightWithSpacing();
-		auto marker_pos = x;
+		auto playhead_pos = x;
 
-		auto marker_line_offset = ImVec2{ outline_width + marker_width / 2.f, 0.f };
+		auto playhead_line_offset = ImVec2{ outline_width + playhead_width / 2.f, 0.f };
 		auto line_offset = ImVec2{ 0.f, triangle_span / 2.f };
 		
 		//line outline
-		draw_list->AddLine(top + line_offset, bottom, 0xA5000000, marker_width + 2 * outline_width);
+		draw_list->AddLine(top + line_offset, bottom, 0xA5000000, playhead_width + 2 * outline_width);
 		
-		auto mark_col = marker_color();
+		auto mark_col = playhead_color();
 		draw_list->AddTriangleFilled
 		(
-			ImVec2{ marker_pos - triangle_span, top.y },
-			ImVec2{ marker_pos, top.y + item_height * 0.5f },
-			ImVec2{ marker_pos + triangle_span, top.y }, mark_col
+			ImVec2{ playhead_pos - triangle_span, top.y },
+			ImVec2{ playhead_pos, top.y + item_height * 0.5f },
+			ImVec2{ playhead_pos + triangle_span, top.y }, mark_col
 		);
 
 		//triangle outline
 		draw_list->AddTriangle
 		(
-			ImVec2{ marker_pos - triangle_span, top.y },
-			ImVec2{ marker_pos, top.y + item_height * 0.5f },
-			ImVec2{ marker_pos + triangle_span, top.y }, 0xA5000000, outline_width
+			ImVec2{ playhead_pos - triangle_span, top.y },
+			ImVec2{ playhead_pos, top.y + item_height * 0.5f },
+			ImVec2{ playhead_pos + triangle_span, top.y }, 0xA5000000, outline_width
 		);
 
-		draw_list->AddLine(top + line_offset, bottom, mark_col, marker_width);
+		draw_list->AddLine(top + line_offset, bottom, mark_col, playhead_width);
 	}
 
 	void timeline::draw_time_intervals() const
@@ -453,19 +453,19 @@ namespace vt::widgets
 		draw_list->AddRectFilled(segment_rect.Min, segment_rect.Max, tag.color, rounding);
 	}
 
-	void timeline::draw_marker_preview(const ImRect& table_rect) const
+	void timeline::draw_playhead_preview(const ImRect& table_rect) const
 	{
-		static constexpr float marker_width = 2.0f;
+		static constexpr float playhead_width = 2.0f;
 
 		const auto& style = ImGui::GetStyle();
 		auto avail_width = ImGui::GetContentRegionAvail().x;
 		auto draw_list = ImGui::GetWindowDrawList();
 
-		auto marker_pos = time_to_pos(state_.current_ts, state_.min_ts, state_.max_ts) * avail_width;
-		auto marker_rect = ImRect{ table_rect.Min.x + marker_pos - marker_width / 2, table_rect.Min.y + style.CellPadding.y, table_rect.Min.x + marker_pos + marker_width / 2, table_rect.Max.y - style.CellPadding.y };
+		auto playhead_pos = time_to_pos(state_.current_ts, state_.min_ts, state_.max_ts) * avail_width;
+		auto playhead_rect = ImRect{ table_rect.Min.x + playhead_pos - playhead_width / 2, table_rect.Min.y + style.CellPadding.y, table_rect.Min.x + playhead_pos + playhead_width / 2, table_rect.Max.y - style.CellPadding.y };
 
 		draw_list->PushClipRect(table_rect.Min, table_rect.Max, true);
-		draw_list->AddRectFilled(marker_rect.Min, marker_rect.Max, marker_color());		
+		draw_list->AddRectFilled(playhead_rect.Min, playhead_rect.Max, playhead_color());		
 		draw_list->PopClipRect();
 	}
 
@@ -577,7 +577,7 @@ namespace vt::widgets
 			
 			bool is_timespan_hovered = false;
 			draw_timespan_preview(table_rect, is_timespan_hovered);
-			draw_marker_preview(table_rect);		
+			draw_playhead_preview(table_rect);		
 		}
 		ImGui::PopStyleVar(2);
 
@@ -854,8 +854,8 @@ namespace vt::widgets
 
 				//draw_cell_debug_rect(zoom_);
 				draw_time_intervals();
-				//The marker has to be drawn two times, since it won't be visible on the interval bar when tags are scrolled otherwise
-				draw_marker();
+				//The playhead has to be drawn two times, since it won't be visible on the interval bar when tags are scrolled otherwise
+				draw_playhead();
 				
 				for (auto& tag : visible_tags)
 				{
@@ -895,7 +895,7 @@ namespace vt::widgets
 						ImGui::SameLine();
 					}
 				}
-				draw_marker();
+				draw_playhead();
 
 				if (is_dragging_any_segment())
 				{
@@ -935,7 +935,7 @@ namespace vt::widgets
 		on_draw_tooltip_ = callback;
 	}
 
-	uint32_t timeline::marker_color() const
+	uint32_t timeline::playhead_color() const
 	{
 		return enabled_ ? 0xFF3E36FF : 0xFF3E3E3E; //0xA02A2AFF
 	}
