@@ -128,12 +128,12 @@ namespace vt::widgets
 		//line outline
 		draw_list->AddLine(top + line_offset, bottom, 0xA5000000, playhead_width + 2 * outline_width);
 		
-		auto mark_col = playhead_color();
+		auto playhead_col = playhead_color();
 		draw_list->AddTriangleFilled
 		(
 			ImVec2{ playhead_pos - triangle_span, top.y },
 			ImVec2{ playhead_pos, top.y + item_height * 0.5f },
-			ImVec2{ playhead_pos + triangle_span, top.y }, mark_col
+			ImVec2{ playhead_pos + triangle_span, top.y }, playhead_col
 		);
 
 		//triangle outline
@@ -144,7 +144,7 @@ namespace vt::widgets
 			ImVec2{ playhead_pos + triangle_span, top.y }, 0xA5000000, outline_width
 		);
 
-		draw_list->AddLine(top + line_offset, bottom, mark_col, playhead_width);
+		draw_list->AddLine(top + line_offset, bottom, playhead_col, playhead_width);
 	}
 
 	void timeline::draw_time_intervals() const
