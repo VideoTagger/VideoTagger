@@ -19,9 +19,17 @@ namespace vt::widgets
 		end,
 	};
 
+	enum class segment_drag_stage
+	{
+		not_dragging,
+		dragging,
+		waiting_for_approval,
+	};
+
 	struct segment_drag_data
 	{
 		segment_part grab_part{ segment_part::none };
+		segment_drag_stage stage{ segment_drag_stage::not_dragging };
 		timestamp start_position{};
 		timestamp current_offset{};
 		timestamp min_start_position{};

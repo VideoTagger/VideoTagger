@@ -39,6 +39,8 @@ namespace vt::ui
 		virtual void on_display();
 		///@brief Called when the popup is being rendered
 		virtual void on_render() = 0;
+		///@brief Called whne the popup is about to close
+		virtual void on_close();
 		/**
 		 * @brief Opens the popup if the condition is true and renders it
 		 * @param[in] condition The condition to check

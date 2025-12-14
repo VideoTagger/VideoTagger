@@ -32,7 +32,8 @@
 #include <ui/widgets/settings_expander.hpp>
 
 #include <events/window/window_resize_event.hpp>
-#include <events/timeline/segments_move_event.hpp>
+#include <events/timeline/segments_try_move_event.hpp>
+#include <events/timeline/segments_approve_move_event.hpp>
 #include <events/timeline/segment_merge_event.hpp>
 
 #ifndef VT_VERSION
@@ -155,10 +156,47 @@ namespace vt
 			debug::log("Main window resized to {}x{}", event.width(), event.height());
 		});
 
-		ctx_.add_event_listener<segments_move_event>([](const segments_move_event& event)
+		ctx_.add_event_listener<segments_try_move_event>([](const segments_try_move_event& event)
 		{
 			//TODO: Merge popup
 			auto& storage = ctx_.get_current_segment_storage();
+			segment_id_map conflicting_segments;
+			for (const auto& [tag, segment_ids] : event.segments())
+			{
+				const auto& tag_timeline = storage.at(tag);
+				for (auto& id : segment_ids)
+				{
+					const auto& segment = tag_timeline.at(id);
+					auto segment_start = segment.start + (event.move_part() & segment_part::left ? event.move_offset() : timestamp::zero());
+					auto segment_end = segment.end + (event.move_part() & segment_part::right ? event.move_offset() : timestamp::zero());
+					
+					auto range = tag_timeline.find_range(segment_start, segment_end);
+					if (!range.empty())
+					{
+						if (range.size() == 1 && range.begin()->id == id)
+						{
+							continue;
+						}
+
+						conflicting_segments[tag].insert(id);
+					}
+				}
+			}
+
+			if (!conflicting_segments.empty())
+			{
+				ctx_.segments_move_conflict_popup.conflicting_segments_ = conflicting_segments;
+				ctx_.segments_move_conflict_popup.move_event_data_.emplace(event.storage(), event.segments(), event.move_part(), event.move_offset());
+				ctx_.win_cfg.show_segments_move_conflict_popup = true;
+				return;
+			}
+
+			ctx_.dispatch_event<segments_approve_move_event>(event.storage(), event.segments(), event.move_part(), event.move_offset());
+		});
+
+		ctx_.add_event_listener<segments_approve_move_event>([](const segments_approve_move_event& event)
+		{
+			auto& storage = event.storage();
 			for (const auto& [tag, segment_ids] : event.segments())
 			{
 				auto move_results = storage.at(tag).move_offset(segment_ids, event.move_part(), event.move_offset());
@@ -1661,6 +1699,7 @@ namespace vt
 			return;
 		}
 
+		//TODO: Use new merge segments popup (segments_move_conflict_popup)
 		bool pressed_ok{};
 		if (widgets::merge_segments_popup("##MergePopupApp", presed_ok, false))
 		{
@@ -2546,6 +2585,16 @@ namespace vt
 		{
 			ctx_.script_progress.open();
 			ctx_.script_progress.render(ctx_.win_cfg.show_script_progress);
+		}
+
+		if (ctx_.win_cfg.show_segments_move_conflict_popup)
+		{
+			ctx_.segments_move_conflict_popup.open();
+			ctx_.segments_move_conflict_popup.render();
+			if (!ctx_.segments_move_conflict_popup.is_open())
+			{
+				ctx_.win_cfg.show_segments_move_conflict_popup = false;
+			}
 		}
 
 		//TODO: This is temporary, replace old timeline widget with this later

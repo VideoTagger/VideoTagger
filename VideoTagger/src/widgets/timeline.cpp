@@ -15,7 +15,9 @@
 #include <events/timeline/begin_segment_drag_event.hpp>
 #include <events/timeline/update_segment_drag_event.hpp>
 #include <events/timeline/end_segment_drag_event.hpp>
-#include <events/timeline/segments_move_event.hpp>
+#include <events/timeline/segments_try_move_event.hpp>
+#include <events/timeline/segments_approve_move_event.hpp>
+#include <events/timeline/segments_reject_move_event.hpp>
 #include <events/timeline/segment_merge_event.hpp>
 
 namespace vt::widgets
@@ -79,6 +81,16 @@ namespace vt::widgets
 		ctx_.add_event_listener<end_segment_drag_event>([this](const end_segment_drag_event& e)
 		{
 			end_segment_drag(e.final_offset());
+		});
+
+		ctx_.add_event_listener<segments_approve_move_event>([this](const segments_approve_move_event& e)
+		{
+			segment_drag_data_ = {};
+		});
+
+		ctx_.add_event_listener<segments_reject_move_event>([this](const segments_reject_move_event& e)
+		{
+			segment_drag_data_ = {};
 		});
 
 		ctx_.add_event_listener<segment_merge_event>([this](const segment_merge_event& e)
@@ -625,7 +637,7 @@ namespace vt::widgets
 
 	bool timeline::is_dragging_any_segment() const
 	{
-		return segment_drag_data_.grab_part != segment_part::none;
+		return segment_drag_data_.stage == segment_drag_stage::dragging;
 	}
 
 	void timeline::begin_segment_drag(segment_storage& storage, const segment_id_map& dragged_segments, segment_part grab_part, timestamp grab_start_position)
@@ -634,6 +646,7 @@ namespace vt::widgets
 
 		dragged_segments_ = dragged_segments;
 
+		segment_drag_data_.stage = segment_drag_stage::dragging;
 		segment_drag_data_.grab_part = grab_part;
 		segment_drag_data_.start_position = grab_start_position;
 		segment_drag_data_.current_offset = timestamp::zero();
@@ -720,9 +733,9 @@ namespace vt::widgets
 			}
 		}
 
-		ctx_.dispatch_event<segments_move_event>(*segment_drag_data_.storage, dragged_segments_, segment_drag_data_.grab_part, final_offset);
+		segment_drag_data_.stage = segment_drag_stage::waiting_for_approval;
 
-		segment_drag_data_.grab_part = segment_part::none;
+		ctx_.dispatch_event<segments_try_move_event>(*segment_drag_data_.storage, dragged_segments_, segment_drag_data_.grab_part, final_offset);
 	}
 
 	void timeline::event_deselect_segments_if(segment_storage& storage, const std::function<bool(const std::string&, segment_id)>& predicate)
@@ -889,7 +902,7 @@ namespace vt::widgets
 					for (const auto& segment_and_id : timeline)
 					{
 						bool is_selected = is_segment_selected(tag, segment_and_id.id);
-						bool is_dragged = is_selected and is_dragging_any_segment();
+						bool is_dragged = is_selected and (is_dragging_any_segment() or segment_drag_data_.stage == segment_drag_stage::waiting_for_approval);
 
 						draw_segment(segments, segment_and_id, *tag_it, is_selected, is_dragged);
 						ImGui::SameLine();

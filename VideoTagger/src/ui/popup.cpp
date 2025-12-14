@@ -16,6 +16,7 @@ namespace vt::ui
 
 	void popup::close()
 	{
+		on_close();
 		ImGui::CloseCurrentPopup();
 	}
 
@@ -32,6 +33,10 @@ namespace vt::ui
 	void popup::on_display()
 	{
 
+	}
+
+	void popup::on_close()
+	{
 	}
 
     void popup::open_and_render(bool condition, ImGuiPopupFlags flags)
@@ -91,6 +96,7 @@ namespace vt::ui
 
 	void modal_popup::close()
 	{
+		on_close();
 		if (open_state_.has_value() and *open_state_ != nullptr)
 		{
 			*open_state_.value() = false;
