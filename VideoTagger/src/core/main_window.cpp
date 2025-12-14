@@ -895,7 +895,7 @@ namespace vt
 			static ui::slider<float> font_slider(0.5f, 2.0f, io.FontGlobalScale, { avail_area.x, ImGui::GetFrameHeight() });
 			font_slider.set_step(0.005f);
 			font_slider.render_with_label("Font Scale");
-			font_slider.set_on_change_callback([&io](float value)
+			font_slider.set_on_change_callback([&io](float old_value, float value)
 			{
 				io.FontGlobalScale = value;
 			});

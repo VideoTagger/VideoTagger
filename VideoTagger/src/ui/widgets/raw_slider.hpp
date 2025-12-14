@@ -19,7 +19,7 @@ namespace vt::ui
 		constexpr raw_slider(type min = std::numeric_limits<type>::min(), type max = std::numeric_limits<type>::max(), type value = {}, const ImVec2& size = {}) : min_{ min }, max_{ max }, value_{ value }, step_{}, size_ { size } {}
 
 	private:
-		std::function<void(type new_value)> on_change_;
+		std::function<void(type old_value, type new_value)> on_change_;
 		ImVec2 pos_;
 		ImVec2 size_;
 		type min_;
@@ -66,14 +66,15 @@ namespace vt::ui
 				{
 					mouse_pos.x += mouse_offset_x_;
 				}
+				auto old_value = value_;
 				value_ = math::normalize(mouse_pos.x, draw_rect.Min.x, draw_rect.Max.x, min_, max_);
 				if (step_ != 0)
 				{
 					value_ = static_cast<type>(std::round(value_ / step_) * step_);
 				}
-				if (on_change_ != nullptr)
+				if (value_ != old_value and on_change_ != nullptr)
 				{
-					on_change_(value_);
+					on_change_(old_value, value_);
 				}
 			}
 
@@ -86,10 +87,12 @@ namespace vt::ui
 
 		constexpr void set_value(type value)
 		{
+			if (value_ == value) return;
+			auto old_value = value_;
 			value_ = value;
 			if (on_change_ != nullptr)
 			{
-				on_change_(value_);
+				on_change_(old_value, value_);
 			}
 		}
 
@@ -119,7 +122,7 @@ namespace vt::ui
 			is_pannable_ = is_pannable;
 		}
 
-		constexpr void set_on_change_callback(const std::function<void(type new_value)>& callback)
+		constexpr void set_on_change_callback(const std::function<void(type old_value, type new_value)>& callback)
 		{
 			on_change_ = callback;
 		}

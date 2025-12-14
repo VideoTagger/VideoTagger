@@ -10,5 +10,10 @@ namespace vt::utils
 
 		timestamp start{};
 		timestamp end{};
+
+		constexpr int64_t length() const
+		{
+			return (end - start).total_milliseconds.count();
+		}
 	};
 }

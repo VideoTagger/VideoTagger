@@ -45,10 +45,10 @@ namespace vt::widgets
 		}
 	}
 
-	timeline::timeline() : zoom_slider_{ 1.f, 5.f, 1.f }
+	timeline::timeline() /*: zoom_slider_{ 1.f, 5.f, 1.f }*/
 	{
 		preview_scrollbar_.set_pannable(true);
-		playback_scrollbar_.set_on_change_callback([this](int64_t ts)
+		playback_scrollbar_.set_on_change_callback([this](int64_t old_ts, int64_t ts)
 		{
 			if (on_seek_ != nullptr)
 			{
@@ -56,7 +56,7 @@ namespace vt::widgets
 			}
 		});
 		menu_popup_ = ui::new_popup<ui::timeline_menu_popup>(nullptr);
-		zoom_slider_.set_step(0.005f);
+		//zoom_slider_.set_step(0.005f);
 
 		ctx_.add_event_listener<segment_select_event>([this](const segment_select_event& e)
 		{
@@ -121,7 +121,7 @@ namespace vt::widgets
 		vMax.y += win_pos.y;
 
 		auto avail_width = (vMax.x - vMin.x);
-		auto scaled_width = avail_width * zoom_slider_.value();
+		auto scaled_width = avail_width * span_as_scale();
 		//auto x = win_pos.x + ImGui::GetCursorPosX() + time_to_pos(state_.current_ts, state_.min_ts, state_.max_ts) * scaled_width;
 		auto x = vMin.x + to_timeline_pos(state_.current_ts) * scaled_width;
 
@@ -225,7 +225,7 @@ namespace vt::widgets
 
 		auto draw_list = ImGui::GetWindowDrawList();
 		auto& style = ImGui::GetStyle();
-		auto avail_width = zoom_slider_.value() * cell_rect->GetWidth();
+		auto avail_width = span_as_scale() * cell_rect->GetWidth();
 
 		auto scaled_start = to_timeline_pos(start) * avail_width;
 		auto scaled_end = to_timeline_pos(end) * avail_width;
@@ -240,12 +240,12 @@ namespace vt::widgets
 		ImGui::SetCursorPosX(min.x - win_pos.x);
 		auto rect_size = segment_rect.GetSize() /*- style.CellPadding * 2.f*/;
 
-		auto scaled_grab_width = grab_width * zoom_slider_.value();
+		auto scaled_grab_width = grab_width * span_as_scale();
 		ImVec2 grab_size{ scaled_grab_width, rect_size.y };
 
 		//Only used for timestamps
 		auto ts_radius = segment_rect.GetHeight() / 2.f * 0.9f;
-		ts_radius = std::min(ts_radius, ts_radius * zoom_slider_.value());
+		ts_radius = std::min(ts_radius, ts_radius * span_as_scale());
 
 		bool is_hovered{};
 		bool is_grab_hovered{};
@@ -481,9 +481,10 @@ namespace vt::widgets
 		draw_list->PopClipRect();
 	}
 
-	void timeline::draw_timespan_preview(const ImRect& table_rect, bool& is_hovered) const
+	void timeline::draw_timespan_preview(const ImRect& table_rect, bool& is_hovered, bool& is_left_grab_hovered, bool& is_right_grab_hovered) const
 	{
 		static constexpr float height_padding = 0.5f;
+		static constexpr float grab_width = 10.f;
 
 		const auto& style = ImGui::GetStyle();
 		auto avail_width = ImGui::GetContentRegionAvail().x;
@@ -499,18 +500,34 @@ namespace vt::widgets
 		auto max = ImVec2{ table_rect.Min.x + scaled_end, table_rect.Max.y - style.CellPadding.y - height_padding };
 
 		ImRect timespan_rect{ min, max };
+		timespan_rect.Min.x += grab_width;
+		timespan_rect.Max.x -= grab_width;
+
+		auto grab_line_offset = (timespan_rect.GetHeight() * 0.45f) / 2.f;
+
+		ImRect left_grab_rect{ ImVec2{ timespan_rect.Min.x - grab_width, timespan_rect.Min.y }, ImVec2{ timespan_rect.Min.x, timespan_rect.Max.y } };
+		ImRect right_grab_rect{ ImVec2{ timespan_rect.Max.x, timespan_rect.Min.y }, ImVec2{ timespan_rect.Max.x + grab_width, timespan_rect.Max.y } };
+
 		is_hovered = enabled_ and ImGui::IsMouseHoveringRect(timespan_rect.Min, timespan_rect.Max);
+		is_left_grab_hovered = ImGui::IsMouseHoveringRect(left_grab_rect.Min, left_grab_rect.Max);
+		is_right_grab_hovered = ImGui::IsMouseHoveringRect(right_grab_rect.Min, right_grab_rect.Max);
+
+		bool is_left_grab_enabled = enabled_ and is_left_grab_hovered;
+		bool is_right_grab_enabled = enabled_ and is_right_grab_hovered;
 
 		draw_list->PushClipRect(table_rect.Min, table_rect.Max, true);
 		draw_list->AddRectFilled(timespan_rect.Min, timespan_rect.Max, IM_COL32(36, 36, 36, is_hovered ? 100 : 75), 0.f);
 		draw_list->AddRect(timespan_rect.Min, timespan_rect.Max, IM_COL32(128, 128, 128, is_hovered ? 255 : 240), 0.f);
+
+		draw_list->AddRectFilled(left_grab_rect.Min, left_grab_rect.Max, IM_COL32(36, 36, 36, is_left_grab_enabled ? 100 : 75), 0.f);
+		draw_list->AddRect(left_grab_rect.Min, left_grab_rect.Max, IM_COL32(128, 128, 128, is_left_grab_enabled ? 255 : 240), 0.f);
+		draw_list->AddLine(ImVec2{ left_grab_rect.Min.x + grab_width / 2, left_grab_rect.Min.y + grab_line_offset }, ImVec2{ left_grab_rect.Min.x + grab_width / 2, left_grab_rect.Max.y - grab_line_offset }, IM_COL32(128, 128, 128, is_left_grab_enabled ? 255 : 240), 1.f);
+
+		draw_list->AddRectFilled(right_grab_rect.Min, right_grab_rect.Max, IM_COL32(36, 36, 36, is_right_grab_enabled ? 100 : 75), 0.f);
+		draw_list->AddRect(right_grab_rect.Min, right_grab_rect.Max, IM_COL32(128, 128, 128, is_right_grab_enabled ? 255 : 240), 0.f);
+		draw_list->AddLine(ImVec2{ right_grab_rect.Min.x + grab_width / 2, right_grab_rect.Min.y + grab_line_offset }, ImVec2{ right_grab_rect.Min.x + grab_width / 2, right_grab_rect.Max.y - grab_line_offset }, IM_COL32(128, 128, 128, is_right_grab_enabled ? 255 : 240), 1.f);
 		draw_list->PopClipRect();
 		//draw_list->AddRectFilled(timespan_rect.Min, timespan_rect.Max, IM_COL32(0xFF, 0xFF, 0xFF, 128), 0.f);
-
-		if (is_hovered and ImGui::IsWindowHovered())
-		{
-			ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeEW);
-		}
 	}
 
 	void timeline::draw_scrollbar(segment_storage& segments, tag_storage& tags)
@@ -519,9 +536,6 @@ namespace vt::widgets
 
 		auto [visible_min, visible_max] = visible_time_span();
 		auto visible_length = visible_max.total_milliseconds.count() - visible_min.total_milliseconds.count();
-		int64_t view_ts = view_ts_.total_milliseconds.count();
-		int64_t scroll_min = state_.min_ts.total_milliseconds.count();
-		int64_t scroll_max = std::max(int64_t(state_.max_ts.total_milliseconds.count()) - visible_length, (int64_t)0);
 
 		auto cpos = ImGui::GetCursorPos();
 
@@ -536,6 +550,8 @@ namespace vt::widgets
 		ImVec2 table_size{ ImGui::GetContentRegionAvail().x, avail_height + 2 * scrollbar_padding };
 		ImRect table_rect{ cspos, ImVec2{ cspos.x + table_size.x, cspos.y + table_size.y } };
 		
+		bool is_grab_hovered = false;
+
 		if (ImGui::BeginTable("##TimelineSegments", 1, ImGuiTableFlags_NoSavedSettings, table_size))
 		{
 			ImGui::TableNextRow();
@@ -588,19 +604,101 @@ namespace vt::widgets
 			ImGui::EndTable();
 			
 			bool is_timespan_hovered = false;
-			draw_timespan_preview(table_rect, is_timespan_hovered);
-			draw_playhead_preview(table_rect);		
+			bool is_left_grab_hovered = false;
+			bool is_right_grab_hovered = false;
+			draw_timespan_preview(table_rect, is_timespan_hovered, is_left_grab_hovered, is_right_grab_hovered);
+			is_grab_hovered = (is_left_grab_hovered or is_right_grab_hovered);
+
+			if (enabled_ and cell_rect.has_value())
+			{
+				float normalized_mouse_x = math::normalize(ImGui::GetMousePos().x, cell_rect->Min.x, cell_rect->Max.x, 0.f, 1.f);
+				timestamp mouse_timestamp = to_timestamp_full_span(normalized_mouse_x);
+				if (ImGui::IsMouseDown(ImGuiMouseButton_Left) and (!is_dragging_span_left_grab_ and !is_dragging_span_right_grab_))
+				{
+					if (is_left_grab_hovered)
+					{
+						is_dragging_span_left_grab_ = true;
+					}
+					else if (is_right_grab_hovered)
+					{
+						is_dragging_span_right_grab_ = true;
+					}
+				}
+
+				if (is_dragging_span_left_grab_)
+				{
+					view_ts_.start = mouse_timestamp;
+				}
+				else if (is_dragging_span_right_grab_)
+				{
+					view_ts_.end = mouse_timestamp;
+				}
+
+				if (view_ts_.start > view_ts_.end)
+				{
+					std::swap(view_ts_.start, view_ts_.end);
+					if (is_dragging_span_left_grab_)
+					{
+						is_dragging_span_left_grab_ = false;
+						is_dragging_span_right_grab_ = true;
+					}
+					else if (is_dragging_span_right_grab_)
+					{
+						is_dragging_span_right_grab_ = false;
+						is_dragging_span_left_grab_ = true;
+					}
+				}
+			}
+
+			if (ImGui::IsMouseReleased(ImGuiMouseButton_Left))
+			{
+				is_dragging_span_left_grab_ = false;
+				is_dragging_span_right_grab_ = false;
+			}
+
+			if (enabled_ and ImGui::IsWindowHovered())
+			{
+				if (is_dragging_span_left_grab_ or is_dragging_span_right_grab_)
+				{
+					ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeEW);
+				}
+				else if (is_timespan_hovered)
+				{
+					ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeAll);
+				}
+			}
+			draw_playhead_preview(table_rect);
 		}
 		ImGui::PopStyleVar(2);
 
 		ImGui::SetCursorPos(cpos);
-		preview_scrollbar_.set_range(scroll_min, scroll_max);
-		preview_scrollbar_.set_value(view_ts);
-		preview_scrollbar_.set_size(ImVec2{ ImGui::GetContentRegionAvail().x, ImGui::GetFrameHeight() });
-		preview_scrollbar_.render_disabled(!enabled_);
 
-		view_ts = preview_scrollbar_.value();
-		view_ts_ = timestamp{ view_ts };
+		int64_t view_ts = (view_ts_.start.total_milliseconds.count() + view_ts_.end.total_milliseconds.count()) / 2;
+		int64_t delta = view_ts - view_ts_.start.total_milliseconds.count();
+		int64_t scroll_min = state_.min_ts.total_milliseconds.count();
+		int64_t scroll_max = std::max(int64_t(state_.max_ts.total_milliseconds.count()) - visible_length, (int64_t)0);
+
+		preview_scrollbar_.set_range(scroll_min, scroll_max);
+		//preview_scrollbar_.set_value(view_ts);
+		preview_scrollbar_.set_size(ImVec2{ ImGui::GetContentRegionAvail().x, ImGui::GetFrameHeight() });
+		preview_scrollbar_.render_disabled(!(enabled_ and !is_dragging_span_left_grab_ and !is_dragging_span_right_grab_));
+		preview_scrollbar_.set_on_change_callback([this](int64_t old_value, int64_t new_value)
+		{
+			int64_t view_ts = (view_ts_.start.total_milliseconds.count() + view_ts_.end.total_milliseconds.count()) / 2;
+			int64_t delta = new_value - old_value;
+			view_ts_.start += timestamp{ delta };
+			view_ts_.end += timestamp{ delta };
+
+			if (view_ts_.start > view_ts_.end)
+			{
+				std::swap(view_ts_.start, view_ts_.end);
+			}
+		});
+	}
+
+	timestamp timeline::to_timestamp_full_span(float pos) const
+	{
+		return timestamp(static_cast<int64_t>(math::lerp(static_cast<float>(state_.min_ts.total_milliseconds.count()), static_cast<float>(state_.max_ts.total_milliseconds.count()), pos)));
 	}
 
 	timestamp timeline::to_timestamp(float pos) const
@@ -616,13 +714,18 @@ namespace vt::widgets
 
 	float timeline::to_timeline_pos(timestamp time) const
 	{
-		return math::normalize((time - view_ts_).total_milliseconds.count(), state_.min_ts.total_milliseconds.count(), state_.max_ts.total_milliseconds.count(), 0.0f, 1.0f);
+		auto vis_span = visible_time_span();
+		auto visible_length = vis_span.length();
+		auto view_ts = (timestamp)(vis_span.start.total_milliseconds.count() + visible_length / 2);
+		return math::normalize((time - view_ts).total_milliseconds.count(), state_.min_ts.total_milliseconds.count(), state_.max_ts.total_milliseconds.count(), 0.0f, 1.0f);
 	}
 
 	float timeline::to_visible_timeline_pos(timestamp time) const
 	{
-		auto [start, end] = visible_time_span();
-		return math::normalize((time - view_ts_).total_milliseconds.count(), start.total_milliseconds.count(), end.total_milliseconds.count(), 0.0f, 1.0f);
+		auto vis_span = visible_time_span();
+		auto visible_length = vis_span.length();
+		auto view_ts = (timestamp)(vis_span.start.total_milliseconds.count() + visible_length / 2);
+		return math::normalize((time - view_ts).total_milliseconds.count(), vis_span.start.total_milliseconds.count(), vis_span.end.total_milliseconds.count(), 0.0f, 1.0f);
 	}
 
 	int64_t timeline::interval_time() const
@@ -632,7 +735,7 @@ namespace vt::widgets
 		//if (zoom_ <= 0.1f) return std::max<int64_t>(1, (int64_t)(math::rescale(zoom_, 0.0f, 0.1f, 0.0f, 1.0f) * 10)); //1m
 		
 		auto time_length = state_.time_length();
-		return math::lerp<int64_t>(base_interval, time_length / 10, zoom_slider_.value());
+		return math::lerp<int64_t>(base_interval, time_length / 10, span_as_scale());
 	}
 
 	bool timeline::is_dragging_any_segment() const
@@ -784,7 +887,14 @@ namespace vt::widgets
 
 	utils::timestamp_span timeline::visible_time_span() const
 	{
-		return utils::timestamp_span(view_ts_, view_ts_ + timestamp(static_cast<int64_t>(state_.time_length() / zoom_slider_.value())));
+		return view_ts_;
+	}
+
+	float timeline::span_as_scale() const
+	{
+		auto time_length = state_.time_length();
+		auto visible_length = visible_time_span().length();
+		return time_length / static_cast<float>(visible_length);
 	}
 
 	timeline_state& timeline::state()
@@ -807,7 +917,14 @@ namespace vt::widgets
 
 			ui::toggle("Enabled", enabled_);
 			ImGui::SameLine();
+			if (ui::accent_button("Reset Span"))
+			{
+				view_ts_.start = state_.min_ts;
+				view_ts_.end = state_.max_ts;
+			}
 
+			/*
+			ImGui::SameLine();
 			static constexpr auto accent_color = ImVec4{ 0.2588f, 0.6f, 0.8784f, 1.f };
 			static constexpr auto accent_color_hover = ImVec4{ 0.2f, 0.5098f, 0.7804f, 1.f };
 			ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 4.f);
@@ -817,10 +934,11 @@ namespace vt::widgets
 			zoom_slider_.render();
 			ImGui::PopStyleVar();
 			ImGui::PopStyleColor(2);
+			*/
 
-			ImGui::BeginDisabled(zoom_slider_.value() <= 1.f);
+			//ImGui::BeginDisabled(zoom_slider_.value() <= 1.f);
 			draw_scrollbar(segments, tags);
-			ImGui::EndDisabled();
+			//ImGui::EndDisabled();
 			//-------------
 			ImGui::Separator();
 

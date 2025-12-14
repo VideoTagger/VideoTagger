@@ -67,6 +67,7 @@ namespace vt::widgets
 		bool is_dragging_any_segment() const;
 
 		utils::timestamp_span visible_time_span() const;
+		float span_as_scale() const;
 		timeline_state& state();
 
 		static std::string window_name();
@@ -74,10 +75,12 @@ namespace vt::widgets
 	private:
 		ui::raw_slider<int64_t> preview_scrollbar_;
 		ui::raw_slider<int64_t> playback_scrollbar_;
-		ui::slider<float> zoom_slider_;
+		//ui::slider<float> zoom_slider_;
 		std::unique_ptr<ui::timeline_menu_popup> menu_popup_;
-		timestamp view_ts_{};
+		utils::timestamp_span view_ts_{};
 		bool enabled_ = true;
+		bool is_dragging_span_left_grab_ = false;
+		bool is_dragging_span_right_grab_ = false;
 		timeline_state state_;
 		std::function<void(timestamp ts)> on_seek_;
 		//TODO: segment shouldn't be const
@@ -94,9 +97,10 @@ namespace vt::widgets
 		void draw_segment(segment_storage& segments, const segment_with_id& segment_and_id, const tag& tag, bool is_selected, bool is_dragged);
 		void draw_segment_preview(const segment_with_id& segment_and_id, const tag& tag, float scaled_height, bool is_selected, bool is_dragged) const;
 		void draw_playhead_preview(const ImRect& table_rect) const;
-		void draw_timespan_preview(const ImRect& table_rect, bool& is_hovered) const;
+		void draw_timespan_preview(const ImRect& table_rect, bool& is_hovered, bool& is_left_grab_hovered, bool& is_right_grab_hovered) const;
 		void draw_scrollbar(segment_storage& segments, tag_storage& tags);
 
+		timestamp to_timestamp_full_span(float pos) const;
 		timestamp to_timestamp(float pos) const;
 		float time_to_pos(timestamp time, timestamp min, timestamp max) const;
 		float to_timeline_pos(timestamp time) const;
