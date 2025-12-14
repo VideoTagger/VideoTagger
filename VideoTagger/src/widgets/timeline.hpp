@@ -70,6 +70,8 @@ namespace vt::widgets
 		std::unique_ptr<ui::timeline_menu_popup> menu_popup_;
 		timestamp view_ts_{};
 		bool enabled_ = true;
+		bool is_dragging_span_left_grab_ = false;
+		bool is_dragging_span_right_grab_ = false;
 		timeline_state state_;
 		std::function<void(timestamp ts)> on_seek_;
 		//TODO: segment shouldn't be const
@@ -86,7 +88,7 @@ namespace vt::widgets
 		void draw_segment(segment_storage& segments, const segment_with_id& segment_and_id, const tag& tag, bool is_selected, bool is_dragged);
 		void draw_segment_preview(const segment_with_id& segment_and_id, const tag& tag, float scaled_height, bool is_selected, bool is_dragged) const;
 		void draw_playhead_preview(const ImRect& table_rect) const;
-		void draw_timespan_preview(const ImRect& table_rect, bool& is_hovered) const;
+		void draw_timespan_preview(const ImRect& table_rect, bool& is_hovered, bool& is_left_grab_hovered, bool& is_right_grab_hovered) const;
 		void draw_scrollbar(segment_storage& segments, tag_storage& tags);
 
 		timestamp to_timestamp(float pos) const;

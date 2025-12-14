@@ -469,9 +469,10 @@ namespace vt::widgets
 		draw_list->PopClipRect();
 	}
 
-	void timeline::draw_timespan_preview(const ImRect& table_rect, bool& is_hovered) const
+	void timeline::draw_timespan_preview(const ImRect& table_rect, bool& is_hovered, bool& is_left_grab_hovered, bool& is_right_grab_hovered) const
 	{
 		static constexpr float height_padding = 0.5f;
+		static constexpr float grab_width = 10.f;
 
 		const auto& style = ImGui::GetStyle();
 		auto avail_width = ImGui::GetContentRegionAvail().x;
@@ -487,17 +488,45 @@ namespace vt::widgets
 		auto max = ImVec2{ table_rect.Min.x + scaled_end, table_rect.Max.y - style.CellPadding.y - height_padding };
 
 		ImRect timespan_rect{ min, max };
+		timespan_rect.Min.x += grab_width;
+		timespan_rect.Max.x -= grab_width;
+
+		auto grab_line_offset = (timespan_rect.GetHeight() * 0.45f) / 2.f;
+
+		ImRect left_grab_rect{ ImVec2{ timespan_rect.Min.x - grab_width, timespan_rect.Min.y }, ImVec2{ timespan_rect.Min.x, timespan_rect.Max.y } };
+		ImRect right_grab_rect{ ImVec2{ timespan_rect.Max.x, timespan_rect.Min.y }, ImVec2{ timespan_rect.Max.x + grab_width, timespan_rect.Max.y } };
+
 		is_hovered = enabled_ and ImGui::IsMouseHoveringRect(timespan_rect.Min, timespan_rect.Max);
+		is_left_grab_hovered = ImGui::IsMouseHoveringRect(left_grab_rect.Min, left_grab_rect.Max);
+		is_right_grab_hovered = ImGui::IsMouseHoveringRect(right_grab_rect.Min, right_grab_rect.Max);
+
+		bool is_left_grab_enabled = enabled_ and is_left_grab_hovered;
+		bool is_right_grab_enabled = enabled_ and is_right_grab_hovered;
 
 		draw_list->PushClipRect(table_rect.Min, table_rect.Max, true);
 		draw_list->AddRectFilled(timespan_rect.Min, timespan_rect.Max, IM_COL32(36, 36, 36, is_hovered ? 100 : 75), 0.f);
 		draw_list->AddRect(timespan_rect.Min, timespan_rect.Max, IM_COL32(128, 128, 128, is_hovered ? 255 : 240), 0.f);
+
+		draw_list->AddRectFilled(left_grab_rect.Min, left_grab_rect.Max, IM_COL32(36, 36, 36, is_left_grab_enabled ? 100 : 75), 0.f);
+		draw_list->AddRect(left_grab_rect.Min, left_grab_rect.Max, IM_COL32(128, 128, 128, is_left_grab_enabled ? 255 : 240), 0.f);
+		draw_list->AddLine(ImVec2{ left_grab_rect.Min.x + grab_width / 2, left_grab_rect.Min.y + grab_line_offset }, ImVec2{ left_grab_rect.Min.x + grab_width / 2, left_grab_rect.Max.y - grab_line_offset }, IM_COL32(128, 128, 128, is_left_grab_enabled ? 255 : 240), 1.f);
+
+		draw_list->AddRectFilled(right_grab_rect.Min, right_grab_rect.Max, IM_COL32(36, 36, 36, is_right_grab_enabled ? 100 : 75), 0.f);
+		draw_list->AddRect(right_grab_rect.Min, right_grab_rect.Max, IM_COL32(128, 128, 128, is_right_grab_enabled ? 255 : 240), 0.f);
+		draw_list->AddLine(ImVec2{ right_grab_rect.Min.x + grab_width / 2, right_grab_rect.Min.y + grab_line_offset }, ImVec2{ right_grab_rect.Min.x + grab_width / 2, right_grab_rect.Max.y - grab_line_offset }, IM_COL32(128, 128, 128, is_right_grab_enabled ? 255 : 240), 1.f);
 		draw_list->PopClipRect();
 		//draw_list->AddRectFilled(timespan_rect.Min, timespan_rect.Max, IM_COL32(0xFF, 0xFF, 0xFF, 128), 0.f);
 
-		if (is_hovered and ImGui::IsWindowHovered())
+		if (ImGui::IsWindowHovered())
 		{
-			ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeEW);
+			if (is_left_grab_hovered or is_right_grab_hovered)
+			{
+				ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeEW);
+			}
+			else if (is_hovered)
+			{
+				ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeAll);
+			}
 		}
 	}
 
@@ -507,9 +536,6 @@ namespace vt::widgets
 
 		auto [visible_min, visible_max] = visible_time_span();
 		auto visible_length = visible_max.total_milliseconds.count() - visible_min.total_milliseconds.count();
-		int64_t view_ts = view_ts_.total_milliseconds.count();
-		int64_t scroll_min = state_.min_ts.total_milliseconds.count();
-		int64_t scroll_max = std::max(int64_t(state_.max_ts.total_milliseconds.count()) - visible_length, (int64_t)0);
 
 		auto cpos = ImGui::GetCursorPos();
 
@@ -524,6 +550,8 @@ namespace vt::widgets
 		ImVec2 table_size{ ImGui::GetContentRegionAvail().x, avail_height + 2 * scrollbar_padding };
 		ImRect table_rect{ cspos, ImVec2{ cspos.x + table_size.x, cspos.y + table_size.y } };
 		
+		bool is_grab_hovered = false;
+
 		if (ImGui::BeginTable("##TimelineSegments", 1, ImGuiTableFlags_NoSavedSettings, table_size))
 		{
 			ImGui::TableNextRow();
@@ -576,16 +604,56 @@ namespace vt::widgets
 			ImGui::EndTable();
 			
 			bool is_timespan_hovered = false;
-			draw_timespan_preview(table_rect, is_timespan_hovered);
+			bool is_left_grab_hovered = false;
+			bool is_right_grab_hovered = false;
+			draw_timespan_preview(table_rect, is_timespan_hovered, is_left_grab_hovered, is_right_grab_hovered);
+			is_grab_hovered = (is_left_grab_hovered or is_right_grab_hovered);
+
+			if (cell_rect.has_value())
+			{
+				float normalized_mouse_x = math::normalize(ImGui::GetMousePos().x, cell_rect->Min.x, cell_rect->Max.x, 0.f, 1.f);
+				timestamp mouse_timestamp = to_timestamp(normalized_mouse_x);
+				if (ImGui::IsMouseDown(ImGuiMouseButton_Left) and (!is_dragging_span_left_grab_ and !is_dragging_span_right_grab_))
+				{
+					if (is_left_grab_hovered)
+					{
+						is_dragging_span_left_grab_ = true;
+					}
+					else if (is_right_grab_hovered)
+					{
+						is_dragging_span_right_grab_ = true;
+					}
+				}
+
+				if (is_dragging_span_left_grab_)
+				{
+					//TODO: Set view_min to mouse_timestamp;
+				}
+				else if (is_dragging_span_right_grab_)
+				{
+					//TODO: Set view_max to mouse_timestamp;
+				}
+			}
+
+			if (ImGui::IsMouseReleased(ImGuiMouseButton_Left))
+			{
+				is_dragging_span_left_grab_ = false;
+				is_dragging_span_right_grab_ = false;
+			}
 			draw_playhead_preview(table_rect);		
 		}
 		ImGui::PopStyleVar(2);
 
 		ImGui::SetCursorPos(cpos);
+
+		int64_t view_ts = view_ts_.total_milliseconds.count();
+		int64_t scroll_min = state_.min_ts.total_milliseconds.count();
+		int64_t scroll_max = std::max(int64_t(state_.max_ts.total_milliseconds.count()) - visible_length, (int64_t)0);
+
 		preview_scrollbar_.set_range(scroll_min, scroll_max);
 		preview_scrollbar_.set_value(view_ts);
 		preview_scrollbar_.set_size(ImVec2{ ImGui::GetContentRegionAvail().x, ImGui::GetFrameHeight() });
-		preview_scrollbar_.render_disabled(!enabled_);
+		preview_scrollbar_.render_disabled(!(enabled_ and !is_grab_hovered));
 
 		view_ts = preview_scrollbar_.value();
 		view_ts_ = timestamp{ view_ts };
