@@ -653,7 +653,7 @@ namespace vt::widgets
 		preview_scrollbar_.set_range(scroll_min, scroll_max);
 		preview_scrollbar_.set_value(view_ts);
 		preview_scrollbar_.set_size(ImVec2{ ImGui::GetContentRegionAvail().x, ImGui::GetFrameHeight() });
-		preview_scrollbar_.render_disabled(!(enabled_ and !is_grab_hovered));
+		preview_scrollbar_.render_disabled(!(enabled_ and !is_dragging_span_left_grab_ and !is_dragging_span_right_grab_));
 
 		view_ts = preview_scrollbar_.value();
 		view_ts_ = timestamp{ view_ts };
