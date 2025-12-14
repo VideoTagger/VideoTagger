@@ -21,8 +21,10 @@ namespace vt::ui
 
 	void segments_move_conflict_popup::on_render()
 	{
-		ui::text message(ctx_.lang->get("segments_move_conflict_popup_message"));
 		close_on_escape();
+
+		ui::text message(ctx_.lang->get("segments_move_conflict_popup_message"));
+		message.render();
 		ui::vertical_item_spacer();
 		std::vector<std::pair<int, std::string>> buttons
 		{

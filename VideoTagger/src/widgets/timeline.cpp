@@ -648,6 +648,9 @@ namespace vt::widgets
 						is_dragging_span_left_grab_ = true;
 					}
 				}
+
+				view_ts_.start = std::clamp(view_ts_.start, state_.min_ts, state_.max_ts);
+				view_ts_.end = std::clamp(view_ts_.end, state_.min_ts, state_.max_ts);
 			}
 
 			if (ImGui::IsMouseReleased(ImGuiMouseButton_Left))
@@ -676,7 +679,7 @@ namespace vt::widgets
 		int64_t view_ts = (view_ts_.start.total_milliseconds.count() + view_ts_.end.total_milliseconds.count()) / 2;
 		int64_t delta = view_ts - view_ts_.start.total_milliseconds.count();
 		int64_t scroll_min = state_.min_ts.total_milliseconds.count();
-		int64_t scroll_max = std::max(int64_t(state_.max_ts.total_milliseconds.count()) - visible_length, (int64_t)0);
+		int64_t scroll_max = std::max(int64_t(state_.max_ts.total_milliseconds.count()) - visible_length / 2, (int64_t)0);
 
 		preview_scrollbar_.set_range(scroll_min, scroll_max);
 		//preview_scrollbar_.set_value(view_ts);
@@ -686,13 +689,18 @@ namespace vt::widgets
 		{
 			int64_t view_ts = (view_ts_.start.total_milliseconds.count() + view_ts_.end.total_milliseconds.count()) / 2;
 			int64_t delta = new_value - old_value;
-			view_ts_.start += timestamp{ delta };
-			view_ts_.end += timestamp{ delta };
+			auto new_start = view_ts_.start + timestamp{ delta };
+			auto new_end = view_ts_.end + timestamp{ delta };
 
-			if (view_ts_.start > view_ts_.end)
+			if (new_start > new_end)
 			{
-				std::swap(view_ts_.start, view_ts_.end);
+				std::swap(new_start, new_end);
 			}
+
+			if (new_start < state_.min_ts or new_end > state_.max_ts) return;
+
+			view_ts_.start = new_start;
+			view_ts_.end = new_end;
 		});
 	}
 
@@ -717,7 +725,7 @@ namespace vt::widgets
 		auto vis_span = visible_time_span();
 		auto visible_length = vis_span.length();
 		auto view_ts = (timestamp)(vis_span.start.total_milliseconds.count() + visible_length / 2);
-		return math::normalize((time - view_ts).total_milliseconds.count(), state_.min_ts.total_milliseconds.count(), state_.max_ts.total_milliseconds.count(), 0.0f, 1.0f);
+		return math::normalize((time - vis_span.start).total_milliseconds.count(), state_.min_ts.total_milliseconds.count(), state_.max_ts.total_milliseconds.count(), 0.0f, 1.0f);
 	}
 
 	float timeline::to_visible_timeline_pos(timestamp time) const
@@ -725,7 +733,7 @@ namespace vt::widgets
 		auto vis_span = visible_time_span();
 		auto visible_length = vis_span.length();
 		auto view_ts = (timestamp)(vis_span.start.total_milliseconds.count() + visible_length / 2);
-		return math::normalize((time - view_ts).total_milliseconds.count(), vis_span.start.total_milliseconds.count(), vis_span.end.total_milliseconds.count(), 0.0f, 1.0f);
+		return math::normalize((time - vis_span.start).total_milliseconds.count(), vis_span.start.total_milliseconds.count(), vis_span.end.total_milliseconds.count(), 0.0f, 1.0f);
 	}
 
 	int64_t timeline::interval_time() const
