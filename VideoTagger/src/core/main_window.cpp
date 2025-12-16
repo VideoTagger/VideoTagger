@@ -33,7 +33,7 @@
 
 #include <events/window/window_resize_event.hpp>
 #include <events/timeline/segments_try_move_event.hpp>
-#include <events/timeline/segments_approve_move_event.hpp>
+#include <events/timeline/segments_try_move_result_event.hpp>
 #include <events/timeline/segment_merge_event.hpp>
 
 #ifndef VT_VERSION
@@ -191,11 +191,13 @@ namespace vt
 				return;
 			}
 
-			ctx_.dispatch_event<segments_approve_move_event>(event.storage(), event.segments(), event.move_part(), event.move_offset());
+			ctx_.dispatch_event<segments_try_move_result_event>(event.storage(), event.segments(), event.move_part(), event.move_offset(), true);
 		});
 
-		ctx_.add_event_listener<segments_approve_move_event>([](const segments_approve_move_event& event)
+		ctx_.add_event_listener<segments_try_move_result_event>([](const segments_try_move_result_event& event)
 		{
+			if (!event.approved()) return;
+
 			auto& storage = event.storage();
 			for (const auto& [tag, segment_ids] : event.segments())
 			{

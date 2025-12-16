@@ -16,8 +16,7 @@
 #include <events/timeline/update_segment_drag_event.hpp>
 #include <events/timeline/end_segment_drag_event.hpp>
 #include <events/timeline/segments_try_move_event.hpp>
-#include <events/timeline/segments_approve_move_event.hpp>
-#include <events/timeline/segments_reject_move_event.hpp>
+#include <events/timeline/segments_try_move_result_event.hpp>
 #include <events/timeline/segment_merge_event.hpp>
 
 namespace vt::widgets
@@ -83,12 +82,7 @@ namespace vt::widgets
 			end_segment_drag(e.final_offset());
 		});
 
-		ctx_.add_event_listener<segments_approve_move_event>([this](const segments_approve_move_event& e)
-		{
-			segment_drag_data_ = {};
-		});
-
-		ctx_.add_event_listener<segments_reject_move_event>([this](const segments_reject_move_event& e)
+		ctx_.add_event_listener<segments_try_move_result_event>([this](const segments_try_move_result_event& e)
 		{
 			segment_drag_data_ = {};
 		});

@@ -5,14 +5,15 @@
 namespace vt
 {
 	///@brief Event triggered when one or more segments have been moved
-	struct segments_approve_move_event : public multi_segment_event
+	struct segments_try_move_result_event : public multi_segment_event
 	{
-		segments_approve_move_event(segment_storage& storage, const segment_id_map& segments, segment_part move_part, timestamp move_offset) :
-			multi_segment_event(storage, segments), move_part_{ move_part }, move_offset_{ move_offset } {}
+		segments_try_move_result_event(segment_storage& storage, const segment_id_map& segments, segment_part move_part, timestamp move_offset, bool approved) :
+			multi_segment_event(storage, segments), move_part_{ move_part }, move_offset_{ move_offset }, approved_{ approved } {}
 
 	private:
 		segment_part move_part_;
 		timestamp move_offset_;
+		bool approved_{};
 
 	public:
 		///@return The part of the segment that was moved
@@ -25,6 +26,12 @@ namespace vt
 		constexpr timestamp move_offset() const
 		{
 			return move_offset_;
+		}
+
+		///@return Whether the move was approved
+		constexpr bool approved() const
+		{
+			return approved_;
 		}
 	};
 }

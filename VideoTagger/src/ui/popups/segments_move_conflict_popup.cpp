@@ -4,8 +4,7 @@
 #include <ui/widgets/button_bar.hpp>
 #include <ui/widgets/common.hpp>
 #include <ui/widgets/text.hpp>
-#include <events/timeline/segments_reject_move_event.hpp>
-#include <events/timeline/segments_approve_move_event.hpp>
+#include <events/timeline/segments_try_move_result_event.hpp>
 
 namespace vt::ui
 {
@@ -44,8 +43,8 @@ namespace vt::ui
 					}
 
 					cancelled_ = false;
-					ctx_.dispatch_event<segments_approve_move_event>(
-						move_event_data_->storage(), move_event_data_->segments(), move_event_data_->move_part(), move_event_data_->move_offset()
+					ctx_.dispatch_event<segments_try_move_result_event>(
+						move_event_data_->storage(), move_event_data_->segments(), move_event_data_->move_part(), move_event_data_->move_offset(), true
 					);
 					close();
 				}
@@ -59,7 +58,9 @@ namespace vt::ui
 	{
 		if (cancelled_ and move_event_data_.has_value())
 		{
-			ctx_.dispatch_event<segments_reject_move_event>(move_event_data_->storage(), move_event_data_->segments());
+			ctx_.dispatch_event<segments_try_move_result_event>(
+				move_event_data_->storage(), move_event_data_->segments(), move_event_data_->move_part(), move_event_data_->move_offset(), false
+			);
 		}
 	}
 }
