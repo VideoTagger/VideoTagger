@@ -2316,7 +2316,7 @@ namespace vt
 										draw_list->PushClipRect(top_left, bottom_right, true);
 										shape.draw(current_ts, shape.interpolate, from_tex_pos, from_pixels, tex_size, size, is_selected ? orange : tag.color, fill_color, show_points, [&](size_t i)
 										{
-											if (ImGui::IsMouseDown(0))
+											if (ImGui::IsMouseClicked(0) and hovered)
 											{
 												ctx_.video_timeline.selected_segment = widgets::selected_segment_data{ tag.name, segment_id };
 												ctx_.set_selected_attribute(&attr);

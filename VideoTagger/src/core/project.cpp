@@ -342,10 +342,12 @@ namespace vt
 					auto json_video = nlohmann::ordered_json::object();
 
 					json_video["title"] = metadata.title.has_value() ? *metadata.title : "UNKNOWN";
+					json_video["id"] = std::to_string(group_video_info.id);
 					if (metadata.sha256.has_value())
 					{
 						json_video["sha256"] = utils::hash::bytes_to_hex(*metadata.sha256, utils::hash::string_case::lower);
 					}
+					json_video["offset"] = timestamp{ std::chrono::duration_cast<std::chrono::milliseconds>(group_video_info.offset) };
 					json_group_videos.push_back(json_video);
 				}
 			}
