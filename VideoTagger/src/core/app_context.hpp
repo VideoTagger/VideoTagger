@@ -42,6 +42,7 @@
 #include <services/service_account_manager.hpp>
 #include <video/video_importer.hpp>
 #include <ui/popups/segments_move_conflict_popup.hpp>
+#include <ui/popups/segment_insert_conflict_popup.hpp>
 
 #include <events/event_storage.hpp>
 
@@ -94,6 +95,7 @@ namespace vt
 		bool show_tag_importer_window = false;
 		bool show_script_progress = false;
 		bool show_segments_move_conflict_popup = false;
+		bool show_segment_insert_conflict_popup = false;
 	};
 
 	enum class font_type
@@ -130,6 +132,7 @@ namespace vt
 		widgets::color_picker color_picker;
 		widgets::modal::tag_importer tag_importer;
 		ui::segments_move_conflict_popup segments_move_conflict_popup;
+		ui::segment_insert_conflict_popup segment_insert_conflict_popup;
 
 		std::filesystem::path projects_list_filepath = storage_path() / std::filesystem::path("projects").replace_extension("json");
 		std::filesystem::path app_settings_filepath = storage_path() / std::filesystem::path("settings").replace_extension("json");
