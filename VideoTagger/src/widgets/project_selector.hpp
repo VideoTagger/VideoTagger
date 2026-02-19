@@ -1,7 +1,6 @@
 #pragma once
 #include <vector>
-#include <functional>
-#include "core/project.hpp"
+#include <core/project.hpp>
 
 namespace vt::widgets
 {
@@ -11,8 +10,6 @@ namespace vt::widgets
 		project_selector() = default;
 		project_selector(const std::vector<project_info>& projects);
 
-		std::function<void(project_info&)> on_click_project;
-		std::function<void()> on_project_list_update;
 	private:
 		std::string filter;
 		bool path_from_name = true;

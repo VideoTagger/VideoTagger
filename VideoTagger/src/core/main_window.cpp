@@ -53,6 +53,8 @@ extern "C"
 #include <events/player/skip_next_event.hpp>
 #include <events/player/skip_previous_event.hpp>
 #include <events/player/seek_event.hpp>
+#include <events/project_selector/open_project_event.hpp>
+#include <events/project_selector/project_list_changed_event.hpp>
 
 namespace vt
 {
@@ -75,8 +77,10 @@ namespace vt
 
 	main_window::main_window(const app_window_config& cfg) : app_window{ cfg }
 	{
-		ctx_.project_selector.on_click_project = [&](project_info& project_info)
+		ctx_.add_event_listener<open_project_event>([this](const open_project_event& event)
 		{
+			auto project_info = event.project();
+
 			debug::log("Clicked project: {}, Filepath: {}", project_info.name, project_info.path.u8string());
 			if (!std::filesystem::is_regular_file(project_info.path))
 			{
@@ -103,7 +107,7 @@ namespace vt
 					case 1:
 					{
 						ctx_.project_selector.remove(project_info);
-						ctx_.project_selector.on_project_list_update();
+						ctx_.dispatch_event<project_list_changed_event>();
 					}
 					break;
 					case 2:
@@ -113,7 +117,7 @@ namespace vt
 						if (result)
 						{
 							project_info = project_info::load_from_file(result.path);
-							ctx_.project_selector.on_project_list_update();
+							ctx_.dispatch_event<project_list_changed_event>();
 						}
 					}
 					break;
@@ -123,14 +127,14 @@ namespace vt
 			ctx_.current_project = project::load_from_file(project_info.path);
 			ctx_.main_window->set_subtitle(ctx_.current_project->name);
 			ctx_.console.clear();
-		};
+		});
 
-		ctx_.project_selector.on_project_list_update = [&]()
+		ctx_.add_event_listener<project_list_changed_event>([this](const project_list_changed_event& event)
 		{
 			ctx_.project_selector.sort();
 			ctx_.project_selector.save_projects_file(ctx_.projects_list_filepath);
 			debug::log("Saving projects list to {}", std::filesystem::absolute(ctx_.projects_list_filepath).u8string());
-		};
+		});
 
 		ctx_.group_browser.on_open_video = [this](video_id_t id)
 		{

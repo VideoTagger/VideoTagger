@@ -11,6 +11,8 @@
 #include "controls.hpp"
 
 #include <core/app.hpp>
+#include <events/project_selector/open_project_event.hpp>
+#include <events/project_selector/project_list_changed_event.hpp>
 
 namespace vt::widgets
 {
@@ -112,9 +114,10 @@ namespace vt::widgets
 				temp_project.save();
 				projects_.push_back(temp_project);
 
-				if (on_project_list_update == nullptr) return;
-				on_project_list_update();
+				ctx_.dispatch_event<project_list_changed_event>();
 				ImGui::CloseCurrentPopup();
+
+				ctx_.dispatch_event<open_project_event>(temp_project);
 			}
 
 			ImGui::EndPopup();
@@ -143,9 +146,9 @@ namespace vt::widgets
 		{
 			ImGui::BeginDisabled();
 		}
-		if (ImGui::Selectable("##ProjectListSelectable", false, ImGuiSelectableFlags_AllowItemOverlap | ImGuiSelectableFlags_SpanAllColumns, size) and on_click_project != nullptr)
+		if (ImGui::Selectable("##ProjectListSelectable", false, ImGuiSelectableFlags_AllowItemOverlap | ImGuiSelectableFlags_SpanAllColumns, size))
 		{
-			on_click_project(project);
+			ctx_.dispatch_event<open_project_event>(project);
 		}
 		if (ImGui::IsItemHovered())
 		{
@@ -225,7 +228,7 @@ namespace vt::widgets
 				if (ImGui::MenuItem(menu_name.c_str()))
 				{
 					projects_.erase(std::find(projects_.begin(), projects_.end(), project));
-					if (on_project_list_update != nullptr) on_project_list_update();
+					ctx_.dispatch_event<project_list_changed_event>();
 				}
 			}
 			{
@@ -259,7 +262,7 @@ namespace vt::widgets
 							if (std::filesystem::remove(project.path, ec))
 							{
 								projects_.erase(std::find(projects_.begin(), projects_.end(), project));
-								if (on_project_list_update != nullptr) on_project_list_update();
+								ctx_.dispatch_event<project_list_changed_event>();
 							}
 							else
 							{
@@ -314,8 +317,7 @@ namespace vt::widgets
 		{
 			projects_[i] = project_info::load_from_file(list[i]);
 		}
-		if (on_project_list_update == nullptr) return;
-		on_project_list_update();
+		ctx_.dispatch_event<project_list_changed_event>();
 	}
 
 	void project_selector::save_projects_file(const std::filesystem::path& filepath)
@@ -463,8 +465,7 @@ namespace vt::widgets
 									if (it == projects_.end())
 									{
 										projects_.push_back(project_info::load_from_file(result.path));
-										if (on_project_list_update == nullptr) return;
-										on_project_list_update();
+										ctx_.dispatch_event<project_list_changed_event>();
 									}
 									else
 									{
