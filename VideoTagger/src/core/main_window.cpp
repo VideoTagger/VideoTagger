@@ -47,6 +47,12 @@ extern "C"
 
 #include <openssl/opensslv.h>
 #include <pybind11/pybind11.h>
+#include <events/player/playback_changed_event.hpp>
+#include <events/player/looping_changed_event.hpp>
+#include <events/player/speed_changed_event.hpp>
+#include <events/player/skip_next_event.hpp>
+#include <events/player/skip_previous_event.hpp>
+#include <events/player/seek_event.hpp>
 
 namespace vt
 {
@@ -1037,10 +1043,10 @@ namespace vt
 			//	if (!vinfo.is_widget_open) continue;
 			//	vinfo.video.set_playing(is_playing);
 			//}
-			if (ctx_.current_video_group_id() == invalid_video_group_id)
-			{
-				return;
-			}
+			if (ctx_.current_video_group_id() == invalid_video_group_id) return;
+			ctx_.dispatch_event<playback_changed_event>(ctx_.player, is_playing);
+
+			//TODO: This should be handled as a playback_changed_event listener
 			ctx_.displayed_videos.set_playing(is_playing);
 		};
 
@@ -1051,10 +1057,8 @@ namespace vt
 			//	if (!vinfo.is_widget_open) continue;
 			//	vinfo.video.set_looping(is_looping);
 			//}
-			if (ctx_.current_video_group_id() == invalid_video_group_id)
-			{
-				return;
-			}
+			if (ctx_.current_video_group_id() == invalid_video_group_id) return;
+			ctx_.dispatch_event<looping_changed_event>(ctx_.player, mode);
 		};
 
 		ctx_.player.callbacks.on_set_speed = [](float speed)
@@ -1065,10 +1069,10 @@ namespace vt
 			//	vinfo.video.set_speed(speed);
 			//}
 
-			if (ctx_.current_video_group_id() == invalid_video_group_id)
-			{
-				return;
-			}
+			if (ctx_.current_video_group_id() == invalid_video_group_id) return;
+			ctx_.dispatch_event<speed_changed_event>(ctx_.player, speed);
+
+			//TODO: This should be handled as a speed_changed_event listener
 			ctx_.displayed_videos.set_speed(speed);
 		};
 
@@ -1080,10 +1084,12 @@ namespace vt
 			if (dir > 0)
 			{
 				it = playlist.next();
+				ctx_.dispatch_event<skip_next_event>(ctx_.player);
 			}
 			else if (dir < 0)
 			{
 				it = playlist.previous();
+				ctx_.dispatch_event<skip_previous_event>(ctx_.player);
 			}
 
 			ctx_.reset_current_video_group();
@@ -1107,16 +1113,15 @@ namespace vt
 			//	vinfo.video.seek(ts);
 			//}
 
-			if (ctx_.current_video_group_id() == invalid_video_group_id)
-			{
-				return;
-			}
+			if (ctx_.current_video_group_id() == invalid_video_group_id) return;
+			ctx_.dispatch_event<seek_event>(ctx_.player, ts);
 			ctx_.displayed_videos.seek(ts);
 		};
 
 		ctx_.player.callbacks.on_finish = [](loop_mode mode, bool is_playing)
 		{
 			auto& playlist = ctx_.current_project->video_group_playlist;
+			//TODO: Consider adding an event here
 
 			if (mode == loop_mode::one)
 			{
