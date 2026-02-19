@@ -35,6 +35,9 @@
 #include <events/timeline/segments_try_move_event.hpp>
 #include <events/timeline/segments_try_move_result_event.hpp>
 #include <events/timeline/segment_merge_event.hpp>
+#include <events/timeline/segment_delete_event.hpp>
+#include <events/timeline/segment_try_insert_event.hpp>
+#include <events/timeline/segment_try_insert_result_event.hpp>
 
 #ifndef VT_VERSION
 	#error VT_VERSION is not defined
@@ -164,7 +167,6 @@ namespace vt
 
 		ctx_.add_event_listener<segments_try_move_event>([](const segments_try_move_event& event)
 		{
-			//TODO: Merge popup
 			auto& storage = ctx_.get_current_segment_storage();
 			segment_id_map conflicting_segments;
 			for (const auto& [tag, segment_ids] : event.segments())
@@ -216,6 +218,60 @@ namespace vt
 						ctx_.dispatch_event<segment_merge_event>(storage, tag, merged_id, move_result.resulting_segment());
 					}
 				}
+			}
+
+			ctx_.is_project_dirty = true;
+		});
+
+		ctx_.add_event_listener<segment_delete_event>([](const segment_delete_event& event)
+		{
+			auto& storage = event.storage();
+			auto it = storage.find(event.tag());
+			if (it == storage.end()) return;
+
+			it->second.erase(event.id());
+			ctx_.is_project_dirty = true;
+		});
+
+		ctx_.add_event_listener<segment_try_insert_event>([](const segment_try_insert_event& event)
+		{
+			auto& storage = ctx_.get_current_segment_storage();
+			std::set<segment_id> conflicting_segments;
+			auto it = storage.find(event.tag());
+			if (it == storage.end()) return;
+			auto& tag_timeline = it->second;
+
+			for (auto& [id, _] : tag_timeline.find_range(event.start(), event.end()))
+			{
+				conflicting_segments.insert(id);
+			}
+
+			if (!conflicting_segments.empty())
+			{
+				ctx_.segment_insert_conflict_popup.conflicting_segments_ = conflicting_segments;
+				ctx_.segment_insert_conflict_popup.insert_event_data_.emplace(event.storage(), event.tag(), event.start(), event.end());
+				ctx_.win_cfg.show_segment_insert_conflict_popup = true;
+				return;
+			}
+
+			ctx_.dispatch_event<segment_try_insert_result_event>(event.storage(), event.tag(), event.start(), event.end(), true);
+		});
+
+		ctx_.add_event_listener<segment_try_insert_result_event>([](const segment_try_insert_result_event& event)
+		{
+			if (!event.approved()) return;
+
+			auto& storage = event.storage();
+			auto it = storage.find(event.tag());
+			if (it == storage.end()) return;
+			auto& tag_timeline = it->second;
+
+			auto insert_result = tag_timeline.insert(event.start(), event.end());
+			if (!insert_result.inserted()) return;
+
+			for (auto& merged_id : insert_result.merged_segments())
+			{
+				ctx_.dispatch_event<segment_merge_event>(storage, event.tag(), merged_id, insert_result.inserted_segment());
 			}
 
 			ctx_.is_project_dirty = true;
@@ -2601,6 +2657,16 @@ namespace vt
 			if (!ctx_.segments_move_conflict_popup.is_open())
 			{
 				ctx_.win_cfg.show_segments_move_conflict_popup = false;
+			}
+		}
+
+		if (ctx_.win_cfg.show_segment_insert_conflict_popup)
+		{
+			ctx_.segment_insert_conflict_popup.open();
+			ctx_.segment_insert_conflict_popup.render();
+			if (!ctx_.segment_insert_conflict_popup.is_open())
+			{
+				ctx_.win_cfg.show_segment_insert_conflict_popup = false;
 			}
 		}
 

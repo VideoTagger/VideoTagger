@@ -8,6 +8,8 @@
 #include <ui/widgets/raw_slider.hpp>
 #include <ui/widgets/slider.hpp>
 #include <ui/popups/timeline_menu_popup.hpp>
+#include <ui/popups/timeline_ctx_menu_popup.hpp>
+#include <ui/popups/timeline_segment_ctx_menu_popup.hpp>
 
 namespace vt::widgets
 {
@@ -77,6 +79,11 @@ namespace vt::widgets
 		ui::raw_slider<int64_t> playback_scrollbar_;
 		//ui::slider<float> zoom_slider_;
 		std::unique_ptr<ui::timeline_menu_popup> menu_popup_;
+		std::unique_ptr<ui::timeline_ctx_menu_popup> ctx_popup_;
+		bool open_ctx_menu_ = false;
+		std::unique_ptr<ui::timeline_segment_ctx_menu_popup> segment_ctx_popup_;
+		bool open_segment_ctx_menu_ = false;
+		
 		utils::timestamp_span view_ts_{};
 		bool enabled_ = true;
 		bool is_dragging_span_left_grab_ = false;

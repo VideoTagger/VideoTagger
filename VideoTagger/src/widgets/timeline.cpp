@@ -18,6 +18,7 @@
 #include <events/timeline/segments_try_move_event.hpp>
 #include <events/timeline/segments_try_move_result_event.hpp>
 #include <events/timeline/segment_merge_event.hpp>
+#include <events/timeline/segment_delete_event.hpp>
 
 namespace vt::widgets
 {
@@ -55,6 +56,8 @@ namespace vt::widgets
 			}
 		});
 		menu_popup_ = ui::new_popup<ui::timeline_menu_popup>(nullptr);
+		ctx_popup_ = ui::new_popup<ui::timeline_ctx_menu_popup>();
+		segment_ctx_popup_ = ui::new_popup<ui::timeline_segment_ctx_menu_popup>();
 		//zoom_slider_.set_step(0.005f);
 
 		ctx_.add_event_listener<segment_select_event>([this](const segment_select_event& e)
@@ -96,6 +99,24 @@ namespace vt::widgets
 			if (!is_segment_selected(e.tag(), e.merged_into_id()))
 			{
 				ctx_.dispatch_event<segment_select_event>(e.storage(), e.tag(), e.merged_into_id());
+			}
+		});
+
+		ctx_.add_event_listener<segment_delete_event>([this](const segment_delete_event& e)
+		{
+			if (is_segment_selected(e.tag(), e.id()))
+			{
+				selected_segments_.at(e.tag()).erase(e.id());
+			}
+			if (is_segment_dragged(e.tag(), e.id()))
+			{
+				auto& dragged_segments_for_tag = dragged_segments_.at(e.tag());
+
+				dragged_segments_for_tag.erase(e.id());
+				if (dragged_segments_for_tag.empty())
+				{
+					segment_drag_data_ = {};
+				}
 			}
 		});
 	}
@@ -348,9 +369,12 @@ namespace vt::widgets
 			
 			if (!is_dragging_any_segment() and is_hovered)
 			{
-				if (ImGui::IsItemClicked(ImGuiMouseButton_Right) and on_ctx_menu_ != nullptr)
+				if (ImGui::IsItemClicked(ImGuiMouseButton_Right))
 				{
-					on_ctx_menu_(segment_and_id, tag);
+					open_segment_ctx_menu_ = true;
+					segment_ctx_popup_->set_segment_storage(&storage);
+					segment_ctx_popup_->set_selected_segments(selected_segments_);
+					segment_ctx_popup_->set_active_segment(tag.name, current_segment_id);
 				}
 				else if (ImGui::IsItemHovered() and ImGui::IsMouseReleased(ImGuiMouseButton_Left))
 				{
@@ -1027,8 +1051,37 @@ namespace vt::widgets
 						draw_segment(segments, segment_and_id, *tag_it, is_selected, is_dragged);
 						ImGui::SameLine();
 					}
+
+					auto current_cell_rect = get_cell_rect();
+
+					if (!open_segment_ctx_menu_ and ImGui::IsMouseClicked(ImGuiMouseButton_Right) and
+						ImGui::IsMouseHoveringRect(current_cell_rect->Min, current_cell_rect->Max))
+					{
+						float normalized_mouse_x = math::normalize(ImGui::GetMousePos().x, cell_rect->Min.x, cell_rect->Max.x, 0.f, 1.f);
+						timestamp mouse_timestamp = to_timestamp(normalized_mouse_x);
+
+						open_ctx_menu_ = true;
+						ctx_popup_->set_segment_storage(&segments);
+						ctx_popup_->set_active_tag(tag);
+						ctx_popup_->set_selected_segments(selected_segments_);
+						ctx_popup_->set_active_position(mouse_timestamp);
+					}
 				}
 				draw_playhead();
+
+				if (open_segment_ctx_menu_)
+				{
+					segment_ctx_popup_->open();
+					open_segment_ctx_menu_ = false;
+				}
+				segment_ctx_popup_->render();
+
+				if (open_ctx_menu_)
+				{
+					ctx_popup_->open();
+					open_ctx_menu_ = false;
+				}
+				ctx_popup_->render();
 
 				if (is_dragging_any_segment())
 				{
