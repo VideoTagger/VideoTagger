@@ -11,9 +11,9 @@ namespace vt
 	 * After processing this event, a segments_try_move_result_event should be dispatched with
 	 * approved set to true if the move should be applied or false if the move should be cancelled.
 	 */
-	struct segments_try_move_event : public multi_segment_event
+	struct segments_move_request_event : public multi_segment_event
 	{
-		segments_try_move_event(segment_storage& storage, const segment_id_map& segments, segment_part move_part, timestamp move_offset) :
+		segments_move_request_event(segment_storage& storage, const segment_id_map& segments, segment_part move_part, timestamp move_offset) :
 			multi_segment_event(storage, segments), move_part_{ move_part }, move_offset_{ move_offset } {}
 
 	private:

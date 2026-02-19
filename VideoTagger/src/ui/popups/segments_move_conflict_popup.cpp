@@ -4,7 +4,6 @@
 #include <ui/widgets/button_bar.hpp>
 #include <ui/widgets/common.hpp>
 #include <ui/widgets/text.hpp>
-#include <events/timeline/segments_try_move_result_event.hpp>
 
 namespace vt::ui
 {
@@ -36,16 +35,13 @@ namespace vt::ui
 			{
 				case 0:
 				{
-					if (!move_event_data_.has_value())
+					if (!move_request_event_data_.has_value())
 					{
 						close();
 						break;
 					}
 
 					cancelled_ = false;
-					ctx_.dispatch_event<segments_try_move_result_event>(
-						move_event_data_->storage(), move_event_data_->segments(), move_event_data_->move_part(), move_event_data_->move_offset(), true
-					);
 					close();
 				}
 				break;
@@ -56,11 +52,10 @@ namespace vt::ui
 
 	void segments_move_conflict_popup::on_close()
 	{
-		if (cancelled_ and move_event_data_.has_value())
-		{
-			ctx_.dispatch_event<segments_try_move_result_event>(
-				move_event_data_->storage(), move_event_data_->segments(), move_event_data_->move_part(), move_event_data_->move_offset(), false
-			);
-		}
+	}
+
+	bool segments_move_conflict_popup::accepted() const
+	{
+		return !cancelled_;
 	}
 }

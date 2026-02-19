@@ -2,7 +2,7 @@
 #include <pch.hpp>
 #include <core/app_context.hpp>
 #include <events/timeline/segment_delete_event.hpp>
-#include <events/timeline/segment_try_insert_event.hpp>
+#include <events/timeline/segment_insert_request_event.hpp>
 
 namespace vt::ui
 {
@@ -17,6 +17,7 @@ namespace vt::ui
 			return;
 		}
 
+		//TODO: Add all option from the old menu, localization
 		if (ImGui::MenuItem("Delete selected"))
 		{
 			for (auto& [tag, segments] : selected_segments_)
@@ -29,7 +30,7 @@ namespace vt::ui
 		}
 		if (ImGui::MenuItem("New segment"))
 		{
-			ctx_.dispatch_event<segment_try_insert_event>(*segment_storage_, active_tag, active_position_, active_position_);
+			ctx_.dispatch_event<segment_insert_request_event>(*segment_storage_, active_tag, active_position_, active_position_);
 		}
 	}
 

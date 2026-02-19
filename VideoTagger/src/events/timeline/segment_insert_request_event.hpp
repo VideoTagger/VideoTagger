@@ -11,12 +11,12 @@ namespace vt
 	 * After processing this event, a segments_try_insert_result_event should be dispatched with
 	 * approved set to true if the insertion should be applied or false if the insertion should be cancelled.
 	 */
-	struct segment_try_insert_event : public event
+	struct segment_insert_request_event : public event
 	{
-		segment_try_insert_event(segment_storage& storage, const std::string& tag, timestamp start, timestamp end) :
+		segment_insert_request_event(segment_storage& storage, const std::string& tag, timestamp start, timestamp end) :
 			tag_{ tag }, segment_storage_{ &storage }, start_{ start }, end_{ end } {
 		}
-		segment_try_insert_event(segment_storage& storage, const std::string& tag, timestamp ts) :
+		segment_insert_request_event(segment_storage& storage, const std::string& tag, timestamp ts) :
 			tag_{ tag }, segment_storage_{ &storage }, start_{ ts }, end_{ ts } {
 		}
 

@@ -15,8 +15,8 @@
 #include <events/timeline/begin_segment_drag_event.hpp>
 #include <events/timeline/update_segment_drag_event.hpp>
 #include <events/timeline/end_segment_drag_event.hpp>
-#include <events/timeline/segments_try_move_event.hpp>
-#include <events/timeline/segments_try_move_result_event.hpp>
+#include <events/timeline/segments_move_request_event.hpp>
+#include <events/timeline/segments_move_event.hpp>
 #include <events/timeline/segment_merge_event.hpp>
 #include <events/timeline/segment_delete_event.hpp>
 
@@ -85,7 +85,7 @@ namespace vt::widgets
 			end_segment_drag(e.final_offset());
 		});
 
-		ctx_.add_event_listener<segments_try_move_result_event>([this](const segments_try_move_result_event& e)
+		ctx_.add_event_listener<segments_move_event>([this](const segments_move_event& e)
 		{
 			segment_drag_data_ = {};
 		});
@@ -864,7 +864,7 @@ namespace vt::widgets
 
 		segment_drag_data_.stage = segment_drag_stage::waiting_for_approval;
 
-		ctx_.dispatch_event<segments_try_move_event>(*segment_drag_data_.storage, dragged_segments_, segment_drag_data_.grab_part, final_offset);
+		ctx_.dispatch_event<segments_move_request_event>(*segment_drag_data_.storage, dragged_segments_, segment_drag_data_.grab_part, final_offset);
 	}
 
 	void timeline::event_deselect_segments_if(segment_storage& storage, const std::function<bool(const std::string&, segment_id)>& predicate)

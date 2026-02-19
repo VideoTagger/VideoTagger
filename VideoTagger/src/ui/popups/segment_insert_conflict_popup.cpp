@@ -4,7 +4,6 @@
 #include <ui/widgets/button_bar.hpp>
 #include <ui/widgets/common.hpp>
 #include <ui/widgets/text.hpp>
-#include <events/timeline/segment_try_insert_result_event.hpp>
 
 namespace vt::ui
 {
@@ -36,16 +35,13 @@ namespace vt::ui
 				{
 				case 0:
 				{
-					if (!insert_event_data_.has_value())
+					if (!insert_request_event_data_.has_value())
 					{
 						close();
 						break;
 					}
 
 					cancelled_ = false;
-					ctx_.dispatch_event<segment_try_insert_result_event>(
-						insert_event_data_->storage(), insert_event_data_->tag(), insert_event_data_->start(), insert_event_data_->end(), true
-					);
 					close();
 				}
 				break;
@@ -56,11 +52,10 @@ namespace vt::ui
 
 	void segment_insert_conflict_popup::on_close()
 	{
-		if (cancelled_ and insert_event_data_.has_value())
-		{
-			ctx_.dispatch_event<segment_try_insert_result_event>(
-				insert_event_data_->storage(), insert_event_data_->tag(), insert_event_data_->start(), insert_event_data_->end(), false
-			);
-		}
+	}
+
+	bool segment_insert_conflict_popup::accepted() const
+	{
+		return !cancelled_;
 	}
 }

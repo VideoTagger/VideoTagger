@@ -16,6 +16,7 @@ namespace vt::ui
 			return;
 		}
 
+		//TODO: Add all option from the old menu, localization
 		if (ImGui::MenuItem("Delete selected"))
 		{
 			for (auto& [tag, segments] : selected_segments_)
