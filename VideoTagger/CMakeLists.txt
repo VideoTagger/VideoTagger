@@ -11,6 +11,8 @@ file(READ "${CMAKE_SOURCE_DIR}/VERSION" VT_VERSION)
 string(STRIP "${VT_VERSION}" VT_VERSION)
 message(STATUS "VT_VERSION: ${VT_VERSION}")
 
+include(FetchContent)
+
 # TODO: Add tests and install targets if needed.
 file(GLOB_RECURSE source_files CONFIGURE_DEPENDS 
 	"${PROJECT_SOURCE_DIR}/src/*.hpp"
@@ -28,9 +30,9 @@ file(GLOB vendor_files CONFIGURE_DEPENDS
 	"${PROJECT_SOURCE_DIR}/vendor/ImGuizmo/ImSequencer.h"
 	"${PROJECT_SOURCE_DIR}/vendor/ImGuizmo/ImSequencer.cpp"
 	"${PROJECT_SOURCE_DIR}/vendor/ImGuizmo/ImGuizmo.cpp"
-	"${PROJECT_SOURCE_DIR}/vendor/imgui_toggle/imgui_toggle.cpp",
-	"${PROJECT_SOURCE_DIR}/vendor/imgui_toggle/imgui_toggle_palette.cpp",
-	"${PROJECT_SOURCE_DIR}/vendor/imgui_toggle/imgui_toggle_renderer.cpp",
+	"${PROJECT_SOURCE_DIR}/vendor/imgui_toggle/imgui_toggle.cpp"
+	"${PROJECT_SOURCE_DIR}/vendor/imgui_toggle/imgui_toggle_palette.cpp"
+	"${PROJECT_SOURCE_DIR}/vendor/imgui_toggle/imgui_toggle_renderer.cpp"
 )
 
 #message(STATUS "Source files found: ${source_files}")
@@ -88,6 +90,9 @@ target_compile_definitions(${PROJECT_NAME} PRIVATE
 add_subdirectory("${PROJECT_SOURCE_DIR}/vendor/nativefiledialog-extended")
 target_link_libraries(${PROJECT_NAME} PRIVATE nfd)
 
+#Setup Velopack
+include(${CMAKE_SOURCE_DIR}/cmake/SetupVelopack.cmake)
+add_velopack(${PROJECT_NAME} "0.0.1298")
 
 target_include_directories(${PROJECT_NAME}
 	PRIVATE "${PROJECT_SOURCE_DIR}/src"
@@ -104,10 +109,9 @@ target_include_directories(${PROJECT_NAME}
 	PRIVATE "${PROJECT_SOURCE_DIR}/vendor/stb"
 )
 
+
 # Setup Python
 include(${CMAKE_SOURCE_DIR}/cmake/SetupPython.cmake)
-
-
 
 if(CMAKE_SYSTEM_PROCESSOR MATCHES "64")
 	set(ARCH "x86_64")

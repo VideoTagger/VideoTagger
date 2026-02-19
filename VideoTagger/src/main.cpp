@@ -1,9 +1,11 @@
 #include "pch.hpp"
 #include <core/app.hpp>
 #include <core/debug.hpp>
+#include <updates/update_manager.hpp>
 
 int main(int argc, char* argv[])
 {
+	vt::update_manager::update();
 	vt::app app;
 	vt::app_window_config main_cfg;
 	{
