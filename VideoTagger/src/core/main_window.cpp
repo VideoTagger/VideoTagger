@@ -2377,7 +2377,7 @@ namespace vt
 						auto fill_color = (tag.color & ~0xFF000000) | 0x80000000;
 
 						auto& segments = it->second;
-						for (auto [segment_id, segment] : segments)
+						for (auto& [segment_id, segment] : segments)
 						{
 							bool is_onscreen = current_ts >= segment.start and current_ts <= segment.end;
 							if (is_onscreen)
