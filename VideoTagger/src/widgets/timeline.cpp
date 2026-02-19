@@ -151,10 +151,10 @@ namespace vt::widgets
 
 		auto playhead_line_offset = ImVec2{ outline_width + playhead_width / 2.f, 0.f };
 		auto line_offset = ImVec2{ 0.f, triangle_span / 2.f };
-		
+
 		//line outline
 		draw_list->AddLine(top + line_offset, bottom, 0xA5000000, playhead_width + 2 * outline_width);
-		
+
 		auto playhead_col = playhead_color();
 		draw_list->AddTriangleFilled
 		(
@@ -283,7 +283,9 @@ namespace vt::widgets
 				}
 				if (ImGui::IsItemHovered())
 				{
+					is_hovering_segment_ = true;
 					hover_type = segment_hover_type::middle;
+
 					if (ImGui::IsMouseDragging(ImGuiMouseButton_Left, 1.f))
 					{
 						if (!is_selected)
@@ -315,6 +317,7 @@ namespace vt::widgets
 					}
 					if (ImGui::IsItemHovered())
 					{
+						is_hovering_segment_ = true;
 						hover_type = segment_hover_type::start;
 					}
 					ImGui::SameLine();
@@ -324,6 +327,7 @@ namespace vt::widgets
 					}
 					if (ImGui::IsItemHovered())
 					{
+						is_hovering_segment_ = true;
 						hover_type = segment_hover_type::middle;
 						if (ImGui::IsMouseDragging(ImGuiMouseButton_Left))
 						{
@@ -344,7 +348,7 @@ namespace vt::widgets
 							}
 						}
 					}
-					
+
 					ImGui::SameLine();
 					if (ImGui::InvisibleButton("##SegmentGrabRight", grab_size, ImGuiButtonFlags_PressedOnClick))
 					{
@@ -355,6 +359,7 @@ namespace vt::widgets
 					}
 					if (ImGui::IsItemHovered())
 					{
+						is_hovering_segment_ = true;
 						hover_type = segment_hover_type::end;
 					}
 				}
@@ -366,7 +371,7 @@ namespace vt::widgets
 
 			is_hovered = enabled_ and (hover_type != segment_hover_type::none);
 			is_grab_hovered = enabled_ and (hover_type == segment_hover_type::start or hover_type == segment_hover_type::end);
-			
+
 			if (!is_dragging_any_segment() and is_hovered)
 			{
 				if (ImGui::IsItemClicked(ImGuiMouseButton_Right))
@@ -403,7 +408,7 @@ namespace vt::widgets
 			}
 			ImGui::PopID();
 		}
-		
+
 		auto rgba = ImGui::ColorConvertU32ToFloat4(tag.color);
 		if (is_dragged)
 		{
@@ -495,7 +500,7 @@ namespace vt::widgets
 		auto playhead_rect = ImRect{ table_rect.Min.x + playhead_pos - playhead_width / 2, table_rect.Min.y + style.CellPadding.y, table_rect.Min.x + playhead_pos + playhead_width / 2, table_rect.Max.y - style.CellPadding.y };
 
 		draw_list->PushClipRect(table_rect.Min, table_rect.Max, true);
-		draw_list->AddRectFilled(playhead_rect.Min, playhead_rect.Max, playhead_color());		
+		draw_list->AddRectFilled(playhead_rect.Min, playhead_rect.Max, playhead_color());
 		draw_list->PopClipRect();
 	}
 
@@ -567,7 +572,7 @@ namespace vt::widgets
 		auto cspos = ImGui::GetCursorScreenPos();
 		ImVec2 table_size{ ImGui::GetContentRegionAvail().x, avail_height + 2 * scrollbar_padding };
 		ImRect table_rect{ cspos, ImVec2{ cspos.x + table_size.x, cspos.y + table_size.y } };
-		
+
 		bool is_grab_hovered = false;
 
 		if (ImGui::BeginTable("##TimelineSegments", 1, ImGuiTableFlags_NoSavedSettings, table_size))
@@ -576,7 +581,7 @@ namespace vt::widgets
 			ImGui::TableNextColumn();
 			ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, ImGui::GetColorU32(ImGuiCol_TableHeaderBg));
 			ui::vertical_item_spacer(scrollbar_padding);
-			
+
 			ImGui::TableNextRow();
 			ImGui::TableNextColumn();
 			auto cell_rect = get_cell_rect();
@@ -601,7 +606,7 @@ namespace vt::widgets
 					ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, ImGui::GetColorU32(ImGuiCol_TableHeaderBg));
 					ui::vertical_item_spacer(scaled_height);
 					ImGui::SameLine();
-					
+
 					//draw_cell_debug_rect(1.f);
 					for (auto& segment_and_id : timeline)
 					{
@@ -620,7 +625,7 @@ namespace vt::widgets
 			ui::vertical_item_spacer(scrollbar_padding);
 
 			ImGui::EndTable();
-			
+
 			bool is_timespan_hovered = false;
 			bool is_left_grab_hovered = false;
 			bool is_right_grab_hovered = false;
@@ -759,7 +764,7 @@ namespace vt::widgets
 		static constexpr int64_t base_interval = 1;
 		//if (zoom_ <= 0.1f) return std::max<int64_t>(1, (int64_t)(math::rescale(zoom_, 0.0f, 0.1f, 0.0f, 1.0f) * 10)); //10ms
 		//if (zoom_ <= 0.1f) return std::max<int64_t>(1, (int64_t)(math::rescale(zoom_, 0.0f, 0.1f, 0.0f, 1.0f) * 10)); //1m
-		
+
 		auto time_length = state_.time_length();
 		return math::lerp<int64_t>(base_interval, time_length / 10, span_as_scale());
 	}
@@ -767,6 +772,11 @@ namespace vt::widgets
 	bool timeline::is_dragging_any_segment() const
 	{
 		return segment_drag_data_.stage == segment_drag_stage::dragging;
+	}
+
+	bool timeline::is_hovering_any_segment() const
+	{
+		return is_hovering_segment_;
 	}
 
 	void timeline::begin_segment_drag(segment_storage& storage, const segment_id_map& dragged_segments, segment_part grab_part, timestamp grab_start_position)
@@ -808,7 +818,7 @@ namespace vt::widgets
 		if (segment_drag_data_.grab_part & segment_part::left)
 		{
 			auto current_min_pos = segment_drag_data_.min_start_position + segment_drag_data_.current_offset;
-			
+
 			if (current_min_pos < state_.min_ts)
 			{
 				segment_drag_data_.current_offset -= current_min_pos - state_.min_ts;
@@ -980,7 +990,7 @@ namespace vt::widgets
 
 				ImGui::TableNextRow();
 				ImGui::TableNextColumn();
-				
+
 				ImGui::BeginDisabled(menu_popup_->is_open());
 				if (ui::icon_button(icons::dots_hor))
 				{
@@ -1007,13 +1017,13 @@ namespace vt::widgets
 				playback_scrollbar_.set_size(cell_rect->GetSize());
 				playback_scrollbar_.render_disabled(!enabled_);
 
-				
+
 
 				//draw_cell_debug_rect(zoom_);
 				draw_time_intervals();
 				//The playhead has to be drawn two times, since it won't be visible on the interval bar when tags are scrolled otherwise
 				draw_playhead();
-				
+
 				for (auto& tag : visible_tags)
 				{
 					auto& timeline = segments[tag];
@@ -1042,10 +1052,11 @@ namespace vt::widgets
 					//Right panel
 					ImGui::TableNextColumn();
 
+					is_hovering_segment_ = false;
 					//TODO: segment shouldn't be const
 					for (const auto& segment_and_id : timeline)
 					{
-						bool is_selected = is_segment_selected(tag, segment_and_id.id);
+						bool is_selected = enabled_ and is_segment_selected(tag, segment_and_id.id);
 						bool is_dragged = is_selected and (is_dragging_any_segment() or segment_drag_data_.stage == segment_drag_stage::waiting_for_approval);
 
 						draw_segment(segments, segment_and_id, *tag_it, is_selected, is_dragged);
@@ -1054,17 +1065,25 @@ namespace vt::widgets
 
 					auto current_cell_rect = get_cell_rect();
 
-					if (!open_segment_ctx_menu_ and ImGui::IsMouseClicked(ImGuiMouseButton_Right) and
-						ImGui::IsMouseHoveringRect(current_cell_rect->Min, current_cell_rect->Max))
-					{
-						float normalized_mouse_x = math::normalize(ImGui::GetMousePos().x, cell_rect->Min.x, cell_rect->Max.x, 0.f, 1.f);
-						timestamp mouse_timestamp = to_timestamp(normalized_mouse_x);
+					bool is_cell_hovered = ImGui::IsMouseHoveringRect(current_cell_rect->Min, current_cell_rect->Max);
 
-						open_ctx_menu_ = true;
-						ctx_popup_->set_segment_storage(&segments);
-						ctx_popup_->set_active_tag(tag);
-						ctx_popup_->set_selected_segments(selected_segments_);
-						ctx_popup_->set_active_position(mouse_timestamp);
+					if (!open_segment_ctx_menu_ and is_cell_hovered)
+					{
+						if (ImGui::IsMouseClicked(ImGuiMouseButton_Right))
+						{
+							float normalized_mouse_x = math::normalize(ImGui::GetMousePos().x, cell_rect->Min.x, cell_rect->Max.x, 0.f, 1.f);
+							timestamp mouse_timestamp = to_timestamp(normalized_mouse_x);
+
+							open_ctx_menu_ = true;
+							ctx_popup_->set_segment_storage(&segments);
+							ctx_popup_->set_active_tag(tag);
+							ctx_popup_->set_selected_segments(selected_segments_);
+							ctx_popup_->set_active_position(mouse_timestamp);
+						}
+						else if (!is_hovering_segment_ and ImGui::IsMouseClicked(ImGuiMouseButton_Left))
+						{
+							event_deselect_all_segments(segments);
+						}
 					}
 				}
 				draw_playhead();

@@ -11,7 +11,7 @@ namespace vt::ui
 
 	void timeline_segment_ctx_menu_popup::on_render()
 	{
-		if (segment_storage_ == nullptr) 
+		if (segment_storage_ == nullptr) return;
 
 		//TODO: Add all option from the old menu, localization
 		if (ImGui::MenuItem("Delete selected"))

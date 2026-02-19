@@ -67,6 +67,7 @@ namespace vt::widgets
 		bool is_segment_selected(const std::string& tag, segment_id segment) const;
 		bool is_segment_dragged(const std::string& tag, segment_id segment) const;
 		bool is_dragging_any_segment() const;
+		bool is_hovering_any_segment() const;
 
 		utils::timestamp_span visible_time_span() const;
 		float span_as_scale() const;
@@ -86,6 +87,7 @@ namespace vt::widgets
 		
 		utils::timestamp_span view_ts_{};
 		bool enabled_ = true;
+		bool is_hovering_segment_ = false;
 		bool is_dragging_span_left_grab_ = false;
 		bool is_dragging_span_right_grab_ = false;
 		timeline_state state_;

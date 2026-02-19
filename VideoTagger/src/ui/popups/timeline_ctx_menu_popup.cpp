@@ -6,16 +6,13 @@
 
 namespace vt::ui
 {
-	vt::ui::timeline_ctx_menu_popup::timeline_ctx_menu_popup() : popup{ "Timeline Context Menu" }, segment_storage_{ nullptr }
+	timeline_ctx_menu_popup::timeline_ctx_menu_popup() : popup{ "Timeline Context Menu" }, segment_storage_{ nullptr }
 	{
 	}
 
 	void timeline_ctx_menu_popup::on_render()
 	{
-		if (segment_storage_ == nullptr)
-		{
-			return;
-		}
+		if (segment_storage_ == nullptr) return;
 
 		//TODO: Add all option from the old menu, localization
 		if (ImGui::MenuItem("Delete selected"))
