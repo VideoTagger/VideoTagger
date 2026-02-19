@@ -2412,7 +2412,7 @@ namespace vt
 		if (ctx_.reset_player_docking)
 		{
 			auto it = ctx_.current_project->video_groups.find(ctx_.current_video_group_id());
-			if (it != ctx_.current_project->video_groups.end())
+			if (it != ctx_.current_project->video_groups.end() and ctx_.player.is_visible())
 			{
 				ctx_.player.dock_windows(it->second.size());
 				ctx_.reset_player_docking = false;
