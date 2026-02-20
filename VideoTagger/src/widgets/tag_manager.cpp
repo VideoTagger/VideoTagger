@@ -8,12 +8,15 @@
 #include <core/app_context.hpp>
 #include <utils/drag_drop.hpp>
 #include <utils/string.hpp>
+#include <events/tags/tag_add_request_event.hpp>
+#include <events/tags/tag_rename_request_event.hpp>
+#include <events/tags/tag_delete_event.hpp>
 
 namespace vt::widgets
 {
 	constexpr ImGuiColorEditFlags color_button_flags = ImGuiColorEditFlags_NoAlpha | ImGuiColorEditFlags_NoTooltip;
 
-	static bool add_tag_popup(tag_storage& tags, tag_storage::iterator& added_entry)
+	static bool add_tag_popup(tag_storage& tags)
 	{
 		//TODO: Improve UI layout
 		
@@ -80,16 +83,7 @@ namespace vt::widgets
 			ImGui::BeginDisabled(valid_tag_name != tag_validate_result::ok);
 			if (ImGui::Button("Done"))
 			{
-				//TODO: inserting maybe should be done outside the widget (like renaming and removing)
-				auto [it, inserted] = tags.insert(tag_name);
-				if (inserted)
-				{
-					return_value = true;
-					it->color = ImGui::ColorConvertFloat4ToU32(color);
-
-					added_entry = it;
-				}
-				
+				ctx_.dispatch_event<tag_add_request_event>(tags, tag_name, ImGui::ColorConvertFloat4ToU32(color));
 				tag_name.clear();
 				ImGui::CloseCurrentPopup();
 			}
@@ -638,12 +632,7 @@ namespace vt::widgets
 			ImGui::OpenPopup("Delete Tag");
 		}		
 
-		tag_storage::iterator added_entry = tags.end();
-		if (add_tag_popup(tags, added_entry))
-		{
-			ctx_.current_project->add_displayed_tag(added_entry->name);
-			dirty_flag = true;
-		}
+		add_tag_popup(tags);
 
 		//TODO: do this in app.cpp
 		bool pressed_button{};
@@ -653,6 +642,7 @@ namespace vt::widgets
 			if (pressed_button == true)
 			{
 				tag_rename->ready = true;
+				ctx_.dispatch_event<tag_rename_request_event>(tags, tag_rename->old_name, tag_rename->new_name);
 			}
 			else
 			{
@@ -666,6 +656,7 @@ namespace vt::widgets
 			if (pressed_yes)
 			{
 				tag_delete->ready = true;
+				ctx_.dispatch_event<tag_delete_event>(tags, tag_delete->tag);
 			}
 			else
 			{

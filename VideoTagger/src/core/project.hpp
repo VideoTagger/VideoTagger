@@ -128,7 +128,9 @@ namespace vt
 		void remove_video(video_id_t id);
 		void remove_video_group(video_group_id_t id);
 
+		//TODO: needs to be removed and fully replace by events
 		tag_rename_result rename_tag(const std::string& old_name, const std::string& new_name);
+		//TODO: needs to be removed and fully replace by events
 		void delete_tag(const std::string& tag_name);
 
 		bool add_displayed_tag(const std::string& tag_name);

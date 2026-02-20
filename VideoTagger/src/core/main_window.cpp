@@ -38,6 +38,11 @@
 #include <events/timeline/segment_delete_event.hpp>
 #include <events/timeline/segment_insert_request_event.hpp>
 #include <events/timeline/segment_insert_event.hpp>
+#include <events/tags/tag_add_request_event.hpp>
+#include <events/tags/tag_add_event.hpp>
+#include <events/tags/tag_rename_request_event.hpp>
+#include <events/tags/tag_rename_event.hpp>
+#include <events/tags/tag_delete_event.hpp>
 
 #ifndef VT_VERSION
 	#error VT_VERSION is not defined
@@ -61,6 +66,12 @@ extern "C"
 
 namespace vt
 {
+	//TODO: tag_manager needs to be reworked and this removed
+	static bool show_tag_rename_failed_popup = false;
+	static std::optional<widgets::tag_rename_data> tag_rename;
+	static std::optional<widgets::tag_delete_data> tag_delete;
+	static tag_validate_result tag_rename_failed_reason;
+
 	static void show_debug_info()
 	{
 		SDL_version compiled;
@@ -294,6 +305,55 @@ namespace vt
 			}
 
 			resolve_segment_insert_request_event(event, true);
+		});
+
+		ctx_.add_event_listener<tag_add_request_event>([](const tag_add_request_event& event)
+		{
+			auto& storage = event.storage();
+			auto [it, validate_result] = storage.insert(event.tag_name(), event.color());
+			if (validate_result == tag_validate_result::ok)
+			{
+				 ctx_.is_project_dirty = true;
+			}
+
+			ctx_.dispatch_event<tag_add_event>(storage, event.tag_name(), validate_result);
+		});
+
+		ctx_.add_event_listener<tag_add_event>([](const tag_add_event& event)
+		{
+			if (event.validate_result() != tag_validate_result::ok) return;
+
+			ctx_.current_project->add_displayed_tag(event.tag_name());
+		});
+
+		ctx_.add_event_listener<tag_rename_request_event>([](const tag_rename_request_event& event)
+		{
+			if (!tag_rename.has_value()) return;
+
+			tag_rename->processed = true;
+
+			auto rename_result = ctx_.current_project->rename_tag(tag_rename->old_name, tag_rename->new_name);
+
+			if (!rename_result.inserted)
+			{
+				show_tag_rename_failed_popup = true;
+				tag_rename_failed_reason = rename_result.validation_result;
+			}
+			else
+			{
+				tag_rename.reset();
+			}
+
+			ctx_.dispatch_event<tag_rename_event>(event.storage(), event.tag_name(), event.new_name(), rename_result);
+		});
+
+		ctx_.add_event_listener<tag_delete_event>([](const tag_delete_event& event)
+		{
+			if (!tag_delete.has_value()) return;
+			
+			ctx_.current_project->delete_tag(tag_delete->tag);
+
+			tag_delete.reset();
 		});
 	}
 
@@ -2522,86 +2582,59 @@ namespace vt
 
 		if (ctx_.win_cfg.show_tag_manager_window)
 		{
-			static std::optional<widgets::tag_rename_data> tag_rename;
-			static std::optional<widgets::tag_delete_data> tag_delete;
+			
 			widgets::draw_tag_manager_widget(ctx_.current_project->tags, tag_rename, tag_delete, ctx_.is_project_dirty, ctx_.win_cfg.show_tag_manager_window);
 
-			//TODO: Should this be done in the widget or outside?
-			if (tag_rename.has_value() and tag_rename->ready)
+			static auto rename_failed_popup = [](const std::string& id, const widgets::tag_rename_data& data, tag_validate_result fail_reason)
 			{
-				static auto rename_failed_popup = [](const std::string& id, const widgets::tag_rename_data& data, tag_validate_result fail_reason)
+				static constexpr ImVec2 button_size = { 55, 30 };
+
+				bool return_value = false;
+
+				auto& style = ImGui::GetStyle();
+				ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 7);
+				ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, style.WindowPadding * 2);
+				ImGui::SetNextWindowPos(ImGui::GetMainViewport()->GetCenter(), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
+				auto flags = ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoMove;
+
+				if (ImGui::BeginPopupModal(id.c_str(), nullptr, flags))
 				{
-					static constexpr ImVec2 button_size = { 55, 30 };
+					ImGui::Text("Failed to rename tag \"%s\" to \"%s\"", data.old_name.c_str(), data.new_name.c_str());
 
-					bool return_value = false;
-
-					auto& style = ImGui::GetStyle();
-					ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 7);
-					ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, style.WindowPadding * 2);
-					ImGui::SetNextWindowPos(ImGui::GetMainViewport()->GetCenter(), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
-					auto flags = ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoMove;
-
-					if (ImGui::BeginPopupModal(id.c_str(), nullptr, flags))
+					std::string error_text;
+					switch (fail_reason)
 					{
-						ImGui::Text("Failed to rename tag \"%s\" to \"%s\"", data.old_name.c_str(), data.new_name.c_str());
-
-						std::string error_text;
-						switch (fail_reason)
-						{
-						case vt::tag_validate_result::already_exists: error_text = fmt::format("Tag \"{}\" already exists", data.new_name); break;
-						case vt::tag_validate_result::invalid_name: error_text = "Invalid name"; break;
-						case vt::tag_validate_result::too_long: error_text = fmt::format("Name can be at most {} characters long", tag_storage::max_tag_name_length); break;
-						default: error_text = "Invalid name"; break;
-						}
-						ImGui::TextDisabled("%s", error_text.c_str());
-						ImGui::NewLine();
-						auto area_size = ImGui::GetWindowSize();
-
-						ImGui::SetCursorPosX(area_size.x / 2 - button_size.x / 2);
-						if (ImGui::Button("OK", button_size))
-						{
-							return_value = true;
-							ImGui::CloseCurrentPopup();
-						}
-						ImGui::EndPopup();
+					case vt::tag_validate_result::already_exists: error_text = fmt::format("Tag \"{}\" already exists", data.new_name); break;
+					case vt::tag_validate_result::invalid_name: error_text = "Invalid name"; break;
+					case vt::tag_validate_result::too_long: error_text = fmt::format("Name can be at most {} characters long", tag_storage::max_tag_name_length); break;
+					default: error_text = "Invalid name"; break;
 					}
+					ImGui::TextDisabled("%s", error_text.c_str());
+					ImGui::NewLine();
+					auto area_size = ImGui::GetWindowSize();
 
-					ImGui::PopStyleVar(2);
-
-					return return_value;
-				};
-
-				static tag_validate_result fail_reason{};
-
-				if (!tag_rename->processed)
-				{
-					tag_rename->processed = true;
-
-					auto rename_result = ctx_.current_project->rename_tag(tag_rename->old_name, tag_rename->new_name);
-
-					if (!rename_result.inserted)
+					ImGui::SetCursorPosX(area_size.x / 2 - button_size.x / 2);
+					if (ImGui::Button("OK", button_size))
 					{
-						//TODO: Display popup
-						ImGui::OpenPopup("Rename Failed");
-						fail_reason = rename_result.validation_result;
+						return_value = true;
+						ImGui::CloseCurrentPopup();
 					}
-					else
-					{
-						tag_rename.reset();
-					}
+					ImGui::EndPopup();
 				}
-				
-				if (tag_rename.has_value() and rename_failed_popup("Rename Failed", *tag_rename, fail_reason))
+
+				ImGui::PopStyleVar(2);
+
+				return return_value;
+			};
+
+			//TODO: rewrite to use the popup class
+			if (show_tag_rename_failed_popup)
+			{
+				ImGui::OpenPopup("Rename Failed");
+				if (rename_failed_popup("Rename Failed", *tag_rename, tag_rename_failed_reason))
 				{
 					tag_rename.reset();
 				}
-
-			}
-			if (tag_delete.has_value() and tag_delete->ready)
-			{
-				ctx_.current_project->delete_tag(tag_delete->tag);
-
-				tag_delete.reset();
 			}
 		}
 

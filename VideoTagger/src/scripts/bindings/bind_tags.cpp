@@ -32,7 +32,7 @@ void vt::bindings::bind_tags(pybind11::module_& module)
 			ctx_.is_project_dirty = true;
 		}
 		auto[_, result] = tags.insert(t);
-		return result;
+		return result == tag_validate_result::ok;
 	})
 	.def("has_tag", [](tag_storage& tags, const std::string& name) -> bool
 	{
