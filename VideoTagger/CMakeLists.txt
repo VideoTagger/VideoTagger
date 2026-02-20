@@ -21,6 +21,8 @@ file(GLOB vendor_files CONFIGURE_DEPENDS
 	"${PROJECT_SOURCE_DIR}/vendor/ImGui/*.cpp"
 	"${PROJECT_SOURCE_DIR}/vendor/ImGui/misc/cpp/*.h"
 	"${PROJECT_SOURCE_DIR}/vendor/ImGui/misc/cpp/*.cpp"
+	"${PROJECT_SOURCE_DIR}/vendor/ImGui/misc/freetype/*.h"
+	"${PROJECT_SOURCE_DIR}/vendor/ImGui/misc/freetype/*.cpp"
 	"${PROJECT_SOURCE_DIR}/vendor/ImGui/backends/imgui_impl_sdl2.h"
 	"${PROJECT_SOURCE_DIR}/vendor/ImGui/backends/imgui_impl_sdl2.cpp"
 	"${PROJECT_SOURCE_DIR}/vendor/ImGui/backends/imgui_impl_opengl3.h"
@@ -88,11 +90,17 @@ target_compile_definitions(${PROJECT_NAME} PRIVATE
 add_subdirectory("${PROJECT_SOURCE_DIR}/vendor/nativefiledialog-extended")
 target_link_libraries(${PROJECT_NAME} PRIVATE nfd)
 
+#target_compile_definitions(${PROJECT_NAME} PRIVATE IMGUI_ENABLE_FREETYPE)
+add_subdirectory("${PROJECT_SOURCE_DIR}/vendor/freetype")
+target_link_libraries(${PROJECT_NAME} PRIVATE freetype)
+target_include_directories(${PROJECT_NAME} PRIVATE ${FREETYPE_INCLUDE_DIRS})
+
 
 target_include_directories(${PROJECT_NAME}
 	PRIVATE "${PROJECT_SOURCE_DIR}/src"
 	PRIVATE "${PROJECT_SOURCE_DIR}/vendor/ImGui"
 	PRIVATE "${PROJECT_SOURCE_DIR}/vendor/ImGui/misc/cpp/"
+	PRIVATE "${PROJECT_SOURCE_DIR}/vendor/ImGui/misc/freetype/"
 	PRIVATE "${PROJECT_SOURCE_DIR}/vendor/ImGuizmo"
 	PRIVATE "${PROJECT_SOURCE_DIR}/vendor/nativefiledialog-extended/src/include"
 	PRIVATE "${PROJECT_SOURCE_DIR}/vendor/fmt/include"

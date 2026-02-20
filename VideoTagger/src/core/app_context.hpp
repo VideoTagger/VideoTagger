@@ -147,6 +147,7 @@ namespace vt
 		window_config win_cfg;
 		std::unordered_map<font_type, ImFont*> fonts;
 		std::vector<std::filesystem::path> themes;
+		theme current_theme;
 		utils::file_node scripts;
 		keybind_storage keybinds;
 		scripting_engine script_eng;

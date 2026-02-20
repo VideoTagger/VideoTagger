@@ -10,15 +10,6 @@
 
 namespace vt::ui
 {
-	//TODO: Move this to theme struct (not hard coded)
-	static constexpr auto accent_color = ImVec4{ 0.2588f, 0.6f, 0.8784f, 1.f };
-	static constexpr auto accent_color_hover = ImVec4{ 0.2f, 0.5098f, 0.7804f, 1.f };
-	static constexpr auto accent_color_active = ImVec4{ 0.1608f, 0.4353f, 0.6863f, 1.f };
-
-	static constexpr auto button_color = ImVec4{ 0.1882f, 0.1882f, 0.1882f, 1.f };
-	static constexpr auto button_color_hover = ImVec4{ 0.2078f, 0.2078f, 0.2078f, 1.f };
-	static constexpr auto button_color_active = ImVec4{ 0.2f, 0.2f, 0.2f, 1.f };
-
 	void tooltip(const std::string& text)
 	{
 		if (text.empty()) return;
@@ -200,39 +191,47 @@ namespace vt::ui
 
 	bool accent_button(const std::string& label, const ImVec2& size)
 	{
+		const auto& theme = ctx_.current_theme;
+
 		auto btn_color = ImGui::GetStyleColorVec4(ImGuiCol_Button);
 		auto btn_hov_color = ImGui::GetStyleColorVec4(ImGuiCol_ButtonHovered);
 		auto btn_actv_color = ImGui::GetStyleColorVec4(ImGuiCol_ButtonActive);
 
 		//TODO: Move these colors into theme class
 		bool is_disabled = ui::is_item_disabled();
-		ImGui::PushStyleColor(ImGuiCol_Button, is_disabled ? button_color : accent_color); // push button color if diabled or accent color if enabled
-		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, accent_color_hover);
-		ImGui::PushStyleColor(ImGuiCol_ButtonActive, accent_color_active);
+		ImGui::PushStyleColor(ImGuiCol_Button, is_disabled ? theme.get_float4(theme_color::secondary_light) : theme.get_float4(theme_color::accent_light)); // push button color if diabled or accent color if enabled
+		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, theme.get_float4(theme_color::accent_medium));
+		ImGui::PushStyleColor(ImGuiCol_ButtonActive, theme.get_float4(theme_color::accent_dark));
 
-		auto text_color = ImGui::GetStyleColorVec4(ImGuiCol_Text);
-		text_color.x = 1.f - text_color.x;
-		text_color.y = 1.f - text_color.y;
-		text_color.z = 1.f - text_color.z;
+		//auto text_color = ImGui::GetStyleColorVec4(ImGuiCol_Text);
+		//text_color.x = 1.f - text_color.x;
+		//text_color.y = 1.f - text_color.y;
+		//text_color.z = 1.f - text_color.z;
+		auto text_color = theme.get_float4(theme_color::text_inverted);
 		if (!is_disabled)
 		{
 			ImGui::PushStyleColor(ImGuiCol_Text, text_color);
 		}
+		else
+		{
+			ImGui::PushStyleColor(ImGuiCol_Text, ImGui::GetStyleColorVec4(ImGuiCol_TextDisabled));
+		}
 		bool result = rounded_button(label, size);
-		ImGui::PopStyleColor(3 + !is_disabled);
+		ImGui::PopStyleColor(4);
 		return result;
 	}
 
 	bool button(const std::string& label, const ImVec2& size)
 	{
+		const auto& theme = ctx_.current_theme;
 		auto btn_color = ImGui::GetStyleColorVec4(ImGuiCol_Button);
 		auto btn_hov_color = ImGui::GetStyleColorVec4(ImGuiCol_ButtonHovered);
 		auto btn_actv_color = ImGui::GetStyleColorVec4(ImGuiCol_ButtonActive);
 
 		//TODO: Move these colors into theme class
-		ImGui::PushStyleColor(ImGuiCol_Button, button_color);
-		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, button_color_hover);
-		ImGui::PushStyleColor(ImGuiCol_ButtonActive, button_color_active);
+		ImGui::PushStyleColor(ImGuiCol_Button, theme.get_float4(theme_color::secondary_light));
+		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, theme.get_float4(theme_color::secondary_medium));
+		ImGui::PushStyleColor(ImGuiCol_ButtonActive, theme.get_float4(theme_color::secondary_dark));
 
 		bool result = rounded_button(label, size);
 		ImGui::PopStyleColor(3);
@@ -242,20 +241,18 @@ namespace vt::ui
 	static ImGuiToggleConfig toggle_config()
 	{
 		float size_scale = 1.f;
+		const auto& theme = ctx_.current_theme;
 
-		const ImVec4 color_default = accent_color;
-		const ImVec4 color_hover = accent_color_hover;
-		const ImVec4 color_dim = accent_color_active;
+		const ImVec4 color_default = theme.get_float4(theme_color::accent_light);
+		const ImVec4 color_hover = theme.get_float4(theme_color::accent_medium);
+		const ImVec4 color_dim = theme.get_float4(theme_color::accent_dark);
 
 		const ImVec2 material_size(37 * size_scale, 16 * size_scale);
 		const float material_inset = -2.5f * size_scale;
 
 		auto text_color = ImGui::GetStyleColorVec4(ImGuiCol_Text);
 		auto text_color_dim = ImGui::GetStyleColorVec4(ImGuiCol_TextDisabled);
-		auto text_color_inverted = text_color;
-		text_color_inverted.x = 1.f - text_color_inverted.x;
-		text_color_inverted.y = 1.f - text_color_inverted.y;
-		text_color_inverted.z = 1.f - text_color_inverted.z;
+		auto text_color_inverted = theme.get_float4(theme_color::text_inverted);
 
 		static ImGuiTogglePalette palette_on;
 		palette_on.Frame = color_default;
@@ -286,7 +283,7 @@ namespace vt::ui
 
     bool toggle(const std::string& label, bool& value)
     {
-		static auto config = toggle_config();
+		auto config = toggle_config();
 		bool result = ImGui::Toggle(label.c_str(), &value, config);
 		if (!is_item_disabled() and ImGui::IsItemHovered())
 		{
@@ -354,7 +351,7 @@ namespace vt::ui
 
 	float toggle_height()
 	{
-		return ImGui::GetFrameHeight() * 0.85f;
+		return ImGui::GetFrameHeightWithSpacing() * 0.85f;
 	}
 
 	bool is_item_disabled()

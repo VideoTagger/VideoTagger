@@ -5,6 +5,7 @@
 #include "controls.hpp"
 #include <core/debug.hpp>
 #include <utils/string.hpp>
+#include <core/app_context.hpp>
 
 namespace vt::widgets
 {
@@ -12,10 +13,9 @@ namespace vt::widgets
 	{
 		switch (flag)
 		{
-			case console::entry::flag_type::error: return 0xFF6758F2/*0xFF0000C2*/;
-			case console::entry::flag_type::warn: return 0xFF94DFFF/*0xFF00B6FF*/;
-			//case console::entry::flag_type::info: break;
-			default: return 0xFFFEB95D/*0xFFFF9400*/;
+			case console::entry::flag_type::error: return ctx_.current_theme.get_rgba(theme_color::console_error);
+			case console::entry::flag_type::warn: return ctx_.current_theme.get_rgba(theme_color::console_warn);
+			default: return ctx_.current_theme.get_rgba(theme_color::console_info);
 		}
 	}
 

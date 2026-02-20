@@ -29,11 +29,13 @@
 #include <SDL_opengl.h>
 
 #define IMGUI_DEFINE_MATH_OPERATORS
+#define IMGUI_ENABLE_FREETYPE
 #include <imgui.h>
 #include <imgui_internal.h>
 #include <imgui_stdlib.h>
 #include <backends/imgui_impl_sdl2.h>
 #include <backends/imgui_impl_opengl3.h>
+#include "imgui_freetype.h"
 
 #define FMT_HEADER_ONLY
 #include <fmt/core.h>

@@ -11,6 +11,7 @@
 	#include <dwmapi.h>
 	#include <shlobj.h>
 #endif
+#include <events/theme/theme_mode_changed_event.hpp>
 
 namespace vt
 {
@@ -163,6 +164,11 @@ namespace vt
 		
 		set_default_theme(false);
 		set_darkmode(true);
+
+		ctx_.add_event_listener<theme_mode_changed_event>([this](const theme_mode_changed_event& event)
+		{
+			set_darkmode(event.is_dark());
+		});
     }
 
 	app_window::~app_window()
@@ -237,6 +243,7 @@ namespace vt
 		ico_config.GlyphOffset = { 0.f, 4.f };
 		ico_config.GlyphMinAdvanceX = size;
 		ico_config.FontDataOwnedByAtlas = false;
+		ico_config.FontBuilderFlags = ImGuiFreeTypeBuilderFlags_NoHinting;
 
 		ImFontConfig def_config{};
 		def_config.FontDataOwnedByAtlas = false;
@@ -294,6 +301,8 @@ namespace vt
 		//ctx_.fonts[font_type::h4] = io.Fonts->AddFontFromMemoryTTF((void*)embed::NotoSans_Regular, static_cast<int>(embed::NotoSans_Regular_size), size * 1.00f, &def_config, default_ranges.Data);
 		ctx_.fonts[font_type::h5] = io.Fonts->AddFontFromMemoryTTF((void*)embed::NotoSans_Regular, static_cast<int>(embed::NotoSans_Regular_size), size * 0.90f, &def_config, default_ranges.Data);
 		ctx_.fonts[font_type::h6] = io.Fonts->AddFontFromMemoryTTF((void*)embed::NotoSans_Regular, static_cast<int>(embed::NotoSans_Regular_size), size * 0.60f, &def_config, default_ranges.Data);
+		io.Fonts->FontBuilderIO = ImGuiFreeType::GetBuilderForFreeType();
+		io.Fonts->FontBuilderFlags = ImGuiFreeTypeBuilderFlags_LightHinting | ImGuiFreeTypeBuilderFlags_ForceAutoHint;
 		io.Fonts->Build();
 	}
 

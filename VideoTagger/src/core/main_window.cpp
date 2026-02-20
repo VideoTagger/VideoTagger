@@ -528,6 +528,10 @@ namespace vt
 			ctx_.reset_layout = true;
 		}
 
+		//TODO: Actually load theme
+		ctx_.current_theme = theme::load_from_file(fmt::format("assets/themes/dark.{}", theme::extension));
+		ctx_.current_theme.apply();
+
 		auto& io = ImGui::GetIO();
 		if (!std::filesystem::exists(io.IniFilename))
 		{
@@ -1556,6 +1560,12 @@ namespace vt
 					{
 						fetch_themes();
 					}
+
+					auto menu_name = fmt::format("{} {}", icons::folder, "Open Themes Folder");
+					if (ImGui::MenuItem(menu_name.c_str(), nullptr, nullptr, std::filesystem::exists(ctx_.theme_dir_filepath)))
+					{
+						utils::filesystem::open_in_explorer(std::filesystem::absolute(ctx_.theme_dir_filepath));
+					}
 					ImGui::Separator();
 
 					//TODO: Select current theme
@@ -1565,7 +1575,7 @@ namespace vt
 						if (ImGui::MenuItem(name.c_str()))
 						{
 							auto theme = theme::load_from_file(path);
-							ImGui::GetStyle() = theme.style;
+							//TODO: Use the theme
 						}
 					}
 					ui::end_menu();
@@ -2056,7 +2066,6 @@ namespace vt
 
 				widgets::draw_video_widget(video_data.video, video_data.display_texture, timestamp_in_range, is_widget_open, vid_id++, [&point_pos, has_selected_attribute, selected_attribute, is_shape, has_target, &video_data, &selected_segment](ImVec2 pos, ImVec2 size, ImVec2 tex_size)
 				{
-					static constexpr auto orange = tag_attribute::type_color(tag_attribute::type::shape); //0xFF30A0F0;
 					static auto from_tex_pos = [&pos, &tex_size, &size](const ImVec2 point) -> ImVec2
 					{
 						return pos + (point / tex_size) * size;
@@ -2394,7 +2403,7 @@ namespace vt
 
 										const auto& shape = attr.get<vt::shape>();
 										draw_list->PushClipRect(top_left, bottom_right, true);
-										shape.draw(current_ts, shape.interpolate, from_tex_pos, from_pixels, tex_size, size, is_selected ? orange : tag.color, fill_color, show_points, [&](size_t i)
+										shape.draw(current_ts, shape.interpolate, from_tex_pos, from_pixels, tex_size, size, is_selected ? ctx_.current_theme.get_rgba(theme_color::selection_normal) : tag.color, fill_color, show_points, [&](size_t i)
 										{
 											if (ImGui::IsMouseClicked(0) and hovered)
 											{
@@ -2451,10 +2460,6 @@ namespace vt
 
 						utils::matrix mod{};
 						auto& gizmo_style = ImGuizmo::GetStyle();
-						gizmo_style.Colors[ImGuizmo::COLOR::DIRECTION_X] = ImGui::ColorConvertU32ToFloat4(0xFF1EC880);
-						gizmo_style.Colors[ImGuizmo::COLOR::DIRECTION_Y] = ImGui::ColorConvertU32ToFloat4(0xFF503CF0);
-						gizmo_style.Colors[ImGuizmo::COLOR::PLANE_Z] = ImGui::ColorConvertU32ToFloat4(0x80F08830);
-						gizmo_style.Colors[ImGuizmo::COLOR::SELECTION] = ImGui::ColorConvertU32ToFloat4(orange);
 
 						gizmo_style.CenterCircleSize = ctx_.app_settings.enable_gizmo_scaling ? from_pixels(5) : 5.f;
 						gizmo_style.ScaleLineCircleSize = gizmo_style.CenterCircleSize;
@@ -2481,7 +2486,7 @@ namespace vt
 					//window focus frame
 					if (selected_segment.has_value() and last_focused and ctx_.last_focused_video.has_value())
 					{
-						draw_list->AddRect(top_left, bottom_right, orange, 0, 0, border_thickness);
+						draw_list->AddRect(top_left, bottom_right, ctx_.current_theme.get_rgba(theme_color::selection_normal), 0, 0, border_thickness);
 					}
 					//auto local_pos = from_tex_pos(point_pos);
 					//draw_list->AddCircle(local_pos, 10.f, border_color);

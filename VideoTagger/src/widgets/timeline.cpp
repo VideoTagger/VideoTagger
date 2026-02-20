@@ -444,7 +444,7 @@ namespace vt::widgets
 		auto light_color = ImGui::ColorConvertFloat4ToU32(rgba);
 		auto dark_color = ImGui::ColorConvertFloat4ToU32(dark_rgba);
 
-		auto outline_color = is_selected ? IM_COL32(0xFF, 0xA5, 0, 0xFF) : dark_color;
+		auto outline_color = is_selected ? ctx_.current_theme.get_rgba(theme_color::selection_normal) : dark_color;
 
 		if (is_timestamp)
 		{
@@ -1142,7 +1142,8 @@ namespace vt::widgets
 
 	uint32_t timeline::playhead_color() const
 	{
-		return enabled_ ? 0xFF3E36FF : 0xFF3E3E3E; //0xA02A2AFF
+		//return enabled_ ? 0xFF3E36FF : 0xFF3E3E3E; //0xA02A2AFF
+		return ctx_.current_theme.get_rgba(enabled_ ? theme_color::playhead_normal : theme_color::playhead_disabled);
 	}
 
 	void timeline::set_segment_selection(const std::string& tag, segment_id segment, bool is_selected)
