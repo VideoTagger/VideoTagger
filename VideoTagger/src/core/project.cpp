@@ -571,6 +571,7 @@ namespace vt
 		ctx_.is_project_dirty = true;
 	}
 
+	//TODO: needs to be removed and fully replace by events
 	tag_rename_result project::rename_tag(const std::string& old_name, const std::string& new_name)
 	{
 		
@@ -591,6 +592,7 @@ namespace vt
 
 		//TODO: maybe handle selected and moving segment but it may not be necessary
 
+		//TODO: should be handled by something else through events
 		for (auto& [group_id, group] : video_groups)
 		{
 			auto& segments = group.segments();
@@ -608,6 +610,7 @@ namespace vt
 		return rename_result;
 	}
 
+	//TODO: needs to be removed and fully replace by events
 	void project::delete_tag(const std::string& tag_name)
 	{
 		if (!tags.contains(tag_name))
@@ -616,6 +619,7 @@ namespace vt
 		}
 
 		ctx_.is_project_dirty = true;
+
 
 		auto& selected_segment = ctx_.video_timeline.selected_segment;
 		if (selected_segment.has_value() and selected_segment->tag == tag_name)
@@ -659,7 +663,7 @@ namespace vt
 	bool project::remove_displayed_tag(const std::string& tag_name)
 	{
 		auto it = std::lower_bound(displayed_tags.begin(), displayed_tags.end(), tag_name);
-		if (it != displayed_tags.end() or *it != tag_name)
+		if (it == displayed_tags.end() or *it != tag_name)
 		{
 			return false;
 		}

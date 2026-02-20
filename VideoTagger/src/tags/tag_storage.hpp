@@ -15,7 +15,8 @@ namespace vt
 		ok,
 		already_exists,
 		invalid_name,
-		too_long
+		too_long,
+		invalid
 	};
 
 	struct tag_rename_result;
@@ -36,18 +37,15 @@ namespace vt
 		static constexpr std::string_view forbidden_characters = "\t\n\r\a\b\v\f\"\'\\/<>|:?*";
 		static constexpr std::string_view forbidden_edge_characters = " "; // tag name can't contain these characters at the very start or end
 
-		std::pair<iterator, bool> insert(const tag& tag);
-		std::pair<iterator, bool> insert(const std::string& name, uint32_t color);
-		std::pair<iterator, bool> insert(const std::string& name);
+		//TODO: maybe make use a special return type like in rename
+		std::pair<iterator, tag_validate_result> insert(const tag& tag);
+		std::pair<iterator, tag_validate_result> insert(const std::string& name, uint32_t color);
+		std::pair<iterator, tag_validate_result> insert(const std::string& name);
 		bool erase(const std::string& name);
 		iterator erase(iterator it);
 		iterator erase(const_iterator it);
 		void clear();
 
-		// returns:
-		//	if current_name doesn't exist: { end, false }
-		//	if new_name already exists: { iterator-to-new_name, false }
-		//	otherwise: { iterator-to-inserted, true }
 		tag_rename_result rename(const std::string& current_name, const std::string& new_name);
 
 		tag& at(const std::string& name);
