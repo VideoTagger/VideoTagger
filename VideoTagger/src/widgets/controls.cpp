@@ -426,9 +426,14 @@ namespace vt::widgets
 		ImGui::TreePop();
 	}
 
-	bool table_hovered_row_style()
+    bool table_is_row_hovered()
+    {
+        return ImGui::TableGetHoveredRow() == ImGui::TableGetRowIndex();
+    }
+
+    bool table_hovered_row_style()
 	{
-		bool row_hovered = ImGui::TableGetHoveredRow() == ImGui::TableGetRowIndex();
+		bool row_hovered = table_is_row_hovered();
 		if (row_hovered)
 		{
 			ImGui::TableSetBgColor(ImGuiTableBgTarget_RowBg0, ImGui::ColorConvertFloat4ToU32(ImGui::GetStyleColorVec4(ImGuiCol_TableRowBgAlt)));

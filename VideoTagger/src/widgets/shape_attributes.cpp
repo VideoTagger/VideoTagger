@@ -29,18 +29,14 @@ namespace vt::widgets
 					auto& shape = selected_attr_inst->get<vt::shape>();
 					if (shape.has_data())
 					{
-						ImGui::PushStyleColor(ImGuiCol_TableRowBg, style.Colors[ImGuiCol_MenuBarBg]);
-						if (ImGui::BeginTable("##Background", 1, ImGuiTableFlags_RowBg))
+						ui::card([&]()
 						{
-							ImGui::TableNextColumn();
 							bool modifiable = is_on_screen;
 							shape.draw_data(active_vid_size.value(), ctx_.gizmo_target, selected_seg.start, selected_seg.end, current_ts, is_timestamp, modifiable, ctx_.is_project_dirty, [](timestamp target_ts)
 							{
 								ctx_.displayed_videos.seek(target_ts.total_milliseconds);
 							});
-							ImGui::EndTable();
-						}
-						ImGui::PopStyleColor();
+						});
 					}
 					else
 					{

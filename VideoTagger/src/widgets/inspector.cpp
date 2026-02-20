@@ -45,10 +45,8 @@ namespace vt::widgets
 
 				if (begin_collapsible("##Properties", "Properties", ImGuiTreeNodeFlags_DefaultOpen, icons::property))
 				{
-					ImGui::PushStyleColor(ImGuiCol_TableRowBg, style.Colors[ImGuiCol_MenuBarBg]);
-					if (ImGui::BeginTable("##Background", 1, ImGuiTableFlags_RowBg))
+					ui::card([&]()
 					{
-						ImGui::TableNextColumn();
 						ImGui::AlignTextToFramePadding();
 						ImGui::Columns(2);
 						ImGui::Text("Timestamp");
@@ -101,7 +99,7 @@ namespace vt::widgets
 									ImGui::TableNextColumn();
 									auto icon = link_start_end ? icons::link : icons::link_off;
 									std::string name = fmt::format("{}##LinkTimestamps", icon);
-									
+
 									auto icon_link_y = end_pos.y - start_pos.y + 2.125f * style.ItemSpacing.y + (ImGui::CalcTextSize(icon).y) / 2;
 									ImGui::SetCursorPosY(icon_link_y);
 									auto cpos = ImGui::GetCursorScreenPos();
@@ -170,9 +168,7 @@ namespace vt::widgets
 							break;
 						}
 						ImGui::Columns();
-						ImGui::EndTable();
-					}
-					ImGui::PopStyleColor();
+					});
 					end_collapsible();
 				}
 

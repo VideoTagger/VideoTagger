@@ -72,7 +72,7 @@ namespace vt::widgets
 				ImGui::ColorPicker3("##ColorPicker", reinterpret_cast<float*>(&color), ImGuiColorEditFlags_NoAlpha | ImGuiColorEditFlags_NoSidePreview | ImGuiColorEditFlags_NoSmallPreview);
 				ImGui::EndPopup();
 			}
-			if (ImGui::ColorButton("##ColorPreview", color, color_button_flags))
+			if (ui::color_button("##ColorPreview", color, color_button_flags))
 			{
 				ImGui::OpenPopup("##ColorPicker");
 			}
@@ -473,9 +473,7 @@ namespace vt::widgets
 
 					if (node_open)
 					{
-						ImVec4 bg_color{ 50 / 255.f, 50 / 255.f, 50 / 255.f, 0.5f };
-						ImGui::PushStyleColor(ImGuiCol_TableRowBg, bg_color/*style.Colors[ImGuiCol_MenuBarBg]*/);
-						if (ImGui::BeginTable("##Background", 1, ImGuiTableFlags_RowBg))
+						ui::card([&]()
 						{
 							ImGui::TableNextColumn();
 							ImGui::Columns(2, "##TagColumnSeparator");
@@ -484,7 +482,7 @@ namespace vt::widgets
 							ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
 
 							//TODO: Add filtering & readd the tag with a new name since std::map is used as a container (why not std::vector??)
-							
+
 							tag_name = tag.name;
 							if (ImGui::InputText("##TagNameInput", &tag_name, ImGuiInputTextFlags_AutoSelectAll | ImGuiInputTextFlags_EnterReturnsTrue))
 							{
@@ -494,7 +492,7 @@ namespace vt::widgets
 							ImGui::NextColumn();
 							ImGui::TextUnformatted("Color");
 							ImGui::NextColumn();
-							if (ImGui::ColorButton("##ColorButton", color, color_button_flags))
+							if (ui::color_button("##ColorButton", color, color_button_flags))
 							{
 								color_ref = it;
 								open_color_picker = true;
@@ -508,10 +506,12 @@ namespace vt::widgets
 
 							// Attributes
 							{
-								ImGui::Separator();				
-
-								static constexpr float table_border_size = 1.f; //FIXME: This is currently hardcoded in ImGui, change this when ImGui uses different border size
-								if (ImGui::BeginTable("##Attributes", 2, ImGuiTableFlags_BordersOuter, { ImGui::GetContentRegionAvail().x - table_border_size, 0 }))
+								ImGui::Separator();
+								const auto& theme = ctx_.current_theme;
+								//ImGui::PushStyleColor(ImGuiCol_TableBorderStrong, ImGui::GetStyleColorVec4(ImGuiCol_Border));
+								ImGui::PushStyleColor(ImGuiCol_TableRowBg, theme.get_float4(theme_color::background_secondary));
+								ImGui::PushStyleColor(ImGuiCol_TableRowBgAlt, theme.get_float4(theme_color::background_secondary));
+								if (ImGui::BeginTable("##Attributes", 2, ImGuiTableFlags_BordersOuter, { ImGui::GetContentRegionAvail().x - ui::table_border_size(), 0}))
 								{
 									ImGui::TableSetupColumn("Name");
 									ImGui::TableSetupColumn("Type");
@@ -569,12 +569,10 @@ namespace vt::widgets
 										tag.attributes.insert(std::move(node));
 									}
 									ImGui::EndTable();
-								}								
+								}
+								ImGui::PopStyleColor(2); //3
 							}
-
-							ImGui::EndTable();
-						}		
-						ImGui::PopStyleColor();
+						});
 						end_collapsible();
 					}
 

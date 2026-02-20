@@ -19,6 +19,7 @@ namespace vt::widgets
 		if (!is_open) return;
 
 		auto& style = ImGui::GetStyle();
+		auto indent_size = style.IndentSpacing * 0.5f;
 		auto& ref = ctx_.current_theme;
 		static bool output_only_modified = false;
 		auto color_flags = ImGuiColorEditFlags_AlphaBar | ImGuiColorEditFlags_DisplayHSV | ImGuiColorEditFlags_AlphaPreviewHalf | ImGuiColorEditFlags_NoInputs;
@@ -70,7 +71,13 @@ namespace vt::widgets
 			bool is_dark = temp_theme.is_dark();
 			ui::toggle("Dark", is_dark);
 			temp_theme.set_dark(is_dark);
-			if (ImGui::BeginChild("##ThemeScrollableView"))
+
+			//ui::begin_styled_scrollbars("##ThemeScrollableView");
+			bool child_visible = ImGui::BeginChild("##ThemeScrollableView");
+			//ui::save_window_scrollbar_state("##ThemeScrollableView");
+			//ui::end_styled_scrollbars();
+
+			if (child_visible)
 			{
 				static auto draw_option = [&](const std::string& label, std::string info, theme_color col_id)
 				{
@@ -79,7 +86,7 @@ namespace vt::widgets
 					ImGui::TableNextRow();
 					ImGui::TableNextColumn();
 					
-					if (ImGui::ColorEdit4(color_label.c_str(), (float*)&color, color_flags))
+					if (ui::color_edit4(color_label.c_str(), color, color_flags))
 					{
 						temp_theme.set_color(col_id, color);
 					}
@@ -94,6 +101,7 @@ namespace vt::widgets
 
 				if (ui::collapsing_header("Base Colors"))
 				{
+					ImGui::Indent(indent_size);
 					static auto draw_accent = [&](const std::string& label, std::string info, theme_color col_id)
 					{
 						std::string color_label = "##" + label + info;
@@ -101,7 +109,7 @@ namespace vt::widgets
 						ImGui::TableNextRow();
 						ImGui::TableNextColumn();
 
-						if (ImGui::ColorEdit4(color_label.c_str(), (float*)&color, color_flags))
+						if (ui::color_edit4(color_label.c_str(), color, color_flags))
 						{
 							temp_theme.set_color(col_id, color);
 						}
@@ -128,32 +136,39 @@ namespace vt::widgets
 						ImGui::EndDisabled();
 						ImGui::SameLine();
 						bool value = true;
-						
+
 						ImGui::BeginDisabled();
 						ui::toggle("", value);
 						ImGui::EndDisabled();
 						ctx_.current_theme.pop_color(6);
 					};
 
-					ImGui::PushStyleColor(ImGuiCol_TableRowBg, style.Colors[ImGuiCol_MenuBarBg]);
+					ImGui::PushStyleColor(ImGuiCol_TableRowBg, temp_theme.get_float4(theme_color::background_secondary));
 					if (ImGui::BeginTable("##BaseColors", 2, table_flags))
 					{
 						draw_accent("Accent", "Light", theme_color::accent_light);
 						draw_accent("Accent", "Medium", theme_color::accent_medium);
 						draw_accent("Accent", "Dark", theme_color::accent_dark);
+						draw_option("Accent", "Background", theme_color::accent_background);
 						ImGui::EndTable();
 					}
 					ImGui::PopStyleColor();
+					ImGui::Unindent(indent_size);
 				}
 
 				if (ui::collapsing_header("Windows, Frames and Popups"))
 				{
-					ImGui::PushStyleColor(ImGuiCol_TableRowBg, style.Colors[ImGuiCol_MenuBarBg]);
+					ImGui::Indent(indent_size);
+					ImGui::PushStyleColor(ImGuiCol_TableRowBg, temp_theme.get_float4(theme_color::background_secondary));
 					if (ImGui::BeginTable("##Background", 2, table_flags))
 					{
-						draw_option("Window", "Background", theme_color::window_background);
-						draw_option("Child", "Background", theme_color::child_background);
-						draw_option("Popup", "Background", theme_color::popup_background);
+						draw_option("Background", "Window", theme_color::background_window);
+						draw_option("Background", "Child", theme_color::background_child);
+						draw_option("Background", "Popup", theme_color::background_popup);
+						draw_option("Background", "Base", theme_color::background_base);
+						draw_option("Background", "Base Alt", theme_color::background_base_alt);
+						draw_option("Background", "Secondary", theme_color::background_secondary);
+						draw_option("Background", "Tertiary", theme_color::background_tertiary);
 						draw_option("Border", "", theme_color::border);
 						//draw_option("Border Shadow", "", ImGuiCol_BorderShadow);
 						draw_option("Menu Bar", "Background", theme_color::menubar_background);
@@ -166,16 +181,18 @@ namespace vt::widgets
 						ImGui::EndTable();
 					}
 					ImGui::PopStyleColor();
+					ImGui::Unindent(indent_size);
 				}
 				if (ui::collapsing_header("Text"))
 				{
+					ImGui::Indent(indent_size);
 					static auto draw_text = [&](const std::string& label, std::string info, theme_color col_id)
 					{
 						std::string color_label = "##" + label + info;
 						auto color = temp_theme.get_float4(col_id);
 						ImGui::TableNextRow();
 						ImGui::TableNextColumn();
-						if (ImGui::ColorEdit4(color_label.c_str(), (float*)&color, color_flags))
+						if (ui::color_edit4(color_label.c_str(), color, color_flags))
 						{
 							temp_theme.set_color(col_id, color);
 						}
@@ -188,7 +205,7 @@ namespace vt::widgets
 						ImGui::TableNextColumn(); ImGui::TextColored(color, "Text");
 					};
 
-					ImGui::PushStyleColor(ImGuiCol_TableRowBg, style.Colors[ImGuiCol_MenuBarBg]);
+					ImGui::PushStyleColor(ImGuiCol_TableRowBg, temp_theme.get_float4(theme_color::background_secondary));
 					if (ImGui::BeginTable("##Background", 2, table_flags))
 					{
 						draw_text("Text", "", theme_color::text_normal);
@@ -197,16 +214,18 @@ namespace vt::widgets
 						ImGui::EndTable();
 					}
 					ImGui::PopStyleColor();
+					ImGui::Unindent(indent_size);
 				}
 				if (ui::collapsing_header("Buttons"))
 				{
+					ImGui::Indent(indent_size);
 					static auto draw_button = [&](const std::string& label, std::string info, theme_color col_id)
 					{
 						std::string color_label = "##" + label + info;
 						auto color = temp_theme.get_float4(col_id);
 						ImGui::TableNextRow();
 						ImGui::TableNextColumn();
-						if (ImGui::ColorEdit4(color_label.c_str(), (float*)&color, color_flags))
+						if (ui::color_edit4(color_label.c_str(), color, color_flags))
 						{
 							temp_theme.set_color(col_id, color);
 						}
@@ -229,7 +248,7 @@ namespace vt::widgets
 						auto color = temp_theme.get_float4(col_id);
 						ImGui::TableNextRow();
 						ImGui::TableNextColumn();
-						if (ImGui::ColorEdit4(color_label.c_str(), (float*)&color, color_flags))
+						if (ui::color_edit4(color_label.c_str(), color, color_flags))
 						{
 							temp_theme.set_color(col_id, color);
 						}
@@ -248,7 +267,7 @@ namespace vt::widgets
 						ImGui::PopStyleColor(3);
 					};
 
-					ImGui::PushStyleColor(ImGuiCol_TableRowBg, style.Colors[ImGuiCol_MenuBarBg]);
+					ImGui::PushStyleColor(ImGuiCol_TableRowBg, temp_theme.get_float4(theme_color::background_secondary));
 					if (ImGui::BeginTable("##Background", 2, table_flags))
 					{
 						draw_button("Button", "", theme_color::button_normal);
@@ -259,17 +278,19 @@ namespace vt::widgets
 						ImGui::EndTable();
 					}
 					ImGui::PopStyleColor();
+					ImGui::Unindent(indent_size);
 				}
 
 				if (ui::collapsing_header("Tabs"))
 				{
+					ImGui::Indent(indent_size);
 					static auto draw_tab = [&](const std::string& label, std::string info, theme_color col_id)
 					{
 						std::string color_label = "##" + label + info;
 						auto color = temp_theme.get_float4(col_id);
 						ImGui::TableNextRow();
 						ImGui::TableNextColumn();
-						if (ImGui::ColorEdit4(color_label.c_str(), (float*)&color, color_flags))
+						if (ui::color_edit4(color_label.c_str(), color, color_flags))
 						{
 							temp_theme.set_color(col_id, color);
 						}
@@ -295,7 +316,7 @@ namespace vt::widgets
 						}
 					};
 
-					ImGui::PushStyleColor(ImGuiCol_TableRowBg, style.Colors[ImGuiCol_MenuBarBg]);
+					ImGui::PushStyleColor(ImGuiCol_TableRowBg, temp_theme.get_float4(theme_color::background_secondary));
 					if (ImGui::BeginTable("##Background", 2, table_flags))
 					{
 						draw_tab("Tab Focused", "", theme_color::tab_focused_normal);
@@ -307,17 +328,19 @@ namespace vt::widgets
 						ImGui::EndTable();
 					}
 					ImGui::PopStyleColor();
+					ImGui::Unindent(indent_size);
 				}
 
 				if (ui::collapsing_header("Scrollbars, Headers and Separators"))
 				{
+					ImGui::Indent(indent_size);
 					static auto draw_header = [&](const std::string& label, std::string info, theme_color col_id)
 					{
 						std::string color_label = "##" + label + info;
 						auto color = temp_theme.get_float4(col_id);
 						ImGui::TableNextRow();
 						ImGui::TableNextColumn();
-						if (ImGui::ColorEdit4(color_label.c_str(), (float*)&color, color_flags))
+						if (ui::color_edit4(color_label.c_str(), color, color_flags))
 						{
 							temp_theme.set_color(col_id, color);
 						}
@@ -342,7 +365,7 @@ namespace vt::widgets
 						auto color = temp_theme.get_float4(col_id);
 						ImGui::TableNextRow();
 						ImGui::TableNextColumn();
-						if (ImGui::ColorEdit4(color_label.c_str(), (float*)&color, color_flags))
+						if (ui::color_edit4(color_label.c_str(), color, color_flags))
 						{
 							temp_theme.set_color(col_id, color);
 						}
@@ -359,7 +382,7 @@ namespace vt::widgets
 						ImGui::PopStyleColor(3);
 					};
 
-					ImGui::PushStyleColor(ImGuiCol_TableRowBg, style.Colors[ImGuiCol_MenuBarBg]);
+					ImGui::PushStyleColor(ImGuiCol_TableRowBg, temp_theme.get_float4(theme_color::background_secondary));
 					if (ImGui::BeginTable("##Background", 2, table_flags))
 					{
 						draw_option("Scrollbar", "Background", theme_color::scrollbar_background);
@@ -378,11 +401,13 @@ namespace vt::widgets
 						ImGui::EndTable();
 					}
 					ImGui::PopStyleColor();
+					ImGui::Unindent(indent_size);
 				}
 
 				if (ui::collapsing_header("Viewport"))
 				{
-					ImGui::PushStyleColor(ImGuiCol_TableRowBg, style.Colors[ImGuiCol_MenuBarBg]);
+					ImGui::Indent(indent_size);
+					ImGui::PushStyleColor(ImGuiCol_TableRowBg, temp_theme.get_float4(theme_color::background_secondary));
 					if (ImGui::BeginTable("##Background", 2, table_flags))
 					{
 						draw_option("Axis", "X", theme_color::axis_x);
@@ -392,11 +417,13 @@ namespace vt::widgets
 						ImGui::EndTable();
 					}
 					ImGui::PopStyleColor();
+					ImGui::Unindent(indent_size);
 				}
 
 				if (ui::collapsing_header("Timeline"))
 				{
-					ImGui::PushStyleColor(ImGuiCol_TableRowBg, style.Colors[ImGuiCol_MenuBarBg]);
+					ImGui::Indent(indent_size);
+					ImGui::PushStyleColor(ImGuiCol_TableRowBg, temp_theme.get_float4(theme_color::background_secondary));
 					if (ImGui::BeginTable("##Background", 2, table_flags))
 					{
 						draw_option("Playhead", "", theme_color::playhead_normal);
@@ -406,11 +433,13 @@ namespace vt::widgets
 						ImGui::EndTable();
 					}
 					ImGui::PopStyleColor();
+					ImGui::Unindent(indent_size);
 				}
 
 				if (ui::collapsing_header("Console"))
 				{
-					ImGui::PushStyleColor(ImGuiCol_TableRowBg, style.Colors[ImGuiCol_MenuBarBg]);
+					ImGui::Indent(indent_size);
+					ImGui::PushStyleColor(ImGuiCol_TableRowBg, temp_theme.get_float4(theme_color::background_secondary));
 					if (ImGui::BeginTable("##Background", 2, table_flags))
 					{
 						draw_option("Console Log", "Info", theme_color::console_info);
@@ -423,6 +452,7 @@ namespace vt::widgets
 						ImGui::EndTable();
 					}
 					ImGui::PopStyleColor();
+					ImGui::Unindent(indent_size);
 				}
 				ImGui::EndChild();
 			}

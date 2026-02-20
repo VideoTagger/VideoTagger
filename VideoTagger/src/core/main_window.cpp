@@ -1621,6 +1621,7 @@ namespace vt
 			if (ImGui::BeginPopupModal("AboutPopup", &ctx_.win_cfg.show_about_window, flags))
 			{
 				const auto& style = ImGui::GetStyle();
+				const auto& theme = ctx_.current_theme;
 
 				ImGui::PushFont(ctx_.get_font(font_type::h3));
 				ImGui::TextUnformatted("About VideoTagger");
@@ -1629,7 +1630,7 @@ namespace vt
 				ImGui::PopFont();
 
 				ImVec2 child_size = ImGui::GetContentRegionAvail();
-				child_size.y -= ImGui::GetTextLineHeightWithSpacing() + style.WindowPadding.y;
+				child_size.y -= ImGui::GetTextLineHeightWithSpacing() * 1.25f + style.WindowPadding.y;
 				if (ImGui::BeginChild("##AboutScrollableArea", child_size))
 				{
 					ImGui::BeginDisabled();
@@ -1667,18 +1668,12 @@ namespace vt
 					{
 						if (widgets::begin_collapsible(fmt::format("##{}", name), name, 0, icons::license))
 						{
-							ImGui::PushStyleColor(ImGuiCol_TableRowBg, style.Colors[ImGuiCol_WindowBg]);
-							if (ImGui::BeginTable("##Background", 1, ImGuiTableFlags_RowBg))
+							ui::card([&]()
 							{
-								ImGui::TableNextColumn();
-
 								ImGui::PushStyleColor(ImGuiCol_Text, style.Colors[ImGuiCol_TextDisabled]);
 								ImGui::TextWrapped("%s", license.c_str());
 								ImGui::PopStyleColor();
-
-								ImGui::EndTable();
-							}
-							ImGui::PopStyleColor();
+							});
 							widgets::end_collapsible();
 						}
 					}
@@ -1686,7 +1681,7 @@ namespace vt
 				ImGui::EndChild();
 
 				auto button_size = ImVec2{ ImGui::GetContentRegionAvail().x, 0 };
-				if (ImGui::Button("Close", button_size) or ImGui::IsKeyReleased(ImGuiKey_Escape))
+				if (ui::accent_button("Close", button_size) or ImGui::IsKeyReleased(ImGuiKey_Escape))
 				{
 					ctx_.win_cfg.show_about_window = false;
 					ImGui::CloseCurrentPopup();
