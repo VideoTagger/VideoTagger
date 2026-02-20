@@ -218,7 +218,7 @@ namespace vt::widgets
 	bool tile(
 		const char* id, const std::string& label, ImVec2 tile_size, ImVec2 image_size, GLuint image,
 		const std::function<void(const std::string&)> context_menu, const std::function<void(const std::string&)> drag_drop,
-		std::function<void(ImDrawList&, ImRect, ImRect)> custom_draw, ImVec2 uv0, ImVec2 uv1, bool is_selected
+		std::function<void(ImDrawList&, ImRect, ImRect)> custom_draw, ImVec2 uv0, ImVec2 uv1, bool is_selected, const ImVec4& img_tint_color
 	)
 	{
 		bool result{};
@@ -264,7 +264,7 @@ namespace vt::widgets
 		}
 
 		ImGui::SetCursorPos(std::exchange(cpos, ImGui::GetCursorPos()));
-		ImGui::Image(imgui_tex, image_size, uv0, uv1);
+		ImGui::Image(imgui_tex, image_size, uv0, uv1, img_tint_color);
 		ImRect image_rect = { ImGui::GetItemRectMin(), ImGui::GetItemRectMax() };
 		ImGui::Dummy({ 0, (image_tile_size.y - image_size.y) / 2.f });
 		//widgets::clipped_text(id, { tile_size.x, text_size.y });

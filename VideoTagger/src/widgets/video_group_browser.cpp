@@ -18,9 +18,11 @@ namespace vt::widgets
 	{
 		if (!ctx_.current_project.has_value()) return;
 
-		//TODO: would be nice to just use the fucntion from video_browser
+		//TODO: would be nice to just use the function from video_browser
 		static auto draw_video_tile = [this](const video_resource& vid_resource, ImVec2 tile_size, bool& open, bool& remove, bool& properties, GLuint image = 0)
 		{
+			const auto& theme = ctx_.current_theme;
+
 			const auto& metadata = vid_resource.metadata();
 
 			ImVec2 image_tile_size{ tile_size.x * 0.9f, tile_size.x * 0.9f };
@@ -28,12 +30,15 @@ namespace vt::widgets
 			ImVec2 image_size = image_tile_size;
 			ImVec2 uv0{ 0, 0 };
 			ImVec2 uv1{ 1, 1 };
+			ImVec4 tint_color{ 1, 1, 1, 1 };
 			if (image == 0)
 			{
 				image = utils::thumbnail::font_texture();
 				auto glyph = utils::thumbnail::find_glyph(utils::thumbnail::video_icon);
 				uv0 = glyph.uv0;
 				uv1 = glyph.uv1;
+
+				tint_color = theme.get_float4(theme_color::icon_thumbnail);
 			}
 			else
 			{
@@ -73,7 +78,7 @@ namespace vt::widgets
 			[&vid_resource](ImDrawList& draw_list, ImRect item_rect, ImRect image_rect)
 			{
 				vid_resource.icon_custom_draw(draw_list, item_rect, image_rect);
-			}, uv0, uv1);
+			}, uv0, uv1, false, tint_color);
 		};
 
 		static auto group_ctx_menu = [](bool& open, bool& remove, bool& enqueue, bool can_enqueue)
@@ -94,10 +99,14 @@ namespace vt::widgets
 
 		static auto draw_group_tile = [this](video_group& vgroup, video_group_id_t gid, ImVec2 tile_size, bool& open, bool& remove, bool& enqueue, bool can_enqueue)
 		{
+			const auto& theme = ctx_.current_theme;
+
 			ImGui::PushID((void*)gid);
 
 			auto image = utils::thumbnail::font_texture();
 			auto glyph = utils::thumbnail::find_glyph(utils::thumbnail::video_group_icon);
+
+			ImVec4 tint_color = theme.get_float4(theme_color::icon_thumbnail);
 
 			open |= widgets::tile(fmt::format("group{}", gid).c_str(), vgroup.display_name, tile_size, tile_size, image,
 			[&](const std::string& label)
@@ -140,7 +149,7 @@ namespace vt::widgets
 					ImGui::EndDragDropSource();
 				}
 			},
-			nullptr, glyph.uv0, glyph.uv1);
+			nullptr, glyph.uv0, glyph.uv1, false, tint_color);
 			ImGui::PopID();
 		};
 

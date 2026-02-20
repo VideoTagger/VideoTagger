@@ -24,7 +24,7 @@ namespace vt::widgets
 		const std::function<void(const std::string& /*label*/)> context_menu = nullptr,
 		const std::function<void(const std::string& /*label*/)> drag_drop = nullptr,
 		std::function<void(ImDrawList& /*label*/, ImRect /*item rect*/, ImRect /*image rect*/)> custom_draw = nullptr,
-		ImVec2 uv0 = {0, 0}, ImVec2 uv1 = {1, 1}, bool is_selected = false
+		ImVec2 uv0 = { 0, 0 }, ImVec2 uv1 = { 1, 1 }, bool is_selected = false, const ImVec4& img_tint_color = { 1, 1, 1, 1 }
 	);
 
 	extern bool selection_area(ImVec2& start_pos, ImVec2& end_pos, ImGuiMouseButton mouse_button = ImGuiMouseButton_Left);

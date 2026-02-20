@@ -420,6 +420,21 @@ namespace vt::widgets
 					ImGui::Unindent(indent_size);
 				}
 
+				if (ui::collapsing_header("UI"))
+				{
+					ImGui::Indent(indent_size);
+					ImGui::PushStyleColor(ImGuiCol_TableRowBg, temp_theme.get_float4(theme_color::background_secondary));
+					if (ImGui::BeginTable("##Background", 2, table_flags))
+					{
+						draw_option("Icon", "Thumbnail", theme_color::icon_thumbnail);
+						draw_option("Selection", "", theme_color::selection_normal);
+
+						ImGui::EndTable();
+					}
+					ImGui::PopStyleColor();
+					ImGui::Unindent(indent_size);
+				}
+
 				if (ui::collapsing_header("Timeline"))
 				{
 					ImGui::Indent(indent_size);
@@ -428,7 +443,6 @@ namespace vt::widgets
 					{
 						draw_option("Playhead", "", theme_color::playhead_normal);
 						draw_option("Playhead", "Disabled", theme_color::playhead_disabled);
-						draw_option("Selection", "", theme_color::selection_normal);
 
 						ImGui::EndTable();
 					}

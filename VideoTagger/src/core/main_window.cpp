@@ -2728,6 +2728,12 @@ namespace vt
 		}
 		//ImGui::ShowDemoWindow();
 		//ImGui::OpenPopup("Script Progress");
+
+		//TODO: Maybe add a status bar here?
+		//if (ImGui::BeginViewportSideBar("##VideoTaggerSidebar", ImGui::GetMainViewport(), ImGuiDir_Down, ImGui::GetTextLineHeightWithSpacing() * 2, ImGuiWindowFlags_AlwaysAutoResize))
+		//{
+		//	ImGui::End();
+		//}
 	}
 
 	void main_window::draw_project_selector()

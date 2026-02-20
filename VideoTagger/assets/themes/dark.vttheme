@@ -18,6 +18,7 @@
 		"axis.x": "#80c81eff",
 		"axis.y": "#f03c50ff",
 		"axis.z": "#3088f080",
+		"icon.thumbnail": "#eeeeeeff",
 		"console.info": "#5db9feff",
 		"console.warn": "#ffdf94ff",
 		"console.error": "#f25867ff",

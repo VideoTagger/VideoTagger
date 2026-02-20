@@ -114,6 +114,7 @@ namespace vt::widgets
 
 							ImGui::SameLine();
 							bool is_selected = current_group_id != 0 and current_group_id == group_id;
+							auto tint_color = theme.get_float4(theme_color::icon_thumbnail);
 
 							bool tile_active = tile(fmt::format("group{}", group_id).c_str(), label, tile_size, image_tile_size, image,
 							[&remove_group](const std::string& label)
@@ -138,7 +139,7 @@ namespace vt::widgets
 									ImGui::TextUnformatted(str.c_str());
 									ImGui::EndDragDropSource();
 								}
-							}, nullptr, glyph.uv0, glyph.uv1, is_selected);
+							}, nullptr, glyph.uv0, glyph.uv1, is_selected, tint_color);
 
 							if (tile_active)
 							{

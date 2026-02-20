@@ -25,6 +25,7 @@ namespace vt
 		{ theme_color::axis_x, "axis.x" },
 		{ theme_color::axis_y, "axis.y" },
 		{ theme_color::axis_z, "axis.z" },
+		{ theme_color::icon_thumbnail, "icon.thumbnail" },
 		{ theme_color::console_info, "console.info" },
 		{ theme_color::console_warn, "console.warn" },
 		{ theme_color::console_error, "console.error" },

@@ -17,6 +17,8 @@ namespace vt::widgets
 
 		static auto draw_video_tile = [this](video_id_t id, video_resource& vid_resource, ImVec2 tile_size, bool& open, GLuint image = 0)
 		{
+			const auto& theme = ctx_.current_theme;
+
 			const auto& metadata = vid_resource.metadata();
 			std::string label = metadata.title.value_or("");
 			ImVec2 image_tile_size{ tile_size.x * 0.9f, tile_size.x * 0.9f };
@@ -25,12 +27,15 @@ namespace vt::widgets
 
 			ImVec2 uv0{ 0, 0 };
 			ImVec2 uv1{ 1, 1 };
+			ImVec4 tint_color{ 1, 1, 1, 1 };
 			if (image == 0)
 			{
 				image = utils::thumbnail::font_texture();
 				auto glyph = utils::thumbnail::find_glyph(utils::thumbnail::video_icon);
 				uv0 = glyph.uv0;
 				uv1 = glyph.uv1;
+
+				tint_color = theme.get_float4(theme_color::icon_thumbnail);
 			}
 			else
 			{
@@ -83,7 +88,7 @@ namespace vt::widgets
 			{
 				vid_resource.icon_custom_draw(draw_list, item_rect, image_rect);
 			},
-			uv0, uv1);
+			uv0, uv1, false, tint_color);
 		};
 
 		auto& style = ImGui::GetStyle();

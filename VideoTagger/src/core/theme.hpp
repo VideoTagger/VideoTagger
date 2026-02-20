@@ -24,6 +24,7 @@ namespace vt
 		axis_x,
 		axis_y,
 		axis_z,
+		icon_thumbnail,
 		console_info,
 		console_warn,
 		console_error,
