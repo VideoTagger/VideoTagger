@@ -394,6 +394,20 @@ namespace vt::widgets
 					ImGui::PopStyleColor();
 				}
 
+				if (ui::collapsing_header("Timeline"))
+				{
+					ImGui::PushStyleColor(ImGuiCol_TableRowBg, style.Colors[ImGuiCol_MenuBarBg]);
+					if (ImGui::BeginTable("##Background", 2, table_flags))
+					{
+						draw_option("Playhead", "", theme_color::playhead_normal);
+						draw_option("Playhead", "Disabled", theme_color::playhead_disabled);
+						draw_option("Selection", "", theme_color::selection_normal);
+
+						ImGui::EndTable();
+					}
+					ImGui::PopStyleColor();
+				}
+
 				if (ui::collapsing_header("Console"))
 				{
 					ImGui::PushStyleColor(ImGuiCol_TableRowBg, style.Colors[ImGuiCol_MenuBarBg]);
