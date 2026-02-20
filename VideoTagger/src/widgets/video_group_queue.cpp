@@ -26,6 +26,7 @@ namespace vt::widgets
 			auto& playlist = ctx_.current_project->video_group_playlist;
 			bool is_shuffled = playlist.is_shuffled();
 			const auto& style = ImGui::GetStyle();
+			const auto& theme = ctx_.current_theme;
 			
 			ImGui::PushStyleVar(ImGuiStyleVar_CellPadding, ImVec2{});
 			bool table_open = ImGui::BeginTable("##GroupQueuePanels", 2, ImGuiTableFlags_BordersInnerV);
@@ -40,7 +41,7 @@ namespace vt::widgets
 
 				ImGui::TableNextColumn();
 				{
-					ImGui::PushStyleColor(ImGuiCol_ChildBg, style.Colors[ImGuiCol_MenuBarBg]);
+					ImGui::PushStyleColor(ImGuiCol_ChildBg, theme.get_float4(theme_color::background_secondary));
 					bool child_open = ImGui::BeginChild("##GroupQueueList", ImGui::GetContentRegionAvail(), 0, ImGuiWindowFlags_HorizontalScrollbar);
 					ImGui::PopStyleColor();
 

@@ -555,6 +555,7 @@ namespace vt::widgets
 
 	void timeline::draw_scrollbar(segment_storage& segments, tag_storage& tags)
 	{
+		const auto& theme = ctx_.current_theme;
 		static constexpr float scrollbar_padding = 2.f;
 
 		auto [visible_min, visible_max] = visible_time_span();
@@ -575,11 +576,13 @@ namespace vt::widgets
 
 		bool is_grab_hovered = false;
 
+		const auto bg_color = theme.get_rgba(theme_color::background_base_alt);
 		if (ImGui::BeginTable("##TimelineSegments", 1, ImGuiTableFlags_NoSavedSettings, table_size))
 		{
+
 			ImGui::TableNextRow();
 			ImGui::TableNextColumn();
-			ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, ImGui::GetColorU32(ImGuiCol_TableHeaderBg));
+			ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, bg_color);
 			ui::vertical_item_spacer(scrollbar_padding);
 
 			ImGui::TableNextRow();
@@ -603,7 +606,7 @@ namespace vt::widgets
 
 					ImGui::TableNextRow();
 					ImGui::TableNextColumn();
-					ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, ImGui::GetColorU32(ImGuiCol_TableHeaderBg));
+					ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, bg_color);
 					ui::vertical_item_spacer(scaled_height);
 					ImGui::SameLine();
 
@@ -621,7 +624,7 @@ namespace vt::widgets
 
 			ImGui::TableNextRow();
 			ImGui::TableNextColumn();
-			ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, ImGui::GetColorU32(ImGuiCol_TableHeaderBg));
+			ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, bg_color);
 			ui::vertical_item_spacer(scrollbar_padding);
 
 			ImGui::EndTable();
@@ -941,11 +944,15 @@ namespace vt::widgets
 	void timeline::render(bool& is_open, segment_storage& segments, tag_storage& tags, std::vector<std::string>& visible_tags)
 	{
 		const auto& style = ImGui::GetStyle();
+		const auto& theme = ctx_.current_theme;
+		const auto tag_col_color = theme.get_rgba(theme_color::background_secondary);
+		const auto tag_col_color_hovered = ImGui::ColorConvertFloat4ToU32(ImGui::GetStyleColorVec4(ImGuiCol_TableRowBgAlt));
 
 		auto win_name = window_name();
+		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2{});
 		//ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2{ style.WindowPadding.x, 0.f });
 		auto win_open = ImGui::Begin(win_name.c_str(), &is_open, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
-		//ImGui::PopStyleVar();
+		ImGui::PopStyleVar();
 
 		if (win_open)
 		{
@@ -990,6 +997,7 @@ namespace vt::widgets
 
 				ImGui::TableNextRow();
 				ImGui::TableNextColumn();
+				ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, tag_col_color);
 
 				ImGui::BeginDisabled(menu_popup_->is_open());
 				if (ui::icon_button(icons::dots_hor))
@@ -1024,6 +1032,8 @@ namespace vt::widgets
 				//The playhead has to be drawn two times, since it won't be visible on the interval bar when tags are scrolled otherwise
 				draw_playhead();
 
+				auto tag_indent_size = style.IndentSpacing * 0.5f;
+
 				for (auto& tag : visible_tags)
 				{
 					auto& timeline = segments[tag];
@@ -1040,12 +1050,16 @@ namespace vt::widgets
 					{
 						table_hovered_row_style();
 					}
+					bool is_row_hovered = table_is_row_hovered();
 					//Left panel
 					ImGui::TableNextColumn();
+					ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, is_row_hovered ? tag_col_color_hovered : tag_col_color);
 					ImGui::AlignTextToFramePadding();
 
 					ImGui::BeginDisabled(timeline.empty());
+					ImGui::Indent(tag_indent_size);
 					ImGui::TextUnformatted(tag.c_str());
+					ImGui::Unindent(tag_indent_size);
 					ImGui::EndDisabled();
 					ui::tooltip(fmt::format("{} segment{}", timeline.size(), timeline.size() != 1 ? "s" : ""));
 

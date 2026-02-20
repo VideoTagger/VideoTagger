@@ -34,6 +34,7 @@ namespace vt::widgets
 	extern bool begin_collapsible(const std::string& id, const std::string& label, ImGuiTreeNodeFlags flags = 0, const char* icon = nullptr, const std::optional<ImVec4>& icon_color = std::nullopt, const std::function<void(void)>& on_dragdrop = nullptr, const std::optional<size_t>& index = std::nullopt);
 	extern void end_collapsible();
 
+	extern bool table_is_row_hovered();
 	extern bool table_hovered_row_style();
 
 	extern bool positon_control(utils::vec2<uint32_t>& pos, const utils::vec2<uint32_t>& max_size);
