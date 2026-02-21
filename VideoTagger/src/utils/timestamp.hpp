@@ -93,6 +93,32 @@ namespace vt
 			return *this;
 		}
 
+		template<typename number_type>
+		constexpr timestamp operator*(number_type scalar) const
+		{
+			return timestamp(total_milliseconds * scalar);
+		}
+
+		template<typename number_type>
+		constexpr timestamp& operator*=(number_type scalar)
+		{
+			total_milliseconds *= scalar;
+			return *this;
+		}
+
+		template<typename number_type>
+		constexpr timestamp operator/(number_type scalar) const
+		{
+			return timestamp(total_milliseconds / scalar);
+		}
+
+		template<typename number_type>
+		constexpr timestamp& operator/=(number_type scalar)
+		{
+			total_milliseconds /= scalar;
+			return *this;
+		}
+
 		constexpr bool operator==(const timestamp& rhs) const
 		{
 			return total_milliseconds == rhs.total_milliseconds;

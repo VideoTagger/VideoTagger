@@ -41,6 +41,7 @@ namespace vt::widgets
 
 	struct timeline_state
 	{
+		timestamp previous_ts{};
 		timestamp current_ts{};
 		timestamp min_ts{};
 		timestamp max_ts{};
@@ -90,6 +91,7 @@ namespace vt::widgets
 		bool is_hovering_segment_ = false;
 		bool is_dragging_span_left_grab_ = false;
 		bool is_dragging_span_right_grab_ = false;
+		bool view_follow_playhead_ = false;
 		timeline_state state_;
 		std::function<void(timestamp ts)> on_seek_;
 		//TODO: segment shouldn't be const

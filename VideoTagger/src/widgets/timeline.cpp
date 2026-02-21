@@ -949,6 +949,9 @@ namespace vt::widgets
 				view_ts_.start = state_.min_ts;
 				view_ts_.end = state_.max_ts;
 			}
+			//TODO: Probably should be a toggle icon button
+			ImGui::SameLine();
+			ui::checkbox("Follow Playhead", view_follow_playhead_);
 
 			/*
 			ImGui::SameLine();
@@ -975,6 +978,26 @@ namespace vt::widgets
 
 			if (is_open)
 			{
+				if (view_follow_playhead_ and state_.current_ts != state_.previous_ts)
+				{
+					auto view_length = timestamp{ visible_time_span().length() };
+					auto new_view_start = state_.current_ts -  view_length / 2;
+					auto new_view_end = new_view_start + view_length;
+					if (new_view_start < state_.min_ts)
+					{
+						new_view_start = state_.min_ts;
+						new_view_end = new_view_start + view_length;
+					}
+					else if (new_view_end > state_.max_ts)
+					{
+						new_view_end = state_.max_ts;
+						new_view_start = new_view_end - view_length;
+					}
+
+					view_ts_.start = new_view_start;
+					view_ts_.end = new_view_end;
+				}
+
 				ImGui::TableSetupColumn(nullptr, ImGuiTableColumnFlags_WidthStretch, 0.15f);
 				ImGui::TableSetupColumn(nullptr, ImGuiTableColumnFlags_WidthStretch);
 				ImGui::TableSetupScrollFreeze(1, 1);
@@ -1193,6 +1216,7 @@ namespace vt::widgets
 
 	void timeline_state::set_current_timestamp(timestamp ts)
 	{
+		previous_ts = current_ts;
 		current_ts = ts;
 	}
 
