@@ -60,7 +60,7 @@ namespace vt::widgets
 		void render(bool& is_open, segment_storage& segments, tag_storage& tags, std::vector<std::string>& visible_tags);
 
 		void set_on_seek_callback(const std::function<void(timestamp ts)>& callback);
-		void set_ctx_menu_callback(const std::function<void(const segment_with_id& segment_and_id, const tag& tag)>& callback);
+		//void set_ctx_menu_callback(const std::function<void(const segment_with_id& segment_and_id, const tag& tag)>& callback);
 		void set_draw_tooltip_callback(const std::function<void(const segment_with_id& segment_and_id, const tag& tag)>& callback);
 
 		uint32_t playhead_color() const;

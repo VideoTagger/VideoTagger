@@ -20,6 +20,8 @@
 #include <events/timeline/segment_merge_event.hpp>
 #include <events/timeline/segment_delete_event.hpp>
 
+#include <core/debug.hpp>
+
 namespace vt::widgets
 {
 	static std::optional<ImRect> get_cell_rect()
@@ -267,6 +269,25 @@ namespace vt::widgets
 
 		//Hit area for the segment
 		{
+			auto handle_segment_dragging = [this, &storage, is_selected, &tag, current_segment_id](segment_part part, timestamp mouse_timestamp) mutable
+			{
+				if (ImGui::IsItemActive() and ImGui::IsMouseDragging(ImGuiMouseButton_Left, 1.f) and !is_dragging_any_segment())
+				{
+					if (!is_selected)
+					{
+						if (!ImGui::IsKeyDown(ImGuiKey_ModCtrl))
+						{
+							event_deselect_all_segments(storage);
+						}
+
+						ctx_.dispatch_event<segment_select_event>(storage, tag.name, current_segment_id);
+						is_selected = true;
+					}
+
+					ctx_.dispatch_event<begin_segment_drag_event>(storage, selected_segments_, part, mouse_timestamp);
+				}
+			};
+
 			ImGui::PushID(&current_segment);
 			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2{});
 			auto cpos_x = ImGui::GetCursorPosX();
@@ -286,21 +307,7 @@ namespace vt::widgets
 					is_hovering_segment_ = true;
 					hover_type = segment_hover_type::middle;
 
-					if (ImGui::IsMouseDragging(ImGuiMouseButton_Left, 1.f))
-					{
-						if (!is_selected)
-						{
-							if (!ImGui::IsKeyDown(ImGuiKey_ModCtrl))
-							{
-								event_deselect_all_segments(storage);
-							}
-
-							ctx_.dispatch_event<segment_select_event>(storage, tag.name, current_segment_id);
-							is_selected = true;
-						}
-
-						ctx_.dispatch_event<begin_segment_drag_event>(storage, selected_segments_, segment_part::both, mouse_timestamp);
-					}
+					handle_segment_dragging(segment_part::both, mouse_timestamp);
 				}
 			}
 			else if (rect_size.x > 0.f and rect_size.y > 0.f)
@@ -310,15 +317,12 @@ namespace vt::widgets
 				{
 					if (ImGui::InvisibleButton("##SegmentGrabLeft", grab_size, ImGuiButtonFlags_PressedOnClick))
 					{
-						if (ImGui::IsMouseClicked(ImGuiMouseButton_Left) and is_selected)
-						{
-							ctx_.dispatch_event<begin_segment_drag_event>(storage, selected_segments_, segment_part::left, mouse_timestamp);
-						}
 					}
 					if (ImGui::IsItemHovered())
 					{
 						is_hovering_segment_ = true;
 						hover_type = segment_hover_type::start;
+						handle_segment_dragging(segment_part::left, mouse_timestamp);
 					}
 					ImGui::SameLine();
 					if (ImGui::InvisibleButton("##Segment", { rect_size.x - scaled_grab_width * 2.f, rect_size.y }))
@@ -329,38 +333,18 @@ namespace vt::widgets
 					{
 						is_hovering_segment_ = true;
 						hover_type = segment_hover_type::middle;
-						if (ImGui::IsMouseDragging(ImGuiMouseButton_Left))
-						{
-							if (!is_selected)
-							{
-								if (!ImGui::IsKeyDown(ImGuiKey_ModCtrl))
-								{
-									event_deselect_all_segments(storage);
-								}
-
-								ctx_.dispatch_event<segment_select_event>(storage, tag.name, current_segment_id);
-								is_selected = true;
-							}
-
-							if (ImGui::IsMouseDragging(ImGuiMouseButton_Left, 1.f))
-							{
-								ctx_.dispatch_event<begin_segment_drag_event>(storage, selected_segments_, segment_part::both, mouse_timestamp);
-							}
-						}
+						handle_segment_dragging(segment_part::both, mouse_timestamp);
 					}
 
 					ImGui::SameLine();
 					if (ImGui::InvisibleButton("##SegmentGrabRight", grab_size, ImGuiButtonFlags_PressedOnClick))
 					{
-						if (ImGui::IsMouseClicked(ImGuiMouseButton_Left) and is_selected)
-						{
-							ctx_.dispatch_event<begin_segment_drag_event>(storage, selected_segments_, segment_part::right, mouse_timestamp);
-						}
 					}
 					if (ImGui::IsItemHovered())
 					{
 						is_hovering_segment_ = true;
 						hover_type = segment_hover_type::end;
+						handle_segment_dragging(segment_part::right, mouse_timestamp);
 					}
 				}
 				ImGui::EndGroup();
@@ -1144,10 +1128,10 @@ namespace vt::widgets
 		on_seek_ = callback;
 	}
 
-	void timeline::set_ctx_menu_callback(const std::function<void(const segment_with_id& segment_and_id, const tag& tag)>& callback)
-	{
-		on_ctx_menu_ = callback;
-	}
+	//void timeline::set_ctx_menu_callback(const std::function<void(const segment_with_id& segment_and_id, const tag& tag)>& callback)
+	//{
+	//	on_ctx_menu_ = callback;
+	//}
 
 	void timeline::set_draw_tooltip_callback(const std::function<void(const segment_with_id& segment_and_id, const tag& tag)>& callback)
 	{
