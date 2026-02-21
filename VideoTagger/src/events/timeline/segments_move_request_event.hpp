@@ -16,6 +16,10 @@ namespace vt
 		segments_move_request_event(segment_storage& storage, const segment_id_map& segments, segment_part move_part, timestamp move_offset) :
 			multi_segment_event(storage, segments), move_part_{ move_part }, move_offset_{ move_offset } {}
 
+		segments_move_request_event(segment_storage& storage, const std::string tag, segment_id segment, segment_part move_part, timestamp move_offset) :
+			multi_segment_event(storage, segment_id_map{ {tag, { segment }} }), move_part_{ move_part }, move_offset_{ move_offset } {
+		}
+
 	private:
 		segment_part move_part_;
 		timestamp move_offset_;

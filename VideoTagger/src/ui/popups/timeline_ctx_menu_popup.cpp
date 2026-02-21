@@ -27,7 +27,7 @@ namespace vt::ui
 		}
 		if (ImGui::MenuItem("New segment"))
 		{
-			ctx_.dispatch_event<segment_insert_request_event>(*segment_storage_, active_tag, active_position_, active_position_);
+			ctx_.dispatch_event<segment_insert_request_event>(*segment_storage_, active_tag_, active_position_, active_position_);
 		}
 	}
 
@@ -43,7 +43,7 @@ namespace vt::ui
 
 	void timeline_ctx_menu_popup::set_active_tag(const std::string& tag)
 	{
-		active_tag = tag;
+		active_tag_ = tag;
 	}
 
 	void timeline_ctx_menu_popup::set_active_position(timestamp ts)

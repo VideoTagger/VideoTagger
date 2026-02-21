@@ -12,7 +12,7 @@ namespace vt::ui
 
 	private:
 		timestamp active_position_;
-		std::string active_tag;
+		std::string active_tag_;
 		segment_storage* segment_storage_;
 		segment_id_map selected_segments_;
 
