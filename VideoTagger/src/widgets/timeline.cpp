@@ -951,7 +951,7 @@ namespace vt::widgets
 			}
 			//TODO: Probably should be a toggle icon button
 			ImGui::SameLine();
-			ui::checkbox("Follow Playhead", view_follow_playhead_);
+			ui::toggle("Follow Playhead", view_follow_playhead_);
 
 			/*
 			ImGui::SameLine();
