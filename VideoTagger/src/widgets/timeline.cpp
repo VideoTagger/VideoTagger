@@ -174,31 +174,146 @@ namespace vt::widgets
 		draw_list->AddLine(top + line_offset, bottom, playhead_col, playhead_width);
 	}
 
-	void timeline::draw_time_intervals() const
+	void timeline::draw_time_intervals(bool only_lines) const
 	{
-		auto rect = get_cell_rect();
-		if (rect.has_value())
+		static auto draw_time_interval = [this, &only_lines](timestamp ts, ImRect draw_rect, timeline_tick_type type)
 		{
-			ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, ImGui::GetColorU32(ImGuiCol_TableHeaderBg));
+			static constexpr float tick_thickness = 1.f;
+			static constexpr std::array<float, 3> tick_scales{ 0.25f, 0.5f, 0.75f };
+			static constexpr std::array<float, 3> tick_line_alphas{ 0.0f, 0.0f, 0.25f }; //{ 0.05f, 0.1f, 0.25f };
+
+			auto vis_span = visible_time_span();
+
+			bool is_subtick = (type != timeline_tick_type::major);
+			auto tick_color = ImGui::GetColorU32(is_subtick ? ImGuiCol_TextDisabled : ImGuiCol_TextDisabled);
 			auto draw_list = ImGui::GetWindowDrawList();
-			bool enabled = true;
-			auto rect_size = rect->GetSize();
 
-			auto tick_color = ImGui::GetColorU32(ImGuiCol_TextDisabled);
-			float tick_thickness = 1.f;
+			auto offset_ts = vis_span.start + ts;
+			auto scaled_pos = to_visible_timeline_pos(offset_ts) * draw_rect.GetWidth();
+			auto x = draw_rect.Min.x + scaled_pos;
 
-			auto time_length = state_.time_length();
-			auto mpt = interval_time();
-			auto tick_count = (time_length / 2) / mpt;
-
-			//size_t tick_count = std::max<size_t>(6, (size_t)(zoom_ * 100));
-			for (int64_t i = 1; i < tick_count; ++i)
+			if (!only_lines)
 			{
-				auto offset = (i & 1) ? rect_size.y / 6.f : 0.f;
-				auto start = rect->Min + ImVec2{ (float)i * rect_size.x / (float)tick_count, tick_thickness };
-				auto end = start;
-				end.y += rect_size.y / 3.f - offset;
+				auto height_scale = tick_scales[(size_t)type];
+				auto scaled_height = draw_rect.GetHeight() * height_scale;
+				ImVec2 start{ x, draw_rect.Min.y };
+				ImVec2 end{ start.x, start.y + scaled_height };
+
 				draw_list->AddLine(start, end, tick_color, tick_thickness);
+
+				if (type == timeline_tick_type::major)
+				{
+					ImGui::PushFont(ctx_.get_font(font_type::h5));
+					const auto& style = ImGui::GetStyle();
+					auto time_text = utils::time::time_to_string(ts.total_milliseconds.count(), utils::time::no_ms_time_format);
+					auto text_size = ImGui::CalcTextSize(time_text.c_str());
+					const ImVec2 text_offset{ style.ItemSpacing.x / 2, -text_size.y / 1.5f };
+					ImVec2 text_pos{ start.x + text_offset.x, end.y + text_offset.y };
+					draw_list->AddText(text_pos, tick_color, time_text.c_str());
+					ImGui::PopFont();
+				}
+			}
+			else
+			{
+				ImVec4 tick_color4 = ImGui::ColorConvertU32ToFloat4(tick_color);
+				tick_color4.w = tick_line_alphas[(size_t)type];
+
+				//alpha == 0
+				if (tick_color4.w == 0.0f) return;
+				const auto& style = ImGui::GetStyle();
+
+				ImVec2 win_min = ImGui::GetWindowContentRegionMin();
+				ImVec2 win_max = ImGui::GetWindowContentRegionMax();
+
+				auto win_pos = ImGui::GetWindowPos();
+				auto scroll_y = ImGui::GetScrollY();
+
+				auto cell_rect = get_cell_rect();
+				win_min.x = cell_rect->Max.x;
+				win_min.y = cell_rect->Min.y + cell_rect->GetHeight() + 2 * style.CellPadding.y; //offsets playback scroll
+				win_max.x = cell_rect->Max.x;
+				win_max.y += win_pos.y;
+
+				ImVec2 top{ x, win_min.y + scroll_y };
+				ImVec2 bottom{ x, win_max.y + scroll_y };
+
+				draw_list->AddLine(top, bottom, ImGui::ColorConvertFloat4ToU32(tick_color4), tick_thickness);
+			}
+		};
+
+		auto rect = get_cell_rect();
+		if (!only_lines and rect.has_value())
+		{
+			ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, ctx_.current_theme.get_rgba(theme_color::background_base_alt));
+		}
+		auto tick_color = ImGui::GetColorU32(ImGuiCol_TextDisabled);
+		float tick_thickness = 1.f;
+
+		auto time_length = state_.time_length();
+		auto mpt = interval_time();
+
+		auto vis_span = visible_time_span();
+		auto span_length = vis_span.length();
+
+		auto span_length_ts = timestamp{ span_length };
+		if (span_length > 0)
+		{
+			//TODO: This should propably be configurable by the user at some point, but for now this is good enough
+			int64_t tick_rate;
+			int64_t subtick_rate;
+			if (span_length_ts.minutes() >= 60) //hours
+			{
+				tick_rate = 1000 * 60 * 10; //10 mins
+				subtick_rate = 1000 * 60; //1 min
+			}
+			else if (span_length_ts.minutes() > 0) // 1 minute
+			{
+				tick_rate = 1000 * 60; //1 min
+				subtick_rate = 1000 * 10; //10 secs
+			}
+			else if (span_length_ts.seconds() >= 15) //15 sec
+			{
+				tick_rate = 1000 * 5; //1 sec
+				subtick_rate = 500; //500 ms
+			}
+			else if (span_length_ts.seconds() > 0) //seconds
+			{
+				tick_rate = 1000; //1 sec
+				subtick_rate = 100; //100 ms
+			}
+			else //milliseconds
+			{
+				tick_rate = 100; //100 ms
+				subtick_rate = 1; //1 ms
+			}
+
+			bool is_subtick = true;
+			{
+				auto min_interval = subtick_rate;
+				size_t i = 0;
+				for (timestamp ts = {}; ts < state_.max_ts; ++i)
+				{
+					int64_t ms = static_cast<int64_t>(min_interval * i);
+					bool is_half_tick = (ms % (tick_rate / 2)) == 0;
+
+					timestamp actual_ts = timestamp{ ms };
+					ts += timestamp{ static_cast<int64_t>(min_interval) };
+					//if (actual_ts < vis_span.start or actual_ts > vis_span.end) continue;
+					draw_time_interval(actual_ts, *rect, is_half_tick ? timeline_tick_type::half : timeline_tick_type::minor);
+				}
+			}
+
+			is_subtick = false;
+			{
+				auto min_interval = tick_rate;
+				size_t i = 0;
+				for (timestamp ts = {}; ts < state_.max_ts; ++i)
+				{
+					timestamp actual_ts = timestamp{ static_cast<int64_t>(min_interval * i) };
+					ts += timestamp{ static_cast<int64_t>(min_interval) };
+					//if (actual_ts < vis_span.start or actual_ts > vis_span.end) continue;
+					draw_time_interval(actual_ts, *rect, timeline_tick_type::major);
+				}
 			}
 		}
 	}
@@ -1026,9 +1141,32 @@ namespace vt::widgets
 				playback_scrollbar_.render_disabled(!enabled_);
 
 
-
 				//draw_cell_debug_rect(zoom_);
-				draw_time_intervals();
+				draw_time_intervals(true);
+				draw_time_intervals(false);
+
+				//draw mouse time tooltip
+				if (enabled_ and cell_rect.has_value())
+				{
+					const auto& rect = cell_rect.value();
+					if (ImGui::IsMouseHoveringRect(rect.Min, rect.Max))
+					{
+						auto mouse_pos_x = ImGui::GetMousePos().x;
+						float normalized_mouse_x = math::normalize(mouse_pos_x, cell_rect->Min.x, cell_rect->Max.x, 0.f, 1.f);
+						timestamp mouse_timestamp = to_timestamp(normalized_mouse_x);
+						auto ts_str = utils::time::time_to_string(mouse_timestamp.total_milliseconds.count());
+						ui::tooltip(ts_str);
+
+						if (!playback_scrollbar_.is_dragged())
+						{
+							auto draw_list = ImGui::GetWindowDrawList();
+							ImVec2 start{ mouse_pos_x, rect.Min.y };
+							ImVec2 end{ start.x, rect.Max.y };
+							draw_list->AddLine(start, end, ctx_.current_theme.get_rgba(theme_color::playhead_normal), 1.f);
+						}
+					}
+				}
+
 				//The playhead has to be drawn two times, since it won't be visible on the interval bar when tags are scrolled otherwise
 				draw_playhead();
 
@@ -1100,6 +1238,7 @@ namespace vt::widgets
 						}
 					}
 				}
+
 				draw_playhead();
 
 				if (open_segment_ctx_menu_)

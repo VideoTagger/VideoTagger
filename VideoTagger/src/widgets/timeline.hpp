@@ -50,6 +50,13 @@ namespace vt::widgets
 		void set_min_timestamp(timestamp ts);
 		void set_max_timestamp(timestamp ts);
 	};
+
+	enum class timeline_tick_type
+	{
+		minor,
+		half,
+		major,
+	};
 	
 	struct timeline
 	{
@@ -101,7 +108,7 @@ namespace vt::widgets
 
 	private:
 		void draw_playhead() const;
-		void draw_time_intervals() const;
+		void draw_time_intervals(bool only_lines) const;
 		//TODO: segment shouldn't be const
 		void draw_segment(segment_storage& segments, const segment_with_id& segment_and_id, const tag& tag, bool is_selected, bool is_dragged);
 		void draw_segment_preview(const segment_with_id& segment_and_id, const tag& tag, float scaled_height, bool is_selected, bool is_dragged) const;
