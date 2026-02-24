@@ -978,7 +978,7 @@ namespace vt::widgets
 
 			if (is_open)
 			{
-				if (view_follow_playhead_ and state_.current_ts != state_.previous_ts)
+				if (view_follow_playhead_ and state_.current_ts != state_.previous_ts and ctx_.player.is_playing())
 				{
 					auto view_length = timestamp{ visible_time_span().length() };
 					auto new_view_start = state_.current_ts -  view_length / 2;

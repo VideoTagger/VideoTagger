@@ -56,6 +56,12 @@ namespace vt
 		size_t size() const;
 		bool empty() const;
 		double max_framerate() const;
+		std::chrono::nanoseconds min_frametime() const;
+
+		///return the timestamp of the closest future frame of all the videos
+		std::chrono::nanoseconds next_frame_timestamp() const;
+		///return the timestamp of the closest past frame of all the videos
+		std::chrono::nanoseconds previous_frame_timestamp() const;
 	
 		iterator begin();
 		const_iterator begin() const;

@@ -136,8 +136,21 @@ namespace vt::widgets
 					{
 						callbacks.on_set_playing(false);
 					}
-					std::chrono::nanoseconds seek_duration = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::duration<double>(1.f / ctx_.displayed_videos.max_framerate()));
-					callbacks.on_seek(data().current_ts + frame * seek_duration);
+
+					std::chrono::nanoseconds seek_ts{};
+					if (frame < 0)
+					{
+						seek_ts = ctx_.displayed_videos.previous_frame_timestamp();
+					}
+					else if (frame > 0)
+					{
+						seek_ts = ctx_.displayed_videos.next_frame_timestamp();
+					}
+
+					if (frame != 0)
+					{
+						callbacks.on_seek(seek_ts);
+					}
 				}
 				ImGui::SameLine();
 

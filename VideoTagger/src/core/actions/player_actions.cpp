@@ -27,8 +27,7 @@ namespace vt
 				{
 					callbacks.on_set_playing(false);
 				}
-				std::chrono::nanoseconds seek_duration = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::duration<double>(1.f / ctx_.displayed_videos.max_framerate()));
-				callbacks.on_seek(player.data().current_ts + seek_duration);
+				callbacks.on_seek(ctx_.displayed_videos.next_frame_timestamp());
 			}
 			break;
 			case player_action_type::backwards:
@@ -38,8 +37,7 @@ namespace vt
 				{
 					callbacks.on_set_playing(false);
 				}
-				std::chrono::nanoseconds seek_duration = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::duration<double>(1.f / ctx_.displayed_videos.max_framerate()));
-				callbacks.on_seek(player.data().current_ts - seek_duration);
+				callbacks.on_seek(ctx_.displayed_videos.previous_frame_timestamp());
 			}
 			break;
 			case player_action_type::skip_next:

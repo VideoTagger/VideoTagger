@@ -255,6 +255,114 @@ namespace vt
 		return return_value;
 	}
 
+	std::chrono::nanoseconds displayed_videos_manager::min_frametime() const
+	{
+		std::chrono::nanoseconds return_value = std::chrono::nanoseconds::max();
+		for (auto& video : videos_)
+		{
+			return_value = std::min(return_value, video.video.frame_time());
+		}
+
+		return return_value;
+	}
+
+	std::chrono::nanoseconds displayed_videos_manager::next_frame_timestamp() const
+	{
+		//std::chrono::nanoseconds return_value = duration();
+		//for (auto& video_data : videos_)
+		//{
+		//	const auto& vid = video_data.video;
+		//	auto video_next_ts = vid.current_timestamp() + vid.frame_time() + video_data.offset;
+		//	auto distance = video_next_ts - current_timestamp_;
+		//	if (distance <= std::chrono::nanoseconds{ 0 })
+		//	{
+		//		continue;
+		//	}
+
+		//	if (distance < (return_value - current_timestamp_))
+		//	{
+		//		return_value = video_next_ts;
+		//	}
+		//}
+
+		//return return_value;
+
+		std::chrono::nanoseconds return_value = duration();
+		for (auto& video_data : videos_)
+		{
+			if (!video_data.is_timestamp_in_range(current_timestamp_))
+			{
+				continue;
+			}
+
+			const auto& vid = video_data.video;
+			int64_t current_frame_number = (current_timestamp_ - video_data.offset) / vid.frame_time();
+			auto video_next_ts = (current_frame_number + 1) * vid.frame_time() + video_data.offset;
+			auto distance = video_next_ts - current_timestamp_;
+			if (distance < (return_value - current_timestamp_))
+			{
+				return_value = video_next_ts;
+			}
+		}
+
+		return return_value;
+	}
+
+	std::chrono::nanoseconds displayed_videos_manager::previous_frame_timestamp() const
+	{
+		//std::chrono::nanoseconds return_value{};
+		//for (auto& video_data : videos_)
+		//{
+		//	const auto& vid = video_data.video;
+		//	auto video_previous_ts = vid.current_timestamp() + video_data.offset;
+		//	while (video_previous_ts >= current_timestamp())
+		//	{
+		//		video_previous_ts -= vid.frame_time();
+		//	}
+		//	auto distance = current_timestamp_ - video_previous_ts;
+		//	if (distance <= std::chrono::nanoseconds{ 0 })
+		//	{
+		//		continue;
+		//	}
+
+		//	if (distance < (current_timestamp_ - return_value))
+		//	{
+		//		return_value = video_previous_ts;
+		//	}
+		//}
+
+		//return return_value;
+
+		std::chrono::nanoseconds return_value{};
+		for (auto& video_data : videos_)
+		{
+			if (!video_data.is_timestamp_in_range(current_timestamp_))
+			{
+				continue;
+			}
+
+			const auto& vid = video_data.video;
+			int64_t current_frame_number = (current_timestamp_ - video_data.offset) / vid.frame_time();
+			auto video_previous_ts = current_frame_number * vid.frame_time() + video_data.offset;
+			if (video_previous_ts == current_timestamp_)
+			{
+				video_previous_ts -= vid.frame_time();
+			}
+
+			auto distance = current_timestamp_ - video_previous_ts;
+			if (distance <= std::chrono::nanoseconds{ 0 })
+			{
+				continue;
+			}
+			if (distance < (current_timestamp_ - return_value))
+			{
+				return_value = video_previous_ts;
+			}
+		}
+
+		return return_value;
+	}
+
 	displayed_videos_manager::iterator displayed_videos_manager::begin()
 	{
 		return videos_.begin();
