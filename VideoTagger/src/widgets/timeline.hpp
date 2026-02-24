@@ -41,6 +41,7 @@ namespace vt::widgets
 
 	struct timeline_state
 	{
+		timestamp previous_ts{};
 		timestamp current_ts{};
 		timestamp min_ts{};
 		timestamp max_ts{};
@@ -67,7 +68,7 @@ namespace vt::widgets
 		void render(bool& is_open, segment_storage& segments, tag_storage& tags, std::vector<std::string>& visible_tags);
 
 		void set_on_seek_callback(const std::function<void(timestamp ts)>& callback);
-		void set_ctx_menu_callback(const std::function<void(const segment_with_id& segment_and_id, const tag& tag)>& callback);
+		//void set_ctx_menu_callback(const std::function<void(const segment_with_id& segment_and_id, const tag& tag)>& callback);
 		void set_draw_tooltip_callback(const std::function<void(const segment_with_id& segment_and_id, const tag& tag)>& callback);
 
 		uint32_t playhead_color() const;
@@ -97,6 +98,7 @@ namespace vt::widgets
 		bool is_hovering_segment_ = false;
 		bool is_dragging_span_left_grab_ = false;
 		bool is_dragging_span_right_grab_ = false;
+		bool view_follow_playhead_ = false;
 		timeline_state state_;
 		std::function<void(timestamp ts)> on_seek_;
 		//TODO: segment shouldn't be const
