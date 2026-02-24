@@ -43,6 +43,8 @@ namespace vt::icons
 	inline constexpr auto toggle_more = "\xee\x97\x97";
 	inline constexpr auto link = "\xee\x85\x97";
 	inline constexpr auto link_off = "\xee\x85\xaf";
+	inline constexpr auto pin = "\xee\x9a\xaa";
+	inline constexpr auto pin_off = "\xee\x9b\xb9";
 	inline constexpr auto edit = "\xee\x8f\x89";
 	inline constexpr auto help = "\xee\xa3\xbd";
 	inline constexpr auto video_group = "\xef\x92\x9a"; //"\xee\x81\x8a";
@@ -103,7 +105,7 @@ namespace vt::icons
 	({
 		dots_hor, play, play_next, play_queue, pause, repeat, repeat_one, retry, shuffle, skip_next, skip_prev, fast_back, fast_fwd,
 		save, save_as, import_, import_export, exit, close, back, visibility_on, visibility_off, add, delete_, reset, folder, folder_code, file, label, tags, add_tag, expand_less, expand_more,
-		toggle_less, toggle_more, link, link_off, edit, help, video_group, video, search, terminal, property, attribute, object, timeline, queue, database,
+		toggle_less, toggle_more, link, link_off, pin, pin_off, edit, help, video_group, video, search, terminal, property, attribute, object, timeline, queue, database,
 		bullet, chevron_left, chevron_right,
 		shape, shape_none, shape_circle, shape_rectangle, shape_polygon, interpolate,
 		align_horizontal_left, align_horizontal_right, align_horizontal_center, align_vertical_bottom, align_vertical_top, align_vertical_center, align_center,

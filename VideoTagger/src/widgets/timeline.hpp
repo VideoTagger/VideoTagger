@@ -72,6 +72,10 @@ namespace vt::widgets
 		void set_draw_tooltip_callback(const std::function<void(const segment_with_id& segment_and_id, const tag& tag)>& callback);
 
 		uint32_t playhead_color() const;
+		///@return Disabled color if the timeline is disabled, normal color otherwise
+		uint32_t segment_color(uint32_t tag_color, bool is_hovered = false, bool is_dragged = false) const;
+		///@return Disabled color if the timeline is disabled, normal color otherwise
+		uint32_t segment_outline_color(uint32_t tag_color, bool is_hovered = false, bool is_dragged = false, bool is_selected = false) const;
 		bool is_segment_selected(const std::string& tag, segment_id segment) const;
 		bool is_segment_dragged(const std::string& tag, segment_id segment) const;
 		bool is_dragging_any_segment() const;

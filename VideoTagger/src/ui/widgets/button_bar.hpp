@@ -74,24 +74,39 @@ namespace vt::ui
 					ImGui::BeginDisabled(!valid);
 					if constexpr (enter_support)
 					{
-						if (ui::accent_button(label) and callback != nullptr or (valid and callback != nullptr and ImGui::IsWindowFocused() and ImGui::IsKeyPressed(ImGuiKey_Enter)))
+						ui::begin_bigger_frames();
+						bool result = ui::accent_button(label) and callback != nullptr or (valid and callback != nullptr and ImGui::IsWindowFocused() and ImGui::IsKeyPressed(ImGuiKey_Enter));
+						ui::end_bigger_frames();
+
+						if (result)
 						{
 							callback(id);
 						}
 					}
 					else
 					{
-						if (ui::accent_button(label) and callback != nullptr)
+						ui::begin_bigger_frames();
+						bool result = ui::accent_button(label) and callback != nullptr;
+						ui::end_bigger_frames();
+
+						if (result)
 						{
 							callback(id);
 						}
 					}
-					
+
 					ImGui::EndDisabled();
 				}
-				else if (ui::button(label) and callback != nullptr)
+				else
 				{
-					callback(id);
+					ui::begin_bigger_frames();
+					bool result = ui::button(label) and callback != nullptr;
+					ui::end_bigger_frames();
+
+					if (result)
+					{
+						callback(id);
+					}
 				}
 			}
 			ImGui::SetCursorPosX(cpos_x);

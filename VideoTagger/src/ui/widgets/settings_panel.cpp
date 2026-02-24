@@ -30,18 +30,22 @@ namespace vt::ui
 		add<settings_expander>(label, description, [label, button_label, on_click](float height)
 		{
 			const auto& style = ImGui::GetStyle();
+			ui::begin_bigger_frames();
 			float offset_y = (height - ImGui::GetFrameHeightWithSpacing()) * 0.5f;
 			if (offset_y > 0.0f)
 			{
 				ImGui::SetCursorPosY(ImGui::GetCursorPosY() + offset_y);
 			}
 
-			float offset_x = (ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize(button_label.c_str()).x) * 0.5f - style.FramePadding.x;
+			float offset_x = 0.0f;
 			if (offset_x > 0.0f)
 			{
 				ImGui::SetCursorPosX(ImGui::GetCursorPosX() - offset_x);
 			}
-			if (ui::rounded_button(button_label))
+			bool result = ui::rounded_button(button_label);
+			ui::end_bigger_frames();
+
+			if (result)
 			{
 				on_click();
 			}

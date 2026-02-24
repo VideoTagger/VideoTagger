@@ -14,7 +14,7 @@ namespace vt::widgets
 		switch (flag)
 		{
 			case console::entry::flag_type::error: return ctx_.current_theme.get_rgba(theme_color::console_error);
-			case console::entry::flag_type::warn: return ctx_.current_theme.get_rgba(theme_color::console_warn);
+			case console::entry::flag_type::warn: return ctx_.current_theme.get_rgba(theme_color::console_warning);
 			default: return ctx_.current_theme.get_rgba(theme_color::console_info);
 		}
 	}

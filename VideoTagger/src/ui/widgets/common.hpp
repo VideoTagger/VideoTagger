@@ -19,6 +19,8 @@ namespace vt::ui
 	void begin_styled_scrollbars(const std::string& window_id);
 	void save_window_scrollbar_state(const std::string& window_id);
 	void end_styled_scrollbars();
+	void begin_bigger_frames();
+	void end_bigger_frames();
 	///@}
 	
 	///@defgroup ui_text UI Text

@@ -236,7 +236,7 @@ namespace vt::widgets
 				win_max.x = cell_rect->Max.x;
 				win_max.y += win_pos.y;
 
-				ImVec2 top{ x, win_min.y + scroll_y };
+				ImVec2 top{ x, win_min.y };
 				ImVec2 bottom{ x, win_max.y + scroll_y };
 
 				draw_list->AddLine(top, bottom, ImGui::ColorConvertFloat4ToU32(tick_color4), tick_thickness);
@@ -508,51 +508,17 @@ namespace vt::widgets
 			ImGui::PopID();
 		}
 
-		auto rgba = ImGui::ColorConvertU32ToFloat4(tag.color);
-		if (is_dragged)
-		{
-			rgba.w *= 0.25f;
-		}
-
-		ImVec4 dark_rgba = rgba;
-		ImVec4 hsva{};
-		hsva.w = rgba.w;
-		ImGui::ColorConvertRGBtoHSV(rgba.x, rgba.y, rgba.z, hsva.x, hsva.y, hsva.z);
-		if (!enabled_)
-		{
-			hsva.y *= 0.75f;
-			hsva.z *= 0.5f;
-		}
-
-		if (is_dragged)
-		{
-			hsva.y *= 0.95f;
-		}
-
-		if (enabled_ and is_hovered)
-		{
-			hsva.z = std::max(1.f, hsva.z * 1.25f);
-		}
-
-		ImVec4 dark_hsva = hsva;
-		dark_hsva.w *= 0.25f;
-		dark_hsva.z = std::max(0.f, dark_hsva.z * 0.25f);
-		ImGui::ColorConvertHSVtoRGB(hsva.x, hsva.y, hsva.z, rgba.x, rgba.y, rgba.z);
-		ImGui::ColorConvertHSVtoRGB(dark_hsva.x, dark_hsva.y, dark_hsva.z, dark_rgba.x, dark_rgba.y, dark_rgba.z);
-
-		auto light_color = ImGui::ColorConvertFloat4ToU32(rgba);
-		auto dark_color = ImGui::ColorConvertFloat4ToU32(dark_rgba);
-
-		auto outline_color = is_selected ? ctx_.current_theme.get_rgba(theme_color::selection_normal) : dark_color;
+		auto base_color = segment_color(tag.color, is_hovered, is_dragged);
+		auto outline_color = segment_outline_color(tag.color, is_hovered, is_dragged, is_selected);
 
 		if (is_timestamp)
 		{
-			draw_list->AddCircleFilled(segment_rect.GetCenter(), ts_radius, light_color);
+			draw_list->AddCircleFilled(segment_rect.GetCenter(), ts_radius, base_color);
 			draw_list->AddCircle(segment_rect.GetCenter(), ts_radius, outline_color, 0, outline_thickness);
 		}
 		else
 		{
-			draw_list->AddRectFilled(segment_rect.Min, segment_rect.Max, light_color, rounding);
+			draw_list->AddRectFilled(segment_rect.Min, segment_rect.Max, base_color, rounding);
 			draw_list->AddRect(segment_rect.Min, segment_rect.Max, outline_color, rounding, 0, outline_thickness);
 		}
 	}
@@ -1064,9 +1030,6 @@ namespace vt::widgets
 				view_ts_.start = state_.min_ts;
 				view_ts_.end = state_.max_ts;
 			}
-			//TODO: Probably should be a toggle icon button
-			ImGui::SameLine();
-			ui::toggle("Follow Playhead", view_follow_playhead_);
 
 			/*
 			ImGui::SameLine();
@@ -1121,14 +1084,26 @@ namespace vt::widgets
 				ImGui::TableNextColumn();
 				ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, tag_col_color);
 
-				ImGui::BeginDisabled(menu_popup_->is_open());
-				if (ui::icon_button(icons::dots_hor))
+				ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2{});
+				//icon bar
 				{
-					menu_popup_->set_visible_tags(visible_tags);
-					menu_popup_->set_tag_storage(&tags);
-					menu_popup_->open();
+					ImGui::BeginDisabled(menu_popup_->is_open());
+					if (ui::icon_button(icons::dots_hor))
+					{
+						menu_popup_->set_visible_tags(visible_tags);
+						menu_popup_->set_tag_storage(&tags);
+						menu_popup_->open();
+					}
+					ImGui::EndDisabled();
+					ImGui::SameLine();
+
+					if (ui::icon_toggle_button(icons::pin, view_follow_playhead_))
+					{
+						view_follow_playhead_ = !view_follow_playhead_;
+					}
+					ui::tooltip(fmt::format("Follow Playhead: {}", view_follow_playhead_ ? "On" : "Off"));
 				}
-				ImGui::EndDisabled();
+				ImGui::PopStyleVar();
 
 				menu_popup_->render();
 				if (menu_popup_->tags_modified())
@@ -1320,6 +1295,73 @@ namespace vt::widgets
 				it->second.erase(segment);
 			}
 		}
+	}
+
+	uint32_t timeline::segment_color(uint32_t tag_color, bool is_hovered, bool is_dragged) const
+	{
+		auto rgba = ImGui::ColorConvertU32ToFloat4(tag_color);
+		if (is_dragged)
+		{
+			rgba.w *= 0.25f;
+		}
+
+		ImVec4 hsva{};
+		hsva.w = rgba.w;
+		ImGui::ColorConvertRGBtoHSV(rgba.x, rgba.y, rgba.z, hsva.x, hsva.y, hsva.z);
+		if (!enabled_)
+		{
+			hsva.y *= 0.75f;
+			hsva.z *= 0.5f;
+		}
+
+		if (is_dragged)
+		{
+			hsva.y *= 0.95f;
+		}
+
+		if (enabled_ and is_hovered)
+		{
+			hsva.z = std::max(1.f, hsva.z * 1.25f);
+		}
+
+		ImGui::ColorConvertHSVtoRGB(hsva.x, hsva.y, hsva.z, rgba.x, rgba.y, rgba.z);
+		return ImGui::ColorConvertFloat4ToU32(rgba);
+	}
+
+	uint32_t timeline::segment_outline_color(uint32_t tag_color, bool is_hovered, bool is_dragged, bool is_selected) const
+	{
+		auto rgba = ImGui::ColorConvertU32ToFloat4(tag_color);
+		if (is_dragged)
+		{
+			rgba.w *= 0.25f;
+		}
+
+		ImVec4 hsva{};
+		hsva.w = rgba.w;
+		ImGui::ColorConvertRGBtoHSV(rgba.x, rgba.y, rgba.z, hsva.x, hsva.y, hsva.z);
+		if (!enabled_)
+		{
+			hsva.y *= 0.75f;
+			hsva.z *= 0.5f;
+		}
+
+		if (is_dragged)
+		{
+			hsva.y *= 0.95f;
+		}
+
+		if (enabled_ and is_hovered)
+		{
+			hsva.z = std::max(1.f, hsva.z * 1.25f);
+		}
+
+		hsva.w *= 0.25f;
+		hsva.z = std::max(0.f, hsva.z * 0.25f);
+
+		ImGui::ColorConvertHSVtoRGB(hsva.x, hsva.y, hsva.z, rgba.x, rgba.y, rgba.z);
+		auto dark_color = ImGui::ColorConvertFloat4ToU32(rgba);
+
+		return is_selected ? ctx_.current_theme.get_rgba(theme_color::selection_normal) : dark_color;
 	}
 
 	bool timeline::is_segment_selected(const std::string& tag, segment_id segment) const

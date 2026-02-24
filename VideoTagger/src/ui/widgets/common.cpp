@@ -133,6 +133,18 @@ namespace vt::ui
 		ImGui::PopStyleColor(2);
 	}
 
+	void begin_bigger_frames()
+	{
+		static constexpr float frame_padding_multiplier = 1.75f;
+		const auto& style = ImGui::GetStyle();
+		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, style.FramePadding * frame_padding_multiplier);
+	}
+
+	void end_bigger_frames()
+	{
+		ImGui::PopStyleVar();
+	}
+
 	void label(const std::string& label)
 	{
 		ImGui::PushStyleColor(ImGuiCol_Button, {});
@@ -220,13 +232,12 @@ namespace vt::ui
 	{
 		const auto& style = ImGui::GetStyle();
 		ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 4.f);
-		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, style.FramePadding * 1.75f);
 		bool result = ImGui::Button(label.c_str(), size);
 		if (ImGui::IsItemHovered())
 		{
 			ImGui::SetMouseCursor(ImGuiMouseCursor_Hand);
 		}
-		ImGui::PopStyleVar(2);
+		ImGui::PopStyleVar();
 		return result;
 	}
 

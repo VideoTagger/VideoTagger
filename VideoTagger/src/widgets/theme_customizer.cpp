@@ -420,7 +420,7 @@ namespace vt::widgets
 					ImGui::Unindent(indent_size);
 				}
 
-				if (ui::collapsing_header("UI"))
+				if (ui::collapsing_header("UI Common"))
 				{
 					ImGui::Indent(indent_size);
 					ImGui::PushStyleColor(ImGuiCol_TableRowBg, temp_theme.get_float4(theme_color::background_secondary));
@@ -428,6 +428,9 @@ namespace vt::widgets
 					{
 						draw_option("Icon", "Thumbnail", theme_color::icon_thumbnail);
 						draw_option("Selection", "", theme_color::selection_normal);
+						draw_option("Success", "", theme_color::common_success);
+						draw_option("Warning", "", theme_color::common_warning);
+						draw_option("Error", "", theme_color::common_error);
 
 						ImGui::EndTable();
 					}
@@ -458,8 +461,8 @@ namespace vt::widgets
 					{
 						draw_option("Console Log", "Info", theme_color::console_info);
 						ImGui::TextColored(temp_theme.get_float4(theme_color::console_info), "%s", icons::info);
-						draw_option("Console Log", "Warn", theme_color::console_warn);
-						ImGui::TextColored(temp_theme.get_float4(theme_color::console_warn), "%s", icons::warning);
+						draw_option("Console Log", "Warning", theme_color::console_warning);
+						ImGui::TextColored(temp_theme.get_float4(theme_color::console_warning), "%s", icons::warning);
 						draw_option("Console Log", "Error", theme_color::console_error);
 						ImGui::TextColored(temp_theme.get_float4(theme_color::console_error), "%s", icons::error);
 
