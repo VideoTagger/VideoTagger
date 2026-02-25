@@ -233,6 +233,7 @@ namespace vt::widgets
 					if (ui::icon_button(icons::delete_))
 					{
 						playlist.clear();
+						ctx_.is_project_dirty = true;
 					}
 					if (is_empty) ImGui::EndDisabled();
 					ui::tooltip("Clear queue");

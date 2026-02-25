@@ -110,7 +110,14 @@ namespace vt
 		ctx_.main_window->set_current();
 		SDL_GL_SetSwapInterval(1); //VSync
 
-		ctx_.script_eng.init();
+		try
+		{
+			ctx_.script_eng.init();
+		}
+		catch (const std::exception& ex)
+		{
+			debug::error("Failed to initialize scripting engine with error: {}", ex.what());
+		}
 
 		auto storage_path = std::filesystem::absolute(app_context::storage_path()).u8string();
 		debug::log("Storage Path: \x1b]8;;file://{}\033\\{}\033]8;;\033\\", storage_path, storage_path);

@@ -386,7 +386,7 @@ namespace vt::widgets
 		{
 			auto handle_segment_dragging = [this, &storage, is_selected, &tag, current_segment_id](segment_part part, timestamp mouse_timestamp) mutable
 			{
-				if (ImGui::IsItemActive() and ImGui::IsMouseDragging(ImGuiMouseButton_Left, 1.f) and !is_dragging_any_segment())
+				if (enabled_ and ImGui::IsItemActive() and ImGui::IsMouseDragging(ImGuiMouseButton_Left, 1.f) and !is_dragging_any_segment())
 				{
 					if (!is_selected)
 					{
