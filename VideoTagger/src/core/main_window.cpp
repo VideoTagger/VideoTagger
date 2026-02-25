@@ -63,6 +63,8 @@ extern "C"
 #include <events/player/seek_event.hpp>
 #include <events/project_selector/open_project_event.hpp>
 #include <events/project_selector/project_list_changed_event.hpp>
+#include <events/window/window_drop_path_event.hpp>
+#include <events/window/window_close_event.hpp>
 
 namespace vt
 {
@@ -71,7 +73,7 @@ namespace vt
 	static std::optional<widgets::tag_rename_data> tag_rename;
 	static std::optional<widgets::tag_delete_data> tag_delete;
 	static tag_validate_result tag_rename_failed_reason;
-	static event_source main_event_source{ "main_window" };
+	static event_source event_source_{ "main_window" };
 
 	static void show_debug_info()
 	{
@@ -94,7 +96,7 @@ namespace vt
 	{
 		if (!accepted)
 		{
-			ctx_.dispatch_event<segments_move_event>(main_event_source, event.storage(), event.segments(), event.move_part(), event.move_offset(), false);
+			ctx_.dispatch_event<segments_move_event>(event_source_, event.storage(), event.segments(), event.move_part(), event.move_offset(), false);
 			return;
 		}
 
@@ -107,12 +109,12 @@ namespace vt
 			{
 				for (auto& merged_id : move_result.merged_segments())
 				{
-					ctx_.dispatch_event<segment_merge_event>(main_event_source, storage, tag, merged_id, move_result.resulting_segment());
+					ctx_.dispatch_event<segment_merge_event>(event_source_, storage, tag, merged_id, move_result.resulting_segment());
 				}
 			}
 		}
 
-		ctx_.dispatch_event<segments_move_event>(main_event_source, event.storage(), event.segments(), event.move_part(), event.move_offset(), false);
+		ctx_.dispatch_event<segments_move_event>(event_source_, event.storage(), event.segments(), event.move_part(), event.move_offset(), false);
 		ctx_.is_project_dirty = true;
 	}
 
@@ -120,7 +122,7 @@ namespace vt
 	{
 		if (!accepted)
 		{
-			ctx_.dispatch_event<segment_insert_event>(main_event_source, event.storage(), event.tag(), event.start(), event.end(), invalid_segment_id, false);
+			ctx_.dispatch_event<segment_insert_event>(event_source_, event.storage(), event.tag(), event.start(), event.end(), invalid_segment_id, false);
 			return;
 		}
 
@@ -132,15 +134,15 @@ namespace vt
 		auto insert_result = tag_timeline.insert(event.start(), event.end());
 		if (!insert_result.inserted())
 		{
-			ctx_.dispatch_event<segment_insert_event>(main_event_source, storage, event.tag(), event.start(), event.end(), insert_result.preventing_segment(), false);
+			ctx_.dispatch_event<segment_insert_event>(event_source_, storage, event.tag(), event.start(), event.end(), insert_result.preventing_segment(), false);
 			return;
 		}
 
-		ctx_.dispatch_event<segment_insert_event>(main_event_source, storage, event.tag(), event.start(), event.end(), insert_result.inserted_segment(), true);
+		ctx_.dispatch_event<segment_insert_event>(event_source_, storage, event.tag(), event.start(), event.end(), insert_result.inserted_segment(), true);
 
 		for (auto& merged_id : insert_result.merged_segments())
 		{
-			ctx_.dispatch_event<segment_merge_event>(main_event_source, storage, event.tag(), merged_id, insert_result.inserted_segment());
+			ctx_.dispatch_event<segment_merge_event>(event_source_, storage, event.tag(), merged_id, insert_result.inserted_segment());
 		}
 
 		ctx_.is_project_dirty = true;
@@ -148,6 +150,18 @@ namespace vt
 
 	main_window::main_window(const app_window_config& cfg) : app_window{ cfg }
 	{
+		ctx_.add_event_listener<window_close_event>([this](const window_close_event& event)
+		{
+			if (!event.is_from(*this)) return;
+			on_close_project(true);
+		});
+
+		ctx_.add_event_listener<window_drop_path_event>([this](const window_drop_path_event& event)
+		{
+			auto& path = event.path();
+			debug::log("File dropped: {}, position: {}", path.u8string(), event.drop_point());
+		});
+
 		ctx_.add_event_listener<open_project_event>([this](const open_project_event& event)
 		{
 			auto project_info = event.project();
@@ -178,7 +192,7 @@ namespace vt
 					case 1:
 					{
 						ctx_.project_selector.remove(project_info);
-						ctx_.dispatch_event<project_list_changed_event>(main_event_source);
+						ctx_.dispatch_event<project_list_changed_event>(event_source_);
 					}
 					break;
 					case 2:
@@ -188,7 +202,7 @@ namespace vt
 						if (result)
 						{
 							project_info = project_info::load_from_file(result.path);
-							ctx_.dispatch_event<project_list_changed_event>(main_event_source);
+							ctx_.dispatch_event<project_list_changed_event>(event_source_);
 						}
 					}
 					break;
@@ -317,7 +331,7 @@ namespace vt
 				 ctx_.is_project_dirty = true;
 			}
 
-			ctx_.dispatch_event<tag_add_event>(main_event_source, storage, event.tag_name(), validate_result);
+			ctx_.dispatch_event<tag_add_event>(event_source_, storage, event.tag_name(), validate_result);
 		});
 
 		ctx_.add_event_listener<tag_add_event>([](const tag_add_event& event)
@@ -345,7 +359,7 @@ namespace vt
 				tag_rename.reset();
 			}
 
-			ctx_.dispatch_event<tag_rename_event>(main_event_source, event.storage(), event.tag_name(), event.new_name(), rename_result);
+			ctx_.dispatch_event<tag_rename_event>(event_source_, event.storage(), event.tag_name(), event.new_name(), rename_result);
 		});
 
 		ctx_.add_event_listener<tag_delete_event>([](const tag_delete_event& event)
@@ -521,8 +535,8 @@ namespace vt
 				auto& size = ctx_.settings["window"]["size"];
 				if (size.contains("width") and size.contains("height"))
 				{
-					SDL_SetWindowSize(window, size["width"].get<int>(), size["height"].get<int>());
-					SDL_SetWindowPosition(window, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED);
+					set_size({ size["width"].get<int>(), size["height"].get<int>() });
+					center();
 				}
 			}
 			if (ctx_.settings.contains("thumbnail-size"))
@@ -535,7 +549,7 @@ namespace vt
 				auto state = json_window["state"].get<window_state>();
 				switch (state)
 				{
-					case window_state::maximized: SDL_MaximizeWindow(window); break;
+					case window_state::maximized: maximize(); break;
 					default: break;
 				}
 				ctx_.win_cfg.state = state;
@@ -1184,7 +1198,7 @@ namespace vt
 			//	vinfo.video.set_playing(is_playing);
 			//}
 			if (ctx_.current_video_group_id() == invalid_video_group_id) return;
-			ctx_.dispatch_event<playback_changed_event>(main_event_source, ctx_.player, is_playing);
+			ctx_.dispatch_event<playback_changed_event>(event_source_, ctx_.player, is_playing);
 
 			//TODO: This should be handled as a playback_changed_event listener
 			ctx_.displayed_videos.set_playing(is_playing);
@@ -1198,7 +1212,7 @@ namespace vt
 			//	vinfo.video.set_looping(is_looping);
 			//}
 			if (ctx_.current_video_group_id() == invalid_video_group_id) return;
-			ctx_.dispatch_event<looping_changed_event>(main_event_source, ctx_.player, mode);
+			ctx_.dispatch_event<looping_changed_event>(event_source_, ctx_.player, mode);
 		};
 
 		ctx_.player.callbacks.on_set_speed = [](float speed)
@@ -1210,7 +1224,7 @@ namespace vt
 			//}
 
 			if (ctx_.current_video_group_id() == invalid_video_group_id) return;
-			ctx_.dispatch_event<speed_changed_event>(main_event_source, ctx_.player, speed);
+			ctx_.dispatch_event<speed_changed_event>(event_source_, ctx_.player, speed);
 
 			//TODO: This should be handled as a speed_changed_event listener
 			ctx_.displayed_videos.set_speed(speed);
@@ -1224,12 +1238,12 @@ namespace vt
 			if (dir > 0)
 			{
 				it = playlist.next();
-				ctx_.dispatch_event<skip_next_event>(main_event_source, ctx_.player);
+				ctx_.dispatch_event<skip_next_event>(event_source_, ctx_.player);
 			}
 			else if (dir < 0)
 			{
 				it = playlist.previous();
-				ctx_.dispatch_event<skip_previous_event>(main_event_source, ctx_.player);
+				ctx_.dispatch_event<skip_previous_event>(event_source_, ctx_.player);
 			}
 
 			ctx_.reset_current_video_group();
@@ -1254,7 +1268,7 @@ namespace vt
 			//}
 
 			if (ctx_.current_video_group_id() == invalid_video_group_id) return;
-			ctx_.dispatch_event<seek_event>(main_event_source, ctx_.player, ts);
+			ctx_.dispatch_event<seek_event>(event_source_, ctx_.player, ts);
 			ctx_.displayed_videos.seek(ts);
 		};
 
@@ -2893,14 +2907,27 @@ namespace vt
 					break;
 					case SDL_WINDOWEVENT_SIZE_CHANGED:
 					{
-						ctx_.dispatch_event<window_resize_event>(main_event_source, *this, utils::vec2<uint32_t>{ (uint32_t)event.window.data1, (uint32_t)event.window.data2 });
+						ctx_.dispatch_event<window_resize_event>(event_source_, *this, utils::vec2<uint32_t>{ (uint32_t)event.window.data1, (uint32_t)event.window.data2 });
 					}
 					break;
 					case SDL_WINDOWEVENT_CLOSE:
 					{
-						on_close_project(true);
+						ctx_.dispatch_event<window_close_event>(event_source_, *this);
 					}
 					break;
+				}
+			}
+			break;
+			case SDL_DROPFILE:
+			{
+				if (event.drop.windowID != SDL_GetWindowID(window)) return;
+				if (event.drop.file != nullptr)
+				{
+					auto drop_point = ImGui::GetMousePos();
+					auto win_pos = position();
+
+					auto win_drop_pos = utils::vec2<float>{ drop_point.x - win_pos[0], drop_point.y - win_pos[1] };					
+					ctx_.dispatch_event<window_drop_path_event>(event_source_, *this, event.drop.file, win_drop_pos);
 				}
 			}
 			break;

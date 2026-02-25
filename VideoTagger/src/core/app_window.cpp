@@ -331,6 +331,55 @@ namespace vt
 		SDL_GL_SwapWindow(ctx_.main_window->window);
 	}
 
+	void app_window::set_position(const utils::vec2<int>& position)
+	{
+		SDL_SetWindowPosition(window, position[0], position[1]);
+	}
+
+	void app_window::set_size(const utils::vec2<int>& size)
+	{
+		SDL_SetWindowSize(window, size[0], size[1]);
+	}
+
+    void app_window::center()
+    {
+		set_position({ SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED });
+    }
+
+    void app_window::maximize()
+    {
+		SDL_MaximizeWindow(window);
+    }
+
+	void app_window::minimize()
+	{
+		SDL_MinimizeWindow(window);
+	}
+
+	void app_window::restore()
+	{
+		SDL_RestoreWindow(window);
+	}
+
+	utils::vec2<int> app_window::position() const
+	{
+		utils::vec2<int> result;
+		SDL_GetWindowPosition(window, &result[0], &result[1]);
+		return result;
+	}
+
+	utils::vec2<int> app_window::size() const
+	{
+		utils::vec2<int> result;
+		SDL_GetWindowSize(window, &result[0], &result[1]);
+		return result;
+	}
+
+	bool app_window::operator==(const app_window& other) const
+	{
+		return window == other.window;
+	}
+
 	void app_window::handle_event(const SDL_Event& event)
 	{
 		ImGui_ImplSDL2_ProcessEvent(&event);

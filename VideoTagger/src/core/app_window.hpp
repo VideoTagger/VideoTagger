@@ -5,6 +5,7 @@
 #include <memory>
 #include <type_traits>
 #include <ui/popup.hpp>
+#include <utils/vec.hpp>
 
 namespace vt
 {
@@ -39,6 +40,19 @@ namespace vt
 
 		void build_fonts(float size);
 		void render();
+
+		void set_position(const utils::vec2<int>& position);
+		void set_size(const utils::vec2<int>& size);
+		void center();
+		void maximize();
+		void minimize();
+		void restore();
+
+		utils::vec2<int> position() const;
+		utils::vec2<int> size() const;
+
+		bool operator==(const app_window& other) const;
+
 		virtual void draw() = 0;
 		virtual void handle_event(const SDL_Event& event);
 	};

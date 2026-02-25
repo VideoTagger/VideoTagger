@@ -19,5 +19,10 @@ namespace vt
 		{
 			return window_;
 		}
+
+		bool is_from(const app_window& window) const
+		{
+			return window_ == window;
+		}
 	};
 }
