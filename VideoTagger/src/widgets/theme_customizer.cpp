@@ -26,7 +26,7 @@ namespace vt::widgets
 		auto color_preview_flags = ImGuiColorEditFlags_NoTooltip | ImGuiColorEditFlags_NoBorder;
 		auto table_flags = ImGuiTableFlags_RowBg | ImGuiTableFlags_BordersInnerV | ImGuiTableFlags_BordersInnerH;
 
-		if (ImGui::Begin("Theme Customizer", &is_open))
+		if (ImGui::Begin(window_name().c_str(), &is_open))
 		{
 			if (ImGui::IsWindowAppearing())
 			{
@@ -99,7 +99,7 @@ namespace vt::widgets
 					ImGui::TableNextColumn();
 				};
 
-				if (ui::collapsing_header("Base Colors"))
+				if (ui::collapsing_header(fmt::format("{} Base Colors", icons::colors)))
 				{
 					ImGui::Indent(indent_size);
 					static auto draw_accent = [&](const std::string& label, std::string info, theme_color col_id)
@@ -156,7 +156,7 @@ namespace vt::widgets
 					ImGui::Unindent(indent_size);
 				}
 
-				if (ui::collapsing_header("Windows, Frames and Popups"))
+				if (ui::collapsing_header(fmt::format("{} Windows, Frames and Popups", icons::windows)))
 				{
 					ImGui::Indent(indent_size);
 					ImGui::PushStyleColor(ImGuiCol_TableRowBg, temp_theme.get_float4(theme_color::background_secondary));
@@ -183,7 +183,7 @@ namespace vt::widgets
 					ImGui::PopStyleColor();
 					ImGui::Unindent(indent_size);
 				}
-				if (ui::collapsing_header("Text"))
+				if (ui::collapsing_header(fmt::format("{} Text", icons::text)))
 				{
 					ImGui::Indent(indent_size);
 					static auto draw_text = [&](const std::string& label, std::string info, theme_color col_id)
@@ -438,7 +438,7 @@ namespace vt::widgets
 					ImGui::Unindent(indent_size);
 				}
 
-				if (ui::collapsing_header("Timeline"))
+				if (ui::collapsing_header(fmt::format("{} Timeline", icons::timeline)))
 				{
 					ImGui::Indent(indent_size);
 					ImGui::PushStyleColor(ImGuiCol_TableRowBg, temp_theme.get_float4(theme_color::background_secondary));
@@ -453,7 +453,7 @@ namespace vt::widgets
 					ImGui::Unindent(indent_size);
 				}
 
-				if (ui::collapsing_header("Console"))
+				if (ui::collapsing_header(fmt::format("{} Console", icons::terminal)))
 				{
 					ImGui::Indent(indent_size);
 					ImGui::PushStyleColor(ImGuiCol_TableRowBg, temp_theme.get_float4(theme_color::background_secondary));
@@ -482,5 +482,10 @@ namespace vt::widgets
 			ref = temp_theme;
 			ref.apply();
 		}
+	}
+
+	std::string theme_customizer::window_name()
+	{
+		return fmt::format("{} Theme Customizer###Theme Customizer", icons::palette);
 	}
 }

@@ -45,6 +45,7 @@ namespace vt::ui
 	bool icon_button(const std::string& label, const ImVec2& size = ImVec2{}, const ImVec4& color = ImGui::GetStyleColorVec4(ImGuiCol_Text));
 	bool icon_button_no_cursor(const std::string& label, const ImVec2& size = ImVec2{}, const ImVec4& color = ImGui::GetStyleColorVec4(ImGuiCol_Text));
 	bool icon_toggle_button(const std::string& label, bool is_toggled, const ImVec2& size = ImVec2{}, const ImVec4& color = ImGui::GetStyleColorVec4(ImGuiCol_Text));
+	bool icon_toggle_button(const std::string& label_on, const std::string& label_off, bool is_toggled, const ImVec2& size = ImVec2{}, const ImVec4& color = ImGui::GetStyleColorVec4(ImGuiCol_Text));
 	bool accent_button(const std::string& label, const ImVec2& size = ImVec2{});
 	bool button(const std::string& label, const ImVec2& size = ImVec2{});
 	bool color_button(const std::string& id, const ImVec4& color, ImGuiColorEditFlags flags = 0, const ImVec2& size = ImVec2(0, 0));

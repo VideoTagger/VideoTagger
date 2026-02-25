@@ -1,4 +1,4 @@
-function(embed_file SOURCE_FILE OUTPUT_DIR NAMESPACE OUT_FILES)
+function(vt_embed_file SOURCE_FILE OUTPUT_DIR NAMESPACE OUT_FILES)
 	get_filename_component(FILE_NAME "${SOURCE_FILE}" NAME_WE)
 	string(REGEX REPLACE "[^a-zA-Z0-9_]" "_" SAFE_NAME "${FILE_NAME}")
 
@@ -25,14 +25,14 @@ function(embed_file SOURCE_FILE OUTPUT_DIR NAMESPACE OUT_FILES)
 endfunction()
 
 
-function(embed_directory INPUT_DIR OUTPUT_DIR NAMESPACE OUT_VAR)
+function(vt_embed_directory INPUT_DIR OUTPUT_DIR NAMESPACE OUT_VAR)
 	file(MAKE_DIRECTORY "${OUTPUT_DIR}")
 	file(GLOB FILES CONFIGURE_DEPENDS "${INPUT_DIR}/*")
 
 	set(GENERATED)
 	foreach(FILE ${FILES})
 		if(NOT IS_DIRECTORY "${FILE}")
-			embed_file(
+			vt_embed_file(
 				"${FILE}"
 				"${OUTPUT_DIR}"
 				"${NAMESPACE}"

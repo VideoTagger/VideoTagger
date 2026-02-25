@@ -1,0 +1,98 @@
+# name:codepoint # icon_name
+dots_hor:e5d3
+play:e037
+autoplay:f6b5 # autoplay
+play_queue:e05f # playlist_play
+pause:e034
+repeat:e040
+repeat_one:e041
+retry:e042
+shuffle:e043
+skip_next:e044
+skip_prev:e045
+fast_back:e020
+fast_fwd:e01f
+save:e161
+save_as:eb60
+import_:e89c # note_add
+import_export:e0c3
+exit:e5cd
+close:e879 # exit_to_app
+back:e5c4
+visibility_on:e8f4 # visibility_on
+visibility_off:e8f5 # visibility_off
+add:e145
+delete_:e872
+reset:f053 # restart_alt
+folder:e2c7 # folder
+folder_code:f3c8 # folder_code
+file:e66d # draft
+label:e892 # label
+tags:e98b # bookmarks
+add_tag:e609 # new_label
+expand_less:e5ce
+expand_more:e5cf
+toggle_less:e5d6
+toggle_more:e5d7
+link:e157 # link
+link_off:e16f # link_off
+pin:e6aa # keep
+pin_off:e6f9 # keep_off
+edit:e3c9
+help:e887 # help
+video_group:f49a # animated_images
+video:e02c # movie
+search:e8b6 # search
+terminal:eb8e # terminal
+download:f090 # download
+upload:f09b # upload
+download_off:e4fe # download_off
+arrow_up:e5d8
+refresh:e5d5
+local_storage:e1db # storage
+google_drive_add:e65c # add_to_drive
+home:e88a # home
+license:eb81 # newspaper
+translate:e8e2 # translate
+property:f3aa # modeling
+attribute:ead3 # data_object
+object:f720 # deployed_code
+timeline:f432 # view_object_track
+browser:f86c # home_storage
+palette:e40a # palette
+colors:e997 # colors
+queue:e064 # subscriptions
+database:f20e # database
+bullet:e061 # fiber_manual_record
+chevron_left:e5cb
+chevron_right:e5cc
+chevron_left_right:f72c # arrows_outward
+shape:e574 # category
+shape_none:f023 # hide_source
+shape_circle:ef4a # circle
+shape_rectangle:e3c6 # crop_square
+shape_polygon:eb50 # pentagon
+interpolate:e71c # animation
+align_horizontal_left:e00d # align_horizontal_left
+align_horizontal_right:e010 # align_horizontal_right
+align_horizontal_center:e00f # align_horizontal_center
+align_vertical_bottom:e015 # align_vertical_bottom
+align_vertical_top:e00c # align_vertical_top
+align_vertical_center:e011 # align_vertical_center
+align_center:e356 align_center
+info:e88e
+warning:e002
+error:e160
+exclamation:e645 # priority_high
+delete_on_run:e16c # delete_sweep
+keyframe:e697 # stat_0
+keyframe_current:e6b7 # nearby
+add_keyframe:f49c # add_diamond
+goto_keyframe:e074 # control_camera
+new_region:f7d2 # screenshot_region
+set_target:e89f # open_with
+text:e262 # text_fields
+windows:e6fa # select_window
+settings:e8b8 # settings
+dark_mode:e51c # dark_mode
+light_mode:e518 # light_mode

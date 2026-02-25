@@ -241,7 +241,7 @@ namespace vt
 		ImFontGlyphRangesBuilder builder;
 		ImFontConfig ico_config{};
 		ico_config.MergeMode = true;
-		ico_config.GlyphOffset = { 0.f, 4.f };
+		ico_config.GlyphOffset = { 0.f, 2.f };
 		ico_config.GlyphMinAdvanceX = size;
 		ico_config.FontDataOwnedByAtlas = false;
 		ico_config.FontBuilderFlags = ImGuiFreeTypeBuilderFlags_NoHinting;

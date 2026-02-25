@@ -6,7 +6,7 @@
 #   LICENSE_DIR
 #   OUTPUT_DIR
 
-function(generate_about LICENSE_DIR OUTPUT_DIR NAMESPACE OUT_VAR)
+function(vt_generate_about LICENSE_DIR OUTPUT_DIR NAMESPACE OUT_VAR)
 	message(STATUS "Generating about files in ${OUTPUT_DIR} from licenses in ${LICENSE_DIR}")
 	file(MAKE_DIRECTORY ${OUTPUT_DIR})
 
@@ -56,8 +56,7 @@ namespace ${NAMESPACE}
 
 namespace ${NAMESPACE}
 {
-	const char* const app_description =
-		\"${APP_DESCRIPTION}\";
+	const char* const app_description = \"${APP_DESCRIPTION}\";
 
 	const std::map<std::string, std::string> third_party_licenses =
 	{

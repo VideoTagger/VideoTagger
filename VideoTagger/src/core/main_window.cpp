@@ -1642,7 +1642,7 @@ namespace vt
 				}
 				ImGui::MenuItem("Theme Customizer", nullptr, &ctx_.win_cfg.show_theme_customizer_window);
 				ImGui::Separator();
-				if (ImGui::MenuItem(ctx_.lang->get("menu_bar.tool.options").c_str()))
+				if (ImGui::MenuItem(fmt::format("{} {}", icons::settings, ctx_.lang->get("menu_bar.tool.options")).c_str()))
 				{
 					ctx_.win_cfg.show_options_window = true;
 				}
@@ -2202,7 +2202,7 @@ namespace vt
 							add_point = true;
 						}
 
-						if (ImGui::MenuItem(fmt::format("{} Add Keyframe", icons::keyframe).c_str(), nullptr, nullptr, !is_keyframe))
+						if (ImGui::MenuItem(fmt::format("{} Add Keyframe", icons::add_keyframe).c_str(), nullptr, nullptr, !is_keyframe))
 						{
 							shape.visit([current_ts, &is_keyframe, &shape](auto& map)
 							{
@@ -2835,13 +2835,13 @@ namespace vt
 			ImGui::DockBuilderDockWindow(widgets::tag_manager_window_name().c_str(), main_dock_right);
 			ImGui::DockBuilderDockWindow(widgets::shape_attributes::window_name().c_str(), main_dock_right);
 			ImGui::DockBuilderDockWindow(widgets::video_group_queue::window_name().c_str(), main_dock_down);
-			ImGui::DockBuilderDockWindow("Video Player", main_dock_up);
+			ImGui::DockBuilderDockWindow(widgets::video_player::window_name().c_str(), main_dock_up);
 			ImGui::DockBuilderDockWindow(widgets::localization_editor::window_name().c_str(), main_dock_up);
 			ImGui::DockBuilderDockWindow(widgets::video_browser::window_name().c_str(), main_dock_up_left);
 			ImGui::DockBuilderDockWindow("Theme Customizer", main_dock_up);
 			ImGui::DockBuilderDockWindow(widgets::console::window_name().c_str(), dockspace_id_copy);
 			ImGui::DockBuilderDockWindow(widgets::video_timeline::window_name().c_str(), dockspace_id_copy);
-			ImGui::DockBuilderDockWindow("Video Group Browser", dockspace_id_copy);
+			ImGui::DockBuilderDockWindow(widgets::video_group_browser::window_name().c_str(), dockspace_id_copy);
 
 			auto queue_node = ImGui::DockBuilderGetNode(main_dock_down);
 			queue_node->LocalFlags = ImGuiDockNodeFlags_NoResizeY;

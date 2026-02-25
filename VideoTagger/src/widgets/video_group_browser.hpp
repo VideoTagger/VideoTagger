@@ -16,5 +16,7 @@ namespace vt::widgets
 
 	public:
 		void render(bool& is_open);
+
+		static std::string window_name();
 	};
 }

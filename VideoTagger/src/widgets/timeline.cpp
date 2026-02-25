@@ -1024,12 +1024,6 @@ namespace vt::widgets
 			auto win_pos = ImGui::GetWindowPos();
 
 			ui::toggle("Enabled", enabled_);
-			ImGui::SameLine();
-			if (ui::accent_button("Reset Span"))
-			{
-				view_ts_.start = state_.min_ts;
-				view_ts_.end = state_.max_ts;
-			}
 
 			/*
 			ImGui::SameLine();
@@ -1097,7 +1091,15 @@ namespace vt::widgets
 					ImGui::EndDisabled();
 					ImGui::SameLine();
 
-					if (ui::icon_toggle_button(icons::pin, view_follow_playhead_))
+					if (ui::icon_button(icons::chevron_left_right))
+					{
+						view_ts_.start = state_.min_ts;
+						view_ts_.end = state_.max_ts;
+					}
+					ui::tooltip("Fit Timeline");
+
+					ImGui::SameLine();
+					if (ui::icon_toggle_button(icons::pin, icons::pin_off, view_follow_playhead_))
 					{
 						view_follow_playhead_ = !view_follow_playhead_;
 					}

@@ -277,6 +277,11 @@ namespace vt::ui
 		return result;
 	}
 
+	bool icon_toggle_button(const std::string& label_on, const std::string& label_off, bool is_toggled, const ImVec2& size, const ImVec4& color)
+	{
+		return icon_toggle_button(is_toggled ? label_on : label_off, is_toggled, size, color);
+	}
+
 	bool accent_button(const std::string& label, const ImVec2& size)
 	{
 		const auto& theme = ctx_.current_theme;

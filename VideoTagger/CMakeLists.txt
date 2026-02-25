@@ -1,7 +1,3 @@
-# CMakeList.txt : CMake project for kohi, include source and define
-# project specific logic here.
-#
-
 project("VideoTagger")
 add_subdirectory("${CMAKE_SOURCE_DIR}/tools" VideoTaggerBuildTools)
 
@@ -20,12 +16,15 @@ set(EMBED_OUTPUT_DIR "${EMBED_INCLUDE_DIR}/embeds")
 message(STATUS "Embed source directory: ${EMBED_SOURCE_DIR}")
 message(STATUS "Embed output directory: ${EMBED_OUTPUT_DIR}")
 
-embed_directory(${EMBED_SOURCE_DIR} ${EMBED_OUTPUT_DIR} "vt::embed" EMBED_GENERATED_FILES)
+vt_embed_directory(${EMBED_SOURCE_DIR} ${EMBED_OUTPUT_DIR} "vt::embed" EMBED_GENERATED_FILES)
 
 # About & Licenses
 include(cmake/GenerateAbout.cmake)
 set(LICENSE_DIR "${PROJECT_SOURCE_DIR}/licenses")
-generate_about(${LICENSE_DIR} ${EMBED_OUTPUT_DIR} "vt::embed" ABOUT_GENERATED_FILES)
+vt_generate_about(${LICENSE_DIR} ${EMBED_OUTPUT_DIR} "vt::embed" ABOUT_GENERATED_FILES)
+include(cmake/GenerateIcons.cmake)
+set(ICONS_FILE "${PROJECT_SOURCE_DIR}/src/ui/icons.hpp")
+vt_generate_icons("${PROJECT_SOURCE_DIR}/resources/icons.list" "${PROJECT_SOURCE_DIR}/src/ui/icons.hpp" ICONS_GENERATED_FILE)
 
 
 file(GLOB_RECURSE source_files CONFIGURE_DEPENDS 
@@ -56,7 +55,7 @@ file(GLOB vendor_files CONFIGURE_DEPENDS
 
 #list(FILTER source_files EXCLUDE REGEX "third_party/")
 list(APPEND source_files ${vendor_files})
-add_executable(${PROJECT_NAME} ${source_files} ${ABOUT_GENERATED_FILES} ${EMBED_GENERATED_FILES})
+add_executable(${PROJECT_NAME} ${source_files} ${ABOUT_GENERATED_FILES} ${EMBED_GENERATED_FILES} ${ICONS_GENERATED_FILE})
 
 file(GLOB_RECURSE no_pch_files
 	"${PROJECT_SOURCE_DIR}/src/embeds/*.cpp"

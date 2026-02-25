@@ -62,5 +62,7 @@ namespace vt::widgets
 		bool is_visible() const;
 		bool is_playing() const;
 		loop_mode loop_mode() const;
+
+		static std::string window_name();
 	};
 }

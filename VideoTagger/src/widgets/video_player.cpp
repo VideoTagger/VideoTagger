@@ -46,7 +46,7 @@ namespace vt::widgets
 		ImGuiWindowFlags flags = ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse;
 
 		float button_size = 25 * io.FontGlobalScale;
-		std::string title = "Video Player";
+		std::string title = window_name();
 
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, { 0, 0 });
 		is_visible_ = ImGui::Begin(title.c_str(), nullptr, flags);
@@ -207,7 +207,7 @@ namespace vt::widgets
 
 			ImGui::NextColumn();
 			{
-				if (ui::icon_toggle_button(icons::play_next, ctx_.app_settings.autoplay, { button_size, button_size }))
+				if (ui::icon_toggle_button(icons::autoplay, ctx_.app_settings.autoplay, { button_size, button_size }))
 				{
 					ctx_.app_settings.autoplay = !ctx_.app_settings.autoplay;
 					ctx_.settings["autoplay"] = ctx_.app_settings.autoplay;
@@ -335,6 +335,11 @@ namespace vt::widgets
 	loop_mode video_player::loop_mode() const
 	{
 		return loop_mode_;
+	}
+
+	std::string video_player::window_name()
+	{
+		return fmt::format("{} Video Player###Video Player", icons::play);
 	}
 
 	bool video_player::is_playing() const

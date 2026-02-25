@@ -158,7 +158,7 @@ namespace vt::widgets
 		//TODO: This should be inside the payload, not here
 		static std::vector<video_id_t> dragged_videos;
 
-		if (ImGui::Begin("Video Group Browser", &is_open, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse))
+		if (ImGui::Begin(window_name().c_str(), &is_open, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse))
 		{
 			//TODO: remove this if
 			if (true or ctx_.current_project->videos.size() > 0)
@@ -585,5 +585,10 @@ namespace vt::widgets
 			}
 		}
 		ImGui::End();
+	}
+
+	std::string video_group_browser::window_name()
+	{
+		return fmt::format("{} Video Group Browser###Video Group Browser", icons::browser);
 	}
 }
