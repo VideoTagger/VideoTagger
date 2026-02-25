@@ -3,6 +3,7 @@
 #
 
 project("VideoTagger")
+add_subdirectory("${CMAKE_SOURCE_DIR}/tools" VideoTaggerBuildTools)
 
 set(NFD_BUILD_TESTS "OFF")
 set(NFD_INSTALL "OFF")
@@ -11,7 +12,22 @@ file(READ "${CMAKE_SOURCE_DIR}/VERSION" VT_VERSION)
 string(STRIP "${VT_VERSION}" VT_VERSION)
 message(STATUS "VT_VERSION: ${VT_VERSION}")
 
-# TODO: Add tests and install targets if needed.
+# Embeds
+include(cmake/Embed.cmake)
+set(EMBED_SOURCE_DIR "${PROJECT_SOURCE_DIR}/embeds")
+set(EMBED_INCLUDE_DIR "${CMAKE_BINARY_DIR}/generated")
+set(EMBED_OUTPUT_DIR "${EMBED_INCLUDE_DIR}/embeds")
+message(STATUS "Embed source directory: ${EMBED_SOURCE_DIR}")
+message(STATUS "Embed output directory: ${EMBED_OUTPUT_DIR}")
+
+embed_directory(${EMBED_SOURCE_DIR} ${EMBED_OUTPUT_DIR} "vt::embed" EMBED_GENERATED_FILES)
+
+# About & Licenses
+include(cmake/GenerateAbout.cmake)
+set(LICENSE_DIR "${PROJECT_SOURCE_DIR}/licenses")
+generate_about(${LICENSE_DIR} ${EMBED_OUTPUT_DIR} "vt::embed" ABOUT_GENERATED_FILES)
+
+
 file(GLOB_RECURSE source_files CONFIGURE_DEPENDS 
 	"${PROJECT_SOURCE_DIR}/src/*.hpp"
 	"${PROJECT_SOURCE_DIR}/src/*.cpp"
@@ -30,9 +46,9 @@ file(GLOB vendor_files CONFIGURE_DEPENDS
 	"${PROJECT_SOURCE_DIR}/vendor/ImGuizmo/ImSequencer.h"
 	"${PROJECT_SOURCE_DIR}/vendor/ImGuizmo/ImSequencer.cpp"
 	"${PROJECT_SOURCE_DIR}/vendor/ImGuizmo/ImGuizmo.cpp"
-	"${PROJECT_SOURCE_DIR}/vendor/imgui_toggle/imgui_toggle.cpp",
-	"${PROJECT_SOURCE_DIR}/vendor/imgui_toggle/imgui_toggle_palette.cpp",
-	"${PROJECT_SOURCE_DIR}/vendor/imgui_toggle/imgui_toggle_renderer.cpp",
+	"${PROJECT_SOURCE_DIR}/vendor/imgui_toggle/imgui_toggle.cpp"
+	"${PROJECT_SOURCE_DIR}/vendor/imgui_toggle/imgui_toggle_palette.cpp"
+	"${PROJECT_SOURCE_DIR}/vendor/imgui_toggle/imgui_toggle_renderer.cpp"
 )
 
 #message(STATUS "Source files found: ${source_files}")
@@ -40,7 +56,7 @@ file(GLOB vendor_files CONFIGURE_DEPENDS
 
 #list(FILTER source_files EXCLUDE REGEX "third_party/")
 list(APPEND source_files ${vendor_files})
-add_executable(${PROJECT_NAME} ${source_files})
+add_executable(${PROJECT_NAME} ${source_files} ${ABOUT_GENERATED_FILES} ${EMBED_GENERATED_FILES})
 
 file(GLOB_RECURSE no_pch_files
 	"${PROJECT_SOURCE_DIR}/src/embeds/*.cpp"
@@ -59,33 +75,12 @@ target_precompile_headers(${PROJECT_NAME} PRIVATE src/pch.hpp)
 set(EXAMPLE_SOURCE_DIR ${PROJECT_SOURCE_DIR}/examples)
 set(EXAMPLE_DEST_DIR ${PROJECT_BINARY_DIR}/examples)
 
-if (CMAKE_VERSION VERSION_GREATER 3.12)
-  set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 17)
-  set_property(TARGET ${PROJECT_NAME} PROPERTY CMAKE_CXX_STANDARD_REQUIRED ON)
-  set_property(TARGET ${PROJECT_NAME} PROPERTY CMAKE_CXX_EXTENSIONS OFF)
-endif()
-
-if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
-   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-changes-meaning")
-   #target_link_libraries(${PROJECT_NAME} PRIVATE ${CMAKE_DL_LIBS})
-endif()
-
-# Turns on standard conformance for Microsoft Visual C++ compiler
-if (MSVC)
-	#target_compile_options(${PROJECT_NAME} PRIVATE /permissive- /utf-8)
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /permissive-")
-	# Enable UTF-8 source encoding for MSVC
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /utf-8")
-	# Optional: Set debug dir (Visual Studio only)
-	set_property(TARGET ${PROJECT_NAME} PROPERTY VS_DEBUGGER_WORKING_DIRECTORY "${PROJECT_BINARY_DIR}")
-else()
-	target_compile_options(${PROJECT_NAME} PRIVATE -fpermissive)
-endif()
-
 target_compile_definitions(${PROJECT_NAME} PRIVATE
-	_CRT_SECURE_NO_WARNINGS
 	VT_VERSION="${VT_VERSION}"
 )
+
+include(${CMAKE_SOURCE_DIR}/cmake/CppCommon.cmake)
+setup_cpp_common(${PROJECT_NAME})
 
 add_subdirectory("${PROJECT_SOURCE_DIR}/vendor/nativefiledialog-extended")
 target_link_libraries(${PROJECT_NAME} PRIVATE nfd)
@@ -110,12 +105,11 @@ target_include_directories(${PROJECT_NAME}
 	PRIVATE "${PROJECT_SOURCE_DIR}/vendor/cpp-httplib"
 	PRIVATE "${PROJECT_SOURCE_DIR}/vendor/imgui_toggle"
 	PRIVATE "${PROJECT_SOURCE_DIR}/vendor/stb"
+	PRIVATE "${EMBED_INCLUDE_DIR}"
 )
 
 # Setup Python
-include(${CMAKE_SOURCE_DIR}/cmake/SetupPython.cmake)
-
-
+include(cmake/SetupPython.cmake)
 
 if(CMAKE_SYSTEM_PROCESSOR MATCHES "64")
 	set(ARCH "x86_64")
