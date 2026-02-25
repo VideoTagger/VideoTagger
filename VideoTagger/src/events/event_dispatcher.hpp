@@ -4,18 +4,132 @@
 #include <memory>
 #include <utility>
 #include <functional>
-#include <typeinfo>
-#include <unordered_map>
+#include <limits>
 #include <utils/random.hpp>
 
 namespace vt
 {
+	///@addtogroup events Events
+	///@{
 	using event_listener_handle = uint64_t;
 
 	struct event_dispatcher_base
 	{
 		virtual ~event_dispatcher_base() = default;
 	};
+
+	struct event_listener_priority
+	{
+	public:
+		static const event_listener_priority lowest;
+		static const event_listener_priority low;
+		///@brief Default priority
+		static const event_listener_priority normal;
+		static const event_listener_priority high;
+		static const event_listener_priority highest;
+
+		constexpr event_listener_priority() : priority_{ event_listener_priority::normal.value() } {}
+		constexpr event_listener_priority(int64_t priority) : priority_{ priority } {}
+	private:
+		int64_t priority_;
+
+	public:
+		constexpr bool operator<(const event_listener_priority& other) const
+		{
+			return priority_ < other.priority_;
+		}
+
+		constexpr bool operator>(const event_listener_priority& other) const
+		{
+			return priority_ > other.priority_;
+		}
+
+		constexpr bool operator<=(const event_listener_priority& other) const
+		{
+			return priority_ <= other.priority_;
+		}
+
+		constexpr bool operator>=(const event_listener_priority& other) const
+		{
+			return priority_ >= other.priority_;
+		}
+
+		constexpr bool operator==(const event_listener_priority& other) const
+		{
+			return priority_ == other.priority_;
+		}
+
+		constexpr bool operator!=(const event_listener_priority& other) const
+		{
+			return priority_ != other.priority_;
+		}
+
+		constexpr event_listener_priority operator+(int64_t other) const
+		{
+			return event_listener_priority(priority_ + other);
+		}
+
+		constexpr event_listener_priority operator-(int64_t value) const
+		{
+			return event_listener_priority(priority_ - value);
+		}
+
+		constexpr event_listener_priority& operator+=(int64_t value)
+		{
+			priority_ += value;
+			return *this;
+		}
+
+		constexpr event_listener_priority& operator-=(int64_t value)
+		{
+			priority_ -= value;
+			return *this;
+		}
+
+		constexpr event_listener_priority& operator++()
+		{
+			++priority_;
+			return *this;
+		}
+
+		constexpr event_listener_priority operator++(int)
+		{
+			event_listener_priority temp = *this;
+			++priority_;
+			return temp;
+		}
+
+		constexpr event_listener_priority& operator--()
+		{
+			--priority_;
+			return *this;
+		}
+
+		constexpr event_listener_priority operator--(int)
+		{
+			event_listener_priority temp = *this;
+			--priority_;
+			return temp;
+		}
+
+		constexpr int compare_to(const event_listener_priority& other) const
+		{
+			if (priority_ < other.priority_) return -1;
+			if (priority_ > other.priority_) return 1;
+			return 0;
+		}
+
+		constexpr int64_t value() const
+		{
+			return priority_;
+		}
+	};
+
+	inline const event_listener_priority event_listener_priority::lowest{ std::numeric_limits<int64_t>::min() };
+	inline const event_listener_priority event_listener_priority::low{ std::numeric_limits<int64_t>::min() / 2 };
+	inline const event_listener_priority event_listener_priority::normal{};
+	inline const event_listener_priority event_listener_priority::high{ std::numeric_limits<int64_t>::max() / 2 };
+	inline const event_listener_priority event_listener_priority::highest{ std::numeric_limits<int64_t>::max() };
 
 	/**
 	 * @brief Callback representing a listener for a specific event type
@@ -26,10 +140,11 @@ namespace vt
 	{
 	public:
 		using event_type = type;
-		constexpr event_listener_callback(event_listener_handle handle, const std::function<void(const event_type&)>& callback) : handle_{ handle }, callback_{ callback } {}
+		constexpr event_listener_callback(event_listener_handle handle, event_listener_priority priority, const std::function<void(const event_type&)>& callback) : priority_{ priority }, handle_ { handle }, callback_{ callback } {}
 
 	private:
 		event_listener_handle handle_;
+		event_listener_priority priority_;
 		std::function<void(const event_type&)> callback_;
 
 	public:
@@ -48,7 +163,18 @@ namespace vt
 		///@brief Invokes the callback with the provided event instance
 		constexpr void operator()(const event_type& event) const
 		{
+			if (callback_ == nullptr) return;
 			callback_(event);
+		}
+
+		constexpr bool operator<(const event_listener_callback& other) const
+		{
+			return priority_ < other.priority_;
+		}
+
+		constexpr bool operator==(const event_listener_callback& other) const
+		{
+			return priority_ == other.priority_;
 		}
 	};
 
@@ -75,10 +201,11 @@ namespace vt
 		 * 
 		 * @sa operator+=(const std::function<void(const event_type&)>& callback)
 		 */
-		constexpr event_listener_handle add_event_listener(const std::function<void(const event_type&)>& callback)
+		constexpr event_listener_handle add_event_listener(const std::function<void(const event_type&)>& callback, event_listener_priority priority = event_listener_priority::normal)
 		{
 			auto handle = utils::random::get<event_listener_handle>(1);
-			listeners_.push_back(std::make_unique<event_callback>(handle, callback));
+			listeners_.push_back(std::make_unique<event_callback>(handle, priority, callback));
+			sort_listeners();
 			return handle;
 		}
 
@@ -98,6 +225,7 @@ namespace vt
 			if (it != listeners_.end())
 			{
 				listeners_.erase(it);
+				sort_listeners();
 				return true;
 			}
 			return false;
@@ -112,6 +240,19 @@ namespace vt
 		constexpr void dispatch_event(arguments&&... args)
 		{
 			event_type event_instance{ std::forward<arguments>(args)... };
+			for (const auto& ptr : listeners_)
+			{
+				if (ptr == nullptr or ptr->callback() == nullptr) continue;
+				std::invoke(ptr->callback(), event_instance);
+			}
+		}
+
+		/**
+		 * @brief Dispatches an event to all registered listeners
+		 * @param[in] event_instance The pre-constructed event instance to dispatch
+		 */
+		constexpr void dispatch_event(const event_type& event_instance)
+		{
 			for (const auto& ptr : listeners_)
 			{
 				if (ptr == nullptr or ptr->callback() == nullptr) continue;
@@ -142,5 +283,14 @@ namespace vt
 		{
 			return remove_event_listener(handle);
 		}
+	private:
+		void sort_listeners()
+		{
+			std::sort(listeners_.begin(), listeners_.end(), [](const std::unique_ptr<event_callback>& left, const std::unique_ptr<event_callback>& right)
+			{
+				return *left < *right;
+			});
+		}
 	};
+	///@}
 }

@@ -6,7 +6,7 @@
 
 namespace vt::ui
 {
-	timeline_ctx_menu_popup::timeline_ctx_menu_popup() : popup{ "Timeline Context Menu" }, segment_storage_{ nullptr }
+	timeline_ctx_menu_popup::timeline_ctx_menu_popup() : popup{ "Timeline Context Menu" }, segment_storage_{ nullptr }, event_source_{ "timeline" }
 	{
 	}
 
@@ -21,13 +21,13 @@ namespace vt::ui
 			{
 				for (auto& id : segments)
 				{
-					ctx_.dispatch_event<segment_delete_event>(*segment_storage_, tag, id);
+					ctx_.dispatch_event<segment_delete_event>(event_source_, *segment_storage_, tag, id);
 				}
 			}
 		}
 		if (ImGui::MenuItem("New segment"))
 		{
-			ctx_.dispatch_event<segment_insert_request_event>(*segment_storage_, active_tag_, active_position_, active_position_);
+			ctx_.dispatch_event<segment_insert_request_event>(event_source_, *segment_storage_, active_tag_, active_position_, active_position_);
 		}
 	}
 

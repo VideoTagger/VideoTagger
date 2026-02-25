@@ -47,7 +47,7 @@ namespace vt::widgets
 		}
 	}
 
-	timeline::timeline() /*: zoom_slider_{ 1.f, 5.f, 1.f }*/
+	timeline::timeline() /*: zoom_slider_{ 1.f, 5.f, 1.f }*/ : event_source_{ "timeline" }
 	{
 		preview_scrollbar_.set_pannable(true);
 		playback_scrollbar_.set_on_change_callback([this](int64_t old_ts, int64_t ts)
@@ -96,11 +96,11 @@ namespace vt::widgets
 		{
 			if (is_segment_selected(e.tag(), e.merged_id()))
 			{
-				ctx_.dispatch_event<segment_deselect_event>(e.storage(), e.tag(), e.merged_id());
+				ctx_.dispatch_event<segment_deselect_event>(event_source_, e.storage(), e.tag(), e.merged_id());
 			}
 			if (!is_segment_selected(e.tag(), e.merged_into_id()))
 			{
-				ctx_.dispatch_event<segment_select_event>(e.storage(), e.tag(), e.merged_into_id());
+				ctx_.dispatch_event<segment_select_event>(event_source_, e.storage(), e.tag(), e.merged_into_id());
 			}
 		});
 
@@ -395,11 +395,11 @@ namespace vt::widgets
 							event_deselect_all_segments(storage);
 						}
 
-						ctx_.dispatch_event<segment_select_event>(storage, tag.name, current_segment_id);
+						ctx_.dispatch_event<segment_select_event>(event_source_, storage, tag.name, current_segment_id);
 						is_selected = true;
 					}
 
-					ctx_.dispatch_event<begin_segment_drag_event>(storage, selected_segments_, part, mouse_timestamp);
+					ctx_.dispatch_event<begin_segment_drag_event>(event_source_, storage, selected_segments_, part, mouse_timestamp);
 				}
 			};
 
@@ -492,11 +492,11 @@ namespace vt::widgets
 
 					if (ImGui::IsKeyDown(ImGuiKey_ModCtrl) and is_selected)
 					{
-						ctx_.dispatch_event<segment_deselect_event>(storage, tag.name, current_segment_id);
+						ctx_.dispatch_event<segment_deselect_event>(event_source_, storage, tag.name, current_segment_id);
 					}
 					else if (!is_segment_selected(tag.name, current_segment_id))
 					{
-						ctx_.dispatch_event<segment_select_event>(storage, tag.name, current_segment_id);
+						ctx_.dispatch_event<segment_select_event>(event_source_, storage, tag.name, current_segment_id);
 					}
 				}
 
@@ -942,7 +942,7 @@ namespace vt::widgets
 
 		segment_drag_data_.stage = segment_drag_stage::waiting_for_approval;
 
-		ctx_.dispatch_event<segments_move_request_event>(*segment_drag_data_.storage, dragged_segments_, segment_drag_data_.grab_part, final_offset);
+		ctx_.dispatch_event<segments_move_request_event>(event_source_, *segment_drag_data_.storage, dragged_segments_, segment_drag_data_.grab_part, final_offset);
 	}
 
 	void timeline::event_deselect_segments_if(segment_storage& storage, const std::function<bool(const std::string&, segment_id)>& predicate)
@@ -958,7 +958,7 @@ namespace vt::widgets
 				}
 
 				auto next_it = std::next(it);
-				ctx_.dispatch_event<segment_deselect_event>(storage, tag_name, *it);
+				ctx_.dispatch_event<segment_deselect_event>(event_source_, storage, tag_name, *it);
 				it = next_it;
 			}
 		}
@@ -971,7 +971,7 @@ namespace vt::widgets
 			for (auto it = segments.begin(); it != segments.end();)
 			{
 				auto next_it = std::next(it);
-				ctx_.dispatch_event<segment_deselect_event>(storage, tag_name, *it);
+				ctx_.dispatch_event<segment_deselect_event>(event_source_, storage, tag_name, *it);
 				it = next_it;
 			}
 		}
@@ -1247,11 +1247,11 @@ namespace vt::widgets
 
 					if (ImGui::IsMouseReleased(ImGuiMouseButton_Left))
 					{
-						ctx_.dispatch_event<end_segment_drag_event>(current_offset);
+						ctx_.dispatch_event<end_segment_drag_event>(event_source_, current_offset);
 					}
 					else
 					{
-						ctx_.dispatch_event<update_segment_drag_event>(current_offset);
+						ctx_.dispatch_event<update_segment_drag_event>(event_source_, current_offset);
 					}
 				}
 

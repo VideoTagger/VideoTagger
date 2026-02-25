@@ -9,7 +9,7 @@
 namespace vt::ui
 {
 	timeline_segment_ctx_menu_popup::timeline_segment_ctx_menu_popup() :
-		popup{ "Segment Menu" }, active_segment_{ invalid_segment_id }, segment_storage_{ nullptr }, active_segment_type_{}
+		popup{ "Segment Menu" }, active_segment_{ invalid_segment_id }, segment_storage_{ nullptr }, active_segment_type_{}, event_source_{ "timeline" }
 	{
 	}
 
@@ -32,7 +32,7 @@ namespace vt::ui
 			{
 				for (auto& id : segments)
 				{
-					ctx_.dispatch_event<segment_delete_event>(*segment_storage_, tag, id);
+					ctx_.dispatch_event<segment_delete_event>(event_source_, *segment_storage_, tag, id);
 				}
 			}
 		}
@@ -43,19 +43,19 @@ namespace vt::ui
 				if (ImGui::MenuItem("At start"))
 				{
 					const auto& segment = segment_storage_->at(active_tag_).at(active_segment_);
-					ctx_.dispatch_event<segments_move_request_event>(*segment_storage_, active_tag_, active_segment_, segment_part::right, timestamp{ -segment.duration() });
+					ctx_.dispatch_event<segments_move_request_event>(event_source_, *segment_storage_, active_tag_, active_segment_, segment_part::right, timestamp{ -segment.duration() });
 				}
 				if (ImGui::MenuItem("At end"))
 				{
 					const auto& segment = segment_storage_->at(active_tag_).at(active_segment_);
-					ctx_.dispatch_event<segments_move_request_event>(*segment_storage_, active_tag_, active_segment_, segment_part::left, timestamp{ segment.duration() });
+					ctx_.dispatch_event<segments_move_request_event>(event_source_, *segment_storage_, active_tag_, active_segment_, segment_part::left, timestamp{ segment.duration() });
 				}
 				if (ImGui::MenuItem("At start and end"))
 				{
 					tag_segment segment = segment_storage_->at(active_tag_).at(active_segment_);
-					ctx_.dispatch_event<segment_delete_event>(*segment_storage_, active_tag_, active_segment_);
-					ctx_.dispatch_event<segment_insert_request_event>(*segment_storage_, active_tag_, segment.start);
-					ctx_.dispatch_event<segment_insert_request_event>(*segment_storage_, active_tag_, segment.end);
+					ctx_.dispatch_event<segment_delete_event>(event_source_, *segment_storage_, active_tag_, active_segment_);
+					ctx_.dispatch_event<segment_insert_request_event>(event_source_, *segment_storage_, active_tag_, segment.start);
+					ctx_.dispatch_event<segment_insert_request_event>(event_source_, *segment_storage_, active_tag_, segment.end);
 				}
 
 				ui::end_menu();
@@ -63,12 +63,12 @@ namespace vt::ui
 			if (ImGui::MenuItem("Seek to segment start"))
 			{
 				const auto& segment = segment_storage_->at(active_tag_).at(active_segment_);
-				ctx_.dispatch_event<seek_event>(ctx_.player, segment.start.total_milliseconds);
+				ctx_.dispatch_event<seek_event>(event_source_, ctx_.player, segment.start.total_milliseconds);
 			}
 			if (ImGui::MenuItem("Seek to segment end"))
 			{
 				const auto& segment = segment_storage_->at(active_tag_).at(active_segment_);
-				ctx_.dispatch_event<seek_event>(ctx_.player, segment.end.total_milliseconds);
+				ctx_.dispatch_event<seek_event>(event_source_, ctx_.player, segment.end.total_milliseconds);
 			}
 		}
 		if (active_segment_type_ == tag_segment_type::timestamp)
@@ -76,12 +76,12 @@ namespace vt::ui
 			if (ImGui::MenuItem("Turn into segment"))
 			{
 				//TODO: probably should display some popup for customization
-				ctx_.dispatch_event<segments_move_request_event>(*segment_storage_, active_tag_, active_segment_, segment_part::right, timestamp{ tag_segment::min_segment_size });
+				ctx_.dispatch_event<segments_move_request_event>(event_source_, *segment_storage_, active_tag_, active_segment_, segment_part::right, timestamp{ tag_segment::min_segment_size });
 			}
 			if (ImGui::MenuItem("Seek to this timestamp"))
 			{
 				const auto& segment = segment_storage_->at(active_tag_).at(active_segment_);
-				ctx_.dispatch_event<seek_event>(ctx_.player, segment.start.total_milliseconds);
+				ctx_.dispatch_event<seek_event>(event_source_, ctx_.player, segment.start.total_milliseconds);
 			}
 		}
 	}

@@ -10,6 +10,7 @@
 #include <ui/popups/timeline_menu_popup.hpp>
 #include <ui/popups/timeline_ctx_menu_popup.hpp>
 #include <ui/popups/timeline_segment_ctx_menu_popup.hpp>
+#include <events/event_source.hpp>
 
 namespace vt::widgets
 {
@@ -95,6 +96,7 @@ namespace vt::widgets
 		std::unique_ptr<ui::timeline_ctx_menu_popup> ctx_popup_;
 		bool open_ctx_menu_ = false;
 		std::unique_ptr<ui::timeline_segment_ctx_menu_popup> segment_ctx_popup_;
+		event_source event_source_;
 		bool open_segment_ctx_menu_ = false;
 		
 		utils::timestamp_span view_ts_{};

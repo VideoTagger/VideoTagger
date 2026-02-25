@@ -18,6 +18,8 @@ namespace vt::widgets
 
 	static bool add_tag_popup(tag_storage& tags)
 	{
+		//TODO: Move this into member variable of tag_manager class
+		event_source event_source_{ "tag_manager" };
 		//TODO: Improve UI layout
 		
 		bool return_value = false;
@@ -83,7 +85,7 @@ namespace vt::widgets
 			ImGui::BeginDisabled(valid_tag_name != tag_validate_result::ok);
 			if (ImGui::Button("Done"))
 			{
-				ctx_.dispatch_event<tag_add_request_event>(tags, tag_name, ImGui::ColorConvertFloat4ToU32(color));
+				ctx_.dispatch_event<tag_add_request_event>(event_source_, tags, tag_name, ImGui::ColorConvertFloat4ToU32(color));
 				tag_name.clear();
 				ImGui::CloseCurrentPopup();
 			}
@@ -326,6 +328,7 @@ namespace vt::widgets
 
 	bool tag_manager(tag_storage& tags, std::optional<tag_rename_data>& tag_rename, std::optional<tag_delete_data>& tag_delete, bool& dirty_flag, tag_manager_flags flags)
 	{
+		event_source event_source_{ "tag_manager" };
 		//TODO: Maybe extract some stuff into separate functions for better readability
 
 		bool return_value = false;
@@ -642,7 +645,7 @@ namespace vt::widgets
 			if (pressed_button == true)
 			{
 				tag_rename->ready = true;
-				ctx_.dispatch_event<tag_rename_request_event>(tags, tag_rename->old_name, tag_rename->new_name);
+				ctx_.dispatch_event<tag_rename_request_event>(event_source_, tags, tag_rename->old_name, tag_rename->new_name);
 			}
 			else
 			{
@@ -656,7 +659,7 @@ namespace vt::widgets
 			if (pressed_yes)
 			{
 				tag_delete->ready = true;
-				ctx_.dispatch_event<tag_delete_event>(tags, tag_delete->tag);
+				ctx_.dispatch_event<tag_delete_event>(event_source_, tags, tag_delete->tag);
 			}
 			else
 			{
