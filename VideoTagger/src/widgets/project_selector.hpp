@@ -8,7 +8,7 @@ namespace vt::widgets
 	class project_selector
 	{
 	public:
-		project_selector() = default;
+		project_selector();
 		project_selector(const std::vector<project_info>& projects);
 
 	private:

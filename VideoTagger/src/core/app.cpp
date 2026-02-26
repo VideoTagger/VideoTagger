@@ -1,6 +1,6 @@
 #include "pch.hpp"
 #include "app.hpp"
-#include "app_window.hpp"
+#include <system/system_window.hpp>
 
 #include <utils/json.hpp>
 
@@ -44,7 +44,7 @@ namespace vt
 		}
 	}
 
-	bool app::init(const app_window_config& main_config)
+	bool app::init(const system_window_config& main_config)
 	{
 		debug::init();
 

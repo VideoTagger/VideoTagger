@@ -134,7 +134,11 @@ install(
 	DESTINATION "."
 )
 
-
+if (MSVC)
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /bigobj")
+else()
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Mbigobj")
+endif()
 
 # Platform-specific
 if (WIN32)

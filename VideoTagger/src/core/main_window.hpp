@@ -1,13 +1,13 @@
 #pragma once
-#include "app_window.hpp"
+#include <system/system_window.hpp>
 #include <utils/file_node.hpp>
 
 namespace vt
 {
-	class main_window : public app_window
+	class main_window : public system_window
 	{
 	public:
-		main_window(const app_window_config& cfg);
+		main_window(const system_window_config& cfg);
 
 	public:
 		bool on_close_project(bool should_shutdown);
@@ -37,6 +37,8 @@ namespace vt
 		void draw_menubar();
 		void draw_project_selector();
 		void draw_main_app();
+
+		void draw_video_widgets();
 
 		void enable_undocking(bool value);
 

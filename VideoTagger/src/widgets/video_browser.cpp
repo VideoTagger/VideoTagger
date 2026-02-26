@@ -11,10 +11,17 @@
 
 namespace vt::widgets
 {
-	void video_browser::render(bool& is_open)
-	{
-		if (!ctx_.current_project.has_value()) return;
+	video_browser::video_browser() : ui::window{ "Video Browser", "video-browser", "Video Browser", ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse }
+    {
+		set_icon(icons::database);
+    }
 
+	void video_browser::on_open_video(video_id_t video_id)
+	{
+	}
+
+    void video_browser::on_render()
+	{
 		static auto draw_video_tile = [this](video_id_t id, video_resource& vid_resource, ImVec2 tile_size, bool& open, GLuint image = 0)
 		{
 			const auto& theme = ctx_.current_theme;
@@ -93,109 +100,100 @@ namespace vt::widgets
 
 		auto& style = ImGui::GetStyle();
 
-		if (ImGui::Begin(window_name().c_str(), &is_open, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse))
+		bool any_item_hovered = false;
+		bool window_hovered = false;
+		if (ctx_.current_project->videos.size() > 0)
 		{
-			bool any_item_hovered = false;
-			bool window_hovered = false;
-			if (ctx_.current_project->videos.size() > 0)
+			ImVec2 img_tile_size{ ctx_.app_settings.thumbnail_size, ctx_.app_settings.thumbnail_size };
+			ImVec2 tile_size = img_tile_size + style.ItemSpacing + style.CellPadding / 2;
+
+			auto avail = ImGui::GetContentRegionAvail() - ImVec2{ 0, ImGui::GetTextLineHeightWithSpacing() };
+			int columns = static_cast<int>(avail.x / tile_size.x);
+			if (columns < 1)
 			{
-				ImVec2 img_tile_size{ ctx_.app_settings.thumbnail_size, ctx_.app_settings.thumbnail_size };
-				ImVec2 tile_size = img_tile_size + style.ItemSpacing + style.CellPadding / 2;
+				columns = 1;
+			}
 
-				auto avail = ImGui::GetContentRegionAvail() - ImVec2{ 0, ImGui::GetTextLineHeightWithSpacing() };
-				int columns = static_cast<int>(avail.x / tile_size.x);
-				if (columns < 1)
+			std::unordered_map<std::string, std::vector<video_resource*>> grouped_videos;
+			for (auto& [id, vid_resource] : ctx_.current_project->videos)
+			{
+				grouped_videos[vid_resource->importer_id()].push_back(vid_resource.get());
+			}
+
+			auto table_flags = ImGuiTableFlags_ScrollY | ImGuiTableFlags_SizingFixedSame;
+			if (ImGui::BeginTable("##VideoBrowserBody", columns, table_flags, ImGui::GetContentRegionMax()))
+			{
+				ImGui::TableNextRow();
+
+
+				//auto node_flags = ImGuiTreeNodeFlags_Framed | ImGuiTreeNodeFlags_SpanFullWidth;
+				for (auto& [importer_id, vid_resources] : grouped_videos)
 				{
-					columns = 1;
-				}
-
-				std::unordered_map<std::string, std::vector<video_resource*>> grouped_videos;
-				for (auto& [id, vid_resource] : ctx_.current_project->videos)
-				{
-					grouped_videos[vid_resource->importer_id()].push_back(vid_resource.get());
-				}
-
-				auto table_flags = ImGuiTableFlags_ScrollY | ImGuiTableFlags_SizingFixedSame;
-				if (ImGui::BeginTable("##VideoBrowserBody", columns, table_flags, ImGui::GetContentRegionMax()))
-				{
-					ImGui::TableNextRow();
-
-
-					//auto node_flags = ImGuiTreeNodeFlags_Framed | ImGuiTreeNodeFlags_SpanFullWidth;
-					for (auto& [importer_id, vid_resources] : grouped_videos)
-					{
-						//if (collapsing_header(ctx_.video_importers.at(importer_id)->importer_display_name().c_str()))
+					//if (collapsing_header(ctx_.video_importers.at(importer_id)->importer_display_name().c_str()))
+					//{
+						//std::string table_id = fmt::format("##VideoBrowser{}", importer_id);
+						//if (ImGui::BeginTable(table_id.c_str(), columns, ImGuiTableFlags_SizingFixedFit))
 						//{
-							//std::string table_id = fmt::format("##VideoBrowser{}", importer_id);
-							//if (ImGui::BeginTable(table_id.c_str(), columns, ImGuiTableFlags_SizingFixedFit))
-							//{
-								for (auto& vid_resource : vid_resources)
-								{
-									bool open_video{};
+					for (auto& vid_resource : vid_resources)
+					{
+						bool open_video{};
 
-									ImGui::TableNextColumn();
-									draw_video_tile(vid_resource->id(), *vid_resource, tile_size, open_video, vid_resource->thumbnail() ? vid_resource->thumbnail()->id() : 0);
-									
-									any_item_hovered = any_item_hovered or ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenBlockedByPopup);
-								}
+						ImGui::TableNextColumn();
+						draw_video_tile(vid_resource->id(), *vid_resource, tile_size, open_video, vid_resource->thumbnail() ? vid_resource->thumbnail()->id() : 0);
 
-								//ImGui::EndTable();
-							//}
-						//}
+						any_item_hovered = any_item_hovered or ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenBlockedByPopup);
 					}
 
-					window_hovered = ImGui::IsWindowHovered();
-
-					ImGui::EndTable();
+					//ImGui::EndTable();
+				//}
+			//}
 				}
-			}
-			else
-			{
+
 				window_hovered = ImGui::IsWindowHovered();
-				ui::centered_text("Import videos to display them here...", ImGui::GetContentRegionMax());
-			}
 
-			if (!any_item_hovered and ImGui::IsMouseReleased(ImGuiMouseButton_Right) and window_hovered)
-			{
-				ImGui::OpenPopup("##BrowserContextMenu", ImGuiPopupFlags_NoOpenOverExistingPopup);
-			}
-
-			if (ImGui::BeginPopup("##BrowserContextMenu"))
-			{
-				if (!ctx_.current_project->videos.empty())
-				{
-					std::string refresh_item_name = fmt::format("{} {}", icons::refresh, "Refresh Videos");
-					if (ImGui::MenuItem(refresh_item_name.c_str()))
-					{
-						for (auto& [id, vid_resource] : ctx_.current_project->videos)
-						{
-							ctx_.current_project->schedule_video_refresh(id);
-						}
-					}
-				}
-				
-				for (auto& [importer_id, importer] : ctx_.video_importers)
-				{
-					if (!importer->available())
-					{
-						continue;
-					}
-
-					std::string item_name = fmt::format("{} Import From {}", importer->importer_display_icon(), importer->importer_display_name());
-					if (ImGui::MenuItem(item_name.c_str()))
-					{
-						ctx_.current_project->prepare_video_import(importer_id);
-					}
-				}
-
-				ImGui::EndPopup();
+				ImGui::EndTable();
 			}
 		}
-		ImGui::End();
-	}
+		else
+		{
+			window_hovered = ImGui::IsWindowHovered();
+			ui::centered_text("Import videos to display them here...", ImGui::GetContentRegionMax());
+		}
 
-	std::string video_browser::window_name()
-	{
-		return fmt::format("{} Video Browser", icons::database);
+		if (!any_item_hovered and ImGui::IsMouseReleased(ImGuiMouseButton_Right) and window_hovered)
+		{
+			ImGui::OpenPopup("##BrowserContextMenu", ImGuiPopupFlags_NoOpenOverExistingPopup);
+		}
+
+		if (ImGui::BeginPopup("##BrowserContextMenu"))
+		{
+			if (!ctx_.current_project->videos.empty())
+			{
+				std::string refresh_item_name = fmt::format("{} {}", icons::refresh, "Refresh Videos");
+				if (ImGui::MenuItem(refresh_item_name.c_str()))
+				{
+					for (auto& [id, vid_resource] : ctx_.current_project->videos)
+					{
+						ctx_.current_project->schedule_video_refresh(id);
+					}
+				}
+			}
+
+			for (auto& [importer_id, importer] : ctx_.video_importers)
+			{
+				if (!importer->available())
+				{
+					continue;
+				}
+
+				std::string item_name = fmt::format("{} Import From {}", importer->importer_display_icon(), importer->importer_display_name());
+				if (ImGui::MenuItem(item_name.c_str()))
+				{
+					ctx_.current_project->prepare_video_import(importer_id);
+				}
+			}
+
+			ImGui::EndPopup();
+		}
 	}
 }

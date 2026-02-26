@@ -36,6 +36,8 @@ namespace vt::ui
 				}
 			}
 		}
+
+		auto& player = ctx_.get_window<widgets::video_player>();
 		if (active_segment_type_ == tag_segment_type::segment)
 		{
 			if (ui::begin_menu("Turn into timestamp"))
@@ -60,15 +62,16 @@ namespace vt::ui
 
 				ui::end_menu();
 			}
+			
 			if (ImGui::MenuItem("Seek to segment start"))
 			{
 				const auto& segment = segment_storage_->at(active_tag_).at(active_segment_);
-				ctx_.dispatch_event<seek_event>(event_source_, ctx_.player, segment.start.total_milliseconds);
+				ctx_.dispatch_event<seek_event>(event_source_, player, segment.start.total_milliseconds);
 			}
 			if (ImGui::MenuItem("Seek to segment end"))
 			{
 				const auto& segment = segment_storage_->at(active_tag_).at(active_segment_);
-				ctx_.dispatch_event<seek_event>(event_source_, ctx_.player, segment.end.total_milliseconds);
+				ctx_.dispatch_event<seek_event>(event_source_, player, segment.end.total_milliseconds);
 			}
 		}
 		if (active_segment_type_ == tag_segment_type::timestamp)
@@ -81,7 +84,7 @@ namespace vt::ui
 			if (ImGui::MenuItem("Seek to this timestamp"))
 			{
 				const auto& segment = segment_storage_->at(active_tag_).at(active_segment_);
-				ctx_.dispatch_event<seek_event>(event_source_, ctx_.player, segment.start.total_milliseconds);
+				ctx_.dispatch_event<seek_event>(event_source_, player, segment.start.total_milliseconds);
 			}
 		}
 	}

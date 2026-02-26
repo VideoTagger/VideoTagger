@@ -13,7 +13,7 @@ namespace vt::ui
 		timeline_menu_popup(tag_storage* tags = nullptr);
 
 	private:
-		std::vector<std::string> visible_tags_;
+		std::vector<std::string> displayed_tags_;
 		tag_storage* tags_;
 		bool tags_modified_;
 
@@ -21,9 +21,9 @@ namespace vt::ui
 		virtual void on_render() override;
 
 		void set_tag_storage(tag_storage* tags);
-		void set_visible_tags(const std::vector<std::string>& visible_tags);
+		void set_displayed_tags(const std::vector<std::string>& displayed_tags);
 
-		const std::vector<std::string>& visible_tags() const;
+		const std::vector<std::string>& displayed_tags() const;
 		bool tags_modified() const;
 	};
 }

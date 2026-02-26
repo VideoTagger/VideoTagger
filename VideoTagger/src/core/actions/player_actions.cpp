@@ -10,7 +10,7 @@ namespace vt
 	{
 		if (!ctx_.current_project.has_value()) return;
 
-		auto& player = ctx_.player;
+		auto& player = ctx_.get_window<widgets::video_player>();
 		const auto& callbacks = player.callbacks;
 		switch (type_)
 		{

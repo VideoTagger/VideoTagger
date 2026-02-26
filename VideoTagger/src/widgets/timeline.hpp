@@ -12,6 +12,8 @@
 #include <ui/popups/timeline_segment_ctx_menu_popup.hpp>
 #include <events/event_source.hpp>
 
+#include <ui/window.hpp>
+
 namespace vt::widgets
 {
 	enum class segment_hover_type
@@ -60,14 +62,38 @@ namespace vt::widgets
 		major,
 	};
 	
-	struct timeline
+	struct timeline : public ui::window
 	{
 	public:
 		timeline();
 
-	public:
-		void render(bool& is_open, segment_storage& segments, tag_storage& tags, std::vector<std::string>& visible_tags);
+	private:
+		ui::raw_slider<int64_t> preview_scrollbar_;
+		ui::raw_slider<int64_t> playback_scrollbar_;
+		//ui::slider<float> zoom_slider_;
+		std::unique_ptr<ui::timeline_menu_popup> menu_popup_;
+		std::unique_ptr<ui::timeline_ctx_menu_popup> ctx_popup_;
+		std::unique_ptr<ui::timeline_segment_ctx_menu_popup> segment_ctx_popup_;
+		event_source event_source_;
+		bool open_ctx_menu_ = false;
+		bool open_segment_ctx_menu_ = false;
 
+		utils::timestamp_span view_ts_{};
+		bool enabled_ = true;
+		bool is_hovering_segment_ = false;
+		bool is_dragging_span_left_grab_ = false;
+		bool is_dragging_span_right_grab_ = false;
+		bool view_follow_playhead_ = false;
+		timeline_state state_;
+		std::function<void(timestamp ts)> on_seek_;
+		//TODO: segment shouldn't be const
+		std::function<void(const segment_with_id& segment_and_id, const tag& tag)> on_ctx_menu_;
+		std::function<void(const segment_with_id& segment_and_id, const tag& tag)> on_draw_tooltip_;
+		segment_id_map selected_segments_;
+		segment_id_map dragged_segments_;
+		segment_drag_data segment_drag_data_{};
+
+	public:
 		void set_on_seek_callback(const std::function<void(timestamp ts)>& callback);
 		//void set_ctx_menu_callback(const std::function<void(const segment_with_id& segment_and_id, const tag& tag)>& callback);
 		void set_draw_tooltip_callback(const std::function<void(const segment_with_id& segment_and_id, const tag& tag)>& callback);
@@ -86,34 +112,13 @@ namespace vt::widgets
 		float span_as_scale() const;
 		timeline_state& state();
 
-		static std::string window_name();
+		virtual void pre_style() override;
+		virtual void post_style() override;
 
-	private:
-		ui::raw_slider<int64_t> preview_scrollbar_;
-		ui::raw_slider<int64_t> playback_scrollbar_;
-		//ui::slider<float> zoom_slider_;
-		std::unique_ptr<ui::timeline_menu_popup> menu_popup_;
-		std::unique_ptr<ui::timeline_ctx_menu_popup> ctx_popup_;
-		bool open_ctx_menu_ = false;
-		std::unique_ptr<ui::timeline_segment_ctx_menu_popup> segment_ctx_popup_;
-		event_source event_source_;
-		bool open_segment_ctx_menu_ = false;
-		
-		utils::timestamp_span view_ts_{};
-		bool enabled_ = true;
-		bool is_hovering_segment_ = false;
-		bool is_dragging_span_left_grab_ = false;
-		bool is_dragging_span_right_grab_ = false;
-		bool view_follow_playhead_ = false;
-		timeline_state state_;
-		std::function<void(timestamp ts)> on_seek_;
-		//TODO: segment shouldn't be const
-		std::function<void(const segment_with_id& segment_and_id, const tag& tag)> on_ctx_menu_;
-		std::function<void(const segment_with_id& segment_and_id, const tag& tag)> on_draw_tooltip_;
-		segment_id_map selected_segments_;
-		segment_id_map dragged_segments_;
-		segment_drag_data segment_drag_data_{};
+		virtual void on_render() override;
 
+		virtual nlohmann::ordered_json serialize() const override;
+		virtual void deserialize(const nlohmann::ordered_json& json) override;
 	private:
 		void draw_playhead() const;
 		void draw_time_intervals(bool only_lines) const;

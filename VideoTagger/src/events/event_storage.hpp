@@ -50,10 +50,10 @@ namespace vt
 		 * @return A handle to the added listener
 		 */
 		template<typename event_type, typename = std::enable_if_t<std::is_base_of_v<event, event_type>>>
-		constexpr event_listener_handle add_event_listener(const std::function<void(const event_type&)>& callback)
+		constexpr event_listener_handle add_event_listener(const std::function<void(const event_type&)>& callback, event_listener_priority priority = event_listener_priority::normal)
 		{
 			auto& dispatcher = get_event_dispatcher<event_type>();
-			return dispatcher.add_event_listener(callback);
+			return dispatcher.add_event_listener(callback, priority);
 		}
 
 		///@brief Clears all event dispatchers.

@@ -37,15 +37,17 @@ namespace vt
 	PYBIND11_EMBEDDED_MODULE(vt, this_module)
 	{
 		struct stdout_hook {};
+		auto& console = ctx_.get_window<widgets::console>();
+
 		py::class_<stdout_hook>(this_module, "stdout_hook")
-		.def_static("write", [](std::string message)
+		.def_static("write", [&console](std::string message)
 		{
 			auto caller_info = get_caller_info();
 			message = utils::string::trim_whitespace(message);
 			if (!message.empty())
 			{
 				debug::log_source(fmt::format("{}:{}", std::filesystem::relative(caller_info.path, ctx_.script_dir_filepath).string(), caller_info.line), "Info", "{}", message);
-				ctx_.console.add_entry(widgets::console::entry::flag_type::info, message, caller_info);
+				console.add_entry(widgets::console::entry::flag_type::info, message, caller_info);
 			}
 		})
 		.def_static("flush", []()
@@ -57,14 +59,14 @@ namespace vt
 
 		struct stderr_hook {};
 		py::class_<stderr_hook>(this_module, "stderr_hook")
-		.def_static("write", [](std::string message)
+		.def_static("write", [&console](std::string message)
 		{
 			auto caller_info = get_caller_info();
 			message = utils::string::trim_whitespace(message);
 			if (!message.empty())
 			{
 				debug::log_source(fmt::format("{}:{}", std::filesystem::relative(caller_info.path, ctx_.script_dir_filepath).string(), caller_info.line), "Error", "{}", message);
-				ctx_.console.add_entry(widgets::console::entry::flag_type::error, message, caller_info);
+				console.add_entry(widgets::console::entry::flag_type::error, message, caller_info);
 			}
 		})
 		.def_static("flush", []()
@@ -110,7 +112,8 @@ namespace vt
 			return player.is_playing();
 		});
 
-		this_module.attr("player") = &ctx_.player;
+		auto& player = ctx_.get_window<widgets::video_player>();
+		this_module.attr("player") = &player;
 
 		bindings::bind_tags(this_module);
 		bindings::bind_tag_attributes(this_module);
@@ -161,36 +164,36 @@ namespace vt
 			return utils::color::to_abgr(value);
 		});
 
-		this_module.def("log", [](std::string message)
+		this_module.def("log", [&console](std::string message)
 		{
 			auto caller_info = get_caller_info();
 			message = utils::string::trim_whitespace(message);
 			if (!message.empty())
 			{
 				debug::log_source(fmt::format("{}:{}", std::filesystem::relative(caller_info.path, ctx_.script_dir_filepath).string(), caller_info.line), "Info", "{}", message);
-				ctx_.console.add_entry(widgets::console::entry::flag_type::info, message, caller_info);
+				console.add_entry(widgets::console::entry::flag_type::info, message, caller_info);
 			}
 		});
 
-		this_module.def("warn", [](std::string message)
+		this_module.def("warn", [&console](std::string message)
 		{
 			auto caller_info = get_caller_info();
 			message = utils::string::trim_whitespace(message);
 			if (!message.empty())
 			{
 				debug::log_source(fmt::format("{}:{}", std::filesystem::relative(caller_info.path, ctx_.script_dir_filepath).string(), caller_info.line), "Warn", "{}", message);
-				ctx_.console.add_entry(widgets::console::entry::flag_type::warn, message, caller_info);
+				console.add_entry(widgets::console::entry::flag_type::warn, message, caller_info);
 			}
 		});
 
-		this_module.def("error", [](std::string message)
+		this_module.def("error", [&console](std::string message)
 		{
 			auto caller_info = get_caller_info();
 			message = utils::string::trim_whitespace(message);
 			if (!message.empty())
 			{
 				debug::log_source(fmt::format("{}:{}", std::filesystem::relative(caller_info.path, ctx_.script_dir_filepath).string(), caller_info.line), "Error", "{}", message);
-				ctx_.console.add_entry(widgets::console::entry::flag_type::error, message, caller_info);
+				console.add_entry(widgets::console::entry::flag_type::error, message, caller_info);
 			}
 		});
 	}
@@ -289,6 +292,8 @@ namespace vt
 			}
 			catch (py::error_already_set& ex)
 			{
+				auto& console = ctx_.get_window<widgets::console>();
+
 				try
 				{
 					py::gil_scoped_acquire lock{};
@@ -319,19 +324,19 @@ namespace vt
 							}
 							catch (...) {}
 							debug::log_source(fmt::format("{}:{}", std::filesystem::relative(file_name, ctx_.script_dir_filepath).string(), lineno), "Info", "{}", "Script interrupted");
-							ctx_.console.add_entry(widgets::console::entry::flag_type::info, "Script interrupted", widgets::console::entry::source_info{ file_name, lineno });
+							console.add_entry(widgets::console::entry::flag_type::info, "Script interrupted", widgets::console::entry::source_info{ file_name, lineno });
 							return false;
 						}
 						else if (!message.empty())
 						{
 							debug::log_source(fmt::format("{}:{}", std::filesystem::relative(file_name, ctx_.script_dir_filepath).string(), lineno), "Error", "{}", message);
-							ctx_.console.add_entry(widgets::console::entry::flag_type::error, message, widgets::console::entry::source_info{ file_name, lineno });
+							console.add_entry(widgets::console::entry::flag_type::error, message, widgets::console::entry::source_info{ file_name, lineno });
 						}
 					}
 					else
 					{
 						debug::error("{}", message);
-						ctx_.console.add_entry(widgets::console::entry::flag_type::error, message, widgets::console::entry::source_info{ "VideoTagger", -1});
+						console.add_entry(widgets::console::entry::flag_type::error, message, widgets::console::entry::source_info{ "VideoTagger", -1});
 					}
 				}
 				catch (const std::exception& iex)

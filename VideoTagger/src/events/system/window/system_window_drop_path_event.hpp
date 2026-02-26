@@ -1,14 +1,14 @@
 #pragma once
 #include <filesystem>
-#include "window_event.hpp"
+#include "system_window_event.hpp"
 #include <utils/vec.hpp>
 
 namespace vt
 {
-	struct window_drop_path_event : public window_event
+	struct system_window_drop_path_event : public system_window_event
 	{
 	public:
-		window_drop_path_event(app_window& window, const std::filesystem::path& path, const utils::vec2<float>& drop_point) : window_event{ window }, path_{ path }, drop_point_{ drop_point } {}
+		system_window_drop_path_event(system_window& window, const std::filesystem::path& path, const utils::vec2<float>& drop_point) : system_window_event{ window }, path_{ path }, drop_point_{ drop_point } {}
 
 	private:
 		std::filesystem::path path_;

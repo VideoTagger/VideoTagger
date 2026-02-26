@@ -1,7 +1,7 @@
 #include <pch.hpp>
-#include "app_window.hpp"
-#include "app_context.hpp"
-#include "debug.hpp"
+#include "system_window.hpp"
+#include <core/app_context.hpp>
+#include <core/debug.hpp>
 #include <ui/icons.hpp>
 
 #include <embeds/MaterialSymbolsSharp_Filled_Regular.hpp>
@@ -130,7 +130,7 @@ namespace vt
 		style.HoverDelayNormal = 0.75f;
 	}
 
-    app_window::app_window(const app_window_config& cfg) : name_{ cfg.window_name }
+    system_window::system_window(const system_window_config& cfg) : name_{ cfg.window_name }
     {
 		int pos_x = cfg.window_pos_x < 0 ? SDL_WINDOWPOS_CENTERED : cfg.window_pos_x;
 		int pos_y = cfg.window_pos_y < 0 ? SDL_WINDOWPOS_CENTERED : cfg.window_pos_y;
@@ -172,12 +172,12 @@ namespace vt
 		});
     }
 
-	app_window::~app_window()
+	system_window::~system_window()
 	{
 		SDL_GL_DeleteContext(gl_ctx);
 	}
 
-	void app_window::show(bool value)
+	void system_window::show(bool value)
 	{
 		if (value)
 		{
@@ -189,7 +189,7 @@ namespace vt
 		}
 	}
 
-	void app_window::set_darkmode(bool value)
+	void system_window::set_darkmode(bool value)
 	{
 #ifdef _WIN32
 
@@ -218,12 +218,12 @@ namespace vt
 #endif
 	}
 
-	void app_window::set_current()
+	void system_window::set_current()
 	{
 		SDL_GL_MakeCurrent(window, gl_ctx);
 	}
 
-	void app_window::set_subtitle(const std::string& subtitle)
+	void system_window::set_subtitle(const std::string& subtitle)
 	{
 		std::string new_title = name_;
 		if (!subtitle.empty())
@@ -233,7 +233,7 @@ namespace vt
 		SDL_SetWindowTitle(window, new_title.c_str());
 	}
 
-	void app_window::build_fonts(float size)
+	void system_window::build_fonts(float size)
 	{
 		auto& io = ImGui::GetIO();
 
@@ -307,7 +307,7 @@ namespace vt
 		io.Fonts->Build();
 	}
 
-	void app_window::render()
+	void system_window::render()
 	{
 		set_current();
 		draw();
@@ -331,56 +331,56 @@ namespace vt
 		SDL_GL_SwapWindow(ctx_.main_window->window);
 	}
 
-	void app_window::set_position(const utils::vec2<int>& position)
+	void system_window::set_position(const utils::vec2<int>& position)
 	{
 		SDL_SetWindowPosition(window, position[0], position[1]);
 	}
 
-	void app_window::set_size(const utils::vec2<int>& size)
+	void system_window::set_size(const utils::vec2<int>& size)
 	{
 		SDL_SetWindowSize(window, size[0], size[1]);
 	}
 
-    void app_window::center()
+    void system_window::center()
     {
 		set_position({ SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED });
     }
 
-    void app_window::maximize()
+    void system_window::maximize()
     {
 		SDL_MaximizeWindow(window);
     }
 
-	void app_window::minimize()
+	void system_window::minimize()
 	{
 		SDL_MinimizeWindow(window);
 	}
 
-	void app_window::restore()
+	void system_window::restore()
 	{
 		SDL_RestoreWindow(window);
 	}
 
-	utils::vec2<int> app_window::position() const
+	utils::vec2<int> system_window::position() const
 	{
 		utils::vec2<int> result;
 		SDL_GetWindowPosition(window, &result[0], &result[1]);
 		return result;
 	}
 
-	utils::vec2<int> app_window::size() const
+	utils::vec2<int> system_window::size() const
 	{
 		utils::vec2<int> result;
 		SDL_GetWindowSize(window, &result[0], &result[1]);
 		return result;
 	}
 
-	bool app_window::operator==(const app_window& other) const
+	bool system_window::operator==(const system_window& other) const
 	{
 		return window == other.window;
 	}
 
-	void app_window::handle_event(const SDL_Event& event)
+	void system_window::handle_event(const SDL_Event& event)
 	{
 		ImGui_ImplSDL2_ProcessEvent(&event);
 	}
