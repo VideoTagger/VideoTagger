@@ -64,7 +64,7 @@ namespace vt::ui
 				close();
 				ctx_.dispatch_event<segment_insert_request_event>(
 					insert_request_event_data_.source(), insert_request_event_data_.storage(),
-					inserted_tag, start_, end_, false, true
+					inserted_tag, start_, end_, false, false
 				);
 			}
 			break;

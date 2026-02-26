@@ -106,9 +106,12 @@ namespace vt
 			}
 
 			merged_segments.reserve(overlapping.size());
-			for (const auto& [overlapping_id, _] : overlapping)
+			for (const auto& [overlapping_id, overlapping_segment] : overlapping)
 			{
 				merged_segments.push_back(overlapping_id);
+
+				time_start = std::min(time_start, overlapping_segment.start);
+				time_end = std::max(time_end, overlapping_segment.end);
 			}
 
 			erase(overlapping.begin(), overlapping.end());
