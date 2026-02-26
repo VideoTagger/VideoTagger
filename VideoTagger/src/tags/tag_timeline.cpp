@@ -87,6 +87,11 @@ namespace vt
 
 	tag_timeline_insert_result tag_timeline::insert(timestamp time_start, timestamp time_end, const tag_segment::attribute_instance_container& attributes)
 	{
+		if (time_start > time_end)
+		{
+			std::swap(time_start, time_end);
+		}
+
 		std::vector<segment_id> merged_segments;
 		auto prepare_result = prepare_insert_(time_start, time_end);
 		if (prepare_result.has_value())
@@ -411,6 +416,11 @@ namespace vt
 
 	tag_timeline_move_result tag_timeline::move_(segment_id id, timestamp new_start, timestamp new_end, const std::set<segment_id>& ignored_segments)
 	{
+		if (new_start > new_end)
+		{
+			std::swap(new_start, new_end);
+		}
+
 		if (new_start == new_end)
 		{
 			return move_(id, new_start, ignored_segments);

@@ -18,6 +18,7 @@ namespace vt::ui
 		segment_id_map selected_segments_;
 		tag_segment_type active_segment_type_;
 		event_source event_source_;
+		timestamp playhead_position_;
 
 	public:
 		virtual void on_display() override;
@@ -27,5 +28,6 @@ namespace vt::ui
 		void set_segment_storage(segment_storage* storage);
 		void set_selected_segments(const segment_id_map& selected_segments);
 		void set_active_segment(const std::string& tag, segment_id id);
+		void set_playhead_position(timestamp ts);
 	};
 }

@@ -347,7 +347,7 @@ namespace vt::widgets
 		static constexpr float rounding = 3.0f;
 		static constexpr float outline_thickness = 2.0f;
 		static constexpr float height_padding = 2.5f;
-		static constexpr float grab_width = 2.0f;
+		static constexpr float grab_width = 3.0f;
 
 		segment_hover_type hover_type = segment_hover_type::none;
 		bool is_timestamp = current_segment.is_timestamp();
@@ -372,7 +372,7 @@ namespace vt::widgets
 		ImGui::SetCursorPosX(min.x - win_pos.x);
 		auto rect_size = segment_rect.GetSize() /*- style.CellPadding * 2.f*/;
 
-		auto scaled_grab_width = grab_width * span_as_scale();
+		auto scaled_grab_width = std::clamp(grab_width * span_as_scale(), 0.f, grab_width);
 		ImVec2 grab_size{ scaled_grab_width, rect_size.y };
 
 		//Only used for timestamps
@@ -508,8 +508,8 @@ namespace vt::widgets
 			ImGui::PopID();
 		}
 
-		auto base_color = segment_color(tag.color, is_hovered, is_dragged);
-		auto outline_color = segment_outline_color(tag.color, is_hovered, is_dragged, is_selected);
+		auto base_color = segment_color(tag.color, is_hovered and !is_dragging_any_segment(), is_dragged);
+		auto outline_color = segment_outline_color(tag.color, is_hovered and !is_dragging_any_segment(), is_dragged, is_selected);
 
 		if (is_timestamp)
 		{
@@ -1228,6 +1228,7 @@ namespace vt::widgets
 
 				if (open_segment_ctx_menu_)
 				{
+					segment_ctx_popup_->set_playhead_position(state_.current_ts);
 					segment_ctx_popup_->open();
 					open_segment_ctx_menu_ = false;
 				}

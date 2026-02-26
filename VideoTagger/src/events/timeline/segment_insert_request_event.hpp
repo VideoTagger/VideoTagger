@@ -13,11 +13,11 @@ namespace vt
 	 */
 	struct segment_insert_request_event : public event
 	{
-		segment_insert_request_event(segment_storage& storage, const std::string& tag, timestamp start, timestamp end) :
-			tag_{ tag }, segment_storage_{ &storage }, start_{ start }, end_{ end } {
+		segment_insert_request_event(segment_storage& storage, const std::string& tag, timestamp start, timestamp end, bool user_customization, bool ignore_conflicts) :
+			tag_{ tag }, segment_storage_{ &storage }, start_{ start }, end_{ end }, user_customization_{ user_customization }, ignore_conflicts_{ ignore_conflicts } {
 		}
-		segment_insert_request_event(segment_storage& storage, const std::string& tag, timestamp ts) :
-			tag_{ tag }, segment_storage_{ &storage }, start_{ ts }, end_{ ts } {
+		segment_insert_request_event(segment_storage& storage, const std::string& tag, timestamp ts, bool user_customization, bool ignore_conflicts) :
+			tag_{ tag }, segment_storage_{ &storage }, start_{ ts }, end_{ ts }, user_customization_{ user_customization }, ignore_conflicts_{ ignore_conflicts } {
 		}
 
 	private:
@@ -25,6 +25,8 @@ namespace vt
 		segment_storage* segment_storage_;
 		timestamp start_;
 		timestamp end_;
+		bool user_customization_{};
+		bool ignore_conflicts_{};
 
 	public:
 		///@return Tag name
@@ -55,6 +57,18 @@ namespace vt
 		constexpr timestamp end() const
 		{
 			return end_;
+		}
+
+		///@return Whether the user is supposed to customize the segment parameters (e.g., by showing a popup to the user)
+		constexpr bool user_customization() const
+		{
+			return user_customization_;
+		}
+
+		///@return Whether conflicts with existing segments should be ignored (i.e., the new segment should be inserted without asking the user even if it overlaps with existing segments)
+		constexpr bool ignore_conflicts() const
+		{
+			return ignore_conflicts_;
 		}
 	};
 }

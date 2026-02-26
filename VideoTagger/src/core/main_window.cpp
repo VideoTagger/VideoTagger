@@ -265,9 +265,7 @@ namespace vt
 
 			if (!conflicting_segments.empty())
 			{
-				ctx_.segments_move_conflict_popup.conflicting_segments_ = conflicting_segments;
-				ctx_.segments_move_conflict_popup.move_request_event_data_.emplace(event.storage(), event.segments(), event.move_part(), event.move_offset());
-				ctx_.win_cfg.show_segments_move_conflict_popup = true;
+				ctx_.segments_move_conflict_popup = ui::new_popup<ui::segments_move_conflict_popup>(event, conflicting_segments);
 				return;
 			}
 
@@ -286,6 +284,25 @@ namespace vt
 
 		ctx_.add_event_listener<segment_insert_request_event>([](const segment_insert_request_event& event)
 		{
+			if (event.user_customization())
+			{
+				//TODO: tmp
+				ctx_.pause_player = true;
+
+				ctx_.dispatch_event<playback_changed_event>(main_event_source, ctx_.player, false);
+
+				auto max_ts = timestamp(std::chrono::duration_cast<std::chrono::milliseconds>(ctx_.displayed_videos.duration()));
+
+				ctx_.segment_insert_popup = ui::new_popup<ui::segment_insert_popup>(event, ctx_.current_project->displayed_tags, timestamp::zero(), max_ts);
+				return;
+			}
+
+			if (event.ignore_conflicts())
+			{
+				resolve_segment_insert_request_event(event, true);
+				return;
+			}
+
 			auto& storage = ctx_.get_current_segment_storage();
 			std::set<segment_id> conflicting_segments;
 			auto it = storage.find(event.tag());
@@ -299,9 +316,11 @@ namespace vt
 
 			if (!conflicting_segments.empty())
 			{
-				ctx_.segment_insert_conflict_popup.conflicting_segments_ = conflicting_segments;
-				ctx_.segment_insert_conflict_popup.insert_request_event_data_.emplace(event.storage(), event.tag(), event.start(), event.end());
-				ctx_.win_cfg.show_segment_insert_conflict_popup = true;
+				//TODO: tmp
+				ctx_.pause_player = true;
+
+				ctx_.dispatch_event<playback_changed_event>(main_event_source, ctx_.player, false);
+				ctx_.segment_insert_conflict_popup = ui::new_popup<ui::segment_insert_conflict_popup>(event, conflicting_segments);
 				return;
 			}
 
@@ -2703,35 +2722,36 @@ namespace vt
 			ctx_.script_progress.render(ctx_.win_cfg.show_script_progress);
 		}
 
-		if (ctx_.win_cfg.show_segments_move_conflict_popup)
+		if (ctx_.segments_move_conflict_popup != nullptr)
 		{
-			ctx_.segments_move_conflict_popup.open();
-			ctx_.segments_move_conflict_popup.render();
-			if (!ctx_.segments_move_conflict_popup.is_open())
+			ctx_.segments_move_conflict_popup->open();
+			ctx_.segments_move_conflict_popup->render();
+			if (!ctx_.segments_move_conflict_popup->is_open())
 			{
-				const auto& event_data = ctx_.segments_move_conflict_popup.move_request_event_data_;
-				if (event_data.has_value())
-				{
-					resolve_segments_move_request_event(*event_data, ctx_.segments_move_conflict_popup.accepted());
-				}
+				const auto& event_data = ctx_.segments_move_conflict_popup->move_request_event_data();
+				resolve_segments_move_request_event(event_data, ctx_.segments_move_conflict_popup->accepted());
 
-				ctx_.win_cfg.show_segments_move_conflict_popup = false;
+				ctx_.segments_move_conflict_popup.reset();
 			}
 		}
 
-		if (ctx_.win_cfg.show_segment_insert_conflict_popup)
+		if (ctx_.segment_insert_conflict_popup != nullptr)
 		{
-			ctx_.segment_insert_conflict_popup.open();
-			ctx_.segment_insert_conflict_popup.render();
-			if (!ctx_.segment_insert_conflict_popup.is_open())
+			ctx_.segment_insert_conflict_popup->open();
+			ctx_.segment_insert_conflict_popup->render();
+			if (!ctx_.segment_insert_conflict_popup->is_open())
 			{
-				const auto& event_data = ctx_.segment_insert_conflict_popup.insert_request_event_data_;
-				if (event_data.has_value())
-				{
-					resolve_segment_insert_request_event(*event_data, ctx_.segment_insert_conflict_popup.accepted());
-				}
+				ctx_.segment_insert_conflict_popup.reset();
+			}
+		}
 
-				ctx_.win_cfg.show_segment_insert_conflict_popup = false;
+		if (ctx_.segment_insert_popup != nullptr)
+		{
+			ctx_.segment_insert_popup->open();
+			ctx_.segment_insert_popup->render();
+			if (!ctx_.segment_insert_popup->is_open())
+			{
+				ctx_.segment_insert_popup.reset();
 			}
 		}
 

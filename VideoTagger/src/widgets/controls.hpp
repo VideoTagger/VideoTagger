@@ -12,6 +12,7 @@ namespace vt::widgets
 	extern bool begin_button_dropdown(const char* label, ImVec2 button_size, float popup_height = 0.0f);
 	extern void end_button_dropdown();
 
+	//TODO: min/max timestamp should be of type timestamp
 	extern bool timestamp_control(const std::string& name, timestamp& timestamp, uint64_t min_timestamp, uint64_t max_timestamp, bool* was_activated, bool* was_released, bool fill_area = true);
 	extern bool frame_dragger(int64_t& frame, bool& is_dragging);
 	

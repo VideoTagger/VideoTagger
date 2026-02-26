@@ -6,7 +6,7 @@
 
 namespace vt::ui
 {
-	timeline_ctx_menu_popup::timeline_ctx_menu_popup() : popup{ "Timeline Context Menu" }, segment_storage_{ nullptr }, event_source_{ "timeline" }
+	timeline_ctx_menu_popup::timeline_ctx_menu_popup() : popup{ /*ctx_.lang->get("popup.timeline_context_menu.title")*/ "TimelineContextMenu"}, segment_storage_{nullptr}, event_source_{"timeline"}
 	{
 	}
 
@@ -15,7 +15,7 @@ namespace vt::ui
 		if (segment_storage_ == nullptr) return;
 
 		//TODO: Add all option from the old menu, localization
-		if (!selected_segments_.empty() and ImGui::MenuItem("Delete selected segments"))
+		if (!selected_segments_.empty() and ImGui::MenuItem(ctx_.lang->get("popup.timeline_context_menu.delete_selected").c_str()))
 		{
 			for (auto& [tag, segments] : selected_segments_)
 			{
@@ -25,29 +25,33 @@ namespace vt::ui
 				}
 			}
 		}
-		if (ImGui::MenuItem("Add timestamp"))
+		if (ImGui::MenuItem(ctx_.lang->get("popup.timeline_context_menu.add_timestamp").c_str()))
 		{
-			ctx_.dispatch_event<segment_insert_request_event>(event_source_, *segment_storage_, active_tag_, active_position_, active_position_);
+			ctx_.dispatch_event<segment_insert_request_event>(event_source_, *segment_storage_, active_tag_, active_position_, true, false);
 		}
-		if (ImGui::MenuItem("Add segment"))
+		if (ImGui::MenuItem(ctx_.lang->get("popup.timeline_context_menu.add_segment").c_str()))
 		{
-			ctx_.dispatch_event<segment_insert_request_event>(*segment_storage_, active_tag_, active_position_, active_position_);
+			auto start = active_position_;
+			auto end = start + timestamp(tag_segment::default_segment_size);
+			ctx_.dispatch_event<segment_insert_request_event>(event_source_, *segment_storage_, active_tag_, start, end, true, false);
 		}
-		if (ImGui::MenuItem("Add timestamp at playhead"))
+		if (ImGui::MenuItem(ctx_.lang->get("popup.timeline_context_menu.add_timestamp_at_playhead").c_str()))
 		{
-
+			ctx_.dispatch_event<segment_insert_request_event>(event_source_, *segment_storage_, active_tag_, playhead_position_, true, false);
 		}
-		if (ImGui::MenuItem("Add segment at playhead"))
+		if (ImGui::MenuItem(ctx_.lang->get("popup.timeline_context_menu.add_segment_at_playhead").c_str()))
 		{
-
+			auto start = playhead_position_;
+			auto end = start + timestamp(tag_segment::default_segment_size);
+			ctx_.dispatch_event<segment_insert_request_event>(event_source_, *segment_storage_, active_tag_, start, end, true, false);
 		}
-		if (ImGui::MenuItem("Begin segment at playhead"))
+		if (ImGui::MenuItem(ctx_.lang->get("popup.timeline_context_menu.begin_segment_at_playhead").c_str()))
 		{
-
+			//TODO: implement
 		}
-		if (ImGui::MenuItem("End segment at playhead"))
+		if (ImGui::MenuItem(ctx_.lang->get("popup.timeline_context_menu.end_segment_at_playhead").c_str()))
 		{
-
+			//TODO: implement
 		}
 	}
 
