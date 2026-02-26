@@ -26,7 +26,11 @@ namespace vt::ui
 		if (segment_storage_ == nullptr) return;
 
 		//TODO: Add all option from the old menu, localization
-		if (ImGui::MenuItem("Delete selected"))
+		if (ImGui::MenuItem("Delete this segment"))
+		{
+			ctx_.dispatch_event<segment_delete_event>(*segment_storage_, active_tag_, active_segment_);
+		}
+		if (!selected_segments_.empty() and ImGui::MenuItem("Delete selected segments"))
 		{
 			for (auto& [tag, segments] : selected_segments_)
 			{

@@ -417,7 +417,7 @@ namespace vt::widgets
 				{
 
 				}
-				if (ImGui::IsItemHovered())
+				if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenBlockedByPopup))
 				{
 					is_hovering_segment_ = true;
 					hover_type = segment_hover_type::middle;
@@ -433,7 +433,7 @@ namespace vt::widgets
 					if (ImGui::InvisibleButton("##SegmentGrabLeft", grab_size, ImGuiButtonFlags_PressedOnClick))
 					{
 					}
-					if (ImGui::IsItemHovered())
+					if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenBlockedByPopup))
 					{
 						is_hovering_segment_ = true;
 						hover_type = segment_hover_type::start;
@@ -444,7 +444,7 @@ namespace vt::widgets
 					{
 
 					}
-					if (ImGui::IsItemHovered())
+					if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenBlockedByPopup))
 					{
 						is_hovering_segment_ = true;
 						hover_type = segment_hover_type::middle;
@@ -455,7 +455,7 @@ namespace vt::widgets
 					if (ImGui::InvisibleButton("##SegmentGrabRight", grab_size, ImGuiButtonFlags_PressedOnClick))
 					{
 					}
-					if (ImGui::IsItemHovered())
+					if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenBlockedByPopup))
 					{
 						is_hovering_segment_ = true;
 						hover_type = segment_hover_type::end;
@@ -473,14 +473,14 @@ namespace vt::widgets
 
 			if (!is_dragging_any_segment() and is_hovered)
 			{
-				if (ImGui::IsItemClicked(ImGuiMouseButton_Right))
+				if (ImGui::IsMouseClicked(ImGuiMouseButton_Right))
 				{
 					open_segment_ctx_menu_ = true;
 					segment_ctx_popup_->set_segment_storage(&storage);
 					segment_ctx_popup_->set_selected_segments(selected_segments_);
 					segment_ctx_popup_->set_active_segment(tag.name, current_segment_id);
 				}
-				else if (ImGui::IsItemHovered() and ImGui::IsMouseReleased(ImGuiMouseButton_Left))
+				else if (ImGui::IsMouseReleased(ImGuiMouseButton_Left))
 				{
 					if (!ImGui::IsKeyDown(ImGuiKey_ModCtrl))
 					{
@@ -1205,7 +1205,7 @@ namespace vt::widgets
 
 					if (!open_segment_ctx_menu_ and is_cell_hovered)
 					{
-						if (ImGui::IsMouseClicked(ImGuiMouseButton_Right))
+						if (!is_hovering_any_segment() and ImGui::IsMouseClicked(ImGuiMouseButton_Right))
 						{
 							float normalized_mouse_x = math::normalize(ImGui::GetMousePos().x, cell_rect->Min.x, cell_rect->Max.x, 0.f, 1.f);
 							timestamp mouse_timestamp = to_timestamp(normalized_mouse_x);
@@ -1215,6 +1215,7 @@ namespace vt::widgets
 							ctx_popup_->set_active_tag(tag);
 							ctx_popup_->set_selected_segments(selected_segments_);
 							ctx_popup_->set_active_position(mouse_timestamp);
+							ctx_popup_->set_playhead_position(state_.current_ts);
 						}
 						else if (!is_hovering_segment_ and ImGui::IsMouseClicked(ImGuiMouseButton_Left))
 						{

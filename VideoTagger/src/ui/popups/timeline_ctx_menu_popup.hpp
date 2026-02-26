@@ -11,6 +11,7 @@ namespace vt::ui
 		timeline_ctx_menu_popup();
 
 	private:
+		timestamp playhead_position_;
 		timestamp active_position_;
 		std::string active_tag_;
 		segment_storage* segment_storage_;
@@ -23,5 +24,6 @@ namespace vt::ui
 		void set_selected_segments(const segment_id_map& selected_segments);
 		void set_active_tag(const std::string& tag);
 		void set_active_position(timestamp ts);
+		void set_playhead_position(timestamp ts);
 	};
 }

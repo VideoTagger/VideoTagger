@@ -15,7 +15,7 @@ namespace vt::ui
 		if (segment_storage_ == nullptr) return;
 
 		//TODO: Add all option from the old menu, localization
-		if (ImGui::MenuItem("Delete selected"))
+		if (!selected_segments_.empty() and ImGui::MenuItem("Delete selected segments"))
 		{
 			for (auto& [tag, segments] : selected_segments_)
 			{
@@ -25,9 +25,29 @@ namespace vt::ui
 				}
 			}
 		}
-		if (ImGui::MenuItem("New segment"))
+		if (ImGui::MenuItem("Add timestamp"))
 		{
 			ctx_.dispatch_event<segment_insert_request_event>(*segment_storage_, active_tag_, active_position_, active_position_);
+		}
+		if (ImGui::MenuItem("Add segment"))
+		{
+			ctx_.dispatch_event<segment_insert_request_event>(*segment_storage_, active_tag_, active_position_, active_position_);
+		}
+		if (ImGui::MenuItem("Add timestamp at playhead"))
+		{
+
+		}
+		if (ImGui::MenuItem("Add segment at playhead"))
+		{
+
+		}
+		if (ImGui::MenuItem("Begin segment at playhead"))
+		{
+
+		}
+		if (ImGui::MenuItem("End segment at playhead"))
+		{
+
 		}
 	}
 
@@ -49,5 +69,10 @@ namespace vt::ui
 	void timeline_ctx_menu_popup::set_active_position(timestamp ts)
 	{
 		active_position_ = ts;
+	}
+
+	void timeline_ctx_menu_popup::set_playhead_position(timestamp ts)
+	{
+		playhead_position_ = ts;
 	}
 }
