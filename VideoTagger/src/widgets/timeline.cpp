@@ -971,11 +971,11 @@ namespace vt::widgets
 	{
 		for (const auto& [tag_name, segments] : selected_segments_)
 		{
-			for (auto it = segments.begin(); it != segments.end();)
+			for (auto segments_it = segments.begin(); segments_it != segments.end();)
 			{
-				auto next_it = std::next(it);
-				ctx_.dispatch_event<segment_deselect_event>(event_source_, storage, tag_name, *it);
-				it = next_it;
+				auto next_it = std::next(segments_it);
+				ctx_.dispatch_event<segment_deselect_event>(event_source_, storage, tag_name, *segments_it);
+				segments_it = next_it;
 			}
 		}
 	}

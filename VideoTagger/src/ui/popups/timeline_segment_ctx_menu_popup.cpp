@@ -14,6 +14,16 @@ namespace vt::ui
 	{
 	}
 
+	bool timeline_segment_ctx_menu_popup::any_segment_selected() const
+	{
+		for (const auto& [tag, segments] : selected_segments_)
+		{
+			if (!segments.empty()) return true;
+		}
+
+		return false;
+	}
+
 	void timeline_segment_ctx_menu_popup::on_display()
 	{
 		if (active_segment_ == invalid_segment_id or segment_storage_ == nullptr) return;
@@ -31,7 +41,7 @@ namespace vt::ui
 		{
 			ctx_.dispatch_event<segment_delete_event>(event_source_, *segment_storage_, active_tag_, active_segment_);
 		}
-		if (!selected_segments_.empty() and ImGui::MenuItem(ctx_.lang->get("popup.timeline_segment_context_menu.delete_selected").c_str()))
+		if (any_segment_selected() and ImGui::MenuItem(ctx_.lang->get("popup.timeline_segment_context_menu.delete_selected").c_str()))
 		{
 			for (auto& [tag, segments] : selected_segments_)
 			{

@@ -20,6 +20,8 @@ namespace vt::ui
 		event_source event_source_;
 		timestamp playhead_position_;
 
+		bool any_segment_selected() const;
+
 	public:
 		virtual void on_display() override;
 		virtual void on_render() override;

@@ -19,6 +19,8 @@ namespace vt::ui
 		segment_id_map selected_segments_;
 		event_source event_source_;
 
+		bool any_segment_selected() const;
+
 	public:
 		virtual void on_render() override;
 
