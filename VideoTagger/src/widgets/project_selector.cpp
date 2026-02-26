@@ -114,10 +114,10 @@ namespace vt::widgets
 				temp_project.save();
 				projects_.push_back(temp_project);
 
-				ctx_.dispatch_event<project_list_changed_event>();
+				ctx_.dispatch_event<project_list_changed_event>(event_source_);
 				ImGui::CloseCurrentPopup();
 
-				ctx_.dispatch_event<open_project_event>(temp_project);
+				ctx_.dispatch_event<open_project_event>(event_source_, temp_project);
 			}
 
 			ImGui::EndPopup();
@@ -148,7 +148,7 @@ namespace vt::widgets
 		}
 		if (ImGui::Selectable("##ProjectListSelectable", false, ImGuiSelectableFlags_AllowItemOverlap | ImGuiSelectableFlags_SpanAllColumns, size))
 		{
-			ctx_.dispatch_event<open_project_event>(project);
+			ctx_.dispatch_event<open_project_event>(event_source_, project);
 		}
 		if (ImGui::IsItemHovered())
 		{
@@ -228,7 +228,7 @@ namespace vt::widgets
 				if (ImGui::MenuItem(menu_name.c_str()))
 				{
 					projects_.erase(std::find(projects_.begin(), projects_.end(), project));
-					ctx_.dispatch_event<project_list_changed_event>();
+					ctx_.dispatch_event<project_list_changed_event>(event_source_);
 				}
 			}
 			{
@@ -262,7 +262,7 @@ namespace vt::widgets
 							if (std::filesystem::remove(project.path, ec))
 							{
 								projects_.erase(std::find(projects_.begin(), projects_.end(), project));
-								ctx_.dispatch_event<project_list_changed_event>();
+								ctx_.dispatch_event<project_list_changed_event>(event_source_);
 							}
 							else
 							{
@@ -317,7 +317,7 @@ namespace vt::widgets
 		{
 			projects_[i] = project_info::load_from_file(list[i]);
 		}
-		ctx_.dispatch_event<project_list_changed_event>();
+		ctx_.dispatch_event<project_list_changed_event>(event_source_);
 	}
 
 	void project_selector::save_projects_file(const std::filesystem::path& filepath)
@@ -465,7 +465,7 @@ namespace vt::widgets
 									if (it == projects_.end())
 									{
 										projects_.push_back(project_info::load_from_file(result.path));
-										ctx_.dispatch_event<project_list_changed_event>();
+										ctx_.dispatch_event<project_list_changed_event>(event_source_);
 									}
 									else
 									{

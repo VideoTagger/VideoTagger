@@ -1,6 +1,7 @@
 #pragma once
 #include <tags/tag_timeline.hpp>
 #include <ui/popup.hpp>
+#include <events/event_source.hpp>
 
 namespace vt::ui
 {
@@ -16,6 +17,7 @@ namespace vt::ui
 		segment_id active_segment_;
 		segment_id_map selected_segments_;
 		tag_segment_type active_segment_type_;
+		event_source event_source_;
 
 	public:
 		virtual void on_display() override;

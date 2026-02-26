@@ -1,6 +1,7 @@
 #pragma once
 #include <vector>
 #include <core/project.hpp>
+#include <events/event_source.hpp>
 
 namespace vt::widgets
 {
@@ -15,6 +16,7 @@ namespace vt::widgets
 		bool path_from_name = true;
 		std::vector<project_info> projects_;
 		project_info temp_project;
+		event_source event_source_{ "project_selector" };
 
 	private:
 		void render_project_creation_menu();

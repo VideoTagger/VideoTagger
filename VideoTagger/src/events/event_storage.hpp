@@ -13,6 +13,8 @@ namespace vt
 {
 	/**
 	 * @brief Holds event dispatchers for different event types
+	 * 
+	 * @ingroup events Events
 	 */
 	struct event_storage
 	{
@@ -63,11 +65,13 @@ namespace vt
 		/**
 		 * @brief Dispatches an event of a specific type constructed from the provided arguments
 		 */
-		template<typename event_type, typename... arguments, typename = std::enable_if_t<std::is_constructible_v<event_type, arguments...> and std::is_base_of_v<event, event_type>>>
-		constexpr void dispatch_event(arguments&&... args)
+		template<typename event_type, typename event_source_id_type, typename... arguments, typename = std::enable_if_t<std::is_constructible_v<event_source, event_source_id_type> and std::is_constructible_v<event_type, arguments...> and std::is_base_of_v<event, event_type>>>
+		constexpr void dispatch_event(const event_source_id_type& source, arguments&&... args)
 		{
 			auto& dispatcher = get_event_dispatcher<event_type>();
-			dispatcher.dispatch_event(std::forward<arguments>(args)...);
+			auto event = event_type(std::forward<arguments>(args)...);
+			event.set_source({ source });
+			dispatcher.dispatch_event(std::move(event));
 		}
 	};
 }
