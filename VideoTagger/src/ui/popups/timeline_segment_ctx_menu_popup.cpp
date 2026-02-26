@@ -41,6 +41,8 @@ namespace vt::ui
 				}
 			}
 		}
+
+		auto& player = ctx_.get_window<widgets::video_player>();
 		if (active_segment_type_ == tag_segment_type::segment)
 		{
 			if (ui::begin_menu(ctx_.lang->get("popup.timeline_segment_context_menu.convert_to_timestamp").c_str()))
@@ -93,12 +95,12 @@ namespace vt::ui
 				if (ImGui::MenuItem(ctx_.lang->get("popup.timeline_segment_context_menu.seek.start").c_str()))
 				{
 					const auto& segment = segment_storage_->at(active_tag_).at(active_segment_);
-					ctx_.dispatch_event<seek_event>(event_source_, ctx_.player, segment.start.total_milliseconds);
+					ctx_.dispatch_event<seek_event>(event_source_, player, segment.start.total_milliseconds);
 				}
 				if (ImGui::MenuItem(ctx_.lang->get("popup.timeline_segment_context_menu.seek.end").c_str()))
 				{
 					const auto& segment = segment_storage_->at(active_tag_).at(active_segment_);
-					ctx_.dispatch_event<seek_event>(event_source_, ctx_.player, segment.end.total_milliseconds);
+					ctx_.dispatch_event<seek_event>(event_source_, player, segment.end.total_milliseconds);
 				}
 
 				ui::end_menu();
@@ -122,7 +124,7 @@ namespace vt::ui
 			if (ImGui::MenuItem(ctx_.lang->get("popup.timeline_segment_context_menu.seek_timestamp").c_str()))
 			{
 				const auto& segment = segment_storage_->at(active_tag_).at(active_segment_);
-				ctx_.dispatch_event<seek_event>(event_source_, ctx_.player, segment.start.total_milliseconds);
+				ctx_.dispatch_event<seek_event>(event_source_, player, segment.start.total_milliseconds);
 			}
 		}
 	}

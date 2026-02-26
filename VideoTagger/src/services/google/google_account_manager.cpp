@@ -105,9 +105,10 @@ namespace vt
 		auto result = refresh_access_token(properties.at("client_id"), properties.at("client_secret"), properties.at("refresh_token"));
 		if (!result.has_value())
 		{
+			auto& console = ctx_.get_window<widgets::console>();
 			debug::error("Failed to refresh access token for service {}", service_id());
 			account_info_.properties = properties;
-			ctx_.console.add_entry(widgets::console::entry::flag_type::error, "Google account: failed to log in", widgets::console::entry::source_info{ "VideoTagger", -1 });
+			console.add_entry(widgets::console::entry::flag_type::error, "Google account: failed to log in", widgets::console::entry::source_info{ "VideoTagger", -1 });
 			return;
 		}
 

@@ -5,10 +5,11 @@
 #include <memory>
 #include <type_traits>
 #include <ui/popup.hpp>
+#include <utils/vec.hpp>
 
 namespace vt
 {
-	struct app_window_config
+	struct system_window_config
 	{
 		int window_width{};
 		int window_height{};
@@ -18,11 +19,11 @@ namespace vt
 		bool is_tool{};
 	};
 
-	class app_window
+	class system_window
 	{
 	public:
-		app_window(const app_window_config& cfg);
-		~app_window();
+		system_window(const system_window_config& cfg);
+		~system_window();
 
 	public:
 		SDL_Window* window{};
@@ -39,6 +40,19 @@ namespace vt
 
 		void build_fonts(float size);
 		void render();
+
+		void set_position(const utils::vec2<int>& position);
+		void set_size(const utils::vec2<int>& size);
+		void center();
+		void maximize();
+		void minimize();
+		void restore();
+
+		utils::vec2<int> position() const;
+		utils::vec2<int> size() const;
+
+		bool operator==(const system_window& other) const;
+
 		virtual void draw() = 0;
 		virtual void handle_event(const SDL_Event& event);
 	};

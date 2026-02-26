@@ -5,9 +5,45 @@
 #include <services/google/google_account_manager.hpp>
 #include <video/local_video_importer.hpp>
 #include <video/google_drive/google_drive_video_importer.hpp>
+#include <widgets/theme_customizer.hpp>
 
 namespace vt
 {
+	app_context::app_context()
+	{
+		create_windows();
+	}
+
+	void app_context::create_windows()
+	{
+		create_window<widgets::theme_customizer>();
+		auto& console = create_window<widgets::console>();
+		console.set_opened(true);
+		console.set_scripts_path(ctx_.script_dir_filepath);
+
+		auto& group_queue = create_window<widgets::video_group_queue>();
+		group_queue.set_opened(true);
+
+		auto& localization_editor = create_window<widgets::localization_editor>();
+		//TODO: Remove this when localization editor is openable via the menu bar
+		localization_editor.set_opened(true);
+
+		auto& shape_attributes = create_window<widgets::shape_attributes>();
+		shape_attributes.set_opened(true);
+
+		auto& group_browser = create_window<widgets::video_group_browser>();
+		group_browser.set_opened(true);
+
+		auto& player = create_window<widgets::video_player>();
+		player.set_opened(true);
+
+		auto& timeline = create_window<widgets::timeline>();
+		timeline.set_opened(true);
+
+		auto& video_browser = create_window<widgets::video_browser>();
+		video_browser.set_opened(true);
+	}
+
 	void app_context::register_account_managers()
 	{
 		register_account_manager<google_account_manager>();
@@ -220,10 +256,9 @@ namespace vt
 
 	void app_context::run_script(const std::filesystem::path& script_path)
 	{
-		if (ctx_.app_settings.clear_console_on_run)
-		{
-			ctx_.console.clear();
-		}
+		auto& console = ctx_.get_window<widgets::console>();
+		console.on_run_script();
+
 		ctx_.script_eng.run(script_path);
 		ctx_.win_cfg.show_script_progress = true;
 	}

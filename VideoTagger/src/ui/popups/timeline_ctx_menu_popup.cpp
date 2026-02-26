@@ -47,11 +47,11 @@ namespace vt::ui
 		}
 		if (ImGui::MenuItem(ctx_.lang->get("popup.timeline_context_menu.begin_segment_at_playhead").c_str()))
 		{
-			//TODO: implement
+			//TODO: implementation
 		}
 		if (ImGui::MenuItem(ctx_.lang->get("popup.timeline_context_menu.end_segment_at_playhead").c_str()))
 		{
-			//TODO: implement
+			//TODO: implementation
 		}
 	}
 

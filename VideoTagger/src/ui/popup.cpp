@@ -37,6 +37,7 @@ namespace vt::ui
 
 	void popup::on_close()
 	{
+
 	}
 
     void popup::open_and_render(bool condition, ImGuiPopupFlags flags)

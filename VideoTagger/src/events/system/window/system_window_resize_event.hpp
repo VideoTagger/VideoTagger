@@ -1,13 +1,13 @@
 #pragma once
-#include "window_event.hpp"
+#include "system_window_event.hpp"
 #include <utils/vec.hpp>
 
 namespace vt
 {
-	struct window_resize_event : public window_event
+	struct system_window_resize_event : public system_window_event
 	{
 	public:
-		constexpr window_resize_event(app_window& window, utils::vec2<uint32_t> size) : window_event{ window }, size_{ size } {}
+		constexpr system_window_resize_event(system_window& window, utils::vec2<uint32_t> size) : system_window_event{ window }, size_{ size } {}
 
 	private:
 		utils::vec2<uint32_t> size_;

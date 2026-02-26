@@ -1,4 +1,5 @@
 #pragma once
+#include <pch.hpp>
 #include <optional>
 #include <memory>
 #include <filesystem>
@@ -27,7 +28,6 @@
 #include <widgets/video_browser.hpp>
 #include <widgets/video_group_browser.hpp>
 #include <widgets/video_group_queue.hpp>
-#include <widgets/theme_customizer.hpp>
 #include <widgets/shape_attributes.hpp>
 #include <widgets/console.hpp>
 #include <ui/popups/options_popup.hpp>
@@ -45,6 +45,7 @@
 #include <ui/popups/segment_insert_conflict_popup.hpp>
 #include <ui/popups/segment_insert_popup.hpp>
 
+#include <ui/window_registry.hpp>
 #include <events/event_storage.hpp>
 
 namespace vt
@@ -70,7 +71,6 @@ namespace vt
 		bool link_start_end_segment = true;
 		bool autoplay = true;
 		bool load_thumbnails = true;
-		bool clear_console_on_run = true;
 		bool enable_undocking = true;
 		bool enable_gizmo_scaling = false;
 	};
@@ -80,18 +80,11 @@ namespace vt
 		//serialized
 		window_state state = window_state::normal;
 		bool show_inspector_window = true;
-		bool show_shape_attributes_window = true;
 		bool show_tag_manager_window = true;
 		bool show_timeline_window = true;
-		bool show_video_player_window = true;
-		bool show_video_browser_window = true;
-		bool show_video_group_browser_window = true;
-		bool show_video_group_queue_window = true;
-		bool show_console_window = true;
 
 		//not serialized
 		bool show_options_window = false;
-		bool show_theme_customizer_window = false;
 		bool show_about_window = false;
 		bool show_tag_importer_window = false;
 		bool show_script_progress = false;
@@ -110,22 +103,14 @@ namespace vt
 	};
 
 	///@brief Application context that holds all states and necessary data
-	struct app_context : public event_storage
+	struct app_context : public event_storage, ui::window_registry
 	{
 		static constexpr auto valid_video_extensions = std::array{ "mp4", "mkv", "avi", "mov", "flv", "wmv", "webm", "m4v", "mpg", "mpeg", "3gp", "ogv", "vob", "mts", "m2ts", "mxf", "f4v", "divx", "rmvb", "asf", "swf" };
+		app_context();
 
 		std::optional<project> current_project;
 		widgets::video_timeline video_timeline;
-		widgets::timeline timeline;
 		widgets::project_selector project_selector;
-		widgets::video_player player;
-		widgets::video_browser browser;
-		widgets::video_group_browser group_browser;
-		widgets::video_group_queue group_queue;
-		widgets::theme_customizer theme_customizer;
-		widgets::shape_attributes shape_attributes;
-		widgets::console console;
-		widgets::localization_editor localization_editor;
 		ui::options_popup options{ &win_cfg.show_options_window };
 		widgets::modal::script_progress script_progress;
 		widgets::color_picker color_picker;
@@ -177,6 +162,8 @@ namespace vt
 		bool reset_player_docking{};
 
 		bool pause_player = false;
+
+		void create_windows();
 		
 		template<typename service_account_manager_type>
 		void register_account_manager();

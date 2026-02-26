@@ -1,7 +1,7 @@
 #pragma once
 #include <chrono>
 #include <functional>
-#include <imgui_internal.h>
+#include <ui/window.hpp>
 
 namespace vt
 {
@@ -33,7 +33,7 @@ namespace vt
 
 namespace vt::widgets
 {
-	class video_player
+	class video_player : public ui::window
 	{
 	public:
 		video_player();
@@ -42,7 +42,6 @@ namespace vt::widgets
 		video_player_data data_;
 		size_t dock_window_count_;
 		float speed_;
-		bool is_visible_;
 		bool is_playing_;
 		loop_mode loop_mode_;
 
@@ -52,17 +51,17 @@ namespace vt::widgets
 	public:
 		void update_data(video_player_data data, bool is_playing);
 		void reset_data();
-		void render();
 		void dock_windows(size_t count);
 		const video_player_data& data() const;
 
 		void set_loop_mode(loop_mode value);
 		void set_playing(bool value);
 
-		bool is_visible() const;
 		bool is_playing() const;
 		loop_mode loop_mode() const;
 
-		static std::string window_name();
+		virtual void pre_style() override;
+		virtual void post_style() override;
+		virtual void on_render() override;
 	};
 }

@@ -13,15 +13,15 @@ namespace vt::ui
 
 		if (ImGui::SmallButton("Show All"))
 		{
-			size_t tags_size = visible_tags_.size();
+			size_t tags_size = displayed_tags_.size();
 
-			visible_tags_.clear();
+			displayed_tags_.clear();
 			for (const auto& tag : *tags_)
 			{
-				visible_tags_.push_back(tag.name);
+				displayed_tags_.push_back(tag.name);
 			}
 
-			if (visible_tags_.size() != tags_size)
+			if (displayed_tags_.size() != tags_size)
 			{
 				tags_modified_ = true;
 			}
@@ -29,12 +29,12 @@ namespace vt::ui
 		ImGui::SameLine();
 		if (ImGui::SmallButton("Hide All"))
 		{
-			if (!visible_tags_.empty())
+			if (!displayed_tags_.empty())
 			{
 				tags_modified_ = true;
 			}
 
-			visible_tags_.clear();
+			displayed_tags_.clear();
 		}
 		ImGui::SameLine();
 		if (ImGui::SmallButton("Toggle All"))
@@ -42,11 +42,11 @@ namespace vt::ui
 			std::vector<std::string> new_tags;
 			for (const auto& tag : *tags_)
 			{
-				if (std::find(visible_tags_.begin(), visible_tags_.end(), tag.name) != visible_tags_.end()) continue;
+				if (std::find(displayed_tags_.begin(), displayed_tags_.end(), tag.name) != displayed_tags_.end()) continue;
 				new_tags.push_back(tag.name);
 			}
 			tags_modified_ = true;
-			set_visible_tags(new_tags);
+			set_displayed_tags(new_tags);
 		}
 
 		if (ImGui::BeginChild("##TagList", { ImGui::GetContentRegionAvail().x, 150 }))
@@ -57,8 +57,8 @@ namespace vt::ui
 				for (const auto& tag : *tags_)
 				{
 					ImGui::TableNextColumn();
-					auto it = std::lower_bound(visible_tags_.begin(), visible_tags_.end(), tag.name);
-					bool visible = it != visible_tags_.end() and *it == tag.name;
+					auto it = std::lower_bound(displayed_tags_.begin(), displayed_tags_.end(), tag.name);
+					bool visible = it != displayed_tags_.end() and *it == tag.name;
 
 					auto name = (visible ? icons::visibility_on : icons::visibility_off) + std::string(" ") + tag.name;
 					if (!visible) ImGui::PushStyleColor(ImGuiCol_Text, style.Colors[ImGuiCol_TextDisabled]);
@@ -66,12 +66,12 @@ namespace vt::ui
 					{
 						if (visible)
 						{
-							visible_tags_.erase(it);
+							displayed_tags_.erase(it);
 							tags_modified_ = true;
 						}
 						else
 						{
-							visible_tags_.insert(it, tag.name);
+							displayed_tags_.insert(it, tag.name);
 							tags_modified_ = true;
 						}
 					}
@@ -88,14 +88,14 @@ namespace vt::ui
 		tags_ = tags;
 	}
 
-	void timeline_menu_popup::set_visible_tags(const std::vector<std::string>& visible_tags)
+	void timeline_menu_popup::set_displayed_tags(const std::vector<std::string>& displayed_tags)
 	{
-		visible_tags_ = visible_tags;
+		displayed_tags_ = displayed_tags;
 	}
 	
-	const std::vector<std::string>& timeline_menu_popup::visible_tags() const
+	const std::vector<std::string>& timeline_menu_popup::displayed_tags() const
 	{
-		return visible_tags_;
+		return displayed_tags_;
 	}
 
 	bool vt::ui::timeline_menu_popup::tags_modified() const

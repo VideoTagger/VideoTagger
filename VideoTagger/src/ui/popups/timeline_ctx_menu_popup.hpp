@@ -22,6 +22,7 @@ namespace vt::ui
 	public:
 		virtual void on_render() override;
 
+		//TODO: maybe add a single function to set all these
 		void set_segment_storage(segment_storage* storage);
 		void set_selected_segments(const segment_id_map& selected_segments);
 		void set_active_tag(const std::string& tag);

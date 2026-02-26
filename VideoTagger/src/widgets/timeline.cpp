@@ -47,8 +47,10 @@ namespace vt::widgets
 		}
 	}
 
-	timeline::timeline() /*: zoom_slider_{ 1.f, 5.f, 1.f }*/ : event_source_{ "timeline" }
+	timeline::timeline() /*: zoom_slider_{ 1.f, 5.f, 1.f }*/ : ui::window{ "Timelinev2", "timeline", "Timeline", ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse }, event_source_{"timeline"}
 	{
+		set_icon(icons::timeline);
+
 		preview_scrollbar_.set_pannable(true);
 		playback_scrollbar_.set_on_change_callback([this](int64_t old_ts, int64_t ts)
 		{
@@ -479,6 +481,7 @@ namespace vt::widgets
 					segment_ctx_popup_->set_segment_storage(&storage);
 					segment_ctx_popup_->set_selected_segments(selected_segments_);
 					segment_ctx_popup_->set_active_segment(tag.name, current_segment_id);
+					segment_ctx_popup_->set_playhead_position(state_.current_ts);
 				}
 				else if (ImGui::IsMouseReleased(ImGuiMouseButton_Left))
 				{
@@ -1006,262 +1009,282 @@ namespace vt::widgets
 		return state_;
 	}
 
-	void timeline::render(bool& is_open, segment_storage& segments, tag_storage& tags, std::vector<std::string>& visible_tags)
+	void timeline::pre_style()
 	{
+		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2{});
+	}
+
+	void timeline::post_style()
+	{
+		ImGui::PopStyleVar();
+	}
+
+	void timeline::on_render()
+	{
+		if (ctx_.current_video_group_id() == invalid_video_group_id) return;
+
+		auto& segments = ctx_.current_project->video_groups.at(ctx_.current_video_group_id()).segments();
+		auto& tags = ctx_.current_project->tags;
+		auto& displayed_tags = ctx_.current_project->displayed_tags;
+
 		const auto& style = ImGui::GetStyle();
 		const auto& theme = ctx_.current_theme;
 		const auto tag_col_color = theme.get_rgba(theme_color::background_secondary);
 		const auto tag_col_color_hovered = ImGui::ColorConvertFloat4ToU32(ImGui::GetStyleColorVec4(ImGuiCol_TableRowBgAlt));
 
-		auto win_name = window_name();
-		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2{});
-		//ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2{ style.WindowPadding.x, 0.f });
-		auto win_open = ImGui::Begin(win_name.c_str(), &is_open, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
+		auto win_pos = ImGui::GetWindowPos();
+
+		ui::toggle("Enabled", enabled_);
+
+		/*
+		ImGui::SameLine();
+		static constexpr auto accent_color = ImVec4{ 0.2588f, 0.6f, 0.8784f, 1.f };
+		static constexpr auto accent_color_hover = ImVec4{ 0.2f, 0.5098f, 0.7804f, 1.f };
+		ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 4.f);
+		ImGui::PushStyleColor(ImGuiCol_SliderGrab, accent_color_hover);
+		ImGui::PushStyleColor(ImGuiCol_SliderGrabActive, accent_color);
+		zoom_slider_.set_size({ ImGui::GetContentRegionAvail().x - 2 * style.WindowPadding.x, ImGui::GetFrameHeight() });
+		zoom_slider_.render();
+		ImGui::PopStyleVar();
+		ImGui::PopStyleColor(2);
+		*/
+
+		//ImGui::BeginDisabled(zoom_slider_.value() <= 1.f);
+		draw_scrollbar(segments, tags);
+		//ImGui::EndDisabled();
+		//-------------
+		ImGui::Separator();
+
+		ImGui::PushStyleVar(ImGuiStyleVar_CellPadding, ImVec2{});
+		auto is_open = ImGui::BeginTable("##TimelineSplitter", 2, ImGuiTableFlags_NoSavedSettings | ImGuiTableFlags_Resizable | ImGuiTableFlags_BordersInner | ImGuiTableFlags_ScrollY, ImGui::GetContentRegionAvail());
 		ImGui::PopStyleVar();
 
-		if (win_open)
+		if (is_open)
 		{
-			auto win_pos = ImGui::GetWindowPos();
-
-			ui::toggle("Enabled", enabled_);
-
-			/*
-			ImGui::SameLine();
-			static constexpr auto accent_color = ImVec4{ 0.2588f, 0.6f, 0.8784f, 1.f };
-			static constexpr auto accent_color_hover = ImVec4{ 0.2f, 0.5098f, 0.7804f, 1.f };
-			ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 4.f);
-			ImGui::PushStyleColor(ImGuiCol_SliderGrab, accent_color_hover);
-			ImGui::PushStyleColor(ImGuiCol_SliderGrabActive, accent_color);
-			zoom_slider_.set_size({ ImGui::GetContentRegionAvail().x - 2 * style.WindowPadding.x, ImGui::GetFrameHeight() });
-			zoom_slider_.render();
-			ImGui::PopStyleVar();
-			ImGui::PopStyleColor(2);
-			*/
-
-			//ImGui::BeginDisabled(zoom_slider_.value() <= 1.f);
-			draw_scrollbar(segments, tags);
-			//ImGui::EndDisabled();
-			//-------------
-			ImGui::Separator();
-
-			ImGui::PushStyleVar(ImGuiStyleVar_CellPadding, ImVec2{});
-			auto is_open = ImGui::BeginTable("##TimelineSplitter", 2, ImGuiTableFlags_NoSavedSettings | ImGuiTableFlags_Resizable | ImGuiTableFlags_BordersInner | ImGuiTableFlags_ScrollY, ImGui::GetContentRegionAvail());
-			ImGui::PopStyleVar();
-
-			if (is_open)
+			auto& player = ctx_.get_window<widgets::video_player>();
+			if (view_follow_playhead_ and state_.current_ts != state_.previous_ts and player.is_playing())
 			{
-				if (view_follow_playhead_ and state_.current_ts != state_.previous_ts and ctx_.player.is_playing())
+				auto view_length = timestamp{ visible_time_span().length() };
+				auto new_view_start = state_.current_ts - view_length / 2;
+				auto new_view_end = new_view_start + view_length;
+				if (new_view_start < state_.min_ts)
 				{
-					auto view_length = timestamp{ visible_time_span().length() };
-					auto new_view_start = state_.current_ts -  view_length / 2;
-					auto new_view_end = new_view_start + view_length;
-					if (new_view_start < state_.min_ts)
-					{
-						new_view_start = state_.min_ts;
-						new_view_end = new_view_start + view_length;
-					}
-					else if (new_view_end > state_.max_ts)
-					{
-						new_view_end = state_.max_ts;
-						new_view_start = new_view_end - view_length;
-					}
-
-					view_ts_.start = new_view_start;
-					view_ts_.end = new_view_end;
+					new_view_start = state_.min_ts;
+					new_view_end = new_view_start + view_length;
+				}
+				else if (new_view_end > state_.max_ts)
+				{
+					new_view_end = state_.max_ts;
+					new_view_start = new_view_end - view_length;
 				}
 
-				ImGui::TableSetupColumn(nullptr, ImGuiTableColumnFlags_WidthStretch, 0.15f);
-				ImGui::TableSetupColumn(nullptr, ImGuiTableColumnFlags_WidthStretch);
-				ImGui::TableSetupScrollFreeze(1, 1);
+				view_ts_.start = new_view_start;
+				view_ts_.end = new_view_end;
+			}
+
+			ImGui::TableSetupColumn(nullptr, ImGuiTableColumnFlags_WidthStretch, 0.15f);
+			ImGui::TableSetupColumn(nullptr, ImGuiTableColumnFlags_WidthStretch);
+			ImGui::TableSetupScrollFreeze(1, 1);
+
+			ImGui::TableNextRow();
+			ImGui::TableNextColumn();
+			ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, tag_col_color);
+
+			ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2{});
+			//icon bar
+			{
+				ImGui::BeginDisabled(menu_popup_->is_open());
+				if (ui::icon_button(icons::dots_hor))
+				{
+					menu_popup_->set_displayed_tags(displayed_tags);
+					menu_popup_->set_tag_storage(&tags);
+					menu_popup_->open();
+				}
+				ImGui::EndDisabled();
+				ImGui::SameLine();
+
+				if (ui::icon_button(icons::chevron_left_right))
+				{
+					view_ts_.start = state_.min_ts;
+					view_ts_.end = state_.max_ts;
+				}
+				ui::tooltip("Fit Timeline");
+
+				ImGui::SameLine();
+				if (ui::icon_toggle_button(icons::pin, icons::pin_off, view_follow_playhead_))
+				{
+					view_follow_playhead_ = !view_follow_playhead_;
+				}
+				ui::tooltip(fmt::format("Follow Playhead: {}", view_follow_playhead_ ? "On" : "Off"));
+			}
+			ImGui::PopStyleVar();
+
+			menu_popup_->render();
+			if (menu_popup_->tags_modified())
+			{
+				displayed_tags = menu_popup_->displayed_tags();
+				//TODO: Mark project dirty
+			}
+
+			ImGui::TableNextColumn();
+			auto cell_rect = get_cell_rect();
+			//ImGui::TextUnformatted("00:00:00");
+
+			auto [start, end] = visible_time_span();
+			playback_scrollbar_.set_range(start.total_milliseconds.count(), end.total_milliseconds.count());
+			playback_scrollbar_.set_value(state_.current_ts.total_milliseconds.count());
+			playback_scrollbar_.set_size(cell_rect->GetSize());
+			playback_scrollbar_.render_disabled(!enabled_);
+
+
+			//draw_cell_debug_rect(zoom_);
+			draw_time_intervals(true);
+			draw_time_intervals(false);
+
+			//draw mouse time tooltip
+			if (enabled_ and cell_rect.has_value())
+			{
+				const auto& rect = cell_rect.value();
+				if (ImGui::IsMouseHoveringRect(rect.Min, rect.Max))
+				{
+					auto mouse_pos_x = ImGui::GetMousePos().x;
+					float normalized_mouse_x = math::normalize(mouse_pos_x, cell_rect->Min.x, cell_rect->Max.x, 0.f, 1.f);
+					timestamp mouse_timestamp = to_timestamp(normalized_mouse_x);
+					auto ts_str = utils::time::time_to_string(mouse_timestamp.total_milliseconds.count());
+					ui::tooltip(ts_str);
+
+					if (!playback_scrollbar_.is_dragged())
+					{
+						auto draw_list = ImGui::GetWindowDrawList();
+						ImVec2 start{ mouse_pos_x, rect.Min.y };
+						ImVec2 end{ start.x, rect.Max.y };
+						draw_list->AddLine(start, end, ctx_.current_theme.get_rgba(theme_color::playhead_normal), 1.f);
+					}
+				}
+			}
+
+			//The playhead has to be drawn two times, since it won't be visible on the interval bar when tags are scrolled otherwise
+			draw_playhead();
+
+			auto tag_indent_size = style.IndentSpacing * 0.5f;
+
+			for (auto& tag : displayed_tags)
+			{
+				auto& timeline = segments[tag];
+
+				auto tag_it = tags.find(tag);
+				if (tag_it == tags.end())
+				{
+					//TODO: Should that tag be discarded?
+					continue;
+				}
 
 				ImGui::TableNextRow();
-				ImGui::TableNextColumn();
-				ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, tag_col_color);
-
-				ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2{});
-				//icon bar
+				if (enabled_)
 				{
-					ImGui::BeginDisabled(menu_popup_->is_open());
-					if (ui::icon_button(icons::dots_hor))
-					{
-						menu_popup_->set_visible_tags(visible_tags);
-						menu_popup_->set_tag_storage(&tags);
-						menu_popup_->open();
-					}
-					ImGui::EndDisabled();
-					ImGui::SameLine();
-
-					if (ui::icon_button(icons::chevron_left_right))
-					{
-						view_ts_.start = state_.min_ts;
-						view_ts_.end = state_.max_ts;
-					}
-					ui::tooltip("Fit Timeline");
-
-					ImGui::SameLine();
-					if (ui::icon_toggle_button(icons::pin, icons::pin_off, view_follow_playhead_))
-					{
-						view_follow_playhead_ = !view_follow_playhead_;
-					}
-					ui::tooltip(fmt::format("Follow Playhead: {}", view_follow_playhead_ ? "On" : "Off"));
+					table_hovered_row_style();
 				}
-				ImGui::PopStyleVar();
+				bool is_row_hovered = table_is_row_hovered();
+				//Left panel
+				ImGui::TableNextColumn();
+				ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, is_row_hovered ? tag_col_color_hovered : tag_col_color);
+				ImGui::AlignTextToFramePadding();
 
-				menu_popup_->render();
-				if (menu_popup_->tags_modified())
+				ImGui::BeginDisabled(timeline.empty());
+				ImGui::Indent(tag_indent_size);
+				ImGui::TextUnformatted(tag.c_str());
+				ImGui::Unindent(tag_indent_size);
+				ImGui::EndDisabled();
+				ui::tooltip(fmt::format("{} segment{}", timeline.size(), timeline.size() != 1 ? "s" : ""));
+
+				//Right panel
+				ImGui::TableNextColumn();
+
+				is_hovering_segment_ = false;
+				//TODO: segment shouldn't be const
+				for (const auto& segment_and_id : timeline)
 				{
-					visible_tags = menu_popup_->visible_tags();
-					//TODO: Mark project dirty
+					bool is_selected = enabled_ and is_segment_selected(tag, segment_and_id.id);
+					bool is_dragged = is_selected and (is_dragging_any_segment() or segment_drag_data_.stage == segment_drag_stage::waiting_for_approval);
+
+					draw_segment(segments, segment_and_id, *tag_it, is_selected, is_dragged);
+					ImGui::SameLine();
 				}
 
-				ImGui::TableNextColumn();
-				auto cell_rect = get_cell_rect();
-				//ImGui::TextUnformatted("00:00:00");
+				auto current_cell_rect = get_cell_rect();
 
-				auto [start, end] = visible_time_span();
-				playback_scrollbar_.set_range(start.total_milliseconds.count(), end.total_milliseconds.count());
-				playback_scrollbar_.set_value(state_.current_ts.total_milliseconds.count());
-				playback_scrollbar_.set_size(cell_rect->GetSize());
-				playback_scrollbar_.render_disabled(!enabled_);
+				bool is_cell_hovered = ImGui::IsMouseHoveringRect(current_cell_rect->Min, current_cell_rect->Max);
 
-
-				//draw_cell_debug_rect(zoom_);
-				draw_time_intervals(true);
-				draw_time_intervals(false);
-
-				//draw mouse time tooltip
-				if (enabled_ and cell_rect.has_value())
+				if (!open_segment_ctx_menu_ and is_cell_hovered)
 				{
-					const auto& rect = cell_rect.value();
-					if (ImGui::IsMouseHoveringRect(rect.Min, rect.Max))
+					if (!is_hovering_any_segment() and ImGui::IsMouseClicked(ImGuiMouseButton_Right))
 					{
-						auto mouse_pos_x = ImGui::GetMousePos().x;
-						float normalized_mouse_x = math::normalize(mouse_pos_x, cell_rect->Min.x, cell_rect->Max.x, 0.f, 1.f);
+						float normalized_mouse_x = math::normalize(ImGui::GetMousePos().x, cell_rect->Min.x, cell_rect->Max.x, 0.f, 1.f);
 						timestamp mouse_timestamp = to_timestamp(normalized_mouse_x);
-						auto ts_str = utils::time::time_to_string(mouse_timestamp.total_milliseconds.count());
-						ui::tooltip(ts_str);
 
-						if (!playback_scrollbar_.is_dragged())
-						{
-							auto draw_list = ImGui::GetWindowDrawList();
-							ImVec2 start{ mouse_pos_x, rect.Min.y };
-							ImVec2 end{ start.x, rect.Max.y };
-							draw_list->AddLine(start, end, ctx_.current_theme.get_rgba(theme_color::playhead_normal), 1.f);
-						}
+						open_ctx_menu_ = true;
+						ctx_popup_->set_segment_storage(&segments);
+						ctx_popup_->set_active_tag(tag);
+						ctx_popup_->set_selected_segments(selected_segments_);
+						ctx_popup_->set_active_position(mouse_timestamp);
+						ctx_popup_->set_playhead_position(state_.current_ts);
+					}
+					else if (!is_hovering_segment_ and ImGui::IsMouseClicked(ImGuiMouseButton_Left))
+					{
+						event_deselect_all_segments(segments);
 					}
 				}
-
-				//The playhead has to be drawn two times, since it won't be visible on the interval bar when tags are scrolled otherwise
-				draw_playhead();
-
-				auto tag_indent_size = style.IndentSpacing * 0.5f;
-
-				for (auto& tag : visible_tags)
-				{
-					auto& timeline = segments[tag];
-
-					auto tag_it = tags.find(tag);
-					if (tag_it == tags.end())
-					{
-						//TODO: Should that tag be discarded?
-						continue;
-					}
-
-					ImGui::TableNextRow();
-					if (enabled_)
-					{
-						table_hovered_row_style();
-					}
-					bool is_row_hovered = table_is_row_hovered();
-					//Left panel
-					ImGui::TableNextColumn();
-					ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, is_row_hovered ? tag_col_color_hovered : tag_col_color);
-					ImGui::AlignTextToFramePadding();
-
-					ImGui::BeginDisabled(timeline.empty());
-					ImGui::Indent(tag_indent_size);
-					ImGui::TextUnformatted(tag.c_str());
-					ImGui::Unindent(tag_indent_size);
-					ImGui::EndDisabled();
-					ui::tooltip(fmt::format("{} segment{}", timeline.size(), timeline.size() != 1 ? "s" : ""));
-
-					//Right panel
-					ImGui::TableNextColumn();
-
-					is_hovering_segment_ = false;
-					//TODO: segment shouldn't be const
-					for (const auto& segment_and_id : timeline)
-					{
-						bool is_selected = enabled_ and is_segment_selected(tag, segment_and_id.id);
-						bool is_dragged = is_selected and (is_dragging_any_segment() or segment_drag_data_.stage == segment_drag_stage::waiting_for_approval);
-
-						draw_segment(segments, segment_and_id, *tag_it, is_selected, is_dragged);
-						ImGui::SameLine();
-					}
-
-					auto current_cell_rect = get_cell_rect();
-
-					bool is_cell_hovered = ImGui::IsMouseHoveringRect(current_cell_rect->Min, current_cell_rect->Max);
-
-					if (!open_segment_ctx_menu_ and is_cell_hovered)
-					{
-						if (!is_hovering_any_segment() and ImGui::IsMouseClicked(ImGuiMouseButton_Right))
-						{
-							float normalized_mouse_x = math::normalize(ImGui::GetMousePos().x, cell_rect->Min.x, cell_rect->Max.x, 0.f, 1.f);
-							timestamp mouse_timestamp = to_timestamp(normalized_mouse_x);
-
-							open_ctx_menu_ = true;
-							ctx_popup_->set_segment_storage(&segments);
-							ctx_popup_->set_active_tag(tag);
-							ctx_popup_->set_selected_segments(selected_segments_);
-							ctx_popup_->set_active_position(mouse_timestamp);
-							ctx_popup_->set_playhead_position(state_.current_ts);
-						}
-						else if (!is_hovering_segment_ and ImGui::IsMouseClicked(ImGuiMouseButton_Left))
-						{
-							event_deselect_all_segments(segments);
-						}
-					}
-				}
-
-				draw_playhead();
-
-				if (open_segment_ctx_menu_)
-				{
-					segment_ctx_popup_->set_playhead_position(state_.current_ts);
-					segment_ctx_popup_->open();
-					open_segment_ctx_menu_ = false;
-				}
-				segment_ctx_popup_->render();
-
-				if (open_ctx_menu_)
-				{
-					ctx_popup_->open();
-					open_ctx_menu_ = false;
-				}
-				ctx_popup_->render();
-
-				if (is_dragging_any_segment())
-				{
-					float normalized_mouse_x = math::normalize(ImGui::GetMousePos().x, cell_rect->Min.x, cell_rect->Max.x, 0.f, 1.f);
-					timestamp mouse_timestamp = to_timestamp(normalized_mouse_x);
-					auto current_offset = mouse_timestamp - segment_drag_data_.start_position;
-
-					if (ImGui::IsMouseReleased(ImGuiMouseButton_Left))
-					{
-						ctx_.dispatch_event<end_segment_drag_event>(event_source_, current_offset);
-					}
-					else
-					{
-						ctx_.dispatch_event<update_segment_drag_event>(event_source_, current_offset);
-					}
-				}
-
-				ImGui::EndTable();
 			}
-		}
-		ImGui::End();
 
+			draw_playhead();
+
+			if (open_segment_ctx_menu_)
+			{
+				segment_ctx_popup_->open();
+				open_segment_ctx_menu_ = false;
+			}
+			segment_ctx_popup_->render();
+
+			if (open_ctx_menu_)
+			{
+				ctx_popup_->open();
+				open_ctx_menu_ = false;
+			}
+			ctx_popup_->render();
+
+			if (is_dragging_any_segment())
+			{
+				float normalized_mouse_x = math::normalize(ImGui::GetMousePos().x, cell_rect->Min.x, cell_rect->Max.x, 0.f, 1.f);
+				timestamp mouse_timestamp = to_timestamp(normalized_mouse_x);
+				auto current_offset = mouse_timestamp - segment_drag_data_.start_position;
+
+				if (ImGui::IsMouseReleased(ImGuiMouseButton_Left))
+				{
+					ctx_.dispatch_event<end_segment_drag_event>(event_source_, current_offset);
+				}
+				else
+				{
+					ctx_.dispatch_event<update_segment_drag_event>(event_source_, current_offset);
+				}
+			}
+
+			ImGui::EndTable();
+		}
+	}
+
+	nlohmann::ordered_json timeline::serialize() const
+	{
+		nlohmann::ordered_json json;
+		json["follow-playhead"] = view_follow_playhead_;
+		return json;
+	}
+
+	void timeline::deserialize(const nlohmann::ordered_json& json)
+	{
+		if (json.contains("follow-playhead") and json["follow-playhead"].is_boolean())
+		{
+			view_follow_playhead_ = json["follow-playhead"].get<bool>();
+		}
 	}
 
 	void timeline::set_on_seek_callback(const std::function<void(timestamp ts)>& callback)
@@ -1387,11 +1410,6 @@ namespace vt::widgets
 			return false;
 		}
 		return it->second.count(segment) != 0;
-	}
-
-	std::string timeline::window_name()
-	{
-		return fmt::format("{} Timeline###Timelinev2", icons::timeline);
 	}
 
 	int64_t timeline_state::time_length() const

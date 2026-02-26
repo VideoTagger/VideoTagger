@@ -286,7 +286,7 @@ namespace vt
 	private:
 		void sort_listeners()
 		{
-			std::sort(listeners_.begin(), listeners_.end(), [](const std::unique_ptr<event_callback>& left, const std::unique_ptr<event_callback>& right)
+			std::stable_sort(listeners_.begin(), listeners_.end(), [](const std::unique_ptr<event_callback>& left, const std::unique_ptr<event_callback>& right)
 			{
 				return *left < *right;
 			});
