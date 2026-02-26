@@ -271,9 +271,4 @@ namespace vt::widgets
 	{
 		entries_.clear();
 	}
-
-	std::string console::window_name()
-	{
-		return fmt::format("{} Console###Console", icons::terminal);
-	}
 }

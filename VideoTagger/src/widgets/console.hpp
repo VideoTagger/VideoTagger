@@ -47,7 +47,5 @@ namespace vt::widgets
 		void set_scripts_path(const std::filesystem::path& path);
 		void add_entry(entry::flag_type flag, const std::string& message, const std::optional<entry::source_info>& info = std::nullopt);
 		void clear();
-
-		static std::string window_name();
 	};
 }
