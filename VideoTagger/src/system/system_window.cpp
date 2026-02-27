@@ -301,7 +301,7 @@ namespace vt
 		//same as font_type::normal
 		//ctx_.fonts[font_type::h4] = io.Fonts->AddFontFromMemoryTTF((void*)embed::NotoSans_Regular, static_cast<int>(embed::NotoSans_Regular_size), size * 1.00f, &def_config, default_ranges.Data);
 		ctx_.fonts[font_type::h5] = io.Fonts->AddFontFromMemoryTTF((void*)embed::NotoSans_Regular, static_cast<int>(embed::NotoSans_Regular_size), size * 0.90f, &def_config, default_ranges.Data);
-		ctx_.fonts[font_type::h6] = io.Fonts->AddFontFromMemoryTTF((void*)embed::NotoSans_Regular, static_cast<int>(embed::NotoSans_Regular_size), size * 0.60f, &def_config, default_ranges.Data);
+		ctx_.fonts[font_type::h6] = io.Fonts->AddFontFromMemoryTTF((void*)embed::NotoSans_Regular, static_cast<int>(embed::NotoSans_Regular_size), size * 0.7f, &def_config, default_ranges.Data);
 		io.Fonts->FontBuilderIO = ImGuiFreeType::GetBuilderForFreeType();
 		io.Fonts->FontBuilderFlags = ImGuiFreeTypeBuilderFlags_LightHinting | ImGuiFreeTypeBuilderFlags_ForceAutoHint;
 		io.Fonts->Build();

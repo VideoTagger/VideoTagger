@@ -7,6 +7,10 @@
 #include <video/google_drive/google_drive_video_importer.hpp>
 #include <widgets/theme_customizer.hpp>
 
+#ifdef _DEBUG
+	#include <ui/windows/sandbox.hpp>
+#endif
+
 namespace vt
 {
 	app_context::app_context()
@@ -42,6 +46,11 @@ namespace vt
 
 		auto& video_browser = create_window<widgets::video_browser>();
 		video_browser.set_opened(true);
+
+#ifdef _DEBUG
+		auto& sandbox = create_window<ui::windows::sandbox>();
+		sandbox.set_opened(true);
+#endif
 	}
 
 	void app_context::register_account_managers()

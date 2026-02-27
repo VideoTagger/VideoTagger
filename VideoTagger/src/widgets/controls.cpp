@@ -238,8 +238,16 @@ namespace vt::widgets
 		ImVec2 cpos = ImGui::GetCursorPos() + (selectable_size - image_size - text_size) / 2;
 		
 		ImGui::BeginGroup();
+		
+		//ImGui::PushStyleColor(ImGuiCol_Header, ImVec4{});
+		//ImGui::PushStyleColor(ImGuiCol_HeaderHovered, ImVec4{});
+		//ImGui::PushStyleColor(ImGuiCol_HeaderActive, ImVec4{});
 		ImGui::Selectable("##TileButton", &is_selected, ImGuiSelectableFlags_AllowOverlap | ImGuiSelectableFlags_AllowDoubleClick, selectable_size);
-		if (ImGui::IsItemHovered() and ImGui::IsMouseDoubleClicked(0))
+		//ImGui::PopStyleColor(3);
+
+		bool is_hovered = ImGui::IsItemHovered();
+
+		if (is_hovered and ImGui::IsMouseDoubleClicked(0))
 		{
 			result = true;
 		}
@@ -284,9 +292,28 @@ namespace vt::widgets
 
 		ImRect item_rect = { ImGui::GetItemRectMin(), ImGui::GetItemRectMax() };
 		auto* draw_list = ImGui::GetWindowDrawList();
+
+		////backkground
+		//{
+		//	auto rounding = style.FrameRounding;
+		//	rounding = 3.f;
+
+		//	auto background_color = ImGui::GetColorU32(is_hovered ? ImGuiCol_HeaderHovered : (is_selected ? ImGuiCol_HeaderActive : ImGuiCol_Header));
+		//	if (!is_selected and !is_hovered)
+		//	{
+		//		background_color = 0;
+		//	}
+
+		//	draw_list->AddRectFilled(item_rect.Min, item_rect.Max, background_color, rounding);
+		//	//bottom rect
+		//	draw_list->AddRectFilled({ item_rect.Min.x, image_rect.Max.y }, item_rect.Max, ImGui::GetColorU32(ImGuiCol_Button), rounding, ImDrawFlags_RoundCornersBottom);
+		//}
+
 		if (custom_draw != nullptr)
 		{
+			draw_list->PushClipRect(item_rect.Min, item_rect.Max);
 			custom_draw(*draw_list, item_rect, image_rect);
+			draw_list->PopClipRect();
 		}
 
 		return result;

@@ -66,6 +66,7 @@ namespace vt::icons
 	inline constexpr auto object = "\xef\x9c\xa0";
 	inline constexpr auto timeline = "\xef\x90\xb2";
 	inline constexpr auto browser = "\xef\xa1\xac";
+	inline constexpr auto experiment = "\xee\x9a\x86";
 	inline constexpr auto palette = "\xee\x90\x8a";
 	inline constexpr auto colors = "\xee\xa6\x97";
 	inline constexpr auto queue = "\xee\x81\xa4";
@@ -106,6 +107,6 @@ namespace vt::icons
 
 	inline std::vector<std::string> all
 	({
-		dots_hor, play, autoplay, play_queue, pause, repeat, repeat_one, retry, shuffle, skip_next, skip_prev, fast_back, fast_fwd, save, save_as, import_, import_export, exit, close, back, visibility_on, visibility_off, add, delete_, reset, folder, folder_code, file, label, tags, add_tag, expand_less, expand_more, toggle_less, toggle_more, link, link_off, pin, pin_off, edit, help, video_group, video, search, terminal, download, upload, download_off, arrow_up, refresh, local_storage, google_drive_add, home, license, translate, property, attribute, object, timeline, browser, palette, colors, queue, database, bullet, chevron_left, chevron_right, chevron_left_right, shape, shape_none, shape_circle, shape_rectangle, shape_polygon, interpolate, align_horizontal_left, align_horizontal_right, align_horizontal_center, align_vertical_bottom, align_vertical_top, align_vertical_center, align_center, info, warning, error, exclamation, delete_on_run, keyframe, keyframe_current, add_keyframe, goto_keyframe, new_region, set_target, text, windows, settings, dark_mode, light_mode
+		dots_hor, play, autoplay, play_queue, pause, repeat, repeat_one, retry, shuffle, skip_next, skip_prev, fast_back, fast_fwd, save, save_as, import_, import_export, exit, close, back, visibility_on, visibility_off, add, delete_, reset, folder, folder_code, file, label, tags, add_tag, expand_less, expand_more, toggle_less, toggle_more, link, link_off, pin, pin_off, edit, help, video_group, video, search, terminal, download, upload, download_off, arrow_up, refresh, local_storage, google_drive_add, home, license, translate, property, attribute, object, timeline, browser, experiment, palette, colors, queue, database, bullet, chevron_left, chevron_right, chevron_left_right, shape, shape_none, shape_circle, shape_rectangle, shape_polygon, interpolate, align_horizontal_left, align_horizontal_right, align_horizontal_center, align_vertical_bottom, align_vertical_top, align_vertical_center, align_center, info, warning, error, exclamation, delete_on_run, keyframe, keyframe_current, add_keyframe, goto_keyframe, new_region, set_target, text, windows, settings, dark_mode, light_mode
 	});
 }

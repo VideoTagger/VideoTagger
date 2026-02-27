@@ -59,6 +59,7 @@ attribute:ead3 # data_object
 object:f720 # deployed_code
 timeline:f432 # view_object_track
 browser:f86c # home_storage
+experiment:e686 # experiment
 palette:e40a # palette
 colors:e997 # colors
 queue:e064 # subscriptions

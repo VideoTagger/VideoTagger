@@ -17,6 +17,7 @@
 #include "theme.hpp"
 #include "localization/lang_pack.hpp"
 
+#include "font_type.hpp"
 #include "main_window.hpp"
 
 #include <video/video_stream.hpp>
@@ -88,18 +89,6 @@ namespace vt
 		bool show_about_window = false;
 		bool show_tag_importer_window = false;
 		bool show_script_progress = false;
-	};
-
-	enum class font_type
-	{
-		h1,
-		h2,
-		h3,
-		h4,
-		h5,
-		h6,
-		thumbnail,
-		normal = h4,
 	};
 
 	///@brief Application context that holds all states and necessary data
