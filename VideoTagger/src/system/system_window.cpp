@@ -257,6 +257,12 @@ namespace vt
 
 		ImVector<ImWchar> default_ranges;
 		ImFontGlyphRangesBuilder default_font_builder;
+		ImVector<ImWchar> password_ranges;
+		ImFontGlyphRangesBuilder password_font_builder;
+		
+		constexpr ImWchar bullet_char = 0x2022; // Bullet character for password fields
+		password_font_builder.AddChar(bullet_char);
+		password_font_builder.BuildRanges(&password_ranges);
 
 		for (const auto& range :
 		{
@@ -293,6 +299,7 @@ namespace vt
 		io.Fonts->AddFontFromMemoryTTF((void*)embed::MaterialSymbolsSharp_Filled_Regular, static_cast<int>(embed::MaterialSymbolsSharp_Filled_Regular_size), size, &ico_config, ranges.Data);
 
 		ico_config.MergeMode = false;
+		ctx_.fonts[font_type::password] = io.Fonts->AddFontFromMemoryTTF((void*)embed::NotoSans_Regular, static_cast<int>(embed::NotoSans_Regular_size), size, &def_config, password_ranges.Data);
 		ctx_.fonts[font_type::thumbnail] = io.Fonts->AddFontFromMemoryTTF((void*)embed::MaterialSymbolsSharp_Filled_Regular, static_cast<int>(embed::MaterialSymbolsSharp_Filled_Regular_size), 256, &ico_config, thumbnail_ranges.Data);
 		def_config.MergeMode = false;
 		ctx_.fonts[font_type::h1] = io.Fonts->AddFontFromMemoryTTF((void*)embed::NotoSans_Regular, static_cast<int>(embed::NotoSans_Regular_size), size * 2.00f, &def_config, default_ranges.Data);
@@ -305,6 +312,8 @@ namespace vt
 		io.Fonts->FontBuilderIO = ImGuiFreeType::GetBuilderForFreeType();
 		io.Fonts->FontBuilderFlags = ImGuiFreeTypeBuilderFlags_LightHinting | ImGuiFreeTypeBuilderFlags_ForceAutoHint;
 		io.Fonts->Build();
+
+		ctx_.fonts[font_type::password]->AddRemapChar(bullet_char, '*');
 	}
 
 	void system_window::render()

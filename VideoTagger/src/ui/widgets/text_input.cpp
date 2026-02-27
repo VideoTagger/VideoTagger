@@ -71,6 +71,12 @@ namespace vt::ui
 		ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 1.f);
 		ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 3.f);
 
+		bool is_empty = input_.empty();
+		bool push_password_font = is_password_ and !is_empty;
+		if (push_password_font)
+		{
+			ImGui::PushFont(ctx_.get_font(font_type::password));
+		}
 		if (!hint_.empty())
 		{
 			result = ImGui::InputTextWithHint(id_.c_str(), hint_.c_str(), &input_, input_flags);
@@ -78,6 +84,10 @@ namespace vt::ui
 		else
 		{
 			result = ImGui::InputText(id_.c_str(), &input_, input_flags);
+		}
+		if (push_password_font)
+		{
+			ImGui::PopFont();
 		}
 
 		if (ImGui::IsItemFocused() and ImGui::IsItemActive())
