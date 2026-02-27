@@ -565,6 +565,8 @@ namespace vt::widgets
 		static constexpr float height_padding = 0.5f;
 		static constexpr float rounding = 1.0f;
 
+		bool is_timestamp = segment.is_timestamp();
+
 		auto avail_width = ImGui::GetContentRegionAvail().x;
 
 		auto scaled_start = time_to_pos(segment.start, state_.min_ts, state_.max_ts) * avail_width;
@@ -585,7 +587,15 @@ namespace vt::widgets
 
 		ImRect segment_rect{ min, max };
 
-		draw_list->AddRectFilled(segment_rect.Min, segment_rect.Max, tag.color, rounding);
+		if (is_timestamp)
+		{
+			auto radius = segment_rect.GetHeight() / 2.f * 0.9f;
+			draw_list->AddCircleFilled(segment_rect.GetCenter(), radius, tag.color);
+		}
+		else
+		{
+			draw_list->AddRectFilled(segment_rect.Min, segment_rect.Max, tag.color, rounding);
+		}
 	}
 
 	void timeline::draw_playhead_preview(const ImRect& table_rect) const
