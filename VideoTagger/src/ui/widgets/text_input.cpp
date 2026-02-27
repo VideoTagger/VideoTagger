@@ -9,7 +9,7 @@
 namespace vt::ui
 {
 	text_input::text_input(const std::string& id, const std::string& hint, const std::function<std::optional<std::string>(const std::string& text)>& validator) : text_input{ id, {}, hint, validator } {}
-	text_input::text_input(const std::string& id, const std::string& input, const std::string& hint, const std::function<std::optional<std::string>(const std::string& text)>& validator) : id_{ id }, input_{ input }, hint_{ hint }, validator_{ validator }, state_{ widget_state::normal } {}
+	text_input::text_input(const std::string& id, const std::string& input, const std::string& hint, const std::function<std::optional<std::string>(const std::string& text)>& validator) : id_{ id }, input_{ input }, hint_{ hint }, validator_{ validator }, state_{ widget_state::normal }, is_password_{} {}
 	
 	void text_input::set_input(const std::string& input)
 	{
@@ -26,6 +26,11 @@ namespace vt::ui
 		validator_ = validator;
 	}
 
+	void text_input::set_is_password(bool value)
+	{
+		is_password_ = value;
+	}
+
 	void text_input::focus() const
 	{
 		ImGui::SetKeyboardFocusHere();
@@ -40,6 +45,11 @@ namespace vt::ui
 	{
 		const auto& style = ImGui::GetStyle();
 		bool result{};
+		int input_flags = ImGuiInputTextFlags_None;
+		if (is_password_)
+		{
+			input_flags |= ImGuiInputTextFlags_Password;
+		}
 
 		auto val_result = validator_ != nullptr ? validator_(input_) : std::nullopt;
 		bool valid = !val_result.has_value();
@@ -63,11 +73,11 @@ namespace vt::ui
 
 		if (!hint_.empty())
 		{
-			result = ImGui::InputTextWithHint(id_.c_str(), hint_.c_str(), &input_);
+			result = ImGui::InputTextWithHint(id_.c_str(), hint_.c_str(), &input_, input_flags);
 		}
 		else
 		{
-			result = ImGui::InputText(id_.c_str(), &input_);
+			result = ImGui::InputText(id_.c_str(), &input_, input_flags);
 		}
 
 		if (ImGui::IsItemFocused() and ImGui::IsItemActive())
@@ -129,6 +139,11 @@ namespace vt::ui
 	{
 		if (validator_ == nullptr) return true;
 		return validator_(input_) == std::nullopt;
+	}
+
+	bool text_input::is_password() const
+	{
+		return is_password_;
 	}
 
 	text_input::operator bool() const

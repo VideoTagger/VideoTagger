@@ -19,11 +19,14 @@ namespace vt::ui
 		std::string input_;
 		std::string hint_;
 		widget_state state_;
+		bool is_password_;
 
 	public:
 		void set_input(const std::string& input);
 		void set_hint(const std::string& hint);
 		void set_validator(const std::function<std::optional<std::string>(const std::string& text)>& validator = nullptr);
+		void set_is_password(bool value);
+
 		void focus() const;
 		void clear();
 		virtual bool render() override;
@@ -32,6 +35,7 @@ namespace vt::ui
 		[[nodiscard]] std::string trimmed_input() const;
 		[[nodiscard]] std::string error() const;
 		[[nodiscard]] bool is_valid() const;
+		[[nodiscard]] bool is_password() const;
 		operator bool() const;
 	};
 }
