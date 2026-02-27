@@ -40,6 +40,7 @@ namespace vt::widgets
 		timestamp min_start_position{};
 		timestamp max_start_position{};
 		segment_storage* storage{};
+		event_source begin_drag_source{};
 	};
 
 	struct timeline_state
@@ -141,7 +142,7 @@ namespace vt::widgets
 
 		void set_segment_selection(const std::string& tag, segment_id segment, bool is_selected);
 
-		void begin_segment_drag(segment_storage& storage, const segment_id_map& dragged_segments, segment_part grab_part, timestamp grab_start_position);
+		void begin_segment_drag(segment_storage& storage, const segment_id_map& dragged_segments, segment_part grab_part, event_source drag_source);
 		void update_segment_drag(timestamp new_offset);
 		void end_segment_drag(timestamp final_offset);
 

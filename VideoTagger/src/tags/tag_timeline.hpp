@@ -27,16 +27,16 @@ namespace vt
 	///@brief Enum representing the type of a segment
 	enum class tag_segment_type
 	{
-		///A point in time (i.e., start == end)
+		///@brief A point in time (i.e., start == end)
 		timestamp,
-		///A period of time (i.e., start != end)
+		///@brief A period of time (i.e., start != end)
 		segment
 	};
 
 	///@brief Enum representing which part of the segment is being grabbed
 	enum class segment_part : uint8_t
 	{
-		none = 0b00, //TODO: maybe remove none
+		none = 0b00,
 		left = 0b01,
 		right = 0b10,
 		both = left | right,

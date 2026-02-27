@@ -78,7 +78,7 @@ namespace vt::widgets
 
 		ctx_.add_event_listener<begin_segment_drag_event>([this](const begin_segment_drag_event& e)
 		{
-			begin_segment_drag(e.storage(), e.segments(), e.grab_part(), e.start_position());
+			begin_segment_drag(e.storage(), e.segments(), e.grab_part(), e.source());
 		});
 
 		ctx_.add_event_listener<update_segment_drag_event>([this](const update_segment_drag_event& e)
@@ -433,7 +433,8 @@ namespace vt::widgets
 						is_selected = true;
 					}
 
-					ctx_.dispatch_event<begin_segment_drag_event>(event_source_, storage, selected_segments_, part, mouse_timestamp);
+					segment_drag_data_.start_position = mouse_timestamp;
+					ctx_.dispatch_event<begin_segment_drag_event>(event_source_, storage, selected_segments_, part);
 				}
 			};
 
@@ -882,7 +883,7 @@ namespace vt::widgets
 		return is_hovering_segment_;
 	}
 
-	void timeline::begin_segment_drag(segment_storage& storage, const segment_id_map& dragged_segments, segment_part grab_part, timestamp grab_start_position)
+	void timeline::begin_segment_drag(segment_storage& storage, const segment_id_map& dragged_segments, segment_part grab_part, event_source drag_source)
 	{
 		if (is_dragging_any_segment()) return;
 
@@ -890,11 +891,11 @@ namespace vt::widgets
 
 		segment_drag_data_.stage = segment_drag_stage::dragging;
 		segment_drag_data_.grab_part = grab_part;
-		segment_drag_data_.start_position = grab_start_position;
 		segment_drag_data_.current_offset = timestamp::zero();
 		segment_drag_data_.max_start_position = state_.min_ts;
 		segment_drag_data_.min_start_position = state_.max_ts;
 		segment_drag_data_.storage = &storage;
+		segment_drag_data_.begin_drag_source = drag_source;
 
 		for (auto& [tag, segment_ids] : dragged_segments_)
 		{
@@ -977,7 +978,11 @@ namespace vt::widgets
 
 		segment_drag_data_.stage = segment_drag_stage::waiting_for_approval;
 
-		ctx_.dispatch_event<segments_move_request_event>(event_source_, *segment_drag_data_.storage, dragged_segments_, segment_drag_data_.grab_part, final_offset);
+		if (segment_drag_data_.begin_drag_source == event_source_)
+		{
+			//TODO: maybe main_window should listen for end_segment_drag_event instead and then dispatch the segments_move_request_event
+			ctx_.dispatch_event<segments_move_request_event>(event_source_, *segment_drag_data_.storage, dragged_segments_, segment_drag_data_.grab_part, final_offset);
+		}
 	}
 
 	void timeline::event_deselect_segments_if(segment_storage& storage, const std::function<bool(const std::string&, segment_id)>& predicate)
@@ -1055,7 +1060,7 @@ namespace vt::widgets
 	{
 		if (ctx_.current_video_group_id() == invalid_video_group_id) return;
 
-		auto& segments = ctx_.current_project->video_groups.at(ctx_.current_video_group_id()).segments();
+		auto& segments = ctx_.get_current_segment_storage();
 		auto& tags = ctx_.current_project->tags;
 		auto& displayed_tags = ctx_.current_project->displayed_tags;
 
@@ -1304,7 +1309,7 @@ namespace vt::widgets
 			}
 			ctx_popup_->render();
 
-			if (is_dragging_any_segment())
+			if (is_dragging_any_segment() and segment_drag_data_.begin_drag_source == event_source_)
 			{
 				float normalized_mouse_x = math::normalize(ImGui::GetMousePos().x, cell_rect->Min.x, cell_rect->Max.x, 0.f, 1.f);
 				timestamp mouse_timestamp = to_timestamp(normalized_mouse_x);
@@ -1312,11 +1317,11 @@ namespace vt::widgets
 
 				if (ImGui::IsMouseReleased(ImGuiMouseButton_Left))
 				{
-					ctx_.dispatch_event<end_segment_drag_event>(event_source_, current_offset);
+					ctx_.dispatch_event<end_segment_drag_event>(event_source_, *segment_drag_data_.storage, dragged_segments_, segment_drag_data_.grab_part, current_offset);
 				}
 				else
 				{
-					ctx_.dispatch_event<update_segment_drag_event>(event_source_, current_offset);
+					ctx_.dispatch_event<update_segment_drag_event>(event_source_, *segment_drag_data_.storage, dragged_segments_, segment_drag_data_.grab_part, current_offset);
 				}
 			}
 

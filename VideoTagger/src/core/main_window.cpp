@@ -10,7 +10,7 @@
 #include <widgets/video_player.hpp>
 #include <widgets/project_selector.hpp>
 #include <widgets/theme_customizer.hpp>
-#include <widgets/inspector.hpp>
+#include <ui/windows/inspector.hpp>
 #include <ui/popups/options_popup.hpp>
 #include <widgets/controls.hpp>
 #include <widgets/modal/keybind_popup.hpp>
@@ -590,8 +590,6 @@ namespace vt
 			{
 				auto& show_windows = ctx_.settings["show-windows"];
 
-				if (show_windows.contains("inspector")) ctx_.win_cfg.show_inspector_window = show_windows["inspector"];
-				if (show_windows.contains("shape-attributes")) ctx_.win_cfg.show_inspector_window = show_windows["shape-attributes"];
 				if (show_windows.contains("tag-manager")) ctx_.win_cfg.show_tag_manager_window = show_windows["tag-manager"];
 				if (show_windows.contains("timeline")) ctx_.win_cfg.show_timeline_window = show_windows["timeline"];
 			}
@@ -765,7 +763,7 @@ namespace vt
 		//ctx_.keybinds.insert("Toggle Video Browser", keybind(SDLK_F2, toggle_window_mod, flags, toggle_window_action("video-browser", ctx_.win_cfg.show_video_browser_window)));
 		//ctx_.keybinds.insert("Toggle Video Group Browser", keybind(SDLK_F3, toggle_window_mod, flags, toggle_window_action("video-group-browser", ctx_.win_cfg.show_video_group_browser_window)));
 		//ctx_.keybinds.insert("Toggle Video Group Queue", keybind(SDLK_F4, toggle_window_mod, flags, toggle_window_action("video-group-queue", ctx_.win_cfg.show_video_group_queue_window)));
-		ctx_.keybinds.insert("Toggle Inspector", keybind(SDLK_F5, toggle_window_mod, flags, toggle_window_action("inspector", ctx_.win_cfg.show_inspector_window)));
+		//ctx_.keybinds.insert("Toggle Inspector", keybind(SDLK_F5, toggle_window_mod, flags, toggle_window_action("inspector", ctx_.win_cfg.show_inspector_window)));
 		//ctx_.keybinds.insert("Toggle Shape Attributes", keybind(SDLK_F6, toggle_window_mod, flags, toggle_window_action("shape-attributes", ctx_.win_cfg.show_shape_attributes_window)));
 		ctx_.keybinds.insert("Toggle Tag Manager", keybind(SDLK_F7, toggle_window_mod, flags, toggle_window_action("tag-manager", ctx_.win_cfg.show_tag_manager_window)));
 		ctx_.keybinds.insert("Toggle Timeline", keybind(SDLK_F8, toggle_window_mod, flags, toggle_window_action("timeline", ctx_.win_cfg.show_timeline_window)));
@@ -1544,7 +1542,7 @@ namespace vt
 					//win_toggles{ "Show Video Group Browser", "Toggle Video Group Browser", "video-group-browser", &ctx_.win_cfg.show_video_group_browser_window },
 					//win_toggles{ "Show Video Group Queue", "Toggle Video Group Queue", "video-group-queue", &ctx_.win_cfg.show_video_group_queue_window },
 					win_toggles{},
-					win_toggles{ "Show Inspector", "Toggle Inspector", "inspector", &ctx_.win_cfg.show_inspector_window },
+					//win_toggles{ "Show Inspector", "Toggle Inspector", "inspector", &ctx_.win_cfg.show_inspector_window },
 					//win_toggles{ "Show Shape Attributes", "Toggle Shape Attributes", "shape-attributes", &ctx_.win_cfg.show_shape_attributes_window },
 					win_toggles{ "Show Tag Manager", "Toggle Tag Manager", "tag-manager", &ctx_.win_cfg.show_tag_manager_window },
 					win_toggles{ "Show Timeline", "Toggle Timeline", "timeline", &ctx_.win_cfg.show_timeline_window },
@@ -2229,11 +2227,6 @@ namespace vt
 			ctx_.options.render();
 		}
 
-		if (ctx_.win_cfg.show_inspector_window)
-		{
-			widgets::inspector(ctx_.video_timeline.selected_segment, ctx_.video_timeline.moving_segment, ctx_.app_settings.link_start_end_segment, ctx_.is_project_dirty, &ctx_.win_cfg.show_inspector_window);
-		}
-
 		if (ctx_.win_cfg.show_script_progress)
 		{
 			ctx_.script_progress.open();
@@ -2855,7 +2848,7 @@ namespace vt
 			auto main_dock_down = ImGui::DockBuilderSplitNode(main_dock_up, ImGuiDir_Down, 0.25f, nullptr, &main_dock_up);
 			auto dock_right_up = ImGui::DockBuilderSplitNode(main_dock_right, ImGuiDir_Up, 0.5f, nullptr, &main_dock_right);
 			
-			ImGui::DockBuilderDockWindow(widgets::inspector_id.c_str(), dock_right_up);
+			ImGui::DockBuilderDockWindow(ctx_.get_window<ui::windows::inspector>().name().c_str(), dock_right_up);
 			ImGui::DockBuilderDockWindow(widgets::tag_manager_window_name().c_str(), main_dock_right);
 			ImGui::DockBuilderDockWindow(ctx_.get_window<widgets::shape_attributes>().name().c_str(), main_dock_right);
 			ImGui::DockBuilderDockWindow(ctx_.get_window<widgets::video_group_queue>().name().c_str(), main_dock_down);

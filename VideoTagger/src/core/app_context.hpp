@@ -80,7 +80,6 @@ namespace vt
 	{
 		//serialized
 		window_state state = window_state::normal;
-		bool show_inspector_window = true;
 		bool show_tag_manager_window = true;
 		bool show_timeline_window = true;
 

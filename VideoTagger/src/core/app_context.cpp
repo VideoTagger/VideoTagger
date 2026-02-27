@@ -6,6 +6,7 @@
 #include <video/local_video_importer.hpp>
 #include <video/google_drive/google_drive_video_importer.hpp>
 #include <widgets/theme_customizer.hpp>
+#include <ui/windows/inspector.hpp>
 
 #ifdef _DEBUG
 	#include <ui/windows/sandbox.hpp>
@@ -46,6 +47,9 @@ namespace vt
 
 		auto& video_browser = create_window<widgets::video_browser>();
 		video_browser.set_opened(true);
+
+		auto& inspector = create_window<ui::windows::inspector>();
+		inspector.set_opened(true);
 
 #ifdef _DEBUG
 		auto& sandbox = create_window<ui::windows::sandbox>();

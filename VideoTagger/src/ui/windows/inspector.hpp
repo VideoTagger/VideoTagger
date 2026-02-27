@@ -1,0 +1,38 @@
+#pragma once
+#include <optional>
+#include <limits>
+#include <ui/icons.hpp>
+#include <fmt/format.h>
+#include <ui/window.hpp>
+#include <tags/tag_timeline.hpp>
+
+namespace vt::ui::windows
+{
+	class inspector : public window
+	{
+	public:
+		inspector();
+
+	private:
+		segment_id_map selected_segments_;
+		segment_id_map dragged_segments_;
+		timestamp min_timestamp_;
+		timestamp max_timestamp_;
+		timestamp current_offset_;
+		segment_part grab_part_{};
+		bool link_start_end_ = false;
+
+	public:
+		virtual void on_render() override;
+
+	private:
+		void register_listeners();
+
+		bool is_segment_selected(const std::string& tag, segment_id segment) const;
+		bool is_any_segment_selected() const;
+		bool is_segment_dragged(const std::string& tag, segment_id segment) const;
+		bool is_dragging_any_segment() const;
+
+		std::pair<std::string, segment_id> first_selected_segment() const;
+	};
+}
