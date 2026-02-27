@@ -12,6 +12,7 @@ namespace vt
 		h5,
 		h6,
 		thumbnail,
+		password,
 		normal = h4,
 	};
 }
