@@ -19,6 +19,8 @@
 #include <events/timeline/segments_move_event.hpp>
 #include <events/timeline/segment_merge_event.hpp>
 #include <events/timeline/segment_delete_event.hpp>
+#include <events/tags/tag_delete_event.hpp>
+#include <events/tags/tag_rename_event.hpp>
 
 #include <core/debug.hpp>
 
@@ -121,6 +123,36 @@ namespace vt::widgets
 				{
 					segment_drag_data_ = {};
 				}
+			}
+		});
+
+		ctx_.add_event_listener<tag_delete_event>([this](const tag_delete_event& e)
+		{
+			selected_segments_.erase(e.tag_name());
+			dragged_segments_.erase(e.tag_name());
+
+			if (!is_dragging_any_segment())
+			{
+				segment_drag_data_ = {};
+			}
+		});
+
+		ctx_.add_event_listener<tag_rename_event>([this](const tag_rename_event& e)
+		{
+			auto selected_it = selected_segments_.find(e.tag_name());
+			if (selected_it != selected_segments_.end())
+			{
+				auto node = selected_segments_.extract(selected_it);
+				node.key() = e.new_name();
+				selected_segments_.insert(std::move(node));
+			}
+
+			auto dragged_it = dragged_segments_.find(e.tag_name());
+			if (dragged_it != dragged_segments_.end())
+			{
+				auto node = dragged_segments_.extract(dragged_it);
+				node.key() = e.new_name();
+				dragged_segments_.insert(std::move(node));
 			}
 		});
 	}
@@ -1135,7 +1167,27 @@ namespace vt::widgets
 			playback_scrollbar_.set_value(state_.current_ts.total_milliseconds.count());
 			playback_scrollbar_.set_size(cell_rect->GetSize());
 			playback_scrollbar_.render_disabled(!enabled_);
+			
+			if (!is_playhead_dragged_ and playback_scrollbar_.is_dragged())
+			{
+				is_playhead_dragged_ = true;
+				if (player.is_playing())
+				{
+					//TODO: probably should use events
+					player_paused_on_seek_ = true;
+					player.set_playing(false);
+				}
+			}
 
+			if (is_playhead_dragged_ and !playback_scrollbar_.is_dragged())
+			{
+				is_playhead_dragged_ = false;
+				if (player_paused_on_seek_)
+				{
+					player.set_playing(true);
+					player_paused_on_seek_ = false;
+				}
+			}
 
 			//draw_cell_debug_rect(zoom_);
 			draw_time_intervals(true);

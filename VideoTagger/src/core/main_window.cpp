@@ -2242,7 +2242,11 @@ namespace vt
 
 		if (ctx_.segments_move_conflict_popup != nullptr)
 		{
-			ctx_.segments_move_conflict_popup->open();
+			if (!ctx_.segments_move_conflict_popup->is_open())
+			{
+				ctx_.segments_move_conflict_popup->open();
+			}
+
 			ctx_.segments_move_conflict_popup->render();
 			if (!ctx_.segments_move_conflict_popup->is_open())
 			{
@@ -2255,7 +2259,11 @@ namespace vt
 
 		if (ctx_.segment_insert_conflict_popup != nullptr)
 		{
-			ctx_.segment_insert_conflict_popup->open();
+			if (!ctx_.segment_insert_conflict_popup->is_open())
+			{
+				ctx_.segment_insert_conflict_popup->open();
+			}
+
 			ctx_.segment_insert_conflict_popup->render();
 			if (!ctx_.segment_insert_conflict_popup->is_open())
 			{

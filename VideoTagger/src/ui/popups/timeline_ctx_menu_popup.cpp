@@ -10,7 +10,7 @@ namespace vt::ui
 	{
 	}
 
-	bool timeline_ctx_menu_popup::any_segment_selected() const
+	bool timeline_ctx_menu_popup::is_any_segment_selected() const
 	{
 		for (const auto& [tag, segments] : selected_segments_)
 		{
@@ -25,7 +25,7 @@ namespace vt::ui
 		if (segment_storage_ == nullptr) return;
 
 		//TODO: Add all option from the old menu, localization
-		if (any_segment_selected() and ImGui::MenuItem(ctx_.lang->get("popup.timeline_context_menu.delete_selected").c_str()))
+		if (is_any_segment_selected() and ImGui::MenuItem(ctx_.lang->get("popup.timeline_context_menu.delete_selected").c_str()))
 		{
 			for (auto& [tag, segments] : selected_segments_)
 			{
