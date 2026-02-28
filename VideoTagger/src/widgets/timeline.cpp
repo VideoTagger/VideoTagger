@@ -78,17 +78,92 @@ namespace vt::widgets
 
 		ctx_.add_event_listener<begin_segment_drag_event>([this](const begin_segment_drag_event& e)
 		{
-			begin_segment_drag(e.storage(), e.segments(), e.grab_part(), e.source());
+			if (is_dragging_any_segment()) return;
+
+			dragged_segments_ = e.segments();
+
+			segment_drag_data_.stage = segment_drag_stage::dragging;
+			segment_drag_data_.grab_part = e.grab_part();
+			segment_drag_data_.current_offset = timestamp::zero();
+			segment_drag_data_.storage = &e.storage();
+			segment_drag_data_.begin_drag_source = e.source();
+
+			auto [min_ts, max_ts] = e.min_max_timestamp();
+			segment_drag_data_.min_start_position = min_ts;
+			segment_drag_data_.max_start_position = max_ts;
 		});
 
 		ctx_.add_event_listener<update_segment_drag_event>([this](const update_segment_drag_event& e)
 		{
-			update_segment_drag(e.current_offset());
+			if (!is_dragging_any_segment()) return;
+
+			auto new_offset = e.current_offset();
+			if (new_offset == segment_drag_data_.current_offset)
+			{
+				return;
+			}
+			segment_drag_data_.current_offset = new_offset;
+
+			if (segment_drag_data_.grab_part & segment_part::left)
+			{
+				auto current_min_pos = segment_drag_data_.min_start_position + segment_drag_data_.current_offset;
+
+				if (current_min_pos < state_.min_ts)
+				{
+					segment_drag_data_.current_offset -= current_min_pos - state_.min_ts;
+				}
+				else if (current_min_pos > state_.max_ts)
+				{
+					segment_drag_data_.current_offset -= current_min_pos - state_.max_ts;
+				}
+			}
+			if (segment_drag_data_.grab_part & segment_part::right)
+			{
+				auto current_max_pos = segment_drag_data_.max_start_position + segment_drag_data_.current_offset;
+				if (current_max_pos < state_.min_ts)
+				{
+					segment_drag_data_.current_offset -= current_max_pos - state_.min_ts;
+				}
+				else if (current_max_pos > state_.max_ts)
+				{
+					segment_drag_data_.current_offset -= current_max_pos - state_.max_ts;
+				}
+			}
 		});
 
 		ctx_.add_event_listener<end_segment_drag_event>([this](const end_segment_drag_event& e)
 		{
-			end_segment_drag(e.final_offset());
+			if (!is_dragging_any_segment()) return;
+
+			/*
+			if (segment_drag_data_.grab_part & segment_part::left)
+			{
+				auto current_min_pos = segment_drag_data_.min_start_position + final_offset;
+
+				if (current_min_pos < state_.min_ts)
+				{
+					final_offset -= current_min_pos - state_.min_ts;
+				}
+				else if (current_min_pos > state_.max_ts)
+				{
+					final_offset -= current_min_pos - state_.max_ts;
+				}
+			}
+			if (segment_drag_data_.grab_part & segment_part::right)
+			{
+				auto current_max_pos = segment_drag_data_.max_start_position + final_offset;
+				if (current_max_pos < state_.min_ts)
+				{
+					final_offset -= current_max_pos - state_.min_ts;
+				}
+				else if (current_max_pos > state_.max_ts)
+				{
+					final_offset -= current_max_pos - state_.max_ts;
+				}
+			}
+			*/
+
+			segment_drag_data_.stage = segment_drag_stage::waiting_for_approval;
 		});
 
 		ctx_.add_event_listener<segments_move_event>([this](const segments_move_event& e)
@@ -892,108 +967,6 @@ namespace vt::widgets
 	bool timeline::is_hovering_any_segment() const
 	{
 		return is_hovering_segment_;
-	}
-
-	void timeline::begin_segment_drag(segment_storage& storage, const segment_id_map& dragged_segments, segment_part grab_part, event_source drag_source)
-	{
-		if (is_dragging_any_segment()) return;
-
-		dragged_segments_ = dragged_segments;
-
-		segment_drag_data_.stage = segment_drag_stage::dragging;
-		segment_drag_data_.grab_part = grab_part;
-		segment_drag_data_.current_offset = timestamp::zero();
-		segment_drag_data_.max_start_position = state_.min_ts;
-		segment_drag_data_.min_start_position = state_.max_ts;
-		segment_drag_data_.storage = &storage;
-		segment_drag_data_.begin_drag_source = drag_source;
-
-		for (auto& [tag, segment_ids] : dragged_segments_)
-		{
-			auto& tag_segments = storage.at(tag);
-			for (auto& segment_id : segment_ids)
-			{
-				auto& segment = tag_segments.at(segment_id);
-				segment_drag_data_.max_start_position = std::max(segment_drag_data_.max_start_position, segment.end);
-				segment_drag_data_.min_start_position = std::min(segment_drag_data_.min_start_position, segment.start);
-			}
-		}
-	}
-
-	void timeline::update_segment_drag(timestamp new_offset)
-	{
-		if (!is_dragging_any_segment()) return;
-
-		if (new_offset == segment_drag_data_.current_offset)
-		{
-			return;
-		}
-		segment_drag_data_.current_offset = new_offset;
-
-		if (segment_drag_data_.grab_part & segment_part::left)
-		{
-			auto current_min_pos = segment_drag_data_.min_start_position + segment_drag_data_.current_offset;
-
-			if (current_min_pos < state_.min_ts)
-			{
-				segment_drag_data_.current_offset -= current_min_pos - state_.min_ts;
-			}
-			else if (current_min_pos > state_.max_ts)
-			{
-				segment_drag_data_.current_offset -= current_min_pos - state_.max_ts;
-			}
-		}
-		if (segment_drag_data_.grab_part & segment_part::right)
-		{
-			auto current_max_pos = segment_drag_data_.max_start_position + segment_drag_data_.current_offset;
-			if (current_max_pos < state_.min_ts)
-			{
-				segment_drag_data_.current_offset -= current_max_pos - state_.min_ts;
-			}
-			else if (current_max_pos > state_.max_ts)
-			{
-				segment_drag_data_.current_offset -= current_max_pos - state_.max_ts;
-			}
-		}
-	}
-
-	void timeline::end_segment_drag(timestamp final_offset)
-	{
-		if (!is_dragging_any_segment()) return;
-
-		if (segment_drag_data_.grab_part & segment_part::left)
-		{
-			auto current_min_pos = segment_drag_data_.min_start_position + final_offset;
-
-			if (current_min_pos < state_.min_ts)
-			{
-				final_offset -= current_min_pos - state_.min_ts;
-			}
-			else if (current_min_pos > state_.max_ts)
-			{
-				final_offset -= current_min_pos - state_.max_ts;
-			}
-		}
-		if (segment_drag_data_.grab_part & segment_part::right)
-		{
-			auto current_max_pos = segment_drag_data_.max_start_position + final_offset;
-			if (current_max_pos < state_.min_ts)
-			{
-				final_offset -= current_max_pos - state_.min_ts;
-			}
-			else if (current_max_pos > state_.max_ts)
-			{
-				final_offset -= current_max_pos - state_.max_ts;
-			}
-		}
-
-		segment_drag_data_.stage = segment_drag_stage::waiting_for_approval;
-
-		if (segment_drag_data_.begin_drag_source == event_source_)
-		{
-			//TODO: maybe main_window should listen for end_segment_drag_event instead and then dispatch the segments_move_request_event
-			ctx_.dispatch_event<segments_move_request_event>(event_source_, *segment_drag_data_.storage, dragged_segments_, segment_drag_data_.grab_part, final_offset, false);
-		}
 	}
 
 	void timeline::event_deselect_segments_if(segment_storage& storage, const std::function<bool(const std::string&, segment_id)>& predicate)

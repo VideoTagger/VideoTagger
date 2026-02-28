@@ -142,10 +142,6 @@ namespace vt::widgets
 
 		void set_segment_selection(const std::string& tag, segment_id segment, bool is_selected);
 
-		void begin_segment_drag(segment_storage& storage, const segment_id_map& dragged_segments, segment_part grab_part, event_source drag_source);
-		void update_segment_drag(timestamp new_offset);
-		void end_segment_drag(timestamp final_offset);
-
 		void event_deselect_segments_if(segment_storage& storage, const std::function<bool(const std::string&, segment_id)>& predicate);
 		void event_deselect_all_segments(segment_storage& storage);
 	};

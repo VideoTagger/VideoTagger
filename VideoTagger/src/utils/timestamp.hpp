@@ -71,6 +71,16 @@ namespace vt
 			return timestamp(0);
 		}
 
+		static constexpr timestamp min()
+		{
+			return timestamp(std::numeric_limits<int64_t>::min());
+		}
+
+		static constexpr timestamp max()
+		{
+			return timestamp(std::numeric_limits<int64_t>::max());
+		}
+
 		constexpr timestamp operator+(const timestamp& other) const
 		{
 			return timestamp(total_milliseconds + other.total_milliseconds);

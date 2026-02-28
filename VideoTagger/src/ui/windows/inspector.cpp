@@ -261,12 +261,6 @@ namespace vt::ui::windows
 			grab_part_ = segment_part::none;
 			current_offset_ = timestamp::zero();
 			auto event_source = get_event_source();
-
-			if (event.is_from(event_source))
-			{
-				//TODO: maybe main_window should listen for end_segment_drag_event instead and then dispatch the segments_move_request_event
-				ctx_.dispatch_event<segments_move_request_event>(event_source, event.storage(),  event.segments(), event.grab_part(), event.final_offset(), false);
-			}
 		});
 
 		ctx_.add_event_listener<segments_move_event>([this](const segments_move_event& event)

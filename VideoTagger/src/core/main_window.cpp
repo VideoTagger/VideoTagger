@@ -44,6 +44,7 @@
 #include <events/tags/tag_delete_event.hpp>
 #include <events/timeline/segment_insert_mark_start.hpp>
 #include <events/timeline/segment_insert_mark_end.hpp>
+#include <events/timeline/end_segment_drag_event.hpp>
 
 #ifndef VT_VERSION
 	#error VT_VERSION is not defined
@@ -373,6 +374,43 @@ namespace vt
 			ctx_.dispatch_event<segment_insert_request_event>(event_source_, event.storage(), it->tag, it->start, event.timestamp(), event.user_customization(), false);
 
 			ctx_.insert_segment_marks.erase(it);
+		});
+
+		ctx_.add_event_listener<end_segment_drag_event>([this](const end_segment_drag_event& event)
+		{
+			auto [segments_min_ts, segments_max_ts] = event.min_max_timestamp();
+			auto min_ts = timestamp::zero();
+			auto max_ts = ctx_.displayed_videos.duration_as_timestamp();
+
+			auto final_offset = event.final_offset();
+
+			if (event.grab_part() & segment_part::left)
+			{
+				auto current_min_pos = segments_min_ts + final_offset;
+
+				if (current_min_pos < min_ts)
+				{
+					final_offset -= current_min_pos - min_ts;
+				}
+				else if (current_min_pos > max_ts)
+				{
+					final_offset -= current_min_pos - max_ts;
+				}
+			}
+			if (event.grab_part() & segment_part::right)
+			{
+				auto current_max_pos = segments_max_ts + final_offset;
+				if (current_max_pos < min_ts)
+				{
+					final_offset -= current_max_pos - min_ts;
+				}
+				else if (current_max_pos > max_ts)
+				{
+					final_offset -= current_max_pos - max_ts;
+				}
+			}
+
+			ctx_.dispatch_event<segments_move_request_event>(event_source_, event.storage(), event.segments(), event.grab_part(), final_offset, false);
 		});
 	}
 
