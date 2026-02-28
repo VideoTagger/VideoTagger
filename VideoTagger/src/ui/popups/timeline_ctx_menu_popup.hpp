@@ -18,6 +18,7 @@ namespace vt::ui
 		segment_storage* segment_storage_;
 		segment_id_map selected_segments_;
 		event_source event_source_;
+		uint64_t mark_id_{};
 
 		bool is_any_segment_selected() const;
 

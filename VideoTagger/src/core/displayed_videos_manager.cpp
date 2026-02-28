@@ -229,9 +229,19 @@ namespace vt
 		return group_duration;
 	}
 
+	timestamp displayed_videos_manager::duration_as_timestamp() const
+	{
+		return timestamp(std::chrono::duration_cast<std::chrono::milliseconds>(duration()));
+	}
+
 	std::chrono::nanoseconds displayed_videos_manager::current_timestamp() const
 	{
 		return current_timestamp_;
+	}
+
+	timestamp displayed_videos_manager::current_timestamp_as_timestamp() const
+	{
+		return timestamp{ std::chrono::duration_cast<std::chrono::milliseconds>(current_timestamp_) };
 	}
 
 	size_t displayed_videos_manager::size() const

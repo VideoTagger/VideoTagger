@@ -474,6 +474,7 @@ namespace vt::widgets
 						hover_type = segment_hover_type::start;
 						handle_segment_dragging(segment_part::left, mouse_timestamp);
 					}
+
 					ImGui::SameLine();
 					if (ImGui::InvisibleButton("##Segment", { rect_size.x - scaled_grab_width * 2.f, rect_size.y }))
 					{
@@ -1310,6 +1311,7 @@ namespace vt::widgets
 				segment_ctx_popup_->open();
 				open_segment_ctx_menu_ = false;
 			}
+			segment_ctx_popup_->set_playhead_position(state_.current_ts);
 			segment_ctx_popup_->render();
 
 			if (open_ctx_menu_)
@@ -1317,6 +1319,7 @@ namespace vt::widgets
 				ctx_popup_->open();
 				open_ctx_menu_ = false;
 			}
+			ctx_popup_->set_playhead_position(state_.current_ts);
 			ctx_popup_->render();
 
 			if (is_dragging_any_segment() and segment_drag_data_.begin_drag_source == event_source_)

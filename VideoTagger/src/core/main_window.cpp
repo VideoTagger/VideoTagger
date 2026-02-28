@@ -42,6 +42,8 @@
 #include <events/tags/tag_rename_request_event.hpp>
 #include <events/tags/tag_rename_event.hpp>
 #include <events/tags/tag_delete_event.hpp>
+#include <events/timeline/segment_insert_mark_start.hpp>
+#include <events/timeline/segment_insert_mark_end.hpp>
 
 #ifndef VT_VERSION
 	#error VT_VERSION is not defined
@@ -121,37 +123,6 @@ namespace vt
 		ctx_.dispatch_event<segments_move_event>(event_source_, event.storage(), event.segments(), event.move_part(), event.move_offset(), false);
 		ctx_.is_project_dirty = true;
 	}
-
-	static void resolve_segment_insert_request_event(const segment_insert_request_event& event, bool accepted)
-	{
-		if (!accepted)
-		{
-			ctx_.dispatch_event<segment_insert_event>(event_source_, event.storage(), event.tag(), event.start(), event.end(), invalid_segment_id, false);
-			return;
-		}
-
-		auto& storage = event.storage();
-		auto it = storage.find(event.tag());
-		if (it == storage.end()) return;
-		auto& tag_timeline = it->second;
-
-		auto insert_result = tag_timeline.insert(event.start(), event.end());
-		if (!insert_result.inserted())
-		{
-			ctx_.dispatch_event<segment_insert_event>(event_source_, storage, event.tag(), event.start(), event.end(), insert_result.preventing_segment(), false);
-			return;
-		}
-
-		ctx_.dispatch_event<segment_insert_event>(event_source_, storage, event.tag(), event.start(), event.end(), insert_result.inserted_segment(), true);
-
-		for (auto& merged_id : insert_result.merged_segments())
-		{
-			ctx_.dispatch_event<segment_merge_event>(event_source_, storage, event.tag(), merged_id, insert_result.inserted_segment());
-		}
-
-		ctx_.is_project_dirty = true;
-	}
-
 	main_window::main_window(const system_window_config& cfg) : system_window{ cfg }
 	{
 		ctx_.add_event_listener<system_window_close_event>([this](const system_window_close_event& event)
@@ -303,7 +274,7 @@ namespace vt
 		{
 			auto& player = ctx_.get_window<widgets::video_player>();
 
-			if (event.user_customization())
+			if (event.user_customization() or !event.tag().has_value())
 			{
 				//TODO: tmp
 				ctx_.pause_player = true;
@@ -316,34 +287,46 @@ namespace vt
 				return;
 			}
 
-			if (event.ignore_conflicts())
-			{
-				resolve_segment_insert_request_event(event, true);
-				return;
-			}
-
 			auto& storage = ctx_.get_current_segment_storage();
-			std::set<segment_id> conflicting_segments;
-			auto it = storage.find(event.tag());
-			if (it == storage.end()) return;
+			const auto& tag_name = *event.tag();
+			auto it = storage.find(tag_name);
 			auto& tag_timeline = it->second;
+			if (it == storage.end()) return;
 
-			for (auto& [id, _] : tag_timeline.find_range(event.start(), event.end()))
+			if (!event.ignore_conflicts())
 			{
-				conflicting_segments.insert(id);
+				std::set<segment_id> conflicting_segments;
+				for (auto& [id, _] : tag_timeline.find_range(event.start(), event.end()))
+				{
+					conflicting_segments.insert(id);
+				}
+
+				if (!conflicting_segments.empty())
+				{
+					//TODO: tmp
+					ctx_.pause_player = true;
+
+					ctx_.dispatch_event<playback_changed_event>(event_source_, player, false);
+					ctx_.segment_insert_conflict_popup = ui::new_popup<ui::segment_insert_conflict_popup>(event, conflicting_segments);
+					return;
+				}
 			}
 
-			if (!conflicting_segments.empty())
+			auto insert_result = tag_timeline.insert(event.start(), event.end());
+			if (!insert_result.inserted())
 			{
-				//TODO: tmp
-				ctx_.pause_player = true;
-
-				ctx_.dispatch_event<playback_changed_event>(event_source_, player, false);
-				ctx_.segment_insert_conflict_popup = ui::new_popup<ui::segment_insert_conflict_popup>(event, conflicting_segments);
+				ctx_.dispatch_event<segment_insert_event>(event_source_, storage, tag_name, event.start(), event.end(), insert_result.preventing_segment(), false);
 				return;
 			}
 
-			resolve_segment_insert_request_event(event, true);
+			ctx_.dispatch_event<segment_insert_event>(event_source_, storage, tag_name, event.start(), event.end(), insert_result.inserted_segment(), true);
+
+			for (auto& merged_id : insert_result.merged_segments())
+			{
+				ctx_.dispatch_event<segment_merge_event>(event_source_, storage, tag_name, merged_id, insert_result.inserted_segment());
+			}
+
+			ctx_.is_project_dirty = true;
 		});
 
 		ctx_.add_event_listener<tag_add_request_event>([](const tag_add_request_event& event)
@@ -393,6 +376,21 @@ namespace vt
 			ctx_.current_project->delete_tag(tag_delete->tag);
 
 			tag_delete.reset();
+		});
+
+		ctx_.add_event_listener<segment_insert_mark_start>([](const segment_insert_mark_start& event)
+		{
+			ctx_.insert_segment_marks.push_back({ event.tag(), event.timestamp(), event.mark_id()});
+		});
+
+		ctx_.add_event_listener<segment_insert_mark_end>([](const segment_insert_mark_end& event)
+		{
+			auto it = ctx_.find_insert_segment_mark_by_id(event.mark_id());
+			if (it == ctx_.insert_segment_marks.end()) return;
+
+			ctx_.dispatch_event<segment_insert_request_event>(event_source_, event.storage(), it->tag, it->start, event.timestamp(), event.user_customization(), false);
+
+			ctx_.insert_segment_marks.erase(it);
 		});
 	}
 
@@ -778,6 +776,37 @@ namespace vt
 		ctx_.keybinds.insert("Skip To Next", keybind(SDLK_RIGHT, player_secondary_mod, flags, player_action(player_action_type::skip_next)));
 		ctx_.keybinds.insert("Skip To Previous", keybind(SDLK_LEFT, player_secondary_mod, flags, player_action(player_action_type::skip_previous)));
 		ctx_.keybinds.insert("Toggle Looping", keybind(SDLK_l, keybind_modifiers{ true }, flags, player_action(player_action_type::toggle_looping)));
+
+
+		//TODO: Maybe move this somewhere else
+		ctx_.add_event_listener<tag_delete_event>([](const tag_delete_event& event)
+		{
+			auto& keybinds = ctx_.current_project->keybinds;
+			for (auto it = keybinds.begin(); it != keybinds.end();)
+			{
+				auto& kb = it->second;
+				if (!kb.flags.removable)
+				{
+					++it;
+					continue;
+				}
+
+				auto timeline_action_ptr = std::dynamic_pointer_cast<timeline_action>(kb.action);
+				if (timeline_action_ptr == nullptr)
+				{
+					++it;
+					continue;
+				}
+
+				if (timeline_action_ptr->tag() != event.tag_name())
+				{
+					++it;
+					continue;
+				}
+
+				it = keybinds.erase(it);
+			}
+		});
 	}
 
 	void main_window::init_options()
@@ -2243,6 +2272,7 @@ namespace vt
 			ctx_.segments_move_conflict_popup->render();
 			if (!ctx_.segments_move_conflict_popup->is_open())
 			{
+				//TODO: make this work like the insert popup (send events from it instead of getting the value here)
 				const auto& event_data = ctx_.segments_move_conflict_popup->move_request_event_data();
 				resolve_segments_move_request_event(event_data, ctx_.segments_move_conflict_popup->accepted());
 
@@ -2278,17 +2308,15 @@ namespace vt
 		bool v = true;
 		if (ctx_.current_video_group_id() != invalid_video_group_id)
 		{
-			auto group_duration = ctx_.displayed_videos.duration();
-
 			auto& state = timeline.state();
 			state.set_min_timestamp(timestamp::zero());
-			state.set_max_timestamp(timestamp(std::chrono::duration_cast<std::chrono::milliseconds>(group_duration)));
-			state.set_current_timestamp(timestamp{ std::chrono::duration_cast<std::chrono::milliseconds>(ctx_.displayed_videos.current_timestamp()) });
+			state.set_max_timestamp(ctx_.displayed_videos.duration_as_timestamp());
+			state.set_current_timestamp(ctx_.displayed_videos.current_timestamp_as_timestamp());
 		}
 
 		timeline.set_on_seek_callback([](timestamp ts)
 		{
-			if (ts.total_milliseconds != std::chrono::duration_cast<std::chrono::milliseconds>(ctx_.displayed_videos.current_timestamp()))
+			if (ts != ctx_.displayed_videos.current_timestamp_as_timestamp())
 			{
 				ctx_.displayed_videos.seek(ts.total_milliseconds);
 			}

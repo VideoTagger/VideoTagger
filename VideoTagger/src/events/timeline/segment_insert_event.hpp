@@ -1,9 +1,13 @@
 #pragma once
+#include <string>
+#include <optional>
 #include <events/event.hpp>
 #include <tags/tag_timeline.hpp>
 
 namespace vt
 {
+	//TODO: maybe insert request and insert should have some id to connect them
+
 	/**
 	 * @brief Event triggered after resolving a segments_insert_request_event.
 	 * 
@@ -12,12 +16,15 @@ namespace vt
 	struct segment_insert_event : public event
 	{
 		segment_insert_event(segment_storage& storage, const std::string& tag, timestamp start, timestamp end, segment_id id, bool inserted) :
+			segment_storage_{ &storage }, tag_{ tag }, start_{ start }, end_{ end }, id_{ id }, inserted_{ inserted } {}
+
+		segment_insert_event(segment_storage& storage, const std::optional<std::string>& tag, timestamp start, timestamp end, segment_id id, bool inserted) :
 			segment_storage_{ &storage }, tag_{ tag }, start_{ start }, end_{ end }, id_{ id }, inserted_{ inserted } {
 		}
 
 	private:
 		bool inserted_{};
-		std::string tag_;
+		std::optional<std::string> tag_;
 		segment_storage* segment_storage_;
 		segment_id id_;
 		timestamp start_;
@@ -25,7 +32,7 @@ namespace vt
 
 	public:
 		///@return Tag name
-		constexpr const std::string& tag() const
+		constexpr const std::optional<std::string>& tag() const
 		{
 			return tag_;
 		}

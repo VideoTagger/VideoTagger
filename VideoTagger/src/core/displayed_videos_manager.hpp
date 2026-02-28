@@ -52,7 +52,9 @@ namespace vt
 		bool is_playing() const;
 		float speed() const;
 		std::chrono::nanoseconds duration() const;
+		timestamp duration_as_timestamp() const;
 		std::chrono::nanoseconds current_timestamp() const;
+		timestamp current_timestamp_as_timestamp() const;
 		size_t size() const;
 		bool empty() const;
 		double max_framerate() const;

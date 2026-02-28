@@ -1,4 +1,6 @@
 #pragma once
+#include <optional>
+#include <string>
 #include <events/event.hpp>
 #include <tags/tag_timeline.hpp>
 
@@ -14,14 +16,24 @@ namespace vt
 	struct segment_insert_request_event : public event
 	{
 		segment_insert_request_event(segment_storage& storage, const std::string& tag, timestamp start, timestamp end, bool user_customization, bool ignore_conflicts) :
-			tag_{ tag }, segment_storage_{ &storage }, start_{ start }, end_{ end }, user_customization_{ user_customization }, ignore_conflicts_{ ignore_conflicts } {
-		}
+			tag_{ tag }, segment_storage_{ &storage }, start_{ start }, end_{ end }, user_customization_{ user_customization }, ignore_conflicts_{ ignore_conflicts } {}
 		segment_insert_request_event(segment_storage& storage, const std::string& tag, timestamp ts, bool user_customization, bool ignore_conflicts) :
-			tag_{ tag }, segment_storage_{ &storage }, start_{ ts }, end_{ ts }, user_customization_{ user_customization }, ignore_conflicts_{ ignore_conflicts } {
+			tag_{ tag }, segment_storage_{ &storage }, start_{ ts }, end_{ ts }, user_customization_{ user_customization }, ignore_conflicts_{ ignore_conflicts } {}
+
+		segment_insert_request_event(segment_storage& storage, const std::optional<std::string>& tag, timestamp start, timestamp end, bool user_customization, bool ignore_conflicts) :
+			tag_{ tag }, segment_storage_{ &storage }, start_{ start }, end_{ end }, user_customization_{ tag.has_value() ? user_customization : true }, ignore_conflicts_{ ignore_conflicts } {
 		}
+		segment_insert_request_event(segment_storage& storage, const std::optional<std::string>& tag, timestamp ts, bool user_customization, bool ignore_conflicts) :
+			tag_{ tag }, segment_storage_{ &storage }, start_{ ts }, end_{ ts }, user_customization_{ tag.has_value() ? user_customization : true }, ignore_conflicts_{ ignore_conflicts } {
+		}
+		
+		segment_insert_request_event(segment_storage& storage, timestamp start, timestamp end, bool ignore_conflicts) :
+			segment_storage_{ &storage }, start_{ start }, end_{ end }, user_customization_{ true }, ignore_conflicts_{ ignore_conflicts } {}
+		segment_insert_request_event(segment_storage& storage, timestamp ts, bool ignore_conflicts) :
+			segment_storage_{ &storage }, start_{ ts }, end_{ ts }, user_customization_{ true }, ignore_conflicts_{ ignore_conflicts } {}
 
 	private:
-		std::string tag_;
+		std::optional<std::string> tag_;
 		segment_storage* segment_storage_;
 		timestamp start_;
 		timestamp end_;
@@ -30,7 +42,7 @@ namespace vt
 
 	public:
 		///@return Tag name
-		constexpr const std::string& tag() const
+		constexpr const std::optional<std::string>& tag() const
 		{
 			return tag_;
 		}

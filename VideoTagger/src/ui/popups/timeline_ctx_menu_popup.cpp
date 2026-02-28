@@ -3,11 +3,16 @@
 #include <core/app_context.hpp>
 #include <events/timeline/segment_delete_event.hpp>
 #include <events/timeline/segment_insert_request_event.hpp>
+#include <events/timeline/segment_insert_mark_start.hpp>
+#include <events/timeline/segment_insert_mark_end.hpp>
+#include <utils/random.hpp>
 
 namespace vt::ui
 {
-	timeline_ctx_menu_popup::timeline_ctx_menu_popup() : popup{ /*ctx_.lang->get("popup.timeline_context_menu.title")*/ "TimelineContextMenu"}, segment_storage_{nullptr}, event_source_{"timeline"}
+	timeline_ctx_menu_popup::timeline_ctx_menu_popup() : 
+		popup{ /*ctx_.lang->get("popup.timeline_context_menu.title")*/ "TimelineContextMenu"}, segment_storage_{nullptr}, event_source_{"timeline"}
 	{
+		mark_id_ = utils::random::get_uuid();
 	}
 
 	bool timeline_ctx_menu_popup::is_any_segment_selected() const
@@ -57,11 +62,11 @@ namespace vt::ui
 		}
 		if (ImGui::MenuItem(ctx_.lang->get("popup.timeline_context_menu.begin_segment_at_playhead").c_str()))
 		{
-			//TODO: implementation
+			ctx_.dispatch_event<segment_insert_mark_start>(event_source_, mark_id_, *segment_storage_, active_tag_, playhead_position_);
 		}
 		if (ImGui::MenuItem(ctx_.lang->get("popup.timeline_context_menu.end_segment_at_playhead").c_str()))
 		{
-			//TODO: implementation
+			ctx_.dispatch_event<segment_insert_mark_end>(event_source_, mark_id_, *segment_storage_, playhead_position_, true);
 		}
 	}
 

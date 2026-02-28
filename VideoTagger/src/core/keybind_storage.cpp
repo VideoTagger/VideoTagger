@@ -13,6 +13,16 @@ namespace vt
 		return keybinds_.erase(name);
 	}
 
+	keybind_storage::iterator keybind_storage::erase(iterator it)
+	{
+		return keybinds_.erase(it);
+	}
+
+	keybind_storage::iterator keybind_storage::erase(const_iterator it)
+	{
+		return keybinds_.erase(it);
+	}
+
 	std::pair<keybind_storage::iterator, bool> keybind_storage::rename(const std::string& current_name, const std::string& new_name)
 	{
 		auto current_it = keybinds_.find(current_name);

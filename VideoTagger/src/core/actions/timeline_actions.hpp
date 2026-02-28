@@ -1,18 +1,33 @@
 #pragma once
 #include <string>
+#include <optional>
 #include "keybind_action.hpp"
 
 namespace vt
 {
-	struct timestamp_action : public keybind_action
+	struct timeline_action : public keybind_action
+	{
+	public:
+		timeline_action(const std::string& name);
+
+	protected:
+		std::optional<std::string> tag_;
+
+	public:
+		const std::optional<std::string>& tag() const;
+
+		virtual void invoke() const override = 0;
+		virtual void to_json(nlohmann::ordered_json& json) const override;
+		virtual void from_json(const nlohmann::ordered_json& json) override;
+		virtual void render_properties() override = 0;
+	};
+
+	struct timestamp_action : public timeline_action
 	{
 		static constexpr auto action_name = "Insert Timestamp";
 
 	public:
 		timestamp_action();
-
-	private:
-		std::string tag_;
 
 	public:
 		virtual void invoke() const final override;
@@ -28,7 +43,7 @@ namespace vt
 		end
 	};
 
-	struct segment_action : public keybind_action
+	struct segment_action : public timeline_action
 	{
 		static constexpr auto action_name = "Start/End Segment";
 
@@ -37,7 +52,6 @@ namespace vt
 
 	private:
 		segment_action_type type_;
-		std::string tag_;
 
 	public:
 		virtual void invoke() const final override;

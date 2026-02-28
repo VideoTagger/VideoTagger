@@ -90,6 +90,13 @@ namespace vt
 		bool show_script_progress = false;
 	};
 
+	struct insert_segment_mark_data
+	{
+		std::optional<std::string> tag;
+		timestamp start;
+		uint64_t mark_id{};
+	};
+
 	///@brief Application context that holds all states and necessary data
 	struct app_context : public event_storage, ui::window_registry
 	{
@@ -135,7 +142,10 @@ namespace vt
 
 		displayed_videos_manager displayed_videos;
 
+		//TODO: remove after removing the old timeline
 		widgets::insert_segment_data_container insert_segment_data;
+
+		std::vector<insert_segment_mark_data> insert_segment_marks;
 
 		app_settings app_settings;
 		std::shared_ptr<lang_pack> lang = nullptr;
@@ -196,6 +206,10 @@ namespace vt
 		tag_attribute_instance* get_selected_attribute() const;
 
 		static std::filesystem::path storage_path();
+
+		std::vector<insert_segment_mark_data>::iterator find_insert_segment_mark_by_tag(const std::string& tag);
+		std::vector<insert_segment_mark_data>::iterator find_insert_segment_mark_by_tag(const std::optional<std::string>& tag);
+		std::vector<insert_segment_mark_data>::iterator find_insert_segment_mark_by_id(uint64_t id);
 
 	private:
 		video_group_id_t current_video_group_id_{};

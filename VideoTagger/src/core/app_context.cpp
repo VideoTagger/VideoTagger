@@ -305,4 +305,28 @@ namespace vt
     {
         return utils::filesystem::get_storage_path("VideoTagger", "VideoTagger");
     }
+
+	std::vector<insert_segment_mark_data>::iterator app_context::find_insert_segment_mark_by_tag(const std::string& tag)
+	{
+		return std::find_if(insert_segment_marks.begin(), insert_segment_marks.end(), [&](const auto& mark)
+		{
+			return mark.tag.has_value() and mark.tag.value() == tag;
+		});
+	}
+
+	std::vector<insert_segment_mark_data>::iterator app_context::find_insert_segment_mark_by_tag(const std::optional<std::string>& tag)
+	{
+		return std::find_if(insert_segment_marks.begin(), insert_segment_marks.end(), [&](const auto& mark)
+		{
+			return mark.tag == tag;
+		});
+	}
+
+	std::vector<insert_segment_mark_data>::iterator app_context::find_insert_segment_mark_by_id(uint64_t id)
+	{
+		return std::find_if(insert_segment_marks.begin(), insert_segment_marks.end(), [&](const auto& mark)
+		{
+			return mark.mark_id == id;
+		});
+	}
 }
