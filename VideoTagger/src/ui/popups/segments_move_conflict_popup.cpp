@@ -4,14 +4,31 @@
 #include <ui/widgets/button_bar.hpp>
 #include <ui/widgets/common.hpp>
 #include <ui/widgets/text.hpp>
+#include <events/timeline/segments_move_request_event.hpp>
+#include <events/timeline/segments_move_event.hpp>
+#include <events/player/playback_changed_event.hpp>
 
 namespace vt::ui
 {
 	segments_move_conflict_popup::segments_move_conflict_popup(const segments_move_request_event& event_data, segment_id_map conflicting_segments, std::optional<bool*> open) :
 		modal_popup{ /*ctx_.lang->get("popup.segments_move_conflict.title")*/ "Move Segment Conflict", open, ImGuiWindowFlags_NoTitleBar},
-		move_request_event_data_{ event_data.storage(), event_data.segments(), event_data.move_part(), event_data.move_offset() },
+		move_request_event_data_{ event_data.storage(), event_data.segments(), event_data.move_part(), event_data.move_offset(), event_data.ignore_conflicts() },
 		conflicting_segments_{ conflicting_segments }
 	{
+	}
+
+	void segments_move_conflict_popup::on_display()
+	{
+		//TODO: this and what's in on_close is repeated in multiple popups, should be refactored
+
+		auto& player = ctx_.get_window<widgets::video_player>();
+		if (player.is_playing())
+		{
+			player.set_playing(false); //TODO: remove when player events work
+
+			ctx_.dispatch_event<playback_changed_event>(move_request_event_data_.source(), player, false);
+			paused_player_ = true;
+		}
 	}
 
 	void segments_move_conflict_popup::on_render()
@@ -30,29 +47,36 @@ namespace vt::ui
 		{
 			switch (id)
 			{
-				case 0:
-				{
-					accepted_ = true;
-					close();
-				}
-				break;
-				default: close(); break;
+			case 0:
+			{
+				accepted_ = true;
+				close();
+				ctx_.dispatch_event<segments_move_request_event>(
+					move_request_event_data_.source(), move_request_event_data_.storage(), move_request_event_data_.segments(),
+					move_request_event_data_.move_part(), move_request_event_data_.move_offset(), true
+				);
 			}
-			}, true);
+			break;
+			default: close(); break;
+			}
+		}, true);
 	}
 
 	void segments_move_conflict_popup::on_close()
 	{
-	}
+		if (!accepted_)
+		{
+			ctx_.dispatch_event<segments_move_event>(
+				move_request_event_data_.source(), move_request_event_data_.storage(), move_request_event_data_.segments(),
+				move_request_event_data_.move_part(), move_request_event_data_.move_offset(), false
+			);
+		}
 
-
-	bool segments_move_conflict_popup::accepted() const
-	{
-		return accepted_;
-	}
-
-	const segments_move_request_event& segments_move_conflict_popup::move_request_event_data() const
-	{
-		return move_request_event_data_;
+		if (paused_player_)
+		{
+			auto& player = ctx_.get_window<widgets::video_player>();
+			player.set_playing(true); //TODO: remove when player events work
+			ctx_.dispatch_event<playback_changed_event>(move_request_event_data_.source(), player, true);
+		}
 	}
 }

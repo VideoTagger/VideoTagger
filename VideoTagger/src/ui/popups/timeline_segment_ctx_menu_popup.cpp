@@ -61,14 +61,14 @@ namespace vt::ui
 				{
 					const auto& segment = segment_storage_->at(active_tag_).at(active_segment_);
 					ctx_.dispatch_event<segments_move_request_event>(
-						event_source_, *segment_storage_, active_tag_, active_segment_, segment_part::right, timestamp{ -segment.duration() }
+						event_source_, *segment_storage_, active_tag_, active_segment_, segment_part::right, timestamp{ -segment.duration() }, false
 					);
 				}
 				if (ImGui::MenuItem(ctx_.lang->get("popup.timeline_segment_context_menu.convert_to_timestamp.end").c_str()))
 				{
 					const auto& segment = segment_storage_->at(active_tag_).at(active_segment_);
 					ctx_.dispatch_event<segments_move_request_event>(
-						event_source_, *segment_storage_, active_tag_, active_segment_, segment_part::left, timestamp{ segment.duration() }
+						event_source_, *segment_storage_, active_tag_, active_segment_, segment_part::left, timestamp{ segment.duration() }, false
 					);
 				}
 				if (ImGui::MenuItem(ctx_.lang->get("popup.timeline_segment_context_menu.convert_to_timestamp.start_end").c_str()))
@@ -87,14 +87,14 @@ namespace vt::ui
 				{
 					const auto& segment = segment_storage_->at(active_tag_).at(active_segment_);
 					ctx_.dispatch_event<segments_move_request_event>(
-						event_source_, *segment_storage_, active_tag_, active_segment_, segment_part::left, playhead_position_ - segment.start
+						event_source_, *segment_storage_, active_tag_, active_segment_, segment_part::left, playhead_position_ - segment.start, false
 					);
 				}
 				if (ImGui::MenuItem(ctx_.lang->get("popup.timeline_segment_context_menu.stretch.end_to_playhead").c_str()))
 				{
 					const auto& segment = segment_storage_->at(active_tag_).at(active_segment_);
 					ctx_.dispatch_event<segments_move_request_event>(
-						event_source_, *segment_storage_, active_tag_, active_segment_, segment_part::right, playhead_position_ - segment.end
+						event_source_, *segment_storage_, active_tag_, active_segment_, segment_part::right, playhead_position_ - segment.end, false
 					);
 				}
 
@@ -121,14 +121,14 @@ namespace vt::ui
 			if (ImGui::MenuItem(ctx_.lang->get("popup.timeline_segment_context_menu.convert_to_segment").c_str()))
 			{
 				ctx_.dispatch_event<segments_move_request_event>(
-					event_source_, *segment_storage_, active_tag_, active_segment_, segment_part::right, timestamp{ tag_segment::min_segment_size }
+					event_source_, *segment_storage_, active_tag_, active_segment_, segment_part::right, timestamp{ tag_segment::min_segment_size }, false
 				);
 			}
 			if (ImGui::MenuItem(ctx_.lang->get("popup.timeline_segment_context_menu.move_to_playhead").c_str()))
 			{
 				const auto& segment = segment_storage_->at(active_tag_).at(active_segment_);
 				ctx_.dispatch_event<segments_move_request_event>(
-					event_source_, *segment_storage_, active_tag_, active_segment_, segment_part::both, playhead_position_ - segment.start
+					event_source_, *segment_storage_, active_tag_, active_segment_, segment_part::both, playhead_position_ - segment.start, false
 				);
 			}
 			if (ImGui::MenuItem(ctx_.lang->get("popup.timeline_segment_context_menu.seek_timestamp").c_str()))

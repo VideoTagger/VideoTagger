@@ -992,7 +992,7 @@ namespace vt::widgets
 		if (segment_drag_data_.begin_drag_source == event_source_)
 		{
 			//TODO: maybe main_window should listen for end_segment_drag_event instead and then dispatch the segments_move_request_event
-			ctx_.dispatch_event<segments_move_request_event>(event_source_, *segment_drag_data_.storage, dragged_segments_, segment_drag_data_.grab_part, final_offset);
+			ctx_.dispatch_event<segments_move_request_event>(event_source_, *segment_drag_data_.storage, dragged_segments_, segment_drag_data_.grab_part, final_offset, false);
 		}
 	}
 

@@ -265,7 +265,7 @@ namespace vt::ui::windows
 			if (event.is_from(event_source))
 			{
 				//TODO: maybe main_window should listen for end_segment_drag_event instead and then dispatch the segments_move_request_event
-				ctx_.dispatch_event<segments_move_request_event>(event_source, event.storage(),  event.segments(), event.grab_part(), event.final_offset());
+				ctx_.dispatch_event<segments_move_request_event>(event_source, event.storage(),  event.segments(), event.grab_part(), event.final_offset(), false);
 			}
 		});
 

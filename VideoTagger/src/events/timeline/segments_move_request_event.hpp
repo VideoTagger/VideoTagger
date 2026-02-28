@@ -13,16 +13,16 @@ namespace vt
 	 */
 	struct segments_move_request_event : public multi_segment_event
 	{
-		segments_move_request_event(segment_storage& storage, const segment_id_map& segments, segment_part move_part, timestamp move_offset) :
-			multi_segment_event(storage, segments), move_part_{ move_part }, move_offset_{ move_offset } {}
+		segments_move_request_event(segment_storage& storage, const segment_id_map& segments, segment_part move_part, timestamp move_offset, bool ignore_conflicts) :
+			multi_segment_event(storage, segments), move_part_{ move_part }, move_offset_{ move_offset }, ignore_conflicts_{ ignore_conflicts } {}
 
-		segments_move_request_event(segment_storage& storage, const std::string tag, segment_id segment, segment_part move_part, timestamp move_offset) :
-			multi_segment_event(storage, segment_id_map{ {tag, { segment }} }), move_part_{ move_part }, move_offset_{ move_offset } {
-		}
+		segments_move_request_event(segment_storage& storage, const std::string tag, segment_id segment, segment_part move_part, timestamp move_offset, bool ignore_conflicts) :
+			multi_segment_event(storage, segment_id_map{ {tag, { segment }} }), move_part_{ move_part }, move_offset_{ move_offset }, ignore_conflicts_{ ignore_conflicts } {}
 
 	private:
 		segment_part move_part_;
 		timestamp move_offset_;
+		bool ignore_conflicts_{};
 
 	public:
 		///@return The part of the segment that was moved
@@ -35,6 +35,12 @@ namespace vt
 		constexpr timestamp move_offset() const
 		{
 			return move_offset_;
+		}
+
+		///@return Whether conflicts with existing segments should be ignored (i.e., the segment should be moved without asking the user even if it overlaps with other segments)
+		constexpr bool ignore_conflicts() const
+		{
+			return ignore_conflicts_;
 		}
 	};
 }

@@ -15,13 +15,11 @@ namespace vt::ui
 		segment_id_map conflicting_segments_;
 		segments_move_request_event move_request_event_data_;
 		bool accepted_{ false };
+		bool paused_player_{ false };
 
 	public:
+		virtual void on_display() override;
 		virtual void on_render() override;
 		virtual void on_close() override;
-
-		//TODO: TEMP
-		bool accepted() const;
-		const segments_move_request_event& move_request_event_data() const;
 	};
 }

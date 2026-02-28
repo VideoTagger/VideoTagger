@@ -25,8 +25,10 @@ namespace vt::ui
 		timestamp min_timestamp_;
 		timestamp max_timestamp_;
 		ui::combo<std::string> tag_combo_;
+		bool paused_player_ = false;
 
 	public:
+		virtual void on_display() override;
 		virtual void on_render() override;
 		virtual void on_close() override;
 	};

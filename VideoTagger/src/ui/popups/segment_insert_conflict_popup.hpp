@@ -14,8 +14,10 @@ namespace vt::ui
 		std::set<segment_id> conflicting_segments_;
 		segment_insert_request_event insert_request_event_data_;
 		bool accepted_{ false };
+		bool paused_player_{ false };
 
 	public:
+		virtual void on_display() override;
 		virtual void on_render() override;
 		virtual void on_close() override;
 	};

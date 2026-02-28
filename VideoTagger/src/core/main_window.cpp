@@ -98,31 +98,6 @@ namespace vt
 		debug::log("pybind11 Version: {}.{}.{}", PYBIND11_VERSION_MAJOR, PYBIND11_VERSION_MINOR, PYBIND11_VERSION_PATCH);
 	}
 
-	static void resolve_segments_move_request_event(const segments_move_request_event& event, bool accepted)
-	{
-		if (!accepted)
-		{
-			ctx_.dispatch_event<segments_move_event>(event_source_, event.storage(), event.segments(), event.move_part(), event.move_offset(), false);
-			return;
-		}
-
-		auto& storage = event.storage();
-		for (const auto& [tag, segment_ids] : event.segments())
-		{
-			auto move_results = storage.at(tag).move_offset(segment_ids, event.move_part(), event.move_offset());
-
-			for (auto& move_result : move_results)
-			{
-				for (auto& merged_id : move_result.merged_segments())
-				{
-					ctx_.dispatch_event<segment_merge_event>(event_source_, storage, tag, merged_id, move_result.resulting_segment());
-				}
-			}
-		}
-
-		ctx_.dispatch_event<segments_move_event>(event_source_, event.storage(), event.segments(), event.move_part(), event.move_offset(), false);
-		ctx_.is_project_dirty = true;
-	}
 	main_window::main_window(const system_window_config& cfg) : system_window{ cfg }
 	{
 		ctx_.add_event_listener<system_window_close_event>([this](const system_window_close_event& event)
@@ -227,37 +202,55 @@ namespace vt
 
 		ctx_.add_event_listener<segments_move_request_event>([](const segments_move_request_event& event)
 		{
-			auto& storage = ctx_.get_current_segment_storage();
-			segment_id_map conflicting_segments;
+			auto& storage = event.storage();
+
+			if (!event.ignore_conflicts())
+			{
+				segment_id_map conflicting_segments;
+				for (const auto& [tag, segment_ids] : event.segments())
+				{
+					const auto& tag_timeline = storage.at(tag);
+					for (auto& id : segment_ids)
+					{
+						const auto& segment = tag_timeline.at(id);
+						auto segment_start = segment.start + (event.move_part() & segment_part::left ? event.move_offset() : timestamp::zero());
+						auto segment_end = segment.end + (event.move_part() & segment_part::right ? event.move_offset() : timestamp::zero());
+
+						auto range = tag_timeline.find_range(segment_start, segment_end);
+						if (!range.empty())
+						{
+							if (range.size() == 1 && range.begin()->id == id)
+							{
+								continue;
+							}
+
+							conflicting_segments[tag].insert(id);
+						}
+					}
+				}
+
+				if (!conflicting_segments.empty())
+				{
+					ctx_.segments_move_conflict_popup = ui::new_popup<ui::segments_move_conflict_popup>(event, conflicting_segments);
+					return;
+				}
+			}
+
 			for (const auto& [tag, segment_ids] : event.segments())
 			{
-				const auto& tag_timeline = storage.at(tag);
-				for (auto& id : segment_ids)
-				{
-					const auto& segment = tag_timeline.at(id);
-					auto segment_start = segment.start + (event.move_part() & segment_part::left ? event.move_offset() : timestamp::zero());
-					auto segment_end = segment.end + (event.move_part() & segment_part::right ? event.move_offset() : timestamp::zero());
-					
-					auto range = tag_timeline.find_range(segment_start, segment_end);
-					if (!range.empty())
-					{
-						if (range.size() == 1 && range.begin()->id == id)
-						{
-							continue;
-						}
+				auto move_results = storage.at(tag).move_offset(segment_ids, event.move_part(), event.move_offset());
 
-						conflicting_segments[tag].insert(id);
+				for (auto& move_result : move_results)
+				{
+					for (auto& merged_id : move_result.merged_segments())
+					{
+						ctx_.dispatch_event<segment_merge_event>(event_source_, storage, tag, merged_id, move_result.resulting_segment());
 					}
 				}
 			}
 
-			if (!conflicting_segments.empty())
-			{
-				ctx_.segments_move_conflict_popup = ui::new_popup<ui::segments_move_conflict_popup>(event, conflicting_segments);
-				return;
-			}
-
-			resolve_segments_move_request_event(event, true);
+			ctx_.dispatch_event<segments_move_event>(event_source_, event.storage(), event.segments(), event.move_part(), event.move_offset(), true);
+			ctx_.is_project_dirty = true;
 		});
 
 		ctx_.add_event_listener<segment_delete_event>([](const segment_delete_event& event)
@@ -272,15 +265,8 @@ namespace vt
 
 		ctx_.add_event_listener<segment_insert_request_event>([](const segment_insert_request_event& event)
 		{
-			auto& player = ctx_.get_window<widgets::video_player>();
-
 			if (event.user_customization() or !event.tag().has_value())
 			{
-				//TODO: tmp
-				ctx_.pause_player = true;
-
-				ctx_.dispatch_event<playback_changed_event>(event_source_, player, false);
-
 				auto max_ts = timestamp(std::chrono::duration_cast<std::chrono::milliseconds>(ctx_.displayed_videos.duration()));
 
 				ctx_.segment_insert_popup = ui::new_popup<ui::segment_insert_popup>(event, ctx_.current_project->displayed_tags, timestamp::zero(), max_ts);
@@ -303,10 +289,6 @@ namespace vt
 
 				if (!conflicting_segments.empty())
 				{
-					//TODO: tmp
-					ctx_.pause_player = true;
-
-					ctx_.dispatch_event<playback_changed_event>(event_source_, player, false);
 					ctx_.segment_insert_conflict_popup = ui::new_popup<ui::segment_insert_conflict_popup>(event, conflicting_segments);
 					return;
 				}
@@ -2272,10 +2254,6 @@ namespace vt
 			ctx_.segments_move_conflict_popup->render();
 			if (!ctx_.segments_move_conflict_popup->is_open())
 			{
-				//TODO: make this work like the insert popup (send events from it instead of getting the value here)
-				const auto& event_data = ctx_.segments_move_conflict_popup->move_request_event_data();
-				resolve_segments_move_request_event(event_data, ctx_.segments_move_conflict_popup->accepted());
-
 				ctx_.segments_move_conflict_popup.reset();
 			}
 		}
