@@ -20,7 +20,7 @@ namespace vt
 		event_source(const event_source&) = default;
 		event_source(event_source&&) = default;
 		constexpr event_source(int64_t id) : id_{ id } {}
-		event_source(const char* id) : event_source(std::string_view(id)) {}
+		event_source(const char* id) : event_source{ std::string_view(id) } {}
 		event_source(const std::string& id) : id_{ static_cast<int64_t>(std::hash<std::string>{}(id)) } {}
 		event_source(std::string_view id) : id_{ static_cast<int64_t>(std::hash<std::string_view>{}(id)) } {}
 

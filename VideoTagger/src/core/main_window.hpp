@@ -42,7 +42,7 @@ namespace vt
 
 		void enable_undocking(bool value);
 
-		virtual void draw() override;
+		virtual void on_render() override;
 		virtual void handle_event(const SDL_Event& event) override;
 	};
 }

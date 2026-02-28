@@ -19,8 +19,36 @@ namespace vt::ui::windows
 	{
 		widget_list_.add_raw([&]()
 		{
+			if (ui::button("Test Tasks"))
+			{
+				auto a = ctx_.tasks.run([]()
+				{
+					debug::log("Job 1");
+					std::this_thread::sleep_for(std::chrono::seconds(3));
+					return 42;
+				}).then([](int value)
+				{
+					debug::log("Job 1 continuation, job 1 result: {}", value);
+					return 1;
+				});
+
+				ctx_.tasks
+				.run([]()
+				{
+					debug::log("Running async task");
+					std::this_thread::sleep_for(std::chrono::seconds(1));
+				})
+				.then(ctx_.tasks.main_thread(), []()
+				{
+					debug::log("Async task finished, running continuation on main thread");
+				});
+			}
+			return true;
+		});
+		widget_list_.add_raw([&]()
+		{
 			static bool is_selected = false;
-			ui::tile test_tile{ "Steamboat Willie 2", "Google Drive", ImVec2{67.5f, 100}};
+			ui::tile test_tile{ "Steamboat Willie 2", "Google Drive", ImVec2{ 67.5f, 100 }};
 			
 			auto image = utils::thumbnail::font_texture();
 			auto glyph = utils::thumbnail::find_glyph(utils::thumbnail::video_icon);

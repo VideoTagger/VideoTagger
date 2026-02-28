@@ -48,6 +48,7 @@
 
 #include <ui/window_registry.hpp>
 #include <events/event_storage.hpp>
+#include <tasks/task_manager.hpp>
 
 namespace vt
 {
@@ -102,6 +103,8 @@ namespace vt
 	{
 		static constexpr auto valid_video_extensions = std::array{ "mp4", "mkv", "avi", "mov", "flv", "wmv", "webm", "m4v", "mpg", "mpeg", "3gp", "ogv", "vob", "mts", "m2ts", "mxf", "f4v", "divx", "rmvb", "asf", "swf" };
 		app_context();
+
+		task_manager tasks;
 
 		std::optional<project> current_project;
 		widgets::video_timeline video_timeline;

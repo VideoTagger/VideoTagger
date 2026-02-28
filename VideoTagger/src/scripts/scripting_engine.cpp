@@ -46,7 +46,7 @@ namespace vt
 			message = utils::string::trim_whitespace(message);
 			if (!message.empty())
 			{
-				debug::log_source(fmt::format("{}:{}", std::filesystem::relative(caller_info.path, ctx_.script_dir_filepath).string(), caller_info.line), "Info", "{}", message);
+				debug::add_log(fmt::format("{}:{}", std::filesystem::relative(caller_info.path, ctx_.script_dir_filepath).string(), caller_info.line), "Info", "{}", message);
 				console.add_entry(widgets::console::entry::flag_type::info, message, caller_info);
 			}
 		})
@@ -65,7 +65,7 @@ namespace vt
 			message = utils::string::trim_whitespace(message);
 			if (!message.empty())
 			{
-				debug::log_source(fmt::format("{}:{}", std::filesystem::relative(caller_info.path, ctx_.script_dir_filepath).string(), caller_info.line), "Error", "{}", message);
+				debug::add_log(fmt::format("{}:{}", std::filesystem::relative(caller_info.path, ctx_.script_dir_filepath).string(), caller_info.line), "Error", "{}", message);
 				console.add_entry(widgets::console::entry::flag_type::error, message, caller_info);
 			}
 		})
@@ -170,7 +170,7 @@ namespace vt
 			message = utils::string::trim_whitespace(message);
 			if (!message.empty())
 			{
-				debug::log_source(fmt::format("{}:{}", std::filesystem::relative(caller_info.path, ctx_.script_dir_filepath).string(), caller_info.line), "Info", "{}", message);
+				debug::log_src(fmt::format("{}:{}", std::filesystem::relative(caller_info.path, ctx_.script_dir_filepath).string(), caller_info.line), "{}", message);
 				console.add_entry(widgets::console::entry::flag_type::info, message, caller_info);
 			}
 		});
@@ -181,7 +181,7 @@ namespace vt
 			message = utils::string::trim_whitespace(message);
 			if (!message.empty())
 			{
-				debug::log_source(fmt::format("{}:{}", std::filesystem::relative(caller_info.path, ctx_.script_dir_filepath).string(), caller_info.line), "Warn", "{}", message);
+				debug::warn_src(fmt::format("{}:{}", std::filesystem::relative(caller_info.path, ctx_.script_dir_filepath).string(), caller_info.line), "{}", message);
 				console.add_entry(widgets::console::entry::flag_type::warn, message, caller_info);
 			}
 		});
@@ -192,7 +192,7 @@ namespace vt
 			message = utils::string::trim_whitespace(message);
 			if (!message.empty())
 			{
-				debug::log_source(fmt::format("{}:{}", std::filesystem::relative(caller_info.path, ctx_.script_dir_filepath).string(), caller_info.line), "Error", "{}", message);
+				debug::error_src(fmt::format("{}:{}", std::filesystem::relative(caller_info.path, ctx_.script_dir_filepath).string(), caller_info.line), "{}", message);
 				console.add_entry(widgets::console::entry::flag_type::error, message, caller_info);
 			}
 		});
@@ -323,13 +323,13 @@ namespace vt
 								sys.attr("exit")(py::int_(-1));
 							}
 							catch (...) {}
-							debug::log_source(fmt::format("{}:{}", std::filesystem::relative(file_name, ctx_.script_dir_filepath).string(), lineno), "Info", "{}", "Script interrupted");
+							debug::add_log(fmt::format("{}:{}", std::filesystem::relative(file_name, ctx_.script_dir_filepath).string(), lineno), "Info", "{}", "Script interrupted");
 							console.add_entry(widgets::console::entry::flag_type::info, "Script interrupted", widgets::console::entry::source_info{ file_name, lineno });
 							return false;
 						}
 						else if (!message.empty())
 						{
-							debug::log_source(fmt::format("{}:{}", std::filesystem::relative(file_name, ctx_.script_dir_filepath).string(), lineno), "Error", "{}", message);
+							debug::add_log(fmt::format("{}:{}", std::filesystem::relative(file_name, ctx_.script_dir_filepath).string(), lineno), "Error", "{}", message);
 							console.add_entry(widgets::console::entry::flag_type::error, message, widgets::console::entry::source_info{ file_name, lineno });
 						}
 					}

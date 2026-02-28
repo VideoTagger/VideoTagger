@@ -18,6 +18,7 @@ namespace vt
 		bool run();
 		void shutdown();
 
+		void handle_tasks();
 		void handle_events();
 	};
 }

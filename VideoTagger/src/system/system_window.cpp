@@ -318,8 +318,9 @@ namespace vt
 
 	void system_window::render()
 	{
+		pre_render();
 		set_current();
-		draw();
+		on_render();
 
 		auto& io = ImGui::GetIO();
 		glViewport(0, 0, (int)io.DisplaySize.x, (int)io.DisplaySize.y);
