@@ -21,7 +21,7 @@ namespace vt::ui
 		tag_combo_{ "##TagName", tag_names_ }
 	{
 		auto it = std::find(tag_names_.begin(), tag_names_.end(), insert_request_event_data_.tag());
-		tag_combo_.set_selected(it == tag_names_.end() ? -1 : std::distance(tag_names_.begin(), it));
+		tag_combo_.set_selected(it == tag_names_.end() ? 0 : std::distance(tag_names_.begin(), it));
 	}
 
 	void segment_insert_popup::on_display()
