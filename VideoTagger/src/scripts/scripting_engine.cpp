@@ -4,6 +4,7 @@
 #include <widgets/video_timeline.hpp>
 #include <core/app_context.hpp>
 #include <widgets/console.hpp>
+#include <widgets/video_player.hpp>
 #include <video/local_video_importer.hpp>
 #include <utils/random.hpp>
 #include "bindings/bind_tags.hpp"

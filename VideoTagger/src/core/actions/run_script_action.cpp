@@ -2,6 +2,7 @@
 #include "run_script_action.hpp"
 #include <core/app_context.hpp>
 #include <utils/filesystem.hpp>
+#include <widgets/console.hpp>
 
 namespace vt
 {

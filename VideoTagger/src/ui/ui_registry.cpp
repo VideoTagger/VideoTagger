@@ -1,11 +1,11 @@
-#include "window_registry.hpp"
+#include "ui_registry.hpp"
 #include <core/app_context.hpp>
 #include <events/ui/window/ui_window_register_event.hpp>
 #include <events/ui/window/ui_window_unregister_event.hpp>
 
 namespace vt::ui
 {
-	window_registry::window_registry()
+	ui_registry::ui_registry()
 	{
 		ctx_.add_event_listener<ui_window_register_event>([this](const ui_window_register_event& event)
 		{
@@ -24,7 +24,7 @@ namespace vt::ui
 		});
 	}
 
-	void window_registry::render_windows()
+	void ui_registry::render_windows()
 	{
 		for (auto& [id, window] : windows_)
 		{
@@ -32,7 +32,7 @@ namespace vt::ui
 		}
 	}
 	
-	nlohmann::ordered_json window_registry::serialize_windows() const
+	nlohmann::ordered_json ui_registry::serialize_windows() const
 	{
 		nlohmann::ordered_json result;
 		for (const auto& [id, window] : windows_)
@@ -50,7 +50,7 @@ namespace vt::ui
 		return result;
 	}
 
-	void window_registry::deserialize_windows(const nlohmann::ordered_json& json)
+	void ui_registry::deserialize_windows(const nlohmann::ordered_json& json)
 	{
 		for (auto& [serialization_id, json_window] : json.items())
 		{

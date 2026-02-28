@@ -8,10 +8,16 @@
 #include <widgets/video_widget.hpp>
 #include <widgets/video_timeline.hpp>
 #include <widgets/video_player.hpp>
+#include <widgets/console.hpp>
 #include <widgets/project_selector.hpp>
 #include <widgets/theme_customizer.hpp>
 #include <ui/windows/inspector.hpp>
 #include <ui/popups/options_popup.hpp>
+#include <widgets/shape_attributes.hpp>
+#include <widgets/localization_editor.hpp>
+#include <widgets/video_group_queue.hpp>
+#include <widgets/video_group_browser.hpp>
+#include <widgets/video_browser.hpp>
 #include <widgets/controls.hpp>
 #include <widgets/modal/keybind_popup.hpp>
 #include <widgets/modal/keybind_options_popup.hpp>

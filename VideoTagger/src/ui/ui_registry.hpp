@@ -7,10 +7,10 @@
 
 namespace vt::ui
 {
-	struct window_registry
+	struct ui_registry
 	{
 	public:
-		window_registry();
+		ui_registry();
 
 	private:
 		std::unordered_map<size_t, std::unique_ptr<ui::window>> windows_;
@@ -45,12 +45,12 @@ namespace vt::ui
 		}
 	};
 
-	inline void to_json(nlohmann::ordered_json& json, const window_registry& registry)
+	inline void to_json(nlohmann::ordered_json& json, const ui_registry& registry)
 	{
 		json = registry.serialize_windows();
 	}
 
-	inline void from_json(const nlohmann::ordered_json& json, window_registry& registry)
+	inline void from_json(const nlohmann::ordered_json& json, ui_registry& registry)
 	{
 		registry.deserialize_windows(json);
 	}

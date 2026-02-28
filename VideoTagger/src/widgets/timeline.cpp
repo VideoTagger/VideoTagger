@@ -8,6 +8,7 @@
 #include <core/debug.hpp>
 #include <utils/math.hpp>
 #include <ui/widgets/common.hpp>
+#include <widgets/video_player.hpp>
 #include <core/app_context.hpp>
 
 #include <events/timeline/segment_select_event.hpp>

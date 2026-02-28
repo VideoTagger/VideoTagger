@@ -5,6 +5,8 @@
 #include <core/debug.hpp>
 #include <utils/random.hpp>
 #include <core/app_context.hpp>
+#include <widgets/console.hpp>
+
 #define CPPHTTPLIB_OPENSSL_SUPPORT
 #include <httplib.h>
 

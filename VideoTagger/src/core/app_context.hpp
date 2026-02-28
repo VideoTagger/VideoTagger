@@ -20,21 +20,12 @@
 #include "font_type.hpp"
 #include "main_window.hpp"
 
-#include <video/video_stream.hpp>
 #include <widgets/project_selector.hpp>
 #include <widgets/video_timeline.hpp>
-#include <widgets/timeline.hpp>
-#include <widgets/video_player.hpp>
 #include <widgets/color_picker.hpp>
-#include <widgets/video_browser.hpp>
-#include <widgets/video_group_browser.hpp>
-#include <widgets/video_group_queue.hpp>
-#include <widgets/shape_attributes.hpp>
-#include <widgets/console.hpp>
 #include <ui/popups/options_popup.hpp>
 #include <widgets/modal/tag_importer.hpp>
 #include <widgets/modal/script_progress.hpp>
-#include <widgets/localization_editor.hpp>
 #include "displayed_videos_manager.hpp"
 #include <utils/json.hpp>
 #include <utils/vec.hpp>
@@ -46,7 +37,7 @@
 #include <ui/popups/segment_insert_conflict_popup.hpp>
 #include <ui/popups/segment_insert_popup.hpp>
 
-#include <ui/window_registry.hpp>
+#include <ui/ui_registry.hpp>
 #include <events/event_storage.hpp>
 #include <tasks/task_manager.hpp>
 
@@ -99,7 +90,7 @@ namespace vt
 	};
 
 	///@brief Application context that holds all states and necessary data
-	struct app_context : public event_storage, ui::window_registry
+	struct app_context : public event_storage, ui::ui_registry
 	{
 		static constexpr auto valid_video_extensions = std::array{ "mp4", "mkv", "avi", "mov", "flv", "wmv", "webm", "m4v", "mpg", "mpeg", "3gp", "ogv", "vob", "mts", "m2ts", "mxf", "f4v", "divx", "rmvb", "asf", "swf" };
 		app_context();

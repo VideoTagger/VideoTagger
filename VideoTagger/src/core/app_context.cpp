@@ -6,6 +6,14 @@
 #include <video/local_video_importer.hpp>
 #include <video/google_drive/google_drive_video_importer.hpp>
 #include <widgets/theme_customizer.hpp>
+#include <widgets/console.hpp>
+#include <widgets/video_group_queue.hpp>
+#include <widgets/localization_editor.hpp>
+#include <widgets/shape_attributes.hpp>
+#include <widgets/video_group_browser.hpp>
+#include <widgets/video_browser.hpp>
+#include <widgets/video_player.hpp>
+#include <widgets/timeline.hpp>
 #include <ui/windows/inspector.hpp>
 
 #ifdef _DEBUG

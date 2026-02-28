@@ -1,6 +1,7 @@
 #include "pch.hpp"
 #include "player_actions.hpp"
 #include <core/app_context.hpp>
+#include <widgets/video_player.hpp>
 
 namespace vt
 {
