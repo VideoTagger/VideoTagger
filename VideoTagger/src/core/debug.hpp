@@ -3,10 +3,12 @@
 #include <fstream>
 #include <string>
 #include <filesystem>
+#include <mutex>
 
 #define FMT_HEADER_ONLY
 #include <fmt/core.h>
 #include <utils/time.hpp>
+#include <utils/string.hpp>
 
 namespace vt
 {
@@ -21,11 +23,14 @@ namespace vt
 		};
 
 		static logging_mode log_mode;
+		static std::optional<std::thread::id> main_thread_id;
 
 		static void init();
 		template<typename... args_t>
-		static void log_source(const std::string& source, std::string flag, const fmt::format_string<args_t...> format, args_t&&... args)
+		static void add_log(const std::string& source, std::string flag, const fmt::format_string<args_t...> format, args_t&&... args)
 		{
+			static std::mutex mutex_;
+
 			std::string color;
 			if (flag == "Info")
 			{
@@ -45,6 +50,7 @@ namespace vt
 			}
 
 			std::string colored_flag = fmt::format("{}[{}]\033[0m({})", color, flag, source);
+
 			flag = fmt::format("[{}]({})", flag, source);
 			auto ts = utils::time::utc_timestamp();
 			auto colored_timestamp = fmt::format("\033[0;90m[{}]", ts);
@@ -52,6 +58,7 @@ namespace vt
 			std::string msg = ": " + fmt::vformat(format.get(), fmt::make_format_args(args...)) + '\n';
 			if (static_cast<uint8_t>(log_mode) & static_cast<uint8_t>(debug::logging_mode::console))
 			{
+				std::scoped_lock lock(mutex_);
 				std::cerr << colored_timestamp << colored_flag << msg;
 			}
 			if (static_cast<uint8_t>(log_mode) & static_cast<uint8_t>(debug::logging_mode::file))
@@ -64,38 +71,67 @@ namespace vt
 
 				auto log_filepath = logs_dir / "app.log";
 
+				std::scoped_lock lock(mutex_);
 				std::ofstream log(log_filepath, std::ios::app);
 				if (log.is_open()) log << timestamp << flag << msg;
 			}
 		}
 
-		//Logs the message with an 'Info' flag
+		///@brief Logs the message with an 'Info' flag
+		template<typename... args_t>
+		static void log_src(const std::string& source, const fmt::format_string<args_t...> format, args_t&&... args)
+		{
+			add_log(source, "Info", format, std::forward<args_t&&>(args)...);
+		}
+
+		///@brief Logs the message with an 'Warn' flag
+		template<typename... args_t>
+		static void warn_src(const std::string& source, const fmt::format_string<args_t...> format, args_t&&... args)
+		{
+			add_log(source, "Warn", format, std::forward<args_t&&>(args)...);
+		}
+
+		///@brief Logs the message with an 'Error' flag
+		template<typename... args_t>
+		static void error_src(const std::string& source, const fmt::format_string<args_t...> format, args_t&&... args)
+		{
+			add_log(source, "Error", format, std::forward<args_t&&>(args)...);
+		}
+		///@brief Logs the message with a 'Panic!' flag and immediately shuts down the app
+		template<typename... args_t>
+		static void panic_src(const std::string& source, const fmt::format_string<args_t...> format, args_t&&... args)
+		{
+			add_log(source, "Panic!", format, std::forward<args_t&&>(args)...);
+		}
+
+		///@brief Logs the message with an 'Info' flag
 		template<typename... args_t>
 		static void log(const fmt::format_string<args_t...> format, args_t&&... args)
 		{
-			log_source("main", "Info", format, std::forward<args_t&&>(args)...);
+			log_src(get_source(), format, std::forward<args_t&&>(args)...);
 		}
 
-		//Logs the message with an 'Warn' flag
+		///@brief Logs the message with an 'Warn' flag
 		template<typename... args_t>
 		static void warn(const fmt::format_string<args_t...> format, args_t&&... args)
 		{
-			log_source("main", "Warn", format, std::forward<args_t&&>(args)...);
+			warn_src(get_source(), format, std::forward<args_t&&>(args)...);
 		}
 
-		//Logs the message with an 'Error' flag
+		///@brief Logs the message with an 'Error' flag
 		template<typename... args_t>
 		static void error(const fmt::format_string<args_t...> format, args_t&&... args)
 		{
-			log_source("main", "Error", format, std::forward<args_t&&>(args)...);
+			error_src(get_source(), format, std::forward<args_t&&>(args)...);
 		}
-		//Logs the message with a 'Panic!' flag and immediately shuts down the app
+		///@brief Logs the message with a 'Panic!' flag and immediately shuts down the app
 		template<typename... args_t>
 		static void panic(const fmt::format_string<args_t...> format, args_t&&... args)
 		{
-			log_source("main", "Panic!", format, std::forward<args_t&&>(args)...);
+			panic_src(get_source(), format, std::forward<args_t&&>(args)...);
 		}
 
+		static std::string get_source();
 		static std::filesystem::path logs_filepath();
 	};
 }

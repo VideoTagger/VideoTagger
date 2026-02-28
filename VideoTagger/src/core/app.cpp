@@ -35,11 +35,11 @@ namespace vt
 			}
 			if (level == AV_LOG_ERROR)
 			{
-				debug::log_source("FFmpeg", "Error", "{}", message);
+				debug::add_log("FFmpeg", "Error", "{}", message);
 			}
 			else
 			{
-				debug::log_source("FFmpeg", "Panic!", "{}", message);
+				debug::add_log("FFmpeg", "Panic!", "{}", message);
 			}
 		}
 	}
@@ -145,6 +145,7 @@ namespace vt
 			ImGuizmo::BeginFrame();
 
 			handle_events();
+			handle_tasks();
 			ctx_.main_window->render();
 		}
 #ifndef _DEBUG
@@ -174,6 +175,11 @@ namespace vt
 		NFD::Quit();
 		SDL_Quit();
 		ctx_.state_ = app_state::uninitialized;
+	}
+
+	void app::handle_tasks()
+	{
+		ctx_.tasks.main_thread().run_some(std::chrono::milliseconds{ 32 });
 	}
 
 	void app::handle_events()

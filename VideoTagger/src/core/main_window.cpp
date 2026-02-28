@@ -2812,7 +2812,7 @@ namespace vt
 		}
 	}
 
-	void main_window::draw()
+	void main_window::on_render()
 	{
 		ImGuiViewport* viewport = ImGui::GetMainViewport();
 		ImGui::SetNextWindowPos(viewport->WorkPos);

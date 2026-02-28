@@ -53,7 +53,8 @@ namespace vt
 
 		bool operator==(const system_window& other) const;
 
-		virtual void draw() = 0;
+		virtual void pre_render() {};
+		virtual void on_render() = 0;
 		virtual void handle_event(const SDL_Event& event);
 	};
 }
