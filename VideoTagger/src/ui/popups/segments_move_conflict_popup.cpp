@@ -5,8 +5,9 @@
 #include <ui/widgets/common.hpp>
 #include <ui/widgets/text.hpp>
 #include <events/timeline/segments_move_request_event.hpp>
-#include <events/timeline/segments_move_event.hpp>
-#include <events/player/playback_changed_event.hpp>
+#include <events/timeline/segments_moved_event.hpp>
+#include <events/player/playback_suspend_request_event.hpp>
+#include <events/player/playback_resume_request_event.hpp>
 
 namespace vt::ui
 {
@@ -19,16 +20,7 @@ namespace vt::ui
 
 	void segments_move_conflict_popup::on_display()
 	{
-		//TODO: this and what's in on_close is repeated in multiple popups, should be refactored
-
-		auto& player = ctx_.get_window<widgets::video_player>();
-		if (player.is_playing())
-		{
-			player.set_playing(false); //TODO: remove when player events work
-
-			ctx_.dispatch_event<playback_changed_event>(move_request_event_data_.source(), player, false);
-			paused_player_ = true;
-		}
+		ctx_.dispatch_event<playback_suspend_request_event>(move_request_event_data_.source(), ctx_.get_window<widgets::video_player>());
 	}
 
 	void segments_move_conflict_popup::on_render()
@@ -66,17 +58,12 @@ namespace vt::ui
 	{
 		if (!accepted_)
 		{
-			ctx_.dispatch_event<segments_move_event>(
+			ctx_.dispatch_event<segments_moved_event>(
 				move_request_event_data_.source(), move_request_event_data_.storage(), move_request_event_data_.segments(),
 				move_request_event_data_.move_part(), move_request_event_data_.move_offset(), false
 			);
 		}
 
-		if (paused_player_)
-		{
-			auto& player = ctx_.get_window<widgets::video_player>();
-			player.set_playing(true); //TODO: remove when player events work
-			ctx_.dispatch_event<playback_changed_event>(move_request_event_data_.source(), player, true);
-		}
+		ctx_.dispatch_event<playback_resume_request_event>(move_request_event_data_.source(), ctx_.get_window<widgets::video_player>());
 	}
 }

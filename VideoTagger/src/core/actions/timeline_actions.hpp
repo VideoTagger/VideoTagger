@@ -16,6 +16,9 @@ namespace vt
 	public:
 		const std::optional<std::string>& tag() const;
 
+		void set_tag(const std::string& tag_name);
+		void set_tag(const std::optional<std::string>& tag_name);
+
 		virtual void invoke() const override = 0;
 		virtual void to_json(nlohmann::ordered_json& json) const override;
 		virtual void from_json(const nlohmann::ordered_json& json) override;

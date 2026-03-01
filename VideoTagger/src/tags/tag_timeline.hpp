@@ -247,8 +247,9 @@ namespace vt
 		 * Invalidates all iterators and references to the segments after the erased segment.
 		 * 
 		 * @param id ID of the segment to erase.
+		 * @return True if the segment was erased, false if no segment with the given ID exists.
 		 */
-		void erase(segment_id id);
+		bool erase(segment_id id);
 
 		/**
 		 * @brief Erase a segment by its iterator

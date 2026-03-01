@@ -6,10 +6,10 @@
 #include <ui/widgets/combo.hpp>
 #include <ui/widgets/common.hpp>
 #include <ui/widgets/text.hpp>
-
-#include <events/player/playback_changed_event.hpp>
 #include <events/timeline/segment_insert_request_event.hpp>
-#include <events/timeline/segment_insert_event.hpp>
+#include <events/timeline/segment_inserted_event.hpp>
+#include <events/player/playback_suspend_request_event.hpp>
+#include <events/player/playback_resume_request_event.hpp>
 
 namespace vt::ui
 {
@@ -26,15 +26,7 @@ namespace vt::ui
 
 	void segment_insert_popup::on_display()
 	{
-		//TODO: this and what's in on_close is repeated in multiple popups, should be refactored
-
-		auto& player = ctx_.get_window<widgets::video_player>();
-		if (player.is_playing())
-		{
-			player.set_playing(false); //TODO: remove when player events work
-			ctx_.dispatch_event<playback_changed_event>(insert_request_event_data_.source(), player, false);
-			paused_player_ = true;
-		}
+		ctx_.dispatch_event<playback_suspend_request_event>(insert_request_event_data_.source(), ctx_.get_window<widgets::video_player>());
 	}
 
 	void segment_insert_popup::on_render()
@@ -93,17 +85,12 @@ namespace vt::ui
 
 		if (!accepted_)
 		{
-			ctx_.dispatch_event<segment_insert_event>(
+			ctx_.dispatch_event<segment_inserted_event>(
 				insert_request_event_data_.source(), insert_request_event_data_.storage(), insert_request_event_data_.tag(),
 				insert_request_event_data_.start(), insert_request_event_data_.end(), invalid_segment_id, false
 			);
 		}
 
-		if (paused_player_)
-		{
-			 auto& player = ctx_.get_window<widgets::video_player>();
-			 player.set_playing(true); //TODO: remove when player events work
-			 ctx_.dispatch_event<playback_changed_event>(insert_request_event_data_.source(), player, true);
-		}
+		ctx_.dispatch_event<playback_resume_request_event>(insert_request_event_data_.source(), ctx_.get_window<widgets::video_player>());
 	}
 }

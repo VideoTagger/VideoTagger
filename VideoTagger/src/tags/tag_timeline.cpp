@@ -141,13 +141,21 @@ namespace vt
 		return tag_timeline_insert_result(id, {});
 	}
 
-	void tag_timeline::erase(segment_id id)
+	bool tag_timeline::erase(segment_id id)
 	{
-		auto index = id_map_.at(id);
+		auto map_it = id_map_.find(id);
+		if (map_it == id_map_.end())
+		{
+			return false;
+		}
+
+		auto index = map_it->second;
 		auto it = segments_.begin() + index;
 		it = segments_.erase(it);
 		id_map_.erase(id);
 		update_id_map_(it, segments_.end(), -1);
+
+		return true;
 	}
 
 	tag_timeline::iterator tag_timeline::erase(iterator it)

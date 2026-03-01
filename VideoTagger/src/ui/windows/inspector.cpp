@@ -14,9 +14,9 @@
 #include <events/timeline/update_segment_drag_event.hpp>
 #include <events/timeline/end_segment_drag_event.hpp>
 #include <events/timeline/segments_move_request_event.hpp>
-#include <events/timeline/segments_move_event.hpp>
-#include <events/timeline/segment_delete_event.hpp>
-#include <events/timeline/segment_merge_event.hpp>
+#include <events/timeline/segments_moved_event.hpp>
+#include <events/timeline/segment_deleted_event.hpp>
+#include <events/timeline/segment_merged_event.hpp>
 #include <events/timeline/segment_select_event.hpp>
 #include <events/timeline/segment_deselect_event.hpp>
 
@@ -263,19 +263,19 @@ namespace vt::ui::windows
 			auto event_source = get_event_source();
 		});
 
-		ctx_.add_event_listener<segments_move_event>([this](const segments_move_event& event)
+		ctx_.add_event_listener<segments_moved_event>([this](const segments_moved_event& event)
 		{
 
 		});
 
-		ctx_.add_event_listener<segment_merge_event>([this](const segment_merge_event& event)
+		ctx_.add_event_listener<segment_merged_event>([this](const segment_merged_event& event)
 		{
 
 		});
 
-		ctx_.add_event_listener<segment_delete_event>([this](const segment_delete_event& event)
+		ctx_.add_event_listener<segment_deleted_event>([this](const segment_deleted_event& event)
 		{
-
+			if (!event.deleted()) return;
 		});
 
 		ctx_.add_event_listener<segment_select_event>([this](const segment_select_event& event)

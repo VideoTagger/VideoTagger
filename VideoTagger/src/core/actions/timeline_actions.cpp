@@ -18,6 +18,16 @@ namespace vt
 		return tag_;
 	}
 
+	void timeline_action::set_tag(const std::string& tag_name)
+	{
+		tag_ = tag_name;
+	}
+
+	void timeline_action::set_tag(const std::optional<std::string>& tag_name)
+	{
+		tag_ = tag_name;
+	}
+
 	void timeline_action::to_json(nlohmann::ordered_json& json) const
 	{
 		auto& tag_name = json["tag-name"];

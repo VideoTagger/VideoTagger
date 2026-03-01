@@ -38,16 +38,18 @@
 
 #include <events/system/window/system_window_resize_event.hpp>
 #include <events/timeline/segments_move_request_event.hpp>
-#include <events/timeline/segments_move_event.hpp>
-#include <events/timeline/segment_merge_event.hpp>
-#include <events/timeline/segment_delete_event.hpp>
+#include <events/timeline/segments_moved_event.hpp>
+#include <events/timeline/segment_merged_event.hpp>
+#include <events/timeline/segment_delete_request_event.hpp>
+#include <events/timeline/segment_deleted_event.hpp>
 #include <events/timeline/segment_insert_request_event.hpp>
-#include <events/timeline/segment_insert_event.hpp>
+#include <events/timeline/segment_inserted_event.hpp>
 #include <events/tags/tag_add_request_event.hpp>
-#include <events/tags/tag_add_event.hpp>
+#include <events/tags/tag_added_event.hpp>
 #include <events/tags/tag_rename_request_event.hpp>
-#include <events/tags/tag_rename_event.hpp>
-#include <events/tags/tag_delete_event.hpp>
+#include <events/tags/tag_renamed_event.hpp>
+#include <events/tags/tag_delete_request_event.hpp>
+#include <events/tags/tag_deleted_event.hpp>
 #include <events/timeline/segment_insert_mark_start.hpp>
 #include <events/timeline/segment_insert_mark_end.hpp>
 #include <events/timeline/end_segment_drag_event.hpp>
@@ -256,23 +258,30 @@ namespace vt
 				{
 					for (auto& merged_id : move_result.merged_segments())
 					{
-						ctx_.dispatch_event<segment_merge_event>(event_source, storage, tag, merged_id, move_result.resulting_segment());
+						ctx_.dispatch_event<segment_merged_event>(event_source, storage, tag, merged_id, move_result.resulting_segment());
 					}
 				}
 			}
 
-			ctx_.dispatch_event<segments_move_event>(event_source, event.storage(), event.segments(), event.move_part(), event.move_offset(), true);
+			ctx_.dispatch_event<segments_moved_event>(event_source, event.storage(), event.segments(), event.move_part(), event.move_offset(), true);
 			ctx_.is_project_dirty = true;
 		});
 
-		ctx_.add_event_listener<segment_delete_event>([](const segment_delete_event& event)
+		ctx_.add_event_listener<segment_delete_request_event>([event_source = event_source_](const segment_delete_request_event& event)
 		{
+			bool deleted = false;
 			auto& storage = event.storage();
 			auto it = storage.find(event.tag());
-			if (it == storage.end()) return;
+			if (it != storage.end())
+			{
+				deleted = it->second.erase(event.id());
+				if (deleted)
+				{
+					ctx_.is_project_dirty = true;
+				}
+			}
 
-			it->second.erase(event.id());
-			ctx_.is_project_dirty = true;
+			ctx_.dispatch_event<segment_deleted_event>(event_source, storage, event.tag(), event.id(), deleted);
 		});
 
 		ctx_.add_event_listener<segment_insert_request_event>([event_source = event_source_](const segment_insert_request_event& event)
@@ -309,15 +318,15 @@ namespace vt
 			auto insert_result = tag_timeline.insert(event.start(), event.end());
 			if (!insert_result.inserted())
 			{
-				ctx_.dispatch_event<segment_insert_event>(event_source, storage, tag_name, event.start(), event.end(), insert_result.preventing_segment(), false);
+				ctx_.dispatch_event<segment_inserted_event>(event_source, storage, tag_name, event.start(), event.end(), insert_result.preventing_segment(), false);
 				return;
 			}
 
-			ctx_.dispatch_event<segment_insert_event>(event_source, storage, tag_name, event.start(), event.end(), insert_result.inserted_segment(), true);
+			ctx_.dispatch_event<segment_inserted_event>(event_source, storage, tag_name, event.start(), event.end(), insert_result.inserted_segment(), true);
 
 			for (auto& merged_id : insert_result.merged_segments())
 			{
-				ctx_.dispatch_event<segment_merge_event>(event_source, storage, tag_name, merged_id, insert_result.inserted_segment());
+				ctx_.dispatch_event<segment_merged_event>(event_source, storage, tag_name, merged_id, insert_result.inserted_segment());
 			}
 
 			ctx_.is_project_dirty = true;
@@ -332,23 +341,23 @@ namespace vt
 				ctx_.is_project_dirty = true;
 			}
 
-			ctx_.dispatch_event<tag_add_event>(event_source, storage, event.tag_name(), validate_result);
+			ctx_.dispatch_event<tag_added_event>(event_source, storage, event.tag_name(), validate_result);
 		});
 
-		ctx_.add_event_listener<tag_add_event>([](const tag_add_event& event)
+		ctx_.add_event_listener<tag_added_event>([](const tag_added_event& event)
 		{
-			if (event.validate_result() != tag_validate_result::ok) return;
+			if (!event.added()) return;
 
 			ctx_.current_project->add_displayed_tag(event.tag_name());
 		});
 
 		ctx_.add_event_listener<tag_rename_request_event>([event_source = event_source_](const tag_rename_request_event& event)
 		{
-			if (!tag_rename.has_value()) return;
-
 			tag_rename->processed = true;
 
-			auto rename_result = ctx_.current_project->rename_tag(tag_rename->old_name, tag_rename->new_name);
+			auto& project = *ctx_.current_project;
+
+			auto rename_result = project.tags.rename(event.tag_name(), event.new_name());
 
 			if (!rename_result.inserted)
 			{
@@ -358,18 +367,106 @@ namespace vt
 			else
 			{
 				tag_rename.reset();
+				ctx_.is_project_dirty = true;
 			}
 
-			ctx_.dispatch_event<tag_rename_event>(event_source, event.storage(), event.tag_name(), event.new_name(), rename_result);
+			ctx_.dispatch_event<tag_renamed_event>(event_source, event.storage(), event.tag_name(), event.new_name(), rename_result);
 		});
 
-		ctx_.add_event_listener<tag_delete_event>([](const tag_delete_event& event)
+		ctx_.add_event_listener<tag_renamed_event>([event_source = event_source_](const tag_renamed_event& event)
 		{
-			if (!tag_delete.has_value()) return;
+			if (!event.renamed()) return;
 
-			ctx_.current_project->delete_tag(tag_delete->tag);
+			auto& project = *ctx_.current_project;
+			const auto& old_name = event.tag_name();
+			const auto& new_name = event.new_name();
 
+			if (auto it = project.find_displayed_tag(old_name); it != project.displayed_tags.end())
+			{
+				project.displayed_tags.erase(it);
+				project.add_displayed_tag(new_name);
+			}
+
+			for (auto& [group_id, group] : project.video_groups)
+			{
+				auto& segments = group.segments();
+				auto node_handle = segments.extract(old_name);
+				if (!node_handle.empty())
+				{
+					node_handle.key() = new_name;
+					segments.insert(std::move(node_handle));
+				}
+			}
+		});
+
+		ctx_.add_event_listener<tag_delete_request_event>([event_source = event_source_](const tag_delete_request_event& event)
+		{
+			auto& tags = ctx_.current_project->tags;
+			bool deleted = tags.erase(event.tag_name());
+			if (deleted)
+			{
+				ctx_.is_project_dirty = true;
+			}
+
+			ctx_.dispatch_event<tag_deleted_event>(event_source, event.storage(), event.tag_name(), deleted);
+
+			//TODO: remove this after reworking tag_manager
 			tag_delete.reset();
+		});
+
+		ctx_.add_event_listener<tag_deleted_event>([event_source = event_source_](const tag_deleted_event& event)
+		{
+			if (!event.deleted()) return;
+
+			auto& project = *ctx_.current_project;
+
+			auto& selected_segment = ctx_.video_timeline.selected_segment;
+			if (selected_segment.has_value() and selected_segment->tag == event.tag_name())
+			{
+				selected_segment.reset();
+			}
+
+			auto& moving_segment = ctx_.video_timeline.moving_segment;
+			if (moving_segment.has_value() and moving_segment->tag == event.tag_name())
+			{
+				moving_segment.reset();
+			}
+
+			auto current_group_id = ctx_.current_video_group_id();
+
+			//TODO: change after segment events store the group id.
+			// Should also send events but currently everything assumes that the segment in the event belongs to the current video group
+			for (auto& [group_id, group] : project.video_groups)
+			{
+				if (group_id == current_group_id) continue;
+
+				auto& group_segments = group.segments();
+				auto segments_it = group_segments.find(event.tag_name());
+				if (segments_it != group_segments.end())
+				{
+					group_segments.erase(segments_it);
+				}
+			}
+
+			auto& current_segments = ctx_.get_current_segment_storage();
+			auto segments_it = current_segments.find(event.tag_name());
+			if (segments_it != current_segments.end())
+			{
+				auto& segments = segments_it->second;
+				std::vector<segment_id> segments_to_delete;
+				segments_to_delete.reserve(segments.size());
+				for (auto& [id, _] : segments)
+				{
+					segments_to_delete.push_back(id);
+				}
+
+				for (auto& id : segments_to_delete)
+				{
+					ctx_.dispatch_event<segment_delete_request_event>(event_source, current_segments, event.tag_name(), id);
+				}
+			}
+
+			ctx_.current_project->remove_displayed_tag(event.tag_name());
 		});
 
 		ctx_.add_event_listener<segment_insert_mark_start>([](const segment_insert_mark_start& event)
@@ -847,8 +944,10 @@ namespace vt
 
 
 		//TODO: Maybe move this somewhere else
-		ctx_.add_event_listener<tag_delete_event>([](const tag_delete_event& event)
+		ctx_.add_event_listener<tag_deleted_event>([](const tag_deleted_event& event)
 		{
+			if (!event.deleted()) return;
+
 			auto& keybinds = ctx_.current_project->keybinds;
 			for (auto it = keybinds.begin(); it != keybinds.end();)
 			{
@@ -875,6 +974,20 @@ namespace vt
 				it = keybinds.erase(it);
 			}
 		});
+
+		ctx_.add_event_listener<tag_renamed_event>([](const tag_renamed_event& event)
+		{
+			if (!event.renamed()) return;
+
+			auto& keybinds = ctx_.current_project->keybinds;
+			for (auto& [name, kb] : keybinds)
+			{
+				auto timeline_action_ptr = std::dynamic_pointer_cast<timeline_action>(kb.action);
+				if (timeline_action_ptr == nullptr) continue;
+				if (timeline_action_ptr->tag() != event.tag_name()) continue;
+				timeline_action_ptr->set_tag(event.new_name());
+			}
+			});
 	}
 
 	void main_window::init_options()

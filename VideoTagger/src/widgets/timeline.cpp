@@ -17,11 +17,11 @@
 #include <events/timeline/update_segment_drag_event.hpp>
 #include <events/timeline/end_segment_drag_event.hpp>
 #include <events/timeline/segments_move_request_event.hpp>
-#include <events/timeline/segments_move_event.hpp>
-#include <events/timeline/segment_merge_event.hpp>
-#include <events/timeline/segment_delete_event.hpp>
-#include <events/tags/tag_delete_event.hpp>
-#include <events/tags/tag_rename_event.hpp>
+#include <events/timeline/segments_moved_event.hpp>
+#include <events/timeline/segment_merged_event.hpp>
+#include <events/timeline/segment_deleted_event.hpp>
+#include <events/tags/tag_deleted_event.hpp>
+#include <events/tags/tag_renamed_event.hpp>
 
 #include <core/debug.hpp>
 
@@ -167,12 +167,14 @@ namespace vt::widgets
 			segment_drag_data_.stage = segment_drag_stage::waiting_for_approval;
 		});
 
-		ctx_.add_event_listener<segments_move_event>([this](const segments_move_event& e)
+		ctx_.add_event_listener<segments_moved_event>([this](const segments_moved_event& e)
 		{
+			if (segment_drag_data_.stage != segment_drag_stage::waiting_for_approval) return;
+
 			segment_drag_data_ = {};
 		});
 
-		ctx_.add_event_listener<segment_merge_event>([this](const segment_merge_event& e)
+		ctx_.add_event_listener<segment_merged_event>([this](const segment_merged_event& e)
 		{
 			if (is_segment_selected(e.tag(), e.merged_id()))
 			{
@@ -184,8 +186,10 @@ namespace vt::widgets
 			}
 		});
 
-		ctx_.add_event_listener<segment_delete_event>([this](const segment_delete_event& e)
+		ctx_.add_event_listener<segment_deleted_event>([this](const segment_deleted_event& e)
 		{
+			if (!e.deleted()) return;
+
 			if (is_segment_selected(e.tag(), e.id()))
 			{
 				selected_segments_.at(e.tag()).erase(e.id());
@@ -202,8 +206,10 @@ namespace vt::widgets
 			}
 		});
 
-		ctx_.add_event_listener<tag_delete_event>([this](const tag_delete_event& e)
+		ctx_.add_event_listener<tag_deleted_event>([this](const tag_deleted_event& e)
 		{
+			if (!e.deleted()) return;
+
 			selected_segments_.erase(e.tag_name());
 			dragged_segments_.erase(e.tag_name());
 
@@ -213,8 +219,10 @@ namespace vt::widgets
 			}
 		});
 
-		ctx_.add_event_listener<tag_rename_event>([this](const tag_rename_event& e)
+		ctx_.add_event_listener<tag_renamed_event>([this](const tag_renamed_event& e)
 		{
+			if (!e.renamed()) return;
+
 			auto selected_it = selected_segments_.find(e.tag_name());
 			if (selected_it != selected_segments_.end())
 			{
