@@ -219,26 +219,15 @@ namespace vt
 
 			if (!event.ignore_conflicts())
 			{
+				// Doesn't detect a conflict if the moved segments overlap with each other
 				segment_id_map conflicting_segments;
 				for (const auto& [tag, segment_ids] : event.segments())
 				{
 					const auto& tag_timeline = storage.at(tag);
-					for (auto& id : segment_ids)
+					auto conflicts = tag_timeline.find_move_conflicts(segment_ids, event.move_part(), event.move_offset());
+					if (!conflicts.empty())
 					{
-						const auto& segment = tag_timeline.at(id);
-						auto segment_start = segment.start + (event.move_part() & segment_part::left ? event.move_offset() : timestamp::zero());
-						auto segment_end = segment.end + (event.move_part() & segment_part::right ? event.move_offset() : timestamp::zero());
-
-						auto range = tag_timeline.find_range(segment_start, segment_end);
-						if (!range.empty())
-						{
-							if (range.size() == 1 && range.begin()->id == id)
-							{
-								continue;
-							}
-
-							conflicting_segments[tag].insert(id);
-						}
+						conflicting_segments.emplace(tag, std::move(conflicts));
 					}
 				}
 
@@ -1416,13 +1405,9 @@ namespace vt
 
 		player.callbacks.on_set_playing = [&player, event_source = event_source_](bool is_playing)
 		{
-			//for (auto& [id, vinfo] : ctx_.current_project->videos)
-			//{
-			//	if (!vinfo.is_widget_open) continue;
-			//	vinfo.video.set_playing(is_playing);
-			//}
 			if (ctx_.current_video_group_id() == invalid_video_group_id) return;
-			ctx_.dispatch_event<playback_changed_event>(event_source, player, is_playing);
+			//TODO: Probably the player should send a request and displayed videos should listen for it and send playback_changed_event
+			ctx_.dispatch_event<playback_changed_event>(event_source, player, is_playing); 
 
 			//TODO: This should be handled as a playback_changed_event listener
 			ctx_.displayed_videos.set_playing(is_playing);

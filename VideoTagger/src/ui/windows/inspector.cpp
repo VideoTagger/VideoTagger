@@ -55,33 +55,45 @@ namespace vt::ui::windows
 		if (!ImGui::BeginChild("##ScrollableInspector", ImGui::GetContentRegionAvail())) return;
 
 		auto& segments = ctx_.get_current_segment_storage();
+		auto event_source = get_event_source();
 
 		bool finished_editing = false;
 		bool started_editing = false;
 		bool modified_timestamp = false;
 		const auto& style = ImGui::GetStyle();
 
-		auto [active_tag, active_segment_id] = first_selected_segment();
-		const auto& active_segment = segments.at(active_tag).at(active_segment_id);
+		auto [first_active_tag, first_active_segment_id] = first_selected_segment();
+		const auto& first_active_segment = segments.at(first_active_tag).at(first_active_segment_id);
 
-		auto segment_type = active_segment.type();
+		bool more_than_one_segment_active = more_than_one_segment_selected();
 
-		min_timestamp_ = timestamp::zero();
-		max_timestamp_ = timestamp(std::chrono::duration_cast<std::chrono::milliseconds>(ctx_.displayed_videos.duration()));
+		tag_segment_type segment_type{};
+		if (more_than_one_segment_active)
+		{
+			segment_type = tag_segment_type::segment;
+		}
+		else
+		{
+			segment_type = first_active_segment.type();
+		}
 
-		timestamp segment_start = active_segment.start;
-		timestamp segment_end = active_segment.end;
+		bool link_segment_parts = link_segment_parts_ or more_than_one_segment_active;
 
-		if ((grab_part_ & segment_part::left) or link_segment_parts_)
+		auto [min_segment_ts, max_segment_ts] = min_max_segment_timestamps(segments, selected_segments_);
+		
+		auto segment_start = min_segment_ts;
+		auto segment_end = max_segment_ts;
+
+		if ((grab_part_ & segment_part::left) or (link_segment_parts and drag_source_ == event_source))
 		{
 			segment_start += current_offset_;
 		}
-		if ((grab_part_ & segment_part::right) or link_segment_parts_)
+		if ((grab_part_ & segment_part::right) or (link_segment_parts and drag_source_ == event_source))
 		{
 			segment_end += current_offset_;
 		}
 
-		auto event_source = get_event_source();
+		debug::log("offset: {}", current_offset_.total_milliseconds.count());
 
 		if (widgets::begin_collapsible("##Properties", "Properties", ImGuiTreeNodeFlags_DefaultOpen, icons::property))
 		{
@@ -95,12 +107,18 @@ namespace vt::ui::windows
 				{
 				case tag_segment_type::timestamp:
 				{
+					auto min_timestamp = timestamp::zero();
+					auto max_timestamp = timestamp(std::chrono::duration_cast<std::chrono::milliseconds>(ctx_.displayed_videos.duration()));
+
 					modified_timestamp = widgets::timestamp_control
 					(
-						"Point", segment_start, min_timestamp_.total_milliseconds.count(), max_timestamp_.total_milliseconds.count(), &started_editing, &finished_editing
+						"Point", segment_start, min_timestamp.total_milliseconds.count(), max_timestamp.total_milliseconds.count(), &started_editing, &finished_editing
 					);
 					segment_end = segment_start;
-					grab_part_ = segment_part::both;
+					if (started_editing)
+					{
+						grab_part_ = segment_part::both;
+					}
 				}
 				break;
 				case tag_segment_type::segment:
@@ -108,8 +126,11 @@ namespace vt::ui::windows
 					timestamp prev_ts_start = segment_start;
 					timestamp prev_ts_end = segment_end;
 
-					timestamp start_max = link_segment_parts_ ? max_timestamp_ : std::max(timestamp::zero(), segment_end - timestamp{ 1 });
-					timestamp end_min = link_segment_parts_ ? min_timestamp_ : segment_start + timestamp{ 1 };
+					auto min_timestamp = timestamp::zero();
+					auto max_timestamp = timestamp(std::chrono::duration_cast<std::chrono::milliseconds>(ctx_.displayed_videos.duration()));
+					
+					timestamp start_max = link_segment_parts ? max_timestamp - (segment_end - segment_start) : std::max(timestamp::zero(), segment_end - timestamp{1});
+					timestamp end_min = link_segment_parts ? min_timestamp + (segment_end - segment_start) : segment_start + timestamp{ 1 };
 
 					bool start_activated = false;
 					bool start_released = false;
@@ -125,12 +146,19 @@ namespace vt::ui::windows
 
 						auto y_offset = ImVec2{ 0.f, (ImGui::GetTextLineHeight() / 2 + style.FramePadding.y) };
 
+						debug::log("prev start 1: {}", prev_ts_start.total_milliseconds.count());
+						debug::log("start: {}, {}", segment_start.total_milliseconds.count(), segment_start != prev_ts_start);
+
 						ImGui::TableNextColumn();
 						//ImGui::Columns(2, nullptr, false);
 						modified_start = widgets::timestamp_control
 						(
-							"Start", segment_start, min_timestamp_.total_milliseconds.count(), start_max.total_milliseconds.count(), &start_activated, &start_released
+							"Start", segment_start, min_timestamp.total_milliseconds.count(), start_max.total_milliseconds.count(), &start_activated, &start_released
 						);
+
+						debug::log("prev start 2: {}", prev_ts_start.total_milliseconds.count());
+						debug::log("start: {}, {}", segment_start.total_milliseconds.count(), segment_start != prev_ts_start);
+
 						ImGui::SameLine();
 						auto start_pos = ImGui::GetCursorScreenPos() + y_offset;
 						ImGui::NewLine();
@@ -138,14 +166,14 @@ namespace vt::ui::windows
 						//ImGui::NextColumn();
 						modified_end = widgets::timestamp_control
 						(
-							"End", segment_end, end_min.total_milliseconds.count(), max_timestamp_.total_milliseconds.count(), &end_activated, &end_released
+							"End", segment_end, end_min.total_milliseconds.count(), max_timestamp.total_milliseconds.count(), &end_activated, &end_released
 						);
 						ImGui::SameLine();
 						auto end_pos = ImGui::GetCursorScreenPos() + y_offset;
 						ImGui::NewLine();
 
 						ImGui::TableNextColumn();
-						auto icon = link_segment_parts_ ? icons::link : icons::link_off;
+						auto icon = link_segment_parts ? icons::link : icons::link_off;
 						std::string name = fmt::format("{}##LinkTimestamps", icon);
 
 						auto icon_link_y = end_pos.y - start_pos.y + 2.125f * style.ItemSpacing.y + (ImGui::CalcTextSize(icon).y) / 2;
@@ -155,7 +183,7 @@ namespace vt::ui::windows
 
 						auto drawlist = ImGui::GetWindowDrawList();
 						auto line_size = 1.f;
-						auto line_color_vec4 = link_segment_parts_ ? style.Colors[ImGuiCol_Text] : style.Colors[ImGuiCol_TextDisabled];
+						auto line_color_vec4 = link_segment_parts ? style.Colors[ImGuiCol_Text] : style.Colors[ImGuiCol_TextDisabled];
 						line_color_vec4.w *= 0.4f;
 						auto line_color = ImGui::ColorConvertFloat4ToU32(line_color_vec4);
 						drawlist->AddLine(start_pos, { link_pos.x, start_pos.y }, line_color, line_size);
@@ -166,15 +194,20 @@ namespace vt::ui::windows
 						drawlist->AddLine({ link_pos.x, start_pos.y - line_size / 2 }, link_pos - link_pos_offset, line_color, line_size);
 						drawlist->AddLine({ link_pos.x, end_pos.y + line_size / 2 }, link_pos + link_pos_offset, line_color, line_size);
 
-						if (ui::icon_toggle_button(name, link_segment_parts_))
+						if (more_than_one_segment_active) ImGui::BeginDisabled();
+
+						if (ui::icon_toggle_button(name, link_segment_parts))
 						{
 							link_segment_parts_ = !link_segment_parts_;
+							link_segment_parts = link_segment_parts_;
 						}
+
+						if (more_than_one_segment_active) ImGui::EndDisabled();
 
 						ImGui::EndTable();
 					}
 
-					if (link_segment_parts_)
+					if (link_segment_parts)
 					{
 						if (modified_start)
 						{
@@ -202,18 +235,21 @@ namespace vt::ui::windows
 					started_editing = start_activated or end_activated;
 					finished_editing = start_released or end_released;
 
-					if (start_activated)
+					if (started_editing)
 					{
-						grab_part_ = static_cast<segment_part>(static_cast<uint8_t>(grab_part_) | static_cast<uint8_t>(segment_part::left));
-					}
-					if (end_activated)
-					{
-						grab_part_ = static_cast<segment_part>(static_cast<uint8_t>(grab_part_) | static_cast<uint8_t>(segment_part::right));
-					}
+						if (start_activated)
+						{
+							grab_part_ = static_cast<segment_part>(static_cast<uint8_t>(grab_part_) | static_cast<uint8_t>(segment_part::left));
+						}
+						if (end_activated)
+						{
+							grab_part_ = static_cast<segment_part>(static_cast<uint8_t>(grab_part_) | static_cast<uint8_t>(segment_part::right));
+						}
 
-					if (link_segment_parts_)
-					{
-						grab_part_ = segment_part::both;
+						if (link_segment_parts)
+						{
+							grab_part_ = segment_part::both;
+						}
 					}
 				}
 				break;
@@ -225,11 +261,11 @@ namespace vt::ui::windows
 
 		if (grab_part_ == segment_part::left)
 		{
-			current_offset_ = segment_start - active_segment.start;
+			current_offset_ = segment_start - min_segment_ts;
 		}
 		else
 		{
-			current_offset_ = segment_end - active_segment.end;
+			current_offset_ = segment_end - max_segment_ts;
 		}
 
 		if (started_editing)
@@ -239,20 +275,20 @@ namespace vt::ui::windows
 
 		if (modified_timestamp)
 		{
-			ctx_.dispatch_event<update_segment_drag_event>(event_source, segments, selected_segments_, grab_part_, current_offset_);
+			ctx_.dispatch_event<update_segment_drag_event>(event_source, segments, dragged_segments_, grab_part_, current_offset_);
 		}
 
 		if (finished_editing)
 		{
-			ctx_.dispatch_event<end_segment_drag_event>(event_source, segments, selected_segments_, grab_part_, current_offset_);
+			ctx_.dispatch_event<end_segment_drag_event>(event_source, segments, dragged_segments_, grab_part_, current_offset_);
 		}
 
-		if (ctx_.current_video_group_id() != invalid_video_group_id and ctx_.last_focused_video.has_value())
+		if (!more_than_one_segment_active and ctx_.current_video_group_id() != invalid_video_group_id and ctx_.last_focused_video.has_value())
 		{
-			auto& selected_tag = ctx_.current_project->tags.at(active_tag);
+			auto& selected_tag = ctx_.current_project->tags.at(first_active_tag);
 			ImGui::BeginDisabled(selected_tag.attributes.empty());
-			auto& timeline = ctx_.get_current_segment_storage().at(active_tag);
-			selected_tag.draw_attribute_instances(timeline.at(active_segment_id), ctx_.last_focused_video.value(), ctx_.is_project_dirty);
+			auto& timeline = ctx_.get_current_segment_storage().at(first_active_tag);
+			selected_tag.draw_attribute_instances(timeline.at(first_active_segment_id), ctx_.last_focused_video.value(), ctx_.is_project_dirty);
 			ImGui::EndDisabled();
 		}
 
@@ -263,34 +299,59 @@ namespace vt::ui::windows
 	{
 		ctx_.add_event_listener<begin_segment_drag_event>([this](const begin_segment_drag_event& event)
 		{
-
+			drag_source_ = event.source();
+			grab_part_ = event.grab_part();
+			current_offset_ = timestamp::zero();
+			dragged_segments_ = event.segments();
 		});
 
 		ctx_.add_event_listener<update_segment_drag_event>([this](const update_segment_drag_event& event)
 		{
-
+			current_offset_ = event.current_offset();
 		});
 
 		ctx_.add_event_listener<end_segment_drag_event>([this](const end_segment_drag_event& event)
 		{
+			drag_source_ = {};
 			grab_part_ = segment_part::none;
 			current_offset_ = timestamp::zero();
-			auto event_source = get_event_source();
+			dragged_segments_.clear();
 		});
 
 		ctx_.add_event_listener<segments_moved_event>([this](const segments_moved_event& event)
 		{
-
+			// Probably don't need to do anything here
 		});
 
 		ctx_.add_event_listener<segment_merged_event>([this](const segment_merged_event& event)
 		{
-
+			auto [tag_it, segment_it] = segment_id_map_find(dragged_segments_, event.tag(), event.merged_id());
+			if (tag_it != dragged_segments_.end() && segment_it != tag_it->second.end())
+			{
+				tag_it->second.erase(segment_it);
+				tag_it->second.insert(event.merged_into_id());
+			}
 		});
 
 		ctx_.add_event_listener<segment_deleted_event>([this](const segment_deleted_event& event)
 		{
 			if (!event.deleted()) return;
+
+			{
+				auto [tag_it, segment_it] = segment_id_map_find(selected_segments_, event.tag(), event.id());
+				if (tag_it != selected_segments_.end() && segment_it != tag_it->second.end())
+				{
+					tag_it->second.erase(segment_it);
+				}
+			}
+
+			{
+				auto [tag_it, segment_it] = segment_id_map_find(dragged_segments_, event.tag(), event.id());
+				if (tag_it != dragged_segments_.end() && segment_it != tag_it->second.end())
+				{
+					tag_it->second.erase(segment_it);
+				}
+			}
 		});
 
 		ctx_.add_event_listener<segment_select_event>([this](const segment_select_event& event)
@@ -313,9 +374,8 @@ namespace vt::ui::windows
 
 	bool inspector::is_segment_selected(const std::string& tag, segment_id segment) const
 	{
-		auto it = selected_segments_.find(tag);
-		if (it == selected_segments_.end()) return false;
-		return it->second.find(segment) != it->second.end();
+		auto [tag_it, segment_it] = segment_id_map_find(selected_segments_, tag, segment);
+		return tag_it != selected_segments_.end() and segment_it != tag_it->second.end();
 	}
 
 	bool inspector::is_any_segment_selected() const
@@ -329,9 +389,8 @@ namespace vt::ui::windows
 
 	bool inspector::is_segment_dragged(const std::string& tag, segment_id segment) const
 	{
-		auto it = dragged_segments_.find(tag);
-		if (it == dragged_segments_.end()) return false;
-		return it->second.find(segment) != it->second.end();
+		auto [tag_it, segment_it] = segment_id_map_find(dragged_segments_, tag, segment);
+		return tag_it != dragged_segments_.end() and segment_it != tag_it->second.end();
 	}
 
 	bool inspector::is_dragging_any_segment() const
@@ -340,6 +399,18 @@ namespace vt::ui::windows
 		{
 			if (!segments.empty()) return true;
 		}
+		return false;
+	}
+
+	bool inspector::more_than_one_segment_selected() const
+	{
+		size_t count = 0;
+		for (const auto& [_, segments] : selected_segments_)
+		{
+			count += segments.size();
+			if (count > 1) return true;
+		}
+
 		return false;
 	}
 

@@ -20,6 +20,7 @@ namespace vt::ui::windows
 		timestamp max_timestamp_;
 		timestamp current_offset_;
 		segment_part grab_part_{};
+		event_source drag_source_;
 		bool link_segment_parts_;
 
 	public:
@@ -35,6 +36,8 @@ namespace vt::ui::windows
 		bool is_any_segment_selected() const;
 		bool is_segment_dragged(const std::string& tag, segment_id segment) const;
 		bool is_dragging_any_segment() const;
+
+		bool more_than_one_segment_selected() const;
 
 		std::pair<std::string, segment_id> first_selected_segment() const;
 	};
