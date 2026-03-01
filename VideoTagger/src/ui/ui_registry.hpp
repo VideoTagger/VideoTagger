@@ -43,6 +43,8 @@ namespace vt::ui
 			}
 			return *reinterpret_cast<window_type*>(windows_[type_id].get());
 		}
+
+		const std::vector<ui::window*>& registered_windows() const;
 	};
 
 	inline void to_json(nlohmann::ordered_json& json, const ui_registry& registry)

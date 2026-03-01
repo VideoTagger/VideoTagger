@@ -146,6 +146,11 @@ namespace vt::ui
 		return flags_;
 	}
 
+	bool window::has_icon() const
+	{
+		return !icon_.empty();
+	}
+
 	std::string window::name() const
 	{
 		return icon_.empty() ? fmt::format("{}##{}", display_name(), id()) : fmt::format("{} {}##{}", icon_, display_name(), id());

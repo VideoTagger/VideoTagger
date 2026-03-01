@@ -67,4 +67,9 @@ namespace vt::ui
 			}
 		}
 	}
+
+    const std::vector<ui::window*>& ui_registry::registered_windows() const
+    {
+		return registered_windows_;
+    }
 }

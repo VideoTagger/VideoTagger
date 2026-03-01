@@ -58,6 +58,8 @@ namespace vt::ui
 		///@return The flags used when rendering the window
 		[[nodiscard]] ImGuiWindowFlags flags() const;
 
+		bool has_icon() const;
+
 		///@return The full name of the window
 		[[nodiscard]] std::string name() const;
 		event_source get_event_source() const;

@@ -1,6 +1,7 @@
 #pragma once
 #include <system/system_window.hpp>
 #include <utils/file_node.hpp>
+#include <events/event_source.hpp>
 
 namespace vt
 {
@@ -9,13 +10,19 @@ namespace vt
 	public:
 		main_window(const system_window_config& cfg);
 
+	private:
+		event_source event_source_;
+
 	public:
+		void register_listeners();
+
 		bool on_close_project(bool should_shutdown);
 		void on_save();
 		void on_save_as();
 		void on_show_in_explorer();
 		void on_import_videos();
 		void on_delete();
+		void on_launch();
 		void on_first_launch();
 
 		bool load_accounts();
@@ -31,7 +38,7 @@ namespace vt
 		void init_player();
 		void init_options();
 
-		void fetch_themes();
+		utils::file_node fetch_themes();
 		utils::file_node fetch_scripts(const std::filesystem::path& path);
 
 		void draw_menubar();

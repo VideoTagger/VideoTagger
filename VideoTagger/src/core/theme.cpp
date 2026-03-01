@@ -6,6 +6,7 @@
 #include <events/theme/theme_mode_changed_event.hpp>
 
 #include <ImGuizmo.h>
+#include <events/theme/theme_changed_event.hpp>
 
 namespace vt
 {
@@ -110,6 +111,7 @@ namespace vt
 	void theme::apply()
 	{
 		auto& style = ImGui::GetStyle();
+		event_source event_source_{ "theme" };
 		for (auto& [imgui_col, theme_col] : imgui_color_map)
 		{
 			style.Colors[imgui_col] = get_float4(theme_col);
@@ -121,7 +123,8 @@ namespace vt
 		gizmo_style.Colors[ImGuizmo::COLOR::PLANE_Z] = get_float4(theme_color::axis_z);
 		gizmo_style.Colors[ImGuizmo::COLOR::SELECTION] = get_float4(theme_color::selection_normal);
 
-		ctx_.dispatch_event<theme_mode_changed_event>("theme", *this, is_dark_);
+		ctx_.dispatch_event<theme_changed_event>(event_source_, *this);
+		ctx_.dispatch_event<theme_mode_changed_event>(event_source_, *this, is_dark_);
 	}
 
 	void theme::push_color(theme_color color, uint32_t rgba)

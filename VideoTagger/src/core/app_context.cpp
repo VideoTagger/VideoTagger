@@ -65,6 +65,13 @@ namespace vt
 #endif
 	}
 
+	void app_context::change_theme(const theme& new_theme)
+	{
+		current_theme = new_theme;
+		current_theme.apply();
+		debug::log("Changed theme to '{}'", current_theme.name());
+	}
+
 	void app_context::register_account_managers()
 	{
 		register_account_manager<google_account_manager>();

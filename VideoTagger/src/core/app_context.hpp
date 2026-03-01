@@ -115,16 +115,16 @@ namespace vt
 		std::filesystem::path accounts_filepath = storage_path() / std::filesystem::path("accounts").replace_extension("json");
 		std::filesystem::path script_dir_filepath = std::filesystem::path("assets") / "scripts";
 		std::filesystem::path lang_dir_filepath = storage_path() / "lang";
-		std::filesystem::path theme_dir_filepath = storage_path() / "themes";
+		std::filesystem::path theme_dir_filepath = std::filesystem::path("assets") / "themes"; //storage_path() / "themes";
 		std::filesystem::path downloads_dir_filepath = storage_path() / "downloads";
 		std::filesystem::path cache_dir_filepath = storage_path() / std::filesystem::path("cache");
 		std::filesystem::path thumbnail_dir_filepath = cache_dir_filepath / "thumbnails";
 		nlohmann::ordered_json settings;
 		window_config win_cfg;
 		std::unordered_map<font_type, ImFont*> fonts;
-		std::vector<std::filesystem::path> themes;
 		theme current_theme;
 		utils::file_node scripts;
+		utils::file_node themes;
 		keybind_storage keybinds;
 		scripting_engine script_eng;
 		std::optional<script_handle> script_handle;
@@ -156,6 +156,8 @@ namespace vt
 		bool pause_player = false;
 
 		void create_windows();
+
+		void change_theme(const theme& new_theme);
 		
 		template<typename service_account_manager_type>
 		void register_account_manager();

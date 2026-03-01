@@ -78,6 +78,8 @@ extern "C"
 #ifdef _DEBUG
 	#include <ui/windows/sandbox.hpp>
 #endif
+#include <events/filesystem/fetch_themes_event.hpp>
+#include <events/filesystem/fetch_scripts_event.hpp>
 
 namespace vt
 {
@@ -86,7 +88,6 @@ namespace vt
 	static std::optional<widgets::tag_rename_data> tag_rename;
 	static std::optional<widgets::tag_delete_data> tag_delete;
 	static tag_validate_result tag_rename_failed_reason;
-	static event_source event_source_{ "main_window" };
 
 	static void show_debug_info()
 	{
@@ -105,7 +106,30 @@ namespace vt
 		debug::log("pybind11 Version: {}.{}.{}", PYBIND11_VERSION_MAJOR, PYBIND11_VERSION_MINOR, PYBIND11_VERSION_PATCH);
 	}
 
-	main_window::main_window(const system_window_config& cfg) : system_window{ cfg }
+	main_window::main_window(const system_window_config& cfg) : system_window{ cfg }, event_source_{ "main_window" }
+	{
+		register_listeners();
+
+		show_debug_info();
+
+		init_options();
+		load_settings();
+		if (ctx_.first_launch)
+		{
+			on_first_launch();
+		}
+		ctx_.load_lang_packs("en_US");
+
+		init_keybinds();
+		init_player();
+		fetch_themes();
+		load_accounts();
+		on_launch();
+
+		ctx_.project_selector.load_projects_file(ctx_.projects_list_filepath);
+	}
+
+	void main_window::register_listeners()
 	{
 		ctx_.add_event_listener<system_window_close_event>([this](const system_window_close_event& event)
 		{
@@ -183,31 +207,12 @@ namespace vt
 			debug::log("Saving projects list to {}", std::filesystem::absolute(ctx_.projects_list_filepath).u8string());
 		});
 
-		show_debug_info();
-
-		init_options();
-		load_settings();
-		if (ctx_.first_launch)
-		{
-			on_first_launch();
-		}
-		ctx_.load_lang_packs("en_US");
-
-		init_keybinds();
-		init_player();
-		fetch_themes();
-		load_accounts();
-
-		ctx_.scripts = fetch_scripts(ctx_.script_dir_filepath);
-		ctx_.project_selector.load_projects_file(ctx_.projects_list_filepath);
-
-		//TODO: Remove this after testing
 		ctx_.add_event_listener<system_window_resize_event>([](const system_window_resize_event& event)
 		{
 			debug::log("Main window resized to {}x{}", event.width(), event.height());
 		});
 
-		ctx_.add_event_listener<segments_move_request_event>([](const segments_move_request_event& event)
+		ctx_.add_event_listener<segments_move_request_event>([event_source = event_source_](const segments_move_request_event& event)
 		{
 			auto& storage = event.storage();
 
@@ -251,12 +256,12 @@ namespace vt
 				{
 					for (auto& merged_id : move_result.merged_segments())
 					{
-						ctx_.dispatch_event<segment_merge_event>(event_source_, storage, tag, merged_id, move_result.resulting_segment());
+						ctx_.dispatch_event<segment_merge_event>(event_source, storage, tag, merged_id, move_result.resulting_segment());
 					}
 				}
 			}
 
-			ctx_.dispatch_event<segments_move_event>(event_source_, event.storage(), event.segments(), event.move_part(), event.move_offset(), true);
+			ctx_.dispatch_event<segments_move_event>(event_source, event.storage(), event.segments(), event.move_part(), event.move_offset(), true);
 			ctx_.is_project_dirty = true;
 		});
 
@@ -270,7 +275,7 @@ namespace vt
 			ctx_.is_project_dirty = true;
 		});
 
-		ctx_.add_event_listener<segment_insert_request_event>([](const segment_insert_request_event& event)
+		ctx_.add_event_listener<segment_insert_request_event>([event_source = event_source_](const segment_insert_request_event& event)
 		{
 			if (event.user_customization() or !event.tag().has_value())
 			{
@@ -304,30 +309,30 @@ namespace vt
 			auto insert_result = tag_timeline.insert(event.start(), event.end());
 			if (!insert_result.inserted())
 			{
-				ctx_.dispatch_event<segment_insert_event>(event_source_, storage, tag_name, event.start(), event.end(), insert_result.preventing_segment(), false);
+				ctx_.dispatch_event<segment_insert_event>(event_source, storage, tag_name, event.start(), event.end(), insert_result.preventing_segment(), false);
 				return;
 			}
 
-			ctx_.dispatch_event<segment_insert_event>(event_source_, storage, tag_name, event.start(), event.end(), insert_result.inserted_segment(), true);
+			ctx_.dispatch_event<segment_insert_event>(event_source, storage, tag_name, event.start(), event.end(), insert_result.inserted_segment(), true);
 
 			for (auto& merged_id : insert_result.merged_segments())
 			{
-				ctx_.dispatch_event<segment_merge_event>(event_source_, storage, tag_name, merged_id, insert_result.inserted_segment());
+				ctx_.dispatch_event<segment_merge_event>(event_source, storage, tag_name, merged_id, insert_result.inserted_segment());
 			}
 
 			ctx_.is_project_dirty = true;
 		});
 
-		ctx_.add_event_listener<tag_add_request_event>([](const tag_add_request_event& event)
+		ctx_.add_event_listener<tag_add_request_event>([event_source = event_source_](const tag_add_request_event& event)
 		{
 			auto& storage = event.storage();
 			auto [it, validate_result] = storage.insert(event.tag_name(), event.color());
 			if (validate_result == tag_validate_result::ok)
 			{
-				 ctx_.is_project_dirty = true;
+				ctx_.is_project_dirty = true;
 			}
 
-			ctx_.dispatch_event<tag_add_event>(event_source_, storage, event.tag_name(), validate_result);
+			ctx_.dispatch_event<tag_add_event>(event_source, storage, event.tag_name(), validate_result);
 		});
 
 		ctx_.add_event_listener<tag_add_event>([](const tag_add_event& event)
@@ -337,7 +342,7 @@ namespace vt
 			ctx_.current_project->add_displayed_tag(event.tag_name());
 		});
 
-		ctx_.add_event_listener<tag_rename_request_event>([](const tag_rename_request_event& event)
+		ctx_.add_event_listener<tag_rename_request_event>([event_source = event_source_](const tag_rename_request_event& event)
 		{
 			if (!tag_rename.has_value()) return;
 
@@ -355,13 +360,13 @@ namespace vt
 				tag_rename.reset();
 			}
 
-			ctx_.dispatch_event<tag_rename_event>(event_source_, event.storage(), event.tag_name(), event.new_name(), rename_result);
+			ctx_.dispatch_event<tag_rename_event>(event_source, event.storage(), event.tag_name(), event.new_name(), rename_result);
 		});
 
 		ctx_.add_event_listener<tag_delete_event>([](const tag_delete_event& event)
 		{
 			if (!tag_delete.has_value()) return;
-			
+
 			ctx_.current_project->delete_tag(tag_delete->tag);
 
 			tag_delete.reset();
@@ -369,20 +374,20 @@ namespace vt
 
 		ctx_.add_event_listener<segment_insert_mark_start>([](const segment_insert_mark_start& event)
 		{
-			ctx_.insert_segment_marks.push_back({ event.tag(), event.timestamp(), event.mark_id()});
+			ctx_.insert_segment_marks.push_back({ event.tag(), event.timestamp(), event.mark_id() });
 		});
 
-		ctx_.add_event_listener<segment_insert_mark_end>([](const segment_insert_mark_end& event)
+		ctx_.add_event_listener<segment_insert_mark_end>([event_source = event_source_](const segment_insert_mark_end& event)
 		{
 			auto it = ctx_.find_insert_segment_mark_by_id(event.mark_id());
 			if (it == ctx_.insert_segment_marks.end()) return;
 
-			ctx_.dispatch_event<segment_insert_request_event>(event_source_, event.storage(), it->tag, it->start, event.timestamp(), event.user_customization(), false);
+			ctx_.dispatch_event<segment_insert_request_event>(event_source, event.storage(), it->tag, it->start, event.timestamp(), event.user_customization(), false);
 
 			ctx_.insert_segment_marks.erase(it);
 		});
 
-		ctx_.add_event_listener<end_segment_drag_event>([this](const end_segment_drag_event& event)
+		ctx_.add_event_listener<end_segment_drag_event>([event_source = event_source_](const end_segment_drag_event& event)
 		{
 			auto [segments_min_ts, segments_max_ts] = event.min_max_timestamp();
 			auto min_ts = timestamp::zero();
@@ -416,7 +421,40 @@ namespace vt
 				}
 			}
 
-			ctx_.dispatch_event<segments_move_request_event>(event_source_, event.storage(), event.segments(), event.grab_part(), final_offset, false);
+			ctx_.dispatch_event<segments_move_request_event>(event_source, event.storage(), event.segments(), event.grab_part(), final_offset, false);
+		});
+
+		ctx_.add_event_listener<fetch_themes_event>([this](const fetch_themes_event& event)
+		{
+			auto priority = task_priority::low;
+			ctx_.tasks.run([this]()
+			{
+				debug::log("Fetching themes...");
+				auto result = fetch_themes();
+				debug::log("Finished fetching themes");
+				return result;
+			}, priority)
+			.then(ctx_.tasks.main_thread(), [](const utils::file_node& theme_list)
+			{
+				debug::log("Updating theme list");
+				ctx_.themes = theme_list;
+			}, priority);
+		});
+
+		ctx_.add_event_listener<fetch_scripts_event>([this](const fetch_scripts_event& event)
+		{
+			ctx_.tasks.run([this]()
+			{
+				debug::log("Fetching scripts...");
+				auto result = fetch_scripts(ctx_.script_dir_filepath);
+				debug::log("Finished fetching scripts");
+				return result;
+			}, task_priority::low)
+			.then(ctx_.tasks.main_thread(), [](const utils::file_node& script_list)
+			{
+				debug::log("Updating script list");
+				ctx_.scripts = script_list;
+			}, task_priority::low);
 		});
 	}
 
@@ -537,6 +575,12 @@ namespace vt
 		}
 	}
 
+	void main_window::on_launch()
+	{
+		ctx_.dispatch_event<fetch_themes_event>(event_source_);
+		ctx_.dispatch_event<fetch_scripts_event>(event_source_);
+	}
+
 	void main_window::on_first_launch()
 	{
 		ctx_.reset_layout = true;
@@ -645,9 +689,7 @@ namespace vt
 			ctx_.reset_layout = true;
 		}
 
-		//TODO: Actually load theme
-		ctx_.current_theme = theme::load_from_file(fmt::format("assets/themes/dark.{}", theme::extension));
-		ctx_.current_theme.apply();
+		ctx_.change_theme(theme::load_from_file(ctx_.theme_dir_filepath / fmt::format("dark.{}", theme::extension)));
 
 		auto& io = ImGui::GetIO();
 		if (!std::filesystem::exists(io.IniFilename))
@@ -1273,7 +1315,7 @@ namespace vt
 	{
 		auto& player = ctx_.get_window<widgets::video_player>();
 
-		player.callbacks.on_set_playing = [&player](bool is_playing)
+		player.callbacks.on_set_playing = [&player, event_source = event_source_](bool is_playing)
 		{
 			//for (auto& [id, vinfo] : ctx_.current_project->videos)
 			//{
@@ -1281,13 +1323,13 @@ namespace vt
 			//	vinfo.video.set_playing(is_playing);
 			//}
 			if (ctx_.current_video_group_id() == invalid_video_group_id) return;
-			ctx_.dispatch_event<playback_changed_event>(event_source_, player, is_playing);
+			ctx_.dispatch_event<playback_changed_event>(event_source, player, is_playing);
 
 			//TODO: This should be handled as a playback_changed_event listener
 			ctx_.displayed_videos.set_playing(is_playing);
 		};
 
-		player.callbacks.on_set_looping = [&player](loop_mode mode)
+		player.callbacks.on_set_looping = [&player, event_source = event_source_](loop_mode mode)
 		{
 			//for (auto& [id, vinfo] : ctx_.current_project->videos)
 			//{
@@ -1295,10 +1337,10 @@ namespace vt
 			//	vinfo.video.set_looping(is_looping);
 			//}
 			if (ctx_.current_video_group_id() == invalid_video_group_id) return;
-			ctx_.dispatch_event<looping_changed_event>(event_source_, player, mode);
+			ctx_.dispatch_event<looping_changed_event>(event_source, player, mode);
 		};
 
-		player.callbacks.on_set_speed = [&player](float speed)
+		player.callbacks.on_set_speed = [&player, event_source = event_source_](float speed)
 		{
 			//for (auto& [id, vinfo] : ctx_.current_project->videos)
 			//{
@@ -1307,13 +1349,13 @@ namespace vt
 			//}
 
 			if (ctx_.current_video_group_id() == invalid_video_group_id) return;
-			ctx_.dispatch_event<speed_changed_event>(event_source_, player, speed);
+			ctx_.dispatch_event<speed_changed_event>(event_source, player, speed);
 
 			//TODO: This should be handled as a speed_changed_event listener
 			ctx_.displayed_videos.set_speed(speed);
 		};
 
-		player.callbacks.on_skip = [&player](int dir, loop_mode mode, bool is_playing)
+		player.callbacks.on_skip = [&player, event_source = event_source_](int dir, loop_mode mode, bool is_playing)
 		{
 			auto& playlist = ctx_.current_project->video_group_playlist;
 
@@ -1321,12 +1363,12 @@ namespace vt
 			if (dir > 0)
 			{
 				it = playlist.next();
-				ctx_.dispatch_event<skip_next_event>(event_source_, player);
+				ctx_.dispatch_event<skip_next_event>(event_source, player);
 			}
 			else if (dir < 0)
 			{
 				it = playlist.previous();
-				ctx_.dispatch_event<skip_previous_event>(event_source_, player);
+				ctx_.dispatch_event<skip_previous_event>(event_source, player);
 			}
 
 			ctx_.reset_current_video_group();
@@ -1342,7 +1384,7 @@ namespace vt
 			}
 		};
 
-		player.callbacks.on_seek = [&player](std::chrono::nanoseconds ts)
+		player.callbacks.on_seek = [&player, event_source = event_source_](std::chrono::nanoseconds ts)
 		{
 			//for (auto& [id, vinfo] : ctx_.current_project->videos)
 			//{
@@ -1351,7 +1393,7 @@ namespace vt
 			//}
 
 			if (ctx_.current_video_group_id() == invalid_video_group_id) return;
-			ctx_.dispatch_event<seek_event>(event_source_, player, ts);
+			ctx_.dispatch_event<seek_event>(event_source, player, ts);
 			ctx_.displayed_videos.seek(ts);
 		};
 
@@ -1388,18 +1430,24 @@ namespace vt
 		};
 	}
 
-	void main_window::fetch_themes()
+	utils::file_node main_window::fetch_themes()
 	{
-		ctx_.themes.clear();
-		if (!std::filesystem::is_directory(ctx_.theme_dir_filepath)) return;
+		utils::file_node result;
+		auto& dark = result["dark"];
+		auto& light = result["light"];
+
+		if (!std::filesystem::is_directory(ctx_.theme_dir_filepath)) return result;
 		for (auto& dir_entry : std::filesystem::directory_iterator(ctx_.theme_dir_filepath))
 		{
 			if (!dir_entry.is_regular_file()) continue;
 
 			auto path = dir_entry.path();
 			if (path.extension() != fmt::format(".{}", theme::extension)) continue;
-			ctx_.themes.push_back(path);
+
+			auto temp_theme = theme::load_from_file(path);
+			(temp_theme.is_dark() ? dark : light).insert(path);
 		}
+		return result;
 	}
 
 	utils::file_node main_window::fetch_scripts(const std::filesystem::path& path)
@@ -1621,11 +1669,25 @@ namespace vt
 #ifdef _DEBUG
 				ImGui::SeparatorText("Debug Only");
 				ImGui::MenuItem("Show Options", nullptr, &ctx_.win_cfg.show_options_window);
-				auto& theme_customizer = ctx_.get_window<widgets::theme_customizer>();
-				bool show_theme_customizer = theme_customizer.is_open();
-				if (ImGui::MenuItem("Show Theme Customizer", nullptr, &show_theme_customizer))
+				
+				for (auto& window : ctx_.registered_windows())
 				{
-					theme_customizer.set_opened(show_theme_customizer);
+					bool show_window = window->is_open();
+					auto& icon = window->icon();
+					std::string menu_name;
+					if (window->has_icon())
+					{
+						menu_name = fmt::format("{} Show {}", icon, window->display_name());
+					}
+					else
+					{
+						menu_name = fmt::format("Show {}", window->display_name());
+					}
+
+					if (ImGui::MenuItem(menu_name.c_str(), nullptr, &show_window))
+					{
+						window->set_opened(show_window);
+					}
 				}
 #endif
 
@@ -1719,27 +1781,49 @@ namespace vt
 			{
 				if (ui::begin_menu("Themes"))
 				{
+					const auto& theme_node = ctx_.themes;
+					const auto& dark_themes = theme_node["dark"];
+					const auto& light_themes = theme_node["light"];
+
+					bool has_theme_dir = std::filesystem::exists(ctx_.theme_dir_filepath);
 					if (ImGui::MenuItem("Reload"))
 					{
-						fetch_themes();
+						ctx_.dispatch_event<fetch_themes_event>(event_source_);
 					}
 
 					auto menu_name = fmt::format("{} {}", icons::folder, "Open Themes Folder");
-					if (ImGui::MenuItem(menu_name.c_str(), nullptr, nullptr, std::filesystem::exists(ctx_.theme_dir_filepath)))
+					if (ImGui::MenuItem(menu_name.c_str(), nullptr, nullptr, has_theme_dir))
 					{
 						utils::filesystem::open_in_explorer(std::filesystem::absolute(ctx_.theme_dir_filepath));
 					}
 					ImGui::Separator();
 
-					//TODO: Select current theme
-					for (const auto& path : ctx_.themes)
+					if (ui::begin_menu("Dark", !dark_themes.empty()))
 					{
-						auto name = path.stem().u8string();
-						if (ImGui::MenuItem(name.c_str()))
+						for (const auto& path : dark_themes.children)
 						{
-							auto theme = theme::load_from_file(path);
-							//TODO: Use the theme
+							auto name = utils::string::to_titlecase(path.stem().u8string());
+							if (ImGui::MenuItem(name.c_str()))
+							{
+								auto new_theme = theme::load_from_file(path);
+								ctx_.change_theme(new_theme);
+							}
 						}
+						ui::end_menu();
+					}
+					if (ui::begin_menu("Light", !light_themes.empty()))
+					{
+						for (const auto& path : light_themes.children)
+						{
+							auto name = utils::string::to_titlecase(path.stem().u8string());
+
+							if (ImGui::MenuItem(name.c_str()))
+							{
+								auto new_theme = theme::load_from_file(path);
+								ctx_.change_theme(new_theme);
+							}
+						}
+						ui::end_menu();
 					}
 					ui::end_menu();
 				}
