@@ -20,9 +20,12 @@ namespace vt::ui::windows
 		timestamp max_timestamp_;
 		timestamp current_offset_;
 		segment_part grab_part_{};
-		bool link_start_end_ = false;
+		bool link_segment_parts_;
 
 	public:
+		[[nodiscard]] virtual nlohmann::ordered_json serialize() const override;
+		virtual void deserialize(const nlohmann::ordered_json& json) override;
+
 		virtual void on_render() override;
 
 	private:

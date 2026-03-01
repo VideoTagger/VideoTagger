@@ -38,7 +38,7 @@ namespace vt
 		void init_player();
 		void init_options();
 
-		utils::file_node fetch_themes();
+		utils::file_node fetch_themes(const std::filesystem::path& path);
 		utils::file_node fetch_scripts(const std::filesystem::path& path);
 
 		void draw_menubar();

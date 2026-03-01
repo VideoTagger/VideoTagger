@@ -124,7 +124,6 @@ namespace vt
 
 		init_keybinds();
 		init_player();
-		fetch_themes();
 		load_accounts();
 		on_launch();
 
@@ -527,7 +526,7 @@ namespace vt
 			ctx_.tasks.run([this]()
 			{
 				debug::log("Fetching themes...");
-				auto result = fetch_themes();
+				auto result = fetch_themes(ctx_.theme_dir_filepath);
 				debug::log("Finished fetching themes");
 				return result;
 			}, priority)
@@ -727,10 +726,6 @@ namespace vt
 					center();
 				}
 			}
-			if (ctx_.settings.contains("thumbnail-size"))
-			{
-				ctx_.app_settings.thumbnail_size = ctx_.settings["thumbnail-size"];
-			}
 			if (ctx_.settings.contains("window") and ctx_.settings["window"].contains("state"))
 			{
 				auto& json_window = ctx_.settings["window"];
@@ -741,11 +736,6 @@ namespace vt
 					default: break;
 				}
 				ctx_.win_cfg.state = state;
-
-				if (json_window.contains("font-size"))
-				{
-					font_size = json_window["font-size"].get<float>();
-				}
 			}
 			if (ctx_.settings.contains("first-launch"))
 			{
@@ -758,21 +748,11 @@ namespace vt
 				if (show_windows.contains("tag-manager")) ctx_.win_cfg.show_tag_manager_window = show_windows["tag-manager"];
 				if (show_windows.contains("timeline")) ctx_.win_cfg.show_timeline_window = show_windows["timeline"];
 			}
-			if (ctx_.settings.contains("load-thumbnails"))
+
+			if (ctx_.settings.contains("preferences"))
 			{
-				ctx_.app_settings.load_thumbnails = ctx_.settings.at("load-thumbnails");
-			}
-			if (ctx_.settings.contains("autoplay"))
-			{
-				ctx_.app_settings.autoplay = ctx_.settings.at("autoplay");
-			}
-			if (ctx_.settings.contains("enable-undocking"))
-			{
-				ctx_.app_settings.enable_undocking = ctx_.settings.at("enable-undocking");
-			}
-			if (ctx_.settings.contains("enable-gizmo-scaling"))
-			{
-				ctx_.app_settings.enable_gizmo_scaling = ctx_.settings.at("enable-gizmo-scaling");
+				auto& json_preferences = ctx_.settings["preferences"];
+				ctx_.deserialize_app_settings(json_preferences);
 			}
 
 			if (ctx_.settings.contains("windows"))
@@ -802,6 +782,12 @@ namespace vt
 		if (!ctx_.app_settings_filepath.empty())
 		{
 			debug::log("Saving app settings...");
+
+			auto json_preferences = ctx_.serialize_app_settings();
+			if (!json_preferences.empty())
+			{
+				ctx_.settings["preferences"] = json_preferences;
+			}
 
 			auto json_windows = ctx_.serialize_windows();
 			if (!json_windows.empty())
@@ -1245,7 +1231,7 @@ namespace vt
 			//TODO: Add messagebox informing that the changes will be applied only after restart
 			if (ImGui::DragInt("##FontSize", &font_size, 1.0f, 8, 72, "%d", ImGuiSliderFlags_AlwaysClamp))
 			{
-				ctx_.settings["window"]["font-size"] = font_size;
+				ctx_.app_settings.font_size = font_size;
 			}
 
 			float text_height = ImGui::GetTextLineHeight();
@@ -1256,13 +1242,13 @@ namespace vt
 			ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x / 4);
 			if (ImGui::DragFloat("##ThumbnailSizeDrag", &ctx_.app_settings.thumbnail_size, 0.5f, 45.0f, 100.f, "%.1f", ImGuiSliderFlags_AlwaysClamp))
 			{
-				ctx_.settings["thumbnail-size"] = ctx_.app_settings.thumbnail_size;
+				
 			}
 			return true;
 		})
 		.add_toggle("Load Thumbnails", "Specifies whether to load thumbnails when opening a project", ctx_.app_settings.load_thumbnails, [&](bool value)
 		{
-			ctx_.settings["load-thumbnails"] = ctx_.app_settings.load_thumbnails;
+			//ctx_.settings["load-thumbnails"] = ctx_.app_settings.load_thumbnails;
 		})
 		.add_button("Clear Thumbnails Cache", "Clears the thumbnails cache", "Clear", []()
 		{
@@ -1270,9 +1256,9 @@ namespace vt
 			std::filesystem::create_directories(ctx_.cache_dir_filepath);
 		})
 		.add_label_spacer("UI")
-		.add_toggle("Scale Gizmos", "Scales gizmos size based on viewport size", ctx_.app_settings.enable_gizmo_scaling, [&](bool value)
+		.add_toggle("Scale Gizmos", "Scales gizmos size based on viewport size", ctx_.app_settings.scale_gizmos, [&](bool value)
 		{
-			ctx_.settings["enable-gizmo-scaling"] = ctx_.app_settings.enable_gizmo_scaling;
+			//ctx_.settings["scale-gizmos"] = ctx_.app_settings.scale_gizmos;
 		})
 
 		//TODO: Add theme selection
@@ -1522,7 +1508,8 @@ namespace vt
 				return;
 			}
 
-			if (ctx_.app_settings.autoplay)
+			auto& player = ctx_.get_window<widgets::video_player>();
+			if (player.should_autoplay())
 			{
 				player.reset_data();
 
@@ -1543,14 +1530,14 @@ namespace vt
 		};
 	}
 
-	utils::file_node main_window::fetch_themes()
+	utils::file_node main_window::fetch_themes(const std::filesystem::path& path)
 	{
 		utils::file_node result;
 		auto& dark = result["dark"];
 		auto& light = result["light"];
 
-		if (!std::filesystem::is_directory(ctx_.theme_dir_filepath)) return result;
-		for (auto& dir_entry : std::filesystem::directory_iterator(ctx_.theme_dir_filepath))
+		if (!std::filesystem::is_directory(path)) return result;
+		for (auto& dir_entry : std::filesystem::directory_iterator(path))
 		{
 			if (!dir_entry.is_regular_file()) continue;
 
@@ -1805,12 +1792,10 @@ namespace vt
 #endif
 
 				ImGui::Separator();
-				if (ImGui::MenuItem("Enable Undocking", nullptr, ctx_.app_settings.enable_undocking))
+				if (ImGui::MenuItem("Allow Undocking", nullptr, ctx_.app_settings.allow_undocking))
 				{
-					ctx_.app_settings.enable_undocking = !ctx_.app_settings.enable_undocking;
-					ctx_.settings["enable-undocking"] = ctx_.app_settings.enable_undocking;
-					save_settings();
-					enable_undocking(ctx_.app_settings.enable_undocking);
+					ctx_.app_settings.allow_undocking = !ctx_.app_settings.allow_undocking;
+					enable_undocking(ctx_.app_settings.allow_undocking);
 				}
 				if (ImGui::MenuItem(ctx_.lang->get("redock_videos").c_str()))
 				{
@@ -2989,7 +2974,7 @@ namespace vt
 						utils::matrix mod{};
 						auto& gizmo_style = ImGuizmo::GetStyle();
 
-						gizmo_style.CenterCircleSize = ctx_.app_settings.enable_gizmo_scaling ? from_pixels(5) : 5.f;
+						gizmo_style.CenterCircleSize = ctx_.app_settings.scale_gizmos ? from_pixels(5) : 5.f;
 						gizmo_style.ScaleLineCircleSize = gizmo_style.CenterCircleSize;
 						gizmo_style.TranslationLineThickness = 2.f * gizmo_style.CenterCircleSize / 3.f;
 						gizmo_style.TranslationLineArrowSize = 1.5f * gizmo_style.TranslationLineThickness;
@@ -3080,7 +3065,7 @@ namespace vt
 		ImGui::Begin("##Editor", NULL, window_flags);
 		ImGui::PopStyleVar(3);
 
-		auto dock_flags = ctx_.app_settings.enable_undocking ? dockspace_flags : (dockspace_flags | ImGuiDockNodeFlags_NoUndocking);
+		auto dock_flags = ctx_.app_settings.allow_undocking ? dockspace_flags : (dockspace_flags | ImGuiDockNodeFlags_NoUndocking);
 		if (ctx_.reset_layout and ImGui::DockBuilderGetNode(dockspace_id) != nullptr)
 		{
 			ImGui::DockBuilderRemoveNode(dockspace_id);

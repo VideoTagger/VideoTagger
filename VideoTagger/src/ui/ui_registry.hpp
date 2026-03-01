@@ -19,7 +19,7 @@ namespace vt::ui
 	public:
 		void render_windows();
 
-		nlohmann::ordered_json serialize_windows() const;
+		[[nodiscard]] nlohmann::ordered_json serialize_windows() const;
 		void deserialize_windows(const nlohmann::ordered_json& json);
 
 		template<typename window_type, typename... arguments, typename = std::enable_if_t<std::is_constructible_v<window_type, arguments&&...> and std::is_base_of_v<ui::window, window_type>>>

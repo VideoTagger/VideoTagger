@@ -2,12 +2,13 @@
 #include <string>
 #include <imgui.h>
 #include <ui/impl/renderable.hpp>
+#include <impl/serializable.hpp>
 #include <utils/json.hpp>
 #include <events/event_source.hpp>
 
 namespace vt::ui
 {
-	struct window : public impl::renderable
+	struct window : public impl::renderable, vt::impl::serializable
 	{
 	public:
 		window(const std::string& id, const std::string& serialization_id, const std::string& display_name, ImGuiWindowFlags flags = 0);
@@ -65,9 +66,6 @@ namespace vt::ui
 		event_source get_event_source() const;
 
 		bool operator==(const window& other) const;
-
-		[[nodiscard]] virtual nlohmann::ordered_json serialize() const { return {}; };
-		virtual void deserialize(const nlohmann::ordered_json& json) {};
 
 	protected:
 		virtual void pre_render() {};

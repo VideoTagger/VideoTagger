@@ -19,6 +19,7 @@
 
 #include "font_type.hpp"
 #include "main_window.hpp"
+#include "app_settings.hpp"
 
 #include <widgets/project_selector.hpp>
 #include <widgets/video_timeline.hpp>
@@ -56,16 +57,6 @@ namespace vt
 		initialized,
 		running,
 		shutdown
-	};
-
-	struct app_settings
-	{
-		float thumbnail_size = 45.0f;
-		bool link_start_end_segment = true;
-		bool autoplay = true;
-		bool load_thumbnails = true;
-		bool enable_undocking = true;
-		bool enable_gizmo_scaling = false;
 	};
 
 	struct window_config
@@ -158,6 +149,8 @@ namespace vt
 		void create_windows();
 
 		void change_theme(const theme& new_theme);
+		[[nodiscard]] nlohmann::ordered_json serialize_app_settings();
+		void deserialize_app_settings(const nlohmann::ordered_json& json);
 		
 		template<typename service_account_manager_type>
 		void register_account_manager();
