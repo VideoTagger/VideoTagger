@@ -122,7 +122,6 @@ namespace vt
 
 		init_keybinds();
 		init_player();
-		fetch_themes();
 		load_accounts();
 		on_launch();
 
@@ -430,7 +429,7 @@ namespace vt
 			ctx_.tasks.run([this]()
 			{
 				debug::log("Fetching themes...");
-				auto result = fetch_themes();
+				auto result = fetch_themes(ctx_.theme_dir_filepath);
 				debug::log("Finished fetching themes");
 				return result;
 			}, priority)
@@ -1418,14 +1417,14 @@ namespace vt
 		};
 	}
 
-	utils::file_node main_window::fetch_themes()
+	utils::file_node main_window::fetch_themes(const std::filesystem::path& path)
 	{
 		utils::file_node result;
 		auto& dark = result["dark"];
 		auto& light = result["light"];
 
-		if (!std::filesystem::is_directory(ctx_.theme_dir_filepath)) return result;
-		for (auto& dir_entry : std::filesystem::directory_iterator(ctx_.theme_dir_filepath))
+		if (!std::filesystem::is_directory(path)) return result;
+		for (auto& dir_entry : std::filesystem::directory_iterator(path))
 		{
 			if (!dir_entry.is_regular_file()) continue;
 
