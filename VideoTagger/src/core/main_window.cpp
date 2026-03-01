@@ -630,10 +630,6 @@ namespace vt
 					center();
 				}
 			}
-			if (ctx_.settings.contains("thumbnail-size"))
-			{
-				ctx_.app_settings.thumbnail_size = ctx_.settings["thumbnail-size"];
-			}
 			if (ctx_.settings.contains("window") and ctx_.settings["window"].contains("state"))
 			{
 				auto& json_window = ctx_.settings["window"];
