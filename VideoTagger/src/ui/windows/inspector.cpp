@@ -23,13 +23,28 @@
 namespace vt::ui::windows
 {
 	inspector::inspector() :
-		window{ "Inspector", "inspector", "Inspector", ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse }
+		window{ "Inspector", "inspector", "Inspector", ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse }, link_segment_parts_{ true }
 	{
 		set_icon(icons::object);
 		register_listeners();
 	}
 
-	void inspector::on_render()
+    nlohmann::ordered_json inspector::serialize() const
+    {
+		nlohmann::ordered_json json;
+		json["link-segment-parts"] = link_segment_parts_;
+        return json;
+    }
+
+	void inspector::deserialize(const nlohmann::ordered_json& json)
+	{
+		if (json.contains("link-segment-parts") and json["link-segment-parts"].is_boolean())
+		{
+			link_segment_parts_ = json["link-segment-parts"].get<bool>();
+		}
+	}
+
+    void inspector::on_render()
 	{
 		if (!is_any_segment_selected())
 		{
@@ -57,11 +72,11 @@ namespace vt::ui::windows
 		timestamp segment_start = active_segment.start;
 		timestamp segment_end = active_segment.end;
 
-		if ((grab_part_ & segment_part::left) or link_start_end_)
+		if ((grab_part_ & segment_part::left) or link_segment_parts_)
 		{
 			segment_start += current_offset_;
 		}
-		if ((grab_part_ & segment_part::right) or link_start_end_)
+		if ((grab_part_ & segment_part::right) or link_segment_parts_)
 		{
 			segment_end += current_offset_;
 		}
@@ -93,8 +108,8 @@ namespace vt::ui::windows
 					timestamp prev_ts_start = segment_start;
 					timestamp prev_ts_end = segment_end;
 
-					timestamp start_max = link_start_end_ ? max_timestamp_ : std::max(timestamp::zero(), segment_end - timestamp{ 1 });
-					timestamp end_min = link_start_end_ ? min_timestamp_ : segment_start + timestamp{ 1 };
+					timestamp start_max = link_segment_parts_ ? max_timestamp_ : std::max(timestamp::zero(), segment_end - timestamp{ 1 });
+					timestamp end_min = link_segment_parts_ ? min_timestamp_ : segment_start + timestamp{ 1 };
 
 					bool start_activated = false;
 					bool start_released = false;
@@ -130,7 +145,7 @@ namespace vt::ui::windows
 						ImGui::NewLine();
 
 						ImGui::TableNextColumn();
-						auto icon = link_start_end_ ? icons::link : icons::link_off;
+						auto icon = link_segment_parts_ ? icons::link : icons::link_off;
 						std::string name = fmt::format("{}##LinkTimestamps", icon);
 
 						auto icon_link_y = end_pos.y - start_pos.y + 2.125f * style.ItemSpacing.y + (ImGui::CalcTextSize(icon).y) / 2;
@@ -140,7 +155,7 @@ namespace vt::ui::windows
 
 						auto drawlist = ImGui::GetWindowDrawList();
 						auto line_size = 1.f;
-						auto line_color_vec4 = link_start_end_ ? style.Colors[ImGuiCol_Text] : style.Colors[ImGuiCol_TextDisabled];
+						auto line_color_vec4 = link_segment_parts_ ? style.Colors[ImGuiCol_Text] : style.Colors[ImGuiCol_TextDisabled];
 						line_color_vec4.w *= 0.4f;
 						auto line_color = ImGui::ColorConvertFloat4ToU32(line_color_vec4);
 						drawlist->AddLine(start_pos, { link_pos.x, start_pos.y }, line_color, line_size);
@@ -151,15 +166,15 @@ namespace vt::ui::windows
 						drawlist->AddLine({ link_pos.x, start_pos.y - line_size / 2 }, link_pos - link_pos_offset, line_color, line_size);
 						drawlist->AddLine({ link_pos.x, end_pos.y + line_size / 2 }, link_pos + link_pos_offset, line_color, line_size);
 
-						if (ui::icon_toggle_button(name, link_start_end_))
+						if (ui::icon_toggle_button(name, link_segment_parts_))
 						{
-							link_start_end_ = !link_start_end_;
+							link_segment_parts_ = !link_segment_parts_;
 						}
 
 						ImGui::EndTable();
 					}
 
-					if (link_start_end_)
+					if (link_segment_parts_)
 					{
 						if (modified_start)
 						{
@@ -196,7 +211,7 @@ namespace vt::ui::windows
 						grab_part_ = static_cast<segment_part>(static_cast<uint8_t>(grab_part_) | static_cast<uint8_t>(segment_part::right));
 					}
 
-					if (link_start_end_)
+					if (link_segment_parts_)
 					{
 						grab_part_ = segment_part::both;
 					}

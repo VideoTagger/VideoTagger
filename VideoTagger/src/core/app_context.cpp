@@ -72,6 +72,16 @@ namespace vt
 		debug::log("Changed theme to '{}'", current_theme.name());
 	}
 
+	nlohmann::ordered_json app_context::serialize_app_settings()
+	{
+		return ctx_.app_settings.serialize();
+	}
+
+	void app_context::deserialize_app_settings(const nlohmann::ordered_json& json)
+	{
+		ctx_.app_settings.deserialize(json);
+	}
+
 	void app_context::register_account_managers()
 	{
 		register_account_manager<google_account_manager>();

@@ -31,7 +31,7 @@ namespace vt::ui
 			window->render();
 		}
 	}
-	
+
 	nlohmann::ordered_json ui_registry::serialize_windows() const
 	{
 		nlohmann::ordered_json result;

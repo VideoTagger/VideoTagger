@@ -17,7 +17,7 @@ namespace vt::widgets
 		return static_cast<size_t>(std::pow(2, std::ceil(std::log2(n))));
 	}
 
-	video_player::video_player() : ui::window{ "Video Player", "video-player", "Video Player", ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse }, dock_window_count_{}, speed_{ 1.0f }, is_playing_{}, loop_mode_{}
+	video_player::video_player() : ui::window{ "Video Player", "video-player", "Video Player", ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse }, dock_window_count_{}, speed_{ 1.0f }, is_playing_{}, autoplay_{}, loop_mode_{}
 	{
 		set_icon(icons::play);
 	}
@@ -67,9 +67,29 @@ namespace vt::widgets
 		return is_playing_;
 	}
 
+    bool video_player::should_autoplay() const
+    {
+        return autoplay_;
+    }
+
 	loop_mode video_player::loop_mode() const
 	{
 		return loop_mode_;
+	}
+
+	nlohmann::ordered_json video_player::serialize() const
+	{
+		nlohmann::ordered_json json;
+		json["autoplay"] = autoplay_;
+		return json;
+	}
+
+	void video_player::deserialize(const nlohmann::ordered_json& json)
+	{
+		if (json.contains("autoplay") and json["autoplay"].is_boolean())
+		{
+			autoplay_ = json["autoplay"].get<bool>();
+		}
 	}
 
 	void video_player::pre_style()
@@ -243,14 +263,13 @@ namespace vt::widgets
 
 		ImGui::NextColumn();
 		{
-			if (ui::icon_toggle_button(icons::autoplay, ctx_.app_settings.autoplay, { button_size, button_size }))
+			if (ui::icon_toggle_button(icons::autoplay, autoplay_, { button_size, button_size }))
 			{
-				ctx_.app_settings.autoplay = !ctx_.app_settings.autoplay;
-				ctx_.settings["autoplay"] = ctx_.app_settings.autoplay;
+				autoplay_ = !autoplay_;
 			}
 			if (has_child_videos)
 			{
-				ui::tooltip(ctx_.app_settings.autoplay ? "Autoplay: On" : "Autoplay: Off");
+				ui::tooltip(autoplay_ ? "Autoplay: On" : "Autoplay: Off");
 			}
 
 			ImGui::SameLine();

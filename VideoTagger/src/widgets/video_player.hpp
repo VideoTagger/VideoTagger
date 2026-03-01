@@ -41,9 +41,10 @@ namespace vt::widgets
 	private:
 		video_player_data data_;
 		size_t dock_window_count_;
+		loop_mode loop_mode_;
 		float speed_;
 		bool is_playing_;
-		loop_mode loop_mode_;
+		bool autoplay_;
 
 	public:
 		video_player_callbacks callbacks;
@@ -58,7 +59,11 @@ namespace vt::widgets
 		void set_playing(bool value);
 
 		bool is_playing() const;
+		bool should_autoplay() const;
 		loop_mode loop_mode() const;
+
+		[[nodiscard]] nlohmann::ordered_json serialize() const override;
+		void deserialize(const nlohmann::ordered_json& json) override;
 
 		virtual void pre_style() override;
 		virtual void post_style() override;
