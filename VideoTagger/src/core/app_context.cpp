@@ -15,6 +15,7 @@
 #include <widgets/video_player.hpp>
 #include <widgets/timeline.hpp>
 #include <ui/windows/inspector.hpp>
+#include <ui/popups/messagebox_popup.hpp>
 
 #ifdef _DEBUG
 	#include <ui/windows/sandbox.hpp>
@@ -63,6 +64,17 @@ namespace vt
 		auto& sandbox = create_window<ui::windows::sandbox>();
 		sandbox.set_opened(true);
 #endif
+	}
+
+	void app_context::render_messagebox()
+	{
+		auto& msgbox = ctx_.messagebox;
+		if (msgbox.should_open())
+		{
+			msgbox.open();
+			msgbox.pop_data();
+		}
+		msgbox.render();
 	}
 
 	void app_context::change_theme(const theme& new_theme)

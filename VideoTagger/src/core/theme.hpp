@@ -26,6 +26,7 @@ namespace vt
 		axis_z,
 		icon_thumbnail,
 		common_success,
+		common_info,
 		common_warning,
 		common_error,
 		console_info,

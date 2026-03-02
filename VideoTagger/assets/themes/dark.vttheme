@@ -20,6 +20,7 @@
 		"axis.z": "#3088f080",
 		"icon.thumbnail": "#eeeeeeff",
 		"common.success": "#6ccb5fff",
+		"common.info": "#5db9feff",
 		"common.warning": "#fce100ff",
 		"common.error": "#ff3e36ff",
 		"console.info": "#5db9feff",

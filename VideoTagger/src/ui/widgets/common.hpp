@@ -21,6 +21,8 @@ namespace vt::ui
 	void end_styled_scrollbars();
 	void begin_bigger_frames();
 	void end_bigger_frames();
+	void begin_modal_style();
+	void end_modal_style();
 	///@}
 	
 	///@defgroup ui_text UI Text

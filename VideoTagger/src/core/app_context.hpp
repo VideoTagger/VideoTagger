@@ -37,6 +37,7 @@
 #include <ui/popups/segments_move_conflict_popup.hpp>
 #include <ui/popups/segment_insert_conflict_popup.hpp>
 #include <ui/popups/segment_insert_popup.hpp>
+#include <ui/popups/messagebox_popup.hpp>
 
 #include <ui/ui_registry.hpp>
 #include <events/event_storage.hpp>
@@ -95,6 +96,7 @@ namespace vt
 		widgets::modal::script_progress script_progress;
 		widgets::color_picker color_picker;
 		widgets::modal::tag_importer tag_importer;
+		ui::messagebox_popup messagebox;
 
 		//TODO: maybe add some popup manager
 		std::unique_ptr<ui::segments_move_conflict_popup> segments_move_conflict_popup;
@@ -147,6 +149,7 @@ namespace vt
 		bool pause_player = false;
 
 		void create_windows();
+		void render_messagebox();
 
 		void change_theme(const theme& new_theme);
 		[[nodiscard]] nlohmann::ordered_json serialize_app_settings();

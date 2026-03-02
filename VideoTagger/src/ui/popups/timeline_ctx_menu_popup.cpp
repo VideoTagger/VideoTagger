@@ -10,7 +10,7 @@
 namespace vt::ui
 {
 	timeline_ctx_menu_popup::timeline_ctx_menu_popup() : 
-		popup{ /*ctx_.lang->get("popup.timeline_context_menu.title")*/ "TimelineContextMenu"}, segment_storage_{nullptr}, event_source_{"timeline"}
+		popup{ "timeline-ctx-menu" }, segment_storage_{nullptr}, event_source_{"timeline"}
 	{
 		mark_id_ = utils::random::get_uuid();
 	}
@@ -23,6 +23,11 @@ namespace vt::ui
 		}
 
 		return false;
+	}
+
+	void timeline_ctx_menu_popup::on_display()
+	{
+		set_display_name(ctx_.lang->get("popup.timeline_context_menu.title"));
 	}
 
 	void timeline_ctx_menu_popup::on_render()

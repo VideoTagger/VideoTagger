@@ -16,13 +16,15 @@ namespace vt
 	public:
 		void register_listeners();
 
-		bool on_close_project(bool should_shutdown);
+		void on_close_project(bool should_shutdown);
 		void on_save();
 		void on_save_as();
+		void on_dont_save();
 		void on_show_in_explorer();
 		void on_import_videos();
 		void on_delete();
 		void on_launch();
+		void on_shutdown();
 		void on_first_launch();
 
 		bool load_accounts();

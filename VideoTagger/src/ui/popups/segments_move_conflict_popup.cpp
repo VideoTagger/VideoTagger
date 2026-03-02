@@ -11,7 +11,7 @@
 namespace vt::ui
 {
 	segments_move_conflict_popup::segments_move_conflict_popup(const segments_move_request_event& event_data, segment_id_map conflicting_segments, std::optional<bool*> open) :
-		modal_popup{ /*ctx_.lang->get("popup.segments_move_conflict.title")*/ "Move Segment Conflict", open, ImGuiWindowFlags_NoTitleBar},
+		modal_popup{ "segments-move-conflict", open, ImGuiWindowFlags_NoTitleBar},
 		move_request_event_data_{ event_data.storage(), event_data.segments(), event_data.move_part(), event_data.move_offset(), event_data.ignore_conflicts() },
 		conflicting_segments_{ conflicting_segments }
 	{
@@ -19,6 +19,7 @@ namespace vt::ui
 
 	void segments_move_conflict_popup::on_display()
 	{
+		set_display_name(ctx_.lang->get("popup.segments_move_conflict.title"));
 		//TODO: this and what's in on_close is repeated in multiple popups, should be refactored
 
 		auto& player = ctx_.get_window<widgets::video_player>();

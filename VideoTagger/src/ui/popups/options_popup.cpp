@@ -7,7 +7,7 @@
 
 namespace vt::ui
 {
-	options_popup::options_popup(std::optional<bool*> open) : modal_popup{ "Options", open, ImGuiWindowFlags_NoTitleBar } {}
+	options_popup::options_popup(std::optional<bool*> open) : modal_popup{ "options", "Options", open, ImGuiWindowFlags_NoTitleBar} {}
 
 	void options_popup::on_display()
 	{

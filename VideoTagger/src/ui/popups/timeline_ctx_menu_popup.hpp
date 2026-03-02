@@ -23,6 +23,7 @@ namespace vt::ui
 		bool is_any_segment_selected() const;
 
 	public:
+		virtual void on_display() override;
 		virtual void on_render() override;
 
 		//TODO: maybe add a single function to set all these

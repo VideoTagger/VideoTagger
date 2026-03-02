@@ -9,8 +9,8 @@
 namespace vt::ui
 {
 	timeline_segment_ctx_menu_popup::timeline_segment_ctx_menu_popup() :
-		popup{ /*ctx_.lang->get("popup.timeline_segment_context_menu.title")*/ "SegmentContextMenu"}, active_segment_{invalid_segment_id},
-		segment_storage_{nullptr}, active_segment_type_{}, event_source_{"timeline"}
+		popup{ "segment-ctx-menu" }, active_segment_{ invalid_segment_id },
+		segment_storage_{ nullptr }, active_segment_type_{}, event_source_{ "timeline" }
 	{
 	}
 
@@ -27,6 +27,8 @@ namespace vt::ui
 	void timeline_segment_ctx_menu_popup::on_display()
 	{
 		if (active_segment_ == invalid_segment_id or segment_storage_ == nullptr) return;
+
+		set_display_name(ctx_.lang->get("popup.timeline_segment_context_menu.title"));
 
 		const auto& segment = segment_storage_->at(active_tag_).at(active_segment_);
 		active_segment_type_ = segment.type();

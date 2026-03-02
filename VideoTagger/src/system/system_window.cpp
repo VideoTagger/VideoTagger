@@ -287,11 +287,14 @@ namespace vt
 
 		ImVector<ImWchar> thumbnail_ranges;
 		ImFontGlyphRangesBuilder thumbnail_font_builder;
+		thumbnail_font_builder.AddText(icons::file);
 		thumbnail_font_builder.AddText(icons::video_group);
 		thumbnail_font_builder.AddText(icons::video);
 		thumbnail_font_builder.AddText(icons::download);
-		thumbnail_font_builder.AddText(icons::file);
 		thumbnail_font_builder.AddText(icons::folder);
+		thumbnail_font_builder.AddText(icons::info);
+		thumbnail_font_builder.AddText(icons::warning);
+		thumbnail_font_builder.AddText(icons::error);
 		thumbnail_font_builder.BuildRanges(&thumbnail_ranges);
 
 		builder.BuildRanges(&ranges);
