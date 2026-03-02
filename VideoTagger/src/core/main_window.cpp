@@ -2432,10 +2432,13 @@ namespace vt
 			//TODO: rewrite to use the popup class
 			if (show_tag_rename_failed_popup)
 			{
-				ImGui::OpenPopup("Rename Failed");
-				if (rename_failed_popup("Rename Failed", *tag_rename, tag_rename_failed_reason))
+				if (tag_rename.has_value())
 				{
-					tag_rename.reset();
+					ImGui::OpenPopup("Rename Failed");
+					if (rename_failed_popup("Rename Failed", *tag_rename, tag_rename_failed_reason))
+					{
+						show_tag_rename_failed_popup = false;
+					}
 				}
 			}
 		}
