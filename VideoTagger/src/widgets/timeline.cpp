@@ -473,6 +473,7 @@ namespace vt::widgets
 		static constexpr float outline_thickness = 2.0f;
 		static constexpr float height_padding = 2.5f;
 		static constexpr float grab_width = 3.0f;
+		static constexpr float min_middle_grab_width = 3.0f;
 
 		segment_hover_type hover_type = segment_hover_type::none;
 		bool is_timestamp = current_segment.is_timestamp();
@@ -498,7 +499,12 @@ namespace vt::widgets
 		auto rect_size = segment_rect.GetSize() /*- style.CellPadding * 2.f*/;
 
 		auto scaled_grab_width = std::clamp(grab_width * span_as_scale(), 0.f, grab_width);
+		if ((scaled_grab_width * 2.f + min_middle_grab_width) > rect_size.x)
+		{
+			scaled_grab_width = 0.f;
+		}
 		ImVec2 grab_size{ scaled_grab_width, rect_size.y };
+
 
 		//Only used for timestamps
 		auto ts_radius = segment_rect.GetHeight() / 2.f * 0.9f;
@@ -565,17 +571,21 @@ namespace vt::widgets
 				ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2{});
 				ImGui::BeginGroup();
 				{
-					if (ImGui::InvisibleButton("##SegmentGrabLeft", grab_size, ImGuiButtonFlags_PressedOnClick))
+					if (scaled_grab_width > 0.f)
 					{
+						if (ImGui::InvisibleButton("##SegmentGrabLeft", grab_size, ImGuiButtonFlags_PressedOnClick))
+						{
+						}
+						if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenBlockedByPopup))
+						{
+							is_hovering_segment_ = true;
+							hover_type = segment_hover_type::start;
+							handle_segment_dragging(segment_part::left, mouse_timestamp);
+						}
+						ImGui::SameLine();
 					}
-					if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenBlockedByPopup))
-					{
-						is_hovering_segment_ = true;
-						hover_type = segment_hover_type::start;
-						handle_segment_dragging(segment_part::left, mouse_timestamp);
-					}
+					
 
-					ImGui::SameLine();
 					if (ImGui::InvisibleButton("##Segment", { rect_size.x - scaled_grab_width * 2.f, rect_size.y }))
 					{
 
@@ -587,15 +597,18 @@ namespace vt::widgets
 						handle_segment_dragging(segment_part::both, mouse_timestamp);
 					}
 
-					ImGui::SameLine();
-					if (ImGui::InvisibleButton("##SegmentGrabRight", grab_size, ImGuiButtonFlags_PressedOnClick))
+					if (scaled_grab_width > 0.f)
 					{
-					}
-					if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenBlockedByPopup))
-					{
-						is_hovering_segment_ = true;
-						hover_type = segment_hover_type::end;
-						handle_segment_dragging(segment_part::right, mouse_timestamp);
+						ImGui::SameLine();
+						if (ImGui::InvisibleButton("##SegmentGrabRight", grab_size, ImGuiButtonFlags_PressedOnClick))
+						{
+						}
+						if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenBlockedByPopup))
+						{
+							is_hovering_segment_ = true;
+							hover_type = segment_hover_type::end;
+							handle_segment_dragging(segment_part::right, mouse_timestamp);
+						}
 					}
 				}
 				ImGui::EndGroup();
