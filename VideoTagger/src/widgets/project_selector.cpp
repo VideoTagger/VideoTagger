@@ -8,6 +8,7 @@
 #include <utils/time.hpp>
 #include <ui/icons.hpp>
 #include <ui/widgets/common.hpp>
+#include <system/messagebox.hpp>
 #include "controls.hpp"
 
 #include <core/app.hpp>
@@ -473,8 +474,7 @@ namespace vt::widgets
 									else
 									{
 										std::string message = "Cannot add this project since it already exits.\nFilepath: " + std::filesystem::relative(result.path).string();
-										//TODO: Change the title based on the app window
-										SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_WARNING, "VideoTagger", message.c_str(), nullptr);
+										messagebox::show("VideoTagger", message, messagebox_icon::warning);
 									}									
 								}
 								ImGui::CloseCurrentPopup();

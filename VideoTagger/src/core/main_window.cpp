@@ -2464,8 +2464,6 @@ namespace vt
 			}
 		}
 
-		ctx_.render_messagebox();
-
 		//TODO: Add base virtual class that has render(bool&) method instead of this
 
 		ctx_.tag_importer.render(ctx_.win_cfg.show_tag_importer_window);
@@ -3117,6 +3115,7 @@ namespace vt
 		ctx_.current_project.has_value() ? draw_main_app() : draw_project_selector();
 
 		ImGui::End();
+		ctx_.render_messagebox();
 	}
 
 	void main_window::handle_event(const SDL_Event& event)
