@@ -1,7 +1,7 @@
 #include "timeline_segment_ctx_menu_popup.hpp"
 #include <pch.hpp>
 #include <core/app_context.hpp>
-#include <events/timeline/segment_delete_event.hpp>
+#include <events/timeline/segment_delete_request_event.hpp>
 #include <events/timeline/segments_move_request_event.hpp>
 #include <events/timeline/segment_insert_request_event.hpp>
 #include <events/player/seek_event.hpp>
@@ -41,7 +41,7 @@ namespace vt::ui
 		//TODO: Add all option from the old menu, localization
 		if (ImGui::MenuItem(ctx_.lang->get("popup.timeline_segment_context_menu.delete_this").c_str()))
 		{
-			ctx_.dispatch_event<segment_delete_event>(event_source_, *segment_storage_, active_tag_, active_segment_);
+			ctx_.dispatch_event<segment_delete_request_event>(event_source_, *segment_storage_, active_tag_, active_segment_);
 		}
 		if (is_any_segment_selected() and ImGui::MenuItem(ctx_.lang->get("popup.timeline_segment_context_menu.delete_selected").c_str()))
 		{
@@ -49,7 +49,7 @@ namespace vt::ui
 			{
 				for (auto& id : segments)
 				{
-					ctx_.dispatch_event<segment_delete_event>(event_source_, *segment_storage_, tag, id);
+					ctx_.dispatch_event<segment_delete_request_event>(event_source_, *segment_storage_, tag, id);
 				}
 			}
 		}
@@ -76,7 +76,7 @@ namespace vt::ui
 				if (ImGui::MenuItem(ctx_.lang->get("popup.timeline_segment_context_menu.convert_to_timestamp.start_end").c_str()))
 				{
 					tag_segment segment = segment_storage_->at(active_tag_).at(active_segment_);
-					ctx_.dispatch_event<segment_delete_event>(event_source_, *segment_storage_, active_tag_, active_segment_);
+					ctx_.dispatch_event<segment_delete_request_event>(event_source_, *segment_storage_, active_tag_, active_segment_);
 					ctx_.dispatch_event<segment_insert_request_event>(event_source_, *segment_storage_, active_tag_, segment.start, false, false);
 					ctx_.dispatch_event<segment_insert_request_event>(event_source_, *segment_storage_, active_tag_, segment.end, false, false);
 				}

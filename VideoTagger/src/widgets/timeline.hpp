@@ -111,6 +111,8 @@ namespace vt::widgets
 		bool is_dragging_any_segment() const;
 		bool is_hovering_any_segment() const;
 
+		bool more_than_one_segment_selected() const;
+
 		utils::timestamp_span visible_time_span() const;
 		float span_as_scale() const;
 		timeline_state& state();

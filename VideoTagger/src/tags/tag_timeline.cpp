@@ -141,13 +141,21 @@ namespace vt
 		return tag_timeline_insert_result(id, {});
 	}
 
-	void tag_timeline::erase(segment_id id)
+	bool tag_timeline::erase(segment_id id)
 	{
-		auto index = id_map_.at(id);
+		auto map_it = id_map_.find(id);
+		if (map_it == id_map_.end())
+		{
+			return false;
+		}
+
+		auto index = map_it->second;
 		auto it = segments_.begin() + index;
 		it = segments_.erase(it);
 		id_map_.erase(id);
 		update_id_map_(it, segments_.end(), -1);
+
+		return true;
 	}
 
 	tag_timeline::iterator tag_timeline::erase(iterator it)
@@ -347,6 +355,23 @@ namespace vt
 		return it;
 	}
 
+	std::set<segment_id> tag_timeline::find_move_conflicts(segment_id id, segment_part part, timestamp offset) const
+	{
+		std::set<segment_id> result;
+		find_overlapping_(result, id, part, offset, {});
+		return result;
+	}
+
+	std::set<segment_id> tag_timeline::find_move_conflicts(const std::set<segment_id>& ids, segment_part part, timestamp offset) const
+	{
+		std::set<segment_id> result;
+		for (auto& id : ids)
+		{
+			find_overlapping_(result, id, part, offset, ids);
+		}
+		return result;
+	}
+
 	const tag_segment& tag_timeline::at(segment_id id) const
 	{
 		return segments_.at(id_map_.at(id)).segment;
@@ -437,7 +462,7 @@ namespace vt
 			auto& overlapping = prepare_result->first;
 			bool can_insert = prepare_result->second;
 
-			// If target location is fully contained in the overlapping segment and its not in the ignored segmnets, just remove the moved segment.
+			// If target location is fully contained in the overlapping segment and its not in the ignored segments, just remove the moved segment.
 			if (!can_insert and ignored_segments.count(overlapping.begin()->id) == 0)
 			{
 				auto result_id = prepare_result->first.begin()->id;
@@ -537,5 +562,41 @@ namespace vt
 		{
 			id_map_.at(it->id) += offset;
 		}
+	}
+
+	void tag_timeline::find_overlapping_(std::set<segment_id>& result, segment_id segment, segment_part part, timestamp offset, const std::set<segment_id>& ignored_segments) const
+	{
+		const auto& segment_data = at(segment);
+		timestamp new_start = segment_data.start;
+		timestamp new_end = segment_data.end;
+		if (part & segment_part::left)
+		{
+			new_start += offset;
+		}
+		if (part & segment_part::right)
+		{
+			new_end += offset;
+		}
+
+		find_overlapping_(result, new_start, new_end, segment, ignored_segments);
+	}
+
+	void tag_timeline::find_overlapping_(std::set<segment_id>& result, timestamp start, timestamp end, segment_id ignored_segment, const std::set<segment_id>& ignored_segments) const
+	{
+		auto overlapping = find_range(start, end);
+		for (const auto& [overlapping_id, _] : overlapping)
+		{
+			if (ignored_segments.count(overlapping_id) != 0 or overlapping_id == ignored_segment)
+			{
+				continue;
+			}
+
+			result.insert(overlapping_id);
+		}
+	}
+
+	void tag_timeline::find_overlapping_(std::set<segment_id>& result, timestamp start, timestamp end, const std::set<segment_id>& ignored_segments) const
+	{
+		find_overlapping_(result, start, end, invalid_segment_id, ignored_segments);
 	}
 }

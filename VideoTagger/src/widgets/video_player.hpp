@@ -46,6 +46,8 @@ namespace vt::widgets
 		bool is_playing_;
 		bool autoplay_;
 
+		std::optional<event_source> playback_suspend_source_;
+
 	public:
 		video_player_callbacks callbacks;
 

@@ -13,12 +13,12 @@ namespace vt
 	 * 
 	 * If inserted() returns false, the insertion was cancelled, otherwise a new segment has been inserted.
 	 */
-	struct segment_insert_event : public event
+	struct segment_inserted_event : public event
 	{
-		segment_insert_event(segment_storage& storage, const std::string& tag, timestamp start, timestamp end, segment_id id, bool inserted) :
+		segment_inserted_event(segment_storage& storage, const std::string& tag, timestamp start, timestamp end, segment_id id, bool inserted) :
 			segment_storage_{ &storage }, tag_{ tag }, start_{ start }, end_{ end }, id_{ id }, inserted_{ inserted } {}
 
-		segment_insert_event(segment_storage& storage, const std::optional<std::string>& tag, timestamp start, timestamp end, segment_id id, bool inserted) :
+		segment_inserted_event(segment_storage& storage, const std::optional<std::string>& tag, timestamp start, timestamp end, segment_id id, bool inserted) :
 			segment_storage_{ &storage }, tag_{ tag }, start_{ start }, end_{ end }, id_{ id }, inserted_{ inserted } {
 		}
 

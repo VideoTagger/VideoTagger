@@ -17,11 +17,11 @@
 #include <events/timeline/update_segment_drag_event.hpp>
 #include <events/timeline/end_segment_drag_event.hpp>
 #include <events/timeline/segments_move_request_event.hpp>
-#include <events/timeline/segments_move_event.hpp>
-#include <events/timeline/segment_merge_event.hpp>
-#include <events/timeline/segment_delete_event.hpp>
-#include <events/tags/tag_delete_event.hpp>
-#include <events/tags/tag_rename_event.hpp>
+#include <events/timeline/segments_moved_event.hpp>
+#include <events/timeline/segment_merged_event.hpp>
+#include <events/timeline/segment_deleted_event.hpp>
+#include <events/tags/tag_deleted_event.hpp>
+#include <events/tags/tag_renamed_event.hpp>
 
 #include <core/debug.hpp>
 
@@ -167,12 +167,14 @@ namespace vt::widgets
 			segment_drag_data_.stage = segment_drag_stage::waiting_for_approval;
 		});
 
-		ctx_.add_event_listener<segments_move_event>([this](const segments_move_event& e)
+		ctx_.add_event_listener<segments_moved_event>([this](const segments_moved_event& e)
 		{
+			if (segment_drag_data_.stage != segment_drag_stage::waiting_for_approval) return;
+
 			segment_drag_data_ = {};
 		});
 
-		ctx_.add_event_listener<segment_merge_event>([this](const segment_merge_event& e)
+		ctx_.add_event_listener<segment_merged_event>([this](const segment_merged_event& e)
 		{
 			if (is_segment_selected(e.tag(), e.merged_id()))
 			{
@@ -182,10 +184,19 @@ namespace vt::widgets
 			{
 				ctx_.dispatch_event<segment_select_event>(event_source_, e.storage(), e.tag(), e.merged_into_id());
 			}
+
+			auto [tag_it, segment_it] = segment_id_map_find(dragged_segments_, e.tag(), e.merged_id());
+			if (tag_it != dragged_segments_.end() && segment_it != tag_it->second.end())
+			{
+				tag_it->second.erase(segment_it);
+				tag_it->second.insert(e.merged_into_id());
+			}
 		});
 
-		ctx_.add_event_listener<segment_delete_event>([this](const segment_delete_event& e)
+		ctx_.add_event_listener<segment_deleted_event>([this](const segment_deleted_event& e)
 		{
+			if (!e.deleted()) return;
+
 			if (is_segment_selected(e.tag(), e.id()))
 			{
 				selected_segments_.at(e.tag()).erase(e.id());
@@ -202,8 +213,10 @@ namespace vt::widgets
 			}
 		});
 
-		ctx_.add_event_listener<tag_delete_event>([this](const tag_delete_event& e)
+		ctx_.add_event_listener<tag_deleted_event>([this](const tag_deleted_event& e)
 		{
+			if (!e.deleted()) return;
+
 			selected_segments_.erase(e.tag_name());
 			dragged_segments_.erase(e.tag_name());
 
@@ -213,8 +226,10 @@ namespace vt::widgets
 			}
 		});
 
-		ctx_.add_event_listener<tag_rename_event>([this](const tag_rename_event& e)
+		ctx_.add_event_listener<tag_renamed_event>([this](const tag_renamed_event& e)
 		{
+			if (!e.renamed()) return;
+
 			auto selected_it = selected_segments_.find(e.tag_name());
 			if (selected_it != selected_segments_.end())
 			{
@@ -506,6 +521,15 @@ namespace vt::widgets
 						}
 
 						ctx_.dispatch_event<segment_select_event>(event_source_, storage, tag.name, current_segment_id);
+						is_selected = true;
+					}
+
+					if (part != segment_part::both and more_than_one_segment_selected())
+					{
+						event_deselect_segments_if(storage, [&tag, &current_segment_id](const std::string& unselect_tag, segment_id unselect_id)
+						{
+							return !(tag.name == unselect_tag and current_segment_id == unselect_id);
+						});
 						is_selected = true;
 					}
 
@@ -968,6 +992,18 @@ namespace vt::widgets
 	bool timeline::is_hovering_any_segment() const
 	{
 		return is_hovering_segment_;
+	}
+
+	bool timeline::more_than_one_segment_selected() const
+	{
+		size_t count = 0;
+		for (const auto& [_, segments] : selected_segments_)
+		{
+			count += segments.size();
+			if (count > 1) return true;
+		}
+
+		return false;
 	}
 
 	void timeline::event_deselect_segments_if(segment_storage& storage, const std::function<bool(const std::string&, segment_id)>& predicate)
@@ -1437,23 +1473,14 @@ namespace vt::widgets
 
 	bool timeline::is_segment_selected(const std::string& tag, segment_id segment) const
 	{
-		auto it = selected_segments_.find(tag);
-		if (it == selected_segments_.end())
-		{
-			return false;
-		}
-
-		return it->second.count(segment) != 0;
+		auto [tag_it, segment_it] = segment_id_map_find(selected_segments_, tag, segment);
+		return tag_it != selected_segments_.end() and segment_it != tag_it->second.end();
 	}
 
 	bool timeline::is_segment_dragged(const std::string& tag, segment_id segment) const
 	{
-		auto it = dragged_segments_.find(tag);
-		if (it == dragged_segments_.end())
-		{
-			return false;
-		}
-		return it->second.count(segment) != 0;
+		auto [tag_it, segment_it] = segment_id_map_find(dragged_segments_, tag, segment);
+		return tag_it != dragged_segments_.end() and segment_it != tag_it->second.end();
 	}
 
 	int64_t timeline_state::time_length() const

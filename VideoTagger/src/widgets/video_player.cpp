@@ -8,6 +8,10 @@
 #include <ui/widgets/common.hpp>
 #include "time_input.hpp"
 #include <core/app_context.hpp>
+#include <events/player/playback_suspend_request_event.hpp>
+#include <events/player/playback_resume_request_event.hpp>
+#include <events/player/playback_change_request_event.hpp>
+#include <events/player/playback_changed_event.hpp>
 
 namespace vt::widgets
 {
@@ -20,6 +24,34 @@ namespace vt::widgets
 	video_player::video_player() : ui::window{ "Video Player", "video-player", "Video Player", ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse }, dock_window_count_{}, speed_{ 1.0f }, is_playing_{}, autoplay_{}, loop_mode_{}
 	{
 		set_icon(icons::play);
+
+		ctx_.add_event_listener<playback_suspend_request_event>([this](const playback_suspend_request_event& event)
+		{
+			if (&event.player() != this) return;
+
+			if (!is_playing_ or playback_suspend_source_.has_value()) return;
+
+			playback_suspend_source_ = event.source();
+			set_playing(false);
+		});
+
+		ctx_.add_event_listener<playback_resume_request_event>([this](const playback_resume_request_event& event)
+		{
+			if (&event.player() != this) return;
+
+			if (is_playing_ or !playback_suspend_source_.has_value() or playback_suspend_source_ != event.source()) return;
+
+			playback_suspend_source_ = std::nullopt;
+			set_playing(true);
+		});
+
+		ctx_.add_event_listener<playback_change_request_event>([this](const playback_change_request_event& event)
+		{
+			if (&event.player() != this) return;
+
+			playback_suspend_source_ = std::nullopt;
+			set_playing(event.is_playing());
+		});
 	}
 
 	void video_player::update_data(video_player_data data, bool is_playing)

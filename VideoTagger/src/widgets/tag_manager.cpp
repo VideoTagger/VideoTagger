@@ -10,7 +10,7 @@
 #include <utils/string.hpp>
 #include <events/tags/tag_add_request_event.hpp>
 #include <events/tags/tag_rename_request_event.hpp>
-#include <events/tags/tag_delete_event.hpp>
+#include <events/tags/tag_delete_request_event.hpp>
 
 namespace vt::widgets
 {
@@ -659,7 +659,7 @@ namespace vt::widgets
 			if (pressed_yes)
 			{
 				tag_delete->ready = true;
-				ctx_.dispatch_event<tag_delete_event>(event_source_, tags, tag_delete->tag);
+				ctx_.dispatch_event<tag_delete_request_event>(event_source_, tags, tag_delete->tag);
 			}
 			else
 			{

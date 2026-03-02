@@ -1,7 +1,7 @@
 #include "timeline_ctx_menu_popup.hpp"
 #include <pch.hpp>
 #include <core/app_context.hpp>
-#include <events/timeline/segment_delete_event.hpp>
+#include <events/timeline/segment_delete_request_event.hpp>
 #include <events/timeline/segment_insert_request_event.hpp>
 #include <events/timeline/segment_insert_mark_start.hpp>
 #include <events/timeline/segment_insert_mark_end.hpp>
@@ -41,7 +41,7 @@ namespace vt::ui
 			{
 				for (auto& id : segments)
 				{
-					ctx_.dispatch_event<segment_delete_event>(event_source_, *segment_storage_, tag, id);
+					ctx_.dispatch_event<segment_delete_request_event>(event_source_, *segment_storage_, tag, id);
 				}
 			}
 		}
