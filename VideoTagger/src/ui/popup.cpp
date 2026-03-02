@@ -2,7 +2,6 @@
 #include "popup.hpp"
 
 #include <core/app_context.hpp>
-#include <widgets/controls.hpp>
 #include <ui/widgets/common.hpp>
 
 namespace vt::ui
@@ -13,7 +12,8 @@ namespace vt::ui
 
 	void popup::open(ImGuiPopupFlags flags)
 	{
-		ImGui::OpenPopup(id_.c_str(), flags);
+		auto win_name = window_name();
+		ImGui::OpenPopup(win_name.c_str(), flags);
 	}
 
 	void popup::close()
@@ -35,6 +35,11 @@ namespace vt::ui
 	const std::string& popup::display_name() const
 	{
 		return display_name_;
+	}
+
+	std::string popup::window_name() const
+	{
+		return fmt::format("{}###{}", display_name_, id_);
 	}
 
 	ImGuiWindowFlags popup::flags() const
@@ -87,7 +92,8 @@ namespace vt::ui
 
 	bool popup::is_open() const
 	{
-		return ImGui::IsPopupOpen(id_.c_str());
+		auto win_name = window_name();
+		return ImGui::IsPopupOpen(win_name.c_str());
 	}
 
 	void popup::pre_style()
@@ -103,18 +109,10 @@ namespace vt::ui
 	bool popup::pre_render()
 	{
 		bool result;
-		if (display_name_.empty())
-		{
-			pre_style();
-			result = ImGui::BeginPopup(id_.c_str(), flags_);
-			post_style();
-		}
-		else
-		{
-			pre_style();
-			result = ImGui::BeginPopup(fmt::format("{}###{}", display_name_, id_).c_str(), flags_);
-			post_style();
-		}
+		pre_style();
+		auto win_name = window_name();
+		result = ImGui::BeginPopup(win_name.c_str(), flags_);
+		post_style();
 		return result;
 	}
 
@@ -157,21 +155,22 @@ namespace vt::ui
 	bool modal_popup::pre_render()
 	{
 		bool result{};
-		const char* id_cstr = id().c_str();
 		ui::begin_modal_style();
 		auto flags_ = flags() | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoMove;
 
 		if (open_state_.has_value())
 		{
 			pre_style();
-			result = ImGui::BeginPopupModal(id_cstr, open_state_.value(), flags_);
+			auto win_name = window_name();
+			result = ImGui::BeginPopupModal(win_name.c_str(), open_state_.value(), flags_);
 			post_style();
 		}
 		else
 		{
 			bool v = true;
 			pre_style();
-			result = ImGui::BeginPopupModal(id_cstr, &v, flags_);
+			auto win_name = window_name();
+			result = ImGui::BeginPopupModal(win_name.c_str(), &v, flags_);
 			post_style();
 
 			if (!v)

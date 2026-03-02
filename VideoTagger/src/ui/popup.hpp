@@ -49,6 +49,8 @@ namespace vt::ui
 		[[nodiscard]] const std::string& id() const;
 		///@return The display name of the popup
 		[[nodiscard]] const std::string& display_name() const;
+		///@return The window name of the popup
+		[[nodiscard]] std::string window_name() const;
 		///@return The flags used when rendering the popup
 		[[nodiscard]] ImGuiWindowFlags flags() const;
 

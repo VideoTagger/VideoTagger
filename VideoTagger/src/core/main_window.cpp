@@ -2464,11 +2464,7 @@ namespace vt
 			}
 		}
 
-		if (ImGui::Begin("##MessageBox", nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings));
-		{
-			ctx_.render_messagebox();
-		}
-		ImGui::End();
+		ctx_.render_messagebox();
 
 		//TODO: Add base virtual class that has render(bool&) method instead of this
 

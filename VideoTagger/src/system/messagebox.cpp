@@ -30,6 +30,10 @@ namespace vt
 		data.buttons = buttons;
 		data.callback = callback;
 		data.icon = icon;
+		if (!buttons.empty())
+		{
+			data.default_button_id = 0;
+		}
 		show(data);
 	}
 
