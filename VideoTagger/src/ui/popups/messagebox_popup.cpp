@@ -93,7 +93,9 @@ namespace vt::ui
 			ImGui::SameLine();
 			ui::vertical_item_spacer(style.ItemSpacing.x * 2);
 			ImGui::SameLine();
-			ImGui::SetCursorPosY(ImGui::GetCursorPosY() + icon_size / 2.f - ImGui::GetTextLineHeight() / 2.f);
+
+			//Text centering relative to the icon
+			//ImGui::SetCursorPosY(ImGui::GetCursorPosY() + icon_size / 2.f - ImGui::GetTextLineHeight() / 2.f);
 		}
 
 		ImGui::TextWrapped("%s", data_.message.c_str());
