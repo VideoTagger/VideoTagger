@@ -35,8 +35,15 @@ namespace vt
 
 	void messagebox::show(const messagebox_data& data)
 	{
-		show_ui(data);
-		//show_system_fallback(data);
+		try
+		{
+			show_ui(data);
+		}
+		catch (const std::exception& e)
+		{
+			debug::error("Failed to show messagebox with custom UI, falling back to system messagebox. Error: {}", e.what());
+			show_system_fallback(data);
+		}
 	}
 
 	void messagebox::show_ui(const messagebox_data& data)
@@ -47,13 +54,23 @@ namespace vt
 
 	void messagebox::show_system_fallback(const messagebox_data& data)
 	{
-		std::vector<SDL_MessageBoxButtonData> sdl_buttons
+		std::vector<SDL_MessageBoxButtonData> sdl_buttons;
+
+		for (const auto& button : data.buttons)
 		{
-			// flags, buttonid, text
-			{ SDL_MESSAGEBOX_BUTTON_ESCAPEKEY_DEFAULT, 0, "Cancel" },
-			{ 0, 2, "Don't Save" },
-			{ SDL_MESSAGEBOX_BUTTON_RETURNKEY_DEFAULT, 1, "Save" },
-		};
+			SDL_MessageBoxButtonData sdl_button{};
+			sdl_button.buttonid = button.id;
+			sdl_button.text = button.label.c_str();
+			if (data.default_button_id.has_value() and button.id == data.default_button_id.value())
+			{
+				sdl_button.flags |= SDL_MESSAGEBOX_BUTTON_RETURNKEY_DEFAULT;
+			}
+			if (data.cancel_button_id.has_value() and button.id == data.cancel_button_id.value())
+			{
+				sdl_button.flags |= SDL_MESSAGEBOX_BUTTON_ESCAPEKEY_DEFAULT;
+			}
+			sdl_buttons.push_back(sdl_button);
+		}
 
 		SDL_MessageBoxData sdl_data{};
 		switch (data.icon)
