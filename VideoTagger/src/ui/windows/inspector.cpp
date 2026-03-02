@@ -93,8 +93,6 @@ namespace vt::ui::windows
 			segment_end += current_offset_;
 		}
 
-		debug::log("offset: {}", current_offset_.total_milliseconds.count());
-
 		if (widgets::begin_collapsible("##Properties", "Properties", ImGuiTreeNodeFlags_DefaultOpen, icons::property))
 		{
 			ui::card([&]()
@@ -146,18 +144,12 @@ namespace vt::ui::windows
 
 						auto y_offset = ImVec2{ 0.f, (ImGui::GetTextLineHeight() / 2 + style.FramePadding.y) };
 
-						debug::log("prev start 1: {}", prev_ts_start.total_milliseconds.count());
-						debug::log("start: {}, {}", segment_start.total_milliseconds.count(), segment_start != prev_ts_start);
-
 						ImGui::TableNextColumn();
 						//ImGui::Columns(2, nullptr, false);
 						modified_start = widgets::timestamp_control
 						(
 							"Start", segment_start, min_timestamp.total_milliseconds.count(), start_max.total_milliseconds.count(), &start_activated, &start_released
 						);
-
-						debug::log("prev start 2: {}", prev_ts_start.total_milliseconds.count());
-						debug::log("start: {}, {}", segment_start.total_milliseconds.count(), segment_start != prev_ts_start);
 
 						ImGui::SameLine();
 						auto start_pos = ImGui::GetCursorScreenPos() + y_offset;
