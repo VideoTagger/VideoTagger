@@ -727,7 +727,6 @@ namespace vt
 
 	bool main_window::load_settings()
 	{
-		float font_size = 18.0f;
 		bool result = std::filesystem::exists(ctx_.app_settings_filepath);
 		if (result)
 		{
@@ -791,7 +790,7 @@ namespace vt
 		{
 			ctx_.reset_layout = true;
 		}
-		build_fonts(font_size);
+		build_fonts(ctx_.app_settings.font_size);
 		return result;
 	}
 
