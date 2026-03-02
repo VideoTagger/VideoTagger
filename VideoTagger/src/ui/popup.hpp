@@ -15,10 +15,19 @@ namespace vt::ui
 		 * @param[in] flags The window flags used when rendering the popup
 		 */
 		popup(const std::string& id, ImGuiWindowFlags flags = ImGuiWindowFlags_None);
+		/**
+		 * @brief Creates a popup with the given id and flags
+		 * @param[in] id The id for the popup
+		 * @param[in] display_name The display name for the popup
+		 * @param[in] flags The window flags used when rendering the popup
+		 */
+		popup(const std::string& id, const std::string& display_name, ImGuiWindowFlags flags = ImGuiWindowFlags_None);
 		virtual ~popup() = default;
 
 	private:
 		std::string id_;
+		std::string display_name_;
+		ImGuiID imgui_id_;
 		ImGuiWindowFlags flags_;
 
 	public:
@@ -30,8 +39,16 @@ namespace vt::ui
 		///@brief Closes the popup
 		virtual void close();
 
+		/**
+		 * @brief Sets the display name of the popup
+		 * @param[in] display_name The new display name for the popup
+		 */
+		void set_display_name(const std::string& display_name);
+
 		///@return The id of the popup
 		[[nodiscard]] const std::string& id() const;
+		///@return The display name of the popup
+		[[nodiscard]] const std::string& display_name() const;
 		///@return The flags used when rendering the popup
 		[[nodiscard]] ImGuiWindowFlags flags() const;
 
@@ -53,6 +70,9 @@ namespace vt::ui
 		[[nodiscard]] bool is_open() const;
 
 	protected:
+		virtual void pre_style();
+		virtual void post_style();
+
 		/**
 		 * @brief Begins the popup rendering context
 		 * 
@@ -78,6 +98,16 @@ namespace vt::ui
 		 * @param[in] flags
 		 */
 		modal_popup(const std::string& id, std::optional<bool*> open = std::nullopt, ImGuiWindowFlags flags = ImGuiWindowFlags_None);
+		/**
+		 * @brief Creates a modal popup with the given id, open state and flags
+		 * @param[in] id The id for the popup
+		 * @param[in] display_name The display name for the popup
+		 * @param[in,out] open If boolean pointer is passed, it will be set to true when the popup is open or false otherwise.
+		 * If std::nullopt is passed, the popup will still be able to be closed but you won't know the state of the popup.
+		 * If nullptr is passed, the popup won't be able to be closed.
+		 * @param[in] flags
+		 */
+		modal_popup(const std::string& id, const std::string& display_name, std::optional<bool*> open = std::nullopt, ImGuiWindowFlags flags = ImGuiWindowFlags_None);
 		virtual ~modal_popup() = default;
 
 	private:

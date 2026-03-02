@@ -14,7 +14,7 @@ namespace vt::ui
 {
 	segment_insert_conflict_popup::segment_insert_conflict_popup(const segment_insert_request_event& event_data,
 		const std::set<segment_id>& conflicting_segments, std::optional<bool*> open) :
-		modal_popup{ /*ctx_.lang->get("popup.segment_insert_conflict.title")*/ "Insert Segment Conflict", open, ImGuiWindowFlags_NoTitleBar},
+		modal_popup{ "segment-insert-conflict", open, ImGuiWindowFlags_NoTitleBar},
 		insert_request_event_data_{ event_data.storage(), event_data.tag(), event_data.start(), event_data.end(), event_data.user_customization(), event_data.ignore_conflicts() },
 		conflicting_segments_{ conflicting_segments }
 	{
@@ -22,6 +22,7 @@ namespace vt::ui
 
 	void segment_insert_conflict_popup::on_display()
 	{
+		set_display_name(ctx_.lang->get("popup.segment_insert_conflict.title"));
 		ctx_.dispatch_event<playback_suspend_request_event>(insert_request_event_data_.source(), ctx_.get_window<widgets::video_player>());
 	}
 

@@ -4,6 +4,7 @@
 #include <ui/widgets/tile.hpp>
 #include <utils/thumbnail.hpp>
 #include <core/app_context.hpp>
+#include <system/messagebox.hpp>
 
 namespace vt::ui::windows
 {
@@ -45,6 +46,20 @@ namespace vt::ui::windows
 			}
 			return true;
 		});
+		widget_list_.add_raw([&]()
+		{
+			if (ui::button("Test Messagebox"))
+			{
+				messagebox::show("Title", "Message");
+				messagebox::show("Info", "Info Message", messagebox_icon::info);
+				messagebox::show("Warning", "Warning Message", messagebox_icon::warning);
+				messagebox::show("Error", "Error Message", messagebox_icon::error);
+			}
+			return true;
+		});
+
+
+
 		widget_list_.add_raw([&]()
 		{
 			static bool is_selected = false;

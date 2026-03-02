@@ -32,6 +32,7 @@
 #include <utils/vec.hpp>
 #include <utils/intersection.hpp>
 #include <utils/string.hpp>
+#include <system/messagebox.hpp>
 #include <ui/widgets/common.hpp>
 #include <ui/widgets/slider.hpp>
 #include <ui/widgets/settings_expander.hpp>
@@ -543,12 +544,12 @@ namespace vt
 		});
 	}
 
-	bool main_window::on_close_project(bool should_shutdown)
+	void main_window::on_close_project(bool should_shutdown)
 	{
 		if (ctx_.script_handle.has_value())
 		{
 			ctx_.script_eng.interrupt();
-			return false;
+			return;
 		}
 
 		if (ctx_.current_project.has_value())
@@ -580,36 +581,54 @@ namespace vt
 
 		if (ctx_.current_project.has_value() and ctx_.is_project_dirty)
 		{
-			const SDL_MessageBoxButtonData buttons[] = {
-				// flags, buttonid, text
-				{ SDL_MESSAGEBOX_BUTTON_ESCAPEKEY_DEFAULT, 0, "Cancel" },
-				{ 0, 2, "Don't Save" },
-				{ SDL_MESSAGEBOX_BUTTON_RETURNKEY_DEFAULT, 1, "Save" },
+			messagebox_data data{};
+			data.buttons =
+			{
+				{ 0, "Save"},
+				{ 1, "Don't Save" },
+				{ 2, "Cancel" }
 			};
-
-			SDL_MessageBoxData data{};
-			data.flags = SDL_MESSAGEBOX_WARNING;
-
-			//TODO: Replace title
-			data.buttons = buttons;
-			data.numbuttons = sizeof(buttons) / sizeof(buttons[0]);
+			data.icon = messagebox_icon::warning;
 			data.title = "VideoTagger";
 			data.message = "The current project has unsaved changes.\nDo you want to save pending changes?";
-			int buttonid{};
-			SDL_ShowMessageBox(&data, &buttonid);
-
-			switch (buttonid)
+			data.default_button_id = 0;
+			data.cancel_button_id = 2;
+			data.callback = [this, should_shutdown](int id)
 			{
-				case 1:
+				switch (id)
 				{
-					on_save();
+					case 0: on_save(); break;
+					case 1: on_dont_save(); break;
+					case 2: return;
 				}
-				break;
-				case 0: return false;
-			}
+				
+				if (should_shutdown) 
+				{
+					on_shutdown();
+				}
+				else
+				{
+					ctx_.reset_current_video_group();
+					ctx_.current_project = std::nullopt;
+					ctx_.video_timeline.selected_segment = std::nullopt;
+					ctx_.is_project_dirty = false;
+					set_subtitle();
+				}
+			};
+			messagebox::show(data);
 		}
-		if (should_shutdown) ctx_.state_ = app_state::shutdown;
-		return true;
+		else if (should_shutdown)
+		{
+			on_shutdown();
+		}
+		else
+		{
+			ctx_.reset_current_video_group();
+			ctx_.current_project = std::nullopt;
+			ctx_.video_timeline.selected_segment = std::nullopt;
+			ctx_.is_project_dirty = false;
+			set_subtitle();
+		}
 	}
 
 	void main_window::on_save()
@@ -629,6 +648,11 @@ namespace vt
 			debug::log("Saving project as {}", result.path.u8string());
 			save_project_as(result.path);
 		}
+	}
+
+	void main_window::on_dont_save()
+	{
+
 	}
 	
 	void main_window::on_show_in_explorer()
@@ -664,6 +688,11 @@ namespace vt
 	{
 		ctx_.dispatch_event<fetch_themes_event>(event_source_);
 		ctx_.dispatch_event<fetch_scripts_event>(event_source_);
+	}
+
+	void main_window::on_shutdown()
+	{
+		ctx_.state_ = app_state::shutdown;
 	}
 
 	void main_window::on_first_launch()
@@ -810,14 +839,7 @@ namespace vt
 
 	void main_window::close_project()
 	{
-		if (on_close_project(false))
-		{
-			ctx_.reset_current_video_group();
-			ctx_.current_project = std::nullopt;
-			ctx_.video_timeline.selected_segment = std::nullopt;
-			ctx_.is_project_dirty = false;
-			set_subtitle();
-		}
+		on_close_project(false);
 	}
 
 	void main_window::copy_app_assets()
@@ -2442,6 +2464,12 @@ namespace vt
 				}
 			}
 		}
+
+		if (ImGui::Begin("##MessageBox", nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings));
+		{
+			ctx_.render_messagebox();
+		}
+		ImGui::End();
 
 		//TODO: Add base virtual class that has render(bool&) method instead of this
 

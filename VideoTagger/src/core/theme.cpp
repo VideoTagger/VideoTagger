@@ -28,6 +28,7 @@ namespace vt
 		{ theme_color::axis_z, "axis.z" },
 		{ theme_color::icon_thumbnail, "icon.thumbnail" },
 		{ theme_color::common_success, "common.success" },
+		{ theme_color::common_info, "common.info" },
 		{ theme_color::common_warning, "common.warning" },
 		{ theme_color::common_error, "common.error" },
 		{ theme_color::console_info, "console.info" },

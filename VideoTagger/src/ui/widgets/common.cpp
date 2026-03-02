@@ -145,6 +145,19 @@ namespace vt::ui
 		ImGui::PopStyleVar();
 	}
 
+    void begin_modal_style()
+    {
+		const auto& style = ImGui::GetStyle();
+		ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 8.f);
+		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, style.WindowPadding * 2);
+		ImGui::SetNextWindowPos(ImGui::GetMainViewport()->GetCenter(), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
+    }
+
+	void end_modal_style()
+	{
+		ImGui::PopStyleVar(2);
+	}
+
 	void label(const std::string& label)
 	{
 		ImGui::PushStyleColor(ImGuiCol_Button, {});

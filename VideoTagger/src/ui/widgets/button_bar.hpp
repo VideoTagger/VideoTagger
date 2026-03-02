@@ -8,7 +8,7 @@
 
 namespace vt::ui
 {
-	template<typename id_type, bool enter_support = true>
+	template<typename id_type, bool enter_support = true, bool cancel_support = true>
 	struct button_bar
 	{
 	public:
@@ -16,16 +16,26 @@ namespace vt::ui
 
 	private:
 		horizontal_alignment alignment_;
+		std::optional<id_type> default_button_;
+		std::optional<id_type> cancel_button_;
 		std::vector<std::pair<id_type, std::string>> buttons_;
 
 	public:
-		constexpr void render(float available_width = 0.f, bool valid = true, const std::function<void(const id_type& id)>& callback = nullptr, bool last_default = false)
+		constexpr void set_default_button(const std::optional<id_type>& id)
+		{
+			default_button_ = id;
+		}
+
+		constexpr void set_cancel_button(const std::optional<id_type>& id)
+		{
+			cancel_button_ = id;
+		}
+
+		constexpr void render(float available_width = 0.f, bool valid = true, const std::function<void(const id_type& id)>& callback = nullptr)
 		{
 			const auto& style = ImGui::GetStyle();
 			size_t button_count = buttons_.size();
 			if (button_count == 0) return;
-
-			size_t default_button = last_default ? button_count - 1 : 0;
 
 			if (available_width == 0.f)
 			{
@@ -69,7 +79,7 @@ namespace vt::ui
 				{
 					ImGui::SameLine();
 				}
-				if (i == default_button)
+				if (default_button_.has_value() and id == default_button_.value())
 				{
 					ImGui::BeginDisabled(!valid);
 					if constexpr (enter_support)
@@ -94,8 +104,32 @@ namespace vt::ui
 							callback(id);
 						}
 					}
-
 					ImGui::EndDisabled();
+				}
+				else if (cancel_button_.has_value() and id == cancel_button_.value())
+				{
+					if constexpr (cancel_support)
+					{
+						ui::begin_bigger_frames();
+						bool result = ui::button(label) and callback != nullptr or (valid and callback != nullptr and ImGui::IsWindowFocused() and ImGui::IsKeyPressed(ImGuiKey_Escape));
+						ui::end_bigger_frames();
+
+						if (result)
+						{
+							callback(id);
+						}
+					}
+					else
+					{
+						ui::begin_bigger_frames();
+						bool result = ui::button(label) and callback != nullptr;
+						ui::end_bigger_frames();
+
+						if (result)
+						{
+							callback(id);
+						}
+					}
 				}
 				else
 				{
@@ -115,19 +149,22 @@ namespace vt::ui
 		constexpr static void render(const std::vector<std::pair<id_type, std::string>>& buttons, horizontal_alignment alignment = horizontal_alignment::right, float available_width = 0.f, bool valid = true, const std::function<void(const id_type& id)>& callback = nullptr)
 		{
 			button_bar bbar{ buttons, alignment };
+			bbar.set_default_button(buttons.front().first);
 			bbar.render(available_width, valid, callback);
 		}
 
 		constexpr static void render(const std::vector<std::pair<id_type, std::string>>& buttons, bool valid = true, const std::function<void(const id_type& id)>& callback = nullptr)
 		{
 			button_bar bbar{ buttons };
+			bbar.set_default_button(buttons.front().first);
 			bbar.render(0.f, valid, callback);
 		}
 
 		constexpr static void render(const std::vector<std::pair<id_type, std::string>>& buttons, const std::function<void(const id_type& id)>& callback = nullptr, bool last_default = false)
 		{
 			button_bar bbar{ buttons };
-			bbar.render(0.f, true, callback, last_default);
+			bbar.set_default_button(last_default ? buttons.back().first : buttons.front().first);
+			bbar.render(0.f, true, callback);
 		}
 	};
 }

@@ -8,7 +8,7 @@
 
 namespace vt::ui
 {
-	new_language_popup::new_language_popup(std::optional<bool*> open) : modal_popup{ "New Language", open, ImGuiWindowFlags_NoTitleBar },
+	new_language_popup::new_language_popup(std::optional<bool*> open) : modal_popup{ "new-language", "New Language", open, ImGuiWindowFlags_NoTitleBar},
 	name_input{ "##LanuguageName", "English", [](const std::string& input) -> std::optional<std::string>
 	{
 		auto trimmed = utils::string::trim_whitespace(input);

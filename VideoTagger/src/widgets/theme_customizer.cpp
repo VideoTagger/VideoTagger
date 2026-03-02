@@ -434,6 +434,7 @@ namespace vt::widgets
 					draw_option("Icon", "Thumbnail", theme_color::icon_thumbnail);
 					draw_option("Selection", "", theme_color::selection_normal);
 					draw_option("Success", "", theme_color::common_success);
+					draw_option("Info", "", theme_color::common_info);
 					draw_option("Warning", "", theme_color::common_warning);
 					draw_option("Error", "", theme_color::common_error);
 

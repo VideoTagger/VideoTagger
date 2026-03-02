@@ -66,6 +66,11 @@ namespace vt::ui
 		is_persistent_ = value;
 	}
 
+	void window::open()
+	{
+		set_opened(true);
+	}
+
 	void window::close()
 	{
 		set_opened(false);
@@ -153,7 +158,7 @@ namespace vt::ui
 
 	std::string window::name() const
 	{
-		return icon_.empty() ? fmt::format("{}##{}", display_name(), id()) : fmt::format("{} {}##{}", icon_, display_name(), id());
+		return icon_.empty() ? fmt::format("{}###{}", display_name(), id()) : fmt::format("{} {}###{}", icon_, display_name(), id());
 	}
 
 	event_source window::get_event_source() const

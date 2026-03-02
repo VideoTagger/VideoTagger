@@ -15,7 +15,7 @@ namespace vt::ui
 {
 	segment_insert_popup::segment_insert_popup(const segment_insert_request_event& event_data, const std::vector<std::string>& tags,
 		timestamp min_timestamp, timestamp max_timestamp, std::optional<bool*> open) :
-		modal_popup{ /*ctx_.lang->get("popup.segment_insert.title")*/ "Insert Segment", open, ImGuiWindowFlags_NoTitleBar},
+		modal_popup{ "segment-insert", open, ImGuiWindowFlags_NoTitleBar},
 		insert_request_event_data_{ event_data.storage(), event_data.tag(), event_data.start(), event_data.end(), event_data.user_customization(), event_data.ignore_conflicts() },
 		tag_names_{ tags }, min_timestamp_{ min_timestamp }, max_timestamp_{ max_timestamp }, start_{ event_data.start() }, end_{ event_data.end() },
 		tag_combo_{ "##TagName", tag_names_ }
@@ -26,6 +26,7 @@ namespace vt::ui
 
 	void segment_insert_popup::on_display()
 	{
+		set_display_name(ctx_.lang->get("popup.segment_insert.title"));
 		ctx_.dispatch_event<playback_suspend_request_event>(insert_request_event_data_.source(), ctx_.get_window<widgets::video_player>());
 	}
 
