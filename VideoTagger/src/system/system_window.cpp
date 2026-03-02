@@ -6,6 +6,7 @@
 
 #include <embeds/MaterialSymbolsSharp_Filled_Regular.hpp>
 #include <embeds/NotoSans_Regular.hpp>
+#include <embeds/NotoSans_Bold.hpp>
 
 #ifdef _WIN32
 	#include <SDL_syswm.h>
@@ -308,6 +309,10 @@ namespace vt
 		ctx_.fonts[font_type::h1] = io.Fonts->AddFontFromMemoryTTF((void*)embed::NotoSans_Regular, static_cast<int>(embed::NotoSans_Regular_size), size * 2.00f, &def_config, default_ranges.Data);
 		ctx_.fonts[font_type::h2] = io.Fonts->AddFontFromMemoryTTF((void*)embed::NotoSans_Regular, static_cast<int>(embed::NotoSans_Regular_size), size * 1.50f, &def_config, default_ranges.Data);
 		ctx_.fonts[font_type::h3] = io.Fonts->AddFontFromMemoryTTF((void*)embed::NotoSans_Regular, static_cast<int>(embed::NotoSans_Regular_size), size * 1.25f, &def_config, default_ranges.Data);
+
+		ctx_.fonts[font_type::h1_bold] = io.Fonts->AddFontFromMemoryTTF((void*)embed::NotoSans_Bold, static_cast<int>(embed::NotoSans_Bold_size), size * 2.00f, &def_config, default_ranges.Data);
+		ctx_.fonts[font_type::h2_bold] = io.Fonts->AddFontFromMemoryTTF((void*)embed::NotoSans_Bold, static_cast<int>(embed::NotoSans_Bold_size), size * 1.50f, &def_config, default_ranges.Data);
+		ctx_.fonts[font_type::h3_bold] = io.Fonts->AddFontFromMemoryTTF((void*)embed::NotoSans_Bold, static_cast<int>(embed::NotoSans_Bold_size), size * 1.25f, &def_config, default_ranges.Data);
 		//same as font_type::normal
 		//ctx_.fonts[font_type::h4] = io.Fonts->AddFontFromMemoryTTF((void*)embed::NotoSans_Regular, static_cast<int>(embed::NotoSans_Regular_size), size * 1.00f, &def_config, default_ranges.Data);
 		ctx_.fonts[font_type::h5] = io.Fonts->AddFontFromMemoryTTF((void*)embed::NotoSans_Regular, static_cast<int>(embed::NotoSans_Regular_size), size * 0.90f, &def_config, default_ranges.Data);
