@@ -105,7 +105,8 @@ namespace vt::widgets
 					draw_overlay(video_screen_pos, image_size, { (float)video_texture.width(), (float)video_texture.height() });
 				}
 
-				auto video_ts = video.current_timestamp();
+				const auto& current_frame = video.current_frame();
+				auto video_ts = current_frame.has_value() ? current_frame->timestamp() : std::chrono::nanoseconds{};
 				auto duration_ts = video.duration();
 				timestamp current_time{ std::chrono::duration_cast<std::chrono::milliseconds>(video_ts) };
 				timestamp duration{ std::chrono::duration_cast<std::chrono::milliseconds>(duration_ts) };
@@ -167,7 +168,7 @@ namespace vt::widgets
 						ImGui::SameLine();
 						if (ui::icon_button(icons::fast_fwd, { button_size, button_size }))
 						{
-							video.seek(std::chrono::nanoseconds(video.duration()));
+							video.seek(video.duration());
 						}
 						ImGui::SameLine();
 						if (ui::icon_button(icons::skip_next, { button_size, button_size })) {}

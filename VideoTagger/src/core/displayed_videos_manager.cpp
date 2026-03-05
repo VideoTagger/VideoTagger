@@ -62,12 +62,13 @@ namespace vt
 		{
 			bool timestamp_in_range = video_data.is_timestamp_in_range(current_timestamp_);
 			video_data.video.set_playing(timestamp_in_range);
-			video_data.video.update(current_timestamp_ - video_data.offset);
+			video_data.video.buffer_frame();
+			video_data.video.update_frame(video_data.display_texture, current_timestamp_ - video_data.offset);
 
-			if (timestamp_in_range)
-			{
-				video_data.video.get_frame(video_data.display_texture);
-			}
+			//if (timestamp_in_range)
+			//{
+			//	video_data.video.get_frame(video_data.display_texture);
+			//}
 			//else
 			//{
 			//	//TODO: Maybe should draw some icon or something, but then some other texture would need to be displayed since this texture can't be a render target
@@ -113,10 +114,12 @@ namespace vt
 	{
 		std::for_each(std::execution::seq, videos_.begin(), videos_.end(), [timestamp, this](displayed_video_data& video_data)
 		{
-			std::chrono::nanoseconds video_ts = timestamp - video_data.offset;
-			std::chrono::nanoseconds clamped_video_ts = std::clamp(video_ts, std::chrono::nanoseconds{ 0 }, video_data.video.duration());
+			auto video_current_ts = current_timestamp_ - video_data.offset;
+			auto video_ts = timestamp - video_data.offset;
+			auto clamped_video_ts = std::clamp(video_ts, std::chrono::nanoseconds{ 0 }, video_data.video.duration());
+
 			video_data.video.seek(clamped_video_ts);
-			video_data.video.get_frame(video_data.display_texture);
+			video_data.video.update_frame(video_data.display_texture, clamped_video_ts);
 
 			if (video_ts < std::chrono::nanoseconds{ 0 })
 			{

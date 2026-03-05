@@ -48,8 +48,12 @@ namespace vt
 		[[nodiscard]] int width() const;
 		[[nodiscard]] int height() const;
 
+		///@return The presentation timestamp of the frame. I.e. the timestamp at which the frame should be displayed.
 		[[nodiscard]] std::chrono::nanoseconds timestamp() const;
+		///@return The duration of the frame. I.e. the time until the next frame should be displayed.
 		[[nodiscard]] std::chrono::nanoseconds duration() const;
+		///@return The timestamp at which the next frame should be displayed. I.e. timestamp + duration.
+		[[nodiscard]] std::chrono::nanoseconds next_timestamp() const;
 
 		[[nodiscard]] size_t planes_count() const;
 
@@ -76,21 +80,61 @@ namespace vt
 		size // don't use
 	};
 
+	enum class codec_send_result
+	{
+		success, ///@brief Packet was sent successfully
+		needs_receive, ///@brief Receive must be called before sending more packets. Packet must be sent again after receiving.
+		flushed, ///@brief Codec has been fully flushed. No more packets can be sent.
+		error ///@brief An error occurred. Packet was not sent.
+	};
+
+	enum class codec_receive_result
+	{
+		success, ///@brief Frame was received successfully
+		needs_more_packets, ///@brief More packets need to be sent before a frame can be received.
+		flushed, ///@brief Codec has been fully flushed. No more frames will be received.
+		error ///@brief An error occurred. Frame was not received.
+	};
+
+	enum class decoder_decode_error
+	{
+		ok, ///@brief No error occurred.
+		needs_more_packets, ///@brief More packets need to be read before a frame can be decoded.
+		flushed, ///@brief Codec has been fully flushed. No more frames will be decoded.
+		error ///@brief An error occurred. Frame was not decoded.
+	};
+
+	enum class decoder_read_result
+	{
+		success, ///@brief A packet was read successfully.
+		eof, ///@brief End of file was reached. No more packets can be read.
+		error ///@brief An error occurred. No packet was read.
+	};
+
 	template<stream_type type>
 	struct stream_type_traits
 	{
 		using decoded_packet_type = void;
-
-		static std::optional<decoded_packet_type> decode(AVCodecContext* codec_context, class packet_wrapper& packet);
 	};
 
 	template<>
 	struct stream_type_traits<stream_type::video>
 	{
 		using decoded_packet_type = video_frame;
-
-		static std::optional<decoded_packet_type> decode(AVCodecContext* codec_context, class packet_wrapper& packet);
 	};
+
+	template<stream_type type>
+	struct decode_result
+	{
+		std::optional<typename stream_type_traits<type>::decoded_packet_type> decoded_packet;
+		decoder_decode_error error{};
+	};
+
+	template<stream_type type>
+	inline codec_send_result codec_send_packet(AVCodecContext* codec_context, class packet_wrapper& packet);
+	
+	template<stream_type type>
+	inline codec_receive_result codec_receive_packet(AVCodecContext* codec_context, typename stream_type_traits<type>::decoded_packet_type& decoded_packet);
 
 	class packet_wrapper
 	{
@@ -111,7 +155,17 @@ namespace vt
 		[[nodiscard]] std::chrono::nanoseconds timestamp() const;
 		[[nodiscard]] std::chrono::nanoseconds duration() const;
 
-		[[nodiscard]] bool is_key() const;
+		///@return Whether the packet contains a keyframe. I.e. the packet contains a frame that can be decoded without any other frames.
+		[[nodiscard]] bool is_keyframe() const;
+
+		///@return Whether the packet should be discarded after decoding. The packet still needs to be decoded to maintain valid decoder state, but the decoded frame doesn't need not be output.
+		[[nodiscard]] bool should_discard() const;
+
+		///@return Whether the packet content is corrupted.
+		[[nodiscard]] bool is_corrupted() const;
+
+		///@return Whether the packet can be safely skipped without decoding. I.e. Non-reference frames.
+		[[nodiscard]] bool is_disposable() const;
 
 		[[nodiscard]] AVPacket* unwrapped();
 		[[nodiscard]] const AVPacket* unwrapped() const;
@@ -198,12 +252,12 @@ namespace vt
 		bool open(const std::filesystem::path& path);
 		void close();
 
-		//TODO: Maybe should return the read packet
 		// Will read the file until it encounters a packet that it can save to one of the packet queues or reaches eof.
-		void read_packet();
+		[[nodiscard]] decoder_read_result read_packet();
 
 		template<stream_type type>
-		[[nodiscard]] std::optional<typename stream_type_traits<type>::decoded_packet_type> decode_next_packet();
+		[[nodiscard]] decode_result<type> get_next_decoded_packet();
+
 		void discard_next_packet(stream_type type);
 		void discard_last_read_packet();
 		void discard_all_packets();
@@ -212,9 +266,6 @@ namespace vt
 		//Seek to the nearest keyframe before or on the timestamp
 		//Discards all packets currently in queues
 		void seek_keyframe(std::chrono::nanoseconds timestamp);
-		//Seek to the nearest keyframe before or on the timestamp
-		//Discards all packets currently in queues
-		void seek_keyframe(size_t frame_number);
 
 		[[nodiscard]] bool is_open() const;
 		[[nodiscard]] bool eof() const;
@@ -254,6 +305,7 @@ namespace vt
 		std::array<AVCodecContext*, static_cast<size_t>(stream_type::size)> codec_contexts_;
 		std::array<packet_queue, static_cast<size_t>(stream_type::size)> packet_queues_;
 
+		std::chrono::nanoseconds last_read_packet_timestamp_;
 		stream_type last_read_packet_type_;
 		bool eof_;
 
@@ -261,24 +313,114 @@ namespace vt
 	};
 
 	template<stream_type type>
-	inline std::optional<typename stream_type_traits<type>::decoded_packet_type> video_decoder::decode_next_packet()
+	inline decode_result<type> video_decoder::get_next_decoded_packet()
 	{
+		decode_result<type> result;
+
 		if (!has_stream(type))
 		{
-			return std::nullopt;
+			result.error = decoder_decode_error::error;
+			return result;
 		}
 
 		auto& queue = packet_queues_[static_cast<size_t>(type)];
-		if (queue.empty())
-		{
-			return std::nullopt;
-		}
-
-		packet_wrapper packet;
-		queue >> packet;
 
 		AVCodecContext* codec_context = codec_contexts_[static_cast<size_t>(type)];
 
-		return stream_type_traits<type>::decode(codec_context, packet);
+		do
+		{
+			typename stream_type_traits<type>::decoded_packet_type decoded_packet{};
+			auto receive_result = codec_receive_packet<type>(codec_context, decoded_packet);
+			if (receive_result == codec_receive_result::success)
+			{
+				AVFrame* unwrapped = decoded_packet.unwrapped();
+				unwrapped->time_base = format_context_->streams[stream_indices_[static_cast<size_t>(type)]]->time_base;
+				result.decoded_packet = std::move(decoded_packet);
+				result.error = decoder_decode_error::ok;
+				break;
+			}
+			if (receive_result == codec_receive_result::flushed)
+			{
+				result.error = decoder_decode_error::flushed;
+				break;
+			}
+			if (receive_result != codec_receive_result::needs_more_packets)
+			{
+				result.error = decoder_decode_error::error;
+				break;
+			}
+
+			if (queue.empty())
+			{
+				if (eof_)
+				{
+					avcodec_send_packet(codec_context, nullptr);
+					continue;
+				}
+				result.error = decoder_decode_error::needs_more_packets;
+				break;
+			}
+
+			packet_wrapper packet;
+			queue >> packet;
+
+			auto send_result = codec_send_packet<type>(codec_context, packet);
+			if (send_result != codec_send_result::success)
+			{
+				result.error = decoder_decode_error::error;
+				break;
+			}
+
+		} while (true);
+
+		return result;
+	}
+
+	template<stream_type type>
+	codec_send_result codec_send_packet(AVCodecContext* codec_context, packet_wrapper& packet)
+	{
+		AVPacket* unwrapped_packet = packet.unwrapped();
+
+		int result = avcodec_send_packet(codec_context, unwrapped_packet);
+		if (result == 0)
+		{
+			return codec_send_result::success;
+		}
+		else if (result == AVERROR(EAGAIN))
+		{
+			return codec_send_result::needs_receive;
+		}
+		else if (result == AVERROR_EOF)
+		{
+			return codec_send_result::flushed;
+		}
+		else
+		{
+			return codec_send_result::error;
+		}
+	}
+
+	template<stream_type type>
+	codec_receive_result codec_receive_packet(AVCodecContext* codec_context, typename stream_type_traits<type>::decoded_packet_type& decoded_packet)
+	{
+		AVFrame* unwrapped_frame = decoded_packet.unwrapped();
+
+		int result = avcodec_receive_frame(codec_context, unwrapped_frame);
+		if (result == 0)
+		{
+			return codec_receive_result::success;
+		}
+		else if (result == AVERROR(EAGAIN))
+		{
+			return codec_receive_result::needs_more_packets;
+		}
+		else if (result == AVERROR_EOF)
+		{
+			return codec_receive_result::flushed;
+		}
+		else
+		{
+			return codec_receive_result::error;
+		}
 	}
 }

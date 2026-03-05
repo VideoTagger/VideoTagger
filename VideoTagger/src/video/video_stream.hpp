@@ -29,12 +29,11 @@ namespace vt
 
 		void set_playing(bool value);
 
-		void update(std::chrono::nanoseconds target_timestamp);
+		bool buffer_frame();
 		void seek(std::chrono::nanoseconds target_timestamp);
 
-		//texture must be in yuv format, have streaming access and with and height the same as the video
-		void get_frame(gl_texture& texture);
-		void get_frame(std::vector<uint8_t>& pixels, int width, int height);
+		bool update_frame(gl_texture& texture, std::chrono::nanoseconds target_timestamp);
+		bool update_frame(std::vector<uint8_t>& pixels, int width, int height, std::chrono::nanoseconds target_timestamp);
 
 		[[nodiscard]] bool is_open() const;
 
@@ -44,9 +43,11 @@ namespace vt
 		[[nodiscard]] bool is_playing() const;
 		[[nodiscard]] std::chrono::nanoseconds duration() const;
 
-		[[nodiscard]] std::chrono::nanoseconds current_timestamp() const;
+		[[nodiscard]] const std::optional<video_frame>& current_frame() const;
 
-		size_t current_frame_number() const;
+		void set_frame_buffer_size(size_t size);
+		[[nodiscard]] size_t frame_buffer_size() const;
+
 		double fps() const;
 		std::chrono::nanoseconds frame_time() const;
 
@@ -59,10 +60,9 @@ namespace vt
 	private:
 		video_decoder decoder_;
 		std::optional<frame_converter> frame_converter_;
-
-		std::optional<video_frame> last_frame;
-		//maybe this is not necessary
-		std::chrono::nanoseconds last_ts_{};
+		std::deque<video_frame> frame_buffer_;
+		std::optional<video_frame> current_frame_;
+		size_t frame_buffer_size_ = 16;
 
 		int width_{};
 		int height_{};

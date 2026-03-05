@@ -22,8 +22,6 @@ namespace vt
 		fps_ = decoder_.fps();
 		duration_ = decoder_.duration();
 
-		last_ts_ = std::chrono::nanoseconds{ 0 };
-
 		return true;
 	}
 
@@ -32,7 +30,8 @@ namespace vt
 		set_playing(false);
 
 		frame_converter_.reset();
-		last_ts_ = std::chrono::nanoseconds(0);
+		frame_buffer_ = std::deque<video_frame>{};
+		current_frame_.reset();
 		
 		//width_ = 0;
 		//height_ = 0;
@@ -56,145 +55,169 @@ namespace vt
 		playing_ = value;
 	}
 
-	void video_stream::update(std::chrono::nanoseconds target_timestamp)
-	{
-		//TODO: drop frames
-
-		if (!is_open() or !is_playing())
-		{
-			return;
-		}
-
-		while (!decoder_.eof())
-		{
-			if (decoder_.packet_queue_size(stream_type::video) == 0)
-			{
-				//TODO: this probably should be a function in the decoder class
-				decoder_.read_packet();
-				if (decoder_.eof())
-				{
-					continue;
-				}
-
-				if (decoder_.last_read_packet_type() != stream_type::video)
-				{
-					decoder_.discard_last_read_packet();
-					continue;
-				}
-				//---
-			}
-
-			auto& packet_queue = decoder_.get_packet_queue(stream_type::video);
-			auto& packet = packet_queue.front();
-			if (packet.timestamp() > target_timestamp)
-			{
-				return;
-			}
-
-			if (packet.timestamp() >= last_ts_)
-			{
-				if (packet.timestamp() + frame_time() > target_timestamp)
-				{
-					break;
-				}
-			}
-
-			decoder_.discard_next_packet(stream_type::video);
-		}
-
-		if (decoder_.eof())
-		{
-			set_playing(false);
-			return;
-		}
-
-		auto decode_result = decoder_.decode_next_packet<stream_type::video>();
-		if (!decode_result.has_value())
-		{
-			return;
-		}
-
-		last_frame = std::move(decode_result);
-		last_ts_ = last_frame->timestamp();
-	}
-
-	void video_stream::seek(std::chrono::nanoseconds target_timestamp)
+	bool video_stream::buffer_frame()
 	{
 		if (!is_open())
 		{
-			return;
+			return false;
 		}
 
-		if (target_timestamp < last_ts_)
+		if (frame_buffer_.size() >= frame_buffer_size_)
 		{
-			decoder_.seek_keyframe(0);
-			last_ts_ = std::chrono::nanoseconds(0);
+			return false;
 		}
-		
-		while (!decoder_.eof())
+
+		while (true)
 		{
-			decoder_.read_packet();
+			auto decode_result = decoder_.get_next_decoded_packet<stream_type::video>();
+			if (decode_result.error == decoder_decode_error::ok)
+			{
+				frame_buffer_.push_back(std::move(*decode_result.decoded_packet));
+				return true;
+			}
+			if (decode_result.error != decoder_decode_error::needs_more_packets)
+			{
+				return false;
+			}
+
+			auto read_result = decoder_.read_packet();
+			if (read_result == decoder_read_result::eof)
+			{
+				continue;
+			}
+			if (read_result != decoder_read_result::success)
+			{
+				continue;
+			}
 			if (decoder_.last_read_packet_type() != stream_type::video)
 			{
 				decoder_.discard_last_read_packet();
 				continue;
 			}
-
-			auto& packet = decoder_.peek_last_read_packet();
-
-			if (packet.is_key())
-			{
-				while (decoder_.packet_queue_size(stream_type::video) > 1)
-				{
-					decoder_.discard_next_packet(stream_type::video);
-				}
-			}
-
-			if (packet.timestamp() < target_timestamp)
-			{
-				continue;
-			}
-
-			break;
 		}
 
-		while (decoder_.packet_queue_size(stream_type::video) > 0)
-		{
-			auto decode_result = decoder_.decode_next_packet<stream_type::video>();
-			if (!decode_result.has_value())
-			{
-				continue;
-			}
-
-			last_frame = std::move(decode_result);
-			last_ts_ = last_frame->timestamp();
-		}
+		return false;
 	}
 
-	void video_stream::get_frame(gl_texture& texture)
+	void video_stream::seek(std::chrono::nanoseconds target_timestamp)
 	{
-		static std::vector<uint8_t> conversion_buffer;
+		//if (!is_open())
+		//{
+		//	return;
+		//}
+
+		//if (target_timestamp < last_ts_)
+		//{
+		//	decoder_.seek_keyframe(0);
+		//	last_ts_ = std::chrono::nanoseconds(0);
+		//}
+		//
+		//while (!decoder_.eof())
+		//{
+		//	decoder_.read_packet();
+		//	if (decoder_.last_read_packet_type() != stream_type::video)
+		//	{
+		//		decoder_.discard_last_read_packet();
+		//		continue;
+		//	}
+
+		//	auto& packet = decoder_.peek_last_read_packet();
+
+		//	if (packet.is_keyframe())
+		//	{
+		//		while (decoder_.packet_queue_size(stream_type::video) > 1)
+		//		{
+		//			decoder_.discard_next_packet(stream_type::video);
+		//		}
+		//	}
+
+		//	if (packet.timestamp() < target_timestamp)
+		//	{
+		//		continue;
+		//	}
+
+		//	break;
+		//}
+
+		//while (decoder_.packet_queue_size(stream_type::video) > 0)
+		//{
+		//	auto decode_result = decoder_.decode_next_packet<stream_type::video>();
+		//	if (!decode_result.has_value())
+		//	{
+		//		continue;
+		//	}
+
+		//	last_frame = std::move(decode_result);
+		//	last_ts_ = last_frame->timestamp();
+		//}
+
 		
-		get_frame(conversion_buffer, texture.width(), texture.height());
 
-		texture.set_pixels(conversion_buffer.data());
+		decoder_.seek_keyframe(target_timestamp);
+		frame_buffer_ = std::deque<video_frame>{};
+		current_frame_.reset();
 	}
 
-	void video_stream::get_frame(std::vector<uint8_t>& pixels, int width, int height)
+	bool video_stream::update_frame(gl_texture& texture, std::chrono::nanoseconds target_timestamp)
 	{
-		if (!last_frame.has_value())
+		static thread_local std::vector<uint8_t> conversion_buffer;
+		
+		bool frame_updated = update_frame(conversion_buffer, texture.width(), texture.height(), target_timestamp);
+
+		if (frame_updated)
 		{
-			return;
+			texture.set_pixels(conversion_buffer.data());
 		}
 
-		auto& frame = *last_frame;
+		return frame_updated;
+	}
 
+	bool video_stream::update_frame(std::vector<uint8_t>& pixels, int width, int height, std::chrono::nanoseconds target_timestamp)
+	{
+		static auto handle_eof = [this]()
+		{
+			if (!decoder_.eof() or !frame_buffer_.empty()) return;
+
+			set_playing(false);
+		};
+
+		if (!current_frame_.has_value())
+		{
+			if (frame_buffer_.empty() and !buffer_frame())
+			{
+				handle_eof();
+				return false;
+			}
+
+			current_frame_ = std::move(frame_buffer_.front());
+			frame_buffer_.pop_front();
+		}
+
+		if (current_frame_->next_timestamp() > target_timestamp or current_frame_->timestamp() >= target_timestamp)
+		{
+			return false;
+		}
+
+		while (current_frame_->next_timestamp() <= target_timestamp)
+		{
+			if (frame_buffer_.empty() and !buffer_frame())
+			{
+				handle_eof();
+				return false;
+			}
+
+			current_frame_ = std::move(frame_buffer_.front());
+			frame_buffer_.pop_front();
+		}
+
+		auto& frame = *current_frame_;
 		if (frame_converter_ == std::nullopt or frame_converter_->destination_width() != width or frame_converter_->destination_height() != height)
 		{
 			frame_converter_ = frame_converter(width_, height_, frame.pixel_format(), width, height, AV_PIX_FMT_RGB24);
 		}
 
 		frame_converter_->convert_frame(frame, pixels);
+		return true;
 	}
 
 	bool video_stream::is_open() const
@@ -222,14 +245,19 @@ namespace vt
 		return duration_;
 	}
 
-	std::chrono::nanoseconds video_stream::current_timestamp() const
+	const std::optional<video_frame>& video_stream::current_frame() const
 	{
-		return last_ts_;
+		return current_frame_;
 	}
 
-	size_t video_stream::current_frame_number() const
+	void video_stream::set_frame_buffer_size(size_t size)
 	{
-		return decoder_.timestamp_to_frame_number(current_timestamp());
+		frame_buffer_size_ = size;
+	}
+
+	size_t video_stream::frame_buffer_size() const
+	{
+		return frame_buffer_size_;
 	}
 
 	double video_stream::fps() const
@@ -244,7 +272,7 @@ namespace vt
 
 	void video_stream::get_thumbnail(gl_texture& texture, std::optional<std::chrono::nanoseconds> timestamp)
 	{
-		auto start_timestamp = current_timestamp();
+		std::optional<std::chrono::nanoseconds> current_ts = current_frame_.has_value() ? std::make_optional(current_frame_->timestamp()) : std::nullopt;
 
 		if (!timestamp.has_value())
 		{
@@ -252,13 +280,17 @@ namespace vt
 		}
 
 		seek(*timestamp);
-		get_frame(texture);
-		seek(start_timestamp);
+		update_frame(texture, *timestamp);
+
+		if (current_ts.has_value())
+		{
+			seek(*current_ts);
+		}
 	}
 
 	void video_stream::get_thumbnail(std::vector<uint8_t>& pixels, int width, int height, std::optional<std::chrono::nanoseconds> timestamp)
 	{
-		auto start_timestamp = current_timestamp();
+		std::optional<std::chrono::nanoseconds> current_ts = current_frame_.has_value() ? std::make_optional(current_frame_->timestamp()) : std::nullopt;
 
 		if (!timestamp.has_value())
 		{
@@ -266,8 +298,12 @@ namespace vt
 		}
 
 		seek(*timestamp);
-		get_frame(pixels, width, height);
-		seek(start_timestamp);
+		update_frame(pixels, width, height, *timestamp);
+
+		if (current_ts.has_value())
+		{
+			seek(*current_ts);
+		}
 	}
 
 	void video_stream::clear_yuv_texture(GLuint texture, uint8_t r, uint8_t g, uint8_t b)
