@@ -13,6 +13,7 @@ namespace vt
 	public:
 		constexpr event() = default;
 		constexpr event(const event&) = delete;
+		constexpr event(event&&) = default;
 		virtual ~event() = default;
 
 	private:

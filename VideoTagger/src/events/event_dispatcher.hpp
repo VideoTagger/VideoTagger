@@ -6,17 +6,14 @@
 #include <functional>
 #include <limits>
 #include <utils/random.hpp>
+#include <events/impl/event_dispatcher.hpp>
+#include <events/event_interceptor.hpp>
 
 namespace vt
 {
 	///@addtogroup events Events
 	///@{
 	using event_listener_handle = uint64_t;
-
-	struct event_dispatcher_base
-	{
-		virtual ~event_dispatcher_base() = default;
-	};
 
 	struct event_listener_priority
 	{
@@ -183,7 +180,7 @@ namespace vt
 	 * @tparam type The type of the event for which this dispatcher is responsible
 	 */
 	template<typename type>
-	struct event_dispatcher : public event_dispatcher_base
+	struct event_dispatcher : public impl::event_dispatcher
 	{
 	public:
 		using event_type = type;
@@ -192,6 +189,7 @@ namespace vt
 
 	private:
 		std::vector<std::unique_ptr<event_callback>> listeners_;
+		std::vector<std::unique_ptr<event_interceptor<event_type>>> interceptors_;
 
 	public:
 		/**
@@ -199,7 +197,7 @@ namespace vt
 		 * @param[in] callback The function to be called when the event is dispatched
 		 * @return A handle to the added listener
 		 * 
-		 * @sa operator+=(const std::function<void(const event_type&)>& callback)
+		 * @sa operator+=(const std::function<void(const event_type&)>& callback, event_listener_priority priority)
 		 */
 		constexpr event_listener_handle add_event_listener(const std::function<void(const event_type&)>& callback, event_listener_priority priority = event_listener_priority::normal)
 		{
@@ -232,14 +230,53 @@ namespace vt
 		}
 
 		/**
+		 * @brief Adds a new interceptor for the event type
+		 * @param[in] args The arguments used to construct the interceptor instance
+		 * @tparam interceptor_type The type of the interceptor to add, must be derived from `event_interceptor<event_type>`
+		 * @tparam arguments The types of arguments used to construct the interceptor instance
+		 * 
+		 * @return A handle to the added interceptor
+		 */
+		template<typename interceptor_type, typename... arguments, typename = std::enable_if_t<std::is_base_of_v<event_interceptor<event_type>, interceptor_type> and std::is_constructible_v<event_type, arguments...>>>
+		constexpr event_interceptor_handle add_event_interceptor(arguments&&... args)
+		{
+			auto handle = utils::random::get<event_interceptor_handle>(1);
+			auto interceptor = std::make_unique<interceptor_type>(handle, args);
+			interceptors_.push_back(std::move(interceptor));
+			return handle;
+		}
+
+		/**
+		 * @brief Removes an interceptor by its handle
+		 * @param[in] handle The handle of the interceptor to remove
+		 * 
+		 * @return True if the interceptor was successfully removed, false otherwise
+		 */
+		constexpr bool remove_event_interceptor(event_interceptor_handle handle)
+		{
+			auto it = std::find_if(interceptors_.begin(), interceptors_.end(), [handle](const std::unique_ptr<impl::event_interceptor>& interceptor)
+			{
+				return interceptor->handle() == handle;
+			});
+			if (it != interceptors_.end())
+			{
+				interceptors_.erase(it);
+				return true;
+			}
+			return false;
+		}
+
+		/**
 		 * @brief Dispatches an event to all registered listeners
-		 * @param[in] args The arguments used to construct the event instance
 		 * @tparam arguments The types of arguments used to construct the event instance
+		 * @param[in] args The arguments used to construct the event instance
 		 */
 		template<typename... arguments, typename = std::enable_if_t<std::is_constructible_v<event_type, arguments...>>>
 		constexpr void dispatch_event(arguments&&... args)
 		{
 			event_type event_instance{ std::forward<arguments>(args)... };
+			if (!try_intercept(event_instance)) return;
+
 			for (const auto& ptr : listeners_)
 			{
 				if (ptr == nullptr or ptr->callback() == nullptr) continue;
@@ -251,21 +288,25 @@ namespace vt
 		 * @brief Dispatches an event to all registered listeners
 		 * @param[in] event_instance The pre-constructed event instance to dispatch
 		 */
-		constexpr void dispatch_event(const event_type& event_instance)
+		constexpr void dispatch_event(event_type&& event_instance)
 		{
+			auto event_ref = std::move(event_instance);
+			if (!try_intercept(event_ref)) return;
+
 			for (const auto& ptr : listeners_)
 			{
 				if (ptr == nullptr or ptr->callback() == nullptr) continue;
-				std::invoke(ptr->callback(), event_instance);
+				std::invoke(ptr->callback(), event_ref);
 			}
 		}
 
 		/**
 		 * @brief Adds a new listener for the event type
 		 * @param[in] callback The function to be called when the event is dispatched
+		 * 
 		 * @return A handle to the added listener
 		 * 
-		 * @sa add_event_listener(const std::function<void(const event_type&)>& callback)
+		 * @sa add_event_listener(const std::function<void(const event_type&)>& callback, event_listener_priority priority)
 		 */
 		constexpr event_listener_handle operator+=(const std::function<void(const event_type&)>& listener)
 		{
@@ -275,6 +316,7 @@ namespace vt
 		/**
 		 * @brief Removes a listener by its handle
 		 * @param[in] handle The handle of the listener to remove
+		 * 
 		 * @return True if the listener was successfully removed, false otherwise
 		 * 
 		 * @sa remove_event_listener(event_listener_handle handle)
@@ -290,6 +332,22 @@ namespace vt
 			{
 				return *left < *right;
 			});
+		}
+
+		/**
+		 * @brief Invokes the interceptors for the event before dispatching it to the listeners
+		 * @return True if the event should be propagated to the listeners, false if it should be canceled
+		 */
+		constexpr bool try_intercept(event_type& event)
+		{
+			for (const auto& interceptor : interceptors_)
+			{
+				if (!interceptor->on_dispatch(event))
+				{
+					return false;
+				}
+			}
+			return true;
 		}
 	};
 	///@}
