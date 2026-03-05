@@ -26,5 +26,5 @@ namespace vt
 		 * @return True if the event should be propagated to the listeners, false if it should be canceled
 		 */
 		virtual bool on_dispatch(event_type& event) = 0;
-	};S
+	};
 }
