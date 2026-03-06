@@ -114,6 +114,11 @@ namespace vt
 		return std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::duration<double>(frame_->duration * av_q2d(frame_->time_base)));
 	}
 
+	std::chrono::nanoseconds video_frame::next_timestamp() const
+	{
+		return timestamp() + duration();
+	}
+
 	size_t video_frame::planes_count() const
 	{
 		return av_pix_fmt_count_planes(pixel_format());
@@ -127,30 +132,6 @@ namespace vt
 	bool video_frame::is_keyframe() const
 	{
 		return frame_->flags & AV_FRAME_FLAG_KEY;
-	}
-
-	std::optional<typename stream_type_traits<stream_type::video>::decoded_packet_type> stream_type_traits<stream_type::video>::decode(AVCodecContext* codec_context, class packet_wrapper& packet)
-	{
-		AVPacket* unwrapped_packet = packet.unwrapped();
-
-		if (avcodec_send_packet(codec_context, unwrapped_packet) != 0)
-		{
-			//TODO: some better error handling
-			return std::nullopt;
-		}
-
-		std::optional<video_frame> frame = video_frame();
-		AVFrame* unwrapped_frame = frame.value().unwrapped();
-
-		if (avcodec_receive_frame(codec_context, unwrapped_frame) != 0)
-		{
-			//TODO: some better error handling
-			return std::nullopt;
-		}
-
-		unwrapped_frame->time_base = unwrapped_packet->time_base;
-
-		return frame;
 	}
 
 	packet_wrapper::packet_wrapper() : packet_{ av_packet_alloc() }, type_{ stream_type::unknown }
@@ -225,9 +206,29 @@ namespace vt
 		return std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::duration<double>(packet_->duration * av_q2d(packet_->time_base)));
 	}
 
-	bool packet_wrapper::is_key() const
+	std::chrono::nanoseconds packet_wrapper::next_timestamp() const
+	{
+		return timestamp() + duration();
+	}
+
+	bool packet_wrapper::is_keyframe() const
 	{
 		return packet_->flags & AV_PKT_FLAG_KEY;
+	}
+
+	bool packet_wrapper::should_discard() const
+	{
+		return packet_->flags & AV_PKT_FLAG_DISCARD;
+	}
+
+	bool packet_wrapper::is_corrupted() const
+	{
+		return packet_->flags & AV_PKT_FLAG_CORRUPT;
+	}
+
+	bool packet_wrapper::is_disposable() const
+	{
+		return packet_->flags & AV_PKT_FLAG_DISPOSABLE;
 	}
 
 	packet_queue::packet_queue() : stream_index_{ -1 } {}
@@ -392,7 +393,8 @@ namespace vt
 
 	video_decoder::video_decoder(video_decoder&& other) noexcept :
 		format_context_{ other.format_context_ }, stream_indices_(other.stream_indices_), codec_contexts_(other.codec_contexts_),
-		packet_queues_(std::move(other.packet_queues_)), last_read_packet_type_{ other.last_read_packet_type_ }, eof_{ other.eof_ }, pixel_format_{}
+		packet_queues_(std::move(other.packet_queues_)), last_read_packet_type_{ other.last_read_packet_type_ }, eof_{ other.eof_ },
+		pixel_format_{}, last_read_packet_timestamp_{ other.last_read_packet_timestamp_ } //, current_frame
 	{
 		for (auto& codec_context : other.codec_contexts_)
 		{
@@ -414,6 +416,7 @@ namespace vt
 		codec_contexts_ = other.codec_contexts_;
 		packet_queues_ = std::move(other.packet_queues_);
 		last_read_packet_type_ = other.last_read_packet_type_;
+		last_read_packet_timestamp_ = other.last_read_packet_timestamp_;
 		eof_ = other.eof_;
 
 		for (auto& codec_context : other.codec_contexts_)
@@ -475,7 +478,7 @@ namespace vt
 			return false;
 		}
 
-		for (size_t i = 0; i < static_cast<size_t>(stream_type::size); i++)
+		for (size_t i = 0; i < static_cast<size_t>(stream_type::size); ++i)
 		{
 			if (stream_indices_[i] < 0)
 			{
@@ -533,9 +536,10 @@ namespace vt
 
 		eof_ = false;
 		last_read_packet_type_ = stream_type::unknown;
+		last_read_packet_timestamp_ = std::chrono::nanoseconds::zero();
 	}
 
-	void video_decoder::read_packet()
+	decoder_read_result video_decoder::read_packet()
 	{
 		packet_wrapper packet;
 		AVPacket* unwrapped_packet = packet.unwrapped();
@@ -548,20 +552,12 @@ namespace vt
 			if (read_frame_result == AVERROR_EOF)
 			{
 				eof_ = true;
-				return;
+				return decoder_read_result::eof;
 			}
-			else if (read_frame_result == AVERROR_INVALIDDATA)
-			{
-				continue;
-			}
-			else if (read_frame_result == AVERROR(EAGAIN))
-			{
-				continue;
-			}
-			else if (read_frame_result != 0)
+			else if (read_frame_result < 0)
 			{
 				//TODO: Do something
-				return;
+				return decoder_read_result::error;
 			}
 
 			auto it = std::find(stream_indices_.begin(), stream_indices_.end(), packet.stream_index());
@@ -576,6 +572,7 @@ namespace vt
 
 			packet.set_type(static_cast<stream_type>(index));
 			last_read_packet_type_ = packet.type();
+			last_read_packet_timestamp_ = packet.timestamp();
 
 			packet_queues_[index] << std::move(packet);
 			break;
@@ -587,6 +584,7 @@ namespace vt
 		//}
 
 		//TODO: handle other errors
+		return decoder_read_result::success;
 	}
 
 	bool video_decoder::is_open() const
@@ -667,29 +665,26 @@ namespace vt
 
 	void video_decoder::seek_keyframe(std::chrono::nanoseconds timestamp)
 	{
-		//TODO https://github.com/bmewj/video-app/blob/master/src/video_reader.cpp write this like here
-
-		//TODO: handle invalid timestamp
-
 		auto video_stream_index = stream_indices_[static_cast<size_t>(stream_type::video)];
-		
 		auto timestamp_seconds = std::chrono::duration_cast<std::chrono::duration<double>>(timestamp);
 		int64_t seek_timestamp = static_cast<int64_t>(timestamp_seconds.count() / av_q2d(format_context_->streams[video_stream_index]->time_base));
 
 		eof_ = false;
-		if (av_seek_frame(format_context_, video_stream_index, seek_timestamp, AVSEEK_FLAG_BACKWARD) < 0)
+
+		int flags = AVSEEK_FLAG_BACKWARD;
+		if (av_seek_frame(format_context_, video_stream_index, seek_timestamp, flags) < 0)
 		{
-			// TODO: Handle error
 			return;
 		}
-		discard_all_packets();
-	}
 
-	void video_decoder::seek_keyframe(size_t frame_number)
-	{
-		auto video_stream = format_context_->streams[stream_indices_[static_cast<size_t>(stream_type::video)]];
-		
-		seek_keyframe(std::chrono::nanoseconds(static_cast<int64_t>(frame_number / fps() * 1'000'000'000)));
+		for (auto& codec_ctx : codec_contexts_)
+		{
+			if (codec_ctx == nullptr) continue;
+
+			avcodec_flush_buffers(codec_ctx);
+		}
+
+		discard_all_packets();
 	}
 
 	int video_decoder::width() const
