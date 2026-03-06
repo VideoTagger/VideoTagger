@@ -6,6 +6,8 @@
 #include <optional>
 #include <chrono>
 
+#include <core/debug.hpp>
+
 extern "C"
 {
 	#include <libavcodec/avcodec.h>
@@ -96,7 +98,7 @@ namespace vt
 		error ///@brief An error occurred. Frame was not received.
 	};
 
-	enum class decoder_decode_error
+	enum class decoder_decode_result
 	{
 		ok, ///@brief No error occurred.
 		needs_more_packets, ///@brief More packets need to be read before a frame can be decoded.
@@ -124,10 +126,10 @@ namespace vt
 	};
 
 	template<stream_type type>
-	struct decode_result
+	struct decoder_decode_return_type
 	{
 		std::optional<typename stream_type_traits<type>::decoded_packet_type> decoded_packet;
-		decoder_decode_error error{};
+		decoder_decode_result error{};
 	};
 
 	template<stream_type type>
@@ -152,8 +154,12 @@ namespace vt
 		[[nodiscard]] stream_type type() const;
 		[[nodiscard]] int stream_index() const;
 
+		///@return The presentation timestamp of the packet. I.e. the timestamp at which the packet should be output.
 		[[nodiscard]] std::chrono::nanoseconds timestamp() const;
+		///@return The duration of the packet. I.e. the time until the next packet should be presented.
 		[[nodiscard]] std::chrono::nanoseconds duration() const;
+		///@return The timestamp at which the next packet should be presented. I.e. timestamp + duration.
+		[[nodiscard]] std::chrono::nanoseconds next_timestamp() const;
 
 		///@return Whether the packet contains a keyframe. I.e. the packet contains a frame that can be decoded without any other frames.
 		[[nodiscard]] bool is_keyframe() const;
@@ -255,8 +261,20 @@ namespace vt
 		// Will read the file until it encounters a packet that it can save to one of the packet queues or reaches eof.
 		[[nodiscard]] decoder_read_result read_packet();
 
+		/**
+		 * @brief Get the next decoded packet of the specified stream type.
+		 * 
+		 * Consumes packets from the corresponding packet queue until a frame can be decoded or the queue is empty.
+		 * Will not read new packets from the file
+		 * 
+		 * @param skip_disposable Whether to skip disposable packets. I.e. packets that can be safely skipped without decoding.
+		 * @param target_timestamp If has value and skip_disposable is true, will only skip disposable frames with target_timestamp >= next_timestamp() 
+		 *  Has no effect if skip_disposable is false.
+		 * 
+		 * @return The decoded packet (if one was decode) and the decode result code.
+		 */
 		template<stream_type type>
-		[[nodiscard]] decode_result<type> get_next_decoded_packet();
+		[[nodiscard]] decoder_decode_return_type<type> get_next_decoded_packet(bool skip_disposable = false, std::optional<std::chrono::nanoseconds> target_timestamp = std::nullopt);
 
 		void discard_next_packet(stream_type type);
 		void discard_last_read_packet();
@@ -313,13 +331,13 @@ namespace vt
 	};
 
 	template<stream_type type>
-	inline decode_result<type> video_decoder::get_next_decoded_packet()
+	inline decoder_decode_return_type<type> video_decoder::get_next_decoded_packet(bool skip_disposable, std::optional<std::chrono::nanoseconds> target_timestamp)
 	{
-		decode_result<type> result;
+		decoder_decode_return_type<type> result;
 
 		if (!has_stream(type))
 		{
-			result.error = decoder_decode_error::error;
+			result.error = decoder_decode_result::error;
 			return result;
 		}
 
@@ -336,17 +354,17 @@ namespace vt
 				AVFrame* unwrapped = decoded_packet.unwrapped();
 				unwrapped->time_base = format_context_->streams[stream_indices_[static_cast<size_t>(type)]]->time_base;
 				result.decoded_packet = std::move(decoded_packet);
-				result.error = decoder_decode_error::ok;
+				result.error = decoder_decode_result::ok;
 				break;
 			}
 			if (receive_result == codec_receive_result::flushed)
 			{
-				result.error = decoder_decode_error::flushed;
+				result.error = decoder_decode_result::flushed;
 				break;
 			}
 			if (receive_result != codec_receive_result::needs_more_packets)
 			{
-				result.error = decoder_decode_error::error;
+				result.error = decoder_decode_result::error;
 				break;
 			}
 
@@ -357,17 +375,26 @@ namespace vt
 					avcodec_send_packet(codec_context, nullptr);
 					continue;
 				}
-				result.error = decoder_decode_error::needs_more_packets;
+				result.error = decoder_decode_result::needs_more_packets;
 				break;
 			}
 
 			packet_wrapper packet;
 			queue >> packet;
 
+			if (skip_disposable and packet.is_disposable())
+			{
+				if (!target_timestamp.has_value() or target_timestamp.value() >= packet.next_timestamp())
+				{
+					debug::log("Skipping disposable packet");
+					continue;
+				}
+			}
+
 			auto send_result = codec_send_packet<type>(codec_context, packet);
 			if (send_result != codec_send_result::success)
 			{
-				result.error = decoder_decode_error::error;
+				result.error = decoder_decode_result::error;
 				break;
 			}
 

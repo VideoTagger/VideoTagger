@@ -206,6 +206,11 @@ namespace vt
 		return std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::duration<double>(packet_->duration * av_q2d(packet_->time_base)));
 	}
 
+	std::chrono::nanoseconds packet_wrapper::next_timestamp() const
+	{
+		return timestamp() + duration();
+	}
+
 	bool packet_wrapper::is_keyframe() const
 	{
 		return packet_->flags & AV_PKT_FLAG_KEY;
@@ -674,6 +679,8 @@ namespace vt
 
 		for (auto& codec_ctx : codec_contexts_)
 		{
+			if (codec_ctx == nullptr) continue;
+
 			avcodec_flush_buffers(codec_ctx);
 		}
 

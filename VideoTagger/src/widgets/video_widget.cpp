@@ -46,7 +46,7 @@ namespace vt::widgets
 			
 			ImGui::PushID(str_id.c_str());
 			auto& imgui_style = ImGui::GetStyle();
-			bool is_playing = video.is_playing();
+			bool is_playing = false; //video.is_playing();
 			auto image_avail_size = ImGui::GetContentRegionMax();
 
 			//TODO: a video probably shouldn't have its own controls since they could break synchronization 
@@ -163,7 +163,7 @@ namespace vt::widgets
 						ImGui::SameLine();
 						if (ui::icon_button(is_playing ? icons::pause : icons::play, { button_size, button_size }))
 						{
-							video.set_playing(!is_playing);
+							//video.set_playing(!is_playing);
 						}
 						ImGui::SameLine();
 						if (ui::icon_button(icons::fast_fwd, { button_size, button_size }))

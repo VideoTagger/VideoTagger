@@ -41,10 +41,6 @@ namespace vt
 	{
 		//TODO: maybe should do something to ensure that videos don't get desynchronized
 
-		if (!is_playing())
-		{
-			return;
-		}
 
 		if (videos_.size() == 0)
 		{
@@ -53,15 +49,18 @@ namespace vt
 			return;
 		}
 
-		//TODO: maybe take delta time as argument
-		auto current_timepoint = std::chrono::steady_clock::now();
-		current_timestamp_ += std::chrono::duration_cast<std::chrono::nanoseconds>((current_timepoint - last_timepoint_) * speed_);
-		last_timepoint_ = current_timepoint;
+		if (is_playing())
+		{
+			//TODO: maybe take delta time as argument
+			auto current_timepoint = std::chrono::steady_clock::now();
+			current_timestamp_ += std::chrono::duration_cast<std::chrono::nanoseconds>((current_timepoint - last_timepoint_) * speed_);
+			last_timepoint_ = current_timepoint;
+		}
 
 		for (auto& video_data : videos_)
 		{
 			bool timestamp_in_range = video_data.is_timestamp_in_range(current_timestamp_);
-			video_data.video.set_playing(timestamp_in_range);
+			//video_data.video.set_playing(timestamp_in_range);
 			video_data.video.buffer_frame();
 			video_data.video.update_frame(video_data.display_texture, current_timestamp_ - video_data.offset);
 
@@ -94,7 +93,7 @@ namespace vt
 				continue;
 			}
 
-			video_data.video.set_playing(value);
+			//video_data.video.set_playing(value);
 		}
 
 		if (!is_playing_ and value)
@@ -119,16 +118,16 @@ namespace vt
 			auto clamped_video_ts = std::clamp(video_ts, std::chrono::nanoseconds{ 0 }, video_data.video.duration());
 
 			video_data.video.seek(clamped_video_ts);
-			video_data.video.update_frame(video_data.display_texture, clamped_video_ts);
+			video_data.video.update_frame(video_data.display_texture, clamped_video_ts, true);
 
-			if (video_ts < std::chrono::nanoseconds{ 0 })
-			{
-				video_data.video.set_playing(false);
-			}
-			if (is_playing() and video_ts == clamped_video_ts)
-			{
-				video_data.video.set_playing(true);
-			}
+			//if (video_ts < std::chrono::nanoseconds{ 0 })
+			//{
+			//	video_data.video.set_playing(false);
+			//}
+			//if (is_playing() and video_ts == clamped_video_ts)
+			//{
+			//	video_data.video.set_playing(true);
+			//}
 		});
 
 		auto group_duration = duration();
@@ -281,37 +280,21 @@ namespace vt
 
 	std::chrono::nanoseconds displayed_videos_manager::next_frame_timestamp() const
 	{
-		//std::chrono::nanoseconds return_value = duration();
-		//for (auto& video_data : videos_)
-		//{
-		//	const auto& vid = video_data.video;
-		//	auto video_next_ts = vid.current_timestamp() + vid.frame_time() + video_data.offset;
-		//	auto distance = video_next_ts - current_timestamp_;
-		//	if (distance <= std::chrono::nanoseconds{ 0 })
-		//	{
-		//		continue;
-		//	}
-
-		//	if (distance < (return_value - current_timestamp_))
-		//	{
-		//		return_value = video_next_ts;
-		//	}
-		//}
-
-		//return return_value;
-
 		std::chrono::nanoseconds return_value = duration();
 		for (auto& video_data : videos_)
 		{
-			if (!video_data.is_timestamp_in_range(current_timestamp_))
+			const auto& vid = video_data.video;
+			if (!vid.current_frame().has_value()) continue;
+
+			const auto& current_frame = vid.current_frame().value();
+
+			auto video_next_ts = current_frame.next_timestamp() + video_data.offset;
+			auto distance = video_next_ts - current_timestamp_;
+			if (distance <= std::chrono::nanoseconds{ 0 })
 			{
 				continue;
 			}
 
-			const auto& vid = video_data.video;
-			int64_t current_frame_number = (current_timestamp_ - video_data.offset) / vid.frame_time();
-			auto video_next_ts = (current_frame_number + 1) * vid.frame_time() + video_data.offset;
-			auto distance = video_next_ts - current_timestamp_;
 			if (distance < (return_value - current_timestamp_))
 			{
 				return_value = video_next_ts;
@@ -319,6 +302,26 @@ namespace vt
 		}
 
 		return return_value;
+
+		//std::chrono::nanoseconds return_value = duration();
+		//for (auto& video_data : videos_)
+		//{
+		//	if (!video_data.is_timestamp_in_range(current_timestamp_))
+		//	{
+		//		continue;
+		//	}
+
+		//	const auto& vid = video_data.video;
+		//	int64_t current_frame_number = (current_timestamp_ - video_data.offset) / vid.frame_time();
+		//	auto video_next_ts = (current_frame_number + 1) * vid.frame_time() + video_data.offset;
+		//	auto distance = video_next_ts - current_timestamp_;
+		//	if (distance < (return_value - current_timestamp_))
+		//	{
+		//		return_value = video_next_ts;
+		//	}
+		//}
+
+		//return return_value;
 	}
 
 	std::chrono::nanoseconds displayed_videos_manager::previous_frame_timestamp() const
