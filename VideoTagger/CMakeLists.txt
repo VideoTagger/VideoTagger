@@ -89,6 +89,13 @@ add_subdirectory("${PROJECT_SOURCE_DIR}/vendor/freetype")
 target_link_libraries(${PROJECT_NAME} PRIVATE freetype)
 target_include_directories(${PROJECT_NAME} PRIVATE ${FREETYPE_INCLUDE_DIRS})
 
+add_subdirectory("${PROJECT_SOURCE_DIR}/vendor/SDL2")
+target_link_libraries(${PROJECT_NAME} PRIVATE SDL2::SDL2 SDL2::SDL2main)
+
+add_subdirectory("${PROJECT_SOURCE_DIR}/vendor/pybind11")
+target_link_libraries(${PROJECT_NAME} PRIVATE pybind11::embed)
+
+
 
 target_include_directories(${PROJECT_NAME}
 	PRIVATE "${PROJECT_SOURCE_DIR}/src"
@@ -104,11 +111,12 @@ target_include_directories(${PROJECT_NAME}
 	PRIVATE "${PROJECT_SOURCE_DIR}/vendor/cpp-httplib"
 	PRIVATE "${PROJECT_SOURCE_DIR}/vendor/imgui_toggle"
 	PRIVATE "${PROJECT_SOURCE_DIR}/vendor/stb"
+	PRIVATE "${PROJECT_SOURCE_DIR}/vendor/SDL2"
 	PRIVATE "${EMBED_INCLUDE_DIR}"
 )
 
 # Setup Python
-include(cmake/SetupPython.cmake)
+#include(cmake/SetupPython.cmake)
 
 if(CMAKE_SYSTEM_PROCESSOR MATCHES "64")
 	set(ARCH "x86_64")
@@ -134,11 +142,7 @@ install(
 	DESTINATION "."
 )
 
-if (MSVC)
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /bigobj")
-else()
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Mbigobj")
-endif()
+target_compile_options(${PROJECT_NAME} PRIVATE $<$<CXX_COMPILER_ID:MSVC>:/bigobj>)
 
 # Platform-specific
 if (WIN32)
@@ -146,35 +150,26 @@ if (WIN32)
 		"${PROJECT_SOURCE_DIR}/src/resources/resource.rc"
 	)
 	target_include_directories(${PROJECT_NAME} PRIVATE
-		"${PROJECT_SOURCE_DIR}/vendor/SDL2/include"
 		"${PROJECT_SOURCE_DIR}/vendor/FFmpeg/include"
 		"${PROJECT_SOURCE_DIR}/vendor/FFmpeg/include/libavcodec"
 		"${PROJECT_SOURCE_DIR}/vendor/FFmpeg/include/libavformat"
 		"${PROJECT_SOURCE_DIR}/vendor/FFmpeg/include/libswscale"
 		"${PROJECT_SOURCE_DIR}/vendor/openssl/include"
-		${PythonIncludePath}
 	)
 
 	target_link_directories(${PROJECT_NAME} PRIVATE
-		"${PROJECT_SOURCE_DIR}/vendor/SDL2/lib/${ARCH}"
 		"${PROJECT_SOURCE_DIR}/vendor/FFmpeg/lib/${ARCH}"
 		"${PROJECT_SOURCE_DIR}/vendor/openssl/lib/${ARCH}"
-		${PythonLibPath}
 	)
 
 	target_link_libraries(${PROJECT_NAME} PRIVATE
-		SDL2 SDL2main opengl32 avcodec avformat avutil swscale
+		opengl32 avcodec avformat avutil swscale
 		libssl libcrypto ${PythonLibName}
 	)
 
 	string(TOLOWER "${PythonLibName}" PythonLibNameLower)
 
-	add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-		COMMAND ${CMAKE_COMMAND} -E copy_if_different "${PythonPath}/${PythonLibNameLower}.dll" "${PROJECT_BINARY_DIR}/${PythonLibNameLower}.dll"
-	)
-
 	file(GLOB DLL_FILES
-		"${PROJECT_SOURCE_DIR}/vendor/SDL2/lib/${ARCH}/*.dll"
 		"${PROJECT_SOURCE_DIR}/vendor/FFmpeg/lib/${ARCH}/*.dll"
 		"${PROJECT_SOURCE_DIR}/vendor/openssl/lib/${ARCH}/*.dll"
 	)
@@ -192,60 +187,120 @@ if (WIN32)
 		)
 	endforeach()
 
-	install(
-		FILES "${PythonPath}/${PythonLibNameLower}.dll"
-		DESTINATION "."
-	)
 elseif(UNIX AND NOT APPLE)
+	find_package(OpenSSL)
+	target_link_libraries(${PROJECT_NAME} PRIVATE OpenSSL::Crypto OpenSSL::SSL)
+
+	find_package(OpenGL REQUIRED)
+	target_link_libraries(${PROJECT_NAME} PRIVATE OpenGL::GL)
+
+	find_package(PkgConfig REQUIRED)
+	pkg_check_modules(AVCODEC REQUIRED libavcodec)
+	pkg_check_modules(AVFORMAT REQUIRED libavformat)
+	pkg_check_modules(AVUTIL REQUIRED libavutil)
+	pkg_check_modules(SWSCALE REQUIRED libswscale)
+
+	target_include_directories(${PROJECT_NAME} PRIVATE
+		${AVCODEC_INCLUDE_DIRS}
+		${AVFORMAT_INCLUDE_DIRS}
+		${AVUTIL_INCLUDE_DIRS}
+		${SWSCALE_INCLUDE_DIRS}
+	)
+
+	target_link_libraries(${PROJECT_NAME} PRIVATE
+		${SWSCALE_LIBRARIES}
+		${AVCODEC_LIBRARIES}
+		${AVFORMAT_LIBRARIES}
+		${AVUTIL_LIBRARIES}
+	)
+
 	execute_process(
-		COMMAND "pkg-config --cflags libavcodec libavformat libavutil libswscale sdl2 opengl gtk+-3.0 glib-2.0 gobject-2.0 gio-2.0 openssl"
+		COMMAND "pkg-config --cflags gtk+-3.0 glib-2.0 gobject-2.0 gio-2.0"
 		OUTPUT_VARIABLE PKG_CFLAGS
 		OUTPUT_STRIP_TRAILING_WHITESPACE
 	)
 
 	execute_process(
-		COMMAND "python3-config --cflags"
-		OUTPUT_VARIABLE PYTHON_CFLAGS
+		COMMAND "sdl2-config --cflags"
+		OUTPUT_VARIABLE SDL2_CFLAGS
 		OUTPUT_STRIP_TRAILING_WHITESPACE
 	)
 
 	execute_process(
-		COMMAND "pkg-config --libs libavcodec libavformat libavutil libswscale sdl2 opengl gtk+-3.0 glib-2.0 gobject-2.0 gio-2.0 openssl"
+		COMMAND "sdl2-config --libs"
+		OUTPUT_VARIABLE SDL2_LIBS
+		OUTPUT_STRIP_TRAILING_WHITESPACE
+	)
+
+	execute_process(
+		COMMAND "pkg-config --libs gtk+-3.0 glib-2.0 gobject-2.0 gio-2.0"
 		OUTPUT_VARIABLE PKG_LIBS
 		OUTPUT_STRIP_TRAILING_WHITESPACE
 	)
 
-	execute_process(
-		COMMAND "python3-config --embed --ldflags"
-		OUTPUT_VARIABLE PYTHON_LDFLAGS
-		OUTPUT_STRIP_TRAILING_WHITESPACE
-	)
+	separate_arguments(PKG_CFLAGS_LIST UNIX_COMMAND "${PKG_CFLAGS}")
+    separate_arguments(SDL2_CFLAGS_LIST UNIX_COMMAND "${SDL2_CFLAGS}")
+	separate_arguments(SDL2_LIBS_LIST UNIX_COMMAND "${SDL2_LIBS}")
 
-	target_link_options(${PROJECT_NAME} PRIVATE ${PKG_LIBS} ${PYTHON_LDFLAGS})
+	target_compile_options(${PROJECT_NAME} PRIVATE ${PKG_CFLAGS} ${SDL2_CFLAGS})
+	target_link_options(${PROJECT_NAME} PRIVATE ${PKG_LIBS} ${SDL2_LIBS})
 elseif(APPLE)
+	find_package(OpenSSL)
+	target_link_libraries(${PROJECT_NAME} PRIVATE OpenSSL::Crypto OpenSSL::SSL)
+
+	find_package(OpenGL REQUIRED)
+	target_link_libraries(${PROJECT_NAME} PRIVATE OpenGL::GL)
+
+	find_package(PkgConfig REQUIRED)
+	pkg_check_modules(AVCODEC REQUIRED libavcodec)
+	pkg_check_modules(AVFORMAT REQUIRED libavformat)
+	pkg_check_modules(AVUTIL REQUIRED libavutil)
+	pkg_check_modules(SWSCALE REQUIRED libswscale)
+
+	target_include_directories(${PROJECT_NAME} PRIVATE
+		${AVCODEC_INCLUDE_DIRS}
+		${AVFORMAT_INCLUDE_DIRS}
+		${AVUTIL_INCLUDE_DIRS}
+		${SWSCALE_INCLUDE_DIRS}
+	)
+
+	target_link_libraries(${PROJECT_NAME} PRIVATE
+		${SWSCALE_LIBRARIES}
+		${AVCODEC_LIBRARIES}
+		${AVFORMAT_LIBRARIES}
+		${AVUTIL_LIBRARIES}
+	)
+
 	execute_process(
-		COMMAND "pkg-config --cflags libavcodec libavformat libavutil libswscale sdl2 opengl openssl"
+		COMMAND "pkg-config --cflags gtk+-3.0 glib-2.0 gobject-2.0 gio-2.0"
 		OUTPUT_VARIABLE PKG_CFLAGS
 		OUTPUT_STRIP_TRAILING_WHITESPACE
 	)
 
 	execute_process(
-		COMMAND "python3-config --cflags"
-		OUTPUT_VARIABLE PYTHON_CFLAGS
+		COMMAND "sdl2-config --cflags"
+		OUTPUT_VARIABLE SDL2_CFLAGS
 		OUTPUT_STRIP_TRAILING_WHITESPACE
 	)
 
 	execute_process(
-		COMMAND "pkg-config --libs libavcodec libavformat libavutil libswscale sdl2 opengl openssl"
+		COMMAND "sdl2-config --libs"
+		OUTPUT_VARIABLE SDL2_LIBS
+		OUTPUT_STRIP_TRAILING_WHITESPACE
+	)
+
+	execute_process(
+		COMMAND "pkg-config --libs gtk+-3.0 glib-2.0 gobject-2.0 gio-2.0"
 		OUTPUT_VARIABLE PKG_LIBS
 		OUTPUT_STRIP_TRAILING_WHITESPACE
 	)
 
-	execute_process(
-		COMMAND "python3-config --embed --ldflags"
-		OUTPUT_VARIABLE PYTHON_LDFLAGS
-		OUTPUT_STRIP_TRAILING_WHITESPACE
-	)
+	separate_arguments(PKG_CFLAGS_LIST UNIX_COMMAND "${PKG_CFLAGS}")
+    separate_arguments(SDL2_CFLAGS_LIST UNIX_COMMAND "${SDL2_CFLAGS}")
+	separate_arguments(SDL2_LIBS_LIST UNIX_COMMAND "${SDL2_LIBS}")
+
+	target_compile_options(${PROJECT_NAME} PRIVATE ${PKG_CFLAGS} ${SDL2_CFLAGS})
+	target_link_options(${PROJECT_NAME} PRIVATE ${PKG_LIBS} ${SDL2_LIBS})
 
 	find_library(APPKIT_FRAMEWORK AppKit)
 	find_library(UTI_FRAMEWORK UniformTypeIdentifiers)
@@ -256,7 +311,7 @@ elseif(APPLE)
 		list(APPEND EXTRA_LIBS ${UTI_FRAMEWORK})
 	endif()
 
-	set(EXTRA_LINK_FLAGS "${PKG_LIBS} ${PYTHON_LDFLAGS}")
+	set(EXTRA_LINK_FLAGS "${PKG_LIBS}")
 
 	target_link_libraries(${PROJECT_NAME} PRIVATE ${EXTRA_LIBS})
 	target_link_options(${PROJECT_NAME} PRIVATE ${EXTRA_LINK_FLAGS})
@@ -284,8 +339,6 @@ if(CONFIG_TYPE STREQUAL "Shipping")
 		set(subsystem_linker_options "/SUBSYSTEM:WINDOWS")
 		# Keep the same "main" function instead of requiring "WinMain"
 		list(APPEND subsystem_linker_options "/ENTRY:mainCRTStartup")
-	else()
-		set(subsystem_linker_options "-mwindows")
 	endif()
 
 	target_link_options(${PROJECT_NAME} PRIVATE ${subsystem_linker_options})

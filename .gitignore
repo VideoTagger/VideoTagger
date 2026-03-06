@@ -2,6 +2,8 @@ out/
 build/
 scripts/embeds/
 __pycache__/
+.vs/
+
 *.log
 
 # Premake generated files
@@ -27,7 +29,6 @@ Makefile
 .cproject
 .settings
 .buildpath
-*.vs
 
 **.buildcfg
 *.aps

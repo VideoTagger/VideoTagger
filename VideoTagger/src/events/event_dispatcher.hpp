@@ -241,7 +241,7 @@ namespace vt
 		constexpr event_interceptor_handle add_event_interceptor(arguments&&... args)
 		{
 			auto handle = utils::random::get<event_interceptor_handle>(1);
-			auto interceptor = std::make_unique<interceptor_type>(handle, args);
+			auto interceptor = std::make_unique<interceptor_type>(handle, std::forward<arguments>(args)...);
 			interceptors_.push_back(std::move(interceptor));
 			return handle;
 		}

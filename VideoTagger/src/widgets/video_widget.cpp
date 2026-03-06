@@ -128,7 +128,7 @@ namespace vt::widgets
 						auto text_size = ImGui::CalcTextSize("00:00:00 | 00:00:00");
 
 						ImGui::SetCursorPos({ avail_size.x - text_size.x, ImGui::GetCursorPosY() + text_size.y / 4 });
-						ImGui::Text("%02d:%02d:%02d | %02d:%02d:%02d",
+						ImGui::Text("%02ld:%02ld:%02ld | %02ld:%02ld:%02ld",
 							current_time.hours(), current_time.minutes(), current_time.seconds(),
 							duration.hours(), duration.minutes(), duration.seconds()
 						);

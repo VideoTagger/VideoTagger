@@ -16,11 +16,6 @@ EXECUTABLE_EXT = ".exe" if platform == "win32" else ""
 WORK_DIR = os.path.dirname(os.path.realpath(sys.argv[0]))
 TOOL_DIR = os.path.join(WORK_DIR, os.pardir, "tools", "bin")
 
-PREMAKE_VER = "5.0.0-beta2"
-PREMAKE_WIN_URL = f"https://github.com/premake/premake-core/releases/download/v{PREMAKE_VER}/premake-{PREMAKE_VER}-windows.zip"
-PREMAKE_LINUX_URL = f"https://github.com/premake/premake-core/releases/download/v{PREMAKE_VER}/premake-{PREMAKE_VER}-linux.tar.gz"
-PREMAKE_MAC_URL = f"https://github.com/premake/premake-core/releases/download/v{PREMAKE_VER}/premake-{PREMAKE_VER}-macosx.tar.gz"
-
 DOXYGEN_VER = "1.12.0"
 DOXYGEN_SAFE_VER = DOXYGEN_VER.replace(".", "_")
 DOXYGEN_WIN_URL = f"https://github.com/doxygen/doxygen/releases/download/Release_{DOXYGEN_SAFE_VER}/doxygen-{DOXYGEN_VER}.windows.x64.bin.zip"
@@ -29,11 +24,6 @@ DOXYGEN_MAC_URL = f"https://github.com/doxygen/doxygen/releases/download/Release
 
 
 tools = {
-	"premake5": [
-		{"url": PREMAKE_WIN_URL, "unpack-action": UnpackAction.UnpackZip},
-		{"url": PREMAKE_LINUX_URL, "unpack-action": UnpackAction.UnpackTar},
-		{"url": PREMAKE_MAC_URL, "unpack-action": UnpackAction.UnpackTar},
-	],
 	"doxygen": [
 		{"url": DOXYGEN_WIN_URL, "unpack-action": UnpackAction.UnpackZip},
 		{"url": DOXYGEN_LINUX_URL, "unpack-action": UnpackAction.UnpackTar},

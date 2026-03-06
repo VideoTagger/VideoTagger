@@ -16,62 +16,33 @@ git submodule update --init
 
 ## Build Requirements
 - Python 3.12+ (tested with 3.12.6 and 3.13.0)
-- Visual Studio 2022 (on Windows)
+- CMake 3.24+
 
-> [!Important]
-> Both Linux and macOS require SDL2 version 2.0.17 or later to build properly.
-Windows comes with prebuilt binaries.
+# Initial setup
+Install `uv` package manager:
+```shell
+# On Windows
+powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
 
-## Initial setup
+# On macOS and Linux
+curl -LsSf https://astral.sh/uv/install.sh | sh
+```
+
+On Linux install the following packages:
+```shell
+build-essential pkg-config cmake ninja-build python3 python3-pip libsdl2-dev libavutil-dev libavcodec-dev libavformat-dev libswscale-dev python3-dev libgtk-3-dev libglib2.0-dev libgtk2.0-dev libgl1-mesa-dev libssl-dev
+```
+
 In the root directory run:
 ```shell
 cd scripts
-pip install -r requirements.txt
-# on linux use python3
-python setup.py
-python gen_about.py
+uv run setup.py
 ```
 
-## Visual Studio (Windows)
-Generate project files with:
-```shell
-scripts/win-gen-projects.cmd
-```
-
-Build the projects by opening the `Visual Studio` solution file and building with desired configuration.
-
-## Makefile (Linux)
-Install Required packages
-```
-build-essential pkg-config libsdl2-dev libavcodec-dev libavformat-dev libswscale-dev python3-dev libgtk-3-dev libglib2.0-dev libgtk2.0-dev libssl-dev
-```
-
-Generate project files with:
-```shell
-chmod +x ./scripts/linux-gen-projects.sh && ./scripts/linux-gen-projects.sh
-```
-
-Build the projects by running:
-```shell
-make config=<BUILD_CONFIG>
-```
-Replace `<BUILD_CONFIG>` with one of:
-- `debug_x86_64`
-- `release_x86_64`
-- `shipping_x86_64`
-
-## Xcode (macOS)
 > [!Warning]
 > Building on macOS is untested
 
-Generate project files with:
-```shell
-scripts/macos-gen-projects.sh
-```
-
-Build the projects by opening the `Xcode` project file and building with desired configuration.
-
-## CMake (Cross Platform)
+## Build using CMake
 ```shell
 # On Windows it might be necessary to activate the developer command prompt first, you can do it by running:
 /path/to/vcvars64.bat
@@ -81,9 +52,9 @@ cmake --build --preset=<BUILD_PRESET>
 cpack --preset=<BUILD_PRESET>
 ```
 Replace `<BUILD_PRESET>` with one of the presets:
-- `<SYSTEM>-x64-debug`
-- `<SYSTEM>-x64-release`
-- `<SYSTEM>-x64-shipping`
+- `<SYSTEM>-debug`
+- `<SYSTEM>-release`
+- `<SYSTEM>-shipping`
 
 where `<SYSTEM>` is `windows`/`linux`/`macos`
 
@@ -91,6 +62,11 @@ You can also show all available presets with
 ```shell
 cmake --list-presets
 cpack --list-presets
+```
+
+## Build on Ubuntu using Docker
+```shell
+docker compose up --build && docker cp videotagger:/app/build/. ./build/ && docker compose down
 ```
 
 ## Third party libraries
@@ -106,6 +82,7 @@ cpack --list-presets
 - [FFmpeg](https://ffmpeg.org/)
 - [cpp-httplib](https://github.com/yhirose/cpp-httplib)
 - [OpenSSL](https://github.com/openssl/openssl)
+- [freetype](https://gitlab.freedesktop.org/freetype/freetype)
 
 ## License
 This software is licensed under the [MIT License](/LICENSE).
