@@ -47,10 +47,9 @@ uv run setup.py
 # On Windows it might be necessary to activate the developer command prompt first, you can do it by running:
 /path/to/vcvars64.bat
 
-cmake --build --preset=<BUILD_PRESET>
-# To package
-cpack --preset=<BUILD_PRESET>
+cmake --build --target install --preset=<BUILD_PRESET>
 ```
+
 Replace `<BUILD_PRESET>` with one of the presets:
 - `<SYSTEM>-debug`
 - `<SYSTEM>-release`
@@ -65,8 +64,11 @@ cpack --list-presets
 ```
 
 ## Build on Ubuntu using Docker
+In the root directory run:
 ```shell
-docker compose up --build && docker cp videotagger:/app/build/. ./build/ && docker compose down
+docker compose up --build
+docker cp videotagger:/app/build/. ./build/
+docker compose down
 ```
 
 ## Third party libraries

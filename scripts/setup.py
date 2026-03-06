@@ -16,7 +16,7 @@ EXECUTABLE_EXT = ".exe" if platform == "win32" else ""
 WORK_DIR = os.path.dirname(os.path.realpath(sys.argv[0]))
 TOOL_DIR = os.path.join(WORK_DIR, os.pardir, "tools", "bin")
 
-DOXYGEN_VER = "1.12.0"
+DOXYGEN_VER = "1.16.1"
 DOXYGEN_SAFE_VER = DOXYGEN_VER.replace(".", "_")
 DOXYGEN_WIN_URL = f"https://github.com/doxygen/doxygen/releases/download/Release_{DOXYGEN_SAFE_VER}/doxygen-{DOXYGEN_VER}.windows.x64.bin.zip"
 DOXYGEN_LINUX_URL = f"https://github.com/doxygen/doxygen/releases/download/Release_{DOXYGEN_SAFE_VER}/doxygen-{DOXYGEN_VER}.linux.bin.tar.gz"
