@@ -181,6 +181,7 @@ namespace vt
 			set_playing(false);
 		};
 
+		bool update_frame = false;
 		if (!current_frame_.has_value())
 		{
 			if (frame_buffer_.empty() and !buffer_frame())
@@ -191,9 +192,10 @@ namespace vt
 
 			current_frame_ = std::move(frame_buffer_.front());
 			frame_buffer_.pop_front();
+			update_frame = true;
 		}
 
-		if (current_frame_->next_timestamp() > target_timestamp or current_frame_->timestamp() >= target_timestamp)
+		if (!update_frame and (current_frame_->next_timestamp() > target_timestamp or current_frame_->timestamp() >= target_timestamp))
 		{
 			return false;
 		}
