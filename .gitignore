@@ -3,6 +3,7 @@ build/
 scripts/embeds/
 __pycache__/
 .vs/
+.venv/
 
 *.log
 
