@@ -384,9 +384,15 @@ namespace vt
 		return *this;
 	}
 
+	bool video_decoder::is_hardware_acceleration_enabled() const
+	{
+		return is_hardware_acceleration_enabled_;
+	}
+
 	video_decoder::video_decoder() :
 		format_context_{ nullptr }, stream_indices_{}, codec_contexts_{}, packet_queues_{},
-		last_read_packet_type_{ stream_type::unknown }, eof_{ false }, pixel_format_{} //, current_frame_number_{ 0 }
+		last_read_packet_type_{ stream_type::unknown }, eof_{ false }, pixel_format_{ AV_PIX_FMT_NONE },
+		hw_device_ctx_{ nullptr }
 	{
 		std::fill(stream_indices_.begin(), stream_indices_.end(), -1);
 	}
@@ -394,7 +400,8 @@ namespace vt
 	video_decoder::video_decoder(video_decoder&& other) noexcept :
 		format_context_{ other.format_context_ }, stream_indices_(other.stream_indices_), codec_contexts_(other.codec_contexts_),
 		packet_queues_(std::move(other.packet_queues_)), last_read_packet_type_{ other.last_read_packet_type_ }, eof_{ other.eof_ },
-		pixel_format_{}, last_read_packet_timestamp_{ other.last_read_packet_timestamp_ } //, current_frame
+		pixel_format_{ other.pixel_format_ }, last_read_packet_timestamp_{ other.last_read_packet_timestamp_ },
+		hw_device_ctx_{ other.hw_device_ctx_ }
 	{
 		for (auto& codec_context : other.codec_contexts_)
 		{
@@ -402,6 +409,8 @@ namespace vt
 		}
 
 		other.format_context_ = nullptr;
+		other.hw_device_ctx_ = nullptr;
+		other.pixel_format_ = AV_PIX_FMT_NONE;
 	}
 
 	video_decoder::~video_decoder()
@@ -418,22 +427,28 @@ namespace vt
 		last_read_packet_type_ = other.last_read_packet_type_;
 		last_read_packet_timestamp_ = other.last_read_packet_timestamp_;
 		eof_ = other.eof_;
+		hw_device_ctx_ = other.hw_device_ctx_;
+		pixel_format_ = other.pixel_format_;
 
 		for (auto& codec_context : other.codec_contexts_)
 		{
 			codec_context = nullptr;
 		}
 		other.format_context_ = nullptr;
+		other.hw_device_ctx_ = nullptr;
+		other.pixel_format_ = AV_PIX_FMT_NONE;
 
 		return *this;
 	}
 
-	bool video_decoder::open(const std::filesystem::path& path)
+	bool video_decoder::open(const std::filesystem::path& path, bool accelerated)
 	{
 		if (is_open())
 		{
 			close();
 		}
+
+		is_hardware_acceleration_enabled_ = accelerated;
 		
 		format_context_ = avformat_alloc_context();
 		if (avformat_open_input(&format_context_, path.u8string().c_str(), NULL, NULL) < 0)
@@ -446,7 +461,7 @@ namespace vt
 
 		bool found_any_stream = false;
 
-		// No idea if one file can have multiple streams of the same type
+		// TODO: check what happens if there are multiple streams of the same type.
 		for (unsigned int i = 0; i < format_context_->nb_streams; i++)
 		{
 			auto stream = format_context_->streams[i];
@@ -488,8 +503,6 @@ namespace vt
 			codec_contexts_[i] = avcodec_alloc_context3(codecs_array[i]);
 			if (codec_contexts_[i] == nullptr)
 			{
-				// Highly unlikely, basically critical failure
-
 				close();
 				return false;
 			}
@@ -498,6 +511,50 @@ namespace vt
 			{
 				close();
 				return false;
+			}
+
+			if (is_hardware_acceleration_enabled_ and static_cast<stream_type>(i) == stream_type::video)
+			{
+				const AVCodec* codec = codecs_array[i];
+				pixel_format_ = AV_PIX_FMT_NONE;
+
+				static constexpr AVHWDeviceType hw_device_types[]
+				{
+					AV_HWDEVICE_TYPE_CUDA,
+					AV_HWDEVICE_TYPE_VULKAN,
+					AV_HWDEVICE_TYPE_D3D11VA,
+					AV_HWDEVICE_TYPE_D3D12VA,
+					AV_HWDEVICE_TYPE_VDPAU,
+					AV_HWDEVICE_TYPE_VAAPI,
+					AV_HWDEVICE_TYPE_DXVA2,
+					AV_HWDEVICE_TYPE_QSV,
+					AV_HWDEVICE_TYPE_VIDEOTOOLBOX,
+					AV_HWDEVICE_TYPE_DRM,
+					AV_HWDEVICE_TYPE_OPENCL,
+					AV_HWDEVICE_TYPE_MEDIACODEC,
+				};
+
+				for (AVHWDeviceType device_type : hw_device_types)
+				{
+					for (int j = 0;; j++)
+					{
+						const AVCodecHWConfig* config = avcodec_get_hw_config(codec, j);
+						if (config == nullptr)
+						{
+							break;
+						}
+
+						if (config->methods & AV_CODEC_HW_CONFIG_METHOD_HW_DEVICE_CTX and config->device_type == device_type)
+						{
+							if (av_hwdevice_ctx_create(&hw_device_ctx_, device_type, nullptr, nullptr, 0) >= 0)
+							{
+								pixel_format_ = config->pix_fmt;
+								codec_contexts_[i]->hw_device_ctx = av_buffer_ref(hw_device_ctx_);
+								break;
+							}
+						}
+					}
+				}
 			}
 
 			if (avcodec_open2(codec_contexts_[i], codecs_array[i], NULL) < 0)
@@ -532,11 +589,19 @@ namespace vt
 			}
 		}
 
+		if (hw_device_ctx_ != nullptr)
+		{
+			av_buffer_unref(&hw_device_ctx_);
+			hw_device_ctx_ = nullptr;
+		}
+		pixel_format_ = AV_PIX_FMT_NONE;
+
 		avformat_close_input(&format_context_);
 
 		eof_ = false;
 		last_read_packet_type_ = stream_type::unknown;
 		last_read_packet_timestamp_ = std::chrono::nanoseconds::zero();
+		is_hardware_acceleration_enabled_ = false;
 	}
 
 	decoder_read_result video_decoder::read_packet()

@@ -77,13 +77,13 @@ namespace vt
 		const std::string& file_path() const;
 
 		virtual bool playable() const = 0;
-		virtual video_stream video() const = 0;
+		virtual video_stream video() const;
 		virtual void context_menu_items(std::vector<video_resource_context_menu_item>& items);
 		virtual void icon_custom_draw(ImDrawList& draw_list, ImRect item_rect, ImRect image_rect) const;
 		virtual void on_remove();
 		
 		//TODO: size as argument
-		virtual std::optional<video_resource_thumbnail> generate_thumbnail() = 0;
+		virtual std::optional<video_resource_thumbnail> generate_thumbnail();
 
 		virtual std::function<void()> on_refresh_task(); //TODO: use a task class
 

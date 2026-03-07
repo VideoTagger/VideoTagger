@@ -80,17 +80,6 @@ namespace vt
 		return file_id_;
 	}
 
-	video_stream google_drive_video_resource::video() const
-	{
-		video_stream result;
-		if (!result.open_file(file_path()))
-		{
-			debug::panic("Failed to open video from path {}", file_path());
-		}
-
-		return result;
-	}
-
 	std::optional<video_resource_thumbnail> google_drive_video_resource::generate_thumbnail()
 	{
 		//TODO: implement

@@ -123,7 +123,7 @@ namespace vt::ui
 			if (ImGui::MenuItem(ctx_.lang->get("popup.timeline_segment_context_menu.convert_to_segment").c_str()))
 			{
 				ctx_.dispatch_event<segments_move_request_event>(
-					event_source_, *segment_storage_, active_tag_, active_segment_, segment_part::right, timestamp{ tag_segment::min_segment_size }, false
+					event_source_, *segment_storage_, active_tag_, active_segment_, segment_part::right, timestamp{ tag_segment::default_segment_size }, false
 				);
 			}
 			if (ImGui::MenuItem(ctx_.lang->get("popup.timeline_segment_context_menu.move_to_playhead").c_str()))

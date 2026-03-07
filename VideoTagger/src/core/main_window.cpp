@@ -1256,6 +1256,9 @@ namespace vt
 			}
 			return true;
 		})
+		.add_toggle("Hardware Acceleration", "Specifies whether to use hardware acceleration for video decoding and processing. Takes effect only for newly opened videos", ctx_.app_settings.hardware_acceleration, [&](bool value)
+		{
+		})
 		.add_toggle("Load Thumbnails", "Specifies whether to load thumbnails when opening a project", ctx_.app_settings.load_thumbnails, [&](bool value)
 		{
 			//ctx_.settings["load-thumbnails"] = ctx_.app_settings.load_thumbnails;

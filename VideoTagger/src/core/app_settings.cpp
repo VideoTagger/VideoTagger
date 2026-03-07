@@ -9,6 +9,7 @@ namespace vt
 		json["thumbnail-size"] = thumbnail_size;
 		json["allow-undocking"] = allow_undocking;
 		json["scale-gizmos"] = scale_gizmos;
+		json["hardware-acceleration"] = hardware_acceleration;
 		return json;
 	}
 
@@ -29,6 +30,10 @@ namespace vt
 		if (json.contains("scale-gizmos") and json["scale-gizmos"].is_boolean())
 		{
 			scale_gizmos = json["scale-gizmos"].get<bool>();
+		}
+		if (json.contains("hardware-acceleration") and json["hardware-acceleration"].is_boolean())
+		{
+			hardware_acceleration = json["hardware-acceleration"].get<bool>();
 		}
 	}
 }

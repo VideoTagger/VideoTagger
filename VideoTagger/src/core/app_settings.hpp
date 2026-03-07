@@ -10,6 +10,7 @@ namespace vt
 		bool load_thumbnails = true;
 		bool allow_undocking = true;
 		bool scale_gizmos = false;
+		bool hardware_acceleration = true;
 
 		[[nodiscard]] virtual nlohmann::ordered_json serialize() const override;
 		virtual void deserialize(const nlohmann::ordered_json& json) override;

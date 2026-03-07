@@ -12,6 +12,7 @@ extern "C"
 {
 	#include <libavcodec/avcodec.h>
 	#include <libavformat/avformat.h>
+	#include <libavutil/hwcontext.h>
 }
 
 namespace vt
@@ -52,8 +53,10 @@ namespace vt
 
 		///@return The presentation timestamp of the frame. I.e. the timestamp at which the frame should be displayed.
 		[[nodiscard]] std::chrono::nanoseconds timestamp() const;
+
 		///@return The duration of the frame. I.e. the time until the next frame should be displayed.
 		[[nodiscard]] std::chrono::nanoseconds duration() const;
+
 		///@return The timestamp at which the next frame should be displayed. I.e. timestamp + duration.
 		[[nodiscard]] std::chrono::nanoseconds next_timestamp() const;
 
@@ -255,7 +258,9 @@ namespace vt
 		video_decoder& operator=(const video_decoder&) = delete;
 		video_decoder& operator=(video_decoder&& other) noexcept;
 
-		bool open(const std::filesystem::path& path);
+		bool is_hardware_acceleration_enabled() const;
+
+		bool open(const std::filesystem::path& path, bool accelerated);
 		void close();
 
 		// Will read the file until it encounters a packet that it can save to one of the packet queues or reaches eof.
@@ -316,16 +321,20 @@ namespace vt
 		[[nodiscard]] AVFormatContext* av_format_context();
 
 	private:
-		AVFormatContext* format_context_;
-		AVPixelFormat pixel_format_;
 
-		std::array<int, static_cast<size_t>(stream_type::size)> stream_indices_;
-		std::array<AVCodecContext*, static_cast<size_t>(stream_type::size)> codec_contexts_;
-		std::array<packet_queue, static_cast<size_t>(stream_type::size)> packet_queues_;
+		AVFormatContext* format_context_{};
+		AVPixelFormat pixel_format_{ AV_PIX_FMT_NONE };
+		AVBufferRef* hw_device_ctx_{};
 
-		std::chrono::nanoseconds last_read_packet_timestamp_;
-		stream_type last_read_packet_type_;
-		bool eof_;
+		std::array<int, static_cast<size_t>(stream_type::size)> stream_indices_{};
+		std::array<AVCodecContext*, static_cast<size_t>(stream_type::size)> codec_contexts_{};
+		std::array<packet_queue, static_cast<size_t>(stream_type::size)> packet_queues_{};
+
+		std::chrono::nanoseconds last_read_packet_timestamp_{};
+		stream_type last_read_packet_type_{ stream_type::unknown };
+
+		bool is_hardware_acceleration_enabled_{};
+		bool eof_{};
 
 		//size_t current_frame_number_;
 	};
@@ -435,6 +444,33 @@ namespace vt
 		int result = avcodec_receive_frame(codec_context, unwrapped_frame);
 		if (result == 0)
 		{
+			if (unwrapped_frame->format == AV_PIX_FMT_D3D11 ||
+				unwrapped_frame->format == AV_PIX_FMT_DXVA2_VLD ||
+				unwrapped_frame->format == AV_PIX_FMT_CUDA ||
+				unwrapped_frame->format == AV_PIX_FMT_VAAPI ||
+				unwrapped_frame->format == AV_PIX_FMT_VDPAU ||
+				unwrapped_frame->format == AV_PIX_FMT_VIDEOTOOLBOX)
+			{
+				AVFrame* sw_frame = av_frame_alloc();
+				if (sw_frame == nullptr)
+				{
+					return codec_receive_result::error;
+				}
+
+				if (av_hwframe_transfer_data(sw_frame, unwrapped_frame, 0) < 0)
+				{
+					av_frame_free(&sw_frame);
+					return codec_receive_result::error;
+				}
+
+				sw_frame->pts = unwrapped_frame->pts;
+				sw_frame->duration = unwrapped_frame->duration;
+				sw_frame->time_base = unwrapped_frame->time_base;
+
+				av_frame_unref(unwrapped_frame);
+				av_frame_move_ref(unwrapped_frame, sw_frame);
+				av_frame_free(&sw_frame);
+			}
 			return codec_receive_result::success;
 		}
 		else if (result == AVERROR(EAGAIN))

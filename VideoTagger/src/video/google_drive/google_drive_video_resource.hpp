@@ -11,7 +11,6 @@ namespace vt
 
 		const std::string& file_id() const;
 
-		video_stream video() const override;
 		std::optional<video_resource_thumbnail> generate_thumbnail() override;
 		std::function<void()> on_refresh_task() override;
 		video_downloadable downloadable() const override;
@@ -19,7 +18,7 @@ namespace vt
 		void on_save(nlohmann::ordered_json& json) const override;
 	
 	protected:
-		video_download_status on_download(std::shared_ptr<video_download_data>) override;
+		video_download_status on_download(std::shared_ptr<video_download_data> data) override;
 
 	private:
 		std::string file_id_;

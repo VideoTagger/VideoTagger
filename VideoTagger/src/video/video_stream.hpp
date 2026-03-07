@@ -24,7 +24,7 @@ namespace vt
 		video_stream& operator=(const video_stream&) = delete;
 		video_stream& operator=(video_stream&&) = default;
 
-		bool open_file(const std::filesystem::path& filepath);
+		bool open_file(const std::filesystem::path& filepath, bool accelerated);
 		void close();
 
 		/**

@@ -4,7 +4,7 @@
 
 namespace vt
 {
-	bool video_stream::open_file(const std::filesystem::path& filepath)
+	bool video_stream::open_file(const std::filesystem::path& filepath, bool accelerated)
 	{
 		if (is_open())
 		{
@@ -12,7 +12,7 @@ namespace vt
 		}
 
 		//TODO: error handling
-		if (!decoder_.open(filepath))
+		if (!decoder_.open(filepath, accelerated))
 		{
 			return false;
 		}
