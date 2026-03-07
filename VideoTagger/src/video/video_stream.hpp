@@ -39,8 +39,9 @@ namespace vt
 		bool buffer_frame(bool skip_disposable = false, std::optional<std::chrono::nanoseconds> target_timestamp = std::nullopt);
 		void seek(std::chrono::nanoseconds target_timestamp);
 
-		bool update_frame(gl_texture& texture, std::chrono::nanoseconds target_timestamp, bool skip_disposable = false);
-		bool update_frame(std::vector<uint8_t>& pixels, int width, int height, std::chrono::nanoseconds target_timestamp, bool skip_disposable = false);
+		bool update_frame(gl_texture& texture, std::chrono::nanoseconds target_timestamp, bool force_update = false, bool skip_disposable = false);
+		bool update_frame(std::vector<uint8_t>& pixels, int width, int height, std::chrono::nanoseconds target_timestamp, bool force_update = false, bool skip_disposable = false);
+		bool update_current_frame(std::chrono::nanoseconds target_timestamp, bool skip_disposable);
 
 		[[nodiscard]] bool is_open() const;
 
@@ -64,7 +65,6 @@ namespace vt
 		static void clear_yuv_texture(GLuint texture, uint8_t r, uint8_t g, uint8_t b);
 
 	private:
-		bool update_current_frame(std::chrono::nanoseconds target_timestamp, bool skip_disposable);
 
 		video_decoder decoder_;
 		std::optional<frame_converter> frame_converter_;

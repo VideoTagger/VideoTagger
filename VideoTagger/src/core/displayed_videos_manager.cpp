@@ -118,7 +118,7 @@ namespace vt
 			auto clamped_video_ts = std::clamp(video_ts, std::chrono::nanoseconds{ 0 }, video_data.video.duration());
 
 			video_data.video.seek(clamped_video_ts);
-			video_data.video.update_frame(video_data.display_texture, clamped_video_ts, true);
+			video_data.video.update_frame(video_data.display_texture, clamped_video_ts, false, true);
 
 			//if (video_ts < std::chrono::nanoseconds{ 0 })
 			//{

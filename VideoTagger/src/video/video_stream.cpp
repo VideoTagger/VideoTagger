@@ -111,11 +111,11 @@ namespace vt
 		current_frame_.reset();
 	}
 
-	bool video_stream::update_frame(gl_texture& texture, std::chrono::nanoseconds target_timestamp, bool skip_disposable)
+	bool video_stream::update_frame(gl_texture& texture, std::chrono::nanoseconds target_timestamp, bool force_update, bool skip_disposable)
 	{
 		static thread_local std::vector<uint8_t> conversion_buffer;
 		
-		bool frame_updated = update_frame(conversion_buffer, texture.width(), texture.height(), target_timestamp, skip_disposable);
+		bool frame_updated = update_frame(conversion_buffer, texture.width(), texture.height(), target_timestamp, force_update, skip_disposable);
 
 		if (frame_updated)
 		{
@@ -125,9 +125,9 @@ namespace vt
 		return frame_updated;
 	}
 
-	bool video_stream::update_frame(std::vector<uint8_t>& pixels, int width, int height, std::chrono::nanoseconds target_timestamp, bool skip_disposable)
+	bool video_stream::update_frame(std::vector<uint8_t>& pixels, int width, int height, std::chrono::nanoseconds target_timestamp, bool force_update, bool skip_disposable)
 	{
-		if (!update_current_frame(target_timestamp, skip_disposable))
+		if (!update_current_frame(target_timestamp, skip_disposable) and !force_update)
 		{
 			return false;
 		}
