@@ -102,6 +102,8 @@ namespace vt
 		static void panic_src(const std::string& source, const fmt::format_string<args_t...> format, args_t&&... args)
 		{
 			add_log(source, "Panic!", format, std::forward<args_t&&>(args)...);
+
+			throw std::runtime_error(fmt::format("Panic! ({}): {}", source, fmt::vformat(format.get(), fmt::make_format_args(args...))));
 		}
 
 		///@brief Logs the message with an 'Info' flag
