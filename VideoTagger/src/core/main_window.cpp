@@ -3178,6 +3178,7 @@ namespace vt
 
 					auto win_drop_pos = utils::vec2<float>{ drop_point.x - win_pos[0], drop_point.y - win_pos[1] };					
 					ctx_.dispatch_event<system_window_drop_path_event>(event_source_, *this, event.drop.file, win_drop_pos);
+					SDL_free(event.drop.file);
 				}
 			}
 			break;
