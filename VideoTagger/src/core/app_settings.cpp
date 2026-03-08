@@ -5,6 +5,10 @@ namespace vt
 	nlohmann::ordered_json app_settings::serialize() const
 	{
 		nlohmann::ordered_json json;
+		if (theme_name.has_value())
+		{
+			json["theme"] = theme_name.value();
+		}
 		json["font-size"] = font_size;
 		json["thumbnail-size"] = thumbnail_size;
 		json["allow-undocking"] = allow_undocking;
@@ -15,6 +19,10 @@ namespace vt
 
 	void app_settings::deserialize(const nlohmann::ordered_json& json)
 	{
+		if (json.contains("theme") and json["theme"].is_string())
+		{
+			theme_name = json["theme"].get<std::string>();
+		}
 		if (json.contains("font-size") and json["font-size"].is_number())
 		{
 			font_size = json["font-size"].get<float>();

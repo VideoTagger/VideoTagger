@@ -1,6 +1,5 @@
 #include "pch.hpp"
 #include "theme.hpp"
-#include <utils/json.hpp>
 #include <utils/color.hpp>
 #include "app_context.hpp"
 #include <events/theme/theme_mode_changed_event.hpp>
@@ -212,21 +211,20 @@ namespace vt
 		utils::json::write_to_file(json, filepath);
 	}
 
-	theme theme::load_from_file(const std::filesystem::path& filepath)
+	theme theme::load_from_json(const nlohmann::ordered_json& json)
 	{
 		theme result;
-		auto json = utils::json::load_from_file(filepath);
 		if (json.contains("@meta"))
 		{
 			auto& meta = json["@meta"];
-			 if (meta.contains("name"))
-			 {
-				 result.set_name(meta["name"].get<std::string>());
-			 }
-			 if (meta.contains("dark"))
-			 {
-				 result.set_dark(meta["dark"].get<bool>());
-			 }
+			if (meta.contains("name"))
+			{
+				result.set_name(meta["name"].get<std::string>());
+			}
+			if (meta.contains("dark"))
+			{
+				result.set_dark(meta["dark"].get<bool>());
+			}
 		}
 		if (json.contains("colors"))
 		{
@@ -243,6 +241,11 @@ namespace vt
 			}
 		}
 		return result;
+	}
+
+	theme theme::load_from_file(const std::filesystem::path& filepath)
+	{
+		return load_from_json(utils::json::load_from_file(filepath));
 	}
 
 	std::optional<theme_color> theme::to_theme_color(const std::string& name)

@@ -1,10 +1,14 @@
 #pragma once
+#include <string>
+#include <optional>
 #include <impl/serializable.hpp>
 
 namespace vt
 {
 	struct app_settings : public impl::serializable
 	{
+		///@brief The name of the theme to use, if not set the default theme will be used
+		std::optional<std::string> theme_name;
 		float font_size = 16.0f;
 		float thumbnail_size = 45.0f;
 		bool load_thumbnails = true;

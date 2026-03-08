@@ -29,6 +29,7 @@ namespace vt
 
 		bool load_accounts();
 		bool load_settings();
+		void load_theme();
 		void save_settings();
 		void save_project();
 		void save_project_as(const std::filesystem::path& filepath);
