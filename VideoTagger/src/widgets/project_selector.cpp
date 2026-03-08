@@ -239,46 +239,44 @@ namespace vt::widgets
 				std::string menu_name = fmt::format("{} Delete", icons::delete_);
 				if (std::filesystem::is_regular_file(project.path) and project.path.extension() == std::string(".") + project::extension and ImGui::MenuItem(menu_name.c_str()))
 				{
-					const SDL_MessageBoxButtonData buttons[] = {
-						// flags, buttonid, text
-						{ SDL_MESSAGEBOX_BUTTON_ESCAPEKEY_DEFAULT, 0, ctx_.lang->get("cancel").c_str() },
-						{ SDL_MESSAGEBOX_BUTTON_RETURNKEY_DEFAULT, 1, "Delete" }
+					messagebox_data data{};
+					data.icon = messagebox_icon::warning;
+					data.buttons = {
+						{ 0, ctx_.lang->get("cancel") },
+						{ 1, ctx_.lang->get("delete") }
 					};
-
-					SDL_MessageBoxData data{};
-					data.flags = SDL_MESSAGEBOX_WARNING;
-
-					//TODO: Replace title
-					data.buttons = buttons;
-					data.numbuttons = sizeof(buttons) / sizeof(buttons[0]);
+					data.cancel_button_id = 0;
+					data.default_button_id = 1;
+					//TODO: Replace this title
 					data.title = "VideoTagger";
-					auto message = "Are you sure you want to delete the project file?\n\nFilepath:\n" + std::filesystem::absolute(project.path).string();
-					data.message = message.c_str();
-					int buttonid{};
-					SDL_ShowMessageBox(&data, &buttonid);
-
-					switch (buttonid)
+					data.message = "Are you sure you want to delete the project file?\n\nFilepath:\n" + std::filesystem::absolute(project.path).u8string();
+					data.callback = [this, project](int id)
 					{
-						case 1:
+						auto proj_path = project.path.u8string();
+						switch (id)
 						{
-							debug::log("Deleting project file: {}", project.path.u8string());
-							std::error_code ec{};
-							if (std::filesystem::remove(project.path, ec))
+							case 1:
 							{
-								projects_.erase(std::find(projects_.begin(), projects_.end(), project));
-								ctx_.dispatch_event<project_list_changed_event>(event_source_);
+								debug::log("Deleting project file: {}", proj_path);
+								std::error_code ec{};
+								if (std::filesystem::remove(project.path, ec))
+								{
+									projects_.erase(std::find(projects_.begin(), projects_.end(), project));
+									ctx_.dispatch_event<project_list_changed_event>(event_source_);
+								}
+								else
+								{
+									debug::error("Project file couldn't be deleted: {}", proj_path);
+									auto message = "Project file couldn't be deleted\n\nFilepath:\n" + proj_path;
+									message += "\nReason:\n" + ec.message() + "\nCode: " + std::to_string(ec.value());
+									messagebox::show("VideoTagger", message, messagebox_icon::error);
+								}
 							}
-							else
-							{
-								debug::error("Project file couldn't be deleted: {}", project.path.u8string());
-								auto message = "Project file couldn't be deleted\n\nFilepath:\n" + project.path.u8string();
-								message += "\nReason:\n" + ec.message() + "\nCode: " + std::to_string(ec.value());
-								SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "VideoTagger", message.c_str(), nullptr);
-							}
-
+							break;
+							default: break;
 						}
-						break;
-					}
+					};
+					messagebox::show(data);					
 				}
 			}
 			ImGui::EndPopup();
