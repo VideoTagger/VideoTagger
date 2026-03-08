@@ -4,9 +4,6 @@
 
 extern "C"
 {
-	#include <libavutil/imgutils.h>
-	#include <libavutil/hwcontext.h>
-	#include <libavutil/pixdesc.h>
 	#include <libswscale/swscale.h>
 }
 #include "video_decoder.hpp"
