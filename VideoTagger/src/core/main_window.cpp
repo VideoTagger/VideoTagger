@@ -1940,7 +1940,9 @@ namespace vt
 							auto name = utils::string::to_titlecase(path.stem().u8string());
 							if (ImGui::MenuItem(name.c_str()))
 							{
+								auto filename = path.stem().string();
 								auto new_theme = theme::load_from_file(path);
+								ctx_.app_settings.theme_name = filename;
 								ctx_.change_theme(new_theme);
 							}
 						}
@@ -1954,7 +1956,9 @@ namespace vt
 
 							if (ImGui::MenuItem(name.c_str()))
 							{
+								auto filename = path.stem().string();
 								auto new_theme = theme::load_from_file(path);
+								ctx_.app_settings.theme_name = filename;
 								ctx_.change_theme(new_theme);
 							}
 						}
