@@ -18,7 +18,7 @@ namespace vt::ui
 		modal_popup{ "segment-insert", open, ImGuiWindowFlags_NoTitleBar},
 		insert_request_event_data_{ event_data.storage(), event_data.tag(), event_data.start(), event_data.end(), event_data.user_customization(), event_data.ignore_conflicts() },
 		tag_names_{ tags }, min_timestamp_{ min_timestamp }, max_timestamp_{ max_timestamp }, start_{ event_data.start() }, end_{ event_data.end() },
-		tag_combo_{ "##TagName", tag_names_ }
+		tag_combo_{ "##TagName", tag_names_ }, event_source_{ event_data.source() }
 	{
 		auto it = std::find(tag_names_.begin(), tag_names_.end(), insert_request_event_data_.tag());
 		tag_combo_.set_selected(it == tag_names_.end() ? 0 : std::distance(tag_names_.begin(), it));
@@ -27,7 +27,7 @@ namespace vt::ui
 	void segment_insert_popup::on_display()
 	{
 		set_display_name(ctx_.lang->get("popup.segment_insert.title"));
-		ctx_.dispatch_event<playback_suspend_request_event>(insert_request_event_data_.source(), ctx_.get_window<widgets::video_player>());
+		ctx_.dispatch_event<playback_suspend_request_event>(event_source_, ctx_.get_window<widgets::video_player>());
 	}
 
 	void segment_insert_popup::on_render()
@@ -70,7 +70,7 @@ namespace vt::ui
 				accepted_ = true;
 				close();
 				ctx_.dispatch_event<segment_insert_request_event>(
-					insert_request_event_data_.source(), insert_request_event_data_.storage(),
+					event_source_, insert_request_event_data_.storage(),
 					inserted_tag, start_, end_, false, false
 				);
 			}
@@ -87,11 +87,11 @@ namespace vt::ui
 		if (!accepted_)
 		{
 			ctx_.dispatch_event<segment_inserted_event>(
-				insert_request_event_data_.source(), insert_request_event_data_.storage(), insert_request_event_data_.tag(),
+				event_source_, insert_request_event_data_.storage(), insert_request_event_data_.tag(),
 				insert_request_event_data_.start(), insert_request_event_data_.end(), invalid_segment_id, false
 			);
 		}
 
-		ctx_.dispatch_event<playback_resume_request_event>(insert_request_event_data_.source(), ctx_.get_window<widgets::video_player>());
+		ctx_.dispatch_event<playback_resume_request_event>(event_source_, ctx_.get_window<widgets::video_player>());
 	}
 }

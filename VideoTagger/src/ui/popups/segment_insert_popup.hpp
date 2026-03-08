@@ -6,6 +6,7 @@
 #include <ui/widgets/combo.hpp>
 #include <tags/tag_timeline.hpp>
 #include <events/timeline/segment_insert_request_event.hpp>
+#include <events/event_source.hpp>
 
 namespace vt::ui
 {
@@ -17,6 +18,7 @@ namespace vt::ui
 		timestamp min_timestamp, timestamp max_timestamp, std::optional<bool*> open = std::nullopt);
 
 	private:
+		event_source event_source_;
 		segment_insert_request_event insert_request_event_data_;
 		bool accepted_ = false;
 		std::vector<std::string> tag_names_;

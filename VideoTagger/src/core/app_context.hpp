@@ -37,6 +37,7 @@
 #include <ui/popups/segments_move_conflict_popup.hpp>
 #include <ui/popups/segment_insert_conflict_popup.hpp>
 #include <ui/popups/segment_insert_popup.hpp>
+#include <ui/popups/tag_rename_failed_popup.hpp>
 #include <ui/popups/messagebox_popup.hpp>
 
 #include <ui/ui_registry.hpp>
@@ -102,6 +103,7 @@ namespace vt
 		std::unique_ptr<ui::segments_move_conflict_popup> segments_move_conflict_popup;
 		std::unique_ptr<ui::segment_insert_conflict_popup> segment_insert_conflict_popup;
 		std::unique_ptr<ui::segment_insert_popup> segment_insert_popup;
+		std::unique_ptr<ui::tag_rename_failed_popup> tag_rename_failed_popup;
 
 		std::filesystem::path projects_list_filepath = storage_path() / std::filesystem::path("projects").replace_extension("json");
 		std::filesystem::path app_settings_filepath = storage_path() / std::filesystem::path("settings").replace_extension("json");

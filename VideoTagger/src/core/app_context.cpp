@@ -15,6 +15,7 @@
 #include <widgets/video_player.hpp>
 #include <widgets/timeline.hpp>
 #include <ui/windows/inspector.hpp>
+#include <ui/windows/tag_manager.hpp>
 #include <ui/popups/messagebox_popup.hpp>
 
 #ifdef _DEBUG
@@ -59,6 +60,9 @@ namespace vt
 
 		auto& inspector = create_window<ui::windows::inspector>();
 		inspector.set_opened(true);
+
+		auto& tag_manager = create_window<ui::windows::tag_manager>();
+		tag_manager.set_opened(true);
 
 #ifdef _DEBUG
 		auto& sandbox = create_window<ui::windows::sandbox>();

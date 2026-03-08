@@ -1,8 +1,4 @@
 #pragma once
-#include <optional>
-#include <limits>
-#include <ui/icons.hpp>
-#include <fmt/format.h>
 #include <ui/window.hpp>
 #include <tags/tag_timeline.hpp>
 

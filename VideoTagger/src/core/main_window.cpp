@@ -2,9 +2,7 @@
 #include "main_window.hpp"
 #include "app_context.hpp"
 #include <fmt/format.h>
-
-#include <widgets/widgets.hpp>
-#include <widgets/tag_manager.hpp>
+#include <ui/windows/tag_manager.hpp>
 #include <widgets/video_widget.hpp>
 #include <widgets/video_timeline.hpp>
 #include <widgets/video_player.hpp>
@@ -87,12 +85,6 @@ extern "C"
 
 namespace vt
 {
-	//TODO: tag_manager needs to be reworked and this removed
-	static bool show_tag_rename_failed_popup = false;
-	static std::optional<widgets::tag_rename_data> tag_rename;
-	static std::optional<widgets::tag_delete_data> tag_delete;
-	static tag_validate_result tag_rename_failed_reason;
-
 	static void show_debug_info()
 	{
 		SDL_version compiled;
@@ -343,20 +335,16 @@ namespace vt
 
 		ctx_.add_event_listener<tag_rename_request_event>([event_source = event_source_](const tag_rename_request_event& event)
 		{
-			tag_rename->processed = true;
-
 			auto& project = *ctx_.current_project;
 
 			auto rename_result = project.tags.rename(event.tag_name(), event.new_name());
 
 			if (!rename_result.inserted)
 			{
-				show_tag_rename_failed_popup = true;
-				tag_rename_failed_reason = rename_result.validation_result;
+				//TODO: maybe should display a popup
 			}
 			else
 			{
-				tag_rename.reset();
 				ctx_.is_project_dirty = true;
 			}
 
@@ -365,7 +353,11 @@ namespace vt
 
 		ctx_.add_event_listener<tag_renamed_event>([event_source = event_source_](const tag_renamed_event& event)
 		{
-			if (!event.renamed()) return;
+			if (!event.renamed())
+			{
+				ctx_.tag_rename_failed_popup = ui::new_popup<ui::tag_rename_failed_popup>(event);
+				return;
+			}
 
 			auto& project = *ctx_.current_project;
 			const auto& old_name = event.tag_name();
@@ -399,9 +391,6 @@ namespace vt
 			}
 
 			ctx_.dispatch_event<tag_deleted_event>(event_source, event.storage(), event.tag_name(), deleted);
-
-			//TODO: remove this after reworking tag_manager
-			tag_delete.reset();
 		});
 
 		ctx_.add_event_listener<tag_deleted_event>([event_source = event_source_](const tag_deleted_event& event)
@@ -2437,69 +2426,6 @@ namespace vt
 			}
 		}
 
-		if (ctx_.win_cfg.show_tag_manager_window)
-		{
-			
-			widgets::draw_tag_manager_widget(ctx_.current_project->tags, tag_rename, tag_delete, ctx_.is_project_dirty, ctx_.win_cfg.show_tag_manager_window);
-
-			static auto rename_failed_popup = [](const std::string& id, const widgets::tag_rename_data& data, tag_validate_result fail_reason)
-			{
-				static constexpr ImVec2 button_size = { 55, 30 };
-
-				bool return_value = false;
-
-				auto& style = ImGui::GetStyle();
-				ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 7);
-				ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, style.WindowPadding * 2);
-				ImGui::SetNextWindowPos(ImGui::GetMainViewport()->GetCenter(), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
-				auto flags = ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoMove;
-
-				if (ImGui::BeginPopupModal(id.c_str(), nullptr, flags))
-				{
-					ImGui::Text("Failed to rename tag \"%s\" to \"%s\"", data.old_name.c_str(), data.new_name.c_str());
-
-					std::string error_text;
-					switch (fail_reason)
-					{
-					case vt::tag_validate_result::already_exists: error_text = fmt::format("Tag \"{}\" already exists", data.new_name); break;
-					case vt::tag_validate_result::invalid_name: error_text = "Invalid name"; break;
-					case vt::tag_validate_result::too_long: error_text = fmt::format("Name can be at most {} characters long", tag_storage::max_tag_name_length); break;
-					default: error_text = "Invalid name"; break;
-					}
-					ImGui::TextDisabled("%s", error_text.c_str());
-					ImGui::NewLine();
-					auto area_size = ImGui::GetWindowSize();
-
-					ImGui::SetCursorPosX(area_size.x / 2 - button_size.x / 2);
-					if (ImGui::Button("OK", button_size))
-					{
-						return_value = true;
-						ImGui::CloseCurrentPopup();
-					}
-					ImGui::EndPopup();
-				}
-
-				ImGui::PopStyleVar(2);
-
-				return return_value;
-			};
-
-			//TODO: rewrite to use the popup class
-			if (show_tag_rename_failed_popup)
-			{
-				if (tag_rename.has_value())
-				{
-					ImGui::OpenPopup("Rename Failed");
-					if (rename_failed_popup("Rename Failed", *tag_rename, tag_rename_failed_reason))
-					{
-						show_tag_rename_failed_popup = false;
-					}
-				}
-			}
-		}
-
-		//TODO: Add base virtual class that has render(bool&) method instead of this
-
 		ctx_.tag_importer.render(ctx_.win_cfg.show_tag_importer_window);
 
 		if (ctx_.win_cfg.show_options_window)
@@ -2515,12 +2441,7 @@ namespace vt
 
 		if (ctx_.segments_move_conflict_popup != nullptr)
 		{
-			if (!ctx_.segments_move_conflict_popup->is_open())
-			{
-				ctx_.segments_move_conflict_popup->open();
-			}
-
-			ctx_.segments_move_conflict_popup->render();
+			ctx_.segments_move_conflict_popup->open_and_render(!ctx_.segments_move_conflict_popup->is_open());
 			if (!ctx_.segments_move_conflict_popup->is_open())
 			{
 				ctx_.segments_move_conflict_popup.reset();
@@ -2529,12 +2450,7 @@ namespace vt
 
 		if (ctx_.segment_insert_conflict_popup != nullptr)
 		{
-			if (!ctx_.segment_insert_conflict_popup->is_open())
-			{
-				ctx_.segment_insert_conflict_popup->open();
-			}
-
-			ctx_.segment_insert_conflict_popup->render();
+			ctx_.segment_insert_conflict_popup->open_and_render(!ctx_.segment_insert_conflict_popup->is_open());
 			if (!ctx_.segment_insert_conflict_popup->is_open())
 			{
 				ctx_.segment_insert_conflict_popup.reset();
@@ -2543,11 +2459,19 @@ namespace vt
 
 		if (ctx_.segment_insert_popup != nullptr)
 		{
-			ctx_.segment_insert_popup->open();
-			ctx_.segment_insert_popup->render();
+			ctx_.segment_insert_popup->open_and_render(!ctx_.segment_insert_popup->is_open());
 			if (!ctx_.segment_insert_popup->is_open())
 			{
 				ctx_.segment_insert_popup.reset();
+			}
+		}
+
+		if (ctx_.tag_rename_failed_popup != nullptr)
+		{
+			ctx_.tag_rename_failed_popup->open_and_render(!ctx_.tag_rename_failed_popup->is_open());
+			if (!ctx_.tag_rename_failed_popup->is_open())
+			{
+				ctx_.tag_rename_failed_popup.reset();
 			}
 		}
 
@@ -3124,7 +3048,7 @@ namespace vt
 			auto dock_right_up = ImGui::DockBuilderSplitNode(main_dock_right, ImGuiDir_Up, 0.5f, nullptr, &main_dock_right);
 			
 			ImGui::DockBuilderDockWindow(ctx_.get_window<ui::windows::inspector>().name().c_str(), dock_right_up);
-			ImGui::DockBuilderDockWindow(widgets::tag_manager_window_name().c_str(), main_dock_right);
+			ImGui::DockBuilderDockWindow(ctx_.get_window<ui::windows::tag_manager>().name().c_str(), main_dock_right);
 			ImGui::DockBuilderDockWindow(ctx_.get_window<widgets::shape_attributes>().name().c_str(), main_dock_right);
 			ImGui::DockBuilderDockWindow(ctx_.get_window<widgets::video_group_queue>().name().c_str(), main_dock_down);
 			ImGui::DockBuilderDockWindow(ctx_.get_window<widgets::video_player>().name().c_str(), main_dock_up);

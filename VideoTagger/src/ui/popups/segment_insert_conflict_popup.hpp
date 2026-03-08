@@ -2,6 +2,7 @@
 #include <ui/popup.hpp>
 #include <tags/tag_timeline.hpp>
 #include <events/timeline/segment_insert_request_event.hpp>
+#include <events/event_source.hpp>
 
 namespace vt::ui
 {
@@ -11,6 +12,7 @@ namespace vt::ui
 		segment_insert_conflict_popup(const segment_insert_request_event& event_data, const std::set<segment_id>& conflicting_segments, std::optional<bool*> open = std::nullopt);
 
 	private:
+		event_source event_source_;
 		std::set<segment_id> conflicting_segments_;
 		segment_insert_request_event insert_request_event_data_;
 		bool accepted_{ false };

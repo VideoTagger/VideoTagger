@@ -16,14 +16,14 @@ namespace vt::ui
 		const std::set<segment_id>& conflicting_segments, std::optional<bool*> open) :
 		modal_popup{ "segment-insert-conflict", open, ImGuiWindowFlags_NoTitleBar},
 		insert_request_event_data_{ event_data.storage(), event_data.tag(), event_data.start(), event_data.end(), event_data.user_customization(), event_data.ignore_conflicts() },
-		conflicting_segments_{ conflicting_segments }
+		conflicting_segments_{ conflicting_segments }, event_source_{ event_data.source() }
 	{
 	}
 
 	void segment_insert_conflict_popup::on_display()
 	{
 		set_display_name(ctx_.lang->get("popup.segment_insert_conflict.title"));
-		ctx_.dispatch_event<playback_suspend_request_event>(insert_request_event_data_.source(), ctx_.get_window<widgets::video_player>());
+		ctx_.dispatch_event<playback_suspend_request_event>(event_source_, ctx_.get_window<widgets::video_player>());
 	}
 
 	void segment_insert_conflict_popup::on_render()
@@ -47,11 +47,11 @@ namespace vt::ui
 				accepted_ = true;
 				close();
 				ctx_.dispatch_event<segment_insert_request_event>(
-					insert_request_event_data_.source(), insert_request_event_data_.storage(), insert_request_event_data_.tag(),
+					event_source_, insert_request_event_data_.storage(), insert_request_event_data_.tag(),
 					insert_request_event_data_.start(), insert_request_event_data_.end(), false, true
 				);
+				break;
 			}
-			break;
 			default: close(); break;
 			}
 		}, true);
@@ -62,11 +62,11 @@ namespace vt::ui
 		if (!accepted_)
 		{
 			ctx_.dispatch_event<segment_inserted_event>(
-				insert_request_event_data_.source(), insert_request_event_data_.storage(), insert_request_event_data_.tag(),
+				event_source_, insert_request_event_data_.storage(), insert_request_event_data_.tag(),
 				insert_request_event_data_.start(), insert_request_event_data_.end(), invalid_segment_id, false
 			);
 		}
 
-		ctx_.dispatch_event<playback_resume_request_event>(insert_request_event_data_.source(), ctx_.get_window<widgets::video_player>());
+		ctx_.dispatch_event<playback_resume_request_event>(event_source_, ctx_.get_window<widgets::video_player>());
 	}
 }
