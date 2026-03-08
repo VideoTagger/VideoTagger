@@ -262,10 +262,26 @@ namespace vt
 
 		bool is_hardware_acceleration_enabled() const;
 
+		/**
+		 * @brief Open a video file and prepare it for decoding
+		 *
+		 * @param filepath The path to the video file to open.
+		 * @param accelerated If true, hardware acceleration will be used if available.
+		 *
+		 * @return true if the file was successfully opened, false otherwise.
+		 */
 		bool open(const std::filesystem::path& path, bool accelerated);
+
+		/**
+		 * @brief Close the currently opened video file and release all resources.
+		 */
 		void close();
 
-		// Will read the file until it encounters a packet that it can save to one of the packet queues or reaches eof.
+		/**
+		 * @brief Read the next packet from the video file and save it to the corresponding packet queue.
+		 * 
+		 * @return The result of the read operation. If successful, the packet will be added to the corresponding packet queue.
+		 */
 		[[nodiscard]] decoder_read_result read_packet();
 
 		/**
@@ -288,8 +304,11 @@ namespace vt
 		void discard_all_packets();
 		void discard_all_packets(stream_type type);
 
-		//Seek to the nearest keyframe before or on the timestamp
-		//Discards all packets currently in queues
+		/**
+		 * @brief Seek to the nearest keyframe before or on the timestamp. Discards all packets currently in queues
+		 * 
+		 * @param timestamp The timestamp to seek to
+		 */
 		void seek_keyframe(std::chrono::nanoseconds timestamp);
 
 		[[nodiscard]] bool is_open() const;

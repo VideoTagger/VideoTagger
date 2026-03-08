@@ -178,6 +178,11 @@ namespace vt
 
 	void video_stream::get_thumbnail(gl_texture& texture, std::optional<std::chrono::nanoseconds> timestamp)
 	{
+		if (!is_open())
+		{
+			return;
+		}
+
 		std::optional<std::chrono::nanoseconds> current_ts = current_frame_.has_value() ? std::make_optional(current_frame_->timestamp()) : std::nullopt;
 
 		if (!timestamp.has_value())
@@ -196,6 +201,11 @@ namespace vt
 
 	void video_stream::get_thumbnail(std::vector<uint8_t>& pixels, int width, int height, std::optional<std::chrono::nanoseconds> timestamp)
 	{
+		if (!is_open())
+		{
+			return;
+		}
+
 		std::optional<std::chrono::nanoseconds> current_ts = current_frame_.has_value() ? std::make_optional(current_frame_->timestamp()) : std::nullopt;
 
 		if (!timestamp.has_value())
@@ -212,51 +222,51 @@ namespace vt
 		}
 	}
 
-	void video_stream::clear_yuv_texture(GLuint texture, uint8_t r, uint8_t g, uint8_t b)
-	{
-		thread_local std::vector<uint8_t> y_plane;
-		thread_local std::vector<uint8_t> u_plane;
-		thread_local std::vector<uint8_t> v_plane;
+	//void video_stream::clear_yuv_texture(GLuint texture, uint8_t r, uint8_t g, uint8_t b)
+	//{
+	//	thread_local std::vector<uint8_t> y_plane;
+	//	thread_local std::vector<uint8_t> u_plane;
+	//	thread_local std::vector<uint8_t> v_plane;
 
-		int w{}, h{};
-		//TODO: Implement OpenGL code!!!
-		/*if (SDL_QueryTexture(texture, NULL, NULL, &w, &h) < 0)
-		{
-			debug::error("SDL_QueryTexture failed: {}", SDL_GetError());
-			return;
-		}*/
+	//	int w{}, h{};
+	//	//TODO: Implement OpenGL code!!!
+	//	/*if (SDL_QueryTexture(texture, NULL, NULL, &w, &h) < 0)
+	//	{
+	//		debug::error("SDL_QueryTexture failed: {}", SDL_GetError());
+	//		return;
+	//	}*/
 
-		size_t y_size = w * h;
-		size_t uv_size = (w / 2) * (h / 2);
+	//	size_t y_size = w * h;
+	//	size_t uv_size = (w / 2) * (h / 2);
 
-		if (y_plane.size() != y_size)
-		{
-			y_plane.resize(y_size);
-		}
-		if (u_plane.size() != uv_size)
-		{
-			u_plane.resize(uv_size);
-		}
-		if (v_plane.size() != uv_size)
-		{
-			v_plane.resize(uv_size);
-		}
+	//	if (y_plane.size() != y_size)
+	//	{
+	//		y_plane.resize(y_size);
+	//	}
+	//	if (u_plane.size() != uv_size)
+	//	{
+	//		u_plane.resize(uv_size);
+	//	}
+	//	if (v_plane.size() != uv_size)
+	//	{
+	//		v_plane.resize(uv_size);
+	//	}
 
-		uint8_t y = static_cast<uint8_t>(0.257 * r + 0.504 * g + 0.098 * b + 16);
-		uint8_t u = static_cast<uint8_t>(-0.148 * r - 0.291 * g + 0.439 * b + 128);
-		uint8_t v = static_cast<uint8_t>(0.439 * r - 0.368 * g - 0.071 * b + 128);
-		
-		std::memset(y_plane.data(), y, y_size);
-		std::memset(u_plane.data(), u, uv_size);
-		std::memset(v_plane.data(), v, uv_size);
+	//	uint8_t y = static_cast<uint8_t>(0.257 * r + 0.504 * g + 0.098 * b + 16);
+	//	uint8_t u = static_cast<uint8_t>(-0.148 * r - 0.291 * g + 0.439 * b + 128);
+	//	uint8_t v = static_cast<uint8_t>(0.439 * r - 0.368 * g - 0.071 * b + 128);
+	//	
+	//	std::memset(y_plane.data(), y, y_size);
+	//	std::memset(u_plane.data(), u, uv_size);
+	//	std::memset(v_plane.data(), v, uv_size);
 
-		//TODO: Implement OpenGL code!!!
-		/*if (SDL_UpdateYUVTexture(texture, NULL, y_plane.data(), w, u_plane.data(), w / 2, v_plane.data(), w / 2) < 0)
-		{
-			debug::error("SDL_UpdateYUVTexture failed: {}", SDL_GetError());
-			return;
-		}*/
-	}
+	//	//TODO: Implement OpenGL code!!!
+	//	/*if (SDL_UpdateYUVTexture(texture, NULL, y_plane.data(), w, u_plane.data(), w / 2, v_plane.data(), w / 2) < 0)
+	//	{
+	//		debug::error("SDL_UpdateYUVTexture failed: {}", SDL_GetError());
+	//		return;
+	//	}*/
+	//}
 
 	bool video_stream::update_current_frame(std::chrono::nanoseconds target_timestamp, bool skip_disposable)
 	{

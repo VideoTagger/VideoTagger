@@ -24,7 +24,19 @@ namespace vt
 		video_stream& operator=(const video_stream&) = delete;
 		video_stream& operator=(video_stream&&) = default;
 
+		/**
+		 * @brief Open a video file and prepare it for decoding
+		 * 
+		 * @param filepath The path to the video file to open.
+		 * @param accelerated If true, hardware acceleration will be used if available.
+		 * 
+		 * @return true if the file was successfully opened, false otherwise.
+		 */
 		bool open_file(const std::filesystem::path& filepath, bool accelerated);
+
+		/**
+		 * @brief Close the video stream and release all resources.
+		 */
 		void close();
 
 		/**
@@ -50,7 +62,7 @@ namespace vt
 		void seek(std::chrono::nanoseconds target_timestamp);
 
 		/**
-		 * @brief Update the current frame to the frame with the specified timestamp and update the texture with it if it is necessary.
+		 * @brief Update the current frame to the frame with the specified timestamp and update the texture with it if it's necessary.
 		 * 
 		 * The texture will only be updated if the current frame changes or skip_disposable is true.
 		 * 
@@ -64,11 +76,11 @@ namespace vt
 		bool update_frame(gl_texture& texture, std::chrono::nanoseconds target_timestamp, bool force_update = false, bool skip_disposable = false);
 		
 		/**
-		 * @brief Update the current frame to the frame with the specified timestamp and update the given pixels with it if it is necessary.
+		 * @brief Update the current frame to the frame with the specified timestamp and update the given pixel array with it if it's necessary.
 		 *
 		 * The pixels will only be updated if the current frame changes or skip_disposable is true.
 		 *
-		 * @param pixels The pixels to update with the current frame.
+		 * @param pixels The pixel array to update with the current frame. If the array doesn't match the required size it will be resized.
 		 * @param width The width of the image.
 		 * @param height The height of the image.
 		 * @param target_timestamp The timestamp of the frame to update to.
@@ -99,9 +111,9 @@ namespace vt
 		bool update_from_current_frame(gl_texture& texture);
 
 		/**
-		 * @brief Update the given pixels with the current frame
+		 * @brief Update the given pixel array with the current frame
 		 *
-		 * @param pixels The pixels to update with the current frame.
+		 * @param pixels The pixel array to update with the current frame. If the array doesn't match the required size it will be resized.
 		 * @param width The width of the image.
 		 * @param height The height of the image.
 		 *
@@ -124,11 +136,27 @@ namespace vt
 		double fps() const;
 		std::chrono::nanoseconds frame_time() const;
 
+		/**
+		 * @brief Generate a thumbnail of the open video and save it in the given texture. Does nothing if no video is open.
+		 * 
+		 * @param texture The texture to store the thumbnail in. The thumbnail will be scaled to fit the texture.
+		 * @param timestamp If has value, the thumbnail will be generated from the frame at the specified timestamp.
+		 *  Otherwise, it will be generated from the middle frame of the video.
+		 */
 		void get_thumbnail(gl_texture& texture, std::optional<std::chrono::nanoseconds> timestamp = std::nullopt);
+
+		/**
+		 * @brief Generate a thumbnail of the open video and save it in the given pixel array. Does nothing if no video is open.
+		 *
+		 * @param pixels The pixel array to store the thumbnail in. If the array doesn't match the required size it will be resized.
+		 * @param width The width of the thumbnail.
+		 * @param height The height of the thumbnail.
+		 * @param timestamp If has value, the thumbnail will be generated from the frame at the specified timestamp.
+		 *  Otherwise, it will be generated from the middle frame of the video.
+		 */
 		void get_thumbnail(std::vector<uint8_t>& pixels, int width, int height, std::optional<std::chrono::nanoseconds> timestamp = std::nullopt);
 
-		//TODO: should be somewhere in utils
-		static void clear_yuv_texture(GLuint texture, uint8_t r, uint8_t g, uint8_t b);
+		//static void clear_yuv_texture(GLuint texture, uint8_t r, uint8_t g, uint8_t b);
 
 	private:
 
