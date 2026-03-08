@@ -134,6 +134,11 @@ namespace vt
 		return frame_->flags & AV_FRAME_FLAG_KEY;
 	}
 
+	bool video_frame::is_hardware() const
+	{
+		return frame_->hw_frames_ctx != nullptr;
+	}
+
 	packet_wrapper::packet_wrapper() : packet_{ av_packet_alloc() }, type_{ stream_type::unknown }
 	{
 		if (packet_ == nullptr)
@@ -518,7 +523,7 @@ namespace vt
 				const AVCodec* codec = codecs_array[i];
 				pixel_format_ = AV_PIX_FMT_NONE;
 
-				static constexpr AVHWDeviceType hw_device_types[]
+				static constexpr std::array<AVHWDeviceType, 12> hw_device_types
 				{
 					AV_HWDEVICE_TYPE_CUDA,
 					AV_HWDEVICE_TYPE_VULKAN,
@@ -536,6 +541,11 @@ namespace vt
 
 				for (AVHWDeviceType device_type : hw_device_types)
 				{
+					if (pixel_format_ != AV_PIX_FMT_NONE)
+					{
+						break;
+					}
+
 					for (int j = 0;; j++)
 					{
 						const AVCodecHWConfig* config = avcodec_get_hw_config(codec, j);

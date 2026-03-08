@@ -27,7 +27,7 @@ namespace vt
 
 	void video_stream::close()
 	{
-		frame_converter_.reset();
+		frame_converter_ = frame_converter();
 		frame_buffer_ = std::deque<video_frame>{};
 		current_frame_.reset();
 		
@@ -113,16 +113,12 @@ namespace vt
 
 	bool video_stream::update_frame(gl_texture& texture, std::chrono::nanoseconds target_timestamp, bool force_update, bool skip_disposable)
 	{
-		static thread_local std::vector<uint8_t> conversion_buffer;
-		
-		bool frame_updated = update_frame(conversion_buffer, texture.width(), texture.height(), target_timestamp, force_update, skip_disposable);
-
-		if (frame_updated)
+		if (!update_current_frame(target_timestamp, skip_disposable) and !force_update)
 		{
-			texture.set_pixels(conversion_buffer.data());
+			return false;
 		}
 
-		return frame_updated;
+		return update_from_current_frame(texture);
 	}
 
 	bool video_stream::update_frame(std::vector<uint8_t>& pixels, int width, int height, std::chrono::nanoseconds target_timestamp, bool force_update, bool skip_disposable)
@@ -132,14 +128,7 @@ namespace vt
 			return false;
 		}
 
-		auto& frame = *current_frame_;
-		if (frame_converter_ == std::nullopt or frame_converter_->destination_width() != width or frame_converter_->destination_height() != height)
-		{
-			frame_converter_ = frame_converter(width_, height_, frame.pixel_format(), width, height, AV_PIX_FMT_RGB24);
-		}
-
-		frame_converter_->convert_frame(frame, pixels);
-		return true;
+		return update_from_current_frame(pixels, width, height);
 	}
 
 	bool video_stream::is_open() const
@@ -301,5 +290,29 @@ namespace vt
 		}
 
 		return true;
+	}
+
+	bool video_stream::update_from_current_frame(gl_texture& texture)
+	{
+		static thread_local std::vector<uint8_t> conversion_buffer;
+
+		bool frame_updated = update_from_current_frame(conversion_buffer, texture.width(), texture.height());
+
+		if (frame_updated)
+		{
+			texture.set_pixels(conversion_buffer.data());
+		}
+
+		return frame_updated;
+	}
+
+	bool video_stream::update_from_current_frame(std::vector<uint8_t>& pixels, int width, int height)
+	{
+		if (!current_frame_.has_value())
+		{
+			return false;
+		}
+
+		return frame_converter_.convert_frame(*current_frame_, pixels, width, height, AV_PIX_FMT_RGB24);
 	}
 }

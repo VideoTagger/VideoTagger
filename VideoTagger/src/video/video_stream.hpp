@@ -37,11 +37,77 @@ namespace vt
 		 * @return true if a frame was buffered, false if no more frames could be buffered (e.g. end of file reached) or there was an error.
 		 */
 		bool buffer_frame(bool skip_disposable = false, std::optional<std::chrono::nanoseconds> target_timestamp = std::nullopt);
+
+		/**
+		 * @brief Seek to the frame with the specified timestamp or the closest frame before it.
+		 * 
+		 * The frame buffer will be cleared if the timestamp is not within the range (current_frame->timestamp(); current_frame->timestamp() + seek_threshold]
+		 * or current_frame has no value.
+		 * current_frame has no value after calling this function so either update_current_frame or update_frame must be called to set it.
+		 * 
+		 * @param target_timestamp The timestamp to seek to.
+		 */
 		void seek(std::chrono::nanoseconds target_timestamp);
 
+		/**
+		 * @brief Update the current frame to the frame with the specified timestamp and update the texture with it if it is necessary.
+		 * 
+		 * The texture will only be updated if the current frame changes or skip_disposable is true.
+		 * 
+		 * @param texture The texture to update with the current frame.
+		 * @param target_timestamp The timestamp of the frame to update to.
+		 * @param force_update If true, the texture will be updated even if the current frame does not change.
+		 * @param skip_disposable If true, disposable frames (non-reference frames) will be skipped. If the frame at target_timestamp is disposable it won't be skipped.
+		 * 
+		 * @return true if the current frame was updated, false otherwise.
+		 */
 		bool update_frame(gl_texture& texture, std::chrono::nanoseconds target_timestamp, bool force_update = false, bool skip_disposable = false);
+		
+		/**
+		 * @brief Update the current frame to the frame with the specified timestamp and update the given pixels with it if it is necessary.
+		 *
+		 * The pixels will only be updated if the current frame changes or skip_disposable is true.
+		 *
+		 * @param pixels The pixels to update with the current frame.
+		 * @param width The width of the image.
+		 * @param height The height of the image.
+		 * @param target_timestamp The timestamp of the frame to update to.
+		 * @param force_update If true, the texture will be updated even if the current frame does not change.
+		 * @param skip_disposable If true, disposable frames (non-reference frames) will be skipped. If the frame at target_timestamp is disposable it won't be skipped.
+		 *
+		 * @return true if the current frame was updated, false otherwise.
+		 */
 		bool update_frame(std::vector<uint8_t>& pixels, int width, int height, std::chrono::nanoseconds target_timestamp, bool force_update = false, bool skip_disposable = false);
+		
+		/**
+		 * @brief Update the current frame to the frame with the specified timestamp if it is necessary.
+		 * 
+		 * @param target_timestamp The timestamp of the frame to update to.
+		 * @param skip_disposable If true, disposable frames (non-reference frames) will be skipped. If the frame at target_timestamp is disposable it won't be skipped.
+		 * 
+		 * @return true if the current frame was updated, false otherwise.
+		 */
 		bool update_current_frame(std::chrono::nanoseconds target_timestamp, bool skip_disposable);
+		
+		/**
+		 * @brief Update the given texture with the current frame
+		 * 
+		 * @param texture The texture to update with the current frame.
+		 * 
+		 * @return true if the texture was updated, false if there was no current frame or an error occurred.
+		 */
+		bool update_from_current_frame(gl_texture& texture);
+
+		/**
+		 * @brief Update the given pixels with the current frame
+		 *
+		 * @param pixels The pixels to update with the current frame.
+		 * @param width The width of the image.
+		 * @param height The height of the image.
+		 *
+		 * @return true if the pixels were updated, false if there was no current frame or an error occurred.
+		 */
+		bool update_from_current_frame(std::vector<uint8_t>& pixels, int width, int height);
 
 		[[nodiscard]] bool is_open() const;
 
@@ -67,7 +133,7 @@ namespace vt
 	private:
 
 		video_decoder decoder_;
-		std::optional<frame_converter> frame_converter_;
+		frame_converter frame_converter_;
 		std::deque<video_frame> frame_buffer_;
 		std::optional<video_frame> current_frame_;
 		size_t frame_buffer_size_ = 16;

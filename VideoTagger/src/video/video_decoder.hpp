@@ -66,6 +66,8 @@ namespace vt
 
 		[[nodiscard]] bool is_keyframe() const;
 
+		[[nodiscard]] bool is_hardware() const;
+
 		[[nodiscard]] AVFrame* unwrapped();
 		[[nodiscard]] const AVFrame* unwrapped() const;
 
@@ -321,7 +323,6 @@ namespace vt
 		[[nodiscard]] AVFormatContext* av_format_context();
 
 	private:
-
 		AVFormatContext* format_context_{};
 		AVPixelFormat pixel_format_{ AV_PIX_FMT_NONE };
 		AVBufferRef* hw_device_ctx_{};
@@ -406,7 +407,7 @@ namespace vt
 				result.error = decoder_decode_result::error;
 				break;
 			}
-
+			
 		} while (true);
 
 		return result;
@@ -418,21 +419,12 @@ namespace vt
 		AVPacket* unwrapped_packet = packet.unwrapped();
 
 		int result = avcodec_send_packet(codec_context, unwrapped_packet);
-		if (result == 0)
+		switch (result)
 		{
-			return codec_send_result::success;
-		}
-		else if (result == AVERROR(EAGAIN))
-		{
-			return codec_send_result::needs_receive;
-		}
-		else if (result == AVERROR_EOF)
-		{
-			return codec_send_result::flushed;
-		}
-		else
-		{
-			return codec_send_result::error;
+			case 0: return codec_send_result::success;
+			case AVERROR(EAGAIN): return codec_send_result::needs_receive;
+			case AVERROR_EOF: return codec_send_result::flushed;
+			default: return codec_send_result::error;
 		}
 	}
 
@@ -442,48 +434,12 @@ namespace vt
 		AVFrame* unwrapped_frame = decoded_packet.unwrapped();
 
 		int result = avcodec_receive_frame(codec_context, unwrapped_frame);
-		if (result == 0)
+		switch (result)
 		{
-			if (unwrapped_frame->format == AV_PIX_FMT_D3D11 ||
-				unwrapped_frame->format == AV_PIX_FMT_DXVA2_VLD ||
-				unwrapped_frame->format == AV_PIX_FMT_CUDA ||
-				unwrapped_frame->format == AV_PIX_FMT_VAAPI ||
-				unwrapped_frame->format == AV_PIX_FMT_VDPAU ||
-				unwrapped_frame->format == AV_PIX_FMT_VIDEOTOOLBOX)
-			{
-				AVFrame* sw_frame = av_frame_alloc();
-				if (sw_frame == nullptr)
-				{
-					return codec_receive_result::error;
-				}
-
-				if (av_hwframe_transfer_data(sw_frame, unwrapped_frame, 0) < 0)
-				{
-					av_frame_free(&sw_frame);
-					return codec_receive_result::error;
-				}
-
-				sw_frame->pts = unwrapped_frame->pts;
-				sw_frame->duration = unwrapped_frame->duration;
-				sw_frame->time_base = unwrapped_frame->time_base;
-
-				av_frame_unref(unwrapped_frame);
-				av_frame_move_ref(unwrapped_frame, sw_frame);
-				av_frame_free(&sw_frame);
-			}
-			return codec_receive_result::success;
-		}
-		else if (result == AVERROR(EAGAIN))
-		{
-			return codec_receive_result::needs_more_packets;
-		}
-		else if (result == AVERROR_EOF)
-		{
-			return codec_receive_result::flushed;
-		}
-		else
-		{
-			return codec_receive_result::error;
+			case 0: return codec_receive_result::success;
+			case AVERROR(EAGAIN): return codec_receive_result::needs_more_packets;
+			case AVERROR_EOF: return codec_receive_result::flushed;
+			default: return codec_receive_result::error;
 		}
 	}
 }
