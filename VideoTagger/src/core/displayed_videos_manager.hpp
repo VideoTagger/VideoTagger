@@ -60,9 +60,14 @@ namespace vt
 		double max_framerate() const;
 		std::chrono::nanoseconds min_frametime() const;
 
-		///return the timestamp of the closest future frame of all the videos
+		std::chrono::nanoseconds frame_clock_current_timestamp() const;
+
+		///@return the timestamp of the closest future frame of all the videos
 		std::chrono::nanoseconds next_frame_timestamp() const;
-		///return the timestamp of the closest past frame of all the videos
+
+		std::chrono::nanoseconds current_frame_timestamp() const;
+
+		///@return the timestamp of the closest past frame of all the videos
 		std::chrono::nanoseconds previous_frame_timestamp() const;
 	
 		iterator begin();
@@ -73,12 +78,14 @@ namespace vt
 		const_iterator cend() const;
 
 	private:
+		using frame_clock = std::chrono::steady_clock;
+
 		container videos_;
 		
 		bool is_playing_{};
 		float speed_{1};
 
-		std::chrono::nanoseconds current_timestamp_{};
-		std::chrono::steady_clock::time_point last_timepoint_;
+		std::chrono::nanoseconds frame_clock_base_timestamp_{};
+		frame_clock::time_point frame_clock_base_timepoint_;
 	};
 }

@@ -1,6 +1,12 @@
-#include <pch.hpp>
 #include "frame_converter.hpp"
+#include <pch.hpp>
 #include <core/debug.hpp>
+
+extern "C"
+{
+	#include <libavutil/hwcontext.h>
+	#include <libavutil/imgutils.h>
+}
 
 namespace vt
 {
@@ -92,7 +98,7 @@ namespace vt
 		}
 
 		int original_linesizes[AV_NUM_DATA_POINTERS];
-		if (av_image_fill_linesizes(original_linesizes, destination_format_, destination_width_))
+		if (av_image_fill_linesizes(original_linesizes, destination_format_, destination_width_) < 0)
 		{
 			return false;
 		}
