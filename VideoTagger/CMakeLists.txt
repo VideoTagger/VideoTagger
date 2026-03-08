@@ -85,13 +85,19 @@ add_subdirectory("${PROJECT_SOURCE_DIR}/vendor/nativefiledialog-extended")
 target_link_libraries(${PROJECT_NAME} PRIVATE nfd)
 
 #target_compile_definitions(${PROJECT_NAME} PRIVATE IMGUI_ENABLE_FREETYPE)
+set("SKIP_INSTALL_ALL" "ON")
 add_subdirectory("${PROJECT_SOURCE_DIR}/vendor/freetype")
 target_link_libraries(${PROJECT_NAME} PRIVATE freetype)
 target_include_directories(${PROJECT_NAME} PRIVATE ${FREETYPE_INCLUDE_DIRS})
 
+set(SDL_CMAKE_DEBUG_POSTFIX "d" CACHE STRING "Name suffix for debug builds") 
 add_subdirectory("${PROJECT_SOURCE_DIR}/vendor/SDL2")
-target_link_libraries(${PROJECT_NAME} PRIVATE SDL2::SDL2 SDL2::SDL2main)
+if(TARGET SDL2::SDL2main)
+    target_link_libraries(${PROJECT_NAME} PRIVATE SDL2::SDL2main)
+endif()
+target_link_libraries(${PROJECT_NAME} PRIVATE SDL2::SDL2)
 
+set("PYBIND11_FINDPYTHON" "ON")
 add_subdirectory("${PROJECT_SOURCE_DIR}/vendor/pybind11")
 target_link_libraries(${PROJECT_NAME} PRIVATE pybind11::embed)
 
@@ -164,15 +170,23 @@ if (WIN32)
 
 	target_link_libraries(${PROJECT_NAME} PRIVATE
 		opengl32 avcodec avformat avutil swscale
-		libssl libcrypto ${PythonLibName}
+		libssl libcrypto
 	)
 
-	string(TOLOWER "${PythonLibName}" PythonLibNameLower)
+	find_package(Python COMPONENTS Interpreter Development REQUIRED)
+	get_filename_component(PYTHON_DLL_DIR "${Python_LIBRARY_DIRS}/../" ABSOLUTE)
+	
+	set(PYTHON_DLL_NAME "python${Python_VERSION_MAJOR}${Python_VERSION_MINOR}.dll")
+	set(PYTHON_DLL_PATH "${PYTHON_DLL_DIR}/${PYTHON_DLL_NAME}")
+	message(STATUS "Python library directories: ${Python_LIBRARY_DIRS}")
+	message(STATUS "Python DLL directory: ${PYTHON_DLL_DIR}")
 
 	file(GLOB DLL_FILES
 		"${PROJECT_SOURCE_DIR}/vendor/FFmpeg/lib/${ARCH}/*.dll"
 		"${PROJECT_SOURCE_DIR}/vendor/openssl/lib/${ARCH}/*.dll"
 	)
+
+	list(APPEND DLL_FILES "${PYTHON_DLL_PATH}")
 
 	foreach(DLL ${DLL_FILES})
 		get_filename_component(DLL_NAME "${DLL}" NAME)
@@ -239,7 +253,7 @@ elseif(UNIX AND NOT APPLE)
 	)
 
 	separate_arguments(PKG_CFLAGS_LIST UNIX_COMMAND "${PKG_CFLAGS}")
-    separate_arguments(SDL2_CFLAGS_LIST UNIX_COMMAND "${SDL2_CFLAGS}")
+	separate_arguments(SDL2_CFLAGS_LIST UNIX_COMMAND "${SDL2_CFLAGS}")
 	separate_arguments(SDL2_LIBS_LIST UNIX_COMMAND "${SDL2_LIBS}")
 
 	target_compile_options(${PROJECT_NAME} PRIVATE ${PKG_CFLAGS} ${SDL2_CFLAGS})
@@ -296,7 +310,7 @@ elseif(APPLE)
 	)
 
 	separate_arguments(PKG_CFLAGS_LIST UNIX_COMMAND "${PKG_CFLAGS}")
-    separate_arguments(SDL2_CFLAGS_LIST UNIX_COMMAND "${SDL2_CFLAGS}")
+	separate_arguments(SDL2_CFLAGS_LIST UNIX_COMMAND "${SDL2_CFLAGS}")
 	separate_arguments(SDL2_LIBS_LIST UNIX_COMMAND "${SDL2_LIBS}")
 
 	target_compile_options(${PROJECT_NAME} PRIVATE ${PKG_CFLAGS} ${SDL2_CFLAGS})
