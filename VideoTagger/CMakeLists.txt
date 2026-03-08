@@ -13,15 +13,18 @@ include(cmake/Embed.cmake)
 set(EMBED_SOURCE_DIR "${PROJECT_SOURCE_DIR}/embeds")
 set(EMBED_INCLUDE_DIR "${CMAKE_BINARY_DIR}/generated")
 set(EMBED_OUTPUT_DIR "${EMBED_INCLUDE_DIR}/embeds")
+set(ASSETS_SOURCE_DIR "${PROJECT_SOURCE_DIR}/assets")
 message(STATUS "Embed source directory: ${EMBED_SOURCE_DIR}")
 message(STATUS "Embed output directory: ${EMBED_OUTPUT_DIR}")
 
+vt_embed_text_file("${ASSETS_SOURCE_DIR}/themes/dark.vttheme" "${EMBED_OUTPUT_DIR}/dark_theme.hpp" "vt::embed" EMBED_GENERATED_FILES)
+#vt_embed_json("${ASSETS_SOURCE_DIR}/themes/light.vttheme" "${EMBED_OUTPUT_DIR}" "vt::embed" EMBED_GENERATED_FILES)
 vt_embed_directory(${EMBED_SOURCE_DIR} ${EMBED_OUTPUT_DIR} "vt::embed" EMBED_GENERATED_FILES)
 
 # About & Licenses
 include(cmake/GenerateAbout.cmake)
 set(LICENSE_DIR "${PROJECT_SOURCE_DIR}/licenses")
-vt_generate_about(${LICENSE_DIR} ${EMBED_OUTPUT_DIR} "vt::embed" ABOUT_GENERATED_FILES)
+vt_generate_about(${LICENSE_DIR} ${EMBED_OUTPUT_DIR} "vt::embed" EMBED_GENERATED_FILES)
 include(cmake/GenerateIcons.cmake)
 set(ICONS_FILE "${PROJECT_SOURCE_DIR}/src/ui/icons.hpp")
 vt_generate_icons("${PROJECT_SOURCE_DIR}/resources/icons.list" "${PROJECT_SOURCE_DIR}/src/ui/icons.hpp" ICONS_GENERATED_FILE)
@@ -55,7 +58,7 @@ file(GLOB vendor_files CONFIGURE_DEPENDS
 
 #list(FILTER source_files EXCLUDE REGEX "third_party/")
 list(APPEND source_files ${vendor_files})
-add_executable(${PROJECT_NAME} ${source_files} ${ABOUT_GENERATED_FILES} ${EMBED_GENERATED_FILES} ${ICONS_GENERATED_FILE})
+add_executable(${PROJECT_NAME} ${source_files} ${EMBED_GENERATED_FILES} ${ICONS_GENERATED_FILE})
 
 file(GLOB_RECURSE no_pch_files
 	"${PROJECT_SOURCE_DIR}/src/embeds/*.cpp"

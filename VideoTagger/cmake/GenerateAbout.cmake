@@ -87,6 +87,7 @@ ${LICENSE_MAP}
 	write_if_different(${CPP} "${CPP_CONTENT}")
 
 	set(${OUT_VAR}
+		${${OUT_VAR}}
 		${HPP}
 		${CPP}
 		PARENT_SCOPE

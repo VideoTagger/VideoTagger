@@ -5,6 +5,7 @@
 #include <stack>
 #include <unordered_map>
 #include <imgui.h>
+#include <utils/json.hpp>
 
 namespace vt
 {
@@ -112,6 +113,7 @@ namespace vt
 		ImVec4 get_float4(const std::string& name) const;
 
 		void save(const std::filesystem::path& filepath) const;
+		static theme load_from_json(const nlohmann::ordered_json& json);
 		static theme load_from_file(const std::filesystem::path& filepath);
 
 		static std::optional<theme_color> to_theme_color(const std::string& name);

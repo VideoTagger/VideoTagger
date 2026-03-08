@@ -25,6 +25,7 @@
 #include <widgets/timeline.hpp>
 #include <ui/icons.hpp>
 #include <embeds/about.hpp>
+#include <embeds/dark_theme.hpp>
 
 #include <utils/filesystem.hpp>
 #include <ImGuizmo.h>
@@ -783,7 +784,7 @@ namespace vt
 			ctx_.reset_layout = true;
 		}
 
-		ctx_.change_theme(theme::load_from_file(ctx_.theme_dir_filepath / fmt::format("dark.{}", theme::extension)));
+		load_theme();
 
 		auto& io = ImGui::GetIO();
 		if (!std::filesystem::exists(io.IniFilename))
@@ -792,6 +793,33 @@ namespace vt
 		}
 		build_fonts(ctx_.app_settings.font_size);
 		return result;
+	}
+
+	void main_window::load_theme()
+	{
+		if (ctx_.app_settings.theme_name.has_value())
+		{
+			auto theme_name = ctx_.app_settings.theme_name.value();
+			debug::log("Loading theme: {}", theme_name);
+			auto theme_path = ctx_.theme_dir_filepath / fmt::format("{}.{}", theme_name, theme::extension);
+			if (std::filesystem::exists(theme_path))
+			{
+				ctx_.change_theme(theme::load_from_file(theme_path));
+				return;
+			}
+			else
+			{
+				debug::error("Failed to load theme, file does not exist: {}", theme_path.u8string());
+				debug::log("Resetting preferred theme...");
+				ctx_.app_settings.theme_name.reset();
+			}
+		}
+
+		debug::log("Preferred theme is empty, loading default theme");
+		auto default_theme_json = nlohmann::ordered_json::parse(embed::dark_theme);
+		ctx_.change_theme(theme::load_from_json(default_theme_json));
+		return;
+		
 	}
 
 	void main_window::save_settings()
