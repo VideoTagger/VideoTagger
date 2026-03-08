@@ -14,6 +14,7 @@ namespace vt
 		json["allow-undocking"] = allow_undocking;
 		json["scale-gizmos"] = scale_gizmos;
 		json["hardware-acceleration"] = hardware_acceleration;
+		json["snap-to-frame"] = snap_to_frame;
 		return json;
 	}
 
@@ -42,6 +43,10 @@ namespace vt
 		if (json.contains("hardware-acceleration") and json["hardware-acceleration"].is_boolean())
 		{
 			hardware_acceleration = json["hardware-acceleration"].get<bool>();
+		}
+		if (json.contains("snap-to-frame") and json["snap-to-frame"].is_boolean())
+		{
+			snap_to_frame = json["snap-to-frame"].get<bool>();
 		}
 	}
 }
