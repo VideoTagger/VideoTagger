@@ -233,7 +233,7 @@ namespace vt
 		return std::make_shared<lang_pack>(new_lang.value());
 	}
 
-    void app_context::instert_lang_pack(std::shared_ptr<lang_pack> pack)
+    void app_context::insert_lang_pack(std::shared_ptr<lang_pack> pack)
     {
 		lang_packs.push_back(pack);
     }

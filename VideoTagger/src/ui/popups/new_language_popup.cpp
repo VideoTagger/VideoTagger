@@ -63,7 +63,7 @@ namespace vt::ui
 				{
 					auto lang = std::make_shared<lang_pack>(name_input.trimmed_input(), filename_input.trimmed_input());
 					lang->save(ctx_.lang_dir_filepath);
-					ctx_.instert_lang_pack(lang);
+					ctx_.insert_lang_pack(lang);
 					close();
 				}
 				break;

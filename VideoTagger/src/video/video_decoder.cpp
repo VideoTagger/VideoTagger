@@ -4,6 +4,7 @@
 extern "C"
 {
 	#include <libavutil/pixdesc.h>
+	#include <libavutil/hwcontext.h>
 }
 
 #define CALC_FFMPEG_VERSION(a,b,c) ( a<<16 | b<<8 | c )
@@ -24,7 +25,7 @@ namespace vt
 		}
 	}
 
-	video_plane::video_plane(uint8_t* data, size_t size, int pitch) : data_{ data }, size_{ size }, pitch_{ pitch } {}
+	video_plane::video_plane(uint8_t* data, size_t size, int pitch) : data_{ data }, pitch_{ pitch }, size_{ size } {}
 
 	uint8_t* video_plane::data()
 	{
@@ -81,7 +82,7 @@ namespace vt
 
 	video_plane video_frame::get_plane(size_t plane_index) const
 	{
-		return video_plane(frame_->data[plane_index], int64_t(frame_->linesize[plane_index]) * frame_->height, frame_->linesize[plane_index]);
+		return video_plane(frame_->data[plane_index], static_cast<int64_t>(frame_->linesize[plane_index]) * frame_->height, frame_->linesize[plane_index]);
 	}
 
 	int video_frame::width() const
@@ -394,19 +395,16 @@ namespace vt
 		return is_hardware_acceleration_enabled_;
 	}
 
-	video_decoder::video_decoder() :
-		format_context_{ nullptr }, stream_indices_{}, codec_contexts_{}, packet_queues_{},
-		last_read_packet_type_{ stream_type::unknown }, eof_{ false }, pixel_format_{ AV_PIX_FMT_NONE },
-		hw_device_ctx_{ nullptr }
+	video_decoder::video_decoder()
 	{
 		std::fill(stream_indices_.begin(), stream_indices_.end(), -1);
 	}
 
 	video_decoder::video_decoder(video_decoder&& other) noexcept :
-		format_context_{ other.format_context_ }, stream_indices_(other.stream_indices_), codec_contexts_(other.codec_contexts_),
-		packet_queues_(std::move(other.packet_queues_)), last_read_packet_type_{ other.last_read_packet_type_ }, eof_{ other.eof_ },
-		pixel_format_{ other.pixel_format_ }, last_read_packet_timestamp_{ other.last_read_packet_timestamp_ },
-		hw_device_ctx_{ other.hw_device_ctx_ }
+		format_context_{ other.format_context_ }, pixel_format_{ other.pixel_format_ }, hw_device_ctx_{ other.hw_device_ctx_ },
+		stream_indices_(other.stream_indices_), codec_contexts_(other.codec_contexts_), packet_queues_(std::move(other.packet_queues_)),
+		last_read_packet_timestamp_{ other.last_read_packet_timestamp_ }, last_read_packet_type_{ other.last_read_packet_type_ },
+		eof_{ other.eof_ }
 	{
 		for (auto& codec_context : other.codec_contexts_)
 		{
@@ -456,7 +454,7 @@ namespace vt
 		is_hardware_acceleration_enabled_ = accelerated;
 		
 		format_context_ = avformat_alloc_context();
-		if (avformat_open_input(&format_context_, path.u8string().c_str(), NULL, NULL) < 0)
+		if (avformat_open_input(&format_context_, path.u8string().c_str(), nullptr, nullptr) < 0)
 		{
 			return false;
 		}
@@ -528,7 +526,9 @@ namespace vt
 					AV_HWDEVICE_TYPE_CUDA,
 					AV_HWDEVICE_TYPE_VULKAN,
 					AV_HWDEVICE_TYPE_D3D11VA,
+#if LIBAVUTIL_BUILD >= CALC_FFMPEG_VERSION(61, 0, 0)
 					AV_HWDEVICE_TYPE_D3D12VA,
+#endif
 					AV_HWDEVICE_TYPE_VDPAU,
 					AV_HWDEVICE_TYPE_VAAPI,
 					AV_HWDEVICE_TYPE_DXVA2,
@@ -567,14 +567,14 @@ namespace vt
 				}
 			}
 
-			if (avcodec_open2(codec_contexts_[i], codecs_array[i], NULL) < 0)
+			if (avcodec_open2(codec_contexts_[i], codecs_array[i], nullptr) < 0)
 			{
 				close();
 				return false;
 			}
 		}
 
-		avformat_find_stream_info(format_context_, NULL);
+		avformat_find_stream_info(format_context_, nullptr);
 
 		return true;
 	}
@@ -619,10 +619,9 @@ namespace vt
 		packet_wrapper packet;
 		AVPacket* unwrapped_packet = packet.unwrapped();
 
-		int read_frame_result;
 		while (true)
 		{
-			read_frame_result = av_read_frame(format_context_, unwrapped_packet);
+			int read_frame_result = av_read_frame(format_context_, unwrapped_packet);
 			
 			if (read_frame_result == AVERROR_EOF)
 			{
@@ -653,12 +652,6 @@ namespace vt
 			break;
 		}
 
-		//if (read_frame_result == AVERROR_EOF)
-		//{
-		//	eof_ = true;
-		//}
-
-		//TODO: handle other errors
 		return decoder_read_result::success;
 	}
 
@@ -776,7 +769,7 @@ namespace vt
 	{
 		auto video_stream = format_context_->streams[stream_indices_[static_cast<size_t>(stream_type::video)]];
 
-		constexpr double eps = 0.000025;
+		static constexpr double eps = 0.000025;
 		double fps{};
 
 		//Most of this is borrowed from OpenCV's implementation
@@ -813,7 +806,7 @@ namespace vt
 
 		if (frame_count == 0)
 		{
-			frame_count = (int64_t)std::floor(duration_seconds * fps() + 0.5);
+			frame_count = static_cast<int64_t>(std::floor(duration_seconds * fps() + 0.5));
 		}
 
 		return frame_count;
@@ -821,7 +814,7 @@ namespace vt
 
 	std::chrono::nanoseconds video_decoder::duration() const
 	{
-		return std::chrono::nanoseconds(static_cast<int64_t>(format_context_->duration / (double)(AV_TIME_BASE) * 1'000'000'000));
+		return std::chrono::nanoseconds(static_cast<int64_t>(format_context_->duration / static_cast<double>((AV_TIME_BASE)) * 1'000'000'000));
 	}
 
 	std::chrono::nanoseconds video_decoder::frame_number_to_timestamp(size_t frame) const
@@ -851,6 +844,11 @@ namespace vt
 	}
 
 	AVFormatContext* video_decoder::av_format_context()
+	{
+		return format_context_;
+	}
+
+	const AVFormatContext* video_decoder::av_format_context() const
 	{
 		return format_context_;
 	}

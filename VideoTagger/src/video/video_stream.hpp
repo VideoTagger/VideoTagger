@@ -4,8 +4,6 @@
 #include <chrono>
 #include <deque>
 #include <optional>
-#include <SDL.h>
-#include <SDL_opengl.h>
 #include <core/gl_texture.hpp>
 
 #include "video_decoder.hpp"

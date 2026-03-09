@@ -1,9 +1,6 @@
 #pragma once
 #include <unordered_map>
 
-#include <SDL.h>
-#include <SDL_opengl.h>
-
 #include "video_stream.hpp"
 #include <utils/random.hpp>
 #include "video_resource.hpp"
@@ -11,7 +8,6 @@
 
 namespace vt
 {
-	//TODO: use this instead of just 0
 	inline constexpr auto invalid_video_group_id = video_group_id_t{ 0 };
 
 	class video_group
@@ -30,7 +26,7 @@ namespace vt
 		std::string display_name;
 
 		video_group() = default;
-		video_group(const std::string& name, const std::vector<video_info>& video_infos);
+		video_group(const std::string& name, const std::vector<video_info>& video_ids);
 
 		bool insert(video_info video_info);
 		bool erase(video_id_t video_id);

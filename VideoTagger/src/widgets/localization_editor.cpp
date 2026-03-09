@@ -50,7 +50,7 @@ namespace vt::widgets
 					auto lang = lang_pack::load_from_file(file);
 					if (lang.has_value())
 					{
-						ctx_.instert_lang_pack(std::make_shared<lang_pack>(lang.value()));
+						ctx_.insert_lang_pack(std::make_shared<lang_pack>(lang.value()));
 					}
 				}
 			}

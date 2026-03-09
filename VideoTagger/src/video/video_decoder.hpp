@@ -12,7 +12,6 @@ extern "C"
 {
 	#include <libavcodec/avcodec.h>
 	#include <libavformat/avformat.h>
-	#include <libavutil/hwcontext.h>
 }
 
 namespace vt
@@ -71,8 +70,6 @@ namespace vt
 		[[nodiscard]] AVFrame* unwrapped();
 		[[nodiscard]] const AVFrame* unwrapped() const;
 
-		//TODO: get timestamp
-
 	private:
 		AVFrame* frame_;
 	};
@@ -84,38 +81,65 @@ namespace vt
 		video,
 		audio,
 
-		size // don't use
+		///@brief The number of stream types
+		size
 	};
 
 	enum class codec_send_result
 	{
-		success, ///@brief Packet was sent successfully
-		needs_receive, ///@brief Receive must be called before sending more packets. Packet must be sent again after receiving.
-		flushed, ///@brief Codec has been fully flushed. No more packets can be sent.
-		error ///@brief An error occurred. Packet was not sent.
+		///@brief Packet was sent successfully
+		success,
+
+		///@brief Receive must be called before sending more packets. Packet must be sent again after receiving.
+		needs_receive,
+
+		///@brief Codec has been fully flushed. No more packets can be sent.
+		flushed,
+
+		///@brief An error occurred. Packet was not sent.
+		error
 	};
 
 	enum class codec_receive_result
 	{
-		success, ///@brief Frame was received successfully
-		needs_more_packets, ///@brief More packets need to be sent before a frame can be received.
-		flushed, ///@brief Codec has been fully flushed. No more frames will be received.
-		error ///@brief An error occurred. Frame was not received.
+		///@brief Frame was received successfully
+		success,
+
+		///@brief More packets need to be sent before a frame can be received.
+		needs_more_packets,
+
+		///@brief Codec has been fully flushed. No more frames will be received.
+		flushed,
+
+		///@brief An error occurred. Frame was not received.
+		error
 	};
 
 	enum class decoder_decode_result
 	{
-		ok, ///@brief No error occurred.
-		needs_more_packets, ///@brief More packets need to be read before a frame can be decoded.
-		flushed, ///@brief Codec has been fully flushed. No more frames will be decoded.
-		error ///@brief An error occurred. Frame was not decoded.
+		///@brief No error occurred.
+		ok,
+
+		///@brief More packets need to be read before a frame can be decoded.
+		needs_more_packets,
+
+		///@brief Codec has been fully flushed. No more frames will be decoded.
+		flushed,
+
+		///@brief An error occurred. Frame was not decoded.
+		error
 	};
 
 	enum class decoder_read_result
 	{
-		success, ///@brief A packet was read successfully.
-		eof, ///@brief End of file was reached. No more packets can be read.
-		error ///@brief An error occurred. No packet was read.
+		///@brief A packet was read successfully.
+		success,
+
+		///@brief End of file was reached. No more packets can be read.
+		eof,
+
+		///@brief An error occurred. No packet was read.
+		error
 	};
 
 	template<stream_type type>
@@ -203,8 +227,6 @@ namespace vt
 		void pop_front();
 		void pop_back();
 
-		//TODO: maybe add push_front, pop_back. Rename push push_back, pop_front
-
 		void clear();
 
 		[[nodiscard]] packet_wrapper& front();
@@ -265,7 +287,7 @@ namespace vt
 		/**
 		 * @brief Open a video file and prepare it for decoding
 		 *
-		 * @param filepath The path to the video file to open.
+		 * @param path The path to the video file to open.
 		 * @param accelerated If true, hardware acceleration will be used if available.
 		 *
 		 * @return true if the file was successfully opened, false otherwise.
@@ -294,7 +316,7 @@ namespace vt
 		 * @param target_timestamp If has value and skip_disposable is true, will only skip disposable frames with target_timestamp >= next_timestamp() 
 		 *  Has no effect if skip_disposable is false.
 		 * 
-		 * @return The decoded packet (if one was decode) and the decode result code.
+		 * @return The decoded packet (if one was decoded) and the decode result code.
 		 */
 		template<stream_type type>
 		[[nodiscard]] decoder_decode_return_type<type> get_next_decoded_packet(bool skip_disposable = false, std::optional<std::chrono::nanoseconds> target_timestamp = std::nullopt);
@@ -340,6 +362,7 @@ namespace vt
 		[[nodiscard]] AVPixelFormat pixel_format() const;
 
 		[[nodiscard]] AVFormatContext* av_format_context();
+		[[nodiscard]] const AVFormatContext* av_format_context() const;
 
 	private:
 		AVFormatContext* format_context_{};
@@ -435,10 +458,9 @@ namespace vt
 	template<stream_type type>
 	codec_send_result codec_send_packet(AVCodecContext* codec_context, packet_wrapper& packet)
 	{
-		AVPacket* unwrapped_packet = packet.unwrapped();
+		const AVPacket* unwrapped_packet = packet.unwrapped();
 
-		int result = avcodec_send_packet(codec_context, unwrapped_packet);
-		switch (result)
+		switch (avcodec_send_packet(codec_context, unwrapped_packet))
 		{
 			case 0: return codec_send_result::success;
 			case AVERROR(EAGAIN): return codec_send_result::needs_receive;
@@ -452,8 +474,7 @@ namespace vt
 	{
 		AVFrame* unwrapped_frame = decoded_packet.unwrapped();
 
-		int result = avcodec_receive_frame(codec_context, unwrapped_frame);
-		switch (result)
+		switch (avcodec_receive_frame(codec_context, unwrapped_frame))
 		{
 			case 0: return codec_receive_result::success;
 			case AVERROR(EAGAIN): return codec_receive_result::needs_more_packets;
