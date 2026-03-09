@@ -39,8 +39,8 @@ file(GLOB vendor_files CONFIGURE_DEPENDS
 	"${PROJECT_SOURCE_DIR}/vendor/ImGui/*.cpp"
 	"${PROJECT_SOURCE_DIR}/vendor/ImGui/misc/cpp/*.h"
 	"${PROJECT_SOURCE_DIR}/vendor/ImGui/misc/cpp/*.cpp"
-	"${PROJECT_SOURCE_DIR}/vendor/ImGui/misc/FreeType/*.h"
-	"${PROJECT_SOURCE_DIR}/vendor/ImGui/misc/FreeType/*.cpp"
+	"${PROJECT_SOURCE_DIR}/vendor/ImGui/misc/freetype/*.h"
+	"${PROJECT_SOURCE_DIR}/vendor/ImGui/misc/freetype/*.cpp"
 	"${PROJECT_SOURCE_DIR}/vendor/ImGui/backends/imgui_impl_sdl2.h"
 	"${PROJECT_SOURCE_DIR}/vendor/ImGui/backends/imgui_impl_sdl2.cpp"
 	"${PROJECT_SOURCE_DIR}/vendor/ImGui/backends/imgui_impl_opengl3.h"
@@ -89,7 +89,7 @@ target_link_libraries(${PROJECT_NAME} PRIVATE nfd)
 
 #target_compile_definitions(${PROJECT_NAME} PRIVATE IMGUI_ENABLE_FREETYPE)
 set("SKIP_INSTALL_ALL" "ON")
-add_subdirectory("${PROJECT_SOURCE_DIR}/vendor/freetype")
+add_subdirectory("${PROJECT_SOURCE_DIR}/vendor/FreeType")
 target_link_libraries(${PROJECT_NAME} PRIVATE freetype)
 target_include_directories(${PROJECT_NAME} PRIVATE ${FREETYPE_INCLUDE_DIRS})
 
