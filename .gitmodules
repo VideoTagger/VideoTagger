@@ -33,8 +33,8 @@
 [submodule "VideoTagger/vendor/stb"]
 	path = VideoTagger/vendor/stb
 	url = https://github.com/nothings/stb.git
-[submodule "VideoTagger/vendor/freetype"]
-	path = VideoTagger/vendor/freetype
+[submodule "VideoTagger/vendor/FreeType"]
+	path = VideoTagger/vendor/FreeType
 	url = https://gitlab.freedesktop.org/freetype/freetype.git
 [submodule "VideoTagger/vendor/SDL2"]
 	path = VideoTagger/vendor/SDL2

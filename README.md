@@ -84,7 +84,7 @@ docker compose down
 - [FFmpeg](https://ffmpeg.org/)
 - [cpp-httplib](https://github.com/yhirose/cpp-httplib)
 - [OpenSSL](https://github.com/openssl/openssl)
-- [freetype](https://gitlab.freedesktop.org/freetype/freetype)
+- [FreeType](https://gitlab.freedesktop.org/freetype/freetype)
 
 ## License
 This software is licensed under the [MIT License](/LICENSE).
