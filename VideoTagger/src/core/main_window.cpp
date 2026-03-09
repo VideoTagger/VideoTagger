@@ -881,16 +881,14 @@ namespace vt
 
 	void main_window::on_delete()
 	{
-		//TODO: This should be implemented as a function in timeline
-		//also segments dont get deselected when windows other than Inspector are active, which should probably be changed
-		if (!ctx_.video_timeline.selected_segment.has_value()) return;
-
-		ctx_.is_project_dirty = true;
-		auto& segments = ctx_.get_current_segment_storage().at(ctx_.video_timeline.selected_segment->tag);
-		if (segments.is_id_valid(ctx_.video_timeline.selected_segment->segment_id))
+		auto& timeline = ctx_.get_window<widgets::timeline>();
+		segment_id_map selected_segments = timeline.selected_segments();
+		for (const auto& [tag, segments] : selected_segments)
 		{
-			segments.erase(ctx_.video_timeline.selected_segment->segment_id);
-			ctx_.video_timeline.selected_segment.reset();
+			for (auto& id : segments)
+			{
+				ctx_.dispatch_event<segment_delete_request_event>(event_source_, ctx_.get_current_segment_storage(), tag, id);
+			}
 		}
 	}
 

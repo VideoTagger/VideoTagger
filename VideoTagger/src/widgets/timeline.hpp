@@ -123,6 +123,8 @@ namespace vt::widgets
 
 		virtual nlohmann::ordered_json serialize() const override;
 		virtual void deserialize(const nlohmann::ordered_json& json) override;
+
+		const segment_id_map& selected_segments() const;
 	private:
 		void draw_playhead() const;
 		void draw_time_intervals(bool only_lines) const;

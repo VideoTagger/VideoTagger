@@ -1074,18 +1074,6 @@ namespace vt::widgets
 		}
 	}
 
-	//TODO: This
-	/*
-	utils::timestamp_span timeline::visible_time_span() const
-	{
-		auto time_length = state_.time_length();
-		auto interval = interval_time();
-		auto visible_time_length = time_length / zoom_;
-
-		return utils::timestamp_span{ timestamp{ start }, timestamp{ end } };
-	}
-	*/
-
 	utils::timestamp_span timeline::visible_time_span() const
 	{
 		return view_ts_;
@@ -1387,6 +1375,11 @@ namespace vt::widgets
 		{
 			view_follow_playhead_ = json["follow-playhead"].get<bool>();
 		}
+	}
+
+	const segment_id_map& timeline::selected_segments() const
+	{
+		return selected_segments_;
 	}
 
 	void timeline::set_on_seek_callback(const std::function<void(timestamp ts)>& callback)
