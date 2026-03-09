@@ -15,7 +15,6 @@ namespace vt::ui
 	private:
 		std::vector<std::string> displayed_tags_;
 		tag_storage* tags_;
-		bool tags_modified_;
 
 	public:
 		virtual void on_render() override;
@@ -24,6 +23,5 @@ namespace vt::ui
 		void set_displayed_tags(const std::vector<std::string>& displayed_tags);
 
 		const std::vector<std::string>& displayed_tags() const;
-		bool tags_modified() const;
 	};
 }

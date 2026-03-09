@@ -85,7 +85,6 @@ namespace vt::widgets
 		bool is_dragging_span_left_grab_ = false;
 		bool is_dragging_span_right_grab_ = false;
 		bool view_follow_playhead_ = false;
-		bool player_paused_on_seek_ = false;
 		bool is_playhead_dragged_ = false;
 		timeline_state state_;
 		std::function<void(timestamp ts)> on_seek_;

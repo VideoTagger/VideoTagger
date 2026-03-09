@@ -5,7 +5,6 @@
 #include "timeline.hpp"
 #include "controls.hpp"
 #include <ui/icons.hpp>
-#include <core/debug.hpp>
 #include <utils/math.hpp>
 #include <ui/widgets/common.hpp>
 #include <widgets/video_player.hpp>
@@ -20,8 +19,13 @@
 #include <events/timeline/segments_moved_event.hpp>
 #include <events/timeline/segment_merged_event.hpp>
 #include <events/timeline/segment_deleted_event.hpp>
+
 #include <events/tags/tag_deleted_event.hpp>
 #include <events/tags/tag_renamed_event.hpp>
+
+#include <events/player/playback_suspend_request_event.hpp>
+#include <events/player/playback_resume_request_event.hpp>
+#include <events/player/video_group_changed_event.hpp>
 
 #include <core/debug.hpp>
 
@@ -246,6 +250,25 @@ namespace vt::widgets
 				dragged_segments_.insert(std::move(node));
 			}
 		});
+
+		ctx_.add_event_listener<video_group_changed_event>([this](const video_group_changed_event& e)
+		{
+			if (e.new_group_id() != invalid_video_group_id)
+			{
+				state_.set_min_timestamp(timestamp::zero());
+				state_.set_max_timestamp(ctx_.displayed_videos.duration_as_timestamp());
+				state_.set_current_timestamp(timestamp::zero());
+				view_ts_ = { state_.min_ts, state_.max_ts };
+			}
+			else
+			{
+				state_.set_min_timestamp(timestamp::zero());
+				state_.set_max_timestamp(timestamp::zero());
+				state_.set_current_timestamp(timestamp::zero());
+				preview_scrollbar_.set_value(0);
+				playback_scrollbar_.set_value(0);
+			}
+		}, event_listener_priority::low);
 	}
 
 	void timeline::draw_playhead() const
@@ -1191,11 +1214,6 @@ namespace vt::widgets
 			ImGui::PopStyleVar();
 
 			menu_popup_->render();
-			if (menu_popup_->tags_modified())
-			{
-				displayed_tags = menu_popup_->displayed_tags();
-				//TODO: Mark project dirty
-			}
 
 			ImGui::TableNextColumn();
 			auto cell_rect = get_cell_rect();
@@ -1210,22 +1228,13 @@ namespace vt::widgets
 			if (!is_playhead_dragged_ and playback_scrollbar_.is_dragged())
 			{
 				is_playhead_dragged_ = true;
-				if (player.is_playing())
-				{
-					//TODO: probably should use events
-					player_paused_on_seek_ = true;
-					player.set_playing(false);
-				}
+				ctx_.dispatch_event<playback_suspend_request_event>(event_source_, player);
 			}
 
 			if (is_playhead_dragged_ and !playback_scrollbar_.is_dragged())
 			{
 				is_playhead_dragged_ = false;
-				if (player_paused_on_seek_)
-				{
-					player.set_playing(true);
-					player_paused_on_seek_ = false;
-				}
+				ctx_.dispatch_event<playback_resume_request_event>(event_source_, player);
 			}
 
 			//draw_cell_debug_rect(zoom_);

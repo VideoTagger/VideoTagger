@@ -27,15 +27,14 @@ namespace vt::ui
 
 	void timeline_ctx_menu_popup::on_display()
 	{
-		set_display_name(ctx_.lang->get("popup.timeline_context_menu.title"));
 	}
 
 	void timeline_ctx_menu_popup::on_render()
 	{
 		if (segment_storage_ == nullptr) return;
 
-		//TODO: Add all option from the old menu, localization
-		if (is_any_segment_selected() and ImGui::MenuItem(ctx_.lang->get("popup.timeline_context_menu.delete_selected").c_str()))
+		auto delete_selected_name = fmt::format("{} {}", icons::delete_, ctx_.lang->get("popup.timeline_context_menu.delete_selected"));
+		if (is_any_segment_selected() and ImGui::MenuItem(delete_selected_name.c_str()))
 		{
 			for (auto& [tag, segments] : selected_segments_)
 			{
@@ -45,33 +44,57 @@ namespace vt::ui
 				}
 			}
 		}
-		if (ImGui::MenuItem(ctx_.lang->get("popup.timeline_context_menu.add_timestamp").c_str()))
+
+		auto add_here_name = fmt::format("{} {}", icons::add, ctx_.lang->get("popup.timeline_context_menu.add_here"));
+		if (ui::begin_menu(add_here_name.c_str()))
 		{
-			ctx_.dispatch_event<segment_insert_request_event>(event_source_, *segment_storage_, active_tag_, active_position_, true, false);
+			auto add_timestamp_name = fmt::format("{} {}", icons::shape_circle, ctx_.lang->get("popup.timeline_context_menu.add_here.timestamp"));
+			if (ImGui::MenuItem(add_timestamp_name.c_str()))
+			{
+				ctx_.dispatch_event<segment_insert_request_event>(event_source_, *segment_storage_, active_tag_, active_position_, true, false);
+			}
+
+			auto add_segment_name = fmt::format("{} {}", icons::shape_rectangle, ctx_.lang->get("popup.timeline_context_menu.add_here.segment"));
+			if (ImGui::MenuItem(add_segment_name.c_str()))
+			{
+				auto start = active_position_;
+				auto end = start + timestamp(tag_segment::default_segment_size);
+				ctx_.dispatch_event<segment_insert_request_event>(event_source_, *segment_storage_, active_tag_, start, end, true, false);
+			}
+
+			ImGui::EndMenu();
 		}
-		if (ImGui::MenuItem(ctx_.lang->get("popup.timeline_context_menu.add_segment").c_str()))
+
+		auto add_at_playhead_name = fmt::format("{} {}", icons::add, ctx_.lang->get("popup.timeline_context_menu.add_at_playhead"));
+		if (ui::begin_menu(add_at_playhead_name.c_str()))
 		{
-			auto start = active_position_;
-			auto end = start + timestamp(tag_segment::default_segment_size);
-			ctx_.dispatch_event<segment_insert_request_event>(event_source_, *segment_storage_, active_tag_, start, end, true, false);
-		}
-		if (ImGui::MenuItem(ctx_.lang->get("popup.timeline_context_menu.add_timestamp_at_playhead").c_str()))
-		{
-			ctx_.dispatch_event<segment_insert_request_event>(event_source_, *segment_storage_, active_tag_, playhead_position_, true, false);
-		}
-		if (ImGui::MenuItem(ctx_.lang->get("popup.timeline_context_menu.add_segment_at_playhead").c_str()))
-		{
-			auto start = playhead_position_;
-			auto end = start + timestamp(tag_segment::default_segment_size);
-			ctx_.dispatch_event<segment_insert_request_event>(event_source_, *segment_storage_, active_tag_, start, end, true, false);
-		}
-		if (ImGui::MenuItem(ctx_.lang->get("popup.timeline_context_menu.begin_segment_at_playhead").c_str()))
-		{
-			ctx_.dispatch_event<segment_insert_mark_start>(event_source_, mark_id_, *segment_storage_, active_tag_, playhead_position_);
-		}
-		if (ImGui::MenuItem(ctx_.lang->get("popup.timeline_context_menu.end_segment_at_playhead").c_str()))
-		{
-			ctx_.dispatch_event<segment_insert_mark_end>(event_source_, mark_id_, *segment_storage_, playhead_position_, true);
+			auto add_timestamp_name = fmt::format("{} {}", icons::shape_circle, ctx_.lang->get("popup.timeline_context_menu.add_at_playhead.timestamp"));
+			if (ImGui::MenuItem(add_timestamp_name.c_str()))
+			{
+				ctx_.dispatch_event<segment_insert_request_event>(event_source_, *segment_storage_, active_tag_, playhead_position_, true, false);
+			}
+
+			auto add_segment_name = fmt::format("{} {}", icons::shape_rectangle, ctx_.lang->get("popup.timeline_context_menu.add_at_playhead.segment"));
+			if (ImGui::MenuItem(add_segment_name.c_str()))
+			{
+				auto start = playhead_position_;
+				auto end = start + timestamp(tag_segment::default_segment_size);
+				ctx_.dispatch_event<segment_insert_request_event>(event_source_, *segment_storage_, active_tag_, start, end, true, false);
+			}
+
+			auto add_segment_begin_name = fmt::format("{} {}", icons::line_start_circle, ctx_.lang->get("popup.timeline_context_menu.add_at_playhead.begin_segment"));
+			if (ImGui::MenuItem(add_segment_begin_name.c_str()))
+			{
+				ctx_.dispatch_event<segment_insert_mark_start>(event_source_, mark_id_, *segment_storage_, active_tag_, playhead_position_);
+			}
+
+			auto add_segment_end_name = fmt::format("{} {}", icons::line_end_circle, ctx_.lang->get("popup.timeline_context_menu.add_at_playhead.end_segment"));
+			if (ImGui::MenuItem(add_segment_end_name.c_str()))
+			{
+				ctx_.dispatch_event<segment_insert_mark_end>(event_source_, mark_id_, *segment_storage_, playhead_position_, true);
+			}
+
+			ImGui::EndMenu();
 		}
 	}
 

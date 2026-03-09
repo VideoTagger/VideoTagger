@@ -169,7 +169,7 @@ namespace vt
 
 		constexpr bool operator<(const event_listener_callback& other) const
 		{
-			return priority_ < other.priority_;
+			return priority_ > other.priority_;
 		}
 
 		constexpr bool operator==(const event_listener_callback& other) const

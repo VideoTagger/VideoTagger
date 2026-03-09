@@ -1,6 +1,7 @@
 #include "pch.hpp"
 #include "displayed_videos_manager.hpp"
 #include <core/app_context.hpp>
+#include <events/player/playback_reached_end_event.hpp>
 
 namespace vt
 {
@@ -60,6 +61,8 @@ namespace vt
 		{
 			frame_clock_base_timestamp_ = group_duration;
 			is_playing_ = false;
+
+			ctx_.dispatch_event<playback_reached_end_event>("displayed videos manager", ctx_.get_window<widgets::video_player>(), ctx_.current_video_group_id());
 		}
 	}
 

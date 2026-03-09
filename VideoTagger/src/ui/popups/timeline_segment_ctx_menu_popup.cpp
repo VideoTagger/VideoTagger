@@ -4,7 +4,7 @@
 #include <events/timeline/segment_delete_request_event.hpp>
 #include <events/timeline/segments_move_request_event.hpp>
 #include <events/timeline/segment_insert_request_event.hpp>
-#include <events/player/seek_event.hpp>
+#include <events/player/seek_request_event.hpp>
 
 namespace vt::ui
 {
@@ -28,8 +28,6 @@ namespace vt::ui
 	{
 		if (active_segment_ == invalid_segment_id or segment_storage_ == nullptr) return;
 
-		set_display_name(ctx_.lang->get("popup.timeline_segment_context_menu.title"));
-
 		const auto& segment = segment_storage_->at(active_tag_).at(active_segment_);
 		active_segment_type_ = segment.type();
 	}
@@ -38,12 +36,14 @@ namespace vt::ui
 	{
 		if (segment_storage_ == nullptr) return;
 
-		//TODO: Add all option from the old menu, localization
-		if (ImGui::MenuItem(ctx_.lang->get("popup.timeline_segment_context_menu.delete_this").c_str()))
+		auto delete_this_name = fmt::format("{} {}", icons::delete_, ctx_.lang->get("popup.timeline_segment_context_menu.delete_this"));
+		if (ImGui::MenuItem(delete_this_name.c_str()))
 		{
 			ctx_.dispatch_event<segment_delete_request_event>(event_source_, *segment_storage_, active_tag_, active_segment_);
 		}
-		if (is_any_segment_selected() and ImGui::MenuItem(ctx_.lang->get("popup.timeline_segment_context_menu.delete_selected").c_str()))
+
+		auto delete_selected_name = fmt::format("{} {}", icons::delete_, ctx_.lang->get("popup.timeline_segment_context_menu.delete_selected"));
+		if (is_any_segment_selected() and ImGui::MenuItem(delete_selected_name.c_str()))
 		{
 			for (auto& [tag, segments] : selected_segments_)
 			{
@@ -57,23 +57,29 @@ namespace vt::ui
 		auto& player = ctx_.get_window<widgets::video_player>();
 		if (active_segment_type_ == tag_segment_type::segment)
 		{
-			if (ui::begin_menu(ctx_.lang->get("popup.timeline_segment_context_menu.convert_to_timestamp").c_str()))
+			auto convert_to_timestamp_name = fmt::format("{} {}", icons::shape_circle, ctx_.lang->get("popup.timeline_segment_context_menu.convert_to_timestamp"));
+			if (ui::begin_menu(convert_to_timestamp_name.c_str()))
 			{
-				if (ImGui::MenuItem(ctx_.lang->get("popup.timeline_segment_context_menu.convert_to_timestamp.start").c_str()))
+				auto convert_to_timestamp_start_name = fmt::format("{} {}", icons::line_start_circle, ctx_.lang->get("popup.timeline_segment_context_menu.convert_to_timestamp.start"));
+				if (ImGui::MenuItem(convert_to_timestamp_start_name.c_str()))
 				{
 					const auto& segment = segment_storage_->at(active_tag_).at(active_segment_);
 					ctx_.dispatch_event<segments_move_request_event>(
 						event_source_, *segment_storage_, active_tag_, active_segment_, segment_part::right, timestamp{ -segment.duration() }, false
 					);
 				}
-				if (ImGui::MenuItem(ctx_.lang->get("popup.timeline_segment_context_menu.convert_to_timestamp.end").c_str()))
+
+				auto convert_to_timestamp_end_name = fmt::format("{} {}", icons::line_end_circle, ctx_.lang->get("popup.timeline_segment_context_menu.convert_to_timestamp.end"));
+				if (ImGui::MenuItem(convert_to_timestamp_end_name.c_str()))
 				{
 					const auto& segment = segment_storage_->at(active_tag_).at(active_segment_);
 					ctx_.dispatch_event<segments_move_request_event>(
 						event_source_, *segment_storage_, active_tag_, active_segment_, segment_part::left, timestamp{ segment.duration() }, false
 					);
 				}
-				if (ImGui::MenuItem(ctx_.lang->get("popup.timeline_segment_context_menu.convert_to_timestamp.start_end").c_str()))
+
+				auto convert_to_timestamp_start_end_name = fmt::format("{} {}", icons::fit_width, ctx_.lang->get("popup.timeline_segment_context_menu.convert_to_timestamp.start_end"));
+				if (ImGui::MenuItem(convert_to_timestamp_start_end_name.c_str()))
 				{
 					tag_segment segment = segment_storage_->at(active_tag_).at(active_segment_);
 					ctx_.dispatch_event<segment_delete_request_event>(event_source_, *segment_storage_, active_tag_, active_segment_);
@@ -83,16 +89,21 @@ namespace vt::ui
 
 				ui::end_menu();
 			}
-			if (ui::begin_menu(ctx_.lang->get("popup.timeline_segment_context_menu.stretch").c_str()))
+
+			auto stretch_name = fmt::format("{} {}", icons::fit_width, ctx_.lang->get("popup.timeline_segment_context_menu.stretch"));
+			if (ui::begin_menu(stretch_name.c_str()))
 			{
-				if (ImGui::MenuItem(ctx_.lang->get("popup.timeline_segment_context_menu.stretch.start_to_playhead").c_str()))
+				auto stretch_start_name = fmt::format("{} {}", icons::stretch_start, ctx_.lang->get("popup.timeline_segment_context_menu.stretch.start_to_playhead"));
+				if (ImGui::MenuItem(stretch_start_name.c_str()))
 				{
 					const auto& segment = segment_storage_->at(active_tag_).at(active_segment_);
 					ctx_.dispatch_event<segments_move_request_event>(
 						event_source_, *segment_storage_, active_tag_, active_segment_, segment_part::left, playhead_position_ - segment.start, false
 					);
 				}
-				if (ImGui::MenuItem(ctx_.lang->get("popup.timeline_segment_context_menu.stretch.end_to_playhead").c_str()))
+
+				auto stretch_end_name = fmt::format("{} {}", icons::stretch_end, ctx_.lang->get("popup.timeline_segment_context_menu.stretch.end_to_playhead"));
+				if (ImGui::MenuItem(stretch_end_name.c_str()))
 				{
 					const auto& segment = segment_storage_->at(active_tag_).at(active_segment_);
 					ctx_.dispatch_event<segments_move_request_event>(
@@ -102,17 +113,22 @@ namespace vt::ui
 
 				ui::end_menu();
 			}
-			if (ui::begin_menu(ctx_.lang->get("popup.timeline_segment_context_menu.seek").c_str()))
+
+			auto seek_name = fmt::format("{} {}", icons::fast_fwd, ctx_.lang->get("popup.timeline_segment_context_menu.seek"));
+			if (ui::begin_menu(seek_name.c_str()))
 			{
-				if (ImGui::MenuItem(ctx_.lang->get("popup.timeline_segment_context_menu.seek.start").c_str()))
+				auto seek_start_name = fmt::format("{} {}", icons::line_start_circle, ctx_.lang->get("popup.timeline_segment_context_menu.seek.start"));
+				if (ImGui::MenuItem(seek_start_name.c_str()))
 				{
 					const auto& segment = segment_storage_->at(active_tag_).at(active_segment_);
-					ctx_.dispatch_event<seek_event>(event_source_, player, segment.start.total_milliseconds);
+					ctx_.dispatch_event<seek_request_event>(event_source_, player, segment.start.total_milliseconds);
 				}
-				if (ImGui::MenuItem(ctx_.lang->get("popup.timeline_segment_context_menu.seek.end").c_str()))
+
+				auto seek_end_name = fmt::format("{} {}", icons::line_end_circle, ctx_.lang->get("popup.timeline_segment_context_menu.seek.end"));
+				if (ImGui::MenuItem(seek_end_name.c_str()))
 				{
 					const auto& segment = segment_storage_->at(active_tag_).at(active_segment_);
-					ctx_.dispatch_event<seek_event>(event_source_, player, segment.end.total_milliseconds);
+					ctx_.dispatch_event<seek_request_event>(event_source_, player, segment.end.total_milliseconds);
 				}
 
 				ui::end_menu();
@@ -120,23 +136,28 @@ namespace vt::ui
 		}
 		if (active_segment_type_ == tag_segment_type::timestamp)
 		{
-			if (ImGui::MenuItem(ctx_.lang->get("popup.timeline_segment_context_menu.convert_to_segment").c_str()))
+			auto convert_to_segment_name = fmt::format("{} {}", icons::shape_rectangle, ctx_.lang->get("popup.timeline_segment_context_menu.convert_to_segment"));
+			if (ImGui::MenuItem(convert_to_segment_name.c_str()))
 			{
 				ctx_.dispatch_event<segments_move_request_event>(
 					event_source_, *segment_storage_, active_tag_, active_segment_, segment_part::right, timestamp{ tag_segment::default_segment_size }, false
 				);
 			}
-			if (ImGui::MenuItem(ctx_.lang->get("popup.timeline_segment_context_menu.move_to_playhead").c_str()))
+
+			auto move_to_playhead_name = fmt::format("{} {}", icons::move_item, ctx_.lang->get("popup.timeline_segment_context_menu.move_to_playhead"));
+			if (ImGui::MenuItem(move_to_playhead_name.c_str()))
 			{
 				const auto& segment = segment_storage_->at(active_tag_).at(active_segment_);
 				ctx_.dispatch_event<segments_move_request_event>(
 					event_source_, *segment_storage_, active_tag_, active_segment_, segment_part::both, playhead_position_ - segment.start, false
 				);
 			}
-			if (ImGui::MenuItem(ctx_.lang->get("popup.timeline_segment_context_menu.seek_timestamp").c_str()))
+
+			auto seek_timestamp_name = fmt::format("{} {}", icons::fast_fwd, ctx_.lang->get("popup.timeline_segment_context_menu.seek_timestamp"));
+			if (ImGui::MenuItem(seek_timestamp_name.c_str()))
 			{
 				const auto& segment = segment_storage_->at(active_tag_).at(active_segment_);
-				ctx_.dispatch_event<seek_event>(event_source_, player, segment.start.total_milliseconds);
+				ctx_.dispatch_event<seek_request_event>(event_source_, player, segment.start.total_milliseconds);
 			}
 		}
 	}

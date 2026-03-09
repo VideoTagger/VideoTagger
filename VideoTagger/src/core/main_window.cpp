@@ -37,6 +37,7 @@
 #include <ui/widgets/settings_expander.hpp>
 
 #include <events/system/window/system_window_resize_event.hpp>
+
 #include <events/timeline/segments_move_request_event.hpp>
 #include <events/timeline/segments_moved_event.hpp>
 #include <events/timeline/segment_merged_event.hpp>
@@ -44,15 +45,18 @@
 #include <events/timeline/segment_deleted_event.hpp>
 #include <events/timeline/segment_insert_request_event.hpp>
 #include <events/timeline/segment_inserted_event.hpp>
+#include <events/timeline/segment_insert_mark_start.hpp>
+#include <events/timeline/segment_insert_mark_end.hpp>
+#include <events/timeline/end_segment_drag_event.hpp>
+
 #include <events/tags/tag_add_request_event.hpp>
 #include <events/tags/tag_added_event.hpp>
 #include <events/tags/tag_rename_request_event.hpp>
 #include <events/tags/tag_renamed_event.hpp>
 #include <events/tags/tag_delete_request_event.hpp>
 #include <events/tags/tag_deleted_event.hpp>
-#include <events/timeline/segment_insert_mark_start.hpp>
-#include <events/timeline/segment_insert_mark_end.hpp>
-#include <events/timeline/end_segment_drag_event.hpp>
+#include <events/tags/tag_change_display_request_event.hpp>
+#include <events/tags/tag_display_changed_event.hpp>
 
 #ifndef VT_VERSION
 	#error VT_VERSION is not defined
@@ -65,12 +69,25 @@ extern "C"
 
 #include <openssl/opensslv.h>
 #include <pybind11/pybind11.h>
+
 #include <events/player/playback_changed_event.hpp>
+#include <events/player/playback_change_request_event.hpp>
 #include <events/player/looping_changed_event.hpp>
+#include <events/player/looping_change_request_event.hpp>
 #include <events/player/speed_changed_event.hpp>
-#include <events/player/skip_next_event.hpp>
-#include <events/player/skip_previous_event.hpp>
+#include <events/player/speed_change_request_event.hpp>
+#include <events/player/skip_next_request_event.hpp>
+#include <events/player/skip_previous_request_event.hpp>
 #include <events/player/seek_event.hpp>
+#include <events/player/seek_request_event.hpp>
+#include <events/player/seek_to_end_request_event.hpp>
+#include <events/player/seek_to_start_request_event.hpp>
+#include <events/player/seek_to_previous_frame_request_event.hpp>
+#include <events/player/seek_to_next_frame_request_event.hpp>
+#include <events/player/video_group_change_request_event.hpp>
+#include <events/player/video_group_changed_event.hpp>
+#include <events/player/playback_reached_end_event.hpp>
+
 #include <events/project_selector/open_project_event.hpp>
 #include <events/project_selector/project_list_changed_event.hpp>
 #include <events/system/window/system_window_drop_path_event.hpp>
@@ -326,11 +343,11 @@ namespace vt
 			ctx_.dispatch_event<tag_added_event>(event_source, storage, event.tag_name(), validate_result);
 		});
 
-		ctx_.add_event_listener<tag_added_event>([](const tag_added_event& event)
+		ctx_.add_event_listener<tag_added_event>([event_source = event_source_](const tag_added_event& event)
 		{
 			if (!event.added()) return;
 
-			ctx_.current_project->add_displayed_tag(event.tag_name());
+			ctx_.dispatch_event<tag_change_display_request_event>(event_source, event.storage(), event.tag_name(), true);
 		});
 
 		ctx_.add_event_listener<tag_rename_request_event>([event_source = event_source_](const tag_rename_request_event& event)
@@ -445,7 +462,22 @@ namespace vt
 				}
 			}
 
-			ctx_.current_project->remove_displayed_tag(event.tag_name());
+			ctx_.dispatch_event<tag_change_display_request_event>(event_source, event.storage(), event.tag_name(), false);
+		});
+
+		ctx_.add_event_listener<tag_change_display_request_event>([event_source = event_source_](const tag_change_display_request_event& event)
+		{
+			auto& project = *ctx_.current_project;
+			if (event.display())
+			{
+				if (!project.add_displayed_tag(event.tag_name())) return;
+			}
+			else
+			{
+				if (!project.remove_displayed_tag(event.tag_name())) return;
+			}
+
+			ctx_.dispatch_event<tag_display_changed_event>(event_source, event.storage(), event.tag_name(), event.display());
 		});
 
 		ctx_.add_event_listener<segment_insert_mark_start>([](const segment_insert_mark_start& event)
@@ -534,6 +566,194 @@ namespace vt
 		});
 	}
 
+	void main_window::register_player_listeners()
+	{
+		//TODO: maybe all these listeners should have highest priority
+
+		auto& player = ctx_.get_window<widgets::video_player>();
+
+		ctx_.add_event_listener<playback_change_request_event>([&player, this](const playback_change_request_event& event)
+		{
+			if (&event.player() != &player) return;
+
+			if (event.is_playing() == ctx_.displayed_videos.is_playing()) return;
+
+			ctx_.displayed_videos.set_playing(event.is_playing());
+			ctx_.dispatch_event<playback_changed_event>(event_source_, player, event.is_playing());
+		});
+
+		ctx_.add_event_listener<seek_request_event>([&player, this](const seek_request_event& event)
+		{
+			if (&event.player() != &player) return;
+
+			ctx_.displayed_videos.seek(event.timestamp());
+			ctx_.dispatch_event<seek_event>(event_source_, player, event.timestamp());
+		});
+
+		ctx_.add_event_listener<seek_to_start_request_event>([&player, this](const seek_to_start_request_event& event)
+		{
+			if (&event.player() != &player) return;
+
+			ctx_.dispatch_event<seek_request_event>(event_source_, player, std::chrono::nanoseconds::zero());
+		});
+
+		ctx_.add_event_listener<seek_to_end_request_event>([&player, this](const seek_to_end_request_event& event)
+		{
+			if (&event.player() != &player) return;
+
+			ctx_.dispatch_event<seek_request_event>(event_source_, player, ctx_.displayed_videos.duration());
+		});
+
+		ctx_.add_event_listener<seek_to_previous_frame_request_event>([&player, this](const seek_to_previous_frame_request_event& event)
+		{
+			if (&event.player() != &player) return;
+			
+			ctx_.dispatch_event<seek_request_event>(event_source_, player, ctx_.displayed_videos.previous_frame_timestamp());
+		});
+
+		ctx_.add_event_listener<seek_to_next_frame_request_event>([&player, this](const seek_to_next_frame_request_event& event)
+		{
+			if (&event.player() != &player) return;
+
+			ctx_.dispatch_event<seek_request_event>(event_source_, player, ctx_.displayed_videos.next_frame_timestamp());
+		});
+
+		ctx_.add_event_listener<looping_change_request_event>([&player, this](const looping_change_request_event& event)
+		{
+			if (&event.player() != &player) return;
+
+			//TODO: video queue should be in charge of looping and skipping,
+
+			ctx_.dispatch_event<looping_changed_event>(event_source_, player, event.mode());
+		});
+
+		ctx_.add_event_listener<speed_change_request_event>([&player, this](const speed_change_request_event& event)
+		{
+			if (&event.player() != &player) return;
+
+			ctx_.displayed_videos.set_speed(event.speed());
+
+			ctx_.dispatch_event<speed_changed_event>(event_source_, player, ctx_.displayed_videos.speed());
+		});
+
+		ctx_.add_event_listener<skip_next_request_event>([&player, this](const skip_next_request_event& event)
+		{
+			//TODO: video queue should be in charge of looping and skipping,
+
+			if (&event.player() != &player) return;
+
+			auto& playlist = ctx_.current_project->video_group_playlist;
+			if (playlist.empty()) return;
+
+			auto it = playlist.next();
+
+			if (player.loop_mode() == loop_mode::all and it == playlist.end())
+			{
+				ctx_.dispatch_event<video_group_change_request_event>(event_source_, player, *playlist.begin());
+				return;
+			}
+
+			if (it != playlist.end())
+			{
+				ctx_.dispatch_event<video_group_change_request_event>(event_source_, player, *it);
+				return;
+			}
+
+			ctx_.dispatch_event<video_group_change_request_event>(event_source_, player, invalid_video_group_id);
+		});
+
+		ctx_.add_event_listener<skip_previous_request_event>([&player, this](const skip_previous_request_event& event)
+		{
+			//TODO: video queue should be in charge of looping and skipping,
+
+			if (&event.player() != &player) return;
+
+			auto& playlist = ctx_.current_project->video_group_playlist;
+			if (playlist.empty()) return;
+
+			auto it = playlist.previous();
+
+			if (it == playlist.begin() or it == playlist.end()) return
+
+			ctx_.dispatch_event<video_group_change_request_event>(event_source_, player, *it);
+		});
+
+		ctx_.add_event_listener<video_group_change_request_event>([&player, this](const video_group_change_request_event& event)
+		{
+			if (&event.player() != &player) return;
+
+			auto new_group_id = event.new_group_id();
+			auto current_group_id = ctx_.current_video_group_id();
+
+			const auto& video_groups = ctx_.current_project->video_groups;
+
+			if (current_group_id == new_group_id) return;
+
+			if (new_group_id != invalid_video_group_id and video_groups.find(new_group_id) == video_groups.end())
+			{
+				debug::error("Video group with id {} does not exist", new_group_id);
+				return;
+			}
+
+			ctx_.dispatch_event<video_group_changed_event>(event_source_, player, current_group_id,  new_group_id);
+		});
+
+		ctx_.add_event_listener<video_group_changed_event>([&player, this](const video_group_changed_event& event)
+		{
+			ctx_.current_video_group_id_ = event.new_group_id();
+			ctx_.insert_segment_marks.clear();
+			ctx_.displayed_videos.clear();
+
+			auto& playlist = ctx_.current_project->video_group_playlist;
+
+			if (event.new_group_id() == invalid_video_group_id)
+			{
+				playlist.set_current(playlist.end());
+				return;
+			}
+
+			auto playlist_it = playlist.find(event.new_group_id());
+
+			if (playlist_it != playlist.end())
+			{
+				playlist.set_current(playlist_it);
+			}
+
+			for (auto& group_inf : ctx_.current_project->video_groups.at(event.new_group_id()))
+			{
+				auto& vid_resource = ctx_.current_project->videos.get(group_inf.id);
+				const auto& metadata = vid_resource.metadata();
+				if (!vid_resource.playable())
+				{
+					debug::error("Video {} with id {} is not available", metadata.title.has_value() ? *metadata.title : "[UNTITLED]", vid_resource.id());
+					continue;
+				}
+
+				ctx_.displayed_videos.insert(vid_resource.id(), vid_resource.video(), group_inf.offset, *metadata.width, *metadata.height);
+			}
+
+			ctx_.reset_player_docking = true;
+		}, event_listener_priority::highest);
+
+		ctx_.add_event_listener<playback_reached_end_event>([&player, this](const playback_reached_end_event& event)
+		{
+			auto& playlist = ctx_.current_project->video_group_playlist;
+			auto event_source = player.get_event_source();
+
+			if (player.loop_mode() == loop_mode::one)
+			{
+				ctx_.dispatch_event<seek_to_start_request_event>(event_source, player);
+				ctx_.dispatch_event<playback_change_request_event>(event_source, player, true);
+				return;
+			}
+
+			if (player.should_autoplay())
+			{
+				ctx_.dispatch_event<skip_next_request_event>(event_source, player);
+			}
+		});
+	}
+
 	void main_window::on_close_project(bool should_shutdown)
 	{
 		if (ctx_.script_handle.has_value())
@@ -598,7 +818,7 @@ namespace vt
 				}
 				else
 				{
-					ctx_.reset_current_video_group();
+					ctx_.dispatch_event<video_group_change_request_event>(event_source_, ctx_.get_window<widgets::video_player>(), invalid_video_group_id);
 					ctx_.current_project = std::nullopt;
 					ctx_.video_timeline.selected_segment = std::nullopt;
 					ctx_.is_project_dirty = false;
@@ -613,7 +833,7 @@ namespace vt
 		}
 		else
 		{
-			ctx_.reset_current_video_group();
+			ctx_.dispatch_event<video_group_change_request_event>(event_source_, ctx_.get_window<widgets::video_player>(), invalid_video_group_id);
 			ctx_.current_project = std::nullopt;
 			ctx_.video_timeline.selected_segment = std::nullopt;
 			ctx_.is_project_dirty = false;
@@ -1443,116 +1663,12 @@ namespace vt
 	{
 		auto& player = ctx_.get_window<widgets::video_player>();
 
-		player.callbacks.on_set_playing = [&player, event_source = event_source_](bool is_playing)
+		player.callbacks.on_finish = [](loop_mode mode, bool is_playing)
 		{
-			if (ctx_.current_video_group_id() == invalid_video_group_id) return;
-			//TODO: Probably the player should send a request and displayed videos should listen for it and send playback_changed_event
-			ctx_.dispatch_event<playback_changed_event>(event_source, player, is_playing); 
-
-			//TODO: This should be handled as a playback_changed_event listener
-			ctx_.displayed_videos.set_playing(is_playing);
+			
 		};
 
-		player.callbacks.on_set_looping = [&player, event_source = event_source_](loop_mode mode)
-		{
-			//for (auto& [id, vinfo] : ctx_.current_project->videos)
-			//{
-			//	if (!vinfo.is_widget_open) continue;
-			//	vinfo.video.set_looping(is_looping);
-			//}
-			if (ctx_.current_video_group_id() == invalid_video_group_id) return;
-			ctx_.dispatch_event<looping_changed_event>(event_source, player, mode);
-		};
-
-		player.callbacks.on_set_speed = [&player, event_source = event_source_](float speed)
-		{
-			//for (auto& [id, vinfo] : ctx_.current_project->videos)
-			//{
-			//	if (!vinfo.is_widget_open) continue;
-			//	vinfo.video.set_speed(speed);
-			//}
-
-			if (ctx_.current_video_group_id() == invalid_video_group_id) return;
-			ctx_.dispatch_event<speed_changed_event>(event_source, player, speed);
-
-			//TODO: This should be handled as a speed_changed_event listener
-			ctx_.displayed_videos.set_speed(speed);
-		};
-
-		player.callbacks.on_skip = [&player, event_source = event_source_](int dir, loop_mode mode, bool is_playing)
-		{
-			auto& playlist = ctx_.current_project->video_group_playlist;
-
-			video_group_playlist::iterator it;
-			if (dir > 0)
-			{
-				it = playlist.next();
-				ctx_.dispatch_event<skip_next_event>(event_source, player);
-			}
-			else if (dir < 0)
-			{
-				it = playlist.previous();
-				ctx_.dispatch_event<skip_previous_event>(event_source, player);
-			}
-
-			ctx_.reset_current_video_group();
-			if (mode == loop_mode::all and it == playlist.end())
-			{
-				it = playlist.set_current(playlist.begin());
-			}
-
-			if (it != playlist.end())
-			{
-				ctx_.set_current_video_group_id(*it);
-				ctx_.displayed_videos.set_playing(is_playing);
-			}
-		};
-
-		player.callbacks.on_seek = [&player, event_source = event_source_](std::chrono::nanoseconds ts)
-		{
-			//for (auto& [id, vinfo] : ctx_.current_project->videos)
-			//{
-			//	if (!vinfo.is_widget_open) continue;
-			//	vinfo.video.seek(ts);
-			//}
-
-			if (ctx_.current_video_group_id() == invalid_video_group_id) return;
-			ctx_.dispatch_event<seek_event>(event_source, player, ts);
-			ctx_.displayed_videos.seek(ts);
-		};
-
-		player.callbacks.on_finish = [&player](loop_mode mode, bool is_playing)
-		{
-			auto& playlist = ctx_.current_project->video_group_playlist;
-			//TODO: Consider adding an event here
-
-			if (mode == loop_mode::one)
-			{
-				ctx_.displayed_videos.seek(std::chrono::nanoseconds{ 0 });
-				ctx_.displayed_videos.set_playing(true);
-				return;
-			}
-
-			auto& player = ctx_.get_window<widgets::video_player>();
-			if (player.should_autoplay())
-			{
-				player.reset_data();
-
-				auto it = playlist.next();
-				ctx_.reset_current_video_group();
-				if (mode == loop_mode::all and it == playlist.end())
-				{
-					it = playlist.set_current(playlist.begin());
-				}
-
-				if (it != playlist.end())
-				{
-					ctx_.set_current_video_group_id(*it);
-				}
-
-				ctx_.displayed_videos.set_playing(true);
-			}
-		};
+		register_player_listeners();
 	}
 
 	utils::file_node main_window::fetch_themes(const std::filesystem::path& path)
@@ -2485,11 +2601,12 @@ namespace vt
 			state.set_current_timestamp(ctx_.displayed_videos.current_timestamp_as_timestamp());
 		}
 
-		timeline.set_on_seek_callback([](timestamp ts)
+		timeline.set_on_seek_callback([event_source = event_source_](timestamp ts)
 		{
 			if (ts != ctx_.displayed_videos.current_timestamp_as_timestamp())
 			{
-				ctx_.displayed_videos.seek(ts.total_milliseconds);
+				auto& player = ctx_.get_window<widgets::video_player>();
+				ctx_.dispatch_event<seek_request_event>(event_source, player, ts.total_milliseconds);
 			}
 		});
 		

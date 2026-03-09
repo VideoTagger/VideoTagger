@@ -1,16 +1,15 @@
 #include "timeline_menu_popup.hpp"
-#include "timeline_menu_popup.hpp"
 #include "pch.hpp"
-#include "timeline_menu_popup.hpp"
+
+#include <core/app_context.hpp>
+#include <events/tags/tag_change_display_request_event.hpp>
 
 namespace vt::ui
 {
-	timeline_menu_popup::timeline_menu_popup(tag_storage* tags) : popup{ "Timeline Menu" }, tags_{ tags }, tags_modified_{} {}
+	timeline_menu_popup::timeline_menu_popup(tag_storage* tags) : popup{ "Timeline Menu" }, tags_{ tags } {}
 
 	void timeline_menu_popup::on_render()
 	{
-		tags_modified_ = false;
-
 		if (ImGui::SmallButton("Show All"))
 		{
 			size_t tags_size = displayed_tags_.size();
@@ -19,21 +18,16 @@ namespace vt::ui
 			for (const auto& tag : *tags_)
 			{
 				displayed_tags_.push_back(tag.name);
-			}
-
-			if (displayed_tags_.size() != tags_size)
-			{
-				tags_modified_ = true;
+				ctx_.dispatch_event<tag_change_display_request_event>("timeline", *tags_, tag.name, true);
 			}
 		}
 		ImGui::SameLine();
 		if (ImGui::SmallButton("Hide All"))
 		{
-			if (!displayed_tags_.empty())
+			for (const auto& tag : displayed_tags_)
 			{
-				tags_modified_ = true;
+				ctx_.dispatch_event<tag_change_display_request_event>("timeline", *tags_, tag, false);
 			}
-
 			displayed_tags_.clear();
 		}
 		ImGui::SameLine();
@@ -42,10 +36,16 @@ namespace vt::ui
 			std::vector<std::string> new_tags;
 			for (const auto& tag : *tags_)
 			{
-				if (std::find(displayed_tags_.begin(), displayed_tags_.end(), tag.name) != displayed_tags_.end()) continue;
-				new_tags.push_back(tag.name);
+				if (std::find(displayed_tags_.begin(), displayed_tags_.end(), tag.name) != displayed_tags_.end())
+				{
+					ctx_.dispatch_event<tag_change_display_request_event>("timeline", *tags_, tag.name, false);
+				}
+				else
+				{
+					ctx_.dispatch_event<tag_change_display_request_event>("timeline", *tags_, tag.name, true);
+					new_tags.push_back(tag.name);
+				}
 			}
-			tags_modified_ = true;
 			set_displayed_tags(new_tags);
 		}
 
@@ -66,13 +66,13 @@ namespace vt::ui
 					{
 						if (visible)
 						{
+							ctx_.dispatch_event<tag_change_display_request_event>("timeline", *tags_, tag.name, false);
 							displayed_tags_.erase(it);
-							tags_modified_ = true;
 						}
 						else
 						{
+							ctx_.dispatch_event<tag_change_display_request_event>("timeline", *tags_, tag.name, true);
 							displayed_tags_.insert(it, tag.name);
-							tags_modified_ = true;
 						}
 					}
 					if (!visible) ImGui::PopStyleColor();
@@ -96,10 +96,5 @@ namespace vt::ui
 	const std::vector<std::string>& timeline_menu_popup::displayed_tags() const
 	{
 		return displayed_tags_;
-	}
-
-	bool vt::ui::timeline_menu_popup::tags_modified() const
-	{
-		return tags_modified_;
 	}
 }

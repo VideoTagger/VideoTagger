@@ -150,6 +150,8 @@ namespace vt
 
 		bool pause_player = false;
 
+		video_group_id_t current_video_group_id_{};
+
 		void create_windows();
 		void render_messagebox();
 
@@ -178,11 +180,9 @@ namespace vt
 		bool is_video_importer_registered(const std::string& importer_id) const;
 
 		void update_current_video_group();
-		void reset_current_video_group();
 
 		segment_storage& get_current_segment_storage();
 	
-		void set_current_video_group_id(video_group_id_t id);
 		video_group_id_t current_video_group_id() const;
 
 		std::shared_ptr<lang_pack> load_lang_pack(const std::string& name = "en_US");
@@ -204,9 +204,6 @@ namespace vt
 		std::vector<insert_segment_mark_data>::iterator find_insert_segment_mark_by_tag(const std::string& tag);
 		std::vector<insert_segment_mark_data>::iterator find_insert_segment_mark_by_tag(const std::optional<std::string>& tag);
 		std::vector<insert_segment_mark_data>::iterator find_insert_segment_mark_by_id(uint64_t id);
-
-	private:
-		video_group_id_t current_video_group_id_{};
 	};
 
 	///@brief Global application context instance

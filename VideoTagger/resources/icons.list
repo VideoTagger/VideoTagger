@@ -97,3 +97,9 @@ windows:e6fa # select_window
 settings:e8b8 # settings
 dark_mode:e51c # dark_mode
 light_mode:e518 # light_mode
+stretch_start:f73d # text_select_jump_to_beginning
+stretch_end:f73c # text_select_jump_to_end
+fit_width:f779 # fit_width
+move_item:f1ff # move_item
+line_start_circle:f816 # line_start_circle
+line_end_circle:f81b # line_end_circle

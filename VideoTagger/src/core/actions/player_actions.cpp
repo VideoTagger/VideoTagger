@@ -3,6 +3,12 @@
 #include <core/app_context.hpp>
 #include <widgets/video_player.hpp>
 
+#include <events/player/seek_to_previous_frame_request_event.hpp>
+#include <events/player/seek_to_next_frame_request_event.hpp>
+#include <events/player/skip_next_request_event.hpp>
+#include <events/player/skip_previous_request_event.hpp>
+#include <events/player/playback_change_request_event.hpp>
+
 namespace vt
 {
 	player_action::player_action(player_action_type type) : keybind_action(action_name), type_{ type } {}
@@ -17,40 +23,27 @@ namespace vt
 		{
 			case player_action_type::play_pause:
 			{
-				if (callbacks.on_set_playing == nullptr) break;
-				callbacks.on_set_playing(!player.is_playing());
+				ctx_.dispatch_event<playback_change_request_event>("player_action", player, !player.is_playing());
 			}
 			break;
 			case player_action_type::forwards:
 			{
-				if (callbacks.on_seek == nullptr) break;
-				if (callbacks.on_set_playing != nullptr)
-				{
-					callbacks.on_set_playing(false);
-				}
-				callbacks.on_seek(ctx_.displayed_videos.next_frame_timestamp());
+				ctx_.dispatch_event<seek_to_next_frame_request_event>("player_action", player);
 			}
 			break;
 			case player_action_type::backwards:
 			{
-				if (callbacks.on_seek == nullptr) break;
-				if (callbacks.on_set_playing != nullptr)
-				{
-					callbacks.on_set_playing(false);
-				}
-				callbacks.on_seek(ctx_.displayed_videos.previous_frame_timestamp());
+				ctx_.dispatch_event<seek_to_previous_frame_request_event>("player_action", player);
 			}
 			break;
 			case player_action_type::skip_next:
 			{
-				if (callbacks.on_skip == nullptr) break;
-				callbacks.on_skip(1, player.loop_mode(), player.is_playing());
+				ctx_.dispatch_event<skip_next_request_event>("player_action", player);
 			}
 			break;
 			case player_action_type::skip_previous:
 			{
-				if (callbacks.on_skip == nullptr) break;
-				callbacks.on_skip(-1, player.loop_mode(), player.is_playing());
+				ctx_.dispatch_event<skip_previous_request_event>("player_action", player);
 			}
 			break;
 			case player_action_type::toggle_looping:

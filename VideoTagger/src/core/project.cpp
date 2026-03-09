@@ -11,6 +11,8 @@
 #include <video/downloadable_video_resource.hpp>
 #include <video/video_resource.hpp>
 
+#include <events/player/video_group_change_request_event.hpp>
+
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 #define STB_IMAGE_WRITE_IMPLEMENTATION
@@ -557,7 +559,7 @@ namespace vt
 	{
 		if (ctx_.current_video_group_id() == id)
 		{
-			ctx_.reset_current_video_group();
+			ctx_.dispatch_event<video_group_change_request_event>("project", ctx_.get_window<widgets::video_player>(), invalid_video_group_id);
 		}
 
 		auto playlist_it = std::find(video_group_playlist.begin(), video_group_playlist.end(), id);

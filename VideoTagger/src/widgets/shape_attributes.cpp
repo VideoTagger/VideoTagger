@@ -2,6 +2,7 @@
 #include "shape_attributes.hpp"
 #include <core/app_context.hpp>
 #include <ui/icons.hpp>
+#include <events/player/seek_request_event.hpp>
 
 namespace vt::widgets
 {
@@ -36,7 +37,8 @@ namespace vt::widgets
 						bool modifiable = is_on_screen;
 						shape.draw_data(active_vid_size.value(), ctx_.gizmo_target, selected_seg.start, selected_seg.end, current_ts, is_timestamp, modifiable, ctx_.is_project_dirty, [](timestamp target_ts)
 						{
-							ctx_.displayed_videos.seek(target_ts.total_milliseconds);
+							auto& player = ctx_.get_window<widgets::video_player>();
+							ctx_.dispatch_event<seek_request_event>("shape_attributes", player, target_ts.total_milliseconds);
 						});
 					});
 				}

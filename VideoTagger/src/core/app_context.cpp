@@ -134,11 +134,6 @@ namespace vt
 		displayed_videos.update();
 	}
 
-	void app_context::reset_current_video_group()
-	{
-		set_current_video_group_id(invalid_video_group_id);
-	}
-
 	segment_storage& app_context::get_current_segment_storage()
 	{
 		//TODO: maybe do something else
@@ -152,52 +147,6 @@ namespace vt
 		}
 
 		return current_project->video_groups.at(current_video_group_id_).segments();
-	}
-
-	void app_context::set_current_video_group_id(video_group_id_t id)
-	{
-		if (!current_project.has_value())
-		{
-			return;
-		}
-
-		if (id == current_video_group_id_)
-		{
-			return;
-		}
-
-		if (id != invalid_video_group_id and current_project->video_groups.count(id) == 0)
-		{
-			debug::error("Tried to set video group to id {} which doesn't exist", id);
-			return;
-		}
-
-		current_video_group_id_ = id;
-		video_timeline.moving_segment.reset();
-		video_timeline.selected_segment.reset();
-		insert_segment_data.clear();
-
-		displayed_videos.clear();
-		
-		if (id == invalid_video_group_id)
-		{
-			return;
-		}
-
-		for (auto& group_inf : current_project->video_groups.at(id))
-		{
-			auto& vid_resource = current_project->videos.get(group_inf.id);
-			const auto& metadata = vid_resource.metadata();
-			if (!vid_resource.playable())
-			{
-				debug::error("Video {} with id {} is not available", metadata.title.has_value() ? *metadata.title : "[UNTITLED]", vid_resource.id());
-				continue;
-			}
-
-			displayed_videos.insert(vid_resource.id(), vid_resource.video(), group_inf.offset, *metadata.width, *metadata.height);
-		}
-
-		ctx_.reset_player_docking = true;
 	}
 
 	video_group_id_t app_context::current_video_group_id() const

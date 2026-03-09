@@ -12,6 +12,18 @@
 #include <events/player/playback_resume_request_event.hpp>
 #include <events/player/playback_change_request_event.hpp>
 #include <events/player/playback_changed_event.hpp>
+#include <events/player/looping_changed_event.hpp>
+#include <events/player/looping_change_request_event.hpp>
+#include <events/player/seek_request_event.hpp>
+#include <events/player/seek_to_start_request_event.hpp>
+#include <events/player/seek_to_end_request_event.hpp>
+#include <events/player/seek_to_previous_frame_request_event.hpp>
+#include <events/player/seek_to_next_frame_request_event.hpp>
+#include <events/player/skip_next_request_event.hpp>
+#include <events/player/skip_previous_request_event.hpp>
+#include <events/player/speed_changed_event.hpp>
+#include <events/player/speed_change_request_event.hpp>
+
 
 namespace vt::widgets
 {
@@ -32,7 +44,8 @@ namespace vt::widgets
 			if (!is_playing_ or playback_suspend_source_.has_value()) return;
 
 			playback_suspend_source_ = event.source();
-			set_playing(false);
+			
+			ctx_.dispatch_event<playback_change_request_event>(get_event_source(), *this, false);
 		});
 
 		ctx_.add_event_listener<playback_resume_request_event>([this](const playback_resume_request_event& event)
@@ -42,15 +55,37 @@ namespace vt::widgets
 			if (is_playing_ or !playback_suspend_source_.has_value() or playback_suspend_source_ != event.source()) return;
 
 			playback_suspend_source_ = std::nullopt;
-			set_playing(true);
+			
+			ctx_.dispatch_event<playback_change_request_event>(get_event_source(), *this, true);
 		});
 
-		ctx_.add_event_listener<playback_change_request_event>([this](const playback_change_request_event& event)
+		ctx_.add_event_listener<playback_changed_event>([this](const playback_changed_event& event)
 		{
 			if (&event.player() != this) return;
 
 			playback_suspend_source_ = std::nullopt;
 			set_playing(event.is_playing());
+		});
+
+		ctx_.add_event_listener<looping_changed_event>([this](const looping_changed_event& event)
+		{
+			if (&event.player() != this) return;
+
+			set_loop_mode(event.mode());
+		});
+
+		ctx_.add_event_listener<speed_changed_event>([this](const speed_changed_event& event)
+		{
+			if (&event.player() != this) return;
+
+			speed_ = event.speed();
+		});
+
+		ctx_.add_event_listener<seek_request_event>([this](const seek_request_event& event)
+		{
+			if (&event.player() != this) return;
+			
+			data_.current_ts = event.timestamp();
 		});
 	}
 
@@ -205,6 +240,7 @@ namespace vt::widgets
 		{
 			if (slider_scalar("##VideoProgressBar", ImGuiDataType_U64, progress_size, text_height / 5.f, &data_.current_ts, &min_ts, &data_.end_ts, "", ImGuiSliderFlags_AlwaysClamp))
 			{
+				ctx_.dispatch_event<seek_request_event>(get_event_source(), *this, data_.current_ts);
 				std::invoke(callbacks.on_seek, data_.current_ts);
 			}
 		}
@@ -225,19 +261,13 @@ namespace vt::widgets
 					callbacks.on_set_playing(false);
 				}
 
-				std::chrono::nanoseconds seek_ts{};
 				if (frame < 0)
 				{
-					seek_ts = ctx_.displayed_videos.previous_frame_timestamp();
+					ctx_.dispatch_event<seek_to_previous_frame_request_event>(get_event_source(), *this);
 				}
 				else if (frame > 0)
 				{
-					seek_ts = ctx_.displayed_videos.next_frame_timestamp();
-				}
-
-				if (frame != 0)
-				{
-					callbacks.on_seek(seek_ts);
+					ctx_.dispatch_event<seek_to_next_frame_request_event>(get_event_source(), *this);
 				}
 			}
 			ImGui::SameLine();
@@ -249,6 +279,7 @@ namespace vt::widgets
 			ImGui::PushStyleColor(ImGuiCol_FrameBg, { 0, 0, 0, 0 });
 			if (widgets::time_input("##TimeInput", &current_time, 1, 0, duration.total_milliseconds.count()))
 			{
+				ctx_.dispatch_event<seek_request_event>(get_event_source(), *this, current_time.total_milliseconds);
 				callbacks.on_seek(current_time.total_milliseconds);
 			}
 			ImGui::PopStyleColor();
@@ -267,28 +298,30 @@ namespace vt::widgets
 			ImGui::SetCursorPosX(cursor_pos.x + button_pos_x);
 			if (ui::icon_button(icons::skip_prev, { button_size, button_size }))
 			{
+				ctx_.dispatch_event<skip_previous_request_event>(get_event_source(), *this);
 				std::invoke(callbacks.on_skip, -1, loop_mode_, is_playing_);
 			}
 			ImGui::SameLine();
 			if (ui::icon_button(icons::fast_back, { button_size, button_size }))
 			{
-				set_playing(false);
+				ctx_.dispatch_event<seek_to_start_request_event>(get_event_source(), *this);
 				std::invoke(callbacks.on_seek, std::chrono::nanoseconds{});
 			}
 			ImGui::SameLine();
 			if (ui::icon_button(is_playing_ ? icons::pause : icons::play, { button_size, button_size }))
 			{
-				set_playing(!is_playing_);
+				ctx_.dispatch_event<playback_change_request_event>(get_event_source(), *this, !is_playing_);
 			}
 			ImGui::SameLine();
 			if (ui::icon_button(icons::fast_fwd, { button_size, button_size }))
 			{
-				set_playing(false);
+				ctx_.dispatch_event<seek_to_end_request_event>(get_event_source(), *this);
 				std::invoke(callbacks.on_seek, std::chrono::nanoseconds(data_.end_ts));
 			}
 			ImGui::SameLine();
 			if (ui::icon_button(icons::skip_next, { button_size, button_size }))
 			{
+				ctx_.dispatch_event<skip_next_request_event>(get_event_source(), *this);
 				std::invoke(callbacks.on_skip, 1, loop_mode_, is_playing_);
 			}
 		}
@@ -317,6 +350,7 @@ namespace vt::widgets
 					case loop_mode::one: loop_mode_ = loop_mode::off; break;
 				}
 
+				ctx_.dispatch_event<looping_change_request_event>(get_event_source(), *this, loop_mode_);
 				std::invoke(callbacks.on_set_looping, loop_mode_);
 			}
 			if (has_child_videos)
@@ -338,15 +372,20 @@ namespace vt::widgets
 			static constexpr float max_speed = 8.0f;
 
 			ImGui::SetNextItemWidth(speed_control_size.x);
-			if (ImGui::DragFloat("##VideoPlayerSpeed", &speed_, 0.1f, min_speed, max_speed, "%.2fx", ImGuiSliderFlags_AlwaysClamp) and callbacks.on_set_speed != nullptr)
+			if (ImGui::DragFloat("##VideoPlayerSpeed", &speed_, 0.1f, min_speed, max_speed, "%.2fx", ImGuiSliderFlags_AlwaysClamp))
 			{
-				std::invoke(callbacks.on_set_speed, speed_);
+				ctx_.dispatch_event<speed_change_request_event>(get_event_source(), *this, speed_);
+				if (callbacks.on_set_speed != nullptr)
+				{
+					std::invoke(callbacks.on_set_speed, speed_);
+				}
 			}
 
 			if (ImGui::IsItemHovered() and io.MouseWheel != 0)
 			{
 				auto scroll_dir = !std::signbit(io.MouseWheel) * 2 - 1;
 				speed_ = std::clamp(speed_ + scroll_dir * speed_step, min_speed, max_speed);
+				ctx_.dispatch_event<speed_change_request_event>(get_event_source(), *this, speed_);
 				if (callbacks.on_set_speed != nullptr) std::invoke(callbacks.on_set_speed, speed_);
 			}
 
@@ -355,6 +394,7 @@ namespace vt::widgets
 				if (ImGui::MenuItem("Reset"))
 				{
 					speed_ = 1.0f;
+					ctx_.dispatch_event<speed_change_request_event>(get_event_source(), *this, speed_);
 					if (callbacks.on_set_speed != nullptr) std::invoke(callbacks.on_set_speed, speed_);
 				}
 				ImGui::EndPopup();
@@ -377,6 +417,7 @@ namespace vt::widgets
 					if (ImGui::Button(speed_str.c_str(), speed_control_size))
 					{
 						speed_ = new_speed;
+						ctx_.dispatch_event<speed_change_request_event>(get_event_source(), *this, speed_);
 						if (callbacks.on_set_speed != nullptr) std::invoke(callbacks.on_set_speed, speed_);
 						ImGui::CloseCurrentPopup();
 					}

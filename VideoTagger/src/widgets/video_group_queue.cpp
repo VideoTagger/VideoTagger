@@ -9,6 +9,8 @@
 #include <ui/icons.hpp>
 #include <ui/widgets/common.hpp>
 
+#include <events/player/video_group_change_request_event.hpp>
+
 namespace vt::widgets
 {
 	video_group_queue::video_group_queue() : ui::window{ "Group Queue", "video-group-queue", "Group Queue", ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize }
@@ -174,7 +176,7 @@ namespace vt::widgets
 
 					if (clicked_group.has_value())
 					{
-						ctx_.set_current_video_group_id(**clicked_group);
+						ctx_.dispatch_event<video_group_change_request_event>("group queue", ctx_.get_window<widgets::video_player>(), **clicked_group);
 						clicked_group.reset();
 					}
 
@@ -235,7 +237,7 @@ namespace vt::widgets
 				if (ui::icon_button(icons::play_queue))
 				{
 					auto it = playlist.set_current(playlist.begin());
-					ctx_.set_current_video_group_id(*it);
+					ctx_.dispatch_event<video_group_change_request_event>("group queue", ctx_.get_window<widgets::video_player>(), *it);
 
 					auto& pool = ctx_.current_project->videos;
 				}
