@@ -1,6 +1,6 @@
 services:
   videotagger:
-    build: .
+    build: ./docker/ubuntu
     image: videotagger:latest
     container_name: videotagger
     working_dir: /app

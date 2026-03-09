@@ -83,7 +83,7 @@ namespace vt
 		constexpr event_interceptor_handle add_event_interceptor(arguments&&... args)
 		{
 			auto& dispatcher = get_event_dispatcher<event_type>();
-			return dispatcher.add_event_interceptor<interceptor_type>(std::forward<arguments>(args)...);
+			return dispatcher.template add_event_interceptor<interceptor_type>(std::forward<arguments>(args)...);
 		}
 
 		///@brief Clears all event dispatchers.
