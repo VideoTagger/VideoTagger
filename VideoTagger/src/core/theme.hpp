@@ -118,5 +118,7 @@ namespace vt
 
 		static std::optional<theme_color> to_theme_color(const std::string& name);
 		static std::string to_string(theme_color color);
+
+		static bool system_uses_dark_mode();
 	};
 }

@@ -165,12 +165,8 @@ namespace vt
 		}
 		
 		set_default_theme(false);
-		set_darkmode(true);
-
-		ctx_.add_event_listener<theme_mode_changed_event>([this](const theme_mode_changed_event& event)
-		{
-			set_darkmode(event.is_dark());
-		});
+		set_darkmode(ctx_.current_theme.is_dark());
+		register_listeners();
     }
 
 	system_window::~system_window()
@@ -401,6 +397,14 @@ namespace vt
 	void system_window::handle_event(const SDL_Event& event)
 	{
 		ImGui_ImplSDL2_ProcessEvent(&event);
+	}
+
+	void system_window::register_listeners()
+	{
+		ctx_.add_event_listener<theme_mode_changed_event>([this](const theme_mode_changed_event& event)
+		{
+			set_darkmode(event.is_dark());
+		});
 	}
 
 }

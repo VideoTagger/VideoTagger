@@ -56,5 +56,7 @@ namespace vt
 		virtual void pre_render() {};
 		virtual void on_render() = 0;
 		virtual void handle_event(const SDL_Event& event);
+	private:
+		void register_listeners();
 	};
 }

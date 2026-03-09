@@ -13,6 +13,7 @@
 #include <utils/filesystem.hpp>
 #include <scripts/scripting_engine.hpp>
 #include <ImGuizmo.h>
+#include <events/system/system_color_scheme_changed_event.hpp>
 
 namespace vt
 {
@@ -122,7 +123,7 @@ namespace vt
 		auto storage_path = std::filesystem::absolute(app_context::storage_path()).u8string();
 		debug::log("Storage Path: \x1b]8;;file://{}\033\\{}\033]8;;\033\\", storage_path, storage_path);
 		audio::init();
-
+		ctx_.dispatch_event<system_color_scheme_changed_event>("system", theme::system_uses_dark_mode());
 		ctx_.state_ = app_state::initialized;
 		return true;
 	}

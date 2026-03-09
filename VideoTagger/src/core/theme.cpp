@@ -7,6 +7,10 @@
 #include <ImGuizmo.h>
 #include <events/theme/theme_changed_event.hpp>
 
+#ifdef _WIN32
+	#include <windows.h>
+#endif
+
 namespace vt
 {
 	static std::unordered_map<theme_color, std::string> color_names
@@ -263,5 +267,22 @@ namespace vt
 		auto it = color_names.find(color);
 		if (it != color_names.end()) return it->second;
 		return {};
+	}
+
+	bool theme::system_uses_dark_mode()
+	{
+#ifdef _WIN32
+		using ShouldAppsUseDarkModeFn = bool (*)();
+		HMODULE handle = LoadLibraryA("uxtheme.dll");
+		if (!handle) return false;
+
+		auto fn = (ShouldAppsUseDarkModeFn)GetProcAddress(handle, MAKEINTRESOURCEA(132));
+		if (!fn) return false;
+
+		return fn();
+#else
+		//TODO: Add support for other systems
+		return true;
+#endif
 	}
 }
