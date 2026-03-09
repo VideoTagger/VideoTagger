@@ -4,7 +4,10 @@
 #include <memory>
 #include <utility>
 #include <functional>
+#include <algorithm>
+#include <mutex>
 #include <limits>
+#include <shared_mutex>
 #include <utils/random.hpp>
 #include <events/impl/event_dispatcher.hpp>
 #include <events/event_interceptor.hpp>
@@ -188,8 +191,9 @@ namespace vt
 		constexpr event_dispatcher() = default;
 
 	private:
+		mutable std::shared_mutex mutex_;
 		std::vector<std::unique_ptr<event_callback>> listeners_;
-		std::vector<std::unique_ptr<event_interceptor<event_type>>> interceptors_;
+		std::vector<std::shared_ptr<event_interceptor<event_type>>> interceptors_;
 
 	public:
 		/**
@@ -201,7 +205,8 @@ namespace vt
 		 */
 		constexpr event_listener_handle add_event_listener(const std::function<void(const event_type&)>& callback, event_listener_priority priority = event_listener_priority::normal)
 		{
-			auto handle = utils::random::get<event_listener_handle>(1);
+			auto handle = (event_listener_handle)utils::random::get_mono();
+			std::scoped_lock lock{ mutex_ };
 			listeners_.push_back(std::make_unique<event_callback>(handle, priority, callback));
 			sort_listeners();
 			return handle;
@@ -216,6 +221,7 @@ namespace vt
 		 */
 		constexpr bool remove_event_listener(event_listener_handle handle)
 		{
+			std::scoped_lock lock{ mutex_ };
 			auto it = std::find_if(listeners_.begin(), listeners_.end(), [handle](const std::unique_ptr<event_callback>& callback)
 			{
 				return callback->handle() == handle;
@@ -237,11 +243,13 @@ namespace vt
 		 * 
 		 * @return A handle to the added interceptor
 		 */
-		template<typename interceptor_type, typename... arguments, typename = std::enable_if_t<std::is_base_of_v<event_interceptor<event_type>, interceptor_type> and std::is_constructible_v<event_type, arguments...>>>
+		template<typename interceptor_type, typename... arguments, typename = std::enable_if_t<std::is_base_of_v<event_interceptor<event_type>, interceptor_type> and std::is_constructible_v<interceptor_type, event_interceptor_handle, arguments...>>>
 		constexpr event_interceptor_handle add_event_interceptor(arguments&&... args)
 		{
-			auto handle = utils::random::get<event_interceptor_handle>(1);
-			auto interceptor = std::make_unique<interceptor_type>(handle, std::forward<arguments>(args)...);
+			auto handle = utils::random::get_mono();
+			auto interceptor = std::make_shared<interceptor_type>(handle, std::forward<arguments>(args)...);
+
+			std::scoped_lock lock{ mutex_ };
 			interceptors_.push_back(std::move(interceptor));
 			return handle;
 		}
@@ -254,7 +262,8 @@ namespace vt
 		 */
 		constexpr bool remove_event_interceptor(event_interceptor_handle handle)
 		{
-			auto it = std::find_if(interceptors_.begin(), interceptors_.end(), [handle](const std::unique_ptr<impl::event_interceptor>& interceptor)
+			std::scoped_lock lock{ mutex_ };
+			auto it = std::find_if(interceptors_.begin(), interceptors_.end(), [handle](const std::shared_ptr<impl::event_interceptor>& interceptor)
 			{
 				return interceptor->handle() == handle;
 			});
@@ -275,13 +284,7 @@ namespace vt
 		constexpr void dispatch_event(arguments&&... args)
 		{
 			event_type event_instance{ std::forward<arguments>(args)... };
-			if (!try_intercept(event_instance)) return;
-
-			for (const auto& ptr : listeners_)
-			{
-				if (ptr == nullptr or ptr->callback() == nullptr) continue;
-				std::invoke(ptr->callback(), event_instance);
-			}
+			dispatch_event_instance(event_instance);
 		}
 
 		/**
@@ -291,13 +294,7 @@ namespace vt
 		constexpr void dispatch_event(event_type&& event_instance)
 		{
 			auto event_ref = std::move(event_instance);
-			if (!try_intercept(event_ref)) return;
-
-			for (const auto& ptr : listeners_)
-			{
-				if (ptr == nullptr or ptr->callback() == nullptr) continue;
-				std::invoke(ptr->callback(), event_ref);
-			}
+			dispatch_event_instance(event_ref);
 		}
 
 		/**
@@ -334,20 +331,42 @@ namespace vt
 			});
 		}
 
-		/**
-		 * @brief Invokes the interceptors for the event before dispatching it to the listeners
-		 * @return True if the event should be propagated to the listeners, false if it should be canceled
-		 */
-		constexpr bool try_intercept(event_type& event)
+		void dispatch_event_instance(event_type& event)
 		{
-			for (const auto& interceptor : interceptors_)
+			std::vector<std::function<void(const event_type&)>> callbacks;
+			std::vector<std::shared_ptr<event_interceptor<event_type>>> interceptors;
+
 			{
-				if (!interceptor->on_dispatch(event))
+				std::shared_lock lock{ mutex_ };
+				callbacks.reserve(listeners_.size());
+				interceptors.reserve(interceptors_.size());
+
+				for (const auto& interceptor : interceptors_)
 				{
-					return false;
+					if (interceptor != nullptr)
+					{
+						interceptors.push_back(interceptor);
+					}
+				}
+
+				for (const auto& listener : listeners_)
+				{
+					if (listener != nullptr and listener->callback() != nullptr)
+					{
+						callbacks.push_back(listener->callback());
+					}
 				}
 			}
-			return true;
+
+			for (const auto& interceptor : interceptors)
+			{
+				if (!interceptor->on_dispatch(event)) return;
+			}
+
+			for (const auto& callback : callbacks)
+			{
+				std::invoke(callback, event);
+			}
 		}
 	};
 	///@}

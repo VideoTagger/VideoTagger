@@ -1,6 +1,8 @@
 #pragma once
 #include <memory>
 #include <cstddef>
+#include <mutex>
+#include <shared_mutex>
 #include <unordered_map>
 #include <type_traits>
 #include <typeinfo>
@@ -23,6 +25,7 @@ namespace vt
 		event_storage(const event_storage&) = delete;
 
 	private:
+		mutable std::shared_mutex mutex_;
 		std::unordered_map<size_t, std::unique_ptr<impl::event_dispatcher>> dispatchers_;
 
 	public:
@@ -36,13 +39,22 @@ namespace vt
 		constexpr event_dispatcher<event_type>& get_event_dispatcher()
 		{
 			auto id = typeid(event_type).hash_code();
-			auto it = dispatchers_.find(id);
-			if (it != dispatchers_.end())
 			{
-				return *reinterpret_cast<event_dispatcher<event_type>*>(it->second.get());
+				std::shared_lock read_lock{ mutex_ };
+				auto it = dispatchers_.find(id);
+				if (it != dispatchers_.end())
+				{
+					return *static_cast<event_dispatcher<event_type>*>(it->second.get());
+				}
 			}
-			dispatchers_[id] = std::make_unique<event_dispatcher<event_type>>();
-			return *reinterpret_cast<event_dispatcher<event_type>*>(dispatchers_.at(id).get());
+
+			std::scoped_lock write_lock{ mutex_ };
+			auto [it, inserted] = dispatchers_.try_emplace(id, nullptr);
+			if (inserted or it->second == nullptr)
+			{
+				it->second = std::make_unique<event_dispatcher<event_type>>();
+			}
+			return *reinterpret_cast<event_dispatcher<event_type>*>(it->second.get());
 		}
 
 		/**
@@ -61,21 +73,23 @@ namespace vt
 		/**
 		 * @brief Adds an interceptor for a specific event type
 		 * @tparam event_type The type of the event for which the interceptor is added
+		 * @tparam interceptor_type The type of the interceptor to add, must be derived from `event_interceptor<event_type>`
 		 * @tparam arguments The types of arguments used to construct the interceptor instance
 		 * @param[in] args The arguments used to construct the interceptor instance
 		 * 
 		 * @return A handle to the added interceptor
 		 */
-		template<typename event_type, typename... arguments, typename = std::enable_if_t<std::is_base_of_v<event, event_type> and std::is_constructible_v<event_type, arguments...>>>
+		template<typename event_type, typename interceptor_type, typename... arguments, typename = std::enable_if_t<std::is_base_of_v<event_interceptor<event_type>, interceptor_type> and std::is_constructible_v<interceptor_type, event_interceptor_handle, arguments...>>>
 		constexpr event_interceptor_handle add_event_interceptor(arguments&&... args)
 		{
 			auto& dispatcher = get_event_dispatcher<event_type>();
-			return dispatcher.add_event_interceptor(std::forward<arguments>(args)...);
+			return dispatcher.add_event_interceptor<interceptor_type>(std::forward<arguments>(args)...);
 		}
 
 		///@brief Clears all event dispatchers.
 		void clear_event_dispatchers()
 		{
+			std::scoped_lock lock{ mutex_ };
 			dispatchers_.clear();
 		}
 

@@ -1,7 +1,9 @@
 #pragma once
 #include <random>
+#include <mutex>
 #include <type_traits>
 #include <limits>
+#include <SDL.h>
 
 namespace vt::utils
 {
@@ -14,6 +16,7 @@ namespace vt::utils
 	private:
 		static std::random_device rd;
 		static std::mt19937_64 gen;
+		static std::mutex mutex_;
 
 	public:
 		/**
@@ -60,8 +63,22 @@ namespace vt::utils
 		{
 			return get<uuid>(1);
 		}
+
+		/**
+		 * @brief Generates a monotonic ID of the specified type, which is guaranteed to be unique and increasing across calls
+		 * @tparam type The type of the monotonic ID to generate, must be constructible from uint64_t
+		 */
+		template<typename type = uint64_t, typename = std::enable_if_t<std::is_constructible_v<type, uint64_t>>>
+		static uint64_t get_mono()
+		{
+			std::scoped_lock lock{ mutex_ };
+			auto timestamp = SDL_GetTicks64();
+			static std::atomic<uint64_t> counter{ 1 };
+			return type{ (timestamp << 32) | (counter++ & 0xFFFFFFFF) };
+		}
 	};
 
 	inline std::random_device random::rd{};
 	inline std::mt19937_64 random::gen = std::mt19937_64(random::rd());
+	inline std::mutex random::mutex_;
 }
