@@ -572,7 +572,7 @@ namespace vt
 			if (event.is_playing() == ctx_.displayed_videos.is_playing()) return;
 
 			ctx_.displayed_videos.set_playing(event.is_playing());
-			ctx_.dispatch_event<playback_changed_event>(event_source_, player, event.is_playing());
+			ctx_.dispatch_event<playback_changed_event>(event.source(), player, event.is_playing());
 		});
 
 		ctx_.add_event_listener<seek_request_event>([&player, this](const seek_request_event& event)
@@ -580,35 +580,35 @@ namespace vt
 			if (&event.player() != &player) return;
 
 			ctx_.displayed_videos.seek(event.timestamp());
-			ctx_.dispatch_event<seek_event>(event_source_, player, event.timestamp());
+			ctx_.dispatch_event<seek_event>(event.source(), player, event.timestamp());
 		});
 
 		ctx_.add_event_listener<seek_to_start_request_event>([&player, this](const seek_to_start_request_event& event)
 		{
 			if (&event.player() != &player) return;
 
-			ctx_.dispatch_event<seek_request_event>(event_source_, player, std::chrono::nanoseconds::zero());
+			ctx_.dispatch_event<seek_request_event>(event.source(), player, std::chrono::nanoseconds::zero());
 		});
 
 		ctx_.add_event_listener<seek_to_end_request_event>([&player, this](const seek_to_end_request_event& event)
 		{
 			if (&event.player() != &player) return;
 
-			ctx_.dispatch_event<seek_request_event>(event_source_, player, ctx_.displayed_videos.duration());
+			ctx_.dispatch_event<seek_request_event>(event.source(), player, ctx_.displayed_videos.duration());
 		});
 
 		ctx_.add_event_listener<seek_to_previous_frame_request_event>([&player, this](const seek_to_previous_frame_request_event& event)
 		{
 			if (&event.player() != &player) return;
 			
-			ctx_.dispatch_event<seek_request_event>(event_source_, player, ctx_.displayed_videos.previous_frame_timestamp());
+			ctx_.dispatch_event<seek_request_event>(event.source(), player, ctx_.displayed_videos.previous_frame_timestamp());
 		});
 
 		ctx_.add_event_listener<seek_to_next_frame_request_event>([&player, this](const seek_to_next_frame_request_event& event)
 		{
 			if (&event.player() != &player) return;
 
-			ctx_.dispatch_event<seek_request_event>(event_source_, player, ctx_.displayed_videos.next_frame_timestamp());
+			ctx_.dispatch_event<seek_request_event>(event.source(), player, ctx_.displayed_videos.next_frame_timestamp());
 		});
 
 		ctx_.add_event_listener<looping_change_request_event>([&player, this](const looping_change_request_event& event)
@@ -617,7 +617,7 @@ namespace vt
 
 			//TODO: video queue should be in charge of looping and skipping,
 
-			ctx_.dispatch_event<looping_changed_event>(event_source_, player, event.mode());
+			ctx_.dispatch_event<looping_changed_event>(event.source(), player, event.mode());
 		});
 
 		ctx_.add_event_listener<speed_change_request_event>([&player, this](const speed_change_request_event& event)
@@ -626,7 +626,7 @@ namespace vt
 
 			ctx_.displayed_videos.set_speed(event.speed());
 
-			ctx_.dispatch_event<speed_changed_event>(event_source_, player, ctx_.displayed_videos.speed());
+			ctx_.dispatch_event<speed_changed_event>(event.source(), player, ctx_.displayed_videos.speed());
 		});
 
 		ctx_.add_event_listener<skip_next_request_event>([&player, this](const skip_next_request_event& event)
@@ -642,17 +642,17 @@ namespace vt
 
 			if (player.loop_mode() == loop_mode::all and it == playlist.end())
 			{
-				ctx_.dispatch_event<video_group_change_request_event>(event_source_, player, *playlist.begin());
+				ctx_.dispatch_event<video_group_change_request_event>(event.source(), player, *playlist.begin());
 				return;
 			}
 
 			if (it != playlist.end())
 			{
-				ctx_.dispatch_event<video_group_change_request_event>(event_source_, player, *it);
+				ctx_.dispatch_event<video_group_change_request_event>(event.source(), player, *it);
 				return;
 			}
 
-			ctx_.dispatch_event<video_group_change_request_event>(event_source_, player, invalid_video_group_id);
+			ctx_.dispatch_event<video_group_change_request_event>(event.source(), player, invalid_video_group_id);
 		});
 
 		ctx_.add_event_listener<skip_previous_request_event>([&player, this](const skip_previous_request_event& event)
@@ -668,7 +668,7 @@ namespace vt
 
 			if (it == playlist.begin() or it == playlist.end()) return
 
-			ctx_.dispatch_event<video_group_change_request_event>(event_source_, player, *it);
+			ctx_.dispatch_event<video_group_change_request_event>(event.source(), player, *it);
 		});
 
 		ctx_.add_event_listener<video_group_changed_event>([&player, this](const video_group_changed_event& event)

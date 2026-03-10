@@ -38,7 +38,7 @@ namespace vt
 				return;
 			}
 
-			ctx_.dispatch_event<segment_selected_event>(event_source_, event.storage(), event.tag(), event.id());
+			ctx_.dispatch_event<segment_selected_event>(event.source(), event.storage(), event.tag(), event.id());
 		});
 
 		ctx_.add_event_listener<segment_deselect_request_event>([this](const segment_deselect_request_event& event)
@@ -51,7 +51,7 @@ namespace vt
 				return;
 			}
 
-			ctx_.dispatch_event<segment_selected_event>(event_source_, event.storage(), event.tag(), event.id());
+			ctx_.dispatch_event<segment_selected_event>(event.source(), event.storage(), event.tag(), event.id());
 		});
 
 		ctx_.add_event_listener<video_group_change_request_event>([this](const video_group_change_request_event& event)
@@ -77,7 +77,7 @@ namespace vt
 			selected_segments_.clear();
 			dragged_segments_.clear();
 
-			ctx_.dispatch_event<video_group_changed_event>(event_source_, main_player, current_group_id, new_group_id);
+			ctx_.dispatch_event<video_group_changed_event>(event.source(), main_player, current_group_id, new_group_id);
 		});
 
 		ctx_.add_event_listener<segment_insert_mark_start>([this](const segment_insert_mark_start& event)
@@ -90,7 +90,7 @@ namespace vt
 			auto it = find_insert_segment_mark_by_id(event.mark_id());
 			if (it == insert_segment_marks_.end()) return;
 
-			ctx_.dispatch_event<segment_insert_request_event>(event_source_, event.storage(), it->tag, it->start, event.timestamp(), event.user_customization(), false);
+			ctx_.dispatch_event<segment_insert_request_event>(event.source(), event.storage(), it->tag, it->start, event.timestamp(), event.user_customization(), false);
 
 			insert_segment_marks_.erase(it);
 		});

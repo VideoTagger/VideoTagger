@@ -45,7 +45,7 @@ namespace vt::widgets
 
 			playback_suspend_source_ = event.source();
 			
-			ctx_.dispatch_event<playback_change_request_event>(get_event_source(), *this, false);
+			ctx_.dispatch_event<playback_change_request_event>(event.source(), *this, false);
 		});
 
 		ctx_.add_event_listener<playback_resume_request_event>([this](const playback_resume_request_event& event)
@@ -56,14 +56,17 @@ namespace vt::widgets
 
 			playback_suspend_source_ = std::nullopt;
 			
-			ctx_.dispatch_event<playback_change_request_event>(get_event_source(), *this, true);
+			ctx_.dispatch_event<playback_change_request_event>(event.source(), *this, true);
 		});
 
 		ctx_.add_event_listener<playback_changed_event>([this](const playback_changed_event& event)
 		{
 			if (&event.player() != this) return;
 
-			playback_suspend_source_ = std::nullopt;
+			if (playback_suspend_source_ != event.source())
+			{
+				playback_suspend_source_ = std::nullopt;
+			}
 			set_playing(event.is_playing());
 		});
 
