@@ -30,7 +30,7 @@ namespace vt::widgets
 
 	void video_group_queue::pre_render()
 	{
-		set_current_group_id(ctx_.current_video_group_id());
+		set_current_group_id(ctx_.session.current_video_group_id());
 	}
 
 	void video_group_queue::on_render()
@@ -230,7 +230,7 @@ namespace vt::widgets
 			ImGui::TableNextColumn();
 			{
 				bool is_empty = playlist.empty();
-				bool can_play = !is_empty and ctx_.current_video_group_id() == invalid_video_group_id;
+				bool can_play = !is_empty and ctx_.session.current_video_group_id() == invalid_video_group_id;
 				auto cpos = ImGui::GetCursorPosX() + style.CellPadding.x;
 				ImGui::SetCursorPosX(cpos);
 				if (!can_play) ImGui::BeginDisabled();

@@ -557,7 +557,7 @@ namespace vt
 
 	void project::remove_video_group(video_group_id_t id)
 	{
-		if (ctx_.current_video_group_id() == id)
+		if (ctx_.session.current_video_group_id() == id)
 		{
 			ctx_.dispatch_event<video_group_change_request_event>("project", ctx_.get_window<widgets::video_player>(), invalid_video_group_id);
 		}

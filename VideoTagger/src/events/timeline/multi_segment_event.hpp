@@ -2,6 +2,7 @@
 #include <events/event.hpp>
 #include <utility>
 #include <tags/tag_timeline.hpp>
+#include <utils/timestamp.hpp>
 
 namespace vt
 {

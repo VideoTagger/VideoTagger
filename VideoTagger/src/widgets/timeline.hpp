@@ -24,25 +24,6 @@ namespace vt::widgets
 		end,
 	};
 
-	enum class segment_drag_stage
-	{
-		not_dragging,
-		dragging,
-		waiting_for_approval,
-	};
-
-	struct segment_drag_data
-	{
-		segment_part grab_part{ segment_part::none };
-		segment_drag_stage stage{ segment_drag_stage::not_dragging };
-		timestamp start_position{};
-		timestamp current_offset{};
-		timestamp min_start_position{};
-		timestamp max_start_position{};
-		segment_storage* storage{};
-		event_source begin_drag_source{};
-	};
-
 	struct timeline_state
 	{
 		timestamp previous_ts{};
@@ -88,12 +69,10 @@ namespace vt::widgets
 		bool is_playhead_dragged_ = false;
 		timeline_state state_;
 		std::function<void(timestamp ts)> on_seek_;
-		//TODO: segment shouldn't be const
 		std::function<void(const segment_with_id& segment_and_id, const tag& tag)> on_ctx_menu_;
 		std::function<void(const segment_with_id& segment_and_id, const tag& tag)> on_draw_tooltip_;
-		segment_id_map selected_segments_;
-		segment_id_map dragged_segments_;
-		segment_drag_data segment_drag_data_{};
+
+		timestamp segment_drag_start_position_{};
 
 	public:
 		void set_on_seek_callback(const std::function<void(timestamp ts)>& callback);
@@ -105,12 +84,8 @@ namespace vt::widgets
 		uint32_t segment_color(uint32_t tag_color, bool is_hovered = false, bool is_dragged = false) const;
 		///@return Disabled color if the timeline is disabled, normal color otherwise
 		uint32_t segment_outline_color(uint32_t tag_color, bool is_hovered = false, bool is_dragged = false, bool is_selected = false) const;
-		bool is_segment_selected(const std::string& tag, segment_id segment) const;
-		bool is_segment_dragged(const std::string& tag, segment_id segment) const;
-		bool is_dragging_any_segment() const;
-		bool is_hovering_any_segment() const;
 
-		bool more_than_one_segment_selected() const;
+		bool is_hovering_any_segment() const;
 
 		utils::timestamp_span visible_time_span() const;
 		float span_as_scale() const;
@@ -123,8 +98,6 @@ namespace vt::widgets
 
 		virtual nlohmann::ordered_json serialize() const override;
 		virtual void deserialize(const nlohmann::ordered_json& json) override;
-
-		const segment_id_map& selected_segments() const;
 	private:
 		void draw_playhead() const;
 		void draw_time_intervals(bool only_lines) const;
@@ -142,8 +115,6 @@ namespace vt::widgets
 		float to_visible_timeline_pos(timestamp time) const;
 		
 		int64_t interval_time() const;
-
-		void set_segment_selection(const std::string& tag, segment_id segment, bool is_selected);
 
 		void event_deselect_segments_if(segment_storage& storage, const std::function<bool(const std::string&, segment_id)>& predicate);
 		void event_deselect_all_segments(segment_storage& storage);

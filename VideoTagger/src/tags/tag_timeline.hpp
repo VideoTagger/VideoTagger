@@ -651,6 +651,28 @@ namespace vt
 		return { it, id_it };
 	}
 
+	inline bool segment_id_map_contains(const segment_id_map& map, const std::string& tag_name, segment_id id)
+	{
+		auto [map_it, id_it] = segment_id_map_find(map, tag_name, id);
+		return map_it != map.end() and id_it != map_it->second.end();
+	}
+
+	inline bool segment_id_map_erase(segment_id_map& map, const std::string& tag_name, segment_id id)
+	{
+		auto [tags_it, segments_it] = segment_id_map_find(map, tag_name, id);
+		if (tags_it == map.end() or segments_it == tags_it->second.end())
+		{
+			return false;
+		}
+
+		tags_it->second.erase(segments_it);
+		if (tags_it->second.empty())
+		{
+			map.erase(tags_it);
+		}
+		return true;
+	}
+
 	inline std::pair<timestamp, timestamp> min_max_segment_timestamps(const segment_storage& storage, const segment_id_map& segments)
 	{
 		timestamp min_timestamp = timestamp::max();

@@ -16,7 +16,7 @@ namespace vt::widgets
 		const auto& style = ImGui::GetStyle();
 		std::optional<selected_segment_data>& selected_segment = ctx_.video_timeline.selected_segment;
 
-		if (ctx_.current_video_group_id() != invalid_video_group_id and ctx_.last_focused_video.has_value() and selected_segment.has_value())
+		if (ctx_.session.current_video_group_id() != invalid_video_group_id and ctx_.last_focused_video.has_value() and selected_segment.has_value())
 		{
 			auto selected_attr_inst = ctx_.get_selected_attribute();
 			auto active_vid_size = ctx_.get_active_video_tex_size();

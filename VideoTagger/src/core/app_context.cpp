@@ -141,17 +141,12 @@ namespace vt
 		{
 			debug::panic("No open project");
 		}
-		if (current_video_group_id_ == invalid_video_group_id)
+		if (session.current_video_group_id() == invalid_video_group_id)
 		{
 			debug::panic("No current video group");
 		}
 
-		return current_project->video_groups.at(current_video_group_id_).segments();
-	}
-
-	video_group_id_t app_context::current_video_group_id() const
-	{
-		return current_video_group_id_;
+		return current_project->video_groups.at(session.current_video_group_id()).segments();
 	}
 
 	std::shared_ptr<lang_pack> app_context::load_lang_pack(const std::string& name)
@@ -295,28 +290,4 @@ namespace vt
     {
         return utils::filesystem::get_storage_path("VideoTagger", "VideoTagger");
     }
-
-	std::vector<insert_segment_mark_data>::iterator app_context::find_insert_segment_mark_by_tag(const std::string& tag)
-	{
-		return std::find_if(insert_segment_marks.begin(), insert_segment_marks.end(), [&](const auto& mark)
-		{
-			return mark.tag.has_value() and mark.tag.value() == tag;
-		});
-	}
-
-	std::vector<insert_segment_mark_data>::iterator app_context::find_insert_segment_mark_by_tag(const std::optional<std::string>& tag)
-	{
-		return std::find_if(insert_segment_marks.begin(), insert_segment_marks.end(), [&](const auto& mark)
-		{
-			return mark.tag == tag;
-		});
-	}
-
-	std::vector<insert_segment_mark_data>::iterator app_context::find_insert_segment_mark_by_id(uint64_t id)
-	{
-		return std::find_if(insert_segment_marks.begin(), insert_segment_marks.end(), [&](const auto& mark)
-		{
-			return mark.mark_id == id;
-		});
-	}
 }

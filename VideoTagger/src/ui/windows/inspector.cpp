@@ -17,8 +17,6 @@
 #include <events/timeline/segments_moved_event.hpp>
 #include <events/timeline/segment_deleted_event.hpp>
 #include <events/timeline/segment_merged_event.hpp>
-#include <events/timeline/segment_select_event.hpp>
-#include <events/timeline/segment_deselect_event.hpp>
 
 namespace vt::ui::windows
 {
@@ -46,7 +44,7 @@ namespace vt::ui::windows
 
     void inspector::on_render()
 	{
-		if (!is_any_segment_selected())
+		if (!ctx_.session.is_any_segment_selected())
 		{
 			ui::centered_text("Select a segment to display its properties...", ImGui::GetContentRegionMax());
 			return;
@@ -65,7 +63,7 @@ namespace vt::ui::windows
 		auto [first_active_tag, first_active_segment_id] = first_selected_segment();
 		const auto& first_active_segment = segments.at(first_active_tag).at(first_active_segment_id);
 
-		bool more_than_one_segment_active = more_than_one_segment_selected();
+		bool more_than_one_segment_active = ctx_.session.more_than_one_segment_selected();
 
 		tag_segment_type segment_type{};
 		if (more_than_one_segment_active)
@@ -79,16 +77,17 @@ namespace vt::ui::windows
 
 		bool link_segment_parts = link_segment_parts_ or more_than_one_segment_active;
 
-		auto [min_segment_ts, max_segment_ts] = min_max_segment_timestamps(segments, selected_segments_);
+		auto [min_segment_ts, max_segment_ts] = min_max_segment_timestamps(segments, ctx_.session.selected_segments());
 		
 		auto segment_start = min_segment_ts;
 		auto segment_end = max_segment_ts;
 
-		if ((grab_part_ & segment_part::left) or (link_segment_parts and drag_source_ == event_source))
+		const auto& segment_drag_data = ctx_.session.segment_drag_data();
+		if ((grab_part_ & segment_part::left) or (link_segment_parts and segment_drag_data.begin_drag_source == event_source))
 		{
 			segment_start += current_offset_;
 		}
-		if ((grab_part_ & segment_part::right) or (link_segment_parts and drag_source_ == event_source))
+		if ((grab_part_ & segment_part::right) or (link_segment_parts and segment_drag_data.begin_drag_source == event_source))
 		{
 			segment_end += current_offset_;
 		}
@@ -262,20 +261,20 @@ namespace vt::ui::windows
 
 		if (started_editing)
 		{
-			ctx_.dispatch_event<begin_segment_drag_event>(event_source, segments, selected_segments_, grab_part_);
+			ctx_.dispatch_event<begin_segment_drag_event>(event_source, segments, ctx_.session.selected_segments(), grab_part_);
 		}
 
-		if (modified_timestamp)
+		if (modified_timestamp and segment_drag_data.begin_drag_source == event_source)
 		{
-			ctx_.dispatch_event<update_segment_drag_event>(event_source, segments, dragged_segments_, grab_part_, current_offset_);
+			ctx_.dispatch_event<update_segment_drag_event>(event_source, segments, ctx_.session.dragged_segments(), grab_part_, current_offset_);
 		}
 
-		if (finished_editing)
+		if (finished_editing and segment_drag_data.begin_drag_source == event_source)
 		{
-			ctx_.dispatch_event<end_segment_drag_event>(event_source, segments, dragged_segments_, grab_part_, current_offset_);
+			ctx_.dispatch_event<end_segment_drag_event>(event_source, segments, ctx_.session.dragged_segments(), grab_part_, current_offset_);
 		}
 
-		if (!more_than_one_segment_active and ctx_.current_video_group_id() != invalid_video_group_id and ctx_.last_focused_video.has_value())
+		if (!more_than_one_segment_active and ctx_.session.current_video_group_id() != invalid_video_group_id and ctx_.last_focused_video.has_value())
 		{
 			auto& selected_tag = ctx_.current_project->tags.at(first_active_tag);
 			ImGui::BeginDisabled(selected_tag.attributes.empty());
@@ -291,10 +290,8 @@ namespace vt::ui::windows
 	{
 		ctx_.add_event_listener<begin_segment_drag_event>([this](const begin_segment_drag_event& event)
 		{
-			drag_source_ = event.source();
 			grab_part_ = event.grab_part();
 			current_offset_ = timestamp::zero();
-			dragged_segments_ = event.segments();
 		});
 
 		ctx_.add_event_listener<update_segment_drag_event>([this](const update_segment_drag_event& event)
@@ -304,113 +301,16 @@ namespace vt::ui::windows
 
 		ctx_.add_event_listener<end_segment_drag_event>([this](const end_segment_drag_event& event)
 		{
-			drag_source_ = {};
 			grab_part_ = segment_part::none;
 			current_offset_ = timestamp::zero();
-			dragged_segments_.clear();
 		});
-
-		ctx_.add_event_listener<segments_moved_event>([this](const segments_moved_event& event)
-		{
-			// Probably don't need to do anything here
-		});
-
-		ctx_.add_event_listener<segment_merged_event>([this](const segment_merged_event& event)
-		{
-			auto [tag_it, segment_it] = segment_id_map_find(dragged_segments_, event.tag(), event.merged_id());
-			if (tag_it != dragged_segments_.end() && segment_it != tag_it->second.end())
-			{
-				tag_it->second.erase(segment_it);
-				tag_it->second.insert(event.merged_into_id());
-			}
-		});
-
-		ctx_.add_event_listener<segment_deleted_event>([this](const segment_deleted_event& event)
-		{
-			if (!event.deleted()) return;
-
-			{
-				auto [tag_it, segment_it] = segment_id_map_find(selected_segments_, event.tag(), event.id());
-				if (tag_it != selected_segments_.end() && segment_it != tag_it->second.end())
-				{
-					tag_it->second.erase(segment_it);
-				}
-			}
-
-			{
-				auto [tag_it, segment_it] = segment_id_map_find(dragged_segments_, event.tag(), event.id());
-				if (tag_it != dragged_segments_.end() && segment_it != tag_it->second.end())
-				{
-					tag_it->second.erase(segment_it);
-				}
-			}
-		});
-
-		ctx_.add_event_listener<segment_select_event>([this](const segment_select_event& event)
-		{
-			selected_segments_[event.tag()].insert(event.id());
-		});
-
-		ctx_.add_event_listener<segment_deselect_event>([this](const segment_deselect_event& event)
-		{
-			auto it = selected_segments_.find(event.tag());
-			if (it == selected_segments_.end()) return;
-
-			it->second.erase(event.id());
-			if (it->second.empty())
-			{
-				selected_segments_.erase(it);
-			}
-		});
-	}
-
-	bool inspector::is_segment_selected(const std::string& tag, segment_id segment) const
-	{
-		auto [tag_it, segment_it] = segment_id_map_find(selected_segments_, tag, segment);
-		return tag_it != selected_segments_.end() and segment_it != tag_it->second.end();
-	}
-
-	bool inspector::is_any_segment_selected() const
-	{
-		for (const auto& [tag, segments] : selected_segments_)
-		{
-			if (!segments.empty()) return true;
-		}
-		return false;
-	}
-
-	bool inspector::is_segment_dragged(const std::string& tag, segment_id segment) const
-	{
-		auto [tag_it, segment_it] = segment_id_map_find(dragged_segments_, tag, segment);
-		return tag_it != dragged_segments_.end() and segment_it != tag_it->second.end();
-	}
-
-	bool inspector::is_dragging_any_segment() const
-	{
-		for (const auto& [tag, segments] : dragged_segments_)
-		{
-			if (!segments.empty()) return true;
-		}
-		return false;
-	}
-
-	bool inspector::more_than_one_segment_selected() const
-	{
-		size_t count = 0;
-		for (const auto& [_, segments] : selected_segments_)
-		{
-			count += segments.size();
-			if (count > 1) return true;
-		}
-
-		return false;
 	}
 
 	std::pair<std::string, segment_id> inspector::first_selected_segment() const
 	{
 		std::string tag_name;
 		segment_id selected_segment_id = invalid_segment_id;
-		for (auto& [tag, seg] : selected_segments_)
+		for (auto& [tag, seg] : ctx_.session.selected_segments())
 		{
 			if (!seg.empty())
 			{

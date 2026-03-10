@@ -43,6 +43,7 @@
 #include <ui/ui_registry.hpp>
 #include <events/event_storage.hpp>
 #include <tasks/task_manager.hpp>
+#include "session_storage.hpp"
 
 namespace vt
 {
@@ -73,13 +74,6 @@ namespace vt
 		bool show_about_window = false;
 		bool show_tag_importer_window = false;
 		bool show_script_progress = false;
-	};
-
-	struct insert_segment_mark_data
-	{
-		std::optional<std::string> tag;
-		timestamp start;
-		uint64_t mark_id{};
 	};
 
 	///@brief Application context that holds all states and necessary data
@@ -129,12 +123,14 @@ namespace vt
 		tag_attribute_instance* selected_attribute{};
 		utils::vec2<uint32_t>* gizmo_target{};
 
+		session_storage session;
+
 		displayed_videos_manager displayed_videos;
 
 		//TODO: remove after removing the old timeline
 		widgets::insert_segment_data_container insert_segment_data;
 
-		std::vector<insert_segment_mark_data> insert_segment_marks;
+		
 
 		app_settings app_settings;
 		std::shared_ptr<lang_pack> lang = nullptr;
@@ -149,8 +145,6 @@ namespace vt
 		bool reset_player_docking{};
 
 		bool pause_player = false;
-
-		video_group_id_t current_video_group_id_{};
 
 		void create_windows();
 		void render_messagebox();
@@ -182,8 +176,6 @@ namespace vt
 		void update_current_video_group();
 
 		segment_storage& get_current_segment_storage();
-	
-		video_group_id_t current_video_group_id() const;
 
 		std::shared_ptr<lang_pack> load_lang_pack(const std::string& name = "en_US");
 		std::shared_ptr<lang_pack> load_or_create_lang_pack(const std::string& name, const std::string& filename);
@@ -200,10 +192,6 @@ namespace vt
 		tag_attribute_instance* get_selected_attribute() const;
 
 		static std::filesystem::path storage_path();
-
-		std::vector<insert_segment_mark_data>::iterator find_insert_segment_mark_by_tag(const std::string& tag);
-		std::vector<insert_segment_mark_data>::iterator find_insert_segment_mark_by_tag(const std::optional<std::string>& tag);
-		std::vector<insert_segment_mark_data>::iterator find_insert_segment_mark_by_id(uint64_t id);
 	};
 
 	///@brief Global application context instance

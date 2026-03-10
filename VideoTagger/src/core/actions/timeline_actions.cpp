@@ -57,7 +57,7 @@ namespace vt
 
 	void timestamp_action::invoke() const
 	{
-		if (!ctx_.current_project.has_value() or ctx_.current_video_group_id() == invalid_video_group_id) return;
+		if (!ctx_.current_project.has_value() or ctx_.session.current_video_group_id() == invalid_video_group_id) return;
 
 		auto& segments = ctx_.get_current_segment_storage();
 		auto current_timestamp = ctx_.displayed_videos.current_timestamp_as_timestamp();
@@ -116,14 +116,14 @@ namespace vt
 
 	void segment_action::invoke() const
 	{
-		if (!ctx_.current_project.has_value() or ctx_.current_video_group_id() == invalid_video_group_id) return;
+		if (!ctx_.current_project.has_value() or ctx_.session.current_video_group_id() == invalid_video_group_id) return;
 
-		auto mark_it = ctx_.find_insert_segment_mark_by_tag(tag_);
+		auto mark_it = ctx_.session.find_insert_segment_mark_by_tag(tag_);
 
 		auto type = type_;
 		if (type_ == segment_action_type::auto_)
 		{
-			type = mark_it == ctx_.insert_segment_marks.end() ? segment_action_type::start : segment_action_type::end;
+			type = mark_it == ctx_.session.insert_segment_marks().end() ? segment_action_type::start : segment_action_type::end;
 		}
 
 		auto& segments = ctx_.get_current_segment_storage();
@@ -133,14 +133,14 @@ namespace vt
 		{
 			case segment_action_type::start:
 			{
-				if (mark_it != ctx_.insert_segment_marks.end()) return;
+				if (mark_it != ctx_.session.insert_segment_marks().end()) return;
 
 				ctx_.dispatch_event<segment_insert_mark_start>("keybind", utils::random::get_uuid(), segments, tag_, current_timestamp);
 			}
 			break;
 			case segment_action_type::end:
 			{
-				if (mark_it == ctx_.insert_segment_marks.end()) return;
+				if (mark_it == ctx_.session.insert_segment_marks().end()) return;
 
 				ctx_.dispatch_event<segment_insert_mark_end>("keybind", mark_it->mark_id, segments, current_timestamp, !tag_.has_value());
 			}

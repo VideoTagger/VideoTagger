@@ -1,5 +1,5 @@
 #pragma once
-#include <events/event.hpp>
+#include <events/timeline/multi_segment_event.hpp>
 #include <utils/timestamp.hpp>
 
 namespace vt
@@ -16,6 +16,16 @@ namespace vt
 		timestamp current_offset_;
 
 	public:
+		constexpr void set_grab_part(segment_part grab_part)
+		{
+			grab_part_ = grab_part;
+		}
+
+		constexpr void set_current_offset(timestamp current_offset)
+		{
+			current_offset_ = current_offset;
+		}
+
 		///@return The part of the segment being grabbed
 		constexpr segment_part grab_part() const
 		{

@@ -12,7 +12,6 @@ namespace vt
 
 	private:
 		video_group_id_t group_id_;
-		bool playback_ended_;
 
 	public:
 		constexpr video_group_id_t group_id() const

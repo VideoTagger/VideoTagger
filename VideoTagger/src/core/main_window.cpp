@@ -47,7 +47,13 @@
 #include <events/timeline/segment_inserted_event.hpp>
 #include <events/timeline/segment_insert_mark_start.hpp>
 #include <events/timeline/segment_insert_mark_end.hpp>
+#include <events/timeline/update_segment_drag_event.hpp>
 #include <events/timeline/end_segment_drag_event.hpp>
+#include <events/timeline/segment_select_request_event.hpp>
+#include <events/timeline/segment_selected_event.hpp>
+#include <events/timeline/segment_deselect_request_event.hpp>
+#include <events/timeline/segment_deselected_event.hpp>
+#include <events/interceptors/update_segment_drag_interceptor.hpp>
 
 #include <events/tags/tag_add_request_event.hpp>
 #include <events/tags/tag_added_event.hpp>
@@ -428,7 +434,7 @@ namespace vt
 				moving_segment.reset();
 			}
 
-			auto current_group_id = ctx_.current_video_group_id();
+			auto current_group_id = ctx_.session.current_video_group_id();
 
 			//TODO: change after segment events store the group id.
 			// Should also send events but currently everything assumes that the segment in the event belongs to the current video group
@@ -480,20 +486,7 @@ namespace vt
 			ctx_.dispatch_event<tag_display_changed_event>(event_source, event.storage(), event.tag_name(), event.display());
 		});
 
-		ctx_.add_event_listener<segment_insert_mark_start>([](const segment_insert_mark_start& event)
-		{
-			ctx_.insert_segment_marks.push_back({ event.tag(), event.timestamp(), event.mark_id() });
-		});
-
-		ctx_.add_event_listener<segment_insert_mark_end>([event_source = event_source_](const segment_insert_mark_end& event)
-		{
-			auto it = ctx_.find_insert_segment_mark_by_id(event.mark_id());
-			if (it == ctx_.insert_segment_marks.end()) return;
-
-			ctx_.dispatch_event<segment_insert_request_event>(event_source, event.storage(), it->tag, it->start, event.timestamp(), event.user_customization(), false);
-
-			ctx_.insert_segment_marks.erase(it);
-		});
+		ctx_.add_event_interceptor<update_segment_drag_event, update_segment_drag_interceptor>();
 
 		ctx_.add_event_listener<end_segment_drag_event>([event_source = event_source_](const end_segment_drag_event& event)
 		{
@@ -678,30 +671,8 @@ namespace vt
 			ctx_.dispatch_event<video_group_change_request_event>(event_source_, player, *it);
 		});
 
-		ctx_.add_event_listener<video_group_change_request_event>([&player, this](const video_group_change_request_event& event)
-		{
-			if (&event.player() != &player) return;
-
-			auto new_group_id = event.new_group_id();
-			auto current_group_id = ctx_.current_video_group_id();
-
-			const auto& video_groups = ctx_.current_project->video_groups;
-
-			if (current_group_id == new_group_id) return;
-
-			if (new_group_id != invalid_video_group_id and video_groups.find(new_group_id) == video_groups.end())
-			{
-				debug::error("Video group with id {} does not exist", new_group_id);
-				return;
-			}
-
-			ctx_.dispatch_event<video_group_changed_event>(event_source_, player, current_group_id,  new_group_id);
-		});
-
 		ctx_.add_event_listener<video_group_changed_event>([&player, this](const video_group_changed_event& event)
 		{
-			ctx_.current_video_group_id_ = event.new_group_id();
-			ctx_.insert_segment_marks.clear();
 			ctx_.displayed_videos.clear();
 
 			auto& playlist = ctx_.current_project->video_group_playlist;
@@ -822,6 +793,7 @@ namespace vt
 					ctx_.current_project = std::nullopt;
 					ctx_.video_timeline.selected_segment = std::nullopt;
 					ctx_.is_project_dirty = false;
+					ctx_.session.reset();
 					set_subtitle();
 				}
 			};
@@ -838,6 +810,7 @@ namespace vt
 			ctx_.video_timeline.selected_segment = std::nullopt;
 			ctx_.is_project_dirty = false;
 			set_subtitle();
+			ctx_.session.reset();
 		}
 	}
 
@@ -882,7 +855,7 @@ namespace vt
 	void main_window::on_delete()
 	{
 		auto& timeline = ctx_.get_window<widgets::timeline>();
-		segment_id_map selected_segments = timeline.selected_segments();
+		segment_id_map selected_segments = ctx_.session.selected_segments();
 		for (const auto& [tag, segments] : selected_segments)
 		{
 			for (auto& id : segments)
@@ -1804,9 +1777,9 @@ namespace vt
 								}
 							}
 							ImGui::Separator();
-							if (ImGui::MenuItem("Export Segments", nullptr, nullptr, ctx_.current_video_group_id() != invalid_video_group_id))
+							if (ImGui::MenuItem("Export Segments", nullptr, nullptr, ctx_.session.current_video_group_id() != invalid_video_group_id))
 							{
-								const auto& group_name = ctx_.current_project->video_groups.at(ctx_.current_video_group_id()).display_name;
+								const auto& group_name = ctx_.current_project->video_groups.at(ctx_.session.current_video_group_id()).display_name;
 
 								utils::dialog_filter filter{ "VideoTagger Segments", "vtss" };
 								auto result = utils::filesystem::save_file({}, { filter }, group_name);
@@ -1814,7 +1787,7 @@ namespace vt
 								{
 									//TODO: ability to choose which groups to export
 
-									ctx_.current_project->export_segments(result.path, { ctx_.current_video_group_id() });
+									ctx_.current_project->export_segments(result.path, { ctx_.session.current_video_group_id() });
 
 								}
 							}
@@ -2482,7 +2455,7 @@ namespace vt
 			//	}
 			//}
 			static bool reset_player_when_group_is_invalid = false;
-			if (ctx_.current_video_group_id() == invalid_video_group_id)
+			if (ctx_.session.current_video_group_id() == invalid_video_group_id)
 			{
 				if (reset_player_when_group_is_invalid)
 				{
@@ -2524,9 +2497,9 @@ namespace vt
 			auto group_duration = ctx_.displayed_videos.duration();
 
 			//TODO: Definitely change this!
-			ctx_.video_timeline.set_video_group_id(ctx_.current_video_group_id());
+			ctx_.video_timeline.set_video_group_id(ctx_.session.current_video_group_id());
 			ctx_.video_timeline.set_tag_storage(&ctx_.current_project->tags);
-			ctx_.video_timeline.set_segment_storage(ctx_.current_video_group_id() != invalid_video_group_id ? &ctx_.get_current_segment_storage() : nullptr);
+			ctx_.video_timeline.set_segment_storage(ctx_.session.current_video_group_id() != invalid_video_group_id ? &ctx_.get_current_segment_storage() : nullptr);
 			ctx_.video_timeline.set_start_timestamp(timestamp::zero());
 			ctx_.video_timeline.set_end_timestamp(timestamp(std::chrono::duration_cast<std::chrono::milliseconds>(group_duration)));
 			ctx_.video_timeline.set_current_timestamp(timestamp{ std::chrono::duration_cast<std::chrono::milliseconds>(ctx_.displayed_videos.current_timestamp()) });
@@ -2591,7 +2564,7 @@ namespace vt
 
 		auto& timeline = ctx_.get_window<widgets::timeline>();
 		bool v = true;
-		if (ctx_.current_video_group_id() != invalid_video_group_id)
+		if (ctx_.session.current_video_group_id() != invalid_video_group_id)
 		{
 			auto& state = timeline.state();
 			state.set_min_timestamp(timestamp::zero());
@@ -2659,7 +2632,7 @@ namespace vt
 					point_pos = { (float)ctx_.gizmo_target->at(0), (float)ctx_.gizmo_target->at(1) };
 				}
 
-				widgets::draw_video_widget(video_data.video, video_data.display_texture, timestamp_in_range, is_widget_open, vid_id++, [&point_pos, has_selected_attribute, selected_attribute, is_shape, has_target, &video_data, &selected_segment](ImVec2 pos, ImVec2 size, ImVec2 tex_size)
+				widgets::draw_video_widget(video_data.video, video_data.display_texture, timestamp_in_range, is_widget_open, vid_id++, [&point_pos, has_selected_attribute, selected_attribute, is_shape, has_target, &video_data, &selected_segment, this](ImVec2 pos, ImVec2 size, ImVec2 tex_size)
 				{
 					static auto from_tex_pos = [&pos, &tex_size, &size](const ImVec2 point) -> ImVec2
 					{
@@ -2998,10 +2971,11 @@ namespace vt
 
 										const auto& shape = attr.get<vt::shape>();
 										draw_list->PushClipRect(top_left, bottom_right, true);
-										shape.draw(current_ts, shape.interpolate, from_tex_pos, from_pixels, tex_size, size, is_selected ? ctx_.current_theme.get_rgba(theme_color::selection_normal) : tag.color, fill_color, show_points, [&](size_t i)
+										shape.draw(current_ts, shape.interpolate, from_tex_pos, from_pixels, tex_size, size, is_selected ? ctx_.current_theme.get_rgba(theme_color::selection_normal) : tag.color, fill_color, show_points, [&, this](size_t i)
 										{
 											if (ImGui::IsMouseClicked(0) and hovered)
 											{
+												ctx_.dispatch_event<segment_select_request_event>(event_source_, segment_storage, tag.name, segment_id);
 												ctx_.video_timeline.selected_segment = widgets::selected_segment_data{ tag.name, segment_id };
 												ctx_.set_selected_attribute(&attr);
 											}
@@ -3091,7 +3065,7 @@ namespace vt
 
 		if (ctx_.reset_player_docking)
 		{
-			auto it = ctx_.current_project->video_groups.find(ctx_.current_video_group_id());
+			auto it = ctx_.current_project->video_groups.find(ctx_.session.current_video_group_id());
 			if (it != ctx_.current_project->video_groups.end() and player.is_visible())
 			{
 				player.dock_windows(it->second.size());
