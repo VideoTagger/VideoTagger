@@ -24,13 +24,16 @@ namespace vt
 		std::optional<std::array<uint8_t, utils::hash::sha256_byte_count>> sha256;
 
 		std::string sha256_string() const;
+
+		[[nodiscard]] nlohmann::ordered_json serialize() const;
+		void deserialize(const nlohmann::ordered_json& json);
 	};
 
 	struct video_resource_thumbnail
 	{
 		std::vector<uint8_t> pixels;
-		int width;
-		int height;
+		int width{};
+		int height{};
 		
 		gl_texture texture() const;
 	};

@@ -98,7 +98,7 @@ namespace vt
 	}
 
 	video_resource::video_resource(std::string importer_id, const nlohmann::ordered_json& json) :
-		importer_id_{ std::move(importer_id) }, id_{ make_video_id_from_json(json) }, metadata_{ make_video_metadata_from_json(json) }
+		importer_id_{ std::move(importer_id) }, id_{ make_video_id_from_json(json) }
 	{
 		//TODO: could verify the hash
 		if (json.contains("file-path"))
@@ -111,6 +111,8 @@ namespace vt
 			}
 
 			file_path_ = path;
+
+			metadata_.deserialize(json);
 
 			make_metadata_include_fields fields;
 			fields.title = !metadata_.title.has_value();
@@ -277,31 +279,13 @@ namespace vt
 		auto result = nlohmann::ordered_json::object();
 		
 		result["id"] = id_;
-		if (metadata_.title.has_value())
+
+		if (!file_path_.empty())
 		{
-			result["title"] = *metadata_.title;
+			result["file-path"] = file_path_;
 		}
-		if (metadata_.width.has_value())
-		{
-			result["width"] = *metadata_.width;
-		}
-		if (metadata_.height.has_value())
-		{
-			result["height"] = *metadata_.height;
-		}
-		if (metadata_.fps.has_value())
-		{
-			result["fps"] = *metadata_.fps;
-		}
-		if (metadata_.duration.has_value())
-		{
-			//TODO: save in better format (as a string)
-			result["duration"] = metadata_.duration->count();
-		}
-		if (metadata_.sha256.has_value())
-		{
-			result["sha256"] = metadata_.sha256_string();
-		}
+
+		result.update(metadata_.serialize());
 
 		on_save(result);
 
@@ -310,10 +294,7 @@ namespace vt
 
 	void video_resource::on_save(nlohmann::ordered_json& json) const
 	{
-		if (!file_path_.empty())
-		{
-			json["file-path"] = file_path_;
-		}
+		
 	}
 
 	std::string video_resource_metadata::sha256_string() const
@@ -324,6 +305,70 @@ namespace vt
 		}
 
 		return utils::hash::bytes_to_hex(*sha256, utils::hash::string_case::lower);
+	}
+
+	[[nodiscard]] nlohmann::ordered_json video_resource_metadata::serialize() const
+	{
+		auto result = nlohmann::ordered_json::object();
+
+		if (title.has_value())
+		{
+			result["title"] = *title;
+		}
+		if (width.has_value())
+		{
+			result["width"] = *width;
+		}
+		if (height.has_value())
+		{
+			result["height"] = *height;
+		}
+		if (fps.has_value())
+		{
+			result["fps"] = *fps;
+		}
+		if (duration.has_value())
+		{
+			//TODO: save in better format (as a string)
+			result["duration"] = duration->count();
+		}
+		if (sha256.has_value())
+		{
+			result["sha256"] = sha256_string();
+		}
+
+		return result;
+	}
+
+	void video_resource_metadata::deserialize(const nlohmann::ordered_json& json)
+	{
+		if (json.contains("title"))
+		{
+			title = json.at("title");
+		}
+		if (json.contains("width"))
+		{
+			width = json.at("width");
+		}
+		if (json.contains("height"))
+		{
+			height = json.at("height");
+		}
+		if (json.contains("fps"))
+		{
+			fps = json.at("fps");
+		}
+		if (json.contains("duration"))
+		{
+			//TODO: change when save format changes
+			duration = std::chrono::nanoseconds{ std::chrono::nanoseconds::rep(json.at("duration")) };
+		}
+		if (json.contains("sha256"))
+		{
+			sha256 = std::array<uint8_t, utils::hash::sha256_byte_count>{};
+			auto bytes = utils::hash::hex_to_bytes(json.at("sha256").get<std::string>());
+			std::copy_n(bytes.begin(), utils::hash::sha256_byte_count, sha256->begin());
+		}
 	}
 
 	gl_texture video_resource_thumbnail::texture() const
