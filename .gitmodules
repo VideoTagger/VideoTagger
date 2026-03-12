@@ -37,3 +37,6 @@
 	path = VideoTagger/vendor/SDL2
 	url = https://github.com/libsdl-org/SDL.git
 	branch = SDL2
+[submodule "VideoTagger/vendor/FreeType"]
+	path = VideoTagger/vendor/FreeType
+	url = https://gitlab.freedesktop.org/freetype/freetype.git
