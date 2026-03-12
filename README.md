@@ -14,11 +14,11 @@ If the repository was cloned non-recursively run:
 git submodule update --init
 ```
 
-## Build Requirements
+### Build Requirements
 - Python 3.12+ (tested with 3.12.6 and 3.13.0)
 - CMake 3.24+
 
-# Initial setup
+## Initial setup
 Install `uv` package manager:
 ```shell
 # On Windows
@@ -68,6 +68,12 @@ In the root directory run:
 docker compose up --build
 docker cp videotagger:/app/build/. ./build/
 docker compose down
+```
+
+## Build docs
+To build the documentation run:
+```shell
+uv run ./scripts/build_docs.py
 ```
 
 ## Third party libraries
