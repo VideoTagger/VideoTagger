@@ -35,8 +35,7 @@ build-essential pkg-config cmake ninja-build python3 python3-pip libsdl2-dev lib
 
 In the root directory run:
 ```shell
-cd scripts
-uv run setup.py
+uv run ./scripts/setup.py
 ```
 
 > [!Warning]

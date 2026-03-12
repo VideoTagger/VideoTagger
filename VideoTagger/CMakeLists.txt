@@ -1,14 +1,9 @@
 project("VideoTagger")
 add_subdirectory("${CMAKE_SOURCE_DIR}/tools" VideoTaggerBuildTools)
 
-set(NFD_BUILD_TESTS "OFF")
-set(NFD_INSTALL "OFF")
-
-file(READ "${CMAKE_SOURCE_DIR}/VERSION" VT_VERSION)
-string(STRIP "${VT_VERSION}" VT_VERSION)
+include(cmake/SetupVersion.cmake)
+vt_setup_version(VT_VERSION)
 message(STATUS "VT_VERSION: ${VT_VERSION}")
-
-include(FetchContent)
 
 include(FetchContent)
 
@@ -21,6 +16,8 @@ set(ASSETS_SOURCE_DIR "${PROJECT_SOURCE_DIR}/assets")
 message(STATUS "Embed source directory: ${EMBED_SOURCE_DIR}")
 message(STATUS "Embed output directory: ${EMBED_OUTPUT_DIR}")
 
+vt_embed_text_file("${CMAKE_SOURCE_DIR}/config.json" "${EMBED_OUTPUT_DIR}/config.hpp" "vt::embed" EMBED_GENERATED_FILES)
+
 vt_embed_text_file("${ASSETS_SOURCE_DIR}/themes/dark.vttheme" "${EMBED_OUTPUT_DIR}/dark_theme.hpp" "vt::embed" EMBED_GENERATED_FILES)
 #vt_embed_json("${ASSETS_SOURCE_DIR}/themes/light.vttheme" "${EMBED_OUTPUT_DIR}" "vt::embed" EMBED_GENERATED_FILES)
 vt_embed_directory(${EMBED_SOURCE_DIR} ${EMBED_OUTPUT_DIR} "vt::embed" EMBED_GENERATED_FILES)
@@ -31,7 +28,7 @@ set(LICENSE_DIR "${PROJECT_SOURCE_DIR}/licenses")
 vt_generate_about(${LICENSE_DIR} ${EMBED_OUTPUT_DIR} "vt::embed" EMBED_GENERATED_FILES)
 include(cmake/GenerateIcons.cmake)
 set(ICONS_FILE "${PROJECT_SOURCE_DIR}/src/ui/icons.hpp")
-vt_generate_icons("${PROJECT_SOURCE_DIR}/resources/icons.list" "${PROJECT_SOURCE_DIR}/src/ui/icons.hpp" ICONS_GENERATED_FILE)
+vt_generate_icons("${PROJECT_SOURCE_DIR}/src/resources/icons.list" "${PROJECT_SOURCE_DIR}/src/ui/icons.hpp" ICONS_GENERATED_FILE)
 
 
 file(GLOB_RECURSE source_files CONFIGURE_DEPENDS 
@@ -88,6 +85,8 @@ target_compile_definitions(${PROJECT_NAME} PRIVATE
 include(${CMAKE_SOURCE_DIR}/cmake/CppCommon.cmake)
 setup_cpp_common(${PROJECT_NAME})
 
+set("NFD_BUILD_TESTS" "OFF")
+set("NFD_INSTALL" "OFF")
 add_subdirectory("${PROJECT_SOURCE_DIR}/vendor/nativefiledialog-extended")
 target_link_libraries(${PROJECT_NAME} PRIVATE nfd)
 
@@ -130,8 +129,6 @@ target_include_directories(${PROJECT_NAME}
 	PRIVATE "${PROJECT_SOURCE_DIR}/vendor/SDL2"
 	PRIVATE "${EMBED_INCLUDE_DIR}"
 )
-
-
 
 if(CMAKE_SYSTEM_PROCESSOR MATCHES "64")
 	set(ARCH "x86_64")

@@ -46,13 +46,16 @@ jobs:
         with:
           ref: gh-pages
           path: gh-pages
+      
+      - name: Setup uv
+        uses: astral-sh/setup-uv@v7
 
       - name: Copy files to working directory
         run: |
           mkdir -p ./gh-pages/scripts
-          cp ./VERSION ./gh-pages/
-          cp ./scripts/docs.py ./gh-pages/scripts/
-          cp ./scripts/setup_docs_version_selector.py ./gh-pages/scripts/
+          cp ./config.json ./gh-pages/
+          cp ./pyproject.toml ./gh-pages/
+          cp -r ./scripts/ ./gh-pages/scripts/
           mkdir -p ./gh-pages/docs/src
           cp ./docs/src/version_selector.html ./gh-pages/docs/src/
           cp -r /tmp/new_docs/* ./gh-pages/
@@ -60,9 +63,10 @@ jobs:
       - name: Update version selector
         run: |
           cd gh-pages
-          python3 ./scripts/setup_docs_version_selector.py
+          uv run ./scripts/setup_docs.py --only-version-selector
           mv ./build/web/public/docs/version_selector.html ./docs/version_selector.html
-          rm -f ./VERSION
+          rm -f ./config.json
+          rm -f ./pyproject.toml
           rm -rf build
           rm -rf docs/src
           rm -rf scripts
