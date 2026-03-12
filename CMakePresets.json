@@ -189,7 +189,7 @@
 		},
 		{
 			"name": "linux-x64-debug",
-			"configurePreset": "linux-debug",
+			"configurePreset": "linux-x64-debug",
 			"condition": {
 				"type": "equals",
 				"lhs": "${hostSystemName}",
@@ -198,7 +198,7 @@
 		},
 		{
 			"name": "linux-x64-release",
-			"configurePreset": "linux-release",
+			"configurePreset": "linux-x64-release",
 			"condition": {
 				"type": "equals",
 				"lhs": "${hostSystemName}",
@@ -207,7 +207,7 @@
 		},
 		{
 			"name": "linux-x64-shipping",
-			"configurePreset": "linux-shipping",
+			"configurePreset": "linux-x64-shipping",
 			"condition": {
 				"type": "equals",
 				"lhs": "${hostSystemName}",
@@ -216,7 +216,7 @@
 		},
 		{
 			"name": "macos-x64-debug",
-			"configurePreset": "macos-debug",
+			"configurePreset": "macos-x64-debug",
 			"condition": {
 				"type": "equals",
 				"lhs": "${hostSystemName}",
@@ -225,7 +225,7 @@
 		},
 		{
 			"name": "macos-x64-release",
-			"configurePreset": "macos-release",
+			"configurePreset": "macos-x64-release",
 			"condition": {
 				"type": "equals",
 				"lhs": "${hostSystemName}",
@@ -234,7 +234,7 @@
 		},
 		{
 			"name": "macos-x64-shipping",
-			"configurePreset": "macos-shipping",
+			"configurePreset": "macos-x64-shipping",
 			"condition": {
 				"type": "equals",
 				"lhs": "${hostSystemName}",
@@ -266,7 +266,7 @@
 		},
 		{
 			"name": "linux-x64-shipping",
-			"configurePreset": "linux-shipping",
+			"configurePreset": "linux-x64-shipping",
 			"packageDirectory": "${sourceDir}/build/cmake/pack/${hostSystemName}/",
 			"generators": [
 				"TGZ"
@@ -287,7 +287,7 @@
 		},
 		{
 			"name": "macos-x64-shipping",
-			"configurePreset": "macos-shipping",
+			"configurePreset": "macos-x64-shipping",
 			"packageDirectory": "${sourceDir}/build/cmake/pack/${hostSystemName}/",
 			"generators": [
 				"TGZ"
