@@ -51,9 +51,9 @@ cmake --build --target install --preset=<BUILD_PRESET>
 ```
 
 Replace `<BUILD_PRESET>` with one of the presets:
-- `<SYSTEM>-debug`
-- `<SYSTEM>-release`
-- `<SYSTEM>-shipping`
+- `<SYSTEM>-x64-debug`
+- `<SYSTEM>-x64-release`
+- `<SYSTEM>-x64-shipping`
 
 where `<SYSTEM>` is `windows`/`linux`/`macos`
 

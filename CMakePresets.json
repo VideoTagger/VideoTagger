@@ -97,7 +97,7 @@
 			}
 		},
 		{
-			"name": "linux-debug",
+			"name": "linux-x64-debug",
 			"displayName": "x64 Debug",
 			"inherits": "linux-base",
 			"binaryDir": "${sourceDir}/build/cmake/${hostSystemName}-x86_64/Debug/",
@@ -107,7 +107,7 @@
 			}
 		},
 		{
-			"name": "linux-release",
+			"name": "linux-x64-release",
 			"displayName": "x64 Release",
 			"inherits": "linux-base",
 			"binaryDir": "${sourceDir}/build/cmake/${hostSystemName}-x86_64/Release/",
@@ -117,7 +117,7 @@
 			}
 		},
 		{
-			"name": "linux-shipping",
+			"name": "linux-x64-shipping",
 			"displayName": "x64 Shipping",
 			"inherits": "linux-base",
 			"binaryDir": "${sourceDir}/build/cmake/${hostSystemName}-x86_64/Shipping/",
@@ -128,7 +128,7 @@
 			}
 		},
 		{
-			"name": "macos-debug",
+			"name": "macos-x64-debug",
 			"displayName": "x64 Debug",
 			"inherits": "macos-base",
 			"binaryDir": "${sourceDir}/build/cmake/${hostSystemName}-x86_64/Debug/",
@@ -138,7 +138,7 @@
 			}
 		},
 		{
-			"name": "macos-release",
+			"name": "macos-x64-release",
 			"displayName": "x64 Release",
 			"inherits": "macos-base",
 			"binaryDir": "${sourceDir}/build/cmake/${hostSystemName}-x86_64/Release/",
@@ -148,7 +148,7 @@
 			}
 		},
 		{
-			"name": "macos-shipping",
+			"name": "macos-x64-shipping",
 			"displayName": "x64 Shipping",
 			"inherits": "macos-base",
 			"binaryDir": "${sourceDir}/build/cmake/${hostSystemName}-x86_64/Shipping/",
@@ -188,7 +188,7 @@
 			}
 		},
 		{
-			"name": "linux-debug",
+			"name": "linux-x64-debug",
 			"configurePreset": "linux-debug",
 			"condition": {
 				"type": "equals",
@@ -197,7 +197,7 @@
 			}
 		},
 		{
-			"name": "linux-release",
+			"name": "linux-x64-release",
 			"configurePreset": "linux-release",
 			"condition": {
 				"type": "equals",
@@ -206,7 +206,7 @@
 			}
 		},
 		{
-			"name": "linux-shipping",
+			"name": "linux-x64-shipping",
 			"configurePreset": "linux-shipping",
 			"condition": {
 				"type": "equals",
@@ -215,7 +215,7 @@
 			}
 		},
 		{
-			"name": "macos-debug",
+			"name": "macos-x64-debug",
 			"configurePreset": "macos-debug",
 			"condition": {
 				"type": "equals",
@@ -224,7 +224,7 @@
 			}
 		},
 		{
-			"name": "macos-release",
+			"name": "macos-x64-release",
 			"configurePreset": "macos-release",
 			"condition": {
 				"type": "equals",
@@ -233,7 +233,7 @@
 			}
 		},
 		{
-			"name": "macos-shipping",
+			"name": "macos-x64-shipping",
 			"configurePreset": "macos-shipping",
 			"condition": {
 				"type": "equals",
