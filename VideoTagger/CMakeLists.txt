@@ -132,10 +132,6 @@ target_include_directories(${PROJECT_NAME}
 )
 
 
-# Setup Python
-include(${CMAKE_SOURCE_DIR}/cmake/SetupPython.cmake)
-
-
 
 if(CMAKE_SYSTEM_PROCESSOR MATCHES "64")
 	set(ARCH "x86_64")
