@@ -7,7 +7,7 @@ int main(int argc, char* argv[])
 {
 	vt::update_manager::update();
 	vt::app app;
-	vt::app_window_config main_cfg;
+	vt::system_window_config main_cfg;
 	{
 		main_cfg.window_pos_x = -1;
 		main_cfg.window_pos_y = -1;

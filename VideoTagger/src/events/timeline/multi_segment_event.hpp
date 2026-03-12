@@ -1,6 +1,8 @@
 #pragma once
 #include <events/event.hpp>
+#include <utility>
 #include <tags/tag_timeline.hpp>
+#include <utils/timestamp.hpp>
 
 namespace vt
 {
@@ -25,6 +27,12 @@ namespace vt
 		constexpr segment_storage& storage() const
 		{
 			return *segment_storage_;
+		}
+
+		///@return The minimum and maximum timestamp among all segments associated with the event
+		std::pair<timestamp, timestamp> min_max_timestamp() const
+		{
+			return min_max_segment_timestamps(*segment_storage_, segments_);
 		}
 	};
 }

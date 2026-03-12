@@ -1,40 +1,34 @@
 #include "timeline_menu_popup.hpp"
-#include "timeline_menu_popup.hpp"
 #include "pch.hpp"
-#include "timeline_menu_popup.hpp"
+
+#include <core/app_context.hpp>
+#include <events/tags/tag_change_display_request_event.hpp>
 
 namespace vt::ui
 {
-	timeline_menu_popup::timeline_menu_popup(tag_storage* tags) : popup{ "Timeline Menu" }, tags_{ tags }, tags_modified_{} {}
+	timeline_menu_popup::timeline_menu_popup(tag_storage* tags) : popup{ "Timeline Menu" }, tags_{ tags } {}
 
 	void timeline_menu_popup::on_render()
 	{
-		tags_modified_ = false;
-
 		if (ImGui::SmallButton("Show All"))
 		{
-			size_t tags_size = visible_tags_.size();
+			size_t tags_size = displayed_tags_.size();
 
-			visible_tags_.clear();
+			displayed_tags_.clear();
 			for (const auto& tag : *tags_)
 			{
-				visible_tags_.push_back(tag.name);
-			}
-
-			if (visible_tags_.size() != tags_size)
-			{
-				tags_modified_ = true;
+				displayed_tags_.push_back(tag.name);
+				ctx_.dispatch_event<tag_change_display_request_event>("timeline", *tags_, tag.name, true);
 			}
 		}
 		ImGui::SameLine();
 		if (ImGui::SmallButton("Hide All"))
 		{
-			if (!visible_tags_.empty())
+			for (const auto& tag : displayed_tags_)
 			{
-				tags_modified_ = true;
+				ctx_.dispatch_event<tag_change_display_request_event>("timeline", *tags_, tag, false);
 			}
-
-			visible_tags_.clear();
+			displayed_tags_.clear();
 		}
 		ImGui::SameLine();
 		if (ImGui::SmallButton("Toggle All"))
@@ -42,11 +36,17 @@ namespace vt::ui
 			std::vector<std::string> new_tags;
 			for (const auto& tag : *tags_)
 			{
-				if (std::find(visible_tags_.begin(), visible_tags_.end(), tag.name) != visible_tags_.end()) continue;
-				new_tags.push_back(tag.name);
+				if (std::find(displayed_tags_.begin(), displayed_tags_.end(), tag.name) != displayed_tags_.end())
+				{
+					ctx_.dispatch_event<tag_change_display_request_event>("timeline", *tags_, tag.name, false);
+				}
+				else
+				{
+					ctx_.dispatch_event<tag_change_display_request_event>("timeline", *tags_, tag.name, true);
+					new_tags.push_back(tag.name);
+				}
 			}
-			tags_modified_ = true;
-			set_visible_tags(new_tags);
+			set_displayed_tags(new_tags);
 		}
 
 		if (ImGui::BeginChild("##TagList", { ImGui::GetContentRegionAvail().x, 150 }))
@@ -57,8 +57,8 @@ namespace vt::ui
 				for (const auto& tag : *tags_)
 				{
 					ImGui::TableNextColumn();
-					auto it = std::lower_bound(visible_tags_.begin(), visible_tags_.end(), tag.name);
-					bool visible = it != visible_tags_.end() and *it == tag.name;
+					auto it = std::lower_bound(displayed_tags_.begin(), displayed_tags_.end(), tag.name);
+					bool visible = it != displayed_tags_.end() and *it == tag.name;
 
 					auto name = (visible ? icons::visibility_on : icons::visibility_off) + std::string(" ") + tag.name;
 					if (!visible) ImGui::PushStyleColor(ImGuiCol_Text, style.Colors[ImGuiCol_TextDisabled]);
@@ -66,13 +66,13 @@ namespace vt::ui
 					{
 						if (visible)
 						{
-							visible_tags_.erase(it);
-							tags_modified_ = true;
+							ctx_.dispatch_event<tag_change_display_request_event>("timeline", *tags_, tag.name, false);
+							displayed_tags_.erase(it);
 						}
 						else
 						{
-							visible_tags_.insert(it, tag.name);
-							tags_modified_ = true;
+							ctx_.dispatch_event<tag_change_display_request_event>("timeline", *tags_, tag.name, true);
+							displayed_tags_.insert(it, tag.name);
 						}
 					}
 					if (!visible) ImGui::PopStyleColor();
@@ -88,18 +88,13 @@ namespace vt::ui
 		tags_ = tags;
 	}
 
-	void timeline_menu_popup::set_visible_tags(const std::vector<std::string>& visible_tags)
+	void timeline_menu_popup::set_displayed_tags(const std::vector<std::string>& displayed_tags)
 	{
-		visible_tags_ = visible_tags;
+		displayed_tags_ = displayed_tags;
 	}
 	
-	const std::vector<std::string>& timeline_menu_popup::visible_tags() const
+	const std::vector<std::string>& timeline_menu_popup::displayed_tags() const
 	{
-		return visible_tags_;
-	}
-
-	bool vt::ui::timeline_menu_popup::tags_modified() const
-	{
-		return tags_modified_;
+		return displayed_tags_;
 	}
 }

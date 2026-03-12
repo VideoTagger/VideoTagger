@@ -5,9 +5,99 @@
 #include <services/google/google_account_manager.hpp>
 #include <video/local_video_importer.hpp>
 #include <video/google_drive/google_drive_video_importer.hpp>
+#include <widgets/theme_customizer.hpp>
+#include <widgets/console.hpp>
+#include <widgets/video_group_queue.hpp>
+#include <widgets/localization_editor.hpp>
+#include <widgets/shape_attributes.hpp>
+#include <widgets/video_group_browser.hpp>
+#include <widgets/video_browser.hpp>
+#include <widgets/video_player.hpp>
+#include <widgets/timeline.hpp>
+#include <ui/windows/inspector.hpp>
+#include <ui/windows/tag_manager.hpp>
+#include <ui/popups/messagebox_popup.hpp>
+
+#ifdef _DEBUG
+	#include <ui/windows/sandbox.hpp>
+#endif
 
 namespace vt
 {
+	app_context::app_context()
+	{
+		create_windows();
+	}
+
+	void app_context::create_windows()
+	{
+		create_window<widgets::theme_customizer>();
+		auto& console = create_window<widgets::console>();
+		console.set_opened(true);
+		console.set_scripts_path(ctx_.script_dir_filepath);
+
+		auto& group_queue = create_window<widgets::video_group_queue>();
+		group_queue.set_opened(true);
+
+		auto& localization_editor = create_window<widgets::localization_editor>();
+		//TODO: Remove this when localization editor is openable via the menu bar
+		localization_editor.set_opened(true);
+
+		auto& shape_attributes = create_window<widgets::shape_attributes>();
+		shape_attributes.set_opened(true);
+
+		auto& group_browser = create_window<widgets::video_group_browser>();
+		group_browser.set_opened(true);
+
+		auto& player = create_window<widgets::video_player>();
+		player.set_opened(true);
+
+		auto& timeline = create_window<widgets::timeline>();
+		timeline.set_opened(true);
+
+		auto& video_browser = create_window<widgets::video_browser>();
+		video_browser.set_opened(true);
+
+		auto& inspector = create_window<ui::windows::inspector>();
+		inspector.set_opened(true);
+
+		auto& tag_manager = create_window<ui::windows::tag_manager>();
+		tag_manager.set_opened(true);
+
+#ifdef _DEBUG
+		auto& sandbox = create_window<ui::windows::sandbox>();
+		sandbox.set_opened(true);
+#endif
+	}
+
+	void app_context::render_messagebox()
+	{
+		auto& msgbox = ctx_.messagebox;
+		if (msgbox.should_open())
+		{
+			msgbox.open();
+			msgbox.pop_data();
+		}
+		msgbox.render();
+	}
+
+	void app_context::change_theme(const theme& new_theme)
+	{
+		current_theme = new_theme;
+		current_theme.apply();
+		debug::log("Changed theme to '{}'", current_theme.name());
+	}
+
+	nlohmann::ordered_json app_context::serialize_app_settings()
+	{
+		return ctx_.app_settings.serialize();
+	}
+
+	void app_context::deserialize_app_settings(const nlohmann::ordered_json& json)
+	{
+		ctx_.app_settings.deserialize(json);
+	}
+
 	void app_context::register_account_managers()
 	{
 		register_account_manager<google_account_manager>();
@@ -44,11 +134,6 @@ namespace vt
 		displayed_videos.update();
 	}
 
-	void app_context::reset_current_video_group()
-	{
-		set_current_video_group_id(invalid_video_group_id);
-	}
-
 	segment_storage& app_context::get_current_segment_storage()
 	{
 		//TODO: maybe do something else
@@ -56,63 +141,12 @@ namespace vt
 		{
 			debug::panic("No open project");
 		}
-		if (current_video_group_id_ == invalid_video_group_id)
+		if (session.current_video_group_id() == invalid_video_group_id)
 		{
 			debug::panic("No current video group");
 		}
 
-		return current_project->video_groups.at(current_video_group_id_).segments();
-	}
-
-	void app_context::set_current_video_group_id(video_group_id_t id)
-	{
-		if (!current_project.has_value())
-		{
-			return;
-		}
-
-		if (id == current_video_group_id_)
-		{
-			return;
-		}
-
-		if (id != invalid_video_group_id and current_project->video_groups.count(id) == 0)
-		{
-			debug::error("Tried to set video group to id {} which doesn't exist", id);
-			return;
-		}
-
-		current_video_group_id_ = id;
-		video_timeline.moving_segment.reset();
-		video_timeline.selected_segment.reset();
-		insert_segment_data.clear();
-
-		displayed_videos.clear();
-		
-		if (id == invalid_video_group_id)
-		{
-			return;
-		}
-
-		for (auto& group_inf : current_project->video_groups.at(id))
-		{
-			auto& vid_resource = current_project->videos.get(group_inf.id);
-			const auto& metadata = vid_resource.metadata();
-			if (!vid_resource.playable())
-			{
-				debug::error("Video {} with id {} is not available", metadata.title.has_value() ? *metadata.title : "[UNTITLED]", vid_resource.id());
-				continue;
-			}
-
-			displayed_videos.insert(vid_resource.id(), vid_resource.video(), group_inf.offset, *metadata.width, *metadata.height);
-		}
-
-		ctx_.reset_player_docking = true;
-	}
-
-	video_group_id_t app_context::current_video_group_id() const
-	{
-		return current_video_group_id_;
+		return current_project->video_groups.at(session.current_video_group_id()).segments();
 	}
 
 	std::shared_ptr<lang_pack> app_context::load_lang_pack(const std::string& name)
@@ -143,7 +177,7 @@ namespace vt
 		return std::make_shared<lang_pack>(new_lang.value());
 	}
 
-    void app_context::instert_lang_pack(std::shared_ptr<lang_pack> pack)
+    void app_context::insert_lang_pack(std::shared_ptr<lang_pack> pack)
     {
 		lang_packs.push_back(pack);
     }
@@ -220,10 +254,9 @@ namespace vt
 
 	void app_context::run_script(const std::filesystem::path& script_path)
 	{
-		if (ctx_.app_settings.clear_console_on_run)
-		{
-			ctx_.console.clear();
-		}
+		auto& console = ctx_.get_window<widgets::console>();
+		console.on_run_script();
+
 		ctx_.script_eng.run(script_path);
 		ctx_.win_cfg.show_script_progress = true;
 	}

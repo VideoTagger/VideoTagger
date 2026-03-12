@@ -1,0 +1,17 @@
+services:
+  videotagger:
+    build: ./docker/ubuntu
+    image: videotagger:latest
+    container_name: videotagger
+    working_dir: /app
+    volumes:
+      - .:/app
+      - build_cache:/app/build
+    command: >
+      bash -c "
+      cmake --preset=linux-shipping &&
+      cmake --build --target install --preset=linux-shipping
+      "
+volumes:
+  build_cache:
+      name: videotagger-build-cache

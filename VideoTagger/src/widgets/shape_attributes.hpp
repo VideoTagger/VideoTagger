@@ -1,18 +1,14 @@
 #pragma once
-#include <string>
-#include <optional>
-#include "video_timeline.hpp"
+#include <ui/window.hpp>
 
 namespace vt::widgets
 {
-	class shape_attributes
+	class shape_attributes : public ui::window
 	{
 	public:
-		shape_attributes() = default;
+		shape_attributes();
 
 	public:
-		void render(std::optional<selected_segment_data>& selected_segment, bool& is_open);
-
-		static std::string window_name();
+		virtual void on_render() override;
 	};
 }

@@ -218,7 +218,7 @@ namespace vt::widgets
 	bool tile(
 		const char* id, const std::string& label, ImVec2 tile_size, ImVec2 image_size, GLuint image,
 		const std::function<void(const std::string&)> context_menu, const std::function<void(const std::string&)> drag_drop,
-		std::function<void(ImDrawList&, ImRect, ImRect)> custom_draw, ImVec2 uv0, ImVec2 uv1, bool is_selected
+		std::function<void(ImDrawList&, ImRect, ImRect)> custom_draw, ImVec2 uv0, ImVec2 uv1, bool is_selected, const ImVec4& img_tint_color
 	)
 	{
 		bool result{};
@@ -238,8 +238,16 @@ namespace vt::widgets
 		ImVec2 cpos = ImGui::GetCursorPos() + (selectable_size - image_size - text_size) / 2;
 		
 		ImGui::BeginGroup();
+		
+		//ImGui::PushStyleColor(ImGuiCol_Header, ImVec4{});
+		//ImGui::PushStyleColor(ImGuiCol_HeaderHovered, ImVec4{});
+		//ImGui::PushStyleColor(ImGuiCol_HeaderActive, ImVec4{});
 		ImGui::Selectable("##TileButton", &is_selected, ImGuiSelectableFlags_AllowOverlap | ImGuiSelectableFlags_AllowDoubleClick, selectable_size);
-		if (ImGui::IsItemHovered() and ImGui::IsMouseDoubleClicked(0))
+		//ImGui::PopStyleColor(3);
+
+		bool is_hovered = ImGui::IsItemHovered();
+
+		if (is_hovered and ImGui::IsMouseDoubleClicked(0))
 		{
 			result = true;
 		}
@@ -264,7 +272,7 @@ namespace vt::widgets
 		}
 
 		ImGui::SetCursorPos(std::exchange(cpos, ImGui::GetCursorPos()));
-		ImGui::Image(imgui_tex, image_size, uv0, uv1);
+		ImGui::Image(imgui_tex, image_size, uv0, uv1, img_tint_color);
 		ImRect image_rect = { ImGui::GetItemRectMin(), ImGui::GetItemRectMax() };
 		ImGui::Dummy({ 0, (image_tile_size.y - image_size.y) / 2.f });
 		//widgets::clipped_text(id, { tile_size.x, text_size.y });
@@ -284,9 +292,28 @@ namespace vt::widgets
 
 		ImRect item_rect = { ImGui::GetItemRectMin(), ImGui::GetItemRectMax() };
 		auto* draw_list = ImGui::GetWindowDrawList();
+
+		////backkground
+		//{
+		//	auto rounding = style.FrameRounding;
+		//	rounding = 3.f;
+
+		//	auto background_color = ImGui::GetColorU32(is_hovered ? ImGuiCol_HeaderHovered : (is_selected ? ImGuiCol_HeaderActive : ImGuiCol_Header));
+		//	if (!is_selected and !is_hovered)
+		//	{
+		//		background_color = 0;
+		//	}
+
+		//	draw_list->AddRectFilled(item_rect.Min, item_rect.Max, background_color, rounding);
+		//	//bottom rect
+		//	draw_list->AddRectFilled({ item_rect.Min.x, image_rect.Max.y }, item_rect.Max, ImGui::GetColorU32(ImGuiCol_Button), rounding, ImDrawFlags_RoundCornersBottom);
+		//}
+
 		if (custom_draw != nullptr)
 		{
+			draw_list->PushClipRect(item_rect.Min, item_rect.Max);
 			custom_draw(*draw_list, item_rect, image_rect);
+			draw_list->PopClipRect();
 		}
 
 		return result;
@@ -426,9 +453,14 @@ namespace vt::widgets
 		ImGui::TreePop();
 	}
 
-	bool table_hovered_row_style()
+    bool table_is_row_hovered()
+    {
+        return ImGui::TableGetHoveredRow() == ImGui::TableGetRowIndex();
+    }
+
+    bool table_hovered_row_style()
 	{
-		bool row_hovered = ImGui::TableGetHoveredRow() == ImGui::TableGetRowIndex();
+		bool row_hovered = table_is_row_hovered();
 		if (row_hovered)
 		{
 			ImGui::TableSetBgColor(ImGuiTableBgTarget_RowBg0, ImGui::ColorConvertFloat4ToU32(ImGui::GetStyleColorVec4(ImGuiCol_TableRowBgAlt)));

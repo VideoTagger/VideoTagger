@@ -8,23 +8,29 @@
 
 namespace vt::ui
 {
-	new_language_popup::new_language_popup(std::optional<bool*> open) : modal_popup{ "New Language", open, ImGuiWindowFlags_NoTitleBar },
-		name_input{ "##LanuguageName", "English", [](const std::string& input)
+	new_language_popup::new_language_popup(std::optional<bool*> open) : modal_popup{ "new-language", "New Language", open, ImGuiWindowFlags_NoTitleBar},
+	name_input{ "##LanuguageName", "English", [](const std::string& input) -> std::optional<std::string>
+	{
+		auto trimmed = utils::string::trim_whitespace(input);
+		if (trimmed.empty()) return ctx_.lang->get_template("field_cannot_be_empty", "Name");
+
+		bool valid = std::find_if(ctx_.lang_packs.begin(), ctx_.lang_packs.end(), [&](const auto& lang)
 		{
-			auto trimmed = utils::string::trim_whitespace(input);
-			return !trimmed.empty() and std::find_if(ctx_.lang_packs.begin(), ctx_.lang_packs.end(), [&](const auto& lang)
-			{
-				return lang->name() == trimmed;
-			}) == ctx_.lang_packs.end();
-		}},
-		filename_input{ "##LanguageFilename", "en_US", [](const std::string& input)
+			return lang->name() == trimmed;
+		}) == ctx_.lang_packs.end();
+		return valid ? std::nullopt : std::optional{ ctx_.lang->get_template("item_already_exists", ctx_.lang->get("language"), trimmed)};
+	}},
+	filename_input{ "##LanguageFilename", "en_US", [](const std::string& input) -> std::optional<std::string>
+	{
+		auto trimmed = utils::string::trim_whitespace(input);
+		if (trimmed.empty()) return ctx_.lang->get_template("field_cannot_be_empty", "Filename");
+
+		bool valid = std::find_if(ctx_.lang_packs.begin(), ctx_.lang_packs.end(), [&](const auto& lang)
 		{
-			auto trimmed = utils::string::trim_whitespace(input);
-			return !trimmed.empty() and std::find_if(ctx_.lang_packs.begin(), ctx_.lang_packs.end(), [&](const auto& lang)
-			{
-				return lang->filename() == trimmed;
-			}) == ctx_.lang_packs.end();
-		}} {}
+			return lang->filename() == trimmed;
+		}) == ctx_.lang_packs.end();
+		return valid ? std::nullopt : std::optional{ ctx_.lang->get_template("item_already_exists", ctx_.lang->get("filename"), trimmed)};
+	} } {}
 
 	void new_language_popup::on_display()
 	{
@@ -57,7 +63,7 @@ namespace vt::ui
 				{
 					auto lang = std::make_shared<lang_pack>(name_input.trimmed_input(), filename_input.trimmed_input());
 					lang->save(ctx_.lang_dir_filepath);
-					ctx_.instert_lang_pack(lang);
+					ctx_.insert_lang_pack(lang);
 					close();
 				}
 				break;

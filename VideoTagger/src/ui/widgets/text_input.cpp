@@ -8,8 +8,8 @@
 
 namespace vt::ui
 {
-	text_input::text_input(const std::string& id, const std::string& hint, const std::function<bool(const std::string& text)>& validator) : text_input{ id, {}, hint, validator } {}
-	text_input::text_input(const std::string& id, const std::string& input, const std::string& hint, const std::function<bool(const std::string& text)>& validator) : id_{ id }, input_{ input }, hint_{ hint }, validator_{ validator }, state_{ widget_state::normal } {}
+	text_input::text_input(const std::string& id, const std::string& hint, const std::function<std::optional<std::string>(const std::string& text)>& validator) : text_input{ id, {}, hint, validator } {}
+	text_input::text_input(const std::string& id, const std::string& input, const std::string& hint, const std::function<std::optional<std::string>(const std::string& text)>& validator) : id_{ id }, input_{ input }, hint_{ hint }, validator_{ validator }, state_{ widget_state::normal }, is_password_{} {}
 	
 	void text_input::set_input(const std::string& input)
 	{
@@ -21,9 +21,14 @@ namespace vt::ui
 		hint_ = hint;
 	}
 
-	void text_input::set_validator(const std::function<bool(const std::string& text)>& validator)
+	void text_input::set_validator(const std::function<std::optional<std::string>(const std::string& text)>& validator)
 	{
 		validator_ = validator;
+	}
+
+	void text_input::set_is_password(bool value)
+	{
+		is_password_ = value;
 	}
 
 	void text_input::focus() const
@@ -40,7 +45,14 @@ namespace vt::ui
 	{
 		const auto& style = ImGui::GetStyle();
 		bool result{};
-		bool valid = is_valid();
+		int input_flags = ImGuiInputTextFlags_None;
+		if (is_password_)
+		{
+			input_flags |= ImGuiInputTextFlags_Password;
+		}
+
+		auto val_result = validator_ != nullptr ? validator_(input_) : std::nullopt;
+		bool valid = !val_result.has_value();
 		//widgets::color_indicator(3.0f, valid ? ImGui::ColorConvertFloat4ToU32({0.15f, 0.75f, 0.15f, 1.f}) : 0xFF3E36FF);
 		//ImGui::SameLine();
 
@@ -59,13 +71,23 @@ namespace vt::ui
 		ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 1.f);
 		ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 3.f);
 
+		bool is_empty = input_.empty();
+		bool push_password_font = is_password_ and !is_empty;
+		if (push_password_font)
+		{
+			ImGui::PushFont(ctx_.get_font(font_type::password));
+		}
 		if (!hint_.empty())
 		{
-			result = ImGui::InputTextWithHint(id_.c_str(), hint_.c_str(), &input_);
+			result = ImGui::InputTextWithHint(id_.c_str(), hint_.c_str(), &input_, input_flags);
 		}
 		else
 		{
-			result = ImGui::InputText(id_.c_str(), &input_);
+			result = ImGui::InputText(id_.c_str(), &input_, input_flags);
+		}
+		if (push_password_font)
+		{
+			ImGui::PopFont();
 		}
 
 		if (ImGui::IsItemFocused() and ImGui::IsItemActive())
@@ -88,8 +110,8 @@ namespace vt::ui
 			ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2{});
 			ImGui::SameLine();
 			ImGui::AlignTextToFramePadding();
-			ImGui::TextColored(ImGui::ColorConvertU32ToFloat4(0xFF3E36FF), "%s", icon);
-			ui::tooltip(ctx_.lang->get("invalid_data"));
+			ImGui::TextColored(ctx_.current_theme.get_float4(theme_color::common_error), "%s", icon);
+			ui::tooltip(val_result.value());
 			ImGui::PopStyleVar();
 		}
 		else
@@ -115,10 +137,23 @@ namespace vt::ui
 		return utils::string::trim_whitespace(input());
 	}
 
+	[[nodiscard]] std::string text_input::error() const
+	{
+		if (validator_ == nullptr) return {};
+		auto validation_result = validator_(input_);
+		if (!validation_result.has_value()) return {};
+		return validation_result.value();
+	}
+
 	bool text_input::is_valid() const
 	{
 		if (validator_ == nullptr) return true;
-		return validator_(input_);
+		return validator_(input_) == std::nullopt;
+	}
+
+	bool text_input::is_password() const
+	{
+		return is_password_;
 	}
 
 	text_input::operator bool() const

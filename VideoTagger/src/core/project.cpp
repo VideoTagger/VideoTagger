@@ -11,6 +11,8 @@
 #include <video/downloadable_video_resource.hpp>
 #include <video/video_resource.hpp>
 
+#include <events/player/video_group_change_request_event.hpp>
+
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 #define STB_IMAGE_WRITE_IMPLEMENTATION
@@ -555,9 +557,9 @@ namespace vt
 
 	void project::remove_video_group(video_group_id_t id)
 	{
-		if (ctx_.current_video_group_id() == id)
+		if (ctx_.session.current_video_group_id() == id)
 		{
-			ctx_.reset_current_video_group();
+			ctx_.dispatch_event<video_group_change_request_event>("project", ctx_.get_window<widgets::video_player>(), invalid_video_group_id);
 		}
 
 		auto playlist_it = std::find(video_group_playlist.begin(), video_group_playlist.end(), id);
@@ -569,79 +571,6 @@ namespace vt
 		video_groups.erase(id);
 
 		ctx_.is_project_dirty = true;
-	}
-
-	tag_rename_result project::rename_tag(const std::string& old_name, const std::string& new_name)
-	{
-		
-		auto rename_result = tags.rename(old_name, new_name);
-
-		if (!rename_result.inserted)
-		{
-			return rename_result;
-		}
-
-		ctx_.is_project_dirty = true;
-
-		if (auto it = find_displayed_tag(old_name); it != displayed_tags.end())
-		{
-			displayed_tags.erase(it);
-			add_displayed_tag(new_name);
-		}
-
-		//TODO: maybe handle selected and moving segment but it may not be necessary
-
-		for (auto& [group_id, group] : video_groups)
-		{
-			auto& segments = group.segments();
-			auto node_handle = segments.extract(old_name);
-			if (!node_handle.empty())
-			{
-				node_handle.key() = new_name;
-				segments.insert(std::move(node_handle));
-				ctx_.is_project_dirty = true;
-			}
-		}
-
-		//TODO: consider renaming tags in keybinds
-
-		return rename_result;
-	}
-
-	void project::delete_tag(const std::string& tag_name)
-	{
-		if (!tags.contains(tag_name))
-		{
-			return;
-		}
-
-		ctx_.is_project_dirty = true;
-
-		auto& selected_segment = ctx_.video_timeline.selected_segment;
-		if (selected_segment.has_value() and selected_segment->tag == tag_name)
-		{
-			selected_segment.reset();
-		}
-
-		auto& moving_segment = ctx_.video_timeline.moving_segment;
-		if (moving_segment.has_value() and moving_segment->tag == tag_name)
-		{
-			moving_segment.reset();
-		}
-
-		remove_displayed_tag(tag_name);
-
-		for (auto& [group_id, group] :video_groups)
-		{
-			auto& group_segments = group.segments();
-			auto segments_it = group_segments.find(tag_name);
-			if (segments_it != group_segments.end())
-			{
-				group_segments.erase(segments_it);
-			}
-		}
-
-		tags.erase(tag_name);
 	}
 
 	bool project::add_displayed_tag(const std::string& tag_name)
@@ -659,7 +588,7 @@ namespace vt
 	bool project::remove_displayed_tag(const std::string& tag_name)
 	{
 		auto it = std::lower_bound(displayed_tags.begin(), displayed_tags.end(), tag_name);
-		if (it != displayed_tags.end() or *it != tag_name)
+		if (it == displayed_tags.end() or *it != tag_name)
 		{
 			return false;
 		}

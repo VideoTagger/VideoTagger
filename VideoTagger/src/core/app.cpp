@@ -1,6 +1,6 @@
 #include "pch.hpp"
 #include "app.hpp"
-#include "app_window.hpp"
+#include <system/system_window.hpp>
 
 #include <utils/json.hpp>
 
@@ -13,6 +13,7 @@
 #include <utils/filesystem.hpp>
 #include <scripts/scripting_engine.hpp>
 #include <ImGuizmo.h>
+#include <events/system/system_color_scheme_changed_event.hpp>
 
 namespace vt
 {
@@ -35,16 +36,16 @@ namespace vt
 			}
 			if (level == AV_LOG_ERROR)
 			{
-				debug::log_source("FFmpeg", "Error", "{}", message);
+				debug::add_log("FFmpeg", "Error", "{}", message);
 			}
 			else
 			{
-				debug::log_source("FFmpeg", "Panic!", "{}", message);
+				debug::add_log("FFmpeg", "Panic!", "{}", message);
 			}
 		}
 	}
 
-	bool app::init(const app_window_config& main_config)
+	bool app::init(const system_window_config& main_config)
 	{
 		debug::init();
 
@@ -110,12 +111,19 @@ namespace vt
 		ctx_.main_window->set_current();
 		SDL_GL_SetSwapInterval(1); //VSync
 
-		ctx_.script_eng.init();
+		try
+		{
+			ctx_.script_eng.init();
+		}
+		catch (const std::exception& ex)
+		{
+			debug::error("Failed to initialize scripting engine with error: {}", ex.what());
+		}
 
 		auto storage_path = std::filesystem::absolute(app_context::storage_path()).u8string();
 		debug::log("Storage Path: \x1b]8;;file://{}\033\\{}\033]8;;\033\\", storage_path, storage_path);
 		audio::init();
-
+		ctx_.dispatch_event<system_color_scheme_changed_event>("system", theme::system_uses_dark_mode());
 		ctx_.state_ = app_state::initialized;
 		return true;
 	}
@@ -138,6 +146,7 @@ namespace vt
 			ImGuizmo::BeginFrame();
 
 			handle_events();
+			handle_tasks();
 			ctx_.main_window->render();
 		}
 #ifndef _DEBUG
@@ -167,6 +176,11 @@ namespace vt
 		NFD::Quit();
 		SDL_Quit();
 		ctx_.state_ = app_state::uninitialized;
+	}
+
+	void app::handle_tasks()
+	{
+		ctx_.tasks.main_thread().run_some(std::chrono::milliseconds{ 32 });
 	}
 
 	void app::handle_events()

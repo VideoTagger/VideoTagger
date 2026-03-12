@@ -1,10 +1,10 @@
 #include "pch.hpp"
 #include "video_pool.hpp"
-#include <core/debug.hpp>
 
 namespace vt
 {
-	video_group::video_group(const std::string& name, const std::vector<video_info>& video_ids) : display_name{ std::move(name) }, video_ids_(video_ids) {}
+	video_group::video_group(const std::string& name, const std::vector<video_info>& video_ids) :
+		display_name{ std::move(name) }, video_ids_(video_ids) {}
 
 	bool video_group::insert(video_info video_info)
 	{
@@ -46,28 +46,18 @@ namespace vt
 
 	video_group::iterator video_group::find(video_id_t video_id)
 	{
-		for (auto it = begin(); it != end(); ++it)
+		return std::find_if(begin(), end(), [video_id](const video_info& video_info)
 		{
-			if (it->id == video_id)
-			{
-				return it;
-			}
-		}
-
-		return end();
+			return video_id == video_info.id;
+		});
 	}
 
 	video_group::const_iterator video_group::find(video_id_t video_id) const
 	{
-		for (auto it = begin(); it != end(); ++it)
+		return std::find_if(begin(), end(), [video_id](const video_info& video_info)
 		{
-			if (it->id == video_id)
-			{
-				return it;
-			}
-		}
-
-		return end();
+			return video_id == video_info.id;
+		});
 	}
 
 	video_group::video_info& video_group::at(size_t index)

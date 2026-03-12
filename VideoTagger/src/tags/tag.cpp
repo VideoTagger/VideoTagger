@@ -10,6 +10,7 @@ namespace vt
 {
 	void tag_attribute_instance::draw(const std::string& name, const tag_attribute& attribute, bool& dirty_flag)
 	{
+		const theme& theme = ctx_.current_theme;
 		const auto& style = ImGui::GetStyle();
 		bool has_value = this->has_value();
 
@@ -128,6 +129,7 @@ namespace vt
 					ImGui::TableNextColumn();
 
 					bool will_fit = (ImGui::GetContentRegionAvail().x - (button_width + 2 * style.FramePadding.x) * shapes.size() >= 0);
+					//ImGui::PushStyleColor(ImGuiCol_ChildBg, theme.get_float4(theme_color::background_base));
 					ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2{});
 					if (ImGui::BeginChild("##ScrollableShapeTypeList", { ImGui::GetContentRegionAvail().x, (will_fit ? ImGui::GetTextLineHeight() : ImGui::GetTextLineHeight() + style.ScrollbarSize) + 2.f * style.FramePadding.y }, 0, ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_NoSavedSettings))
 					{
@@ -163,6 +165,7 @@ namespace vt
 					}
 					ui::tooltip(v.interpolate ? "Interpolation: On" : "Interpolation: Off");
 					ImGui::EndTable();
+					//ImGui::PopStyleColor();
 				}
 				ImGui::PopStyleVar(2);
 			}
@@ -329,11 +332,8 @@ namespace vt
 		{
 			auto selected_attr_inst = ctx_.get_selected_attribute();
 
-			ImGui::PushStyleColor(ImGuiCol_TableRowBg, style.Colors[ImGuiCol_MenuBarBg]);
-			if (ImGui::BeginTable("##Background", 1, ImGuiTableFlags_RowBg))
+			ui::card([&]()
 			{
-				ImGui::TableNextColumn();
-
 				ImGui::Columns(2);
 				{
 					int i{};
@@ -358,9 +358,7 @@ namespace vt
 					}
 				}
 				ImGui::Columns();
-				ImGui::EndTable();
-			}
-			ImGui::PopStyleColor();
+			});
 			widgets::end_collapsible();
 		}
 		return visible;

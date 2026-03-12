@@ -8,13 +8,19 @@
 #include <utils/time.hpp>
 #include <ui/icons.hpp>
 #include <ui/widgets/common.hpp>
+#include <system/messagebox.hpp>
 #include "controls.hpp"
 
 #include <core/app.hpp>
+#include <events/project_selector/open_project_event.hpp>
+#include <events/project_selector/project_list_changed_event.hpp>
 
 namespace vt::widgets
 {
-	project_selector::project_selector(const std::vector<project_info>& projects) : projects_{ projects } {}
+    project_selector::project_selector()
+    {
+    }
+    project_selector::project_selector(const std::vector<project_info>& projects) : projects_{ projects } {}
 
 	void project_selector::render_project_creation_menu()
 	{
@@ -30,7 +36,7 @@ namespace vt::widgets
 
 		if (ImGui::BeginPopupModal("Project Configuration", nullptr, flags))
 		{
-			ImGui::PushFont(ctx_.get_font(font_type::h3));
+			ImGui::PushFont(ctx_.get_font(font_type::h3_bold));
 			ImGui::LabelText("##ProjectCfgTitle", "%s", ctx_.lang->get("project.configuration").c_str());
 			ImGui::Separator();
 			ImGui::Dummy(style.ItemSpacing);
@@ -112,9 +118,10 @@ namespace vt::widgets
 				temp_project.save();
 				projects_.push_back(temp_project);
 
-				if (on_project_list_update == nullptr) return;
-				on_project_list_update();
+				ctx_.dispatch_event<project_list_changed_event>(event_source_);
 				ImGui::CloseCurrentPopup();
+
+				ctx_.dispatch_event<open_project_event>(event_source_, temp_project);
 			}
 
 			ImGui::EndPopup();
@@ -143,9 +150,9 @@ namespace vt::widgets
 		{
 			ImGui::BeginDisabled();
 		}
-		if (ImGui::Selectable("##ProjectListSelectable", false, ImGuiSelectableFlags_AllowItemOverlap | ImGuiSelectableFlags_SpanAllColumns, size) and on_click_project != nullptr)
+		if (ImGui::Selectable("##ProjectListSelectable", false, ImGuiSelectableFlags_AllowItemOverlap | ImGuiSelectableFlags_SpanAllColumns, size))
 		{
-			on_click_project(project);
+			ctx_.dispatch_event<open_project_event>(event_source_, project);
 		}
 		if (ImGui::IsItemHovered())
 		{
@@ -225,53 +232,51 @@ namespace vt::widgets
 				if (ImGui::MenuItem(menu_name.c_str()))
 				{
 					projects_.erase(std::find(projects_.begin(), projects_.end(), project));
-					if (on_project_list_update != nullptr) on_project_list_update();
+					ctx_.dispatch_event<project_list_changed_event>(event_source_);
 				}
 			}
 			{
 				std::string menu_name = fmt::format("{} Delete", icons::delete_);
 				if (std::filesystem::is_regular_file(project.path) and project.path.extension() == std::string(".") + project::extension and ImGui::MenuItem(menu_name.c_str()))
 				{
-					const SDL_MessageBoxButtonData buttons[] = {
-						// flags, buttonid, text
-						{ SDL_MESSAGEBOX_BUTTON_ESCAPEKEY_DEFAULT, 0, ctx_.lang->get("cancel").c_str() },
-						{ SDL_MESSAGEBOX_BUTTON_RETURNKEY_DEFAULT, 1, "Delete" }
+					messagebox_data data{};
+					data.icon = messagebox_icon::warning;
+					data.buttons = {
+						{ 0, ctx_.lang->get("cancel") },
+						{ 1, ctx_.lang->get("delete") }
 					};
-
-					SDL_MessageBoxData data{};
-					data.flags = SDL_MESSAGEBOX_WARNING;
-
-					//TODO: Replace title
-					data.buttons = buttons;
-					data.numbuttons = sizeof(buttons) / sizeof(buttons[0]);
+					data.cancel_button_id = 0;
+					data.default_button_id = 1;
+					//TODO: Replace this title
 					data.title = "VideoTagger";
-					auto message = "Are you sure you want to delete the project file?\n\nFilepath:\n" + std::filesystem::absolute(project.path).string();
-					data.message = message.c_str();
-					int buttonid{};
-					SDL_ShowMessageBox(&data, &buttonid);
-
-					switch (buttonid)
+					data.message = "Are you sure you want to delete the project file?\n\nFilepath:\n" + std::filesystem::absolute(project.path).u8string();
+					data.callback = [this, project](int id)
 					{
-						case 1:
+						auto proj_path = project.path.u8string();
+						switch (id)
 						{
-							debug::log("Deleting project file: {}", project.path.u8string());
-							std::error_code ec{};
-							if (std::filesystem::remove(project.path, ec))
+							case 1:
 							{
-								projects_.erase(std::find(projects_.begin(), projects_.end(), project));
-								if (on_project_list_update != nullptr) on_project_list_update();
+								debug::log("Deleting project file: {}", proj_path);
+								std::error_code ec{};
+								if (std::filesystem::remove(project.path, ec))
+								{
+									projects_.erase(std::find(projects_.begin(), projects_.end(), project));
+									ctx_.dispatch_event<project_list_changed_event>(event_source_);
+								}
+								else
+								{
+									debug::error("Project file couldn't be deleted: {}", proj_path);
+									auto message = "Project file couldn't be deleted\n\nFilepath:\n" + proj_path;
+									message += "\nReason:\n" + ec.message() + "\nCode: " + std::to_string(ec.value());
+									messagebox::show("VideoTagger", message, messagebox_icon::error);
+								}
 							}
-							else
-							{
-								debug::error("Project file couldn't be deleted: {}", project.path.u8string());
-								auto message = "Project file couldn't be deleted\n\nFilepath:\n" + project.path.u8string();
-								message += "\nReason:\n" + ec.message() + "\nCode: " + std::to_string(ec.value());
-								SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "VideoTagger", message.c_str(), nullptr);
-							}
-
+							break;
+							default: break;
 						}
-						break;
-					}
+					};
+					messagebox::show(data);					
 				}
 			}
 			ImGui::EndPopup();
@@ -314,8 +319,7 @@ namespace vt::widgets
 		{
 			projects_[i] = project_info::load_from_file(list[i]);
 		}
-		if (on_project_list_update == nullptr) return;
-		on_project_list_update();
+		ctx_.dispatch_event<project_list_changed_event>(event_source_);
 	}
 
 	void project_selector::save_projects_file(const std::filesystem::path& filepath)
@@ -357,7 +361,7 @@ namespace vt::widgets
 			{
 				sort();
 			}
-			ImGui::PushFont(ctx_.get_font(font_type::h3));
+			ImGui::PushFont(ctx_.get_font(font_type::h3_bold));
 			ImGui::LabelText("##ProjectSelectorTitle", "%s", ctx_.lang->get("projects").c_str());
 			ImGui::PopFont();
 			ImGui::Dummy(ImGui::GetStyle().ItemSpacing);
@@ -463,14 +467,12 @@ namespace vt::widgets
 									if (it == projects_.end())
 									{
 										projects_.push_back(project_info::load_from_file(result.path));
-										if (on_project_list_update == nullptr) return;
-										on_project_list_update();
+										ctx_.dispatch_event<project_list_changed_event>(event_source_);
 									}
 									else
 									{
 										std::string message = "Cannot add this project since it already exits.\nFilepath: " + std::filesystem::relative(result.path).string();
-										//TODO: Change the title based on the app window
-										SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_WARNING, "VideoTagger", message.c_str(), nullptr);
+										messagebox::show("VideoTagger", message, messagebox_icon::warning);
 									}									
 								}
 								ImGui::CloseCurrentPopup();

@@ -10,15 +10,6 @@
 
 namespace vt::ui
 {
-	//TODO: Move this to theme struct (not hard coded)
-	static constexpr auto accent_color = ImVec4{ 0.2588f, 0.6f, 0.8784f, 1.f };
-	static constexpr auto accent_color_hover = ImVec4{ 0.2f, 0.5098f, 0.7804f, 1.f };
-	static constexpr auto accent_color_active = ImVec4{ 0.1608f, 0.4353f, 0.6863f, 1.f };
-
-	static constexpr auto button_color = ImVec4{ 0.1882f, 0.1882f, 0.1882f, 1.f };
-	static constexpr auto button_color_hover = ImVec4{ 0.2078f, 0.2078f, 0.2078f, 1.f };
-	static constexpr auto button_color_active = ImVec4{ 0.2f, 0.2f, 0.2f, 1.f };
-
 	void tooltip(const std::string& text)
 	{
 		if (text.empty()) return;
@@ -63,6 +54,108 @@ namespace vt::ui
 			ImGui::EndTooltip();
 		}
 		ImGui::PopStyleVar();
+	}
+
+	bool is_scrollbar_hovered()
+	{
+		ImGuiContext& g = *ImGui::GetCurrentContext();
+		auto window = g.CurrentWindow;
+
+		bool hovered = false;
+		bool visible = false;
+		if (window->ScrollbarX)
+		{
+			visible = true;
+			hovered |= ImGui::GetWindowScrollbarID(window, ImGuiAxis_X) == ImGui::GetHoveredID();
+		}
+
+		if (window->ScrollbarY)
+		{
+			visible = true;
+			hovered |= ImGui::GetWindowScrollbarID(window, ImGuiAxis_Y) == ImGui::GetHoveredID();
+		}
+		return hovered;
+	}
+
+	static inline std::unordered_map<std::string, bool> scrollbar_hover_state{};
+
+	void begin_styled_scrollbars(const std::string& window_id)
+	{
+		const auto& style = ImGui::GetStyle();
+		const auto& theme = ctx_.current_theme;
+		auto it = scrollbar_hover_state.find(window_id);
+		bool hovered = false;
+		if (it != scrollbar_hover_state.end())
+		{
+			hovered = it->second;
+		}
+
+		auto color = style.Colors[ImGuiCol_ScrollbarBg];
+		color.w *= 0.25f;
+		ImGui::PushStyleColor(ImGuiCol_ScrollbarBg, color);
+
+		if (hovered)
+		{
+			ImGui::PushStyleColor(ImGuiCol_ScrollbarBg, style.Colors[ImGuiCol_ScrollbarBg]);
+		}
+		else
+		{
+			ImGui::PushStyleColor(ImGuiCol_ScrollbarGrab, 0);
+		}
+	}
+
+	void save_window_scrollbar_state(const std::string& window_id)
+	{
+		ImGuiContext& g = *ImGui::GetCurrentContext();
+		auto window = g.CurrentWindow;
+		scrollbar_hover_state[window_id] = false;
+		/*
+
+		if (window->ScrollbarX)
+		{
+			scrollbar_hover_state[window_id] |= ImGui::GetWindowScrollbarID(window, ImGuiAxis_X) == ImGui::GetHoveredID();
+		}
+		if (window->ScrollbarY)
+		{
+			scrollbar_hover_state[window_id] |= ImGui::GetWindowScrollbarID(window, ImGuiAxis_Y) == ImGui::GetHoveredID();
+		}
+
+		if (scrollbar_hover_state[window_id])
+		{
+			auto a = 1;
+		}
+		*/
+		scrollbar_hover_state[window_id] = ImGui::IsWindowHovered();
+	}
+
+	void end_styled_scrollbars()
+	{
+		ImGui::PopStyleColor(2);
+	}
+
+	void begin_bigger_frames()
+	{
+		static constexpr float frame_padding_multiplier = 1.75f;
+		const auto& style = ImGui::GetStyle();
+		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, style.FramePadding * frame_padding_multiplier);
+	}
+
+	void end_bigger_frames()
+	{
+		ImGui::PopStyleVar();
+	}
+
+    void begin_modal_style()
+    {
+		const auto& style = ImGui::GetStyle();
+		ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 8.f);
+		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, style.WindowPadding * 2);
+		ImGui::SetNextWindowPos(ImGui::GetMainViewport()->GetCenter(), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
+    }
+
+	void end_modal_style()
+	{
+		ImGui::PopStyleVar(2);
 	}
 
 	void label(const std::string& label)
@@ -152,13 +245,12 @@ namespace vt::ui
 	{
 		const auto& style = ImGui::GetStyle();
 		ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 4.f);
-		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, style.FramePadding * 1.75f);
 		bool result = ImGui::Button(label.c_str(), size);
 		if (ImGui::IsItemHovered())
 		{
 			ImGui::SetMouseCursor(ImGuiMouseCursor_Hand);
 		}
-		ImGui::PopStyleVar(2);
+		ImGui::PopStyleVar();
 		return result;
 	}
 
@@ -198,64 +290,98 @@ namespace vt::ui
 		return result;
 	}
 
+	bool icon_toggle_button(const std::string& label_on, const std::string& label_off, bool is_toggled, const ImVec2& size, const ImVec4& color)
+	{
+		return icon_toggle_button(is_toggled ? label_on : label_off, is_toggled, size, color);
+	}
+
 	bool accent_button(const std::string& label, const ImVec2& size)
 	{
+		const auto& theme = ctx_.current_theme;
+
 		auto btn_color = ImGui::GetStyleColorVec4(ImGuiCol_Button);
 		auto btn_hov_color = ImGui::GetStyleColorVec4(ImGuiCol_ButtonHovered);
 		auto btn_actv_color = ImGui::GetStyleColorVec4(ImGuiCol_ButtonActive);
 
 		//TODO: Move these colors into theme class
 		bool is_disabled = ui::is_item_disabled();
-		ImGui::PushStyleColor(ImGuiCol_Button, is_disabled ? button_color : accent_color); // push button color if diabled or accent color if enabled
-		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, accent_color_hover);
-		ImGui::PushStyleColor(ImGuiCol_ButtonActive, accent_color_active);
+		ImGui::PushStyleColor(ImGuiCol_Button, is_disabled ? theme.get_float4(theme_color::secondary_light) : theme.get_float4(theme_color::accent_light)); // push button color if diabled or accent color if enabled
+		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, theme.get_float4(theme_color::accent_medium));
+		ImGui::PushStyleColor(ImGuiCol_ButtonActive, theme.get_float4(theme_color::accent_dark));
 
-		auto text_color = ImGui::GetStyleColorVec4(ImGuiCol_Text);
-		text_color.x = 1.f - text_color.x;
-		text_color.y = 1.f - text_color.y;
-		text_color.z = 1.f - text_color.z;
+		//auto text_color = ImGui::GetStyleColorVec4(ImGuiCol_Text);
+		//text_color.x = 1.f - text_color.x;
+		//text_color.y = 1.f - text_color.y;
+		//text_color.z = 1.f - text_color.z;
+		auto text_color = theme.get_float4(theme_color::text_inverted);
 		if (!is_disabled)
 		{
 			ImGui::PushStyleColor(ImGuiCol_Text, text_color);
 		}
+		else
+		{
+			ImGui::PushStyleColor(ImGuiCol_Text, ImGui::GetStyleColorVec4(ImGuiCol_TextDisabled));
+		}
 		bool result = rounded_button(label, size);
-		ImGui::PopStyleColor(3 + !is_disabled);
+		ImGui::PopStyleColor(4);
 		return result;
 	}
 
 	bool button(const std::string& label, const ImVec2& size)
 	{
+		const auto& theme = ctx_.current_theme;
 		auto btn_color = ImGui::GetStyleColorVec4(ImGuiCol_Button);
 		auto btn_hov_color = ImGui::GetStyleColorVec4(ImGuiCol_ButtonHovered);
 		auto btn_actv_color = ImGui::GetStyleColorVec4(ImGuiCol_ButtonActive);
 
-		//TODO: Move these colors into theme class
-		ImGui::PushStyleColor(ImGuiCol_Button, button_color);
-		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, button_color_hover);
-		ImGui::PushStyleColor(ImGuiCol_ButtonActive, button_color_active);
+		ImGui::PushStyleColor(ImGuiCol_Button, theme.get_float4(theme_color::secondary_light));
+		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, theme.get_float4(theme_color::secondary_medium));
+		ImGui::PushStyleColor(ImGuiCol_ButtonActive, theme.get_float4(theme_color::secondary_dark));
 
 		bool result = rounded_button(label, size);
 		ImGui::PopStyleColor(3);
 		return result;
 	}
 
+	bool color_button(const std::string& id, const ImVec4& color, ImGuiColorEditFlags flags, const ImVec2& size)
+	{
+		ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 7.f);
+		auto value = ImGui::ColorButton(id.c_str(), color, flags, size);
+		ImGui::PopStyleVar();
+		return value;
+	}
+
+	bool color_edit3(const std::string& label, ImVec4& color, ImGuiColorEditFlags flags)
+	{
+		ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 7.f);
+		auto value = ImGui::ColorEdit3(label.c_str(), (float*)&color, flags);
+		ImGui::PopStyleVar();
+		return value;
+	}
+
+	bool color_edit4(const std::string& label, ImVec4& color, ImGuiColorEditFlags flags)
+	{
+		ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 7.f);
+		auto value = ImGui::ColorEdit4(label.c_str(), (float*)&color, flags);
+		ImGui::PopStyleVar();
+		return value;
+	}
+
 	static ImGuiToggleConfig toggle_config()
 	{
 		float size_scale = 1.f;
+		const auto& theme = ctx_.current_theme;
 
-		const ImVec4 color_default = accent_color;
-		const ImVec4 color_hover = accent_color_hover;
-		const ImVec4 color_dim = accent_color_active;
+		const ImVec4 color_default = theme.get_float4(theme_color::accent_light);
+		const ImVec4 color_hover = theme.get_float4(theme_color::accent_medium);
+		const ImVec4 color_dim = theme.get_float4(theme_color::accent_dark);
 
 		const ImVec2 material_size(37 * size_scale, 16 * size_scale);
 		const float material_inset = -2.5f * size_scale;
 
 		auto text_color = ImGui::GetStyleColorVec4(ImGuiCol_Text);
 		auto text_color_dim = ImGui::GetStyleColorVec4(ImGuiCol_TextDisabled);
-		auto text_color_inverted = text_color;
-		text_color_inverted.x = 1.f - text_color_inverted.x;
-		text_color_inverted.y = 1.f - text_color_inverted.y;
-		text_color_inverted.z = 1.f - text_color_inverted.z;
+		auto text_color_inverted = theme.get_float4(theme_color::text_inverted);
 
 		static ImGuiTogglePalette palette_on;
 		palette_on.Frame = color_default;
@@ -286,7 +412,7 @@ namespace vt::ui
 
     bool toggle(const std::string& label, bool& value)
     {
-		static auto config = toggle_config();
+		auto config = toggle_config();
 		bool result = ImGui::Toggle(label.c_str(), &value, config);
 		if (!is_item_disabled() and ImGui::IsItemHovered())
 		{
@@ -311,9 +437,11 @@ namespace vt::ui
 		auto& style = ImGui::GetStyle();
 		if (hide_background) ImGui::PushStyleColor(ImGuiCol_Header, ImVec4{});
 		ImGui::PushStyleColor(ImGuiCol_Text, ImVec4{});
+		ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 3.f);
 		std::string node_id = "##Node" + std::string(label);
 		auto cx = ImGui::GetCursorPosX();
 		bool result = ImGui::TreeNodeEx(node_id.c_str(), ImGuiTreeNodeFlags_Framed | ImGuiTreeNodeFlags_SpanFullWidth | ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_NoTreePushOnOpen);
+		ImGui::PopStyleVar();
 
 		int pop_count = 1;
 		if (hide_background) ++pop_count;
@@ -327,6 +455,33 @@ namespace vt::ui
 		ImGui::TextUnformatted(label.c_str());
 		ImGui::SameLine(ImGui::GetContentRegionMax().x - style.FramePadding.x - ImGui::CalcTextSize(icon).x);
 		ImGui::TextUnformatted(icon);
+		return result;
+	}
+
+	bool card(const std::function<void()>& body, bool border)
+	{
+		const auto& theme = ctx_.current_theme;
+		ImGui::PushStyleColor(ImGuiCol_TableRowBg, theme.get_float4(theme_color::background_tertiary));
+		int flags = ImGuiTableFlags_RowBg;
+		ImVec2 size;
+		if (border)
+		{
+			ImGui::PushStyleColor(ImGuiCol_TableBorderStrong, ImGui::GetStyleColorVec4(ImGuiCol_Border));
+			flags |= ImGuiTableFlags_BordersOuter;
+			size = { ImGui::GetContentRegionAvail().x - table_border_size(), 0};
+		}
+		auto result = ImGui::BeginTable("##Card", 1, flags, size);
+		if (result)
+		{
+			ImGui::TableNextRow();
+			ImGui::TableNextColumn();
+			if (body != nullptr)
+			{
+				body();
+			}
+			ImGui::EndTable();
+		}
+		ImGui::PopStyleColor(1 + border);
 		return result;
 	}
 
@@ -352,9 +507,15 @@ namespace vt::ui
 		ImGui::EndMenu();
 	}
 
+	float table_border_size()
+	{
+		static constexpr float table_border_size = 1.f; //FIXME: This is currently hardcoded in ImGui, change this when ImGui uses different border size
+		return table_border_size;
+	}
+
 	float toggle_height()
 	{
-		return ImGui::GetFrameHeight() * 0.85f;
+		return ImGui::GetFrameHeightWithSpacing() * 0.85f;
 	}
 
 	bool is_item_disabled()

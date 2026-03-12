@@ -1,4 +1,5 @@
 #pragma once
+#include <pch.hpp>
 #include <optional>
 #include <memory>
 #include <filesystem>
@@ -16,24 +17,16 @@
 #include "theme.hpp"
 #include "localization/lang_pack.hpp"
 
+#include "font_type.hpp"
 #include "main_window.hpp"
+#include "app_settings.hpp"
 
-#include <video/video_stream.hpp>
 #include <widgets/project_selector.hpp>
 #include <widgets/video_timeline.hpp>
-#include <widgets/timeline.hpp>
-#include <widgets/video_player.hpp>
 #include <widgets/color_picker.hpp>
-#include <widgets/video_browser.hpp>
-#include <widgets/video_group_browser.hpp>
-#include <widgets/video_group_queue.hpp>
-#include <widgets/theme_customizer.hpp>
-#include <widgets/shape_attributes.hpp>
-#include <widgets/console.hpp>
 #include <ui/popups/options_popup.hpp>
 #include <widgets/modal/tag_importer.hpp>
 #include <widgets/modal/script_progress.hpp>
-#include <widgets/localization_editor.hpp>
 #include "displayed_videos_manager.hpp"
 #include <utils/json.hpp>
 #include <utils/vec.hpp>
@@ -42,8 +35,15 @@
 #include <services/service_account_manager.hpp>
 #include <video/video_importer.hpp>
 #include <ui/popups/segments_move_conflict_popup.hpp>
+#include <ui/popups/segment_insert_conflict_popup.hpp>
+#include <ui/popups/segment_insert_popup.hpp>
+#include <ui/popups/tag_rename_failed_popup.hpp>
+#include <ui/popups/messagebox_popup.hpp>
 
+#include <ui/ui_registry.hpp>
 #include <events/event_storage.hpp>
+#include <tasks/task_manager.hpp>
+#include "session_storage.hpp"
 
 namespace vt
 {
@@ -62,89 +62,58 @@ namespace vt
 		shutdown
 	};
 
-	struct app_settings
-	{
-		float thumbnail_size = 45.0f;
-		bool link_start_end_segment = true;
-		bool autoplay = true;
-		bool load_thumbnails = true;
-		bool clear_console_on_run = true;
-		bool enable_undocking = true;
-		bool enable_gizmo_scaling = false;
-	};
-
 	struct window_config
 	{
 		//serialized
 		window_state state = window_state::normal;
-		bool show_inspector_window = true;
-		bool show_shape_attributes_window = true;
 		bool show_tag_manager_window = true;
 		bool show_timeline_window = true;
-		bool show_video_player_window = true;
-		bool show_video_browser_window = true;
-		bool show_video_group_browser_window = true;
-		bool show_video_group_queue_window = true;
-		bool show_console_window = true;
 
 		//not serialized
 		bool show_options_window = false;
-		bool show_theme_customizer_window = false;
 		bool show_about_window = false;
 		bool show_tag_importer_window = false;
 		bool show_script_progress = false;
-		bool show_segments_move_conflict_popup = false;
-	};
-
-	enum class font_type
-	{
-		h1,
-		h2,
-		h3,
-		h4,
-		h5,
-		h6,
-		thumbnail,
-		normal = h4,
 	};
 
 	///@brief Application context that holds all states and necessary data
-	struct app_context : public event_storage
+	struct app_context : public event_storage, ui::ui_registry
 	{
 		static constexpr auto valid_video_extensions = std::array{ "mp4", "mkv", "avi", "mov", "flv", "wmv", "webm", "m4v", "mpg", "mpeg", "3gp", "ogv", "vob", "mts", "m2ts", "mxf", "f4v", "divx", "rmvb", "asf", "swf" };
+		app_context();
+
+		task_manager tasks;
 
 		std::optional<project> current_project;
 		widgets::video_timeline video_timeline;
-		widgets::timeline timeline;
 		widgets::project_selector project_selector;
-		widgets::video_player player;
-		widgets::video_browser browser;
-		widgets::video_group_browser group_browser;
-		widgets::video_group_queue group_queue;
-		widgets::theme_customizer theme_customizer;
-		widgets::shape_attributes shape_attributes;
-		widgets::console console;
-		widgets::localization_editor localization_editor;
 		ui::options_popup options{ &win_cfg.show_options_window };
 		widgets::modal::script_progress script_progress;
 		widgets::color_picker color_picker;
 		widgets::modal::tag_importer tag_importer;
-		ui::segments_move_conflict_popup segments_move_conflict_popup;
+		ui::messagebox_popup messagebox;
+
+		//TODO: maybe add some popup manager
+		std::unique_ptr<ui::segments_move_conflict_popup> segments_move_conflict_popup;
+		std::unique_ptr<ui::segment_insert_conflict_popup> segment_insert_conflict_popup;
+		std::unique_ptr<ui::segment_insert_popup> segment_insert_popup;
+		std::unique_ptr<ui::tag_rename_failed_popup> tag_rename_failed_popup;
 
 		std::filesystem::path projects_list_filepath = storage_path() / std::filesystem::path("projects").replace_extension("json");
 		std::filesystem::path app_settings_filepath = storage_path() / std::filesystem::path("settings").replace_extension("json");
 		std::filesystem::path accounts_filepath = storage_path() / std::filesystem::path("accounts").replace_extension("json");
 		std::filesystem::path script_dir_filepath = std::filesystem::path("assets") / "scripts";
 		std::filesystem::path lang_dir_filepath = storage_path() / "lang";
-		std::filesystem::path theme_dir_filepath = storage_path() / "themes";
+		std::filesystem::path theme_dir_filepath = std::filesystem::path("assets") / "themes"; //storage_path() / "themes";
 		std::filesystem::path downloads_dir_filepath = storage_path() / "downloads";
 		std::filesystem::path cache_dir_filepath = storage_path() / std::filesystem::path("cache");
 		std::filesystem::path thumbnail_dir_filepath = cache_dir_filepath / "thumbnails";
 		nlohmann::ordered_json settings;
 		window_config win_cfg;
 		std::unordered_map<font_type, ImFont*> fonts;
-		std::vector<std::filesystem::path> themes;
+		theme current_theme;
 		utils::file_node scripts;
+		utils::file_node themes;
 		keybind_storage keybinds;
 		scripting_engine script_eng;
 		std::optional<script_handle> script_handle;
@@ -154,9 +123,14 @@ namespace vt
 		tag_attribute_instance* selected_attribute{};
 		utils::vec2<uint32_t>* gizmo_target{};
 
+		session_storage session;
+
 		displayed_videos_manager displayed_videos;
 
+		//TODO: remove after removing the old timeline
 		widgets::insert_segment_data_container insert_segment_data;
+
+		
 
 		app_settings app_settings;
 		std::shared_ptr<lang_pack> lang = nullptr;
@@ -171,6 +145,13 @@ namespace vt
 		bool reset_player_docking{};
 
 		bool pause_player = false;
+
+		void create_windows();
+		void render_messagebox();
+
+		void change_theme(const theme& new_theme);
+		[[nodiscard]] nlohmann::ordered_json serialize_app_settings();
+		void deserialize_app_settings(const nlohmann::ordered_json& json);
 		
 		template<typename service_account_manager_type>
 		void register_account_manager();
@@ -193,16 +174,12 @@ namespace vt
 		bool is_video_importer_registered(const std::string& importer_id) const;
 
 		void update_current_video_group();
-		void reset_current_video_group();
 
 		segment_storage& get_current_segment_storage();
-	
-		void set_current_video_group_id(video_group_id_t id);
-		video_group_id_t current_video_group_id() const;
 
 		std::shared_ptr<lang_pack> load_lang_pack(const std::string& name = "en_US");
 		std::shared_ptr<lang_pack> load_or_create_lang_pack(const std::string& name, const std::string& filename);
-		void instert_lang_pack(std::shared_ptr<lang_pack> pack);
+		void insert_lang_pack(std::shared_ptr<lang_pack> pack);
 		void remove_lang_pack(const std::string& name);
 		void load_lang_packs(const std::string& desired_lang);
 		std::vector<std::string> lang_names() const;
@@ -215,9 +192,6 @@ namespace vt
 		tag_attribute_instance* get_selected_attribute() const;
 
 		static std::filesystem::path storage_path();
-
-	private:
-		video_group_id_t current_video_group_id_{};
 	};
 
 	///@brief Global application context instance

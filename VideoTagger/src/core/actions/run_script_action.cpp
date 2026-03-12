@@ -2,6 +2,7 @@
 #include "run_script_action.hpp"
 #include <core/app_context.hpp>
 #include <utils/filesystem.hpp>
+#include <widgets/console.hpp>
 
 namespace vt
 {
@@ -15,7 +16,8 @@ namespace vt
 		auto it = std::find(all_scripts.begin(), all_scripts.end(), script_path_);
 		if (it == all_scripts.end())
 		{
-			ctx_.console.add_entry(widgets::console::entry::flag_type::warn, fmt::format("Failed to run script '{}', since it doesn't exist", script_path_.string()), widgets::console::entry::source_info{ "VideoTagger", 0 });
+			auto& console = ctx_.get_window<widgets::console>();
+			console.add_entry(widgets::console::entry::flag_type::warn, fmt::format("Failed to run script '{}', since it doesn't exist", script_path_.string()), widgets::console::entry::source_info{ "VideoTagger", 0 });
 			return;
 		}
 		ctx_.run_script(script_path_);

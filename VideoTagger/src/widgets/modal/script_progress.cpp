@@ -60,6 +60,10 @@ namespace vt::widgets::modal
 				{
 					ImGui::ProgressBar(script->progress(), ImVec2{ width, ImGui::GetTextLineHeight() / 3.f }, "");
 				}
+				else
+				{
+					ImGui::ProgressBar(-1.f * static_cast<float>(ImGui::GetTime()), ImVec2{ width, ImGui::GetTextLineHeight() / 3.f }, "");
+				}
 			}
 
 			ImGui::Dummy(style.ItemSpacing);

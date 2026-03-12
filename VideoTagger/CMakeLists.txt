@@ -1,8 +1,5 @@
-# CMakeList.txt : CMake project for kohi, include source and define
-# project specific logic here.
-#
-
 project("VideoTagger")
+add_subdirectory("${CMAKE_SOURCE_DIR}/tools" VideoTaggerBuildTools)
 
 set(NFD_BUILD_TESTS "OFF")
 set(NFD_INSTALL "OFF")
@@ -13,7 +10,30 @@ message(STATUS "VT_VERSION: ${VT_VERSION}")
 
 include(FetchContent)
 
-# TODO: Add tests and install targets if needed.
+include(FetchContent)
+
+# Embeds
+include(cmake/Embed.cmake)
+set(EMBED_SOURCE_DIR "${PROJECT_SOURCE_DIR}/embeds")
+set(EMBED_INCLUDE_DIR "${CMAKE_BINARY_DIR}/generated")
+set(EMBED_OUTPUT_DIR "${EMBED_INCLUDE_DIR}/embeds")
+set(ASSETS_SOURCE_DIR "${PROJECT_SOURCE_DIR}/assets")
+message(STATUS "Embed source directory: ${EMBED_SOURCE_DIR}")
+message(STATUS "Embed output directory: ${EMBED_OUTPUT_DIR}")
+
+vt_embed_text_file("${ASSETS_SOURCE_DIR}/themes/dark.vttheme" "${EMBED_OUTPUT_DIR}/dark_theme.hpp" "vt::embed" EMBED_GENERATED_FILES)
+#vt_embed_json("${ASSETS_SOURCE_DIR}/themes/light.vttheme" "${EMBED_OUTPUT_DIR}" "vt::embed" EMBED_GENERATED_FILES)
+vt_embed_directory(${EMBED_SOURCE_DIR} ${EMBED_OUTPUT_DIR} "vt::embed" EMBED_GENERATED_FILES)
+
+# About & Licenses
+include(cmake/GenerateAbout.cmake)
+set(LICENSE_DIR "${PROJECT_SOURCE_DIR}/licenses")
+vt_generate_about(${LICENSE_DIR} ${EMBED_OUTPUT_DIR} "vt::embed" EMBED_GENERATED_FILES)
+include(cmake/GenerateIcons.cmake)
+set(ICONS_FILE "${PROJECT_SOURCE_DIR}/src/ui/icons.hpp")
+vt_generate_icons("${PROJECT_SOURCE_DIR}/resources/icons.list" "${PROJECT_SOURCE_DIR}/src/ui/icons.hpp" ICONS_GENERATED_FILE)
+
+
 file(GLOB_RECURSE source_files CONFIGURE_DEPENDS 
 	"${PROJECT_SOURCE_DIR}/src/*.hpp"
 	"${PROJECT_SOURCE_DIR}/src/*.cpp"
@@ -23,6 +43,8 @@ file(GLOB vendor_files CONFIGURE_DEPENDS
 	"${PROJECT_SOURCE_DIR}/vendor/ImGui/*.cpp"
 	"${PROJECT_SOURCE_DIR}/vendor/ImGui/misc/cpp/*.h"
 	"${PROJECT_SOURCE_DIR}/vendor/ImGui/misc/cpp/*.cpp"
+	"${PROJECT_SOURCE_DIR}/vendor/ImGui/misc/freetype/*.h"
+	"${PROJECT_SOURCE_DIR}/vendor/ImGui/misc/freetype/*.cpp"
 	"${PROJECT_SOURCE_DIR}/vendor/ImGui/backends/imgui_impl_sdl2.h"
 	"${PROJECT_SOURCE_DIR}/vendor/ImGui/backends/imgui_impl_sdl2.cpp"
 	"${PROJECT_SOURCE_DIR}/vendor/ImGui/backends/imgui_impl_opengl3.h"
@@ -40,7 +62,7 @@ file(GLOB vendor_files CONFIGURE_DEPENDS
 
 #list(FILTER source_files EXCLUDE REGEX "third_party/")
 list(APPEND source_files ${vendor_files})
-add_executable(${PROJECT_NAME} ${source_files})
+add_executable(${PROJECT_NAME} ${source_files} ${EMBED_GENERATED_FILES} ${ICONS_GENERATED_FILE})
 
 file(GLOB_RECURSE no_pch_files
 	"${PROJECT_SOURCE_DIR}/src/embeds/*.cpp"
@@ -59,36 +81,33 @@ target_precompile_headers(${PROJECT_NAME} PRIVATE src/pch.hpp)
 set(EXAMPLE_SOURCE_DIR ${PROJECT_SOURCE_DIR}/examples)
 set(EXAMPLE_DEST_DIR ${PROJECT_BINARY_DIR}/examples)
 
-if (CMAKE_VERSION VERSION_GREATER 3.12)
-  set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 17)
-  set_property(TARGET ${PROJECT_NAME} PROPERTY CMAKE_CXX_STANDARD_REQUIRED ON)
-  set_property(TARGET ${PROJECT_NAME} PROPERTY CMAKE_CXX_EXTENSIONS OFF)
-endif()
-
-if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
-   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-changes-meaning")
-   #target_link_libraries(${PROJECT_NAME} PRIVATE ${CMAKE_DL_LIBS})
-endif()
-
-# Turns on standard conformance for Microsoft Visual C++ compiler
-if (MSVC)
-	#target_compile_options(${PROJECT_NAME} PRIVATE /permissive- /utf-8)
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /permissive-")
-	# Enable UTF-8 source encoding for MSVC
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /utf-8")
-	# Optional: Set debug dir (Visual Studio only)
-	set_property(TARGET ${PROJECT_NAME} PROPERTY VS_DEBUGGER_WORKING_DIRECTORY "${PROJECT_BINARY_DIR}")
-else()
-	target_compile_options(${PROJECT_NAME} PRIVATE -fpermissive)
-endif()
-
 target_compile_definitions(${PROJECT_NAME} PRIVATE
-	_CRT_SECURE_NO_WARNINGS
 	VT_VERSION="${VT_VERSION}"
 )
 
+include(${CMAKE_SOURCE_DIR}/cmake/CppCommon.cmake)
+setup_cpp_common(${PROJECT_NAME})
+
 add_subdirectory("${PROJECT_SOURCE_DIR}/vendor/nativefiledialog-extended")
 target_link_libraries(${PROJECT_NAME} PRIVATE nfd)
+
+#target_compile_definitions(${PROJECT_NAME} PRIVATE IMGUI_ENABLE_FREETYPE)
+set("SKIP_INSTALL_ALL" "ON")
+add_subdirectory("${PROJECT_SOURCE_DIR}/vendor/FreeType")
+target_link_libraries(${PROJECT_NAME} PRIVATE freetype)
+target_include_directories(${PROJECT_NAME} PRIVATE ${FREETYPE_INCLUDE_DIRS})
+
+set(SDL_CMAKE_DEBUG_POSTFIX "d" CACHE STRING "Name suffix for debug builds") 
+add_subdirectory("${PROJECT_SOURCE_DIR}/vendor/SDL2")
+if(TARGET SDL2::SDL2main)
+    target_link_libraries(${PROJECT_NAME} PRIVATE SDL2::SDL2main)
+endif()
+target_link_libraries(${PROJECT_NAME} PRIVATE SDL2::SDL2)
+
+set("PYBIND11_FINDPYTHON" "ON")
+add_subdirectory("${PROJECT_SOURCE_DIR}/vendor/pybind11")
+target_link_libraries(${PROJECT_NAME} PRIVATE pybind11::embed)
+
 
 #Setup Velopack
 include(${CMAKE_SOURCE_DIR}/cmake/SetupVelopack.cmake)
@@ -98,6 +117,7 @@ target_include_directories(${PROJECT_NAME}
 	PRIVATE "${PROJECT_SOURCE_DIR}/src"
 	PRIVATE "${PROJECT_SOURCE_DIR}/vendor/ImGui"
 	PRIVATE "${PROJECT_SOURCE_DIR}/vendor/ImGui/misc/cpp/"
+	PRIVATE "${PROJECT_SOURCE_DIR}/vendor/ImGui/misc/freetype/"
 	PRIVATE "${PROJECT_SOURCE_DIR}/vendor/ImGuizmo"
 	PRIVATE "${PROJECT_SOURCE_DIR}/vendor/nativefiledialog-extended/src/include"
 	PRIVATE "${PROJECT_SOURCE_DIR}/vendor/fmt/include"
@@ -107,11 +127,15 @@ target_include_directories(${PROJECT_NAME}
 	PRIVATE "${PROJECT_SOURCE_DIR}/vendor/cpp-httplib"
 	PRIVATE "${PROJECT_SOURCE_DIR}/vendor/imgui_toggle"
 	PRIVATE "${PROJECT_SOURCE_DIR}/vendor/stb"
+	PRIVATE "${PROJECT_SOURCE_DIR}/vendor/SDL2"
+	PRIVATE "${EMBED_INCLUDE_DIR}"
 )
 
 
 # Setup Python
 include(${CMAKE_SOURCE_DIR}/cmake/SetupPython.cmake)
+
+
 
 if(CMAKE_SYSTEM_PROCESSOR MATCHES "64")
 	set(ARCH "x86_64")
@@ -137,7 +161,7 @@ install(
 	DESTINATION "."
 )
 
-
+target_compile_options(${PROJECT_NAME} PRIVATE $<$<CXX_COMPILER_ID:MSVC>:/bigobj>)
 
 # Platform-specific
 if (WIN32)
@@ -145,38 +169,37 @@ if (WIN32)
 		"${PROJECT_SOURCE_DIR}/src/resources/resource.rc"
 	)
 	target_include_directories(${PROJECT_NAME} PRIVATE
-		"${PROJECT_SOURCE_DIR}/vendor/SDL2/include"
 		"${PROJECT_SOURCE_DIR}/vendor/FFmpeg/include"
 		"${PROJECT_SOURCE_DIR}/vendor/FFmpeg/include/libavcodec"
 		"${PROJECT_SOURCE_DIR}/vendor/FFmpeg/include/libavformat"
 		"${PROJECT_SOURCE_DIR}/vendor/FFmpeg/include/libswscale"
 		"${PROJECT_SOURCE_DIR}/vendor/openssl/include"
-		${PythonIncludePath}
 	)
 
 	target_link_directories(${PROJECT_NAME} PRIVATE
-		"${PROJECT_SOURCE_DIR}/vendor/SDL2/lib/${ARCH}"
 		"${PROJECT_SOURCE_DIR}/vendor/FFmpeg/lib/${ARCH}"
 		"${PROJECT_SOURCE_DIR}/vendor/openssl/lib/${ARCH}"
-		${PythonLibPath}
 	)
 
 	target_link_libraries(${PROJECT_NAME} PRIVATE
-		SDL2 SDL2main opengl32 avcodec avformat avutil swscale
-		libssl libcrypto ${PythonLibName}
+		opengl32 avcodec avformat avutil swscale
+		libssl libcrypto
 	)
 
-	string(TOLOWER "${PythonLibName}" PythonLibNameLower)
-
-	add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-		COMMAND ${CMAKE_COMMAND} -E copy_if_different "${PythonPath}/${PythonLibNameLower}.dll" "${PROJECT_BINARY_DIR}/${PythonLibNameLower}.dll"
-	)
+	find_package(Python COMPONENTS Interpreter Development REQUIRED)
+	get_filename_component(PYTHON_DLL_DIR "${Python_LIBRARY_DIRS}/../" ABSOLUTE)
+	
+	set(PYTHON_DLL_NAME "python${Python_VERSION_MAJOR}${Python_VERSION_MINOR}.dll")
+	set(PYTHON_DLL_PATH "${PYTHON_DLL_DIR}/${PYTHON_DLL_NAME}")
+	message(STATUS "Python library directories: ${Python_LIBRARY_DIRS}")
+	message(STATUS "Python DLL directory: ${PYTHON_DLL_DIR}")
 
 	file(GLOB DLL_FILES
-		"${PROJECT_SOURCE_DIR}/vendor/SDL2/lib/${ARCH}/*.dll"
 		"${PROJECT_SOURCE_DIR}/vendor/FFmpeg/lib/${ARCH}/*.dll"
 		"${PROJECT_SOURCE_DIR}/vendor/openssl/lib/${ARCH}/*.dll"
 	)
+
+	list(APPEND DLL_FILES "${PYTHON_DLL_PATH}")
 
 	foreach(DLL ${DLL_FILES})
 		get_filename_component(DLL_NAME "${DLL}" NAME)
@@ -191,60 +214,120 @@ if (WIN32)
 		)
 	endforeach()
 
-	install(
-		FILES "${PythonPath}/${PythonLibNameLower}.dll"
-		DESTINATION "."
-	)
 elseif(UNIX AND NOT APPLE)
+	find_package(OpenSSL)
+	target_link_libraries(${PROJECT_NAME} PRIVATE OpenSSL::Crypto OpenSSL::SSL)
+
+	find_package(OpenGL REQUIRED)
+	target_link_libraries(${PROJECT_NAME} PRIVATE OpenGL::GL)
+
+	find_package(PkgConfig REQUIRED)
+	pkg_check_modules(AVCODEC REQUIRED libavcodec)
+	pkg_check_modules(AVFORMAT REQUIRED libavformat)
+	pkg_check_modules(AVUTIL REQUIRED libavutil)
+	pkg_check_modules(SWSCALE REQUIRED libswscale)
+
+	target_include_directories(${PROJECT_NAME} PRIVATE
+		${AVCODEC_INCLUDE_DIRS}
+		${AVFORMAT_INCLUDE_DIRS}
+		${AVUTIL_INCLUDE_DIRS}
+		${SWSCALE_INCLUDE_DIRS}
+	)
+
+	target_link_libraries(${PROJECT_NAME} PRIVATE
+		${SWSCALE_LIBRARIES}
+		${AVCODEC_LIBRARIES}
+		${AVFORMAT_LIBRARIES}
+		${AVUTIL_LIBRARIES}
+	)
+
 	execute_process(
-		COMMAND "pkg-config --cflags libavcodec libavformat libavutil libswscale sdl2 opengl gtk+-3.0 glib-2.0 gobject-2.0 gio-2.0 openssl"
+		COMMAND "pkg-config --cflags gtk+-3.0 glib-2.0 gobject-2.0 gio-2.0"
 		OUTPUT_VARIABLE PKG_CFLAGS
 		OUTPUT_STRIP_TRAILING_WHITESPACE
 	)
 
 	execute_process(
-		COMMAND "python3-config --cflags"
-		OUTPUT_VARIABLE PYTHON_CFLAGS
+		COMMAND "sdl2-config --cflags"
+		OUTPUT_VARIABLE SDL2_CFLAGS
 		OUTPUT_STRIP_TRAILING_WHITESPACE
 	)
 
 	execute_process(
-		COMMAND "pkg-config --libs libavcodec libavformat libavutil libswscale sdl2 opengl gtk+-3.0 glib-2.0 gobject-2.0 gio-2.0 openssl"
+		COMMAND "sdl2-config --libs"
+		OUTPUT_VARIABLE SDL2_LIBS
+		OUTPUT_STRIP_TRAILING_WHITESPACE
+	)
+
+	execute_process(
+		COMMAND "pkg-config --libs gtk+-3.0 glib-2.0 gobject-2.0 gio-2.0"
 		OUTPUT_VARIABLE PKG_LIBS
 		OUTPUT_STRIP_TRAILING_WHITESPACE
 	)
 
-	execute_process(
-		COMMAND "python3-config --embed --ldflags"
-		OUTPUT_VARIABLE PYTHON_LDFLAGS
-		OUTPUT_STRIP_TRAILING_WHITESPACE
-	)
+	separate_arguments(PKG_CFLAGS_LIST UNIX_COMMAND "${PKG_CFLAGS}")
+	separate_arguments(SDL2_CFLAGS_LIST UNIX_COMMAND "${SDL2_CFLAGS}")
+	separate_arguments(SDL2_LIBS_LIST UNIX_COMMAND "${SDL2_LIBS}")
 
-	target_link_options(${PROJECT_NAME} PRIVATE ${PKG_LIBS} ${PYTHON_LDFLAGS})
+	target_compile_options(${PROJECT_NAME} PRIVATE ${PKG_CFLAGS} ${SDL2_CFLAGS})
+	target_link_options(${PROJECT_NAME} PRIVATE ${PKG_LIBS} ${SDL2_LIBS})
 elseif(APPLE)
+	find_package(OpenSSL)
+	target_link_libraries(${PROJECT_NAME} PRIVATE OpenSSL::Crypto OpenSSL::SSL)
+
+	find_package(OpenGL REQUIRED)
+	target_link_libraries(${PROJECT_NAME} PRIVATE OpenGL::GL)
+
+	find_package(PkgConfig REQUIRED)
+	pkg_check_modules(AVCODEC REQUIRED libavcodec)
+	pkg_check_modules(AVFORMAT REQUIRED libavformat)
+	pkg_check_modules(AVUTIL REQUIRED libavutil)
+	pkg_check_modules(SWSCALE REQUIRED libswscale)
+
+	target_include_directories(${PROJECT_NAME} PRIVATE
+		${AVCODEC_INCLUDE_DIRS}
+		${AVFORMAT_INCLUDE_DIRS}
+		${AVUTIL_INCLUDE_DIRS}
+		${SWSCALE_INCLUDE_DIRS}
+	)
+
+	target_link_libraries(${PROJECT_NAME} PRIVATE
+		${SWSCALE_LIBRARIES}
+		${AVCODEC_LIBRARIES}
+		${AVFORMAT_LIBRARIES}
+		${AVUTIL_LIBRARIES}
+	)
+
 	execute_process(
-		COMMAND "pkg-config --cflags libavcodec libavformat libavutil libswscale sdl2 opengl openssl"
+		COMMAND "pkg-config --cflags gtk+-3.0 glib-2.0 gobject-2.0 gio-2.0"
 		OUTPUT_VARIABLE PKG_CFLAGS
 		OUTPUT_STRIP_TRAILING_WHITESPACE
 	)
 
 	execute_process(
-		COMMAND "python3-config --cflags"
-		OUTPUT_VARIABLE PYTHON_CFLAGS
+		COMMAND "sdl2-config --cflags"
+		OUTPUT_VARIABLE SDL2_CFLAGS
 		OUTPUT_STRIP_TRAILING_WHITESPACE
 	)
 
 	execute_process(
-		COMMAND "pkg-config --libs libavcodec libavformat libavutil libswscale sdl2 opengl openssl"
+		COMMAND "sdl2-config --libs"
+		OUTPUT_VARIABLE SDL2_LIBS
+		OUTPUT_STRIP_TRAILING_WHITESPACE
+	)
+
+	execute_process(
+		COMMAND "pkg-config --libs gtk+-3.0 glib-2.0 gobject-2.0 gio-2.0"
 		OUTPUT_VARIABLE PKG_LIBS
 		OUTPUT_STRIP_TRAILING_WHITESPACE
 	)
 
-	execute_process(
-		COMMAND "python3-config --embed --ldflags"
-		OUTPUT_VARIABLE PYTHON_LDFLAGS
-		OUTPUT_STRIP_TRAILING_WHITESPACE
-	)
+	separate_arguments(PKG_CFLAGS_LIST UNIX_COMMAND "${PKG_CFLAGS}")
+	separate_arguments(SDL2_CFLAGS_LIST UNIX_COMMAND "${SDL2_CFLAGS}")
+	separate_arguments(SDL2_LIBS_LIST UNIX_COMMAND "${SDL2_LIBS}")
+
+	target_compile_options(${PROJECT_NAME} PRIVATE ${PKG_CFLAGS} ${SDL2_CFLAGS})
+	target_link_options(${PROJECT_NAME} PRIVATE ${PKG_LIBS} ${SDL2_LIBS})
 
 	find_library(APPKIT_FRAMEWORK AppKit)
 	find_library(UTI_FRAMEWORK UniformTypeIdentifiers)
@@ -255,7 +338,7 @@ elseif(APPLE)
 		list(APPEND EXTRA_LIBS ${UTI_FRAMEWORK})
 	endif()
 
-	set(EXTRA_LINK_FLAGS "${PKG_LIBS} ${PYTHON_LDFLAGS}")
+	set(EXTRA_LINK_FLAGS "${PKG_LIBS}")
 
 	target_link_libraries(${PROJECT_NAME} PRIVATE ${EXTRA_LIBS})
 	target_link_options(${PROJECT_NAME} PRIVATE ${EXTRA_LINK_FLAGS})
@@ -283,8 +366,6 @@ if(CONFIG_TYPE STREQUAL "Shipping")
 		set(subsystem_linker_options "/SUBSYSTEM:WINDOWS")
 		# Keep the same "main" function instead of requiring "WinMain"
 		list(APPEND subsystem_linker_options "/ENTRY:mainCRTStartup")
-	else()
-		set(subsystem_linker_options "-mwindows")
 	endif()
 
 	target_link_options(${PROJECT_NAME} PRIVATE ${subsystem_linker_options})

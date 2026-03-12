@@ -46,7 +46,7 @@ namespace vt::widgets
 			
 			ImGui::PushID(str_id.c_str());
 			auto& imgui_style = ImGui::GetStyle();
-			bool is_playing = video.is_playing();
+			bool is_playing = false; //video.is_playing();
 			auto image_avail_size = ImGui::GetContentRegionMax();
 
 			//TODO: a video probably shouldn't have its own controls since they could break synchronization 
@@ -105,7 +105,8 @@ namespace vt::widgets
 					draw_overlay(video_screen_pos, image_size, { (float)video_texture.width(), (float)video_texture.height() });
 				}
 
-				auto video_ts = video.current_timestamp();
+				const auto& current_frame = video.current_frame();
+				auto video_ts = current_frame.has_value() ? current_frame->timestamp() : std::chrono::nanoseconds{};
 				auto duration_ts = video.duration();
 				timestamp current_time{ std::chrono::duration_cast<std::chrono::milliseconds>(video_ts) };
 				timestamp duration{ std::chrono::duration_cast<std::chrono::milliseconds>(duration_ts) };
@@ -128,7 +129,7 @@ namespace vt::widgets
 						auto text_size = ImGui::CalcTextSize("00:00:00 | 00:00:00");
 
 						ImGui::SetCursorPos({ avail_size.x - text_size.x, ImGui::GetCursorPosY() + text_size.y / 4 });
-						ImGui::Text("%02d:%02d:%02d | %02d:%02d:%02d",
+						ImGui::Text("%02ld:%02ld:%02ld | %02ld:%02ld:%02ld",
 							current_time.hours(), current_time.minutes(), current_time.seconds(),
 							duration.hours(), duration.minutes(), duration.seconds()
 						);
@@ -162,12 +163,12 @@ namespace vt::widgets
 						ImGui::SameLine();
 						if (ui::icon_button(is_playing ? icons::pause : icons::play, { button_size, button_size }))
 						{
-							video.set_playing(!is_playing);
+							//video.set_playing(!is_playing);
 						}
 						ImGui::SameLine();
 						if (ui::icon_button(icons::fast_fwd, { button_size, button_size }))
 						{
-							video.seek(std::chrono::nanoseconds(video.duration()));
+							video.seek(video.duration());
 						}
 						ImGui::SameLine();
 						if (ui::icon_button(icons::skip_next, { button_size, button_size })) {}

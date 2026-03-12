@@ -158,22 +158,22 @@ namespace vt::ui
 			selected_ = std::clamp(selected, (size_t)0, items_.size() - 1);
 		}
 
-		constexpr [[nodiscard]] size_t selected() const
+		[[nodiscard]] constexpr size_t selected() const
 		{
 			return selected_;
 		}
 
-		constexpr [[nodiscard]] const value_type& selected_item() const
+		[[nodiscard]] constexpr const value_type& selected_item() const
 		{
 			return items_.at(selected_);
 		}
 
-		constexpr [[nodiscard]] const std::vector<value_type>& items() const
+		[[nodiscard]] constexpr const std::vector<value_type>& items() const
 		{
 			return items_;
 		}
 
-		constexpr [[nodiscard]] const std::string& id() const
+		[[nodiscard]] constexpr const std::string& id() const
 		{
 			return id_;
 		}

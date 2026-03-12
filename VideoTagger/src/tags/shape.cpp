@@ -336,7 +336,7 @@ namespace vt
 				ImGui::TableNextColumn();
 
 				bool is_current_keyframe = keyframe == ts;
-				ImGui::PushID((void*)keyframe.total_milliseconds.count());
+				ImGui::PushID((void*)&keyframe);
 
 				bool was_deleted{};
 				bool is_collapsible_open = widgets::begin_collapsible("##ShapeKeyframe", utils::time::time_to_string(keyframe.total_milliseconds.count()), 0, is_current_keyframe ? icons::keyframe_current : icons::keyframe, is_current_keyframe ? std::optional<ImVec4>{ ImGui::ColorConvertU32ToFloat4(selected_color) } : std::nullopt, [&]()

@@ -4,6 +4,7 @@
 extern "C"
 {
 	#include <libavutil/pixdesc.h>
+	#include <libavutil/hwcontext.h>
 }
 
 #define CALC_FFMPEG_VERSION(a,b,c) ( a<<16 | b<<8 | c )
@@ -24,7 +25,7 @@ namespace vt
 		}
 	}
 
-	video_plane::video_plane(uint8_t* data, size_t size, int pitch) : data_{ data }, size_{ size }, pitch_{ pitch } {}
+	video_plane::video_plane(uint8_t* data, size_t size, int pitch) : data_{ data }, pitch_{ pitch }, size_{ size } {}
 
 	uint8_t* video_plane::data()
 	{
@@ -81,7 +82,7 @@ namespace vt
 
 	video_plane video_frame::get_plane(size_t plane_index) const
 	{
-		return video_plane(frame_->data[plane_index], int64_t(frame_->linesize[plane_index]) * frame_->height, frame_->linesize[plane_index]);
+		return video_plane(frame_->data[plane_index], static_cast<int64_t>(frame_->linesize[plane_index]) * frame_->height, frame_->linesize[plane_index]);
 	}
 
 	int video_frame::width() const
@@ -114,6 +115,11 @@ namespace vt
 		return std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::duration<double>(frame_->duration * av_q2d(frame_->time_base)));
 	}
 
+	std::chrono::nanoseconds video_frame::next_timestamp() const
+	{
+		return timestamp() + duration();
+	}
+
 	size_t video_frame::planes_count() const
 	{
 		return av_pix_fmt_count_planes(pixel_format());
@@ -129,28 +135,9 @@ namespace vt
 		return frame_->flags & AV_FRAME_FLAG_KEY;
 	}
 
-	std::optional<typename stream_type_traits<stream_type::video>::decoded_packet_type> stream_type_traits<stream_type::video>::decode(AVCodecContext* codec_context, class packet_wrapper& packet)
+	bool video_frame::is_hardware() const
 	{
-		AVPacket* unwrapped_packet = packet.unwrapped();
-
-		if (avcodec_send_packet(codec_context, unwrapped_packet) != 0)
-		{
-			//TODO: some better error handling
-			return std::nullopt;
-		}
-
-		std::optional<video_frame> frame = video_frame();
-		AVFrame* unwrapped_frame = frame.value().unwrapped();
-
-		if (avcodec_receive_frame(codec_context, unwrapped_frame) != 0)
-		{
-			//TODO: some better error handling
-			return std::nullopt;
-		}
-
-		unwrapped_frame->time_base = unwrapped_packet->time_base;
-
-		return frame;
+		return frame_->hw_frames_ctx != nullptr;
 	}
 
 	packet_wrapper::packet_wrapper() : packet_{ av_packet_alloc() }, type_{ stream_type::unknown }
@@ -225,9 +212,29 @@ namespace vt
 		return std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::duration<double>(packet_->duration * av_q2d(packet_->time_base)));
 	}
 
-	bool packet_wrapper::is_key() const
+	std::chrono::nanoseconds packet_wrapper::next_timestamp() const
+	{
+		return timestamp() + duration();
+	}
+
+	bool packet_wrapper::is_keyframe() const
 	{
 		return packet_->flags & AV_PKT_FLAG_KEY;
+	}
+
+	bool packet_wrapper::should_discard() const
+	{
+		return packet_->flags & AV_PKT_FLAG_DISCARD;
+	}
+
+	bool packet_wrapper::is_corrupted() const
+	{
+		return packet_->flags & AV_PKT_FLAG_CORRUPT;
+	}
+
+	bool packet_wrapper::is_disposable() const
+	{
+		return packet_->flags & AV_PKT_FLAG_DISPOSABLE;
 	}
 
 	packet_queue::packet_queue() : stream_index_{ -1 } {}
@@ -383,16 +390,21 @@ namespace vt
 		return *this;
 	}
 
-	video_decoder::video_decoder() :
-		format_context_{ nullptr }, stream_indices_{}, codec_contexts_{}, packet_queues_{},
-		last_read_packet_type_{ stream_type::unknown }, eof_{ false }, pixel_format_{} //, current_frame_number_{ 0 }
+	bool video_decoder::is_hardware_acceleration_enabled() const
+	{
+		return is_hardware_acceleration_enabled_;
+	}
+
+	video_decoder::video_decoder()
 	{
 		std::fill(stream_indices_.begin(), stream_indices_.end(), -1);
 	}
 
 	video_decoder::video_decoder(video_decoder&& other) noexcept :
-		format_context_{ other.format_context_ }, stream_indices_(other.stream_indices_), codec_contexts_(other.codec_contexts_),
-		packet_queues_(std::move(other.packet_queues_)), last_read_packet_type_{ other.last_read_packet_type_ }, eof_{ other.eof_ }, pixel_format_{}
+		format_context_{ other.format_context_ }, pixel_format_{ other.pixel_format_ }, hw_device_ctx_{ other.hw_device_ctx_ },
+		stream_indices_(other.stream_indices_), codec_contexts_(other.codec_contexts_), packet_queues_(std::move(other.packet_queues_)),
+		last_read_packet_timestamp_{ other.last_read_packet_timestamp_ }, last_read_packet_type_{ other.last_read_packet_type_ },
+		eof_{ other.eof_ }
 	{
 		for (auto& codec_context : other.codec_contexts_)
 		{
@@ -400,6 +412,8 @@ namespace vt
 		}
 
 		other.format_context_ = nullptr;
+		other.hw_device_ctx_ = nullptr;
+		other.pixel_format_ = AV_PIX_FMT_NONE;
 	}
 
 	video_decoder::~video_decoder()
@@ -414,26 +428,33 @@ namespace vt
 		codec_contexts_ = other.codec_contexts_;
 		packet_queues_ = std::move(other.packet_queues_);
 		last_read_packet_type_ = other.last_read_packet_type_;
+		last_read_packet_timestamp_ = other.last_read_packet_timestamp_;
 		eof_ = other.eof_;
+		hw_device_ctx_ = other.hw_device_ctx_;
+		pixel_format_ = other.pixel_format_;
 
 		for (auto& codec_context : other.codec_contexts_)
 		{
 			codec_context = nullptr;
 		}
 		other.format_context_ = nullptr;
+		other.hw_device_ctx_ = nullptr;
+		other.pixel_format_ = AV_PIX_FMT_NONE;
 
 		return *this;
 	}
 
-	bool video_decoder::open(const std::filesystem::path& path)
+	bool video_decoder::open(const std::filesystem::path& path, bool accelerated)
 	{
 		if (is_open())
 		{
 			close();
 		}
+
+		is_hardware_acceleration_enabled_ = accelerated;
 		
 		format_context_ = avformat_alloc_context();
-		if (avformat_open_input(&format_context_, path.u8string().c_str(), NULL, NULL) < 0)
+		if (avformat_open_input(&format_context_, path.u8string().c_str(), nullptr, nullptr) < 0)
 		{
 			return false;
 		}
@@ -443,7 +464,7 @@ namespace vt
 
 		bool found_any_stream = false;
 
-		// No idea if one file can have multiple streams of the same type
+		// TODO: check what happens if there are multiple streams of the same type.
 		for (unsigned int i = 0; i < format_context_->nb_streams; i++)
 		{
 			auto stream = format_context_->streams[i];
@@ -475,7 +496,7 @@ namespace vt
 			return false;
 		}
 
-		for (size_t i = 0; i < static_cast<size_t>(stream_type::size); i++)
+		for (size_t i = 0; i < static_cast<size_t>(stream_type::size); ++i)
 		{
 			if (stream_indices_[i] < 0)
 			{
@@ -485,8 +506,6 @@ namespace vt
 			codec_contexts_[i] = avcodec_alloc_context3(codecs_array[i]);
 			if (codec_contexts_[i] == nullptr)
 			{
-				// Highly unlikely, basically critical failure
-
 				close();
 				return false;
 			}
@@ -497,14 +516,65 @@ namespace vt
 				return false;
 			}
 
-			if (avcodec_open2(codec_contexts_[i], codecs_array[i], NULL) < 0)
+			if (is_hardware_acceleration_enabled_ and static_cast<stream_type>(i) == stream_type::video)
+			{
+				const AVCodec* codec = codecs_array[i];
+				pixel_format_ = AV_PIX_FMT_NONE;
+
+				static constexpr std::array<AVHWDeviceType, 12> hw_device_types
+				{
+					AV_HWDEVICE_TYPE_CUDA,
+					AV_HWDEVICE_TYPE_VULKAN,
+					AV_HWDEVICE_TYPE_D3D11VA,
+#if LIBAVUTIL_BUILD >= CALC_FFMPEG_VERSION(61, 0, 0)
+					AV_HWDEVICE_TYPE_D3D12VA,
+#endif
+					AV_HWDEVICE_TYPE_VDPAU,
+					AV_HWDEVICE_TYPE_VAAPI,
+					AV_HWDEVICE_TYPE_DXVA2,
+					AV_HWDEVICE_TYPE_QSV,
+					AV_HWDEVICE_TYPE_VIDEOTOOLBOX,
+					AV_HWDEVICE_TYPE_DRM,
+					AV_HWDEVICE_TYPE_OPENCL,
+					AV_HWDEVICE_TYPE_MEDIACODEC,
+				};
+
+				for (AVHWDeviceType device_type : hw_device_types)
+				{
+					if (pixel_format_ != AV_PIX_FMT_NONE)
+					{
+						break;
+					}
+
+					for (int j = 0;; j++)
+					{
+						const AVCodecHWConfig* config = avcodec_get_hw_config(codec, j);
+						if (config == nullptr)
+						{
+							break;
+						}
+
+						if (config->methods & AV_CODEC_HW_CONFIG_METHOD_HW_DEVICE_CTX and config->device_type == device_type)
+						{
+							if (av_hwdevice_ctx_create(&hw_device_ctx_, device_type, nullptr, nullptr, 0) >= 0)
+							{
+								pixel_format_ = config->pix_fmt;
+								codec_contexts_[i]->hw_device_ctx = av_buffer_ref(hw_device_ctx_);
+								break;
+							}
+						}
+					}
+				}
+			}
+
+			if (avcodec_open2(codec_contexts_[i], codecs_array[i], nullptr) < 0)
 			{
 				close();
 				return false;
 			}
 		}
 
-		avformat_find_stream_info(format_context_, NULL);
+		avformat_find_stream_info(format_context_, nullptr);
 
 		return true;
 	}
@@ -529,39 +599,39 @@ namespace vt
 			}
 		}
 
+		if (hw_device_ctx_ != nullptr)
+		{
+			av_buffer_unref(&hw_device_ctx_);
+			hw_device_ctx_ = nullptr;
+		}
+		pixel_format_ = AV_PIX_FMT_NONE;
+
 		avformat_close_input(&format_context_);
 
 		eof_ = false;
 		last_read_packet_type_ = stream_type::unknown;
+		last_read_packet_timestamp_ = std::chrono::nanoseconds::zero();
+		is_hardware_acceleration_enabled_ = false;
 	}
 
-	void video_decoder::read_packet()
+	decoder_read_result video_decoder::read_packet()
 	{
 		packet_wrapper packet;
 		AVPacket* unwrapped_packet = packet.unwrapped();
 
-		int read_frame_result;
 		while (true)
 		{
-			read_frame_result = av_read_frame(format_context_, unwrapped_packet);
+			int read_frame_result = av_read_frame(format_context_, unwrapped_packet);
 			
 			if (read_frame_result == AVERROR_EOF)
 			{
 				eof_ = true;
-				return;
+				return decoder_read_result::eof;
 			}
-			else if (read_frame_result == AVERROR_INVALIDDATA)
-			{
-				continue;
-			}
-			else if (read_frame_result == AVERROR(EAGAIN))
-			{
-				continue;
-			}
-			else if (read_frame_result != 0)
+			else if (read_frame_result < 0)
 			{
 				//TODO: Do something
-				return;
+				return decoder_read_result::error;
 			}
 
 			auto it = std::find(stream_indices_.begin(), stream_indices_.end(), packet.stream_index());
@@ -576,17 +646,13 @@ namespace vt
 
 			packet.set_type(static_cast<stream_type>(index));
 			last_read_packet_type_ = packet.type();
+			last_read_packet_timestamp_ = packet.timestamp();
 
 			packet_queues_[index] << std::move(packet);
 			break;
 		}
 
-		//if (read_frame_result == AVERROR_EOF)
-		//{
-		//	eof_ = true;
-		//}
-
-		//TODO: handle other errors
+		return decoder_read_result::success;
 	}
 
 	bool video_decoder::is_open() const
@@ -667,29 +733,26 @@ namespace vt
 
 	void video_decoder::seek_keyframe(std::chrono::nanoseconds timestamp)
 	{
-		//TODO https://github.com/bmewj/video-app/blob/master/src/video_reader.cpp write this like here
-
-		//TODO: handle invalid timestamp
-
 		auto video_stream_index = stream_indices_[static_cast<size_t>(stream_type::video)];
-		
 		auto timestamp_seconds = std::chrono::duration_cast<std::chrono::duration<double>>(timestamp);
 		int64_t seek_timestamp = static_cast<int64_t>(timestamp_seconds.count() / av_q2d(format_context_->streams[video_stream_index]->time_base));
 
 		eof_ = false;
-		if (av_seek_frame(format_context_, video_stream_index, seek_timestamp, AVSEEK_FLAG_BACKWARD) < 0)
+
+		int flags = AVSEEK_FLAG_BACKWARD;
+		if (av_seek_frame(format_context_, video_stream_index, seek_timestamp, flags) < 0)
 		{
-			// TODO: Handle error
 			return;
 		}
-		discard_all_packets();
-	}
 
-	void video_decoder::seek_keyframe(size_t frame_number)
-	{
-		auto video_stream = format_context_->streams[stream_indices_[static_cast<size_t>(stream_type::video)]];
-		
-		seek_keyframe(std::chrono::nanoseconds(static_cast<int64_t>(frame_number / fps() * 1'000'000'000)));
+		for (auto& codec_ctx : codec_contexts_)
+		{
+			if (codec_ctx == nullptr) continue;
+
+			avcodec_flush_buffers(codec_ctx);
+		}
+
+		discard_all_packets();
 	}
 
 	int video_decoder::width() const
@@ -706,7 +769,7 @@ namespace vt
 	{
 		auto video_stream = format_context_->streams[stream_indices_[static_cast<size_t>(stream_type::video)]];
 
-		constexpr double eps = 0.000025;
+		static constexpr double eps = 0.000025;
 		double fps{};
 
 		//Most of this is borrowed from OpenCV's implementation
@@ -743,7 +806,7 @@ namespace vt
 
 		if (frame_count == 0)
 		{
-			frame_count = (int64_t)std::floor(duration_seconds * fps() + 0.5);
+			frame_count = static_cast<int64_t>(std::floor(duration_seconds * fps() + 0.5));
 		}
 
 		return frame_count;
@@ -751,7 +814,7 @@ namespace vt
 
 	std::chrono::nanoseconds video_decoder::duration() const
 	{
-		return std::chrono::nanoseconds(static_cast<int64_t>(format_context_->duration / (double)(AV_TIME_BASE) * 1'000'000'000));
+		return std::chrono::nanoseconds(static_cast<int64_t>(format_context_->duration / static_cast<double>((AV_TIME_BASE)) * 1'000'000'000));
 	}
 
 	std::chrono::nanoseconds video_decoder::frame_number_to_timestamp(size_t frame) const
@@ -781,6 +844,11 @@ namespace vt
 	}
 
 	AVFormatContext* video_decoder::av_format_context()
+	{
+		return format_context_;
+	}
+
+	const AVFormatContext* video_decoder::av_format_context() const
 	{
 		return format_context_;
 	}

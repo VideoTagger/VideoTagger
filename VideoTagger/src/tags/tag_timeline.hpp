@@ -27,16 +27,16 @@ namespace vt
 	///@brief Enum representing the type of a segment
 	enum class tag_segment_type
 	{
-		///A point in time (i.e., start == end)
+		///@brief A point in time (i.e., start == end)
 		timestamp,
-		///A period of time (i.e., start != end)
+		///@brief A period of time (i.e., start != end)
 		segment
 	};
 
 	///@brief Enum representing which part of the segment is being grabbed
 	enum class segment_part : uint8_t
 	{
-		none = 0b00, //TODO: maybe remove none
+		none = 0b00,
 		left = 0b01,
 		right = 0b10,
 		both = left | right,
@@ -247,8 +247,9 @@ namespace vt
 		 * Invalidates all iterators and references to the segments after the erased segment.
 		 * 
 		 * @param id ID of the segment to erase.
+		 * @return True if the segment was erased, false if no segment with the given ID exists.
 		 */
-		void erase(segment_id id);
+		bool erase(segment_id id);
 
 		/**
 		 * @brief Erase a segment by its iterator
@@ -382,6 +383,26 @@ namespace vt
 		iterator find(timestamp ts) const;
 
 		/**
+		 * @brief Find all segments that would cause conflict during a move operation.
+		 *
+		 * @param id ID of segment to move.
+		 * @param part Which part of the segment to move. Can't be segment_part::none
+		 * @param offset By how much to move the segment relative to its current positions.
+		 * @return Set of IDs of the segments that would cause conflicts during the move operation.
+		 */
+		std::set<segment_id> find_move_conflicts(segment_id id, segment_part part, timestamp offset) const;
+
+		/**
+		 * @brief Find all segments that would cause conflict during a move operation.
+		 * 
+		 * @param ids IDs of segments to move.
+		 * @param part Which part of the segments to move. Can't be segment_part::none
+		 * @param offset By how much to move the segments relative to their current positions.
+		 * @return Set of IDs of the segments that would cause conflicts during the move operation.
+		 */
+		std::set<segment_id> find_move_conflicts(const std::set<segment_id>& ids, segment_part part, timestamp offset) const;
+
+		/**
 		 * @brief Get a segment by its id
 		 * 
 		 * @param id ID of the segment to get.
@@ -419,6 +440,10 @@ namespace vt
 		iterator upper_bound_(timestamp ts) const;
 		iterator upper_bound_(iterator begin, timestamp ts) const;
 		void update_id_map_(iterator update_begin, iterator update_end, ptrdiff_t offset);
+
+		void find_overlapping_(std::set<segment_id>& result, segment_id segment, segment_part part, timestamp offset, const std::set<segment_id>& ignored_segments) const;
+		void find_overlapping_(std::set<segment_id>& result, timestamp start, timestamp end, segment_id ignored_segment, const std::set<segment_id>& ignored_segments) const;
+		void find_overlapping_(std::set<segment_id>& result, timestamp start, timestamp end, const std::set<segment_id>& ignored_segments) const;
 	};
 
 	//key: tag name
@@ -585,6 +610,89 @@ namespace vt
 		}
 		update_id_map_(it_end, segments_.end(), -erased_count);
 		return it;
-;
+	}
+
+
+	inline auto segment_id_map_find(const segment_id_map& map, const std::string& tag_name, segment_id id) ->
+		std::pair<segment_id_map::const_iterator, segment_id_map::mapped_type::const_iterator>
+	{
+		auto it = map.find(tag_name);
+		if (it == map.end())
+		{
+			return { map.end(), {} };
+		}
+
+		const auto& id_set = it->second;
+		auto id_it = id_set.find(id);
+		if (id_it == id_set.end())
+		{
+			return { it, id_set.end() };
+		}
+
+		return { it, id_it };
+	}
+
+	inline auto segment_id_map_find(segment_id_map& map, const std::string& tag_name, segment_id id) ->
+		std::pair<segment_id_map::iterator, segment_id_map::mapped_type::iterator>
+	{
+		auto it = map.find(tag_name);
+		if (it == map.end())
+		{
+			return { map.end(), {} };
+		}
+
+		const auto& id_set = it->second;
+		auto id_it = id_set.find(id);
+		if (id_it == id_set.end())
+		{
+			return { it, id_set.end() };
+		}
+
+		return { it, id_it };
+	}
+
+	inline bool segment_id_map_contains(const segment_id_map& map, const std::string& tag_name, segment_id id)
+	{
+		auto [map_it, id_it] = segment_id_map_find(map, tag_name, id);
+		return map_it != map.end() and id_it != map_it->second.end();
+	}
+
+	inline bool segment_id_map_erase(segment_id_map& map, const std::string& tag_name, segment_id id)
+	{
+		auto [tags_it, segments_it] = segment_id_map_find(map, tag_name, id);
+		if (tags_it == map.end() or segments_it == tags_it->second.end())
+		{
+			return false;
+		}
+
+		tags_it->second.erase(segments_it);
+		if (tags_it->second.empty())
+		{
+			map.erase(tags_it);
+		}
+		return true;
+	}
+
+	inline std::pair<timestamp, timestamp> min_max_segment_timestamps(const segment_storage& storage, const segment_id_map& segments)
+	{
+		timestamp min_timestamp = timestamp::max();
+		timestamp max_timestamp = timestamp::min();
+		for (auto& [tag, segment_ids] : segments)
+		{
+			auto storage_it = storage.find(tag);
+			if (storage_it == storage.end()) continue;
+
+			auto& tag_segments = storage_it->second;
+			for (auto& segment_id : segment_ids)
+			{
+				if (!tag_segments.is_id_valid(segment_id)) continue;
+
+				auto& segment = tag_segments.at(segment_id);
+				min_timestamp = std::min(min_timestamp, segment.start);
+				max_timestamp = std::max(max_timestamp, segment.end);
+			}
+		}
+
+		return { min_timestamp, max_timestamp };
 	}
 }

@@ -8,7 +8,7 @@
 
 namespace vt::ui
 {
-	remove_language_popup::remove_language_popup(std::optional<bool*> open) : modal_popup{ "Remove Language", open, ImGuiWindowFlags_NoTitleBar }, languages_{ "##Languages", {} } {}
+	remove_language_popup::remove_language_popup(std::optional<bool*> open) : modal_popup{ "remove-language", "Remove Language", open, ImGuiWindowFlags_NoTitleBar }, languages_{ "##Languages", {} } {}
 
 	void remove_language_popup::on_display()
 	{

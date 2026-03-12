@@ -8,16 +8,16 @@ namespace vt
 	struct player_event : public event
 	{
 	public:
-		constexpr player_event(widgets::video_player& player) : player_{ player } {}
+		constexpr player_event(widgets::video_player& player) : player_{ &player } {}
 
 	private:
-		widgets::video_player& player_;
+		widgets::video_player* player_;
 
 	public:
 		///@return Reference to the video player associated with this event
 		constexpr widgets::video_player& player() const
 		{
-			return player_;
+			return *player_;
 		}
 	};
 }

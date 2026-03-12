@@ -1,23 +1,22 @@
 #pragma once
 #include <vector>
-#include <functional>
-#include "core/project.hpp"
+#include <core/project.hpp>
+#include <events/event_source.hpp>
 
 namespace vt::widgets
 {
 	class project_selector
 	{
 	public:
-		project_selector() = default;
+		project_selector();
 		project_selector(const std::vector<project_info>& projects);
 
-		std::function<void(project_info&)> on_click_project;
-		std::function<void()> on_project_list_update;
 	private:
 		std::string filter;
 		bool path_from_name = true;
 		std::vector<project_info> projects_;
 		project_info temp_project;
+		event_source event_source_{ "project_selector" };
 
 	private:
 		void render_project_creation_menu();

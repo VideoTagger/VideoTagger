@@ -12,6 +12,7 @@ namespace vt::widgets
 	extern bool begin_button_dropdown(const char* label, ImVec2 button_size, float popup_height = 0.0f);
 	extern void end_button_dropdown();
 
+	//TODO: min/max timestamp should be of type timestamp
 	extern bool timestamp_control(const std::string& name, timestamp& timestamp, uint64_t min_timestamp, uint64_t max_timestamp, bool* was_activated, bool* was_released, bool fill_area = true);
 	extern bool frame_dragger(int64_t& frame, bool& is_dragging);
 	
@@ -24,7 +25,7 @@ namespace vt::widgets
 		const std::function<void(const std::string& /*label*/)> context_menu = nullptr,
 		const std::function<void(const std::string& /*label*/)> drag_drop = nullptr,
 		std::function<void(ImDrawList& /*label*/, ImRect /*item rect*/, ImRect /*image rect*/)> custom_draw = nullptr,
-		ImVec2 uv0 = {0, 0}, ImVec2 uv1 = {1, 1}, bool is_selected = false
+		ImVec2 uv0 = { 0, 0 }, ImVec2 uv1 = { 1, 1 }, bool is_selected = false, const ImVec4& img_tint_color = { 1, 1, 1, 1 }
 	);
 
 	extern bool selection_area(ImVec2& start_pos, ImVec2& end_pos, ImGuiMouseButton mouse_button = ImGuiMouseButton_Left);
@@ -34,6 +35,7 @@ namespace vt::widgets
 	extern bool begin_collapsible(const std::string& id, const std::string& label, ImGuiTreeNodeFlags flags = 0, const char* icon = nullptr, const std::optional<ImVec4>& icon_color = std::nullopt, const std::function<void(void)>& on_dragdrop = nullptr, const std::optional<size_t>& index = std::nullopt);
 	extern void end_collapsible();
 
+	extern bool table_is_row_hovered();
 	extern bool table_hovered_row_style();
 
 	extern bool positon_control(utils::vec2<uint32_t>& pos, const utils::vec2<uint32_t>& max_size);
