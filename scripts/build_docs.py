@@ -31,8 +31,6 @@ def main():
 	if result.returncode != 0:
 		exit(result.returncode)
 
-	input("Press any key to continue . . .")
-
 
 if __name__ == "__main__":
 	main()
