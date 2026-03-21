@@ -76,6 +76,12 @@ To build the documentation run:
 uv run ./scripts/build_docs.py
 ```
 
+## Packaging with Velopack
+Before packaging make sure to build the project with the `-shipping` preset. Then run:
+```shell
+uv run ./scripts/vpk_package.py
+```
+
 ## Third party libraries
 - [SDL2](https://github.com/libsdl-org/SDL)
 - [ImGui](https://github.com/ocornut/imgui)

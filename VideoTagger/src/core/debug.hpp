@@ -32,19 +32,19 @@ namespace vt
 			static std::mutex mutex_;
 
 			std::string color;
-			if (flag == "Info")
+			if (flag == "info")
 			{
 				color = "\033[0;36m";
 			}
-			else if (flag == "Warn")
+			else if (flag == "warn")
 			{
 				color = "\033[0;33m";
 			}
-			else if (flag == "Error")
+			else if (flag == "error")
 			{
 				color = "\033[31m";
 			}
-			else if (flag == "Panic!")
+			else if (flag == "panic!")
 			{
 				color = "\033[0;91m";
 			}
@@ -77,56 +77,56 @@ namespace vt
 			}
 		}
 
-		///@brief Logs the message with an 'Info' flag
+		///@brief Logs the message with an 'info' flag
 		template<typename... args_t>
 		static void log_src(const std::string& source, const fmt::format_string<args_t...> format, args_t&&... args)
 		{
-			add_log(source, "Info", format, std::forward<args_t&&>(args)...);
+			add_log(source, "info", format, std::forward<args_t&&>(args)...);
 		}
 
-		///@brief Logs the message with an 'Warn' flag
+		///@brief Logs the message with an 'warn' flag
 		template<typename... args_t>
 		static void warn_src(const std::string& source, const fmt::format_string<args_t...> format, args_t&&... args)
 		{
-			add_log(source, "Warn", format, std::forward<args_t&&>(args)...);
+			add_log(source, "warn", format, std::forward<args_t&&>(args)...);
 		}
 
-		///@brief Logs the message with an 'Error' flag
+		///@brief Logs the message with an 'error' flag
 		template<typename... args_t>
 		static void error_src(const std::string& source, const fmt::format_string<args_t...> format, args_t&&... args)
 		{
-			add_log(source, "Error", format, std::forward<args_t&&>(args)...);
+			add_log(source, "error", format, std::forward<args_t&&>(args)...);
 		}
-		///@brief Logs the message with a 'Panic!' flag and immediately shuts down the app
+		///@brief Logs the message with a 'panic!' flag and immediately shuts down the app
 		template<typename... args_t>
 		static void panic_src(const std::string& source, const fmt::format_string<args_t...> format, args_t&&... args)
 		{
-			add_log(source, "Panic!", format, std::forward<args_t&&>(args)...);
+			add_log(source, "panic!", format, std::forward<args_t&&>(args)...);
 
 			throw std::runtime_error(fmt::format("Panic! ({}): {}", source, fmt::vformat(format.get(), fmt::make_format_args(args...))));
 		}
 
-		///@brief Logs the message with an 'Info' flag
+		///@brief Logs the message with an 'info' flag
 		template<typename... args_t>
 		static void log(const fmt::format_string<args_t...> format, args_t&&... args)
 		{
 			log_src(get_source(), format, std::forward<args_t&&>(args)...);
 		}
 
-		///@brief Logs the message with an 'Warn' flag
+		///@brief Logs the message with an 'warn' flag
 		template<typename... args_t>
 		static void warn(const fmt::format_string<args_t...> format, args_t&&... args)
 		{
 			warn_src(get_source(), format, std::forward<args_t&&>(args)...);
 		}
 
-		///@brief Logs the message with an 'Error' flag
+		///@brief Logs the message with an 'error' flag
 		template<typename... args_t>
 		static void error(const fmt::format_string<args_t...> format, args_t&&... args)
 		{
 			error_src(get_source(), format, std::forward<args_t&&>(args)...);
 		}
-		///@brief Logs the message with a 'Panic!' flag and immediately shuts down the app
+		///@brief Logs the message with a 'panic!' flag and immediately shuts down the app
 		template<typename... args_t>
 		static void panic(const fmt::format_string<args_t...> format, args_t&&... args)
 		{

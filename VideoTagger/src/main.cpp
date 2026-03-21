@@ -5,7 +5,7 @@
 
 int main(int argc, char* argv[])
 {
-	vt::update_manager::update();
+	vt::update_manager::init();
 	vt::app app;
 	vt::system_window_config main_cfg;
 	{
@@ -18,5 +18,6 @@ int main(int argc, char* argv[])
 	{
 		app.run();
 	}
+	vt::update_manager::shutdown();
 	return 0;
 }

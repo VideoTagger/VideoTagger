@@ -58,7 +58,7 @@
 			"displayName": "x64 Debug",
 			"inherits": "windows-base",
 			"binaryDir": "${sourceDir}/build/cmake/${hostSystemName}-x86_64/Debug/",
-			"installDir": "${sourceDir}/build/cmake/install/${hostSystemName}-x86_x64/Debug/",
+			"installDir": "${sourceDir}/build/cmake/install/${hostSystemName}-x86_64/Debug/",
 			"architecture": {
 				"value": "x64",
 				"strategy": "external"
@@ -72,7 +72,7 @@
 			"displayName": "x64 Release",
 			"inherits": "windows-base",
 			"binaryDir": "${sourceDir}/build/cmake/${hostSystemName}-x86_64/Release/",
-			"installDir": "${sourceDir}/build/cmake/install/${hostSystemName}-x86_x64/Release/",
+			"installDir": "${sourceDir}/build/cmake/install/${hostSystemName}-x86_64/Release/",
 			"architecture": {
 				"value": "x64",
 				"strategy": "external"
@@ -86,7 +86,7 @@
 			"displayName": "x64 Shipping",
 			"inherits": "windows-base",
 			"binaryDir": "${sourceDir}/build/cmake/${hostSystemName}-x86_64/Shipping/",
-			"installDir": "${sourceDir}/build/cmake/install/${hostSystemName}-x86_x64/Shipping/",
+			"installDir": "${sourceDir}/build/cmake/install/${hostSystemName}-x86_64/Shipping/",
 			"architecture": {
 				"value": "x64",
 				"strategy": "external"
@@ -101,7 +101,7 @@
 			"displayName": "x64 Debug",
 			"inherits": "linux-base",
 			"binaryDir": "${sourceDir}/build/cmake/${hostSystemName}-x86_64/Debug/",
-			"installDir": "${sourceDir}/build/cmake/install/${hostSystemName}-x86_x64/Debug/",
+			"installDir": "${sourceDir}/build/cmake/install/${hostSystemName}-x86_64/Debug/",
 			"cacheVariables": {
 				"CMAKE_BUILD_TYPE": "Debug"
 			}
@@ -111,7 +111,7 @@
 			"displayName": "x64 Release",
 			"inherits": "linux-base",
 			"binaryDir": "${sourceDir}/build/cmake/${hostSystemName}-x86_64/Release/",
-			"installDir": "${sourceDir}/build/cmake/install/${hostSystemName}-x86_x64/Release/",
+			"installDir": "${sourceDir}/build/cmake/install/${hostSystemName}-x86_64/Release/",
 			"cacheVariables": {
 				"CMAKE_BUILD_TYPE": "Release"
 			}
@@ -121,7 +121,7 @@
 			"displayName": "x64 Shipping",
 			"inherits": "linux-base",
 			"binaryDir": "${sourceDir}/build/cmake/${hostSystemName}-x86_64/Shipping/",
-			"installDir": "${sourceDir}/build/cmake/install/${hostSystemName}-x86_x64/Shipping/",
+			"installDir": "${sourceDir}/build/cmake/install/${hostSystemName}-x86_64/Shipping/",
 			"cacheVariables": {
 				"CMAKE_BUILD_TYPE": "Release",
 				"VT_BUILD_SHIPPING": "true"
@@ -132,7 +132,7 @@
 			"displayName": "x64 Debug",
 			"inherits": "macos-base",
 			"binaryDir": "${sourceDir}/build/cmake/${hostSystemName}-x86_64/Debug/",
-			"installDir": "${sourceDir}/build/cmake/install/${hostSystemName}-x86_x64/Debug/",
+			"installDir": "${sourceDir}/build/cmake/install/${hostSystemName}-x86_64/Debug/",
 			"cacheVariables": {
 				"CMAKE_BUILD_TYPE": "Debug"
 			}
@@ -142,7 +142,7 @@
 			"displayName": "x64 Release",
 			"inherits": "macos-base",
 			"binaryDir": "${sourceDir}/build/cmake/${hostSystemName}-x86_64/Release/",
-			"installDir": "${sourceDir}/build/cmake/install/${hostSystemName}-x86_x64/Release/",
+			"installDir": "${sourceDir}/build/cmake/install/${hostSystemName}-x86_64/Release/",
 			"cacheVariables": {
 				"CMAKE_BUILD_TYPE": "Release"
 			}
@@ -152,7 +152,7 @@
 			"displayName": "x64 Shipping",
 			"inherits": "macos-base",
 			"binaryDir": "${sourceDir}/build/cmake/${hostSystemName}-x86_64/Shipping/",
-			"installDir": "${sourceDir}/build/cmake/install/${hostSystemName}-x86_x64/Shipping/",
+			"installDir": "${sourceDir}/build/cmake/install/${hostSystemName}-x86_64/Shipping/",
 			"cacheVariables": {
 				"CMAKE_BUILD_TYPE": "Release",
 				"VT_BUILD_SHIPPING": "true"
