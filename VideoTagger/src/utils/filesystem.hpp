@@ -57,5 +57,7 @@ namespace vt::utils
 		static std::string concat_extensions(const std::vector<std::string>& extensions);
 
 		static std::filesystem::path get_storage_path(const std::string& organization, const std::string& app_name);
+
+		static bool is_subdirectory(const std::filesystem::path& parent, const std::filesystem::path& child);
 	};
 }

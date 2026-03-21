@@ -1,4 +1,5 @@
 #include "pch.hpp"
+#include "string.hpp"
 #include "filesystem.hpp"
 
 static nfdu8char_t* make_nfd_path(const std::string& input)
@@ -129,5 +130,22 @@ namespace vt::utils
 		std::string result = buf;
 		SDL_free(buf);
 		return result;
+	}
+
+	bool filesystem::is_subdirectory(const std::filesystem::path& parent, const std::filesystem::path& child)
+	{
+		auto parent_abs = std::filesystem::absolute(parent);
+		auto child_abs = std::filesystem::absolute(child);
+
+		auto parent_it = parent_abs.begin();
+		for (auto child_it = child_abs.begin(); parent_it != parent_abs.end() and child_it != child_abs.end(); ++parent_it, ++child_it)
+		{
+			if (*parent_it != *child_it)
+			{
+				return false;
+			}
+		}
+
+		return parent_it == parent_abs.end();
 	}
 }

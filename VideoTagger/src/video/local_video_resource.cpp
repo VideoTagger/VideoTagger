@@ -8,25 +8,18 @@
 
 namespace vt
 {
-	
-
 	local_video_resource::local_video_resource(video_id_t id, std::filesystem::path path) :
 		video_resource(local_video_importer::static_importer_id, id, make_video_metadata_from_path(path))
 	{
-		if (path.is_relative())
-		{
-			set_file_path(path.u8string());
-			return;
-		}
+		debug::log("current: {}", std::filesystem::current_path().u8string());
 
-		auto current_root = std::filesystem::current_path().root_name();
-		if (path.root_name() == current_root)
+		if (utils::filesystem::is_subdirectory(std::filesystem::current_path(), path))
 		{
 			set_file_path(std::filesystem::relative(path).u8string());
 			return;
 		}
 
-		set_file_path(path.u8string());
+		set_file_path(std::filesystem::absolute(path).u8string());
 	}
 
 	local_video_resource::local_video_resource(const nlohmann::ordered_json& json) :

@@ -65,7 +65,6 @@ namespace vt
 		std::string tooltip;
 	};
 
-	//TODO: maybe put local file path in this class
 	class video_resource
 	{
 	public:
