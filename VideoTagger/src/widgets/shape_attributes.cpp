@@ -13,28 +13,47 @@ namespace vt::widgets
 
 	void shape_attributes::on_render()
 	{
-		const auto& style = ImGui::GetStyle();
-		std::optional<selected_segment_data>& selected_segment = ctx_.video_timeline.selected_segment;
-
-		if (ctx_.session.current_video_group_id() != invalid_video_group_id and ctx_.last_focused_video.has_value() and selected_segment.has_value())
+		if (ctx_.session.current_video_group_id() != invalid_video_group_id and ctx_.last_focused_video.has_value() and ctx_.session.is_any_segment_selected())
 		{
 			auto selected_attr_inst = ctx_.get_selected_attribute();
 			auto active_vid_size = ctx_.get_active_video_tex_size();
+			auto current_ts = ctx_.displayed_videos.current_timestamp_as_timestamp();
 
-			auto& timeline = ctx_.get_current_segment_storage().at(selected_segment->tag);
-			auto& selected_seg = timeline.at(selected_segment->segment_id);
+			std::string selected_tag;
+			segment_id selected_segment_id = invalid_segment_id;
 
-			auto current_ts = ctx_.video_timeline.current_timestamp();
-			bool is_on_screen = current_ts >= selected_seg.start and current_ts <= selected_seg.end;
-			bool is_timestamp = selected_seg.start == selected_seg.end;
-			if (active_vid_size.has_value() and selected_attr_inst != nullptr and selected_attr_inst->has<shape>() and is_on_screen)
+			const auto& storage = ctx_.get_current_segment_storage();
 			{
+				bool found = false;
+				for (const auto& [tag, segments] : ctx_.session.selected_segments())
+				{
+					if (found) break;
+
+					const auto& timeline = storage.at(tag);
+					for (auto& segment_id : segments)
+					{
+						const auto& segment = timeline.at(segment_id);
+						if (segment.start <= current_ts and current_ts <= segment.end)
+						{
+							selected_tag = tag;
+							selected_segment_id = segment_id;
+							found = true;
+							break;
+						}
+					}
+				}
+			}
+
+			if (active_vid_size.has_value() and selected_attr_inst != nullptr and selected_attr_inst->has<shape>() and selected_segment_id != invalid_segment_id)
+			{
+				auto& selected_seg = storage.at(selected_tag).at(selected_segment_id);
+				bool is_timestamp = selected_seg.start == selected_seg.end;
 				auto& shape = selected_attr_inst->get<vt::shape>();
 				if (shape.has_data())
 				{
 					ui::card([&]()
 					{
-						bool modifiable = is_on_screen;
+						bool modifiable = true;
 						shape.draw_data(active_vid_size.value(), ctx_.gizmo_target, selected_seg.start, selected_seg.end, current_ts, is_timestamp, modifiable, ctx_.is_project_dirty, [](timestamp target_ts)
 						{
 							auto& player = ctx_.get_window<widgets::video_player>();

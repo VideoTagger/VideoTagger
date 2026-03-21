@@ -2,6 +2,7 @@
 #include "bind_tags.hpp"
 #include <core/app_context.hpp>
 #include "proxies.hpp"
+#include <events/tags/tag_add_request_event.hpp>
 
 void vt::bindings::bind_tags(pybind11::module_& module)
 {
@@ -31,8 +32,9 @@ void vt::bindings::bind_tags(pybind11::module_& module)
 		{
 			ctx_.is_project_dirty = true;
 		}
-		auto[_, result] = tags.insert(t);
-		return result == tag_validate_result::ok;
+
+		ctx_.dispatch_event<tag_add_request_event>("script", ctx_.current_project->tags, t.name, t.color);
+		return ctx_.current_project->tags.contains(t.name);
 	})
 	.def("has_tag", [](tag_storage& tags, const std::string& name) -> bool
 	{
@@ -40,13 +42,13 @@ void vt::bindings::bind_tags(pybind11::module_& module)
 	})
 	.def("clear", [](tag_storage& tags)
 	{
+		//TODO: should use events
+
 		if (&tags == &ctx_.current_project->tags)
 		{
 			//TODO: This should be a command
 			ctx_.is_project_dirty = true;
 			ctx_.current_project->displayed_tags.clear();
-			ctx_.video_timeline.selected_segment = std::nullopt;
-			ctx_.video_timeline.moving_segment = std::nullopt;
 		}
 		tags.clear();
 	})

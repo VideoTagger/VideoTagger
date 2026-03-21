@@ -1,7 +1,6 @@
 #include "pch.hpp"
 #include <pybind11/operators.h>
 #include "scripting_engine.hpp"
-#include <widgets/video_timeline.hpp>
 #include <core/app_context.hpp>
 #include <widgets/console.hpp>
 #include <widgets/video_player.hpp>

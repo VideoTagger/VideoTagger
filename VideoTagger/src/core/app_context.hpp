@@ -22,7 +22,6 @@
 #include "app_settings.hpp"
 
 #include <widgets/project_selector.hpp>
-#include <widgets/video_timeline.hpp>
 #include <widgets/color_picker.hpp>
 #include <ui/popups/options_popup.hpp>
 #include <widgets/modal/tag_importer.hpp>
@@ -66,8 +65,6 @@ namespace vt
 	{
 		//serialized
 		window_state state = window_state::normal;
-		bool show_tag_manager_window = true;
-		bool show_timeline_window = true;
 
 		//not serialized
 		bool show_options_window = false;
@@ -85,7 +82,6 @@ namespace vt
 		task_manager tasks;
 
 		std::optional<project> current_project;
-		widgets::video_timeline video_timeline;
 		widgets::project_selector project_selector;
 		ui::options_popup options{ &win_cfg.show_options_window };
 		widgets::modal::script_progress script_progress;
@@ -126,11 +122,6 @@ namespace vt
 		session_storage session;
 
 		displayed_videos_manager displayed_videos;
-
-		//TODO: remove after removing the old timeline
-		widgets::insert_segment_data_container insert_segment_data;
-
-		
 
 		app_settings app_settings;
 		std::shared_ptr<lang_pack> lang = nullptr;

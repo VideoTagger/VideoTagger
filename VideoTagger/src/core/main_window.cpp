@@ -4,7 +4,6 @@
 #include <fmt/format.h>
 #include <ui/windows/tag_manager.hpp>
 #include <widgets/video_widget.hpp>
-#include <widgets/video_timeline.hpp>
 #include <widgets/video_player.hpp>
 #include <widgets/console.hpp>
 #include <widgets/project_selector.hpp>
@@ -422,18 +421,6 @@ namespace vt
 
 			auto& project = *ctx_.current_project;
 
-			auto& selected_segment = ctx_.video_timeline.selected_segment;
-			if (selected_segment.has_value() and selected_segment->tag == event.tag_name())
-			{
-				selected_segment.reset();
-			}
-
-			auto& moving_segment = ctx_.video_timeline.moving_segment;
-			if (moving_segment.has_value() and moving_segment->tag == event.tag_name())
-			{
-				moving_segment.reset();
-			}
-
 			auto current_group_id = ctx_.session.current_video_group_id();
 
 			//TODO: change after segment events store the group id.
@@ -791,7 +778,6 @@ namespace vt
 				{
 					ctx_.dispatch_event<video_group_change_request_event>(event_source_, ctx_.get_window<widgets::video_player>(), invalid_video_group_id);
 					ctx_.current_project = std::nullopt;
-					ctx_.video_timeline.selected_segment = std::nullopt;
 					ctx_.is_project_dirty = false;
 					ctx_.session.reset();
 					set_subtitle();
@@ -807,7 +793,6 @@ namespace vt
 		{
 			ctx_.dispatch_event<video_group_change_request_event>(event_source_, ctx_.get_window<widgets::video_player>(), invalid_video_group_id);
 			ctx_.current_project = std::nullopt;
-			ctx_.video_timeline.selected_segment = std::nullopt;
 			ctx_.is_project_dirty = false;
 			set_subtitle();
 			ctx_.session.reset();
@@ -943,8 +928,6 @@ namespace vt
 			{
 				auto& show_windows = ctx_.settings["show-windows"];
 
-				if (show_windows.contains("tag-manager")) ctx_.win_cfg.show_tag_manager_window = show_windows["tag-manager"];
-				if (show_windows.contains("timeline")) ctx_.win_cfg.show_timeline_window = show_windows["timeline"];
 			}
 
 			if (ctx_.settings.contains("preferences"))
@@ -1132,8 +1115,8 @@ namespace vt
 		//ctx_.keybinds.insert("Toggle Video Group Queue", keybind(SDLK_F4, toggle_window_mod, flags, toggle_window_action("video-group-queue", ctx_.win_cfg.show_video_group_queue_window)));
 		//ctx_.keybinds.insert("Toggle Inspector", keybind(SDLK_F5, toggle_window_mod, flags, toggle_window_action("inspector", ctx_.win_cfg.show_inspector_window)));
 		//ctx_.keybinds.insert("Toggle Shape Attributes", keybind(SDLK_F6, toggle_window_mod, flags, toggle_window_action("shape-attributes", ctx_.win_cfg.show_shape_attributes_window)));
-		ctx_.keybinds.insert("Toggle Tag Manager", keybind(SDLK_F7, toggle_window_mod, flags, toggle_window_action("tag-manager", ctx_.win_cfg.show_tag_manager_window)));
-		ctx_.keybinds.insert("Toggle Timeline", keybind(SDLK_F8, toggle_window_mod, flags, toggle_window_action("timeline", ctx_.win_cfg.show_timeline_window)));
+		//ctx_.keybinds.insert("Toggle Tag Manager", keybind(SDLK_F7, toggle_window_mod, flags, toggle_window_action("tag-manager", ctx_.win_cfg.show_tag_manager_window)));
+		//ctx_.keybinds.insert("Toggle Timeline", keybind(SDLK_F8, toggle_window_mod, flags, toggle_window_action("timeline", ctx_.win_cfg.show_timeline_window)));
 		//ctx_.keybinds.insert("Toggle Console", keybind(SDLK_F9, toggle_window_mod, flags, toggle_window_action("console", ctx_.win_cfg.show_console_window)));
 
 		keybind_modifiers player_mod{};
@@ -1859,8 +1842,8 @@ namespace vt
 					win_toggles{},
 					//win_toggles{ "Show Inspector", "Toggle Inspector", "inspector", &ctx_.win_cfg.show_inspector_window },
 					//win_toggles{ "Show Shape Attributes", "Toggle Shape Attributes", "shape-attributes", &ctx_.win_cfg.show_shape_attributes_window },
-					win_toggles{ "Show Tag Manager", "Toggle Tag Manager", "tag-manager", &ctx_.win_cfg.show_tag_manager_window },
-					win_toggles{ "Show Timeline", "Toggle Timeline", "timeline", &ctx_.win_cfg.show_timeline_window },
+					//win_toggles{ "Show Tag Manager", "Toggle Tag Manager", "tag-manager", &ctx_.win_cfg.show_tag_manager_window },
+					//win_toggles{ "Show Timeline", "Toggle Timeline", "timeline", &ctx_.win_cfg.show_timeline_window },
 					//win_toggles{ "Show Console", "Toggle Console", "console", &ctx_.win_cfg.show_console_window},
 
 				})
@@ -2159,118 +2142,6 @@ namespace vt
 		}
 	}
 
-	static void handle_insert_segment()
-	{
-		//TODO: check if start and end have value
-
-		static std::optional<std::string> insert_key;
-
-		for (auto it = ctx_.insert_segment_data.begin(); it != ctx_.insert_segment_data.end() and !insert_key.has_value();)
-		{
-			auto& insert_data = it->second;
-
-			if (!insert_data.tag.empty() and insert_data.name_index < 0)
-			{
-				auto& tags = ctx_.current_project->displayed_tags;
-
-				if (auto it = ctx_.current_project->find_displayed_tag(insert_data.tag); it != tags.end())
-				{
-					insert_data.name_index = static_cast<int>(it - tags.begin());
-				}
-			}
-
-			if (insert_data.show_insert_popup)
-			{
-				ImGui::OpenPopup("###AppInsertSegment");
-				insert_key = it->first;
-				break;
-			}
-
-			if (!insert_data.ready)
-			{
-				it++;
-				continue;
-			}
-
-			auto& segments = ctx_.get_current_segment_storage().at(insert_data.tag);
-
-			if (insert_data.show_merge_popup)
-			{
-				auto overlapping = segments.find_range(*insert_data.start, *insert_data.end);
-				if (!overlapping.empty())
-				{
-					ImGui::OpenPopup("##MergePopupApp");
-					insert_key = it->first;
-					break;
-				}
-			}
-
-			segments.insert(*insert_data.start, *insert_data.end);
-			it = ctx_.insert_segment_data.erase(it);
-			insert_key.reset();
-		}
-
-		if (!insert_key.has_value())
-		{
-			return;
-		}
-
-		auto insert_data_it = ctx_.insert_segment_data.find(*insert_key);
-		if (insert_data_it == ctx_.insert_segment_data.end())
-		{
-			insert_key.reset();
-			ctx_.insert_segment_data.erase(insert_data_it);
-			return;
-		}
-
-		auto& insert_data = insert_data_it->second;
-
-		auto min_ts = ctx_.video_timeline.start_timestamp().total_milliseconds.count();
-		auto max_ts = ctx_.video_timeline.end_timestamp().total_milliseconds.count();
-		//should it be this or all tags?
-		auto& tags = ctx_.current_project->displayed_tags;
-
-		auto segment_type = *insert_data.start == *insert_data.end ? tag_segment_type::timestamp : tag_segment_type::segment;
-		const char* insert_segment_popup_id = segment_type == tag_segment_type::timestamp ? "Insert Timestamp###AppInsertSegment" : "Insert Segment###AppInsertSegment";
-
-		static int selected_tag_index{};
-
-		bool presed_ok{};
-		if (widgets::insert_segment_popup(insert_segment_popup_id, *insert_data.start, *insert_data.end, segment_type, min_ts, max_ts, tags, insert_data.name_index, presed_ok))
-		{
-			if (presed_ok)
-			{
-				insert_data.tag = tags.at(insert_data.name_index);
-				insert_data.show_insert_popup = false;
-				insert_data.ready = true;
-			}
-			else
-			{
-				ctx_.insert_segment_data.erase(insert_data_it);
-			}
-
-			insert_key.reset();
-			return;
-		}
-
-		//TODO: Use new merge segments popup (segments_move_conflict_popup)
-		bool pressed_ok{};
-		if (widgets::merge_segments_popup("##MergePopupApp", presed_ok, false))
-		{
-			if (presed_ok)
-			{
-				insert_data.show_merge_popup = false;
-			}
-			else
-			{
-				ctx_.insert_segment_data.erase(insert_data_it);
-			}
-
-			insert_key.reset();
-			return;
-		}
-	}
-
 	void main_window::draw_main_app()
 	{
 
@@ -2427,8 +2298,6 @@ namespace vt
 			}
 		}
 
-		handle_insert_segment();
-
 		//TODO: probably should be done somewhere else
 		ctx_.update_current_video_group();
 
@@ -2477,39 +2346,6 @@ namespace vt
 				player.update_data(data, ctx_.displayed_videos.is_playing());
 
 				reset_player_when_group_is_invalid = true;
-			}
-		}
-
-		/*uint64_t vid_id{};
-		if (player.is_visible())
-		{
-			for (auto& [id, vinfo] : ctx_.current_project->videos)
-			{
-				if (!vinfo.is_widget_open) continue;
-				auto& vid = vinfo.video;
-
-				widgets::draw_video_widget(vid, vinfo.is_widget_open, vid_id++);
-			}
-		}*/
-
-		if (ctx_.win_cfg.show_timeline_window/* and ctx_.current_video_group_id != 0*/)
-		{
-			auto group_duration = ctx_.displayed_videos.duration();
-
-			//TODO: Definitely change this!
-			ctx_.video_timeline.set_video_group_id(ctx_.session.current_video_group_id());
-			ctx_.video_timeline.set_tag_storage(&ctx_.current_project->tags);
-			ctx_.video_timeline.set_segment_storage(ctx_.session.current_video_group_id() != invalid_video_group_id ? &ctx_.get_current_segment_storage() : nullptr);
-			ctx_.video_timeline.set_start_timestamp(timestamp::zero());
-			ctx_.video_timeline.set_end_timestamp(timestamp(std::chrono::duration_cast<std::chrono::milliseconds>(group_duration)));
-			ctx_.video_timeline.set_current_timestamp(timestamp{ std::chrono::duration_cast<std::chrono::milliseconds>(ctx_.displayed_videos.current_timestamp()) });
-			ctx_.video_timeline.insert_segment_container = &ctx_.insert_segment_data;
-
-			ctx_.video_timeline.render(ctx_.win_cfg.show_timeline_window);
-
-			if (ctx_.video_timeline.current_timestamp().total_milliseconds != std::chrono::duration_cast<std::chrono::milliseconds>(ctx_.displayed_videos.current_timestamp()))
-			{
-				ctx_.displayed_videos.seek(ctx_.video_timeline.current_timestamp().total_milliseconds);
 			}
 		}
 
@@ -2621,7 +2457,6 @@ namespace vt
 			for (auto& video_data : ctx_.displayed_videos)
 			{
 				bool timestamp_in_range = video_data.is_timestamp_in_range(ctx_.displayed_videos.current_timestamp());
-				auto selected_segment = ctx_.video_timeline.selected_segment;
 
 				//TODO: handle is_widget_open
 				bool is_widget_open = true;
@@ -2632,7 +2467,7 @@ namespace vt
 					point_pos = { (float)ctx_.gizmo_target->at(0), (float)ctx_.gizmo_target->at(1) };
 				}
 
-				widgets::draw_video_widget(video_data.video, video_data.display_texture, timestamp_in_range, is_widget_open, vid_id++, [&point_pos, has_selected_attribute, selected_attribute, is_shape, has_target, &video_data, &selected_segment, this](ImVec2 pos, ImVec2 size, ImVec2 tex_size)
+				widgets::draw_video_widget(video_data.video, video_data.display_texture, timestamp_in_range, is_widget_open, vid_id++, [&point_pos, has_selected_attribute, selected_attribute, is_shape, has_target, &video_data, this](ImVec2 pos, ImVec2 size, ImVec2 tex_size)
 				{
 					static auto from_tex_pos = [&pos, &tex_size, &size](const ImVec2 point) -> ImVec2
 					{
@@ -2677,7 +2512,7 @@ namespace vt
 					ImVec2 add_point_pos{};
 					bool add_point{};
 
-					auto current_ts = ctx_.video_timeline.current_timestamp();
+					auto current_ts = ctx_.displayed_videos.current_timestamp_as_timestamp();
 					bool can_add_point{};
 
 					bool is_keyframe{};
@@ -2976,7 +2811,6 @@ namespace vt
 											if (ImGui::IsMouseClicked(0) and hovered)
 											{
 												ctx_.dispatch_event<segment_select_request_event>(event_source_, segment_storage, tag.name, segment_id);
-												ctx_.video_timeline.selected_segment = widgets::selected_segment_data{ tag.name, segment_id };
 												ctx_.set_selected_attribute(&attr);
 											}
 											tooltip = fmt::format("Tag: {}\nAttribute: {}\nID: {}", tag.name, attr_name, i + 1);
@@ -3053,7 +2887,7 @@ namespace vt
 					}
 
 					//window focus frame
-					if (selected_segment.has_value() and last_focused and ctx_.last_focused_video.has_value())
+					if (ctx_.session.is_any_segment_selected() and last_focused and ctx_.last_focused_video.has_value())
 					{
 						draw_list->AddRect(top_left, bottom_right, ctx_.current_theme.get_rgba(theme_color::selection_normal), 0, 0, border_thickness);
 					}
@@ -3148,7 +2982,6 @@ namespace vt
 			ImGui::DockBuilderDockWindow(ctx_.get_window<widgets::video_browser>().name().c_str(), main_dock_up_left);
 			ImGui::DockBuilderDockWindow(ctx_.get_window<widgets::theme_customizer>().name().c_str(), main_dock_up);
 			ImGui::DockBuilderDockWindow(ctx_.get_window<widgets::console>().name().c_str(), dockspace_id_copy);
-			ImGui::DockBuilderDockWindow(widgets::video_timeline::window_name().c_str(), dockspace_id_copy);
 			ImGui::DockBuilderDockWindow(ctx_.get_window<widgets::video_group_browser>().name().c_str(), dockspace_id_copy);
 
 			auto queue_node = ImGui::DockBuilderGetNode(main_dock_down);
