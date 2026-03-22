@@ -55,6 +55,12 @@ namespace vt
 
 	void update_manager::update(const update_info& info)
 	{
+		if (manager_ == nullptr)
+		{
+			debug::warn("Update manager not initialized, cannot apply updates.");
+			return;
+		}
+
 		manager_->WaitExitThenApplyUpdates(info.vpk_info);
 	}
 
