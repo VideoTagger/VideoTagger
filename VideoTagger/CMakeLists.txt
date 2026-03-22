@@ -19,6 +19,7 @@ message(STATUS "Embed output directory: ${EMBED_OUTPUT_DIR}")
 vt_embed_text_file("${CMAKE_SOURCE_DIR}/config.json" "${EMBED_OUTPUT_DIR}/config.hpp" "vt::embed" EMBED_GENERATED_FILES)
 
 vt_embed_text_file("${ASSETS_SOURCE_DIR}/themes/dark.vttheme" "${EMBED_OUTPUT_DIR}/dark_theme.hpp" "vt::embed" EMBED_GENERATED_FILES)
+vt_embed_text_file("${ASSETS_SOURCE_DIR}/lang/en_US.vtlang" "${EMBED_OUTPUT_DIR}/en_US_lang.hpp" "vt::embed" EMBED_GENERATED_FILES)
 #vt_embed_json("${ASSETS_SOURCE_DIR}/themes/light.vttheme" "${EMBED_OUTPUT_DIR}" "vt::embed" EMBED_GENERATED_FILES)
 vt_embed_directory(${EMBED_SOURCE_DIR} ${EMBED_OUTPUT_DIR} "vt::embed" EMBED_GENERATED_FILES)
 

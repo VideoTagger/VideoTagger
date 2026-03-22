@@ -138,7 +138,6 @@ namespace vt
 		{
 			on_first_launch();
 		}
-		ctx_.load_lang_packs("en_US");
 
 		init_keybinds();
 		init_player();
@@ -866,7 +865,6 @@ namespace vt
 	void main_window::on_first_launch()
 	{
 		ctx_.reset_layout = true;
-		copy_app_assets();
 		ctx_.settings["first-launch"] = false;
 	}
 
@@ -957,6 +955,8 @@ namespace vt
 			ctx_.reset_layout = true;
 		}
 		build_fonts(ctx_.app_settings.font_size);
+
+		ctx_.load_lang_packs(ctx_.app_settings.language.value_or("en_US"));
 		return result;
 	}
 
@@ -981,7 +981,7 @@ namespace vt
 		}
 
 		debug::log("Preferred theme is empty, loading default theme");
-		auto default_theme_json = nlohmann::ordered_json::parse(embed::dark_theme);
+		auto default_theme_json = utils::json::from_string(embed::dark_theme);
 		ctx_.change_theme(theme::load_from_json(default_theme_json));
 		return;
 		
@@ -1032,27 +1032,6 @@ namespace vt
 	void main_window::close_project()
 	{
 		on_close_project(false);
-	}
-
-	void main_window::copy_app_assets()
-	{
-		std::filesystem::path assets_path = "assets";
-		auto lang_path = assets_path / "lang";
-		debug::log("Copying builtin assets...");
-
-		if (!std::filesystem::exists(ctx_.lang_dir_filepath))
-		{
-			std::filesystem::create_directories(ctx_.lang_dir_filepath);
-		}
-
-		for (const auto& entry : std::filesystem::directory_iterator(lang_path))
-		{
-			if (entry.is_directory()) continue;
-			auto source = entry.path();
-			auto target = ctx_.lang_dir_filepath / source.filename();
-			debug::log("Copied asset {} -> {}", source.u8string(), target.u8string());
-			std::filesystem::copy_file(source, target, std::filesystem::copy_options::overwrite_existing);
-		}
 	}
 
 	void main_window::init_keybinds()

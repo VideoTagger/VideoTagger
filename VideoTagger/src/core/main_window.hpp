@@ -36,8 +36,6 @@ namespace vt
 		void save_project_as(const std::filesystem::path& filepath);
 		void close_project();
 
-		void copy_app_assets();
-
 		void init_keybinds();
 		void init_player();
 		void init_options();
