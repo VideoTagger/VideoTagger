@@ -173,49 +173,46 @@ namespace vt
 			debug::log("Clicked project: {}, Filepath: {}", project_info.name, project_info.path.u8string());
 			if (!std::filesystem::is_regular_file(project_info.path))
 			{
-				const SDL_MessageBoxButtonData buttons[] = {
-					// flags, buttonid, text
-					{ SDL_MESSAGEBOX_BUTTON_ESCAPEKEY_DEFAULT, 0, "Cancel" },
-					{ SDL_MESSAGEBOX_BUTTON_RETURNKEY_DEFAULT, 1, "Remove" },
-					{ 0, 2, "Locate" },
-				};
-
-				SDL_MessageBoxData data{};
-				data.flags = SDL_MESSAGEBOX_INFORMATION;
-
-				//TODO: Replace title
-				data.buttons = buttons;
-				data.numbuttons = sizeof(buttons) / sizeof(buttons[0]);
+				messagebox_data data{};
+				data.icon = messagebox_icon::info;
 				data.title = "VideoTagger";
-				data.message = "This project no longer exists";
-				int buttonid{};
-				SDL_ShowMessageBox(&data, &buttonid);
-
-				switch (buttonid)
+				data.buttons =
 				{
-					case 1:
+					{ 0, ctx_.lang->get("cancel") },
+					{ 1, ctx_.lang->get("remove") },
+					{ 2, ctx_.lang->get("locate") },
+				};
+				data.message = "This project no longer exists";
+				data.cancel_button_id = 0;
+				data.default_button_id = 1;
+				data.callback = [this, project_info](int button_id)
+				{
+					switch (button_id)
 					{
-						ctx_.project_selector.remove(project_info);
-						ctx_.dispatch_event<project_list_changed_event>(event_source_);
-					}
-					break;
-					case 2:
-					{
-						utils::dialog_filter filter{ "VideoTagger Project", project::extension };
-						auto result = utils::filesystem::get_file({}, { filter });
-						if (result)
+						case 1:
 						{
-							project_info = project_info::load_from_file(result.path);
-							ctx_.dispatch_event<project_list_changed_event>(event_source_);
+							ctx_.project_selector.remove(project_info);
 						}
+						break;
+						case 2:
+						{
+							utils::dialog_filter filter{ "VideoTagger Project", project::extension };
+							auto result = utils::filesystem::get_file({}, { filter });
+							if (result)
+							{
+								auto& pinfo = ctx_.project_selector.replace(project_info, project_info::load_from_file(result.path));
+								load_project(pinfo);
+							}
+						}
+						break;
 					}
-					break;
-				}
-				return;
+				};
+				messagebox::show(data);
 			}
-			ctx_.current_project = project::load_from_file(project_info.path);
-			ctx_.main_window->set_subtitle(ctx_.current_project->name);
-			ctx_.get_window<widgets::console>().clear();
+			else
+			{
+				load_project(project_info);
+			}
 		});
 
 		ctx_.add_event_listener<project_list_changed_event>([this](const project_list_changed_event& event)
@@ -713,6 +710,12 @@ namespace vt
 		});
 	}
 
+	void main_window::on_open_project()
+	{
+		ctx_.main_window->set_subtitle(ctx_.current_project->name);
+		ctx_.get_window<widgets::console>().clear();
+	}
+
 	void main_window::on_close_project(bool should_shutdown)
 	{
 		if (ctx_.script_handle.has_value())
@@ -985,6 +988,12 @@ namespace vt
 		ctx_.change_theme(theme::load_from_json(default_theme_json));
 		return;
 		
+	}
+
+	void main_window::load_project(const project_info& project)
+	{
+		ctx_.current_project = project::load_from_file(project.path);
+		on_open_project();
 	}
 
 	void main_window::save_settings()

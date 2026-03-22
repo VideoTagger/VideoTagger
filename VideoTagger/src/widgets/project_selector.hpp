@@ -23,6 +23,7 @@ namespace vt::widgets
 		void render_project_widget(size_t id, project_info& project);
 	public:
 		void sort();
+		const project_info& replace(const project_info& project, const project_info& new_project);
 		void remove(const project_info& project);
 		void load_projects_file(const std::filesystem::path& filepath);
 		void save_projects_file(const std::filesystem::path& filepath);

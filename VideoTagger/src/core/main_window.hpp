@@ -2,6 +2,7 @@
 #include <system/system_window.hpp>
 #include <utils/file_node.hpp>
 #include <events/event_source.hpp>
+#include <core/project.hpp>
 
 namespace vt
 {
@@ -17,6 +18,7 @@ namespace vt
 		void register_listeners();
 		void register_player_listeners();
 
+		void on_open_project();
 		void on_close_project(bool should_shutdown);
 		void on_save();
 		void on_save_as();
@@ -31,6 +33,7 @@ namespace vt
 		bool load_accounts();
 		bool load_settings();
 		void load_theme();
+		void load_project(const project_info& project);
 		void save_settings();
 		void save_project();
 		void save_project_as(const std::filesystem::path& filepath);
