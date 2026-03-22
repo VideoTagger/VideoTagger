@@ -32,6 +32,7 @@
 	"project.invalid": "Invalid Project",
 	"cancel": "Cancel",
 	"application_settings": "Application Settings",
+	"updates.no_update.message": "This installation is up to date",
 	"project.name": "Project Name",
 	"tag": "Tag",
 	"modification_time": "Modification Time",
@@ -102,5 +103,10 @@
 	"popup.timeline_context_menu.add_at_playhead.begin_segment": "Begin segment",
 	"popup.timeline_context_menu.add_at_playhead.end_segment": "End segment",
 	"popup.segments_move_conflict.title": "Move Conflict",
-	"popup.segment_insert.title": "Insert a new segment"
+	"popup.segment_insert.title": "Insert a new segment",
+	"menu_bar.help.check_for_updates": "Check for Updates",
+	"updates.no_update.title": "No updates available",
+	"updates.update_available.message": "There's a newer version of this software, do you wish to update?",
+	"updates.update_available.title": "Updates available",
+	"updates.update": "Update"
 }

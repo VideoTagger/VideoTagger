@@ -14,11 +14,11 @@ If the repository was cloned non-recursively run:
 git submodule update --init
 ```
 
-## Build Requirements
+### Build Requirements
 - Python 3.12+ (tested with 3.12.6 and 3.13.0)
 - CMake 3.24+
 
-# Initial setup
+## Initial setup
 Install `uv` package manager:
 ```shell
 # On Windows
@@ -35,8 +35,7 @@ build-essential pkg-config cmake ninja-build python3 python3-pip libsdl2-dev lib
 
 In the root directory run:
 ```shell
-cd scripts
-uv run setup.py
+uv run ./scripts/setup.py
 ```
 
 > [!Warning]
@@ -51,9 +50,9 @@ cmake --build --target install --preset=<BUILD_PRESET>
 ```
 
 Replace `<BUILD_PRESET>` with one of the presets:
-- `<SYSTEM>-debug`
-- `<SYSTEM>-release`
-- `<SYSTEM>-shipping`
+- `<SYSTEM>-x64-debug`
+- `<SYSTEM>-x64-release`
+- `<SYSTEM>-x64-shipping`
 
 where `<SYSTEM>` is `windows`/`linux`/`macos`
 
@@ -69,6 +68,19 @@ In the root directory run:
 docker compose up --build
 docker cp videotagger:/app/build/. ./build/
 docker compose down
+```
+
+## Build docs
+To build the documentation run:
+```shell
+uv run ./scripts/build_docs.py
+```
+
+## Packaging with Velopack
+Before packaging make sure to build the project with the `-shipping` preset. Then go to the root directory and run:
+```shell
+# For help add `--help` flag
+uv run ./scripts/vpk_package.py
 ```
 
 ## Third party libraries
