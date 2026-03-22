@@ -176,12 +176,13 @@ namespace vt::ui
 		ImRect top_rect{ tile_rect.Min.x, tile_rect.Min.y, tile_rect.Max.x, bottom_start_y };
 		ImRect bottom_rect{ tile_rect.Min.x, bottom_start_y, tile_rect.Max.x, tile_rect.Max.y };
 
+		bool is_dragged = ImGui::IsMouseDragging(ImGuiMouseButton_Left);
+
 		//coloring
-		bool held = ImGui::IsMouseDown(ImGuiMouseButton_Left);
-		auto color = ImGui::GetColorU32(held and is_hovered_ ? ImGuiCol_HeaderActive : is_hovered_ ? ImGuiCol_HeaderHovered : ImGuiCol_Header);
+		bool held = ImGui::IsMouseDown(ImGuiMouseButton_Left) and is_hovered_ and !is_dragged;
+		auto color = ImGui::GetColorU32(held ? ImGuiCol_HeaderActive : is_hovered_ and !is_dragged ? ImGuiCol_HeaderHovered : ImGuiCol_Header);
 		auto color4 = ImGui::ColorConvertU32ToFloat4(color);
 		color4.w = 1.f;
-		
 
 		ImVec4 hsv;
 		hsv.w = color4.w;
@@ -201,9 +202,9 @@ namespace vt::ui
 			{
 				render_border(tile_rect, theme.get_rgba(theme_color::selection_normal), rounding, border_size);
 			}
-			else
+			else if (!is_dragged)
 			{
-				if (held and is_hovered_)
+				if (held)
 				{
 					render_border(tile_rect, theme.get_rgba(theme_color::separator_active), rounding, border_size);
 				}
