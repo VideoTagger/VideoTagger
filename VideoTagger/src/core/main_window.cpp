@@ -36,6 +36,8 @@
 #include <ui/widgets/slider.hpp>
 #include <ui/widgets/settings_expander.hpp>
 
+#include <updates/update_manager.hpp>
+
 #include <events/system/window/system_window_resize_event.hpp>
 
 #include <events/timeline/segments_move_request_event.hpp>
@@ -2060,6 +2062,42 @@ namespace vt
 				if (ImGui::MenuItem(ctx_.lang->get("menu_bar.help.about").c_str()))
 				{
 					ctx_.win_cfg.show_about_window = true;
+				}
+				if (ImGui::MenuItem(ctx_.lang->get("menu_bar.help.check_for_updates").c_str()))
+				{
+					ctx_.tasks.run([]()
+					{
+						return update_manager::check_for_updates();
+					})
+					.then(ctx_.tasks.main_thread(), [](const std::optional<update_info>& update)
+					{
+						if (update.has_value())
+						{
+							messagebox_data data;
+							data.title = ctx_.lang->get("updates.update_available.title");
+							data.message = ctx_.lang->get("updates.update_available.message");
+							data.default_button_id = 0;
+							data.cancel_button_id = 1;
+							data.callback = [update](int id)
+							{
+								if (id == 0)
+								{
+									update_manager::update(update.value());
+								}
+							};
+							data.icon = messagebox_icon::info;
+							data.buttons =
+							{
+								{ 0, ctx_.lang->get("updates.update") },
+								{ 1, ctx_.lang->get("cancel") }
+							};
+							messagebox::show(data);
+						}
+						else
+						{
+							messagebox::show(ctx_.lang->get("updates.no_update.title"), ctx_.lang->get("updates.no_update.message"), messagebox_icon::info);
+						}
+					});
 				}
 				ui::end_menu();
 			}

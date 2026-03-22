@@ -60,6 +60,12 @@ namespace vt
 
 	std::optional<update_info> update_manager::check_for_updates()
 	{
+		if (manager_ == nullptr)
+		{
+			debug::warn("Update manager not initialized, cannot check for updates.");
+			return std::nullopt;
+		}
+
 		debug::log("Checking for updates...");
 
 		auto info = manager_->CheckForUpdates();
