@@ -94,8 +94,8 @@ def main():
 		f'"{package_dir}"',
 	]
 
-	if platform == "windows":
-		args.extend(["--msiDeploymentTool"])
+	# if platform == "windows":
+	# 	args.extend(["--msiDeploymentTool"])
 
 	args.extend(["-e", exe_name])
 
