@@ -32,6 +32,13 @@ def tool_exists(tool_name: str) -> bool:
 	return tool_path is not None
 
 
+def tool_path(tool_name: str) -> str:
+	tool_path = shutil.which(tool_name)
+	if tool_path is None:
+		eprint(f"Error: {tool_name} tool not found. Please ensure it is installed and in the system PATH.")
+		exit(1)
+	return tool_path
+
 def get_platform():
 	platform = sys.platform
 	if platform.startswith("win"):

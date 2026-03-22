@@ -77,8 +77,9 @@ uv run ./scripts/build_docs.py
 ```
 
 ## Packaging with Velopack
-Before packaging make sure to build the project with the `-shipping` preset. Then run:
+Before packaging make sure to build the project with the `-shipping` preset. Then go to the root directory and run:
 ```shell
+# For help add `--help` flag
 uv run ./scripts/vpk_package.py
 ```
 
