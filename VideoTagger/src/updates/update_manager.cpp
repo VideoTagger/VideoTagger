@@ -34,13 +34,13 @@ namespace vt
 			}
 
 
-			auto app = Velopack::VelopackApp::Build();
-			app.SetLogger([](void* user_data, const char* flag, const char* message)
+			Velopack::VelopackApp::Build()
+			.SetLogger([](void* user_data, const char* flag, const char* message)
 			{
 				debug::add_log("velopack", flag, "{}", message);
-			}, nullptr);
-			app.SetAutoApplyOnStartup(false);
-			app.Run();
+			}, nullptr)
+			.SetAutoApplyOnStartup(false)
+			.Run();
 		}
 		catch (const std::exception& ex)
 		{
