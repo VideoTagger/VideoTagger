@@ -16,6 +16,7 @@
 #include "bindings/bind_segment.hpp"
 #include "bindings/proxies.hpp"
 #include "script.hpp"
+#include <core/platform.hpp>
 
 namespace vt
 {
@@ -204,7 +205,7 @@ namespace vt
 	{
 		PyConfig_InitPythonConfig(&cfg);
 
-#ifdef _DEBUG
+#ifdef VT_DEBUG
 		cfg.optimization_level = 0;
 #else
 		cfg.optimization_level = 2;

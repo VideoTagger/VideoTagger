@@ -100,8 +100,9 @@ extern "C"
 #include <events/system/window/system_window_drop_path_event.hpp>
 #include <events/system/window/system_window_close_event.hpp>
 #include <events/app/request_save_settings_event.hpp>
+#include <core/platform.hpp>
 
-#ifdef _DEBUG
+#ifdef VT_DEBUG
 	#include <ui/windows/sandbox.hpp>
 #endif
 #include <events/filesystem/fetch_themes_event.hpp>
@@ -1456,7 +1457,7 @@ namespace vt
 
 		//TODO: Add theme selection
 
-#ifdef _DEBUG
+#ifdef VT_DEBUG
 		.add_label_spacer("Debug Only")
 		.add_raw([]()
 		{
@@ -1851,7 +1852,7 @@ namespace vt
 						windows[settings_name] = *value;
 					}
 				}
-#ifdef _DEBUG
+#ifdef VT_DEBUG
 				ImGui::SeparatorText("Debug Only");
 				ImGui::MenuItem("Show Options", nullptr, &ctx_.win_cfg.show_options_window);
 				
@@ -2116,7 +2117,7 @@ namespace vt
 
 					ImGui::TextWrapped("%s", embed::app_description);
 
-#ifdef _DEBUG
+#ifdef VT_DEBUG
 					ImGui::SeparatorText("Debug Only");
 
 					SDL_version compiled;
@@ -3002,7 +3003,7 @@ namespace vt
 			ImGui::DockBuilderDockWindow(ctx_.get_window<widgets::video_group_queue>().name().c_str(), main_dock_down);
 			ImGui::DockBuilderDockWindow(ctx_.get_window<widgets::video_player>().name().c_str(), main_dock_up);
 			ImGui::DockBuilderDockWindow(ctx_.get_window<widgets::localization_editor>().name().c_str(), main_dock_up);
-#ifdef _DEBUG
+#ifdef VT_DEBUG
 			ImGui::DockBuilderDockWindow(ctx_.get_window<ui::windows::sandbox>().name().c_str(), main_dock_up);
 #endif
 			ImGui::DockBuilderDockWindow(ctx_.get_window<widgets::video_browser>().name().c_str(), main_dock_up_left);

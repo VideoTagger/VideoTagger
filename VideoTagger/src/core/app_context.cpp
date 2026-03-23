@@ -18,8 +18,9 @@
 #include <ui/windows/tag_manager.hpp>
 #include <ui/popups/messagebox_popup.hpp>
 #include <embeds/en_US_lang.hpp>
+#include <core/platform.hpp>
 
-#ifdef _DEBUG
+#ifdef VT_DEBUG
 	#include <ui/windows/sandbox.hpp>
 #endif
 
@@ -65,7 +66,7 @@ namespace vt
 		auto& tag_manager = create_window<ui::windows::tag_manager>();
 		tag_manager.set_opened(true);
 
-#ifdef _DEBUG
+#ifdef VT_DEBUG
 		auto& sandbox = create_window<ui::windows::sandbox>();
 		sandbox.set_opened(true);
 #endif
