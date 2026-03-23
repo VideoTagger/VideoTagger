@@ -15,6 +15,7 @@ namespace vt
 
 	private:
 		std::vector<std::function<void(const type& result)>> callbacks_;
+		std::function<void(type&& result)> final_callback_;
 		mutable std::mutex mutex_;
 		std::condition_variable cv_;
 		std::optional<type> result_;
@@ -40,15 +41,36 @@ namespace vt
 			}
 		}
 
+		constexpr void set_final_callback(const std::function<void(type&& result)>& callback)
+		{
+			bool should_run{};
+			{
+				std::scoped_lock lock(mutex_);
+				should_run = ready_;
+
+				if (!should_run)
+				{
+					final_callback_ = callback;
+				}
+			}
+
+			if (should_run)
+			{
+				callback(std::move(result_.value()));
+			}
+		}
+
 		void set_value(type&& value)
 		{
 			decltype(callbacks_) callbacks;
+			decltype(final_callback_) final_callback;
 
 			{
 				std::scoped_lock lock(mutex_);
 				result_ = std::move(value);
 				ready_ = true;
 				callbacks = std::move(callbacks_);
+				final_callback = std::move(final_callback_);
 			}
 
 			cv_.notify_all();
@@ -57,9 +79,14 @@ namespace vt
 			{
 				callback(result_.value());
 			}
+
+			if (final_callback != nullptr)
+			{
+				final_callback(std::move(result_.value()));
+			}
 		}
 
-		type get()
+		type& get() &
 		{
 			std::unique_lock lock(mutex_);
 			cv_.wait(lock, [&]
@@ -67,6 +94,16 @@ namespace vt
 				return ready_;
 			});
 			return result_.value();
+		}
+
+		type&& get() &&
+		{
+			std::unique_lock lock(mutex_);
+			cv_.wait(lock, [&]
+			{
+				return ready_;
+			});
+			return std::move(result_.value());
 		}
 
 		bool is_ready() const
@@ -84,6 +121,7 @@ namespace vt
 
 	private:
 		std::vector<std::function<void()>> callbacks_;
+		std::function<void()> final_callback_;
 		mutable std::mutex mutex_;
 		std::condition_variable cv_;
 		bool ready_ = false;
@@ -108,14 +146,35 @@ namespace vt
 			}
 		}
 
+		void set_final_callback(const std::function<void()>& callback)
+		{
+			bool should_run{};
+			{
+				std::scoped_lock lock(mutex_);
+				should_run = ready_;
+
+				if (!should_run)
+				{
+					final_callback_ = callback;
+				}
+			}
+
+			if (should_run)
+			{
+				callback();
+			}
+		}
+
 		void set_value()
 		{
 			decltype(callbacks_) callbacks;
+			decltype(final_callback_) final_callback;
 
 			{
 				std::scoped_lock lock(mutex_);
 				ready_ = true;
 				callbacks = std::move(callbacks_);
+				final_callback = std::move(final_callback_);
 			}
 
 			cv_.notify_all();
@@ -123,6 +182,11 @@ namespace vt
 			for (const auto& callback : callbacks)
 			{
 				callback();
+			}
+
+			if (final_callback != nullptr)
+			{
+				final_callback();
 			}
 		}
 
