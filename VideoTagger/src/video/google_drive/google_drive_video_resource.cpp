@@ -80,19 +80,16 @@ namespace vt
 		return file_id_;
 	}
 
-	std::optional<video_resource_thumbnail> google_drive_video_resource::generate_thumbnail()
+	std::optional<video_resource_thumbnail> google_drive_video_resource::generate_thumbnail() const
 	{
 		//TODO: implement
 		debug::error("Google drive thumbnail download is not yet implemented");
 		return std::nullopt;
 	}
 
-	std::function<void()> google_drive_video_resource::on_refresh_task()
+	void google_drive_video_resource::refresh()
 	{
-		return []()
-		{
-			//TODO: update downloadable_
-		};
+		//TODO: update downloadable_
 	}
 
 	video_downloadable google_drive_video_resource::downloadable() const
@@ -107,19 +104,23 @@ namespace vt
 		json["file-id"] = file_id_;
 	}
 
-	video_download_status google_drive_video_resource::on_download(std::shared_ptr<video_download_data> data)
+	video_download_result google_drive_video_resource::on_download(std::shared_ptr<video_download_data> data)
 	{
+		video_download_result result;
+		result.data = data;
+		result.status = video_download_status::failure;
+
 		if (!ctx_.is_account_manager_registered<google_account_manager>())
 		{
 			debug::error("Google account manager not registered");
-			return video_download_status::failure;
+			return result;
 		}
 
 		auto& account_manager = ctx_.get_account_manager<google_account_manager>();
 		if (account_manager.login_status() != account_login_status::logged_in)
 		{
 			debug::error("Google account manager not logged in");
-			return video_download_status::failure;
+			return result;
 		}
 
 		httplib::Client client("https://www.googleapis.com");
@@ -130,7 +131,7 @@ namespace vt
 		if (!get_size_result)
 		{
 			debug::error("GET {} failed: {}", fmt::format("/drive/v3/files/{}/?fields=size", file_id_), httplib::to_string(get_size_result.error()));
-			return video_download_status::failure;
+			return result;
 		}
 		auto get_size_json = nlohmann::json::parse(get_size_result->body);
 		int64_t file_size = std::stoll(get_size_json.at("size").get<std::string>());
@@ -141,7 +142,7 @@ namespace vt
 		if (!file.is_open())
 		{
 			debug::error("Failed to open file for download");
-			return video_download_status::failure;
+			return result;
 		}
 
 		static constexpr int64_t chunk_size = 1024 * 1024;
@@ -153,7 +154,8 @@ namespace vt
 		{
 			if (data->cancel)
 			{
-				return video_download_status::failure;
+				result.status = video_download_status::cancelled;
+				return result;
 			}
 
 			int64_t range_start = downloaded_size;
@@ -177,11 +179,12 @@ namespace vt
 			{
 				//TODO: retry if there was a connection problem
 				debug::error("Error during download: {}", get_result ? get_result->reason : httplib::to_string(get_result.error()));
-				return video_download_status::failure;
+				return result;
 			}
 		}
 
-		data->download_path = file_path;
-		return video_download_status::success;
+		result.download_path = file_path;
+		result.status = video_download_status::success;
+		return result;
 	}
 }

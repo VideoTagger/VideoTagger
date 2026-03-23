@@ -85,9 +85,10 @@ namespace vt
 		virtual void on_remove();
 		
 		//TODO: size as argument
-		virtual std::optional<video_resource_thumbnail> generate_thumbnail();
+		virtual std::optional<video_resource_thumbnail> generate_thumbnail() const;
 
-		virtual std::function<void()> on_refresh_task(); //TODO: use a task class
+		virtual bool can_async_refresh() const;
+		virtual void refresh();
 
 		void set_metadata(const video_resource_metadata& metadata);
 		void set_thumbnail(gl_texture&& texture);

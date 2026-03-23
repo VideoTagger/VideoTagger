@@ -9,6 +9,9 @@
 #include <ui/icons.hpp>
 #include <ui/widgets/common.hpp>
 
+#include <events/video_resource/video_refresh_request_event.hpp>
+#include <events/video_resource/video_open_importer_request_event.hpp>
+
 namespace vt::widgets
 {
 	video_browser::video_browser() : ui::window{ "Video Browser", "video-browser", "Video Browser", ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse }
@@ -174,7 +177,7 @@ namespace vt::widgets
 				{
 					for (auto& [id, vid_resource] : ctx_.current_project->videos)
 					{
-						ctx_.current_project->schedule_video_refresh(id);
+						ctx_.dispatch_event<video_refresh_request_event>(get_event_source(), id);
 					}
 				}
 			}
@@ -189,7 +192,7 @@ namespace vt::widgets
 				std::string item_name = fmt::format("{} Import From {}", importer->importer_display_icon(), importer->importer_display_name());
 				if (ImGui::MenuItem(item_name.c_str()))
 				{
-					ctx_.current_project->prepare_video_import(importer_id);
+					ctx_.dispatch_event<video_open_importer_request_event>(get_event_source(), importer_id);
 				}
 			}
 

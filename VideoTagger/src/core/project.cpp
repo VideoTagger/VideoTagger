@@ -13,6 +13,8 @@
 
 #include <events/player/video_group_change_request_event.hpp>
 
+#include <events/video_resource/video_load_thumbnail_request_event.hpp>
+
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 #define STB_IMAGE_WRITE_IMPLEMENTATION
@@ -88,166 +90,6 @@ namespace vt
 			result.name = project["name"];
 		}
 		return result;
-	}
-
-	bool prepare_video_import_task::operator()()
-	{
-		return task(import_data);
-	}
-
-	bool load_thumbnail_task::operator()()
-	{
-		return task();
-	}
-
-	void project::prepare_video_import(const std::string& importer_id)
-	{
-		if (!ctx_.is_video_importer_registered(importer_id))
-		{
-			debug::error("Video importer {} is not registered", importer_id);
-			return;
-		}
-
-		auto& importer = ctx_.get_video_importer(importer_id);
-		prepare_video_import_task task;
-		task.importer_id = importer_id;
-		task.task = importer.prepare_video_import_task();
-		prepare_video_import_tasks.push_back(std::move(task));
-	}
-
-	void project::schedule_video_import(const std::string& importer_id, std::any import_data, std::optional<video_group_id_t> group_id)
-	{
-		if (!ctx_.is_video_importer_registered(importer_id))
-		{
-			debug::error("Video importer is {} not registered", importer_id);
-			return;
-		}
-
-		auto& importer = ctx_.get_video_importer(importer_id);
-		video_import_task task;
-		task.group_id = group_id;
-		auto func = [&importer, import_data = std::move(import_data)]()
-		{
-			return importer.import_video(video_importer::generate_video_id(), std::move(import_data));
-		};
-
-		task.task = std::async(std::launch::async, func);
-		video_import_tasks.push_back(std::move(task));
-	}
-
-	void project::schedule_video_download(video_id_t video_id)
-	{
-		if (!videos.contains(video_id))
-		{
-			return;
-		}
-
-		auto* vid_resource = dynamic_cast<downloadable_video_resource*>(&videos.get(video_id));
-		if (vid_resource == nullptr or vid_resource->playable())
-		{
-			return;
-		}
-
-		video_download_task task;
-		task.video_id = video_id;
-		task.task = vid_resource->download_task();
-
-		video_download_tasks.push_back(std::move(task));
-	}
-
-	void project::schedule_load_thumbnail(video_id_t video_id, bool force_generate, bool cache_result)
-	{
-		if (!videos.contains(video_id))
-		{
-			return;
-		}
-
-		load_thumbnail_task task;
-		task.task = [video = &videos.get(video_id), force_generate, cache_result]()
-		{
-			std::filesystem::path filepath = ctx_.thumbnail_dir_filepath / video->metadata().sha256_string();
-			
-			//TODO: use stb_image
-			if (!force_generate)
-			{
-				int image_width;
-				int image_height;
-				int image_channels;
-				unsigned char* image_data = stbi_load(filepath.u8string().c_str(), &image_width, &image_height, &image_channels, 3);
-				if (image_data != nullptr)
-				{
-					if (image_channels != 3)
-					{
-						debug::error("Thumbnail image {} has invalid number of channels: {}", filepath.u8string(), image_channels);
-						stbi_image_free(image_data);
-						return false;
-					}
-
-					video->set_thumbnail(gl_texture(image_width, image_height, GL_RGB, image_data));
-					stbi_image_free(image_data);
-
-					return true;
-				}
-			}
-
-			auto thumbnail = video->generate_thumbnail();
-			if (!thumbnail.has_value())
-			{
-				debug::error("Failed to generate thumbnail for video {}", video->id());
-				return false;
-			}
-
-			video->set_thumbnail(thumbnail->texture());
-			if (cache_result)
-			{
-				std::filesystem::create_directories(ctx_.thumbnail_dir_filepath);
-				if (!stbi_write_png(filepath.u8string().c_str(), thumbnail->width, thumbnail->height, 3, thumbnail->pixels.data(), thumbnail->width * 3))
-				{
-					debug::error("Failed to save thumbnail to {}", filepath.u8string());
-				}
-			}
-			return true;
-		};
-			
-		task.video_id = video_id;
-		load_thumbnail_tasks.push_back(std::move(task));
-	}
-
-	void project::schedule_video_refresh(video_id_t video_id)
-	{
-		if (!videos.contains(video_id))
-		{
-			return;
-		}
-
-		auto refresh_task = videos.get(video_id).on_refresh_task();
-		if (refresh_task == nullptr)
-		{
-			return;
-		}
-
-		video_refresh_task task;
-		task.task = std::async(std::launch::async, refresh_task);
-		task.video_id = video_id;
-		video_refresh_tasks.push_back(std::move(task));
-	}
-
-	void project::schedule_remove_video(video_id_t video_id)
-	{
-		if (!videos.contains(video_id))
-		{
-			return;
-		}
-
-		auto remove_task = [this, video_id]()
-		{
-			remove_video(video_id);
-		};
-
-		remove_video_task task;
-		task.task = std::async(std::launch::deferred, remove_task);
-		task.video_id = video_id;
-		remove_video_tasks.push_back(std::move(task));
 	}
 
 	bool project::import_video(std::unique_ptr<video_resource>&& vid_resource, std::optional<video_group_id_t> group_id, bool check_hash, bool set_project_dirty)
@@ -531,23 +373,25 @@ namespace vt
 
 		ctx_.displayed_videos.erase(id);
 
-		{
-			auto it = std::find_if(load_thumbnail_tasks.begin(), load_thumbnail_tasks.end(), [id](const auto& task) { return task.video_id == id; });
-			if (it != load_thumbnail_tasks.end())
-			{
-				load_thumbnail_tasks.erase(it);
-			}
-		}
+		//TODO: Should somehow stop or wait for tasks
 		
-		{
-			auto it = std::find_if(video_download_tasks.begin(), video_download_tasks.end(), [id](const auto& task) { return task.video_id == id; });
-			if (it != video_download_tasks.end())
-			{
-				it->task.cancel();
-				it->task.result.get();
-				video_download_tasks.erase(it);
-			}
-		}
+		//{
+		//	auto it = std::find_if(load_thumbnail_tasks.begin(), load_thumbnail_tasks.end(), [id](const auto& task) { return task.video_id == id; });
+		//	if (it != load_thumbnail_tasks.end())
+		//	{
+		//		load_thumbnail_tasks.erase(it);
+		//	}
+		//}
+		//
+		//{
+		//	auto it = std::find_if(video_download_tasks.begin(), video_download_tasks.end(), [id](const auto& task) { return task.video_id == id; });
+		//	if (it != video_download_tasks.end())
+		//	{
+		//		it->task.cancel();
+		//		it->task.result.get();
+		//		video_download_tasks.erase(it);
+		//	}
+		//}
 
 		if (videos.erase(id))
 		{
@@ -666,10 +510,6 @@ namespace vt
 						video_id_t video_id = vid_resource->id();
 						if (result.import_video(std::move(vid_resource), std::nullopt, false, false))
 						{
-							if (ctx_.app_settings.load_thumbnails)
-							{
-								result.schedule_load_thumbnail(video_id);
-							}
 						}
 					}
 				}

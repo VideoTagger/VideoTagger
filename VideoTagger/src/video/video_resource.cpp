@@ -3,6 +3,9 @@
 #include <core/app_context.hpp>
 #include <ui/icons.hpp>
 
+#include <events/video_resource/video_delete_request_event.hpp>
+#include <events/video_resource/video_refresh_request_event.hpp>
+
 namespace vt
 {
 	video_resource_metadata make_video_metadata_from_json(const nlohmann::ordered_json& json, make_metadata_include_fields include_fields)
@@ -169,9 +172,9 @@ namespace vt
 		{
 			video_resource_context_menu_item item;
 			item.function = [id = id()]()
-				{
-					ctx_.current_project->schedule_remove_video(id);
-				};
+			{
+				ctx_.dispatch_event<video_delete_request_event>("video_resource", id);
+			};
 			item.name = fmt::format("{} Remove", icons::delete_);
 			item.disabled = ctx_.displayed_videos.contains(id());
 			if (item.disabled)
@@ -183,9 +186,9 @@ namespace vt
 		{
 			video_resource_context_menu_item item;
 			item.function = [id = id()]()
-				{
-					ctx_.current_project->schedule_video_refresh(id);
-				};
+			{
+				ctx_.dispatch_event<video_refresh_request_event>("video_resource", id);
+			};
 			item.name = fmt::format("{} {}", icons::refresh, "Refresh");
 			items.push_back(std::move(item));
 		}
@@ -193,7 +196,7 @@ namespace vt
 
 	void video_resource::icon_custom_draw(ImDrawList&, ImRect, ImRect) const {}
 
-	std::optional<video_resource_thumbnail> video_resource::generate_thumbnail()
+	std::optional<video_resource_thumbnail> video_resource::generate_thumbnail() const
 	{
 		video_stream video;
 		if (!video.open_file(file_path(), ctx_.app_settings.hardware_acceleration))
@@ -226,9 +229,13 @@ namespace vt
 		return std::make_optional<video_resource_thumbnail>(std::move(thumbnail));
 	}
 
-	std::function<void()> video_resource::on_refresh_task()
+	bool video_resource::can_async_refresh() const
 	{
-		return nullptr;
+		return true;
+	}
+
+	void video_resource::refresh()
+	{
 	}
 
 	void video_resource::set_metadata(const video_resource_metadata& metadata)

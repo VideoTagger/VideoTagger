@@ -4,21 +4,15 @@
 #include <utils/thumbnail.hpp>
 #include <ui/icons.hpp>
 
+#include <events/video_resource/video_start_download_request_event.hpp>
+#include <events/video_resource/video_cancel_download_request_event.hpp>
+#include <events/video_resource/video_delete_downloaded_file_request_event.hpp>
+#include <events/video_resource/video_download_started_event.hpp>
+#include <events/video_resource/video_download_canceled_event.hpp>
+#include <events/video_resource/video_download_finished_event.hpp>
+
 namespace vt
 {
-	bool video_download_result::is_done() const
-	{
-		return result.wait_for(std::chrono::seconds{ 0 }) == std::future_status::ready;
-	}
-
-	void video_download_result::cancel()
-	{
-		if (data != nullptr)
-		{
-			data->cancel = true;
-		}
-	}
-
 	downloadable_video_resource::downloadable_video_resource(std::string importer_id, video_id_t id, video_resource_metadata metadata) :
 		video_resource(std::move(importer_id), std::move(id), std::move(metadata))
 	{
@@ -29,19 +23,35 @@ namespace vt
 	{
 	}
 
-	video_download_result downloadable_video_resource::download_task()
+	void downloadable_video_resource::start_download()
 	{
-		video_download_result result;
-		result.data = std::make_shared<video_download_data>();
+		auto download_data = std::make_shared<video_download_data>();
+		download_data_ = download_data;
 
-		auto task = [this](std::shared_ptr<video_download_data> data)
+		ctx_.tasks.run([this, download_data]()
 		{
-			return on_download(data);
-		};
+			return on_download(download_data);
+		})
+		.finally([this](video_download_result&& download_result)
+		{
+			switch (download_result.status)
+			{
+				case video_download_status::success:
+					set_file_path(download_result.download_path.u8string());
+					ctx_.dispatch_event<video_download_finished_event>("video_resource", id(), true);
+					break;
 
-		result.result = std::async(std::launch::async, task, result.data);
-		download_data_ = result.data;
-		return result;
+				case video_download_status::failure:
+					ctx_.dispatch_event<video_download_finished_event>("video_resource", id(), false);
+					break;
+
+				case video_download_status::cancelled:
+					ctx_.dispatch_event<video_download_canceled_event>("video_resource", id());
+					break;
+
+				default: break;
+			}
+		});
 	}
 
 	std::optional<float> downloadable_video_resource::download_progress() const
@@ -53,6 +63,17 @@ namespace vt
 		}
 
 		return ptr->progress;
+	}
+
+	void downloadable_video_resource::cancel_download()
+	{
+		auto ptr = download_data_.lock();
+		if (ptr == nullptr)
+		{
+			return;
+		}
+
+		ptr->cancel = true;
 	}
 
 	bool downloadable_video_resource::remove_downloaded_file()
@@ -98,17 +119,16 @@ namespace vt
 				item.name = fmt::format("{} Download", icons::download);
 				item.function = [id = id()]()
 				{
-					ctx_.current_project->schedule_video_download(id);
+					ctx_.dispatch_event<video_start_download_request_event>("video_resource", id);
 				};
 				items.push_back(std::move(item));
 			}
 			else
 			{
 				video_resource_context_menu_item item;
-				item.function = [this]()
+				item.function = [id = id()]()
 				{
-					//TODO: should be done through the project so it can remove it from displayed videos or something
-					remove_downloaded_file();
+					ctx_.dispatch_event<video_delete_downloaded_file_request_event>("video_resource", id);
 				};
 				item.name = fmt::format("{} Remove Local File", icons::delete_);
 				item.disabled = ctx_.displayed_videos.contains(id());
@@ -123,15 +143,9 @@ namespace vt
 		{
 			video_resource_context_menu_item item;
 			item.name = fmt::format("{} Cancel Download", icons::download_off);
-			item.function = [this]()
+			item.function = [id = id()]()
 			{
-				auto ptr = download_data_.lock();
-				if (ptr == nullptr)
-				{
-					return;
-				}
-
-				ptr->cancel = true;
+				ctx_.dispatch_event<video_cancel_download_request_event>("video_resource", id);
 			};
 			items.push_back(std::move(item));
 		}

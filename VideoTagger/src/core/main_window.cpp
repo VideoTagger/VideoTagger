@@ -2,6 +2,8 @@
 #include "main_window.hpp"
 #include "app_context.hpp"
 #include <fmt/format.h>
+#include <stb_image.h>
+#include <stb_image_write.h>
 #include <ui/windows/tag_manager.hpp>
 #include <widgets/video_widget.hpp>
 #include <widgets/video_player.hpp>
@@ -18,7 +20,6 @@
 #include <widgets/controls.hpp>
 #include <widgets/modal/keybind_popup.hpp>
 #include <widgets/modal/keybind_options_popup.hpp>
-#include <widgets/insert_segment_popup.hpp>
 #include <widgets/timeline.hpp>
 #include <ui/icons.hpp>
 #include <embeds/about.hpp>
@@ -105,12 +106,64 @@ extern "C"
 #include <events/filesystem/fetch_themes_event.hpp>
 #include <events/filesystem/fetch_scripts_event.hpp>
 
+#include <video/google_drive/google_drive_video_importer.hpp>
+#include <video/local_video_importer.hpp>
+
+#include <events/video_resource/google_drive_video_import_request_event.hpp>
+#include <events/video_resource/local_video_import_request_event.hpp>
+#include <events/video_resource/video_imported_event.hpp>
+#include <events/video_resource/video_load_thumbnail_request_event.hpp>
+#include <events/video_resource/video_open_importer_request_event.hpp>
+#include <events/video_resource/video_start_download_request_event.hpp>
+#include <events/video_resource/video_cancel_download_request_event.hpp>
+#include <events/video_resource/video_download_started_event.hpp>
+#include <events/video_resource/video_refresh_request_event.hpp>
+#include <events/video_resource/video_delete_request_event.hpp>
+#include <events/video_resource/video_deleted_event.hpp>
+#include <events/video_resource/video_delete_downloaded_file_request_event.hpp>
+#include <events/video_resource/video_downloaded_file_deleted_event.hpp>
+
 namespace vt
 {
+	template <typename importer_type, typename... import_args>
+	void handle_video_import_request(import_args&&... args)
+	{
+		if (!ctx_.is_video_importer_registered<importer_type>())
+		{
+			return;
+		}
+
+		auto& importer = ctx_.get_video_importer<importer_type>();
+
+		ctx_.tasks.run([&importer, args...]() mutable -> std::unique_ptr<video_resource>
+		{
+			return importer.import_video(std::forward<import_args>(args)...);
+		})
+		.finally(ctx_.tasks.main_thread(), [](std::unique_ptr<video_resource>&& vid_res)
+		{
+			if (vid_res == nullptr)
+			{
+				return;
+			}
+
+			video_id_t video_id = vid_res->id();
+			if (!ctx_.current_project->import_video(std::move(vid_res), utils::random::get_uuid()))
+			{
+				return;
+			}
+
+			if (ctx_.app_settings.load_thumbnails)
+			{
+				ctx_.dispatch_event<video_load_thumbnail_request_event>("main_window", video_id, false, true);
+			}
+			ctx_.dispatch_event<video_imported_event>("main_window", video_id);
+		});
+	}
+
 	static void show_debug_info()
 	{
-		SDL_version compiled;
-		SDL_version linked;
+		SDL_version compiled{};
+		SDL_version linked{};
 		SDL_VERSION(&compiled);
 		SDL_GetVersion(&linked);
 		debug::log("VideoTagger Version: {}", VT_VERSION);
@@ -127,6 +180,7 @@ namespace vt
 	main_window::main_window(const system_window_config& cfg) : system_window{ cfg }, event_source_{ "main_window" }
 	{
 		register_listeners();
+		register_video_resource_listeners();
 
 		show_debug_info();
 
@@ -215,6 +269,14 @@ namespace vt
 			ctx_.current_project = project::load_from_file(project_info.path);
 			ctx_.main_window->set_subtitle(ctx_.current_project->name);
 			ctx_.get_window<widgets::console>().clear();
+
+			for (auto& [video_id, _] : ctx_.current_project->videos)
+			{
+				if (ctx_.app_settings.load_thumbnails)
+				{
+					ctx_.dispatch_event<video_load_thumbnail_request_event>("project", video_id, false, true);
+				}
+			}
 		});
 
 		ctx_.add_event_listener<project_list_changed_event>([this](const project_list_changed_event& event)
@@ -712,6 +774,181 @@ namespace vt
 		});
 	}
 
+	void main_window::register_video_resource_listeners()
+	{
+		ctx_.add_event_listener<google_drive_video_import_request_event>([this](const google_drive_video_import_request_event& event)
+		{
+			handle_video_import_request<google_drive_video_importer>(video_importer::generate_video_id(), event.file_id());
+		});
+
+		ctx_.add_event_listener<local_video_import_request_event>([this](const local_video_import_request_event& event)
+		{
+			handle_video_import_request<local_video_importer>(video_importer::generate_video_id(), event.filepath());
+		});
+
+		ctx_.add_event_listener<video_load_thumbnail_request_event>([this](const video_load_thumbnail_request_event& event)
+		{
+			struct thumbnail_load_result
+			{
+				video_resource_thumbnail thumbnail;
+				bool from_cache;
+			};
+
+			ctx_.tasks.run([this, video_id = event.video_id(), ignore_cache = event.ignore_cache()]() mutable -> std::optional<thumbnail_load_result>
+			{
+				const auto& vid_res = ctx_.current_project->videos.get(video_id);
+
+				std::filesystem::path thumbnail_path = ctx_.thumbnail_dir_filepath / vid_res.metadata().sha256_string();
+
+				if (!ignore_cache)
+				{
+					int image_width;
+					int image_height;
+					int image_channels;
+					uint8_t* image_data = stbi_load(thumbnail_path.u8string().c_str(), &image_width, &image_height, &image_channels, 3);
+					if (image_data != nullptr)
+					{
+						if (image_channels != 3)
+						{
+							debug::error("Thumbnail image {} has invalid number of channels: {}", thumbnail_path.u8string(), image_channels);
+							stbi_image_free(image_data);
+							return std::nullopt;
+						}
+
+						video_resource_thumbnail thumbnail
+						{
+							std::vector<uint8_t>(image_data, image_data + image_width * image_height * image_channels),
+							image_width,
+							image_height
+						};
+						stbi_image_free(image_data);
+
+						return thumbnail_load_result{ std::move(thumbnail), true };
+					}
+				}
+
+				auto thumbnail = vid_res.generate_thumbnail();
+				if (!thumbnail.has_value())
+				{
+					debug::error("Failed to generate thumbnail for video {}", vid_res.id());
+					return std::nullopt;
+				}
+
+				return thumbnail_load_result{ std::move(*thumbnail), false };
+			})
+			.then([video_id = event.video_id(), cache_result = event.cache_result()](const std::optional<thumbnail_load_result>& load_result) -> std::optional<thumbnail_load_result>
+			{
+				if (!load_result.has_value())
+				{
+					return load_result;
+				}
+
+				auto& vid_res = ctx_.current_project->videos.get(video_id);
+				std::filesystem::path thumbnail_path = ctx_.thumbnail_dir_filepath / vid_res.metadata().sha256_string();
+				const auto& [thumbnail, from_cache] = *load_result;
+
+				if (cache_result and !from_cache)
+				{
+					std::filesystem::create_directories(ctx_.thumbnail_dir_filepath);
+					if (!stbi_write_png(thumbnail_path.u8string().c_str(), thumbnail.width, thumbnail.height, 3, thumbnail.pixels.data(), thumbnail.width * 3))
+					{
+						debug::error("Failed to save thumbnail to {}", thumbnail_path.u8string());
+					}
+				}
+
+				return load_result;
+			})
+			.then(ctx_.tasks.main_thread(), [video_id = event.video_id()](const std::optional<thumbnail_load_result>& load_result)
+			{
+				if (!load_result.has_value())
+				{
+					return;
+				}
+
+				auto& [thumbnail, from_cache] = *load_result;
+				auto& vid_res = ctx_.current_project->videos.get(video_id);
+				vid_res.set_thumbnail(thumbnail.texture());
+			});
+		});
+
+		ctx_.add_event_listener<video_start_download_request_event>([this](const video_start_download_request_event& event)
+		{
+			downloadable_video_resource* vid_res = dynamic_cast<downloadable_video_resource*>(&ctx_.current_project->videos.get(event.video_id()));
+			if (vid_res == nullptr)
+			{
+				debug::error("Video with id {} is not a downloadable resource", event.video_id());
+				return;
+			}
+
+			if (vid_res->downloadable() != video_downloadable::yes)
+			{
+				debug::error("Video with id {} is not downloadable right now", event.video_id());
+				return;
+			}
+
+			vid_res->start_download();
+			ctx_.dispatch_event<video_download_started_event>(event_source_, event.video_id());
+		});
+
+		ctx_.add_event_listener<video_cancel_download_request_event>([this](const video_cancel_download_request_event& event)
+		{
+			downloadable_video_resource* vid_res = dynamic_cast<downloadable_video_resource*>(&ctx_.current_project->videos.get(event.video_id()));
+			if (vid_res == nullptr)
+			{
+				debug::error("Video with id {} is not a downloadable resource", event.video_id());
+				return;
+			}
+
+			vid_res->cancel_download();
+		});
+
+		ctx_.add_event_listener<video_refresh_request_event>([this](const video_refresh_request_event& event)
+		{
+			auto& vid_res = ctx_.current_project->videos.get(event.video_id());
+
+			if (vid_res.can_async_refresh())
+			{
+				ctx_.tasks.run([&vid_res]()
+				{
+					vid_res.refresh();
+				});
+			}
+			else
+			{
+				ctx_.tasks.run_on_main([&vid_res]()
+				{
+					vid_res.refresh();
+				});
+			}
+		});
+
+		ctx_.add_event_listener<video_delete_request_event>([this](const video_delete_request_event& event)
+		{
+			ctx_.tasks.run_on_main([this, video_id = event.video_id()]()
+			{
+				ctx_.current_project->remove_video(video_id);
+				ctx_.dispatch_event<video_deleted_event>(event_source_, video_id, true);
+			});
+		});
+
+		ctx_.add_event_listener<video_delete_downloaded_file_request_event>([this](const video_delete_downloaded_file_request_event& event)
+		{
+			downloadable_video_resource* vid_res = dynamic_cast<downloadable_video_resource*>(&ctx_.current_project->videos.get(event.video_id()));
+			if (vid_res == nullptr)
+			{
+				debug::error("Video with id {} is not a downloadable resource", event.video_id());
+				return;
+			}
+
+			if (!vid_res->remove_downloaded_file())
+			{
+				return;
+			}
+
+			ctx_.dispatch_event<video_downloaded_file_deleted_event>(event_source_, event.video_id());
+		});
+	}
+
 	void main_window::on_close_project(bool should_shutdown)
 	{
 		if (ctx_.script_handle.has_value())
@@ -722,9 +959,15 @@ namespace vt
 
 		if (ctx_.current_project.has_value())
 		{
-			for (auto& download_task : ctx_.current_project->video_download_tasks)
+			for (auto& [id, resource_ptr] : ctx_.current_project->videos)
 			{
-				download_task.task.cancel();
+				auto downloadable_resource = dynamic_cast<downloadable_video_resource*>(resource_ptr.get());
+				if (downloadable_resource == nullptr)
+				{
+					continue;
+				}
+
+				downloadable_resource->cancel_download();
 			}
 		}
 
@@ -1689,7 +1932,7 @@ namespace vt
 						std::string menu_importer_name = fmt::format("{} {}", importer->importer_display_icon(), importer->importer_display_name());
 						if (ImGui::MenuItem(menu_importer_name.c_str()))
 						{
-							ctx_.current_project->prepare_video_import(importer_id);
+							ctx_.dispatch_event<video_open_importer_request_event>(event_source_, importer_id);
 						}
 					}
 
@@ -2144,159 +2387,9 @@ namespace vt
 
 	void main_window::draw_main_app()
 	{
-
 		if (!ctx_.current_project.has_value()) return;
 		draw_menubar();
 		if (!ctx_.current_project.has_value()) return;
-
-
-		{
-			static bool was_popup_opened = false;
-			static bool resume_video = false;
-			if (ctx_.pause_player)
-			{
-				if (!was_popup_opened)
-				{
-					was_popup_opened = true;
-					resume_video = ctx_.displayed_videos.is_playing();
-					ctx_.displayed_videos.set_playing(false);
-				}
-			}
-			else
-			{
-				if (was_popup_opened)
-				{
-					was_popup_opened = false;
-					ctx_.displayed_videos.set_playing(resume_video);
-					resume_video = false;
-				}
-			}
-
-			ctx_.pause_player = false;
-		}
-
-		{
-			auto& tasks = ctx_.current_project->prepare_video_import_tasks;
-			for (auto it = tasks.begin(); it != tasks.end();)
-			{
-				auto& task = *it;
-				if (!task())
-				{
-					++it;
-					continue;
-				}
-
-				for (auto& import_data : task.import_data)
-				{
-					ctx_.current_project->schedule_video_import(task.importer_id, std::move(import_data), utils::random::get_uuid());
-				}
-				it = tasks.erase(it);
-			}
-		}
-
-		{
-			auto& tasks = ctx_.current_project->video_import_tasks;
-			for (auto it = tasks.begin(); it != tasks.end();)
-			{
-				auto& task = *it;
-				if (task.task.wait_for(std::chrono::seconds{}) != std::future_status::ready)
-				{
-					++it;
-					continue;
-				}
-
-				auto vid_resource = task.task.get();
-				if (vid_resource != nullptr)
-				{
-					video_id_t video_id = vid_resource->id();
-					if (ctx_.current_project->import_video(std::move(vid_resource), task.group_id))
-					{
-						if (ctx_.app_settings.load_thumbnails)
-						{
-							ctx_.current_project->schedule_load_thumbnail(video_id);
-						}
-					}
-				}
-				it = tasks.erase(it);
-			}
-		}
-
-		{
-			auto& tasks = ctx_.current_project->load_thumbnail_tasks;
-			for (auto it = tasks.begin(); it != tasks.end();)
-			{
-				auto& task = *it;
-				if (!task())
-				{
-					debug::error("Failed to generate thumbnail");
-				}
-
-				it = tasks.erase(it);
-				//TODO: set some frame time limit;
-				break;
-			}
-		}
-
-		{
-			auto& tasks = ctx_.current_project->video_download_tasks;
-			auto& console = ctx_.get_window<widgets::console>();
-			for (auto it = tasks.begin(); it != tasks.end();)
-			{
-				auto& task = *it;
-				if (!task.task.is_done())
-				{
-					++it;
-					continue;
-				}
-
-				std::string video_name = "NAME_UNKNOWN";
-				if (ctx_.current_project->videos.contains(task.video_id))
-				{
-					video_name = ctx_.current_project->videos.get(task.video_id).metadata().title.value_or(video_name);
-				}
-
-				auto status = task.task.result.get();
-				if (status == video_download_status::failure)
-				{
-					debug::error("Failed to download video {} ({})", video_name, task.video_id);
-					console.add_entry(widgets::console::entry::flag_type::error, fmt::format("Failed to download video {} ({})", video_name, task.video_id), widgets::console::entry::source_info{ "VideoTagger", -1 });
-				}
-				else
-				{
-					debug::log("Downloaded video {} ({})", video_name, task.video_id);
-					dynamic_cast<downloadable_video_resource&>(ctx_.current_project->videos.get(task.video_id)).set_file_path(task.task.data->download_path.u8string());
-					console.add_entry(widgets::console::entry::flag_type::info, fmt::format("Downloaded video {} ({})", video_name, task.video_id), widgets::console::entry::source_info{ "VideoTagger", -1 });
-				}
-
-				it = tasks.erase(it);
-			}
-		}
-
-		{
-			auto& tasks = ctx_.current_project->video_refresh_tasks;
-			for (auto it = tasks.begin(); it != tasks.end();)
-			{
-				auto& task = *it;
-				if (task.task.wait_for(std::chrono::seconds{}) != std::future_status::ready)
-				{
-					++it;
-					continue;
-				}
-
-				it = tasks.erase(it);
-			}
-		}
-
-		{
-			auto& tasks = ctx_.current_project->remove_video_tasks;
-			for (auto it = tasks.begin(); it != tasks.end();)
-			{
-				auto& task = *it;
-				task.task.get();
-
-				it = tasks.erase(it);
-			}
-		}
 
 		//TODO: probably should be done somewhere else
 		ctx_.update_current_video_group();
@@ -2396,6 +2489,19 @@ namespace vt
 			{
 				ctx_.tag_rename_failed_popup.reset();
 			}
+		}
+
+		if (ctx_.is_video_importer_registered<google_drive_video_importer>())
+		{
+			auto& importer = ctx_.get_video_importer<google_drive_video_importer>();
+
+			if (importer.open_importer_popup)
+			{
+				importer.importer_popup.open();
+				importer.open_importer_popup = false;
+			}
+
+			importer.importer_popup.render();
 		}
 
 		auto& timeline = ctx_.get_window<widgets::timeline>();

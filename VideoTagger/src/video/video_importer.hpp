@@ -24,12 +24,7 @@ namespace vt
 		virtual std::string importer_display_name() const = 0;
 		virtual std::string importer_display_icon() const = 0;
 
-		//TODO: maybe return an std::future
-		virtual std::unique_ptr<video_resource> import_video(video_id_t id, std::any data) = 0;
 		virtual std::unique_ptr<video_resource> import_video(const nlohmann::ordered_json& json) = 0;
-
-		//return true when import_data is ready
-		virtual std::function<bool(std::vector<std::any>&)> prepare_video_import_task() = 0;
 
 		virtual bool available() = 0;
 	};
