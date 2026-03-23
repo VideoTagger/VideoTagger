@@ -297,9 +297,22 @@ namespace vt::widgets
 		});
 	}
 
+	const project_info& project_selector::replace(const project_info& project, const project_info& new_project)
+	{
+		auto it = std::find(projects_.begin(), projects_.end(), project);
+		if (it != projects_.end())
+		{
+			*it = new_project;
+			ctx_.dispatch_event<project_list_changed_event>(event_source_);
+			return *it;
+		}
+		return project;
+	}
+
 	void project_selector::remove(const project_info& project)
 	{
 		projects_.erase(std::find(projects_.begin(), projects_.end(), project));
+		ctx_.dispatch_event<project_list_changed_event>(event_source_);
 	}
 
 	void project_selector::load_projects_file(const std::filesystem::path& filepath)

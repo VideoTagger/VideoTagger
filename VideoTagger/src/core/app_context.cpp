@@ -17,6 +17,7 @@
 #include <ui/windows/inspector.hpp>
 #include <ui/windows/tag_manager.hpp>
 #include <ui/popups/messagebox_popup.hpp>
+#include <embeds/en_US_lang.hpp>
 
 #ifdef _DEBUG
 	#include <ui/windows/sandbox.hpp>
@@ -210,20 +211,31 @@ namespace vt
 	void app_context::load_lang_packs(const std::string& desired_lang)
 	{
 		ctx_.lang_packs.clear();
-		for (const auto& entry : std::filesystem::directory_iterator{ ctx_.lang_dir_filepath })
+		if (std::filesystem::exists(ctx_.lang_dir_filepath) and std::filesystem::is_directory(ctx_.lang_dir_filepath))
 		{
-			auto path = entry.path();
-			if (entry.is_directory() or path.extension() != std::string(".") + lang_pack::extension) continue;
-			auto lang = lang_pack::load_from_file(path);
-			if (!lang.has_value()) continue;
-			ctx_.lang_packs.push_back(std::make_shared<lang_pack>(lang.value()));
+			for (const auto& entry : std::filesystem::directory_iterator{ ctx_.lang_dir_filepath })
+			{
+				auto path = entry.path();
+				if (entry.is_directory() or path.extension() != std::string(".") + lang_pack::extension) continue;
+				auto lang = lang_pack::load_from_file(path);
+				if (!lang.has_value()) continue;
+				ctx_.lang_packs.push_back(std::make_shared<lang_pack>(lang.value()));
+			}
 		}
 
 		if (ctx_.lang_packs.empty())
 		{
 			debug::error("No lang packs found, creating default lang pack...");
-			auto lang = std::make_shared<lang_pack>("English", "en_US");
-			ctx_.lang_packs.push_back(lang);
+			//auto lang = std::make_shared<lang_pack>("English", "en_US");
+			auto json = utils::json::from_string(embed::en_US_lang);
+			auto lang_opt = lang_pack::load_from_json(json, "en_US");
+			if (!lang_opt.has_value())
+			{
+				debug::panic("Failed to load default lang pack");
+				return;
+			}
+			auto lang = std::make_shared<lang_pack>(lang_opt.value());
+			ctx_.lang_packs.push_back(std::move(lang));
 		}
 
 		auto it = std::find_if(ctx_.lang_packs.begin(), ctx_.lang_packs.end(), [&](const auto& lang)

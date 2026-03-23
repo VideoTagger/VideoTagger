@@ -1,7 +1,5 @@
 #include "pch.hpp"
 #include "lang_pack.hpp"
-#include <fmt/format.h>
-#include <utils/json.hpp>
 
 namespace vt
 {
@@ -98,21 +96,26 @@ namespace vt
 		utils::json::write_to_file(json, path);
     }
 
-	std::optional<lang_pack> lang_pack::load_from_file(const std::filesystem::path& path)
+	std::optional<lang_pack> lang_pack::load_from_json(const nlohmann::ordered_json& json, const std::string& filename)
 	{
-		auto json = utils::json::load_from_file(path);
 		if (!json.contains("@meta")) return std::nullopt;
 
 		auto json_info = json.at("@meta");
 		if (!json_info.contains("name")) return std::nullopt;
 
-		lang_pack lang(json_info.at("name"), path.stem().u8string(), {}, json_info.at("editable"));
+		lang_pack lang(json_info.at("name"), filename, {}, json_info.at("editable"));
 		for (const auto& [key, value] : json.items())
 		{
 			if (key == "@meta" or !value.is_string()) continue;
 			lang[key] = value.get<std::string>();
 		}
 		return lang;
+	}
+
+	std::optional<lang_pack> lang_pack::load_from_file(const std::filesystem::path& path)
+	{
+		auto json = utils::json::load_from_file(path);
+		return load_from_json(json, path.stem().u8string());
 	}
 
 	bool lang_pack::is_template(const std::string& id) const

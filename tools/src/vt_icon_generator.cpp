@@ -7,6 +7,7 @@
 #include <codecvt>
 #include <locale>
 #include <iomanip>
+#include <filesystem>
 
 struct icon
 {
@@ -103,6 +104,21 @@ int main(int argc, char* argv[])
 
 	input.close();
 
+	// Skip generation if output is newer than input
+	{
+		std::error_code ec;
+		auto input_time = std::filesystem::last_write_time(argv[1], ec);
+		if (!ec)
+		{
+			auto output_time = std::filesystem::last_write_time(argv[2], ec);
+			if (!ec && output_time >= input_time)
+			{
+				std::cout << argv[2] << " is up to date\n";
+				return 0;
+			}
+		}
+	}
+
 	// Generate output file
 	std::ofstream output(argv[2]);
 	if (!output)
@@ -115,7 +131,7 @@ int main(int argc, char* argv[])
 		<< "#include <vector>\n"
 		<< "#include <string>\n\n"
 		<< "namespace vt::icons\n{\n"
-		<< "\t//https://fonts.google.com/icons?icon.set=Material+Symbols\n\n";
+		<< "\t//https://fonts.google.com/icons?icon.set=Material+Symbols%5Cn%5Cn&icon.style=Sharp\n\n";
 
 	for (const auto& icon : icons)
 	{

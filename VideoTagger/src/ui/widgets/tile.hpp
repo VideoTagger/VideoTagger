@@ -25,6 +25,7 @@ namespace vt::ui
 		uint32_t tint_color_;
 		font_type label_font_;
 		font_type description_font_;
+
 		bool is_double_clickable_;
 		bool is_selectable_;
 		bool is_draggable_;

@@ -9,6 +9,7 @@ namespace vt
 	{
 		///@brief The name of the theme to use, if not set the default theme will be used
 		std::optional<std::string> theme_name;
+		std::optional<std::string> language;
 		float font_size = 16.0f;
 		float thumbnail_size = 45.0f;
 		bool load_thumbnails = true;

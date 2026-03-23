@@ -9,6 +9,10 @@ namespace vt
 		{
 			json["theme"] = theme_name.value();
 		}
+		if (language.has_value())
+		{
+			json["language"] = language.value();
+		}
 		json["font-size"] = font_size;
 		json["thumbnail-size"] = thumbnail_size;
 		json["allow-undocking"] = allow_undocking;
@@ -23,6 +27,10 @@ namespace vt
 		if (json.contains("theme") and json["theme"].is_string())
 		{
 			theme_name = json["theme"].get<std::string>();
+		}
+		if (json.contains("language") and json["language"].is_string())
+		{
+			language = json["language"].get<std::string>();
 		}
 		if (json.contains("font-size") and json["font-size"].is_number())
 		{

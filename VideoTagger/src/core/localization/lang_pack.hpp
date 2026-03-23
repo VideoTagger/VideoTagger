@@ -6,6 +6,8 @@
 #include <unordered_map>
 #include <fmt/format.h>
 
+#include <utils/json.hpp>
+
 namespace vt
 {
 	using lang_pack_data = std::unordered_map<std::string, std::string>;
@@ -50,6 +52,7 @@ namespace vt
 
 		void save(const std::filesystem::path& dir);
 
+		static std::optional<lang_pack> load_from_json(const nlohmann::ordered_json& json, const std::string& filename);
 		static std::optional<lang_pack> load_from_file(const std::filesystem::path& path);
 
 		bool is_template(const std::string& id) const;
