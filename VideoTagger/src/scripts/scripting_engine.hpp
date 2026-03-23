@@ -1,4 +1,5 @@
 #pragma once
+#include <optional>
 #include <filesystem>
 #include <pybind11/stl.h>
 #include <pybind11/embed.h>
@@ -27,5 +28,9 @@ namespace vt
 		void init();
 		void run(std::filesystem::path script_path);
 		void interrupt();
+
+		bool has_embeddable_package() const;
+	private:
+		std::optional<std::string> find_embeddable_package_name() const;
 	};
 }

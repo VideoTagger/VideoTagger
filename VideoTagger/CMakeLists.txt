@@ -84,7 +84,7 @@ target_compile_definitions(${PROJECT_NAME} PRIVATE
 )
 
 include(${CMAKE_SOURCE_DIR}/cmake/CppCommon.cmake)
-setup_cpp_common(${PROJECT_NAME})
+vt_setup_cpp_common(${PROJECT_NAME})
 
 set("NFD_BUILD_TESTS" "OFF")
 set("NFD_INSTALL" "OFF")
@@ -108,10 +108,14 @@ set("PYBIND11_FINDPYTHON" "ON")
 add_subdirectory("${PROJECT_SOURCE_DIR}/vendor/pybind11")
 target_link_libraries(${PROJECT_NAME} PRIVATE pybind11::embed)
 
+find_package(Python3 REQUIRED COMPONENTS Interpreter Development)
 
-#Setup Velopack
+message(STATUS "Python version: ${Python3_VERSION}")
+include(${CMAKE_SOURCE_DIR}/cmake/SetupPythonEmbedPackage.cmake)
+vt_setup_python_embed_package("${PROJECT_SOURCE_DIR}/assets/python" ${Python3_VERSION} "${PROJECT_SOURCE_DIR}/src/resources/py_embed_packages.list")
+
 include(${CMAKE_SOURCE_DIR}/cmake/SetupVelopack.cmake)
-add_velopack(${PROJECT_NAME} "0.0.1298")
+vt_add_velopack(${PROJECT_NAME} "0.0.1298")
 
 target_include_directories(${PROJECT_NAME}
 	PRIVATE "${PROJECT_SOURCE_DIR}/src"

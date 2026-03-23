@@ -1,6 +1,6 @@
 include(FetchContent)
 
-function(add_velopack TARGET_NAME VELOPACK_GIT_TAG)
+function(vt_add_velopack TARGET_NAME VELOPACK_GIT_TAG)
 	if(NOT VELOPACK_GIT_TAG)
 		message(FATAL_ERROR "add_velopack requires a Velopack version/tag argument")
 	endif()

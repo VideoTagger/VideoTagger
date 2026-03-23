@@ -203,6 +203,37 @@ namespace vt
 	void scripting_engine::init()
 	{
 		PyConfig_InitPythonConfig(&cfg);
+
+#ifdef _DEBUG
+		cfg.optimization_level = 0;
+#else
+		cfg.optimization_level = 2;
+#endif
+		auto package_name_opt = find_embeddable_package_name();
+		if (!package_name_opt.has_value())
+		{
+			debug::warn("Couldn't find Python embeddable package in '{}'", ctx_.python_dir_filepath.u8string());
+		}
+
+		if (package_name_opt.has_value() and has_embeddable_package())
+		{
+			auto pypath = std::filesystem::absolute(ctx_.python_dir_filepath);
+			debug::log("Initializing Python interpreter with home path '{}'", pypath.string());
+			auto pypath_wstr = pypath.wstring();
+
+			cfg.use_environment = false;
+			cfg.user_site_directory = false;
+			cfg.module_search_paths_set = true;
+			PyConfig_SetString(&cfg, &cfg.home, pypath_wstr.c_str());
+			Py_SetPythonHome(pypath_wstr.c_str());
+			
+			auto zip_path = (pypath / (std::string(package_name_opt.value()) + ".zip")).wstring();
+			PyWideStringList_Append(&cfg.module_search_paths, zip_path.c_str());
+
+			auto packages_path = (pypath / "lib" / "site-packages").wstring();
+			PyWideStringList_Append(&cfg.module_search_paths, packages_path.c_str());
+		}
+
 		cfg.use_frozen_modules = false;
 		lock_ = std::make_unique<py::scoped_interpreter>(&cfg);
 		unlock_ = std::make_unique<py::gil_scoped_release>();
@@ -213,7 +244,7 @@ namespace vt
 		auto sys_module = py::module_::import("sys");
 		py::list module_paths = sys_module.attr("path");
 
-		auto dir_str = std::filesystem::absolute(dir).string();
+		auto dir_str = std::filesystem::absolute(dir).u8string();
 		auto it = std::find_if(module_paths.begin(), module_paths.end(), [&dir_str](const py::handle& handle)
 		{
 			return handle.is(py::str(dir_str));
@@ -355,5 +386,26 @@ namespace vt
 			py::gil_scoped_acquire lock{};
 			PyThreadState_SetAsyncExc(ctx_.script_handle->thread_id, PyExc_InterruptedError);
 		}
+	}
+
+	bool scripting_engine::has_embeddable_package() const
+	{
+		return std::filesystem::is_directory(ctx_.python_dir_filepath);
+	}
+
+	std::optional<std::string> scripting_engine::find_embeddable_package_name() const
+	{
+		if (!has_embeddable_package()) return std::nullopt;
+
+		//finds pyhonXX.zip
+		for (const auto& entry : std::filesystem::directory_iterator{ ctx_.python_dir_filepath })
+		{
+			auto name = entry.path().stem().u8string();
+			if (entry.is_regular_file() and entry.path().extension() == ".zip" and name.find_first_of("python") != std::string::npos)
+			{
+				return name;
+			}
+		}
+		return std::nullopt;
 	}
 }

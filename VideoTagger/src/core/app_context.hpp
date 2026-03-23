@@ -95,15 +95,17 @@ namespace vt
 		std::unique_ptr<ui::segment_insert_popup> segment_insert_popup;
 		std::unique_ptr<ui::tag_rename_failed_popup> tag_rename_failed_popup;
 
+		std::filesystem::path assets_dir_filepath = std::filesystem::path("assets");
 		std::filesystem::path projects_list_filepath = storage_path() / std::filesystem::path("projects").replace_extension("json");
 		std::filesystem::path app_settings_filepath = storage_path() / std::filesystem::path("settings").replace_extension("json");
 		std::filesystem::path accounts_filepath = storage_path() / std::filesystem::path("accounts").replace_extension("json");
-		std::filesystem::path script_dir_filepath = std::filesystem::path("assets") / "scripts";
+		std::filesystem::path script_dir_filepath = assets_dir_filepath / "scripts";
 		std::filesystem::path lang_dir_filepath = storage_path() / "lang";
-		std::filesystem::path theme_dir_filepath = std::filesystem::path("assets") / "themes"; //storage_path() / "themes";
+		std::filesystem::path theme_dir_filepath = assets_dir_filepath / "themes"; //storage_path() / "themes";
 		std::filesystem::path downloads_dir_filepath = storage_path() / "downloads";
 		std::filesystem::path cache_dir_filepath = storage_path() / std::filesystem::path("cache");
 		std::filesystem::path thumbnail_dir_filepath = cache_dir_filepath / "thumbnails";
+		std::filesystem::path python_dir_filepath = assets_dir_filepath / "python";
 		nlohmann::ordered_json settings;
 		window_config win_cfg;
 		std::unordered_map<font_type, ImFont*> fonts;

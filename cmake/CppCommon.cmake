@@ -1,4 +1,4 @@
-function(setup_cpp_common TARGET_NAME)
+function(vt_setup_cpp_common TARGET_NAME)
 	if (CMAKE_VERSION VERSION_GREATER 3.12)
 		set_property(TARGET ${TARGET_NAME} PROPERTY CXX_STANDARD 17)
 		set_property(TARGET ${TARGET_NAME} PROPERTY CMAKE_CXX_STANDARD_REQUIRED ON)
