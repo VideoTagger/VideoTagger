@@ -19,8 +19,7 @@ void vt::bindings::bind_project(pybind11::module_& module)
 		result.reserve(p.ref.videos.size());
 		for (const auto& [k, v] : p.ref.videos)
 		{
-			const auto& metadata = v->metadata();
-			result.push_back({ v->file_path(), k, metadata.width.value_or(0), metadata.height.value_or(0) });
+			result.push_back({ v->file_path(), k, v->width(), v->height() });
 		}
 		return result;
 	})
@@ -38,8 +37,7 @@ void vt::bindings::bind_project(pybind11::module_& module)
 
 		auto& vid = p.ref.videos.get<local_video_resource>(vid_resource_id);
 
-		const auto& metadata = vid.metadata();
-		return vt_video{ vid.file_path(), vid.id(), metadata.width.value_or(0), metadata.height.value_or(0) };
+		return vt_video{ vid.file_path(), vid.id(), vid.width(), vid.height() };
 	})
 	.def("get_video", [](vt_project& p, video_id_t id) -> std::optional<vt_video>
 	{
@@ -49,8 +47,7 @@ void vt::bindings::bind_project(pybind11::module_& module)
 		});
 		if (it == p.ref.videos.end()) return std::nullopt;
 		auto& vid = it->second;
-		const auto& metadata = vid->metadata();
-		return vt_video{ vid->file_path(), it->first, metadata.width.value_or(0), metadata.height.value_or(0) };
+		return vt_video{ vid->file_path(), it->first, vid->width(), vid->height() };
 	})
 	.def("remove_video", [](vt_project& p, vt_video& v) -> bool
 	{

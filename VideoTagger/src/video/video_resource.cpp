@@ -2,6 +2,7 @@
 #include "video_resource.hpp"
 #include <core/app_context.hpp>
 #include <ui/icons.hpp>
+#include <fmt/format.h>
 
 #include <events/video_resource/video_delete_request_event.hpp>
 #include <events/video_resource/video_refresh_request_event.hpp>
@@ -119,8 +120,8 @@ namespace vt
 
 			make_metadata_include_fields fields;
 			fields.title = !metadata_.title.has_value();
-			fields.width = !metadata_.width.has_value();
-			fields.height = !metadata_.height.has_value();
+			fields.width = true;
+			fields.height = true;
 			fields.fps = !metadata_.fps.has_value();
 			fields.duration = !metadata_.duration.has_value();
 			fields.sha256 = !metadata_.sha256.has_value();
@@ -154,7 +155,42 @@ namespace vt
 		return file_path_;
 	}
 
+	std::string video_resource::title() const
+	{
+		return metadata_.title.value_or(fmt::format("{}", id_));
+	}
+
+	std::string video_resource::sha256() const
+	{
+		return metadata_.sha256_string();
+	}
+
+	int video_resource::width() const
+	{
+		return metadata_.width;
+	}
+
+	int video_resource::height() const
+	{
+		return metadata_.height;
+	}
+
 	void video_resource::on_remove() {}
+
+	bool video_resource::has_same_hash(const video_resource& other) const
+	{
+		return metadata_.sha256.has_value() and other.metadata_.sha256.has_value() and metadata_.sha256 == other.metadata_.sha256;
+	}
+
+	bool video_resource::has_hash() const
+	{
+		return metadata_.sha256.has_value();
+	}
+
+	bool video_resource::has_title() const
+	{
+		return metadata_.title.has_value();
+	}
 
 	video_stream video_resource::video() const
 	{
@@ -244,14 +280,8 @@ namespace vt
 		{
 			metadata_.title = metadata.title;
 		}
-		if (metadata.width.has_value())
-		{
-			metadata_.width = metadata.width;
-		}
-		if (metadata.height.has_value())
-		{
-			metadata_.height = metadata.height;
-		}
+		metadata_.width = metadata.width;
+		metadata_.height = metadata.height;
 		if (metadata.fps.has_value())
 		{
 			metadata_.fps = metadata.fps;
@@ -322,14 +352,8 @@ namespace vt
 		{
 			result["title"] = *title;
 		}
-		if (width.has_value())
-		{
-			result["width"] = *width;
-		}
-		if (height.has_value())
-		{
-			result["height"] = *height;
-		}
+		result["width"] = width;
+		result["height"] = height;
 		if (fps.has_value())
 		{
 			result["fps"] = *fps;

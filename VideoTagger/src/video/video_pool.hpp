@@ -1,5 +1,9 @@
 #pragma once
 #include <unordered_map>
+#include <vector>
+#include <memory>
+#include <chrono>
+#include <string>
 
 #include "video_stream.hpp"
 #include <utils/random.hpp>
@@ -63,7 +67,7 @@ namespace vt
 	class video_pool
 	{
 	public:
-		using container = std::unordered_map<video_id_t, std::unique_ptr<video_resource>>;
+		using container = std::unordered_map<video_id_t, std::shared_ptr<video_resource>>;
 		using iterator = container::iterator;
 		using const_iterator = container::const_iterator;
 
@@ -74,7 +78,7 @@ namespace vt
 		video_pool& operator=(const video_pool&) = delete;
 		video_pool& operator=(video_pool&&) = default;
 
-		bool insert(std::unique_ptr<video_resource>&& vid_resource);
+		bool insert(std::shared_ptr<video_resource>&& vid_resource);
 		bool erase(video_id_t video_id);
 
 		video_resource& get(video_id_t video_id);

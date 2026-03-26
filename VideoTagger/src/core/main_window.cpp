@@ -137,11 +137,11 @@ namespace vt
 
 		auto& importer = ctx_.get_video_importer<importer_type>();
 
-		ctx_.tasks.run([&importer, args...]() mutable -> std::unique_ptr<video_resource>
+		ctx_.tasks.run([&importer, args...]() mutable -> std::shared_ptr<video_resource>
 		{
 			return importer.import_video(std::forward<import_args>(args)...);
 		})
-		.finally(ctx_.tasks.main_thread(), [](std::unique_ptr<video_resource>&& vid_res)
+		.finally(ctx_.tasks.main_thread(), [](std::shared_ptr<video_resource>&& vid_res)
 		{
 			if (vid_res == nullptr)
 			{
@@ -732,14 +732,13 @@ namespace vt
 			for (auto& group_inf : ctx_.current_project->video_groups.at(event.new_group_id()))
 			{
 				auto& vid_resource = ctx_.current_project->videos.get(group_inf.id);
-				const auto& metadata = vid_resource.metadata();
 				if (!vid_resource.playable())
 				{
-					debug::error("Video {} with id {} is not available", metadata.title.has_value() ? *metadata.title : "[UNTITLED]", vid_resource.id());
+					debug::error("Video {} with hash {} is not available", vid_resource.title(), vid_resource.sha256());
 					continue;
 				}
 
-				ctx_.displayed_videos.insert(vid_resource.id(), vid_resource.video(), group_inf.offset, *metadata.width, *metadata.height);
+				ctx_.displayed_videos.insert(group_inf.id, vid_resource.video(), group_inf.offset, vid_resource.width(), vid_resource.height());
 			}
 
 			ctx_.reset_player_docking = true;
@@ -820,7 +819,7 @@ namespace vt
 				auto thumbnail = vid_res.generate_thumbnail();
 				if (!thumbnail.has_value())
 				{
-					debug::error("Failed to generate thumbnail for video {}", vid_res.id());
+					debug::error("Failed to generate thumbnail for video {}", video_id);
 					return std::nullopt;
 				}
 

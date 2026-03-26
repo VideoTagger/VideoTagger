@@ -32,7 +32,7 @@ namespace vt
 		{
 			return on_download(download_data);
 		})
-		.finally([this](video_download_result&& download_result)
+		.finally(ctx_.tasks.main_thread(), [this](video_download_result&& download_result)
 		{
 			switch (download_result.status)
 			{

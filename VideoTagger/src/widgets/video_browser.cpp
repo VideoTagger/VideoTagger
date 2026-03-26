@@ -29,8 +29,7 @@ namespace vt::widgets
 		{
 			const auto& theme = ctx_.current_theme;
 
-			const auto& metadata = vid_resource.metadata();
-			std::string label = metadata.title.value_or("");
+			std::string label = vid_resource.title();
 			ImVec2 image_tile_size{ tile_size.x * 0.9f, tile_size.x * 0.9f };
 
 			ImVec2 image_size = image_tile_size;
@@ -49,8 +48,8 @@ namespace vt::widgets
 			}
 			else
 			{
-				float scaled_width = *metadata.width * image_tile_size.y / *metadata.height;
-				float scaled_height = image_tile_size.x * *metadata.height / *metadata.width;
+				float scaled_width = vid_resource.width() * image_tile_size.y / vid_resource.height();
+				float scaled_height = image_tile_size.x * vid_resource.height() / vid_resource.width();
 
 				if (scaled_width < image_tile_size.x)
 				{

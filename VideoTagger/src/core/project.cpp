@@ -92,7 +92,7 @@ namespace vt
 		return result;
 	}
 
-	bool project::import_video(std::unique_ptr<video_resource>&& vid_resource, std::optional<video_group_id_t> group_id, bool check_hash, bool set_project_dirty)
+	bool project::import_video(std::shared_ptr<video_resource>&& vid_resource, std::optional<video_group_id_t> group_id, bool check_hash, bool set_project_dirty)
 	{
 		if (vid_resource == nullptr)
 		{
@@ -100,23 +100,23 @@ namespace vt
 			return false;
 		}
 
-		const auto& metadata = vid_resource->metadata();
-
-		if (check_hash and vid_resource->metadata().sha256.has_value())
+		if (check_hash and vid_resource->has_hash())
 		{
-			for (auto& [id, video] : videos)
+			auto it = std::find_if(videos.begin(), videos.end(), [&vid_resource](const auto& id_video_pair)
 			{
-				const auto& hash = *video->metadata().sha256;
-				if (hash == vid_resource->metadata().sha256)
-				{
-					debug::warn("Video with hash: {} is already imported", utils::hash::bytes_to_hex(hash, utils::hash::string_case::lower));
-					return false;
-				}
+				return id_video_pair.second->has_same_hash(*vid_resource);
+			});
+
+			if (it != videos.end())
+			{
+				debug::warn("Video with hash: {} is already imported", vid_resource->sha256());
+				return false;
 			}
 		}
 
 		video_group::video_info group_info{};
 		group_info.id = vid_resource->id();
+		std::optional<std::string> vid_title = vid_resource->metadata().title;
 		
 		if (!videos.insert(std::move(vid_resource)))
 		{
@@ -129,7 +129,7 @@ namespace vt
 			if (group_it == video_groups.end())
 			{
 				auto& group = video_groups[*group_id];
-				group.display_name = metadata.title.has_value() ? *metadata.title : fmt::format("Untitled Group {}", group_info.id);
+				group.display_name = vid_title.has_value() ? *vid_title : fmt::format("Untitled Group {}", group_info.id);
 				group.insert(group_info);
 			}
 			else
@@ -181,15 +181,14 @@ namespace vt
 				for (auto& group_video_info : group)
 				{
 					auto& vid_resource = videos.get(group_video_info.id);
-					const auto& metadata = vid_resource.metadata();
 
 					auto json_video = nlohmann::ordered_json::object();
 
-					json_video["title"] = metadata.title.has_value() ? *metadata.title : "UNKNOWN";
+					json_video["title"] = vid_resource.title();
 					json_video["id"] = std::to_string(group_video_info.id);
-					if (metadata.sha256.has_value())
+					if (vid_resource.has_hash())
 					{
-						json_video["sha256"] = utils::hash::bytes_to_hex(*metadata.sha256, utils::hash::string_case::lower);
+						json_video["sha256"] = vid_resource.sha256();
 					}
 					json_video["offset"] = timestamp{ std::chrono::duration_cast<std::chrono::milliseconds>(group_video_info.offset) };
 					json_group_videos.push_back(json_video);
@@ -507,10 +506,7 @@ namespace vt
 							continue;
 						}
 
-						video_id_t video_id = vid_resource->id();
-						if (result.import_video(std::move(vid_resource), std::nullopt, false, false))
-						{
-						}
+						result.import_video(std::move(vid_resource), std::nullopt, false, false);
 					}
 				}
 			}

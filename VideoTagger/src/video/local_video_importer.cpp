@@ -71,11 +71,11 @@ namespace vt
 		return static_importer_display_icon;
 	}
 
-	std::unique_ptr<video_resource> local_video_importer::import_video(video_id_t id, const std::filesystem::path& path)
+	std::shared_ptr<video_resource> local_video_importer::import_video(video_id_t id, const std::filesystem::path& path)
 	{
 		try
 		{
-			return std::make_unique<local_video_resource>(id, path);
+			return std::make_shared<local_video_resource>(id, path);
 		}
 		catch (const std::exception& ex)
 		{
@@ -84,11 +84,11 @@ namespace vt
 		}
 	}
 
-	std::unique_ptr<video_resource> local_video_importer::import_video(const nlohmann::ordered_json& json)
+	std::shared_ptr<video_resource> local_video_importer::import_video(const nlohmann::ordered_json& json)
 	{
 		try
 		{
-			return std::make_unique<local_video_resource>(json);
+			return std::make_shared<local_video_resource>(json);
 		}
 		catch (const std::exception& ex)
 		{

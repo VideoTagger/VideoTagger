@@ -39,11 +39,11 @@ namespace vt
 		return static_importer_display_icon;
 	}
 
-	std::unique_ptr<video_resource> google_drive_video_importer::import_video(video_id_t id, const std::string& file_id)
+	std::shared_ptr<video_resource> google_drive_video_importer::import_video(video_id_t id, const std::string& file_id)
 	{
 		try
 		{
-			return std::make_unique<google_drive_video_resource>(id, file_id);
+			return std::make_shared<google_drive_video_resource>(id, file_id);
 		}
 		catch (const std::exception& ex)
 		{
@@ -52,11 +52,11 @@ namespace vt
 		}
 	}
 
-	std::unique_ptr<video_resource> google_drive_video_importer::import_video(const nlohmann::ordered_json& json)
+	std::shared_ptr<video_resource> google_drive_video_importer::import_video(const nlohmann::ordered_json& json)
 	{
 		try
 		{
-			return std::make_unique<google_drive_video_resource>(json);
+			return std::make_shared<google_drive_video_resource>(json);
 		}
 		catch (const std::exception& ex)
 		{

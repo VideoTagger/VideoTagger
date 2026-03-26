@@ -23,8 +23,8 @@ namespace vt
 		std::string importer_display_name() const override;
 		std::string importer_display_icon() const override;
 
-		std::unique_ptr<video_resource> import_video(video_id_t id, const std::string& file_id);
-		std::unique_ptr<video_resource> import_video(const nlohmann::ordered_json& json) override;
+		std::shared_ptr<video_resource> import_video(video_id_t id, const std::string& file_id);
+		std::shared_ptr<video_resource> import_video(const nlohmann::ordered_json& json) override;
 
 		bool available() override;
 

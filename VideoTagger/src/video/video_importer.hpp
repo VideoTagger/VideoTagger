@@ -24,7 +24,7 @@ namespace vt
 		virtual std::string importer_display_name() const = 0;
 		virtual std::string importer_display_icon() const = 0;
 
-		virtual std::unique_ptr<video_resource> import_video(const nlohmann::ordered_json& json) = 0;
+		virtual std::shared_ptr<video_resource> import_video(const nlohmann::ordered_json& json) = 0;
 
 		virtual bool available() = 0;
 	};

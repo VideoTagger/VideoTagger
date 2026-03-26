@@ -125,7 +125,7 @@ namespace vt
 		return video_ids_.cend();
 	}
 
-	bool video_pool::insert(std::unique_ptr<video_resource>&& vid_resource)
+	bool video_pool::insert(std::shared_ptr<video_resource>&& vid_resource)
 	{
 		if (vid_resource == nullptr)
 		{
@@ -143,6 +143,8 @@ namespace vt
 		{
 			return false;
 		}
+
+		it->second->on_remove();
 
 		videos_.erase(it);
 		return true;
