@@ -23,21 +23,18 @@ namespace vt
 			using result_type = std::invoke_result_t<std::decay_t<fn_type>, type>;
 
 			auto new_state = std::make_shared<task_state<result_type>>();
-			if constexpr (std::is_same_v<result_type, void>)
+			state_->add_callback([new_state, fn = std::forward<fn_type>(fn)](const type& value) mutable
 			{
-				state_->add_callback([new_state, fn = std::forward<fn_type>(fn)](const type& value) mutable
+				if constexpr (std::is_same_v<result_type, void>)
 				{
 					fn(value);
 					new_state->set_value();
-				});
-			}
-			else
-			{
-				state_->add_callback([new_state, fn = std::forward<fn_type>(fn)](const type& value) mutable
+				}
+				else
 				{
 					new_state->set_value(fn(value));
-				});
-			}
+				}
+			});
 			return task<result_type>{ new_state };
 		}
 
@@ -47,27 +44,21 @@ namespace vt
 			using result_type = std::invoke_result_t<std::decay_t<fn_type>, type>;
 
 			auto new_state = std::make_shared<task_state<result_type>>();
-			if constexpr (std::is_same_v<result_type, void>)
+			state_->add_callback([&executor, new_state, fn = std::forward<fn_type>(fn), priority](const type& value) mutable
 			{
-				state_->add_callback([&executor, new_state, fn = std::forward<fn_type>(fn), priority](const type& value) mutable
+				executor.run({ [value, new_state, fn, priority]() mutable
 				{
-					executor.run({ [value, new_state, fn, priority]() mutable
+					if constexpr (std::is_same_v<result_type, void>)
 					{
 						fn(value);
 						new_state->set_value();
-					}, priority });
-				});
-			}
-			else
-			{
-				state_->add_callback([&executor, new_state, fn = std::forward<fn_type>(fn), priority](const type& value) mutable
-				{
-					executor.run({ [value, new_state, fn, priority]() mutable
+					}
+					else
 					{
 						new_state->set_value(fn(value));
-					}, priority });
-				});
-			}
+					}
+				}, priority });
+			});
 			return task<result_type>{ new_state };
 		}
 
@@ -99,23 +90,21 @@ namespace vt
 			using result_type = std::invoke_result_t<std::decay_t<fn_type>>;
 
 			auto new_state = std::make_shared<task_state<result_type>>();
-			if constexpr (std::is_same_v<result_type, void>)
+			
+			state_->add_callback([state = state_, new_state, fn = std::forward<fn_type>(fn)]() mutable
 			{
-				state_->add_callback([state = state_, new_state, fn = std::forward<fn_type>(fn)]() mutable
+				if constexpr (std::is_same_v<result_type, void>)
 				{
 					state->get();
 					fn();
 					new_state->set_value();
-				});
-			}
-			else
-			{
-				state_->add_callback([state = state_, new_state, fn = std::forward<fn_type>(fn)]() mutable
+				}
+				else
 				{
 					state->get();
 					new_state->set_value(fn());
-				});
-			}
+				}
+			});
 			return task<result_type>{ new_state };
 		}
 
@@ -125,28 +114,23 @@ namespace vt
 			using result_type = std::invoke_result_t<std::decay_t<fn_type>>;
 
 			auto new_state = std::make_shared<task_state<result_type>>();
-			if constexpr (std::is_same_v<result_type, void>)
+			
+			state_->add_callback([&executor, state = state_, new_state, fn = std::forward<fn_type>(fn), priority]() mutable
 			{
-				state_->add_callback([&executor, state = state_, new_state, fn = std::forward<fn_type>(fn), priority]() mutable
+				executor.run({ [state, new_state, fn, priority]() mutable
 				{
-					executor.run({ [state, new_state, fn, priority]() mutable
+					if constexpr (std::is_same_v<result_type, void>)
 					{
 						state->get();
 						fn();
 						new_state->set_value();
-					}, priority });
-				});
-			}
-			else
-			{
-				state_->add_callback([&executor, state = state_, new_state, fn = std::forward<fn_type>(fn), priority]() mutable
-				{
-					executor.run({ [state, new_state, fn, priority]() mutable
+					}
+					else
 					{
 						new_state->set_value(fn(state->get()));
-					}, priority });
-				});
-			}
+					}
+				}, priority });
+			});
 			return task<result_type>{ new_state };
 		}
 
