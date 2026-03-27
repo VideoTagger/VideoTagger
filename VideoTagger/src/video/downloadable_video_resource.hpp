@@ -1,18 +1,21 @@
 #pragma once
-#include <future>
-#include <memory>
 #include <filesystem>
 #include <string>
+#include <atomic>
+#include <mutex>
+#include <vector>
+#include <optional>
 #include <nlohmann/json.hpp>
 #include "video_resource.hpp"
-#include <tasks/task.hpp>
 
 namespace vt
 {
 	enum class video_download_status
 	{
-		success,
-		failure,
+		not_started,
+		completed,
+		in_progress,
+		failed,
 		cancelled
 	};
 
@@ -24,15 +27,8 @@ namespace vt
 		no_other
 	};
 
-	struct video_download_data
-	{
-		bool cancel = false;
-		float progress = 0.f;
-	};
-
 	struct video_download_result
 	{
-		std::shared_ptr<video_download_data> data;
 		video_download_status status;
 		std::filesystem::path download_path;
 	};
@@ -44,9 +40,13 @@ namespace vt
 		downloadable_video_resource(std::string importer_id, const nlohmann::ordered_json& json);
 		virtual ~downloadable_video_resource() = default;
 
-		void start_download();
-		std::optional<float> download_progress() const;
+		bool init_download();
+		video_download_result update_download();
 		void cancel_download();
+		void finalize_download(const video_download_result& download_result);
+
+		float download_progress() const;
+		bool is_downloading() const;
 
 		bool remove_downloaded_file();
 
@@ -57,9 +57,15 @@ namespace vt
 		virtual void on_remove() override;
 
 	protected:
-		virtual video_download_result on_download(std::shared_ptr<video_download_data>) = 0;
+		void set_download_progress(float progress);
+
+		virtual bool on_init_download() = 0;
+		virtual video_download_result on_update_download(int64_t chunk_size, bool cancel) = 0;
+		virtual void on_finalize_download(const video_download_result& download_result) = 0;
 
 	private:
-		std::weak_ptr<video_download_data> download_data_;
+		mutable std::mutex download_progress_mutex_;
+		std::optional<float> download_progress_{};
+		std::atomic_bool cancel_download_{ false };
 	};
 }

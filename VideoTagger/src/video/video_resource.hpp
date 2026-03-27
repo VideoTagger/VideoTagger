@@ -115,7 +115,7 @@ namespace vt
 		virtual void on_save(nlohmann::ordered_json& json) const;
 
 	private:
-		video_id_t id_;
+		video_id_t id_{};
 		std::string importer_id_;
 		video_resource_metadata metadata_;
 		std::optional<gl_texture> thumbnail_;

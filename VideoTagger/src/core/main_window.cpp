@@ -124,6 +124,10 @@ extern "C"
 #include <events/video_resource/video_deleted_event.hpp>
 #include <events/video_resource/video_delete_downloaded_file_request_event.hpp>
 #include <events/video_resource/video_downloaded_file_deleted_event.hpp>
+#include <events/video_resource/video_download_started_event.hpp>
+#include <events/video_resource/video_download_canceled_event.hpp>
+#include <events/video_resource/video_download_finished_event.hpp>
+
 
 namespace vt
 {
@@ -787,7 +791,7 @@ namespace vt
 			{
 				const auto& vid_res = ctx_.current_project->videos.get(video_id);
 
-				std::filesystem::path thumbnail_path = ctx_.thumbnail_dir_filepath / vid_res.metadata().sha256_string();
+				std::filesystem::path thumbnail_path = ctx_.thumbnail_dir_filepath / vid_res.sha256();
 
 				if (!ignore_cache)
 				{
@@ -833,7 +837,7 @@ namespace vt
 				}
 
 				auto& vid_res = ctx_.current_project->videos.get(video_id);
-				std::filesystem::path thumbnail_path = ctx_.thumbnail_dir_filepath / vid_res.metadata().sha256_string();
+				std::filesystem::path thumbnail_path = ctx_.thumbnail_dir_filepath / vid_res.sha256();
 				const auto& [thumbnail, from_cache] = *load_result;
 
 				if (cache_result and !from_cache)
@@ -875,7 +879,43 @@ namespace vt
 				return;
 			}
 
-			vid_res->start_download();
+			ctx_.tasks.run([vid_res]()
+			{
+				video_download_result result{ video_download_status::failed };
+				if (!vid_res->init_download())
+				{
+					return result;
+				}
+
+				result.status = video_download_status::in_progress;
+				while (result.status == video_download_status::in_progress)
+				{
+					result = vid_res->update_download();
+				}
+				return result;
+			})
+			.finally(ctx_.tasks.main_thread(), [vid_res](video_download_result&& download_result)
+			{
+				vid_res->finalize_download(download_result);
+
+				switch (download_result.status)
+				{
+					case video_download_status::completed:
+						ctx_.dispatch_event<video_download_finished_event>("video_resource", vid_res->id(), true);
+						break;
+
+					case video_download_status::failed:
+						ctx_.dispatch_event<video_download_finished_event>("video_resource", vid_res->id(), false);
+						break;
+
+					case video_download_status::cancelled:
+						ctx_.dispatch_event<video_download_canceled_event>("video_resource", vid_res->id());
+						break;
+
+					default: break;
+				}
+			});
+
 			ctx_.dispatch_event<video_download_started_event>(event_source_, event.video_id());
 		});
 
