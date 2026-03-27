@@ -2,7 +2,7 @@
 
 namespace vt
 {
-	thread_pool_executor::thread_pool_executor(size_t thread_count) : stop_{}, next_index_{ 0 }, queues_{ thread_count }, priority_queues_{ thread_count }
+	thread_pool_executor::thread_pool_executor(size_t thread_count) : stop_{}, next_index_{ 0 }, priority_queues_{ thread_count }
 	{
 		for (size_t i = 0; i < thread_count; ++i)
 		{
@@ -58,7 +58,7 @@ namespace vt
 
 	std::optional<std::function<void()>> thread_pool_executor::steal(size_t index)
 	{
-		for (size_t i = 0; i < queues_.size(); ++i)
+		for (size_t i = 0; i < priority_queues_.size(); ++i)
 		{
 			if (i == index) continue;
 
@@ -76,7 +76,7 @@ namespace vt
 
 	void thread_pool_executor::run(const prioritized_task& task)
 	{
-		auto index = next_index_++ % queues_.size();
+		auto index = next_index_++ % priority_queues_.size();
 		priority_queues_[index][static_cast<size_t>(task.priority())].push(task.task());
 		cv_.notify_one();
 	}

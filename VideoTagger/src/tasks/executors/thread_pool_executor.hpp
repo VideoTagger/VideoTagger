@@ -21,7 +21,6 @@ namespace vt
 	private:
 		std::condition_variable cv_;
 		std::vector<std::array<work_stealing_queue<std::function<void()>>, task_priority_count>> priority_queues_;
-		std::vector<work_stealing_queue<std::function<void()>>> queues_;
 		std::vector<std::thread> workers_;
 		std::atomic<bool> stop_;
 		std::atomic<size_t> next_index_;

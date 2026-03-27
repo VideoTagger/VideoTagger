@@ -86,7 +86,7 @@ namespace vt
 			}
 		}
 
-		type& get() &
+		type& get()
 		{
 			std::unique_lock lock(mutex_);
 			cv_.wait(lock, [&]
@@ -94,16 +94,6 @@ namespace vt
 				return ready_;
 			});
 			return result_.value();
-		}
-
-		type&& get() &&
-		{
-			std::unique_lock lock(mutex_);
-			cv_.wait(lock, [&]
-			{
-				return ready_;
-			});
-			return std::move(result_.value());
 		}
 
 		bool is_ready() const
