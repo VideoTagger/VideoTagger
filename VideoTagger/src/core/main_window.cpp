@@ -3022,6 +3022,7 @@ namespace vt
 			ImGui::DockBuilderDockWindow(ctx_.get_window<widgets::video_browser>().name().c_str(), main_dock_up_left);
 			ImGui::DockBuilderDockWindow(ctx_.get_window<widgets::theme_customizer>().name().c_str(), main_dock_up);
 			ImGui::DockBuilderDockWindow(ctx_.get_window<widgets::console>().name().c_str(), dockspace_id_copy);
+			ImGui::DockBuilderDockWindow(ctx_.get_window<widgets::timeline>().name().c_str(), dockspace_id_copy);
 			ImGui::DockBuilderDockWindow(ctx_.get_window<widgets::video_group_browser>().name().c_str(), dockspace_id_copy);
 
 			auto queue_node = ImGui::DockBuilderGetNode(main_dock_down);

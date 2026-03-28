@@ -54,7 +54,7 @@ namespace vt::widgets
 		}
 	}
 
-	timeline::timeline() /*: zoom_slider_{ 1.f, 5.f, 1.f }*/ : ui::window{ "Timelinev2", "timeline", "Timeline", ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse }, event_source_{"timeline"}
+	timeline::timeline() /*: zoom_slider_{ 1.f, 5.f, 1.f }*/ : ui::window{ "Timeline", "timeline", "Timeline", ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse }, event_source_{"timeline"}
 	{
 		set_icon(icons::timeline);
 
