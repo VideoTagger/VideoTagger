@@ -27,7 +27,8 @@ namespace vt::ui::windows
 					debug::log("Job 1");
 					std::this_thread::sleep_for(std::chrono::seconds(3));
 					return 42;
-				}).then([](int value)
+				})
+				.then([](int value)
 				{
 					debug::log("Job 1 continuation, job 1 result: {}", value);
 					return 1;
@@ -39,9 +40,37 @@ namespace vt::ui::windows
 					debug::log("Running async task");
 					std::this_thread::sleep_for(std::chrono::seconds(1));
 				})
-				.then(ctx_.tasks.main_thread(), []()
+				.then(ctx_.tasks.on_main(), []()
 				{
 					debug::log("Async task finished, running continuation on main thread");
+				});
+			}
+
+			if (ui::button("Test Cancellable Tasks"))
+			{
+				auto token = std::make_shared<cancellation_token>();
+
+				auto ct = ctx_.tasks.run([](cancellation_token& token)
+				{
+					debug::log("Cancellable Job starting...");
+					return 1;
+				}, token)
+				.then([](int i, cancellation_token& token)
+				{
+					debug::log("Token cancelled: {}", token.is_cancelled());
+					debug::log("Cancellable Job started");
+					while (!token.is_cancelled())
+					{
+						std::this_thread::yield();
+					}
+					debug::log("Cancellable Job stopped");
+				}, token);
+
+				ctx_.tasks.run([tok = ct.token()]()
+				{
+					std::this_thread::sleep_for(std::chrono::seconds(3));
+					debug::log("Cancelling cancellable job...");
+					tok->cancel();
 				});
 			}
 			return true;
@@ -57,8 +86,6 @@ namespace vt::ui::windows
 			}
 			return true;
 		});
-
-
 
 		widget_list_.add_raw([&]()
 		{

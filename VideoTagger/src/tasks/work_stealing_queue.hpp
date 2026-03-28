@@ -11,8 +11,8 @@ namespace vt
 		work_stealing_queue() = default;
 
 	private:
+		mutable std::mutex mutex_;
 		std::deque<type> queue_;
-		std::mutex mutex_;
 
 	public:
 		constexpr void push(const type& value)
@@ -47,6 +47,12 @@ namespace vt
 			auto result = std::move(queue_.front());
 			queue_.pop_front();
 			return result;
+		}
+
+		constexpr bool empty() const
+		{
+			std::scoped_lock lock(mutex_);
+			return queue_.empty();
 		}
 	};
 }

@@ -5,8 +5,18 @@
 #include <functional>
 #include <condition_variable>
 
+#include <tasks/cancellation_token.hpp>
+
 namespace vt
 {
+	enum class task_status : uint8_t
+	{
+		created,
+		running,
+		cancelled,
+		completed,
+	};
+
 	template<typename type>
 	struct task_state
 	{
@@ -14,20 +24,20 @@ namespace vt
 		task_state() = default;
 
 	private:
-		std::vector<std::function<void(const type& result)>> callbacks_;
-		std::function<void(type&& result)> final_callback_;
 		mutable std::mutex mutex_;
+		std::vector<std::function<void()>> callbacks_;
 		std::condition_variable cv_;
 		std::optional<type> result_;
+		task_status status_ = task_status::created;
 		bool ready_ = false;
 
 	public:
-		constexpr void add_callback(const std::function<void(const type& result)>& callback)
+		constexpr void add_callback(const std::function<void()>& callback)
 		{
 			bool should_run{};
 			{
 				std::scoped_lock lock(mutex_);
-				should_run = ready_;
+				should_run = status_ == task_status::completed;
 
 				if (!should_run)
 				{
@@ -37,53 +47,53 @@ namespace vt
 
 			if (should_run)
 			{
-				callback(result_.value());
+				callback();
 			}
 		}
 
-		constexpr void set_final_callback(const std::function<void(type&& result)>& callback)
+		constexpr void add_callback(std::shared_ptr<cancellation_token> token, const std::function<void(cancellation_token& token)>& callback)
 		{
-			bool should_run{};
+			return add_callback([tok = token, callback]()
 			{
-				std::scoped_lock lock(mutex_);
-				should_run = ready_;
-
-				if (!should_run)
-				{
-					final_callback_ = callback;
-				}
-			}
-
-			if (should_run)
-			{
-				callback(std::move(result_.value()));
-			}
+				callback(*tok);
+			});
 		}
 
 		void set_value(type&& value)
 		{
 			decltype(callbacks_) callbacks;
-			decltype(final_callback_) final_callback;
 
 			{
 				std::scoped_lock lock(mutex_);
 				result_ = std::move(value);
 				ready_ = true;
+				status_ = task_status::completed;
 				callbacks = std::move(callbacks_);
-				final_callback = std::move(final_callback_);
 			}
 
 			cv_.notify_all();
 
 			for (const auto& callback : callbacks)
 			{
-				callback(result_.value());
+				callback();
 			}
+		}
 
-			if (final_callback != nullptr)
+		void set_status(task_status status)
+		{
+			std::scoped_lock lock(mutex_);
+			status_ = status;
+			if (status_ == task_status::completed)
 			{
-				final_callback(std::move(result_.value()));
+				ready_ = true;
+				cv_.notify_all();
 			}
+		}
+
+		task_status status() const
+		{
+			std::scoped_lock lock(mutex_);
+			return status_;
 		}
 
 		type& get()
@@ -91,7 +101,7 @@ namespace vt
 			std::unique_lock lock(mutex_);
 			cv_.wait(lock, [&]
 			{
-				return ready_;
+				return status_ == task_status::completed;
 			});
 			return result_.value();
 		}
@@ -99,7 +109,7 @@ namespace vt
 		bool is_ready() const
 		{
 			std::scoped_lock lock(mutex_);
-			return ready_;
+			return status_ == task_status::completed;
 		}
 	};
 
@@ -111,10 +121,10 @@ namespace vt
 
 	private:
 		std::vector<std::function<void()>> callbacks_;
-		std::function<void()> final_callback_;
 		mutable std::mutex mutex_;
 		std::condition_variable cv_;
 		bool ready_ = false;
+		task_status status_ = task_status::created;
 
 	public:
 		void add_callback(const std::function<void()>& callback)
@@ -122,7 +132,7 @@ namespace vt
 			bool should_run{};
 			{
 				std::scoped_lock lock(mutex_);
-				should_run = ready_;
+				should_run = status_ == task_status::completed;
 
 				if (!should_run)
 				{
@@ -136,35 +146,23 @@ namespace vt
 			}
 		}
 
-		void set_final_callback(const std::function<void()>& callback)
+		void add_callback(std::shared_ptr<cancellation_token> token, const std::function<void(cancellation_token& token)>& callback)
 		{
-			bool should_run{};
+			return add_callback([tok = token, callback]()
 			{
-				std::scoped_lock lock(mutex_);
-				should_run = ready_;
-
-				if (!should_run)
-				{
-					final_callback_ = callback;
-				}
-			}
-
-			if (should_run)
-			{
-				callback();
-			}
+				callback(*tok);
+			});
 		}
 
 		void set_value()
 		{
 			decltype(callbacks_) callbacks;
-			decltype(final_callback_) final_callback;
 
 			{
 				std::scoped_lock lock(mutex_);
 				ready_ = true;
+				status_ = task_status::completed;
 				callbacks = std::move(callbacks_);
-				final_callback = std::move(final_callback_);
 			}
 
 			cv_.notify_all();
@@ -173,26 +171,38 @@ namespace vt
 			{
 				callback();
 			}
+		}
 
-			if (final_callback != nullptr)
+		void set_status(task_status status)
+		{
+			std::scoped_lock lock(mutex_);
+			status_ = status;
+			if (status_ == task_status::completed)
 			{
-				final_callback();
+				ready_ = true;
+				cv_.notify_all();
 			}
+		}
+
+		task_status status() const
+		{
+			std::scoped_lock lock(mutex_);
+			return status_;
 		}
 
 		void get()
 		{
 			std::unique_lock lock(mutex_);
-			cv_.wait(lock, [&]
+			cv_.wait(lock, [this]
 			{
-				return ready_;
+				return status_ == task_status::completed;
 			});
 		}
 
 		bool is_ready() const
 		{
 			std::scoped_lock lock(mutex_);
-			return ready_;
+			return status_ == task_status::completed;
 		}
 	};
 }

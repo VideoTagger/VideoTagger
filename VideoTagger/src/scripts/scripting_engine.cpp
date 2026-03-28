@@ -16,6 +16,7 @@
 #include "bindings/bind_segment.hpp"
 #include "bindings/proxies.hpp"
 #include "script.hpp"
+#include <core/platform.hpp>
 
 namespace vt
 {
@@ -204,7 +205,7 @@ namespace vt
 	{
 		PyConfig_InitPythonConfig(&cfg);
 
-#ifdef _DEBUG
+#ifdef VT_DEBUG
 		cfg.optimization_level = 0;
 #else
 		cfg.optimization_level = 2;
@@ -295,7 +296,6 @@ namespace vt
 					debug::error("Couldn't find '{}' class. Script files should contain a class with the same name as the filename (class filename(vt.Script): ...)", script_class_name);
 					return false;
 				}
-
 				auto script_class = script.attr(script_class_name.c_str());
 
 				//check if script is a subclass of vt.Script
@@ -397,7 +397,7 @@ namespace vt
 	{
 		if (!has_embeddable_package()) return std::nullopt;
 
-		//finds pyhonXX.zip
+		//finds pythonXX.zip
 		for (const auto& entry : std::filesystem::directory_iterator{ ctx_.python_dir_filepath })
 		{
 			auto name = entry.path().stem().u8string();

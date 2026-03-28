@@ -32,6 +32,7 @@ namespace vt
 		std::optional<std::function<void()>> pop(size_t index);
 		std::optional<std::function<void()>> steal(size_t index);
 
-		virtual void run(const prioritized_task& task) override;
+		virtual void run(const wrapped_task& task) override;
+		virtual void wait_for_all() override;
 	};
 }

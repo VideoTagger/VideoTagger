@@ -2,6 +2,7 @@
 #include "debug.hpp"
 #include <optional>
 #include <core/app_context.hpp>
+#include <core/platform.hpp>
 
 #define NOMINMAX
 #ifndef WIN32_LEAN_AND_MEAN
@@ -19,7 +20,7 @@ namespace vt
 	void debug::init()
 	{
 		main_thread_id = std::this_thread::get_id();
-#ifdef _WIN32
+#ifdef VT_OS_WINDOWS
 		HANDLE console = GetStdHandle(STD_OUTPUT_HANDLE);
 		if (console == INVALID_HANDLE_VALUE) return;
 

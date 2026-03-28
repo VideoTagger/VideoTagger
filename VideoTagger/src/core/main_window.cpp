@@ -101,8 +101,9 @@ extern "C"
 #include <events/system/window/system_window_drop_path_event.hpp>
 #include <events/system/window/system_window_close_event.hpp>
 #include <events/app/request_save_settings_event.hpp>
+#include <core/platform.hpp>
 
-#ifdef _DEBUG
+#ifdef VT_DEBUG
 	#include <ui/windows/sandbox.hpp>
 #endif
 #include <events/filesystem/fetch_themes_event.hpp>
@@ -145,7 +146,7 @@ namespace vt
 		{
 			return importer.import_video(std::forward<import_args>(args)...);
 		})
-		.finally(ctx_.tasks.main_thread(), [](std::shared_ptr<video_resource>&& vid_res)
+		.then(ctx_.tasks.on_main(), [](std::shared_ptr<video_resource>& vid_res)
 		{
 			if (vid_res == nullptr)
 			{
@@ -578,11 +579,11 @@ namespace vt
 				debug::log("Finished fetching themes");
 				return result;
 			}, priority)
-			.then(ctx_.tasks.main_thread(), [](const utils::file_node& theme_list)
+			.then(ctx_.tasks.on_main(), [](const utils::file_node& theme_list)
 			{
 				debug::log("Updating theme list");
 				ctx_.themes = theme_list;
-			}, priority);
+			}, nullptr, priority);
 		});
 
 		ctx_.add_event_listener<fetch_scripts_event>([this](const fetch_scripts_event& event)
@@ -594,11 +595,11 @@ namespace vt
 				debug::log("Finished fetching scripts");
 				return result;
 			}, task_priority::low)
-			.then(ctx_.tasks.main_thread(), [](const utils::file_node& script_list)
+			.then(ctx_.tasks.on_main(), [](const utils::file_node& script_list)
 			{
 				debug::log("Updating script list");
 				ctx_.scripts = script_list;
-			}, task_priority::low);
+			}, nullptr, task_priority::low);
 		});
 	}
 
@@ -851,7 +852,7 @@ namespace vt
 
 				return load_result;
 			})
-			.then(ctx_.tasks.main_thread(), [video_id = event.video_id()](const std::optional<thumbnail_load_result>& load_result)
+			.then(ctx_.tasks.on_main(), [video_id = event.video_id()](const std::optional<thumbnail_load_result>& load_result)
 			{
 				if (!load_result.has_value())
 				{
@@ -894,7 +895,7 @@ namespace vt
 				}
 				return result;
 			})
-			.finally(ctx_.tasks.main_thread(), [vid_res](video_download_result&& download_result)
+			.then(ctx_.tasks.on_main(), [vid_res](const video_download_result& download_result)
 			{
 				vid_res->finalize_download(download_result);
 
@@ -999,6 +1000,8 @@ namespace vt
 			ctx_.script_eng.interrupt();
 			return;
 		}
+
+		ctx_.tasks.wait_for_all();
 
 		if (ctx_.current_project.has_value())
 		{
@@ -1738,7 +1741,7 @@ namespace vt
 
 		//TODO: Add theme selection
 
-#ifdef _DEBUG
+#ifdef VT_DEBUG
 		.add_label_spacer("Debug Only")
 		.add_raw([]()
 		{
@@ -2133,7 +2136,7 @@ namespace vt
 						windows[settings_name] = *value;
 					}
 				}
-#ifdef _DEBUG
+#ifdef VT_DEBUG
 				ImGui::SeparatorText("Debug Only");
 				ImGui::MenuItem("Show Options", nullptr, &ctx_.win_cfg.show_options_window);
 				
@@ -2322,7 +2325,7 @@ namespace vt
 					{
 						return update_manager::check_for_updates();
 					})
-					.then(ctx_.tasks.main_thread(), [](const std::optional<update_info>& update)
+					.then(ctx_.tasks.on_main(), [](const std::optional<update_info>& update)
 					{
 						if (update.has_value())
 						{
@@ -2398,7 +2401,7 @@ namespace vt
 
 					ImGui::TextWrapped("%s", embed::app_description);
 
-#ifdef _DEBUG
+#ifdef VT_DEBUG
 					ImGui::SeparatorText("Debug Only");
 
 					SDL_version compiled;
@@ -3147,7 +3150,7 @@ namespace vt
 			ImGui::DockBuilderDockWindow(ctx_.get_window<widgets::video_group_queue>().name().c_str(), main_dock_down);
 			ImGui::DockBuilderDockWindow(ctx_.get_window<widgets::video_player>().name().c_str(), main_dock_up);
 			ImGui::DockBuilderDockWindow(ctx_.get_window<widgets::localization_editor>().name().c_str(), main_dock_up);
-#ifdef _DEBUG
+#ifdef VT_DEBUG
 			ImGui::DockBuilderDockWindow(ctx_.get_window<ui::windows::sandbox>().name().c_str(), main_dock_up);
 #endif
 			ImGui::DockBuilderDockWindow(ctx_.get_window<widgets::video_browser>().name().c_str(), main_dock_up_left);

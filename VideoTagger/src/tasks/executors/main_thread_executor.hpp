@@ -22,6 +22,7 @@ namespace vt
 		///@brief Runs tasks from the queues until the timeout is reached.
 		void run_some(std::chrono::milliseconds timeout);
 
-		virtual void run(const prioritized_task& task) override;
+		virtual void run(const wrapped_task& task) override;
+		virtual void wait_for_all() override;
 	};
 }
