@@ -92,16 +92,16 @@ namespace vt
 			}
 			else
 			{
-				static constexpr bool is_cancellable = is_task_cancellable_arg<fn_type, type>;
+				static constexpr bool is_cancellable = is_task_cancellable_arg<fn_type, type&>;
 				static_assert
 				(
-					std::is_invocable_v<std::decay_t<fn_type>, type> or is_cancellable,
+					std::is_invocable_v<std::decay_t<fn_type>, type&> or is_cancellable,
 					"The provided function must be invocable with the task's result type."
 				);
 
 				if constexpr (is_cancellable)
 				{
-					using result_type = std::invoke_result_t<std::decay_t<fn_type>, type, cancellation_token&>;
+					using result_type = std::invoke_result_t<std::decay_t<fn_type>, type&, cancellation_token&>;
 					auto new_state = std::make_shared<task_state<result_type>>();
 					if (token == nullptr)
 					{
@@ -110,8 +110,8 @@ namespace vt
 
 					state_->add_callback([tok = token, state = state_, new_state, fn = std::forward<fn_type>(fn)]() mutable
 					{
-						const auto& value = state->get();
-						if constexpr (std::is_same_v<result_type, void>)
+						auto& value = state->get();
+						if constexpr (std::is_void_v<result_type>)
 						{
 							fn(value, *tok);
 							new_state->set_value();
@@ -129,13 +129,13 @@ namespace vt
 				}
 				else
 				{
-					using result_type = std::invoke_result_t<std::decay_t<fn_type>, type>;
+					using result_type = std::invoke_result_t<std::decay_t<fn_type>, type&>;
 					auto new_state = std::make_shared<task_state<result_type>>();
 
 					state_->add_callback([state = state_, new_state, fn = std::forward<fn_type>(fn)]() mutable
 					{
-						const auto& value = state->get();
-						if constexpr (std::is_same_v<result_type, void>)
+						auto& value = state->get();
+						if constexpr (std::is_void_v<result_type>)
 						{
 							fn(value);
 							new_state->set_value();
@@ -176,7 +176,7 @@ namespace vt
 						executor.run({ [tok, state, new_state, fn, priority]() mutable
 						{
 							state->get();
-							if constexpr (std::is_same_v<result_type, void>)
+							if constexpr (std::is_void_v<result_type>)
 							{
 								fn(*tok);
 								new_state->set_value();
@@ -203,7 +203,7 @@ namespace vt
 						executor.run({ [state, new_state, fn, priority]() mutable
 						{
 							state->get();
-							if constexpr (std::is_same_v<result_type, void>)
+							if constexpr (std::is_void_v<result_type>)
 							{
 								fn();
 								new_state->set_value();
@@ -219,16 +219,16 @@ namespace vt
 			}
 			else
 			{
-				static constexpr bool is_cancellable = is_task_cancellable_arg<fn_type, type>;
+				static constexpr bool is_cancellable = is_task_cancellable_arg<fn_type, type&>;
 				static_assert
 				(
-					std::is_invocable_v<std::decay_t<fn_type>, type> or is_cancellable,
+					std::is_invocable_v<std::decay_t<fn_type>, type&> or is_cancellable,
 					"The provided function must be invocable with the task's result type."
 				);
 
 				if constexpr (is_cancellable)
 				{
-					using result_type = std::invoke_result_t<std::decay_t<fn_type>, type, cancellation_token&>;
+					using result_type = std::invoke_result_t<std::decay_t<fn_type>, type&, cancellation_token&>;
 					auto new_state = std::make_shared<task_state<result_type>>();
 					if (token == nullptr)
 					{
@@ -239,8 +239,8 @@ namespace vt
 					{
 						executor.run({ [tok, state, new_state, fn, priority]() mutable
 						{
-							const auto& value = state->get();
-							if constexpr (std::is_same_v<result_type, void>)
+							auto& value = state->get();
+							if constexpr (std::is_void_v<result_type>)
 							{
 								fn(value, *tok);
 								new_state->set_value();
@@ -259,15 +259,15 @@ namespace vt
 				}
 				else
 				{
-					using result_type = std::invoke_result_t<std::decay_t<fn_type>, type>;
+					using result_type = std::invoke_result_t<std::decay_t<fn_type>, type&>;
 					auto new_state = std::make_shared<task_state<result_type>>();
 
 					state_->add_callback([state = state_, &executor, new_state, fn = std::forward<fn_type>(fn), priority]() mutable
 					{
 						executor.run({ [state, new_state, fn, priority]() mutable
 						{
-							const auto& value = state->get();
-							if constexpr (std::is_same_v<result_type, void>)
+							auto& value = state->get();
+							if constexpr (std::is_void_v<result_type>)
 							{
 								fn(value);
 								new_state->set_value();
