@@ -118,7 +118,6 @@ namespace vt
 		std::unordered_map<std::string, std::unique_ptr<video_importer>> video_importers;
 		std::optional<video_id_t> last_focused_video;
 		tag_attribute_instance* selected_attribute{};
-		utils::vec2<uint32_t>* gizmo_target{};
 
 		session_storage session;
 

@@ -8,6 +8,7 @@
 #include <video/video_pool.hpp>
 #include <impl/resettable.hpp>
 #include <events/event_source.hpp>
+#include <utils/vec.hpp>
 
 namespace vt
 {
@@ -46,9 +47,14 @@ namespace vt
 		video_group_id_t current_video_group_id_{ invalid_video_group_id };
 		std::vector<insert_segment_mark_data> insert_segment_marks_;
 
+		std::vector<utils::vec2<uint32_t>*> gizmo_targets_;
+
 		event_source event_source_{ "session" };
 
 	public:
+		void register_timeline_listeners();
+		void register_gizmo_listeners();
+
 		const segment_id_map& selected_segments() const;
 		const segment_id_map& dragged_segments() const;
 		const segment_drag_data& segment_drag_data() const;
@@ -61,6 +67,12 @@ namespace vt
 
 		bool is_segment_dragged(const std::string& tag, segment_id id) const;
 		bool is_dragging_any_segment() const;
+
+		bool gizmo_contains_target(const utils::vec2<uint32_t>* target) const;
+		std::vector<utils::vec2<uint32_t>*> gizmo_targets();
+		const std::vector<utils::vec2<uint32_t>*>& gizmo_targets() const;
+		bool has_gizmo_targets() const;
+		utils::vec2<uint32_t> mean_gizmo_target() const;
 
 		std::vector<insert_segment_mark_data>::iterator find_insert_segment_mark_by_tag(const std::string& tag);
 		std::vector<insert_segment_mark_data>::iterator find_insert_segment_mark_by_tag(const std::optional<std::string>& tag);

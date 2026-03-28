@@ -3,6 +3,7 @@
 #include <core/app_context.hpp>
 #include <ui/icons.hpp>
 #include <events/player/seek_request_event.hpp>
+#include <events/gizmo/gizmo_clear_targets_event.hpp>
 
 namespace vt::widgets
 {
@@ -44,6 +45,7 @@ namespace vt::widgets
 				}
 			}
 
+			auto ev_src = get_event_source();
 			if (active_vid_size.has_value() and selected_attr_inst != nullptr and selected_attr_inst->has<shape>() and selected_segment_id != invalid_segment_id)
 			{
 				auto& selected_seg = storage.at(selected_tag).at(selected_segment_id);
@@ -54,10 +56,10 @@ namespace vt::widgets
 					ui::card([&]()
 					{
 						bool modifiable = true;
-						shape.draw_data(active_vid_size.value(), ctx_.gizmo_target, selected_seg.start, selected_seg.end, current_ts, is_timestamp, modifiable, ctx_.is_project_dirty, [](timestamp target_ts)
+						shape.draw_data(active_vid_size.value(), selected_seg.start, selected_seg.end, current_ts, is_timestamp, modifiable, ctx_.is_project_dirty, [ev_src](timestamp target_ts)
 						{
 							auto& player = ctx_.get_window<widgets::video_player>();
-							ctx_.dispatch_event<seek_request_event>("shape_attributes", player, target_ts.total_milliseconds);
+							ctx_.dispatch_event<seek_request_event>(ev_src, player, target_ts.total_milliseconds);
 						});
 					});
 				}
@@ -68,7 +70,7 @@ namespace vt::widgets
 			}
 			else
 			{
-				ctx_.gizmo_target = nullptr;
+				ctx_.dispatch_event<gizmo_clear_targets_event>(ev_src);
 				ui::centered_text("Select a shape attribute in the inspector to display its properties...", ImGui::GetContentRegionMax());
 			}
 		}

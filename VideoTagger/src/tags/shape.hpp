@@ -10,11 +10,12 @@
 #include <utils/vec.hpp>
 #include <utils/math.hpp>
 
+
 namespace vt
 {
 	struct shape_base
 	{
-		virtual void set_target(utils::vec2<uint32_t>*& target) = 0;
+		virtual void set_target() = 0;
 	};
 
 	struct circle : public shape_base
@@ -25,10 +26,7 @@ namespace vt
 		utils::vec2<uint32_t> pos;
 		uint32_t radius = 1;
 
-		virtual void set_target(utils::vec2<uint32_t>*& target) override
-		{
-			target = &pos;
-		}
+		virtual void set_target() override;
 
 		constexpr bool operator==(const circle& other) const
 		{
@@ -43,13 +41,7 @@ namespace vt
 
 		std::vector<utils::vec2<uint32_t>> vertices;
 
-		virtual void set_target(utils::vec2<uint32_t>*& target) override
-		{
-			if (!vertices.empty())
-			{
-				target = &vertices.back();
-			}
-		}
+		virtual void set_target() override;
 
 		bool operator==(const polygon& other) const
 		{
@@ -69,10 +61,7 @@ namespace vt
 
 		}
 
-		virtual void set_target(utils::vec2<uint32_t>*& target) override
-		{
-			target = &vertices.front();
-		}
+		virtual void set_target() override;
 
 		bool operator==(const rectangle& other) const
 		{
@@ -334,7 +323,7 @@ namespace vt
 		}
 
 		void draw(timestamp current_ts, bool lerp, const std::function<ImVec2(const ImVec2&)>& to_local_pos, const std::function<float(uint32_t)>& from_pixels, const ImVec2& tex_size, const ImVec2& viewport_size, uint32_t outline_color, uint32_t fill_color, bool show_points, const std::function<void(size_t)>& on_mouse_over) const;
-		void draw_data(const utils::vec2<uint32_t>& max_size, utils::vec2<uint32_t>*& gizmo_target, timestamp start_ts, timestamp end_ts, timestamp ts, bool is_timestamp, bool modifiable, bool& dirty_flag, const std::function<void(timestamp)>& on_seek);
+		void draw_data(const utils::vec2<uint32_t>& max_size, timestamp start_ts, timestamp end_ts, timestamp ts, bool is_timestamp, bool modifiable, bool& dirty_flag, const std::function<void(timestamp)>& on_seek);
 	};
 
 	inline void to_json(nlohmann::ordered_json& json, const circle& c)

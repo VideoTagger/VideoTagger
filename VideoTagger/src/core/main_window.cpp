@@ -65,6 +65,10 @@
 #include <events/tags/tag_change_display_request_event.hpp>
 #include <events/tags/tag_display_changed_event.hpp>
 
+#include <events/gizmo/gizmo_move_targets_event.hpp>
+#include <events/gizmo/gizmo_clear_targets_event.hpp>
+#include <events/gizmo/gizmo_set_targets_event.hpp>
+
 #include <events/scripts/script_end_event.hpp>
 
 #ifndef VT_VERSION
@@ -743,7 +747,6 @@ namespace vt
 			}
 		}
 
-		ctx_.gizmo_target = nullptr;
 		ctx_.last_focused_video = std::nullopt;
 		ctx_.set_selected_attribute(nullptr);
 
@@ -2485,13 +2488,14 @@ namespace vt
 			{
 				ctx_.last_focused_video = std::nullopt;
 				ctx_.set_selected_attribute(nullptr);
-				ctx_.gizmo_target = nullptr;
+				ctx_.dispatch_event<gizmo_clear_targets_event>(event_source_);
 			}
 
 			if (!is_shape)
 			{
-				ctx_.gizmo_target = nullptr;
+				ctx_.dispatch_event<gizmo_clear_targets_event>(event_source_);
 			}
+
 
 			uint64_t vid_id{};
 			for (auto& video_data : ctx_.displayed_videos)
@@ -2501,13 +2505,18 @@ namespace vt
 				//TODO: handle is_widget_open
 				bool is_widget_open = true;
 				ImVec2 point_pos{};
-				bool has_target = ctx_.gizmo_target != nullptr;
+				ImVec2 start_pos{};
+
+				bool has_target = ctx_.session.has_gizmo_targets();
+				
 				if (has_target)
 				{
-					point_pos = { (float)ctx_.gizmo_target->at(0), (float)ctx_.gizmo_target->at(1) };
+					auto mean_point = ctx_.session.mean_gizmo_target();
+					point_pos = { (float)mean_point.at(0), (float)mean_point.at(1) };
+					start_pos = point_pos;
 				}
 
-				widgets::draw_video_widget(video_data.video, video_data.display_texture, timestamp_in_range, is_widget_open, vid_id++, [&point_pos, has_selected_attribute, selected_attribute, is_shape, has_target, &video_data, this](ImVec2 pos, ImVec2 size, ImVec2 tex_size)
+				widgets::draw_video_widget(video_data.video, video_data.display_texture, timestamp_in_range, is_widget_open, vid_id++, [&point_pos, start_pos, has_selected_attribute, selected_attribute, is_shape, has_target, &video_data, this](ImVec2 pos, ImVec2 size, ImVec2 tex_size)
 				{
 					static auto from_tex_pos = [&pos, &tex_size, &size](const ImVec2 point) -> ImVec2
 					{
@@ -2623,7 +2632,7 @@ namespace vt
 								{
 									auto& keyframe = map.at(current_ts);
 									keyframe.push_back({});
-									keyframe.back().set_target(ctx_.gizmo_target);
+									keyframe.back().set_target();
 									ctx_.is_project_dirty = true;
 								}
 							});
@@ -2698,26 +2707,25 @@ namespace vt
 
 						if (close)
 						{
-							ctx_.gizmo_target->at(0) = (uint32_t)point_pos.x;
-							ctx_.gizmo_target->at(1) = (uint32_t)point_pos.y;
-							ctx_.is_project_dirty = true;
+							utils::vec2<uint32_t> offset = { (uint32_t)(point_pos.x - start_pos.x), (uint32_t)(point_pos.y - start_pos.y) };
+							ctx_.dispatch_event<gizmo_move_targets_event>(event_source_, ctx_.session.gizmo_targets(), offset);
 							ImGui::CloseCurrentPopup();
 						}
 						ImGui::EndPopup();
 					}
 
-					if (!add_point and can_add_point and (ImGui::IsKeyDown(ImGuiKey_LeftShift) or ImGui::IsKeyDown(ImGuiKey_RightShift)) and ImGui::IsMouseClicked(0) and hovered)
+					if (!add_point and can_add_point and (ImGui::IsKeyDown(ImGuiKey_LeftShift) or ImGui::IsKeyDown(ImGuiKey_RightShift)) and ImGui::IsMouseClicked(ImGuiMouseButton_Left) and hovered)
 					{
 						add_point_pos = ImGui::GetMousePos();
 						add_point = true;
 					}
-					else if (is_shape and !add_point and ImGui::IsMouseClicked(0) and hovered)
+					else if (is_shape and !add_point and ImGui::IsMouseClicked(ImGuiMouseButton_Left) and hovered)
 					{
 						auto& shape = selected_attribute->get<vt::shape>();
 						auto closest_target = shape.closest_point(current_ts, to_tex_pos(ImGui::GetMousePos()), from_pixels(10));
 						if (closest_target != nullptr)
 						{
-							ctx_.gizmo_target = closest_target;
+							ctx_.dispatch_event<gizmo_set_targets_event>(event_source_, { { closest_target } });
 						}
 					}
 
@@ -2731,7 +2739,7 @@ namespace vt
 						{
 							for (const auto& vertex : poly.vertices)
 							{
-								if (ctx_.gizmo_target == &vertex) return true;
+								if (ctx_.session.gizmo_contains_target(&vertex)) return true;
 							}
 							return false;
 						});
@@ -2792,11 +2800,13 @@ namespace vt
 									next_it = polygon.vertices.begin();
 								}
 
-								ctx_.gizmo_target = &*polygon.vertices.insert(next_it, to_tex_pos(pos));
+								auto new_target = &*polygon.vertices.insert(next_it, to_tex_pos(pos));
+								ctx_.dispatch_event<gizmo_set_targets_event>(event_source_, { { new_target } });
 							}
 							else
 							{
-								ctx_.gizmo_target = &*polygon.vertices.insert(closest_it, to_tex_pos(pos));
+								auto new_target = &*polygon.vertices.insert(closest_it, to_tex_pos(pos));
+								ctx_.dispatch_event<gizmo_set_targets_event>(event_source_, { { new_target } });
 							}
 						}
 					}
@@ -2869,7 +2879,7 @@ namespace vt
 
 					if (!is_keyframe and has_target)
 					{
-						ctx_.gizmo_target = nullptr;
+						ctx_.dispatch_event<gizmo_clear_targets_event>(event_source_);
 					}
 
 					if (last_focused and has_target and is_keyframe)
@@ -2921,8 +2931,8 @@ namespace vt
 							point_pos.x = std::clamp(translation[0], 0.0f, tex_size.x);
 							point_pos.y = std::clamp(translation[1], 0.0f, tex_size.y);
 
-							ctx_.gizmo_target->at(0) = (uint32_t)point_pos.x;
-							ctx_.gizmo_target->at(1) = (uint32_t)point_pos.y;
+							utils::vec2<uint32_t> offset{ (uint32_t)(point_pos.x - start_pos.x), (uint32_t)(point_pos.y - start_pos.y) };
+							ctx_.dispatch_event<gizmo_move_targets_event>(event_source_, ctx_.session.gizmo_targets(), offset);
 						}
 					}
 
