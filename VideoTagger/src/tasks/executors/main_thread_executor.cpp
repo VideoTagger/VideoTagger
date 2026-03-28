@@ -50,9 +50,14 @@ namespace vt
 		}
 	}
 
-	void main_thread_executor::run(const prioritized_task& task)
+	void main_thread_executor::run(const wrapped_task& task)
 	{
 		std::scoped_lock lock(mutex_);
 		queues_[static_cast<size_t>(task.priority())].push(task.task());
+	}
+
+    void main_thread_executor::wait_for_all()
+    {
+		run_all();
 	}
 }

@@ -14,6 +14,7 @@
 #include <scripts/scripting_engine.hpp>
 #include <ImGuizmo.h>
 #include <events/system/system_color_scheme_changed_event.hpp>
+#include <updates/update_manager.hpp>
 
 namespace vt
 {
@@ -48,6 +49,7 @@ namespace vt
 	bool app::init(const system_window_config& main_config)
 	{
 		debug::init();
+		update_manager::init();
 
 		SDL_SetHint(SDL_HINT_WINDOWS_NO_CLOSE_ON_ALT_F4, "1");
 		SDL_SetHint(SDL_HINT_IME_SHOW_UI, "1");
@@ -167,6 +169,7 @@ namespace vt
 	void app::shutdown()
 	{
 		if (ctx_.state_ != app_state::shutdown) return;
+		update_manager::shutdown();
 
 		ImGui_ImplOpenGL3_Shutdown();
 		ImGui_ImplSDL2_Shutdown();
@@ -180,7 +183,7 @@ namespace vt
 
 	void app::handle_tasks()
 	{
-		ctx_.tasks.main_thread().run_some(std::chrono::milliseconds{ 32 });
+		ctx_.tasks.on_main().run_some(std::chrono::milliseconds{ 32 });
 	}
 
 	void app::handle_events()

@@ -521,11 +521,11 @@ namespace vt
 				debug::log("Finished fetching themes");
 				return result;
 			}, priority)
-			.then(ctx_.tasks.main_thread(), [](const utils::file_node& theme_list)
+			.then(ctx_.tasks.on_main(), [](const utils::file_node& theme_list)
 			{
 				debug::log("Updating theme list");
 				ctx_.themes = theme_list;
-			}, priority);
+			}, nullptr, priority);
 		});
 
 		ctx_.add_event_listener<fetch_scripts_event>([this](const fetch_scripts_event& event)
@@ -537,11 +537,11 @@ namespace vt
 				debug::log("Finished fetching scripts");
 				return result;
 			}, task_priority::low)
-			.then(ctx_.tasks.main_thread(), [](const utils::file_node& script_list)
+			.then(ctx_.tasks.on_main(), [](const utils::file_node& script_list)
 			{
 				debug::log("Updating script list");
 				ctx_.scripts = script_list;
-			}, task_priority::low);
+			}, nullptr, task_priority::low);
 		});
 	}
 
@@ -724,6 +724,8 @@ namespace vt
 			ctx_.script_eng.interrupt();
 			return;
 		}
+
+		ctx_.tasks.wait_for_all();
 
 		if (ctx_.current_project.has_value())
 		{
@@ -2041,7 +2043,7 @@ namespace vt
 					{
 						return update_manager::check_for_updates();
 					})
-					.then(ctx_.tasks.main_thread(), [](const std::optional<update_info>& update)
+					.then(ctx_.tasks.on_main(), [](const std::optional<update_info>& update)
 					{
 						if (update.has_value())
 						{

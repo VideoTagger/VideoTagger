@@ -4,10 +4,10 @@
 
 namespace vt
 {
-	struct prioritized_task
+	struct wrapped_task
 	{
 	public:
-		prioritized_task(const std::function<void()>& task, task_priority priority) : task_{ task }, priority_{ priority } {}
+		wrapped_task(const std::function<void()>& task, task_priority priority) : task_{ task }, priority_{ priority } {}
 
 	private:
 		std::function<void()> task_;
