@@ -9,8 +9,8 @@ services:
       - build_cache:/app/build
     command: >
       bash -c "
-      cmake --preset=linux-shipping &&
-      cmake --build --target install --preset=linux-shipping
+      cmake --preset=linux-x64-shipping &&
+      cmake --build --target install --preset=linux-x64-shipping
       "
 volumes:
   build_cache:
