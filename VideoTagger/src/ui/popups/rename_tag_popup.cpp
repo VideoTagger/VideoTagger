@@ -32,14 +32,14 @@ namespace vt::ui
 		{
 			switch (id)
 			{
-			case 0:
-			{
-				auto& tags = ctx_.current_project->tags;
-				ctx_.dispatch_event<tag_rename_request_event>(event_source_, tags, old_name_, new_name_);
-				close();
-				break;
-			}
-			default: close(); break;
+				case 0:
+				{
+					auto& tags = ctx_.current_project->tags;
+					ctx_.dispatch_event<tag_rename_request_event>(event_source_, tags, old_name_, new_name_);
+					close();
+					break;
+				}
+				default: close(); break;
 			}
 		});
 	}

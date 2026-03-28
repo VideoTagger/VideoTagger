@@ -31,23 +31,20 @@ namespace vt
 		);
 	}
 
-	script_handle::script_handle(std::future<bool>&& promise) : has_progress{}
-	{
-		promise_ = std::move(promise);
-	}
+	script_handle::script_handle(vt::task<bool>&& task) : task_{ std::move(task) }, has_progress{} {}
 
-	std::future<bool>& script_handle::promise()
+	task<bool>& script_handle::task()
 	{
-		return promise_;
+		return task_;
 	}
 
 	bool script_handle::has_finished() const
 	{
-		return promise_.wait_for(std::chrono::seconds(0)) == std::future_status::ready;
+		return task_.is_ready();
 	}
 
 	void script_handle::wait()
 	{
-		promise_.wait();
+		task_.result();
 	}
 }

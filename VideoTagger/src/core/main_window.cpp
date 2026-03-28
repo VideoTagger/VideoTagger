@@ -719,7 +719,7 @@ namespace vt
 
 	void main_window::on_close_project(bool should_shutdown)
 	{
-		if (ctx_.script_handle.has_value())
+		if (ctx_.script_handle.has_value() and !ctx_.script_handle->has_finished())
 		{
 			ctx_.script_eng.interrupt();
 			return;
@@ -2384,11 +2384,14 @@ namespace vt
 		{
 			ctx_.options.render();
 		}
-
-		if (ctx_.win_cfg.show_script_progress)
+		
+		if (ctx_.script_progress_popup != nullptr)
 		{
-			ctx_.script_progress.open();
-			ctx_.script_progress.render(ctx_.win_cfg.show_script_progress);
+			ctx_.script_progress_popup->open_and_render(!ctx_.script_progress_popup->is_open());
+			if (!ctx_.script_progress_popup->is_open())
+			{
+				ctx_.script_progress_popup.reset();
+			}
 		}
 
 		if (ctx_.segments_move_conflict_popup != nullptr)
