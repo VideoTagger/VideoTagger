@@ -6,7 +6,7 @@
 
 namespace vt::ui
 {
-	script_progress_popup::script_progress_popup(std::optional<bool*> open) : modal_popup{ "script-progress-aa", open, ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoResize } {}
+	script_progress_popup::script_progress_popup(std::optional<bool*> open) : modal_popup{ "script-progress", open, ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoResize } {}
 
 	void script_progress_popup::pre_style()
 	{
