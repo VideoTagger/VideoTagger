@@ -66,7 +66,6 @@
 #include <events/tags/tag_display_changed_event.hpp>
 
 #include <events/gizmo/gizmo_move_targets_event.hpp>
-#include <events/gizmo/gizmo_clear_targets_event.hpp>
 #include <events/gizmo/gizmo_set_targets_event.hpp>
 
 #include <events/scripts/script_end_event.hpp>
@@ -2488,12 +2487,12 @@ namespace vt
 			{
 				ctx_.last_focused_video = std::nullopt;
 				ctx_.set_selected_attribute(nullptr);
-				ctx_.dispatch_event<gizmo_clear_targets_event>(event_source_);
+				ctx_.dispatch_event<gizmo_set_targets_event>(event_source_);
 			}
 
 			if (!is_shape)
 			{
-				ctx_.dispatch_event<gizmo_clear_targets_event>(event_source_);
+				ctx_.dispatch_event<gizmo_set_targets_event>(event_source_);
 			}
 
 
@@ -2854,14 +2853,20 @@ namespace vt
 										bool is_selected = selected_attribute == &attr;
 										bool show_points = is_selected;
 
-										const auto& shape = attr.get<vt::shape>();
+										auto& shape = attr.get<vt::shape>();
 										draw_list->PushClipRect(top_left, bottom_right, true);
-										shape.draw(current_ts, shape.interpolate, from_tex_pos, from_pixels, tex_size, size, is_selected ? ctx_.current_theme.get_rgba(theme_color::selection_normal) : tag.color, fill_color, show_points, [&, this](size_t i)
+										
+										shape.draw(current_ts, !is_keyframe and shape.interpolate, from_tex_pos, from_pixels, tex_size, size, is_selected ? ctx_.current_theme.get_rgba(theme_color::selection_normal) : tag.color, fill_color, show_points, [&, this](size_t i, const std::vector<utils::vec2<uint32_t>*>& vertices)
 										{
-											if (ImGui::IsMouseClicked(0) and hovered)
+											if (ImGui::IsMouseClicked(ImGuiMouseButton_Left) and hovered)
 											{
 												ctx_.dispatch_event<segment_select_request_event>(event_source_, segment_storage, tag.name, segment_id);
 												ctx_.set_selected_attribute(&attr);
+
+												if (is_keyframe and !vertices.empty() and !ImGuizmo::IsOver())
+												{
+													ctx_.dispatch_event<gizmo_set_targets_event>(event_source_, vertices);
+												}
 											}
 											tooltip = fmt::format("Tag: {}\nAttribute: {}\nID: {}", tag.name, attr_name, i + 1);
 										});
@@ -2879,7 +2884,7 @@ namespace vt
 
 					if (!is_keyframe and has_target)
 					{
-						ctx_.dispatch_event<gizmo_clear_targets_event>(event_source_);
+						ctx_.dispatch_event<gizmo_set_targets_event>(event_source_);
 					}
 
 					if (last_focused and has_target and is_keyframe)

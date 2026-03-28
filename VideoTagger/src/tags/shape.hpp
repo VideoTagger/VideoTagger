@@ -322,7 +322,7 @@ namespace vt
 			}
 		}
 
-		void draw(timestamp current_ts, bool lerp, const std::function<ImVec2(const ImVec2&)>& to_local_pos, const std::function<float(uint32_t)>& from_pixels, const ImVec2& tex_size, const ImVec2& viewport_size, uint32_t outline_color, uint32_t fill_color, bool show_points, const std::function<void(size_t)>& on_mouse_over) const;
+		void draw(timestamp current_ts, bool lerp, const std::function<ImVec2(const ImVec2& tex_pos)>& to_local_pos, const std::function<float(uint32_t pixels)>& from_pixels, const ImVec2& tex_size, const ImVec2& viewport_size, uint32_t outline_color, uint32_t fill_color, bool show_points, const std::function<void(size_t i, const std::vector<utils::vec2<uint32_t>*>& vertices)>& on_mouse_over);
 		void draw_data(const utils::vec2<uint32_t>& max_size, timestamp start_ts, timestamp end_ts, timestamp ts, bool is_timestamp, bool modifiable, bool& dirty_flag, const std::function<void(timestamp)>& on_seek);
 	};
 

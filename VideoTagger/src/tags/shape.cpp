@@ -14,7 +14,6 @@
 
 #include <widgets/time_input.hpp>
 #include <ui/widgets/common.hpp>
-#include <events/gizmo/gizmo_clear_targets_event.hpp>
 
 
 namespace vt
@@ -56,7 +55,7 @@ namespace vt
 			if (modifiable and ui::icon_button(icons::add))
 			{
 				vertices.push_back({});
-				ctx_.dispatch_event<gizmo_clear_targets_event>("shape-instance");
+				ctx_.dispatch_event<gizmo_set_targets_event>("shape-instance");
 			}
 			if (modifiable)
 			{
@@ -117,7 +116,7 @@ namespace vt
 		}
 	}
 
-	void shape::draw(timestamp current_ts, bool lerp, const std::function<ImVec2(const ImVec2&)>& to_local_pos, const std::function<float(uint32_t)>& from_pixels, const ImVec2& tex_size, const ImVec2& viewport_size, uint32_t outline_color, uint32_t fill_color, bool show_points, const std::function<void(size_t)>& on_mouse_over) const
+	void shape::draw(timestamp current_ts, bool lerp, const std::function<ImVec2(const ImVec2& tex_pos)>& to_local_pos, const std::function<float(uint32_t pixels)>& from_pixels, const ImVec2& tex_size, const ImVec2& viewport_size, uint32_t outline_color, uint32_t fill_color, bool show_points, const std::function<void(size_t i, const std::vector<utils::vec2<uint32_t>*>& vertices)>& on_mouse_over)
 	{
 		float point_size = from_pixels(5);
 
@@ -134,8 +133,10 @@ namespace vt
 			case shape::type::none: return;
 			case shape::type::circle:
 			{
-				static auto draw_circle = [&](const circle& v, size_t i)
+				static auto draw_circle = [&](circle& v, size_t i)
 				{
+					std::vector<utils::vec2<uint32_t>*> verts;
+
 					float viewport_diagonal = std::sqrt(viewport_size.x * viewport_size.x + viewport_size.y * viewport_size.y);
 					float tex_diagonal = std::sqrt(tex_size.x * tex_size.x + tex_size.y * tex_size.y);
 					float scaled_radius = (float)v.radius * viewport_diagonal / tex_diagonal;
@@ -147,7 +148,8 @@ namespace vt
 
 					if (utils::intersection::is_in_circle(mouse_pos, local_pos, scaled_radius))
 					{
-						on_mouse_over(i);
+						verts.push_back(&v.pos);
+						on_mouse_over(i, verts);
 					}
 
 					if (show_points)
@@ -156,9 +158,9 @@ namespace vt
 					}
 				};
 
-				const auto it_prev = get_prev_or_current_keyframe<circle>(current_ts);
+				auto it_prev = get_prev_or_current_keyframe<circle>(current_ts);
 				if (!it_prev.has_value() or current_ts < it_prev.value()->first) return;
-				const auto& [keyframe_prev, regions_prev] = *it_prev.value();
+				auto& [keyframe_prev, regions_prev] = *it_prev.value();
 				auto size_prev = regions_prev.size();
 
 				const auto it_next = get_next_or_current_keyframe<circle>(current_ts);
@@ -173,7 +175,8 @@ namespace vt
 					//if region size changed then dont lerp those shapes
 					for (size_t i = 0; i < std::min(size_prev, size_next); ++i)
 					{
-						draw_circle(math::lerp(regions_prev[i], regions_next[i], alpha), i);
+						auto new_circle = math::lerp(regions_prev[i], regions_next[i], alpha);
+						draw_circle(new_circle, i);
 					}
 				}
 				else
@@ -187,8 +190,10 @@ namespace vt
 			break;
 			case shape::type::rectangle:
 			{
-				static auto draw_rect = [&](const rectangle& v, size_t i)
+				static auto draw_rect = [&](rectangle& v, size_t i)
 				{
+					std::vector<utils::vec2<uint32_t>*> verts;
+
 					auto min = to_local_pos(to_imvec2(v.vertices.at(0)));
 					auto max = to_local_pos(to_imvec2(v.vertices.at(1)));
 
@@ -197,7 +202,10 @@ namespace vt
 
 					if (utils::intersection::is_in_rect(mouse_pos, ImRect{ min, max }))
 					{
-						on_mouse_over(i);
+						verts.push_back(&v.vertices.at(0));
+						verts.push_back(&v.vertices.at(1));
+
+						on_mouse_over(i, verts);
 					}
 
 					if (show_points)
@@ -219,9 +227,9 @@ namespace vt
 					}
 				};
 
-				const auto it_prev = get_prev_or_current_keyframe<rectangle>(current_ts);
+				auto it_prev = get_prev_or_current_keyframe<rectangle>(current_ts);
 				if (!it_prev.has_value() or current_ts < it_prev.value()->first) return;
-				const auto& [keyframe_prev, regions_prev] = *it_prev.value();
+				auto& [keyframe_prev, regions_prev] = *it_prev.value();
 				auto size_prev = regions_prev.size();
 
 				const auto it_next = get_next_or_current_keyframe<rectangle>(current_ts);
@@ -236,7 +244,8 @@ namespace vt
 					//if region size changed then dont lerp those shapes
 					for (size_t i = 0; i < std::min(size_prev, size_next); ++i)
 					{
-						draw_rect(math::lerp(regions_prev[i], regions_next[i], alpha), i);
+						auto new_rect = math::lerp(regions_prev[i], regions_next[i], alpha);
+						draw_rect(new_rect, i);
 					}
 				}
 				else
@@ -250,8 +259,10 @@ namespace vt
 			break;
 			case shape::type::polygon:
 			{
-				static auto draw_poly = [&](const polygon& v, size_t i)
+				static auto draw_poly = [&](polygon& v, size_t i)
 				{
+					std::vector<utils::vec2<uint32_t>*> verts;
+
 					std::vector<ImVec2> vertices(v.vertices.size());
 					auto vert_int_size = static_cast<int>(vertices.size());
 					for (size_t i = 0; i < vertices.size(); ++i)
@@ -261,7 +272,11 @@ namespace vt
 
 					if (utils::intersection::is_in_polygon(mouse_pos, vertices))
 					{
-						on_mouse_over(i);
+						for (auto& vert : v.vertices)
+						{
+							verts.push_back(&vert);
+						}
+						on_mouse_over(i, verts);
 					}
 
 					if (utils::intersection::is_convex_polygon(vertices))
@@ -283,9 +298,9 @@ namespace vt
 					}
 				};
 
-				const auto it_prev = get_prev_or_current_keyframe<polygon>(current_ts);
+				auto it_prev = get_prev_or_current_keyframe<polygon>(current_ts);
 				if (!it_prev.has_value() or current_ts < it_prev.value()->first) return;
-				const auto& [keyframe_prev, regions_prev] = *it_prev.value();
+				auto& [keyframe_prev, regions_prev] = *it_prev.value();
 				auto size_prev = regions_prev.size();
 
 				const auto it_next = get_next_or_current_keyframe<polygon>(current_ts);
@@ -300,7 +315,8 @@ namespace vt
 					//if region size changed then dont lerp those shapes
 					for (size_t i = 0; i < std::min(size_prev, size_next); ++i)
 					{
-						draw_poly(math::lerp(regions_prev[i], regions_next[i], alpha), i);
+						auto new_poly = math::lerp(regions_prev[i], regions_next[i], alpha);
+						draw_poly(new_poly, i);
 					}
 				}
 				else
@@ -526,7 +542,7 @@ namespace vt
 				},
 				[&dirty_flag]()
 				{
-					ctx_.dispatch_event<gizmo_clear_targets_event>("circle-instance");
+					ctx_.dispatch_event<gizmo_set_targets_event>("circle-instance");
 					dirty_flag = true;
 				},
 				on_seek);
@@ -566,7 +582,7 @@ namespace vt
 				},
 				[&dirty_flag]()
 				{
-					ctx_.dispatch_event<gizmo_clear_targets_event>("rectangle-instance");
+					ctx_.dispatch_event<gizmo_set_targets_event>("rectangle-instance");
 					dirty_flag = true;
 				},
 				on_seek);
@@ -606,7 +622,7 @@ namespace vt
 				},
 				[&dirty_flag]()
 				{
-					ctx_.dispatch_event<gizmo_clear_targets_event>("polygon-instance");
+					ctx_.dispatch_event<gizmo_set_targets_event>("polygon-instance");
 					dirty_flag = true;
 				},
 				on_seek);

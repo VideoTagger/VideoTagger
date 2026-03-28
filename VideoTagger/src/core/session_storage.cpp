@@ -21,7 +21,6 @@
 
 #include <events/player/video_group_change_request_event.hpp>
 #include <events/player/video_group_changed_event.hpp>
-#include <events/gizmo/gizmo_clear_targets_event.hpp>
 #include <events/gizmo/gizmo_set_targets_event.hpp>
 #include <events/gizmo/gizmo_move_targets_event.hpp>
 
@@ -206,17 +205,29 @@ namespace vt
 	{
 		ctx_.add_event_listener<gizmo_move_targets_event>([this](const gizmo_move_targets_event& event)
 		{
-			for (const auto& target : gizmo_targets_)
+			auto type = event.move_type();
+			switch (type)
 			{
-				target->at(0) += event.value().at(0);
-				target->at(1) += event.value().at(1);
+				case gizmo_move_type::absolute:
+				{
+					for (const auto& target : gizmo_targets_)
+					{
+						target->at(0) = event.value().at(0);
+						target->at(1) = event.value().at(1);
+					}
+					break;
+				}
+				case gizmo_move_type::offset:
+				{
+					for (const auto& target : gizmo_targets_)
+					{
+						target->at(0) += event.value().at(0);
+						target->at(1) += event.value().at(1);
+					}
+					break;
+				}
 			}
 			ctx_.is_project_dirty = true;
-		});
-
-		ctx_.add_event_listener<gizmo_clear_targets_event>([this](const gizmo_clear_targets_event& event)
-		{
-			gizmo_targets_.clear();
 		});
 
 		ctx_.add_event_listener<gizmo_set_targets_event>([this](const gizmo_set_targets_event& event)

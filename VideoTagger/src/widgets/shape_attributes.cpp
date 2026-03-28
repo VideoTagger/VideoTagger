@@ -3,7 +3,7 @@
 #include <core/app_context.hpp>
 #include <ui/icons.hpp>
 #include <events/player/seek_request_event.hpp>
-#include <events/gizmo/gizmo_clear_targets_event.hpp>
+#include <events/gizmo/gizmo_set_targets_event.hpp>
 
 namespace vt::widgets
 {
@@ -70,7 +70,7 @@ namespace vt::widgets
 			}
 			else
 			{
-				ctx_.dispatch_event<gizmo_clear_targets_event>(ev_src);
+				ctx_.dispatch_event<gizmo_set_targets_event>(ev_src);
 				ui::centered_text("Select a shape attribute in the inspector to display its properties...", ImGui::GetContentRegionMax());
 			}
 		}
