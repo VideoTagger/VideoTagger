@@ -50,6 +50,9 @@ namespace vt::ui
 		elapsed_acc += elapsed_time;
 
 		{
+			auto& main_win = ctx_.main_window;
+			auto taskbar = main_win->taskbar_proxy();
+
 			py::gil_scoped_acquire lock{};
 			std::string suffix = std::string(dot_count, '.') + std::string(max_dots - dot_count, ' ');
 			std::string info = utils::string::trim_whitespace(script->progress_info());
@@ -57,10 +60,14 @@ namespace vt::ui
 			ImGui::Text("%s%s", info.empty() ? "Script Running" : info.c_str(), suffix.c_str());
 			if (ctx_.script_handle->has_progress)
 			{
-				ImGui::ProgressBar(script->progress(), ImVec2{ width, ImGui::GetTextLineHeight() / 3.f }, "");
+				auto progress = script->progress();
+				ImGui::ProgressBar(progress, ImVec2{ width, ImGui::GetTextLineHeight() / 3.f }, "");
+				taskbar.set_state(taskbar_state::normal);
+				taskbar.set_value(progress, 1.0f, 0.f);
 			}
 			else
 			{
+				taskbar.set_state(taskbar_state::indeterminate);
 				ImGui::ProgressBar(-1.f * static_cast<float>(ImGui::GetTime()), ImVec2{ width, ImGui::GetTextLineHeight() / 3.f }, "");
 			}
 		}

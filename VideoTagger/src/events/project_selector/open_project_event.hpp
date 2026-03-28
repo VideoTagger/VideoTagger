@@ -12,7 +12,7 @@ namespace vt
 		project_info info_;
 
 	public:
-		/// @return Project information of the project
+		///@return Project information of the project
 		constexpr const project_info& project() const
 		{
 			return info_;

@@ -273,9 +273,6 @@ namespace vt
 
 	void app_context::run_script(const std::filesystem::path& script_path)
 	{
-		auto& console = ctx_.get_window<widgets::console>();
-		console.on_run_script();
-
 		ctx_.script_eng.run(script_path);
 		ctx_.script_progress_popup = ui::new_popup<ui::script_progress_popup>(nullptr);
 	}

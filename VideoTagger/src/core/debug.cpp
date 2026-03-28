@@ -8,7 +8,7 @@
 #ifndef WIN32_LEAN_AND_MEAN
 	#define WIN32_LEAN_AND_MEAN
 #endif
-#ifdef _WIN32
+#ifdef VT_OS_WINDOWS
 	#include <Windows.h>
 #endif
 

@@ -172,6 +172,9 @@ namespace vt
 	system_window::~system_window()
 	{
 		SDL_GL_DeleteContext(gl_ctx);
+
+		auto tb = taskbar_proxy();
+		tb.reset();
 	}
 
 	void system_window::show(bool value)
@@ -374,6 +377,11 @@ namespace vt
 	{
 		SDL_RestoreWindow(window);
 	}
+
+    taskbar system_window::taskbar_proxy()
+    {
+		return taskbar{ window };
+    }
 
 	utils::vec2<int> system_window::position() const
 	{

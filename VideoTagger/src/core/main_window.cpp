@@ -65,6 +65,8 @@
 #include <events/tags/tag_change_display_request_event.hpp>
 #include <events/tags/tag_display_changed_event.hpp>
 
+#include <events/scripts/script_end_event.hpp>
+
 #ifndef VT_VERSION
 	#error VT_VERSION is not defined
 #endif
@@ -150,6 +152,12 @@ namespace vt
 
 	void main_window::register_listeners()
 	{
+		ctx_.add_event_listener<script_end_event>([this](const script_end_event& event)
+		{
+			auto tb = taskbar_proxy();
+			tb.reset();
+		});
+
 		ctx_.add_event_listener<system_window_close_event>([this](const system_window_close_event& event)
 		{
 			if (!event.is_from(*this)) return;

@@ -17,6 +17,8 @@
 #include "bindings/proxies.hpp"
 #include "script.hpp"
 #include <core/platform.hpp>
+#include <events/scripts/script_start_event.hpp>
+#include <events/scripts/script_end_event.hpp>
 
 namespace vt
 {
@@ -273,6 +275,7 @@ namespace vt
 	{
 		auto task = ctx_.tasks.run([this, script_path]() mutable
 		{
+			ctx_.dispatch_event<script_start_event>("scripting-engine", script_path);
 			py::gil_scoped_acquire lock{};
 			try
 			{
@@ -388,6 +391,7 @@ namespace vt
 			{
 				debug::error("Failed to run script '{}'", script_path.u8string());
 			}
+			ctx_.dispatch_event<script_end_event>("scripting-engine", script_path);
 			ctx_.script_progress_popup.reset();
 		});
 		ctx_.script_handle = script_handle(std::move(task));
