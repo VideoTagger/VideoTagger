@@ -105,6 +105,7 @@ namespace vt
 		importer_id_{ std::move(importer_id) }, id_{ make_video_id_from_json(json) }
 	{
 		//TODO: could verify the hash
+		metadata_.deserialize(json);
 		if (json.contains("file-path"))
 		{
 			std::string path = json.at("file-path");
@@ -115,16 +116,22 @@ namespace vt
 			}
 
 			file_path_ = path;
-
-			metadata_.deserialize(json);
+			auto file_hash = utils::hash::sha256_file(path);
+			if (file_hash.empty())
+			{
+				debug::warn("Failed to calculate hash for file at path: {}", path);
+				return;
+			}
 
 			make_metadata_include_fields fields;
-			fields.title = !metadata_.title.has_value();
-			fields.width = true;
-			fields.height = true;
-			fields.fps = !metadata_.fps.has_value();
-			fields.duration = !metadata_.duration.has_value();
-			fields.sha256 = !metadata_.sha256.has_value();
+			if (metadata_.sha256.has_value() and std::equal(file_hash.begin(), file_hash.end(), metadata_.sha256->begin()))
+			{
+				fields.title = !metadata_.title.has_value();
+				fields.width = metadata_.width == 0;
+				fields.height = metadata_.height == 0;
+				fields.fps = !metadata_.fps.has_value();
+				fields.duration = !metadata_.duration.has_value();
+			}
 
 			write_metadata_fields(metadata_, make_video_metadata_from_path(file_path_, fields), fields);
 		}
@@ -190,6 +197,11 @@ namespace vt
 	bool video_resource::has_title() const
 	{
 		return metadata_.title.has_value();
+	}
+
+	bool video_resource::has_thumbnail() const
+	{
+		return thumbnail_.has_value();
 	}
 
 	video_stream video_resource::video() const
@@ -332,6 +344,16 @@ namespace vt
 	void video_resource::on_save(nlohmann::ordered_json& json) const
 	{
 		
+	}
+
+	void video_resource::mark_for_removal()
+	{
+		marked_for_removal_ = true;
+	}
+
+	bool video_resource::is_marked_for_removal() const
+	{
+		return marked_for_removal_;
 	}
 
 	std::string video_resource_metadata::sha256_string() const

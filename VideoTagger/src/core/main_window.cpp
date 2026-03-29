@@ -2,7 +2,9 @@
 #include "main_window.hpp"
 #include "app_context.hpp"
 #include <fmt/format.h>
+#define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
+#define STB_IMAGE_WRITE_IMPLEMENTATION
 #include <stb_image_write.h>
 #include <ui/windows/tag_manager.hpp>
 #include <widgets/video_widget.hpp>
@@ -140,13 +142,12 @@ namespace vt
 			return;
 		}
 
-		auto& importer = ctx_.get_video_importer<importer_type>();
-
-		ctx_.tasks.run([&importer, args...]() mutable -> std::shared_ptr<video_resource>
+		ctx_.session.tasks.run([args...]() mutable
 		{
+			auto& importer = ctx_.get_video_importer<importer_type>();
 			return importer.import_video(std::forward<import_args>(args)...);
 		})
-		.then(ctx_.tasks.on_main(), [](std::shared_ptr<video_resource>& vid_res)
+		.then(ctx_.session.tasks.on_main(), [](std::shared_ptr<video_resource>& vid_res)
 		{
 			if (vid_res == nullptr)
 			{
@@ -736,14 +737,20 @@ namespace vt
 
 			for (auto& group_inf : ctx_.current_project->video_groups.at(event.new_group_id()))
 			{
-				auto& vid_resource = ctx_.current_project->videos.get(group_inf.id);
-				if (!vid_resource.playable())
+				auto vid_resource = ctx_.current_project->videos.get(group_inf.id);
+				if (vid_resource == nullptr)
 				{
-					debug::error("Video {} with hash {} is not available", vid_resource.title(), vid_resource.sha256());
+					debug::error("Video resource with id {} not found for video group {}", group_inf.id, event.new_group_id());
 					continue;
 				}
 
-				ctx_.displayed_videos.insert(group_inf.id, vid_resource.video(), group_inf.offset, vid_resource.width(), vid_resource.height());
+				if (!vid_resource->playable())
+				{
+					debug::error("Video {} with hash {} is not available", vid_resource->title(), vid_resource->sha256());
+					continue;
+				}
+
+				ctx_.displayed_videos.insert(group_inf.id, vid_resource->video(), group_inf.offset, vid_resource->width(), vid_resource->height());
 			}
 
 			ctx_.reset_player_docking = true;
@@ -788,11 +795,24 @@ namespace vt
 				bool from_cache;
 			};
 
-			ctx_.tasks.run([this, video_id = event.video_id(), ignore_cache = event.ignore_cache()]() mutable -> std::optional<thumbnail_load_result>
-			{
-				const auto& vid_res = ctx_.current_project->videos.get(video_id);
+			auto token = std::make_shared<cancellation_token>();
+			std::set<std::string> task_tags{ "video_resource", video_id_to_task_tag(event.video_id()) };
 
-				std::filesystem::path thumbnail_path = ctx_.thumbnail_dir_filepath / vid_res.sha256();
+			ctx_.session.tasks.run([video_id = event.video_id(), ignore_cache = event.ignore_cache()](cancellation_token& token) mutable -> std::optional<thumbnail_load_result>
+			{
+				auto vid_res = ctx_.current_project->videos.get(video_id);
+				if (vid_res == nullptr)
+				{
+					debug::error("Video resource with id {} not found", video_id);
+					return std::nullopt;
+				}
+
+				std::filesystem::path thumbnail_path = ctx_.thumbnail_dir_filepath / vid_res->sha256();
+
+				if (token.is_cancelled())
+				{
+					return std::nullopt;
+				}
 
 				if (!ignore_cache)
 				{
@@ -821,7 +841,12 @@ namespace vt
 					}
 				}
 
-				auto thumbnail = vid_res.generate_thumbnail();
+				if (token.is_cancelled())
+				{
+					return std::nullopt;
+				}
+
+				auto thumbnail = vid_res->generate_thumbnail();
 				if (!thumbnail.has_value())
 				{
 					debug::error("Failed to generate thumbnail for video {}", video_id);
@@ -829,17 +854,27 @@ namespace vt
 				}
 
 				return thumbnail_load_result{ std::move(*thumbnail), false };
-			})
-			.then([video_id = event.video_id(), cache_result = event.cache_result()](const std::optional<thumbnail_load_result>& load_result) -> std::optional<thumbnail_load_result>
+			}, token, task_tags)
+			.then([video_id = event.video_id(), cache_result = event.cache_result()](const std::optional<thumbnail_load_result>& load_result, cancellation_token& token) -> std::optional<thumbnail_load_result>
 			{
 				if (!load_result.has_value())
 				{
 					return load_result;
 				}
 
-				auto& vid_res = ctx_.current_project->videos.get(video_id);
-				std::filesystem::path thumbnail_path = ctx_.thumbnail_dir_filepath / vid_res.sha256();
+				auto vid_res = ctx_.current_project->videos.get(video_id);
+				if (vid_res == nullptr)
+				{
+					debug::error("Video resource with id {} not found", video_id);
+					return std::nullopt;
+				}
+				std::filesystem::path thumbnail_path = ctx_.thumbnail_dir_filepath / vid_res->sha256();
 				const auto& [thumbnail, from_cache] = *load_result;
+
+				if (token.is_cancelled())
+				{
+					return std::nullopt;
+				}
 
 				if (cache_result and !from_cache)
 				{
@@ -851,7 +886,7 @@ namespace vt
 				}
 
 				return load_result;
-			})
+			}, token, task_tags)
 			.then(ctx_.tasks.on_main(), [video_id = event.video_id()](const std::optional<thumbnail_load_result>& load_result)
 			{
 				if (!load_result.has_value())
@@ -860,14 +895,19 @@ namespace vt
 				}
 
 				auto& [thumbnail, from_cache] = *load_result;
-				auto& vid_res = ctx_.current_project->videos.get(video_id);
-				vid_res.set_thumbnail(thumbnail.texture());
-			});
+				auto vid_res = ctx_.current_project->videos.get(video_id);
+				if (vid_res == nullptr)
+				{
+					debug::error("Video resource with id {} not found", video_id);
+					return;
+				}
+				vid_res->set_thumbnail(thumbnail.texture());
+			}, nullptr, task_tags);
 		});
 
 		ctx_.add_event_listener<video_start_download_request_event>([this](const video_start_download_request_event& event)
 		{
-			downloadable_video_resource* vid_res = dynamic_cast<downloadable_video_resource*>(&ctx_.current_project->videos.get(event.video_id()));
+			auto vid_res = ctx_.current_project->videos.get<downloadable_video_resource>(event.video_id());
 			if (vid_res == nullptr)
 			{
 				debug::error("Video with id {} is not a downloadable resource", event.video_id());
@@ -880,7 +920,10 @@ namespace vt
 				return;
 			}
 
-			ctx_.tasks.run([vid_res]()
+			auto token = std::make_shared<cancellation_token>();
+			std::set<std::string> task_tags{ "video_resource", video_id_to_task_tag(event.video_id()) };
+
+			ctx_.session.tasks.run([vid_res](cancellation_token& token)
 			{
 				video_download_result result{ video_download_status::failed };
 				if (!vid_res->init_download())
@@ -891,10 +934,15 @@ namespace vt
 				result.status = video_download_status::in_progress;
 				while (result.status == video_download_status::in_progress)
 				{
+					if (token.is_cancelled())
+					{
+						vid_res->cancel_download();
+					}
+
 					result = vid_res->update_download();
 				}
 				return result;
-			})
+			}, token, task_tags)
 			.then(ctx_.tasks.on_main(), [vid_res](const video_download_result& download_result)
 			{
 				vid_res->finalize_download(download_result);
@@ -902,6 +950,7 @@ namespace vt
 				switch (download_result.status)
 				{
 					case video_download_status::completed:
+						ctx_.is_project_dirty = true;
 						ctx_.dispatch_event<video_download_finished_event>("video_resource", vid_res->id(), true);
 						break;
 
@@ -915,14 +964,29 @@ namespace vt
 
 					default: break;
 				}
-			});
+			}, nullptr, task_tags);
 
 			ctx_.dispatch_event<video_download_started_event>(event_source_, event.video_id());
 		});
 
+		ctx_.add_event_listener<video_download_finished_event>([this](const video_download_finished_event& event)
+		{
+			auto vid_res = ctx_.current_project->videos.get<downloadable_video_resource>(event.video_id());
+			if (vid_res == nullptr)
+			{
+				debug::error("Video with id {} is not a downloadable resource", event.video_id());
+				return;
+			}
+
+			if (event.successful() and !vid_res->has_thumbnail())
+			{
+				ctx_.dispatch_event<video_load_thumbnail_request_event>("video_resource", event.video_id(), false, true);
+			}
+		});
+
 		ctx_.add_event_listener<video_cancel_download_request_event>([this](const video_cancel_download_request_event& event)
 		{
-			downloadable_video_resource* vid_res = dynamic_cast<downloadable_video_resource*>(&ctx_.current_project->videos.get(event.video_id()));
+			auto vid_res = ctx_.current_project->videos.get<downloadable_video_resource>(event.video_id());
 			if (vid_res == nullptr)
 			{
 				debug::error("Video with id {} is not a downloadable resource", event.video_id());
@@ -934,27 +998,48 @@ namespace vt
 
 		ctx_.add_event_listener<video_refresh_request_event>([this](const video_refresh_request_event& event)
 		{
-			auto& vid_res = ctx_.current_project->videos.get(event.video_id());
-
-			if (vid_res.can_async_refresh())
+			auto vid_res = ctx_.current_project->videos.get(event.video_id());
+			if (vid_res == nullptr)
 			{
-				ctx_.tasks.run([&vid_res]()
+				debug::error("Video resource with id {} not found", event.video_id());
+				return std::nullopt;
+			}
+
+			std::set<std::string> task_tags{ "video_resource", video_id_to_task_tag(event.video_id()) };
+
+			if (vid_res->can_async_refresh())
+			{
+				ctx_.session.tasks.run([vid_res]()
 				{
-					vid_res.refresh();
-				});
+					vid_res->refresh();
+				}, task_tags);
 			}
 			else
 			{
-				ctx_.tasks.run_on_main([&vid_res]()
+				ctx_.session.tasks.run_on_main([vid_res]()
 				{
-					vid_res.refresh();
-				});
+					vid_res->refresh();
+				}, task_tags);
 			}
 		});
 
 		ctx_.add_event_listener<video_delete_request_event>([this](const video_delete_request_event& event)
 		{
-			ctx_.tasks.run_on_main([this, video_id = event.video_id()]()
+			auto vid = ctx_.current_project->videos.get(event.video_id());
+			if (vid == nullptr)
+			{
+				return;
+			}
+			vid->mark_for_removal();
+
+			ctx_.session.tasks.run([video_id = event.video_id()]()
+			{
+				std::set<std::string> task_tags = { "video_resource", video_id_to_task_tag(video_id) };
+
+				ctx_.session.tasks.cancel_all_with_all(task_tags);
+				ctx_.session.tasks.await_all_with_all(task_tags);
+			})
+			.then(ctx_.tasks.on_main(), [this, video_id = event.video_id()]()
 			{
 				ctx_.current_project->remove_video(video_id);
 				ctx_.dispatch_event<video_deleted_event>(event_source_, video_id, true);
@@ -963,7 +1048,7 @@ namespace vt
 
 		ctx_.add_event_listener<video_delete_downloaded_file_request_event>([this](const video_delete_downloaded_file_request_event& event)
 		{
-			downloadable_video_resource* vid_res = dynamic_cast<downloadable_video_resource*>(&ctx_.current_project->videos.get(event.video_id()));
+			auto vid_res = ctx_.current_project->videos.get<downloadable_video_resource>(event.video_id());
 			if (vid_res == nullptr)
 			{
 				debug::error("Video with id {} is not a downloadable resource", event.video_id());

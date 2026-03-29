@@ -92,6 +92,7 @@ namespace vt
 
 		bool has_hash() const;
 		bool has_title() const;
+		bool has_thumbnail() const;
 
 		virtual bool playable() const = 0;
 		virtual video_stream video() const;
@@ -114,12 +115,16 @@ namespace vt
 		//when overloading call the function from parent
 		virtual void on_save(nlohmann::ordered_json& json) const;
 
+		void mark_for_removal();
+		bool is_marked_for_removal() const;
+
 	private:
 		video_id_t id_{};
 		std::string importer_id_;
 		video_resource_metadata metadata_;
 		std::optional<gl_texture> thumbnail_;
 		std::string file_path_;
+		bool marked_for_removal_ = false; //TODO: should probably be moved to video_pool
 	};
 
 	inline constexpr void write_metadata_fields(video_resource_metadata& target, const video_resource_metadata& source, make_metadata_include_fields fields)

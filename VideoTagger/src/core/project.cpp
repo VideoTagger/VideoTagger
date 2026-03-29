@@ -1,24 +1,11 @@
 #include "pch.hpp"
 #include "project.hpp"
 #include <utils/json.hpp>
-#include <utils/string.hpp>
 #include <core/debug.hpp>
-#include <widgets/time_input.hpp>
-#include <utils/color.hpp>
-#include <utils/hash.hpp>
-#include <utils/filesystem.hpp>
 #include "app_context.hpp"
-#include <video/downloadable_video_resource.hpp>
 #include <video/video_resource.hpp>
 
 #include <events/player/video_group_change_request_event.hpp>
-
-#include <events/video_resource/video_load_thumbnail_request_event.hpp>
-
-#define STB_IMAGE_IMPLEMENTATION
-#include <stb_image.h>
-#define STB_IMAGE_WRITE_IMPLEMENTATION
-#include <stb_image_write.h>
 
 static std::chrono::system_clock::time_point to_sys_time(const std::filesystem::file_time_type& ftime)
 {
@@ -180,15 +167,19 @@ namespace vt
 				json_group_videos = nlohmann::ordered_json::array();
 				for (auto& group_video_info : group)
 				{
-					auto& vid_resource = videos.get(group_video_info.id);
+					auto vid_resource = videos.get(group_video_info.id);
+					if (vid_resource == nullptr)
+					{
+						continue;
+					}
 
 					auto json_video = nlohmann::ordered_json::object();
 
-					json_video["title"] = vid_resource.title();
+					json_video["title"] = vid_resource->title();
 					json_video["id"] = std::to_string(group_video_info.id);
-					if (vid_resource.has_hash())
+					if (vid_resource->has_hash())
 					{
-						json_video["sha256"] = vid_resource.sha256();
+						json_video["sha256"] = vid_resource->sha256();
 					}
 					json_video["offset"] = timestamp{ std::chrono::duration_cast<std::chrono::milliseconds>(group_video_info.offset) };
 					json_group_videos.push_back(json_video);
@@ -392,9 +383,21 @@ namespace vt
 		//	}
 		//}
 
-		if (videos.erase(id))
+		auto erase_result = videos.erase(id);
+		switch (erase_result)
 		{
+		case vt::video_pool_erase_result::erased:
 			ctx_.is_project_dirty = true;
+			break;
+
+		case vt::video_pool_erase_result::has_references:
+			debug::error("Failed to remove video with id: {} because it has active references", id);
+			break;
+
+		case vt::video_pool_erase_result::not_found:
+			break;
+		default:
+			break;
 		}
 	}
 

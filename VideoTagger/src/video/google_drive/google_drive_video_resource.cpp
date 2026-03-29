@@ -81,6 +81,11 @@ namespace vt
 
 	std::optional<video_resource_thumbnail> google_drive_video_resource::generate_thumbnail() const
 	{
+		if (playable())
+		{
+			return video_resource::generate_thumbnail();
+		}
+
 		//TODO: implement
 		debug::error("Google drive thumbnail download is not yet implemented");
 		return std::nullopt;
@@ -147,6 +152,8 @@ namespace vt
 			std::move(file_path),
 			std::move(file)
 		});
+
+		return true;
 	}
 
 	video_download_result google_drive_video_resource::on_update_download(int64_t chunk_size, bool cancel)

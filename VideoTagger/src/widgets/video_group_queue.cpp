@@ -86,7 +86,7 @@ namespace vt::widgets
 								bool contains_unplayable = false;
 								for (auto& video : current_project.videos.get_group(current_project.video_groups.at(payload.data.value())))
 								{
-									if (video->playable())
+									if (video != nullptr and video->playable())
 									{
 										continue;
 									}
@@ -201,7 +201,7 @@ namespace vt::widgets
 								bool contains_unplayable = false;
 								for (auto& video : current_project.videos.get_group(current_project.video_groups.at(payload.data.value())))
 								{
-									if (video->playable())
+									if (video != nullptr and video->playable())
 									{
 										continue;
 									}

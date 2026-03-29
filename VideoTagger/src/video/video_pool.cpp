@@ -1,10 +1,11 @@
-#include "pch.hpp"
 #include "video_pool.hpp"
+#include "pch.hpp"
+#include <fmt/format.h>
 
 namespace vt
 {
 	video_group::video_group(const std::string& name, const std::vector<video_info>& video_ids) :
-		display_name{ std::move(name) }, video_ids_(video_ids) {}
+		display_name{ name }, video_ids_(video_ids) {}
 
 	bool video_group::insert(video_info video_info)
 	{
@@ -136,51 +137,72 @@ namespace vt
 		return inserted;
 	}
 
-	bool video_pool::erase(video_id_t video_id)
+	video_pool_erase_result video_pool::erase(video_id_t video_id)
 	{
 		auto it = videos_.find(video_id);
 		if (it == videos_.end())
 		{
-			return false;
+			return video_pool_erase_result::not_found;
+		}
+
+		if (it->second.use_count() > 1)
+		{
+			return video_pool_erase_result::has_references;
 		}
 
 		it->second->on_remove();
 
 		videos_.erase(it);
-		return true;
+		return video_pool_erase_result::erased;
 	}
 
-	video_resource& video_pool::get(video_id_t video_id)
+	void video_pool::mark_for_removal(video_id_t video_id)
 	{
-		return const_cast<video_resource&>(std::as_const(*this).get(video_id));
+		auto vid = get(video_id);
+		vid->mark_for_removal();
 	}
 
-	const video_resource& video_pool::get(video_id_t video_id) const
+	std::shared_ptr<video_resource> video_pool::get(video_id_t video_id)
 	{
-		return *videos_.at(video_id);
+		auto vid = videos_.at(video_id);
+		if (vid->is_marked_for_removal())
+		{
+			return nullptr;
+		}
+		return vid;
 	}
 
-	std::vector<video_resource*> video_pool::get_group(const video_group& group)
+	std::shared_ptr<const video_resource> video_pool::get(video_id_t video_id) const
 	{
-		std::vector<video_resource*> result;
+		auto vid = videos_.at(video_id);
+		if (vid->is_marked_for_removal())
+		{
+			return nullptr;
+		}
+		return vid;
+	}
+
+	std::vector<std::shared_ptr<video_resource>> video_pool::get_group(const video_group& group)
+	{
+		std::vector<std::shared_ptr<video_resource>> result;
 		result.reserve(group.size());
 
 		for (auto& vi : group)
 		{
-			result.push_back(&get(vi.id));
+			result.push_back(get(vi.id));
 		}
 
 		return result;
 	}
 
-	std::vector<const video_resource*> video_pool::get_group(const video_group& group) const
+	std::vector<std::shared_ptr<const video_resource>> video_pool::get_group(const video_group& group) const
 	{
-		std::vector<const video_resource*> result;
+		std::vector<std::shared_ptr<const video_resource>> result;
 		result.reserve(group.size());
 
 		for (auto& vi : group)
 		{
-			result.push_back(&get(vi.id));
+			result.push_back(get(vi.id));
 		}
 
 		return result;
@@ -229,5 +251,10 @@ namespace vt
 	video_pool::const_iterator video_pool::cend() const
 	{
 		return videos_.cend();
+	}
+
+	std::string video_id_to_task_tag(video_id_t video_id)
+	{
+		return fmt::format("video_resource_{}", video_id);
 	}
 }

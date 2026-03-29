@@ -35,9 +35,13 @@ void vt::bindings::bind_project(pybind11::module_& module)
 
 		if (!p.ref.import_video(std::move(vid_resource), std::nullopt)) return std::nullopt;
 
-		auto& vid = p.ref.videos.get<local_video_resource>(vid_resource_id);
+		auto vid = p.ref.videos.get<local_video_resource>(vid_resource_id);
+		if (vid == nullptr)
+		{
+			return std::nullopt;
+		}
 
-		return vt_video{ vid.file_path(), vid.id(), vid.width(), vid.height() };
+		return vt_video{ vid->file_path(), vid->id(), vid->width(), vid->height() };
 	})
 	.def("get_video", [](vt_project& p, video_id_t id) -> std::optional<vt_video>
 	{
