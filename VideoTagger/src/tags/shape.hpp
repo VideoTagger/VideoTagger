@@ -9,19 +9,15 @@
 #include <core/debug.hpp>
 #include <utils/vec.hpp>
 #include <utils/math.hpp>
+#include <tags/impl/shape.hpp>
 
 
 namespace vt
 {
-	struct shape_base
-	{
-		virtual void set_target() = 0;
-	};
-
-	struct circle : public shape_base
+	struct circle : public impl::shape
 	{
 		circle() = default;
-		constexpr circle(const utils::vec2<uint32_t>& pos, uint32_t radius) : shape_base{}, pos { pos }, radius{ radius } {}
+		constexpr circle(const utils::vec2<uint32_t>& pos, uint32_t radius) : pos{ pos }, radius{ radius } {}
 
 		utils::vec2<uint32_t> pos;
 		uint32_t radius = 1;
@@ -34,10 +30,10 @@ namespace vt
 		}
 	};
 
-	struct polygon : public shape_base
+	struct polygon : public impl::shape
 	{
 		polygon() = default;
-		polygon(const std::vector<utils::vec2<uint32_t>>& vertices) : shape_base{}, vertices{ vertices } {}
+		polygon(const std::vector<utils::vec2<uint32_t>>& vertices) : vertices{ vertices } {}
 
 		std::vector<utils::vec2<uint32_t>> vertices;
 

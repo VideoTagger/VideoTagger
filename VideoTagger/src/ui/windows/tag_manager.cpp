@@ -294,21 +294,21 @@ namespace vt::ui::windows
 											auto& [name, attr] = *it;
 											ImGui::TableNextRow();
 											draw_tag_attribute(name, attr,
-												[&new_name_candidate, &new_name, &name](const std::string& nname)
-												{
-													new_name_candidate = name;
-													new_name = nname;
-												},
-												[&attr](const tag_attribute::type new_type)
-												{
-													attr.type_ = new_type;
-												},
-												[&tag, &it, &name, &next]()
-												{
-													it = tag.attributes.erase(it);
-													next = false;
-													ctx_.is_project_dirty = true;
-												});
+											[&new_name_candidate, &new_name, &name](const std::string& nname)
+											{
+												new_name_candidate = name;
+												new_name = nname;
+											},
+											[&attr](const tag_attribute::type new_type)
+											{
+												attr.type_ = new_type;
+											},
+											[&tag, &it, &name, &next]()
+											{
+												it = tag.attributes.erase(it);
+												next = false;
+												ctx_.is_project_dirty = true;
+											});
 
 											if (next)
 											{

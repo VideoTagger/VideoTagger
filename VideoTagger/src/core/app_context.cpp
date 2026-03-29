@@ -23,6 +23,7 @@
 #ifdef VT_DEBUG
 	#include <ui/windows/sandbox.hpp>
 #endif
+#include <tags/factory/trivial_attribute_factory.hpp>
 
 namespace vt
 {
@@ -30,6 +31,16 @@ namespace vt
 	{
 		create_windows();
 		create_popups();
+		init_attribute_registry();
+	}
+
+	void app_context::init_attribute_registry()
+	{
+		attr_registry.new_factory<trivial_attribute_factory<bool>>("bool", 0xFF000092);
+		attr_registry.new_factory<trivial_attribute_factory<double>>("float", 0xFF32C94C);
+		attr_registry.new_factory<trivial_attribute_factory<int64_t>>("integer", 0xFFC49B4E);
+		attr_registry.new_factory<trivial_attribute_factory<std::string>>("string", 0xFF3F7C46);
+		//shape: 0xFF0097FF
 	}
 
 	void app_context::create_windows()

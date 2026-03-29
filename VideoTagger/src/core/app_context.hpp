@@ -43,6 +43,7 @@
 #include <events/event_storage.hpp>
 #include <tasks/task_manager.hpp>
 #include "session_storage.hpp"
+#include <tags/attribute_registry.hpp>
 
 namespace vt
 {
@@ -118,6 +119,7 @@ namespace vt
 		std::unordered_map<std::string, std::unique_ptr<video_importer>> video_importers;
 		std::optional<video_id_t> last_focused_video;
 		tag_attribute_instance* selected_attribute{};
+		attribute_registry attr_registry;
 
 		session_storage session;
 
@@ -136,6 +138,8 @@ namespace vt
 		bool reset_player_docking{};
 
 		bool pause_player = false;
+
+		void init_attribute_registry();
 
 		void create_windows();
 		void create_popups();
