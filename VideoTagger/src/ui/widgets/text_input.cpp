@@ -9,8 +9,13 @@
 namespace vt::ui
 {
 	text_input::text_input(const std::string& id, const std::string& hint, const std::function<std::optional<std::string>(const std::string& text)>& validator) : text_input{ id, {}, hint, validator } {}
-	text_input::text_input(const std::string& id, const std::string& input, const std::string& hint, const std::function<std::optional<std::string>(const std::string& text)>& validator) : id_{ id }, input_{ input }, hint_{ hint }, validator_{ validator }, state_{ widget_state::normal }, is_password_{} {}
+	text_input::text_input(const std::string& id, const std::string& input, const std::string& hint, const std::function<std::optional<std::string>(const std::string& text)>& validator) : id_{ id }, input_{ input }, hint_{ hint }, validator_{ validator }, state_{ widget_state::normal }, flags_{} {}
 	
+	void text_input::set_flags(ImGuiInputFlags flags)
+	{
+		flags_ = flags;
+	}
+
 	void text_input::set_input(const std::string& input)
 	{
 		input_ = input;
@@ -28,7 +33,14 @@ namespace vt::ui
 
 	void text_input::set_is_password(bool value)
 	{
-		is_password_ = value;
+		if (value)
+		{
+			flags_ |= ImGuiInputTextFlags_Password;
+		}
+		else
+		{
+			flags_ &= ~ImGuiInputTextFlags_Password;
+		}
 	}
 
 	void text_input::focus() const
@@ -45,10 +57,28 @@ namespace vt::ui
 	{
 		const auto& style = ImGui::GetStyle();
 		bool result{};
-		int input_flags = ImGuiInputTextFlags_None;
-		if (is_password_)
+
+		auto window = ImGui::GetCurrentWindow();
+		auto active_id = ImGui::GetActiveID();
+		auto focus_id = ImGui::GetFocusID();
+		auto hovered_id = ImGui::GetHoveredID();
+		auto item_id = window->GetID(id_.c_str());
+
+		bool is_active = (active_id == item_id);
+		bool is_focused = (focus_id == item_id);
+		bool is_hovered = (hovered_id == item_id);
+
+		if (is_focused and is_active)
 		{
-			input_flags |= ImGuiInputTextFlags_Password;
+			state_ = widget_state::active;
+		}
+		else if (is_hovered)
+		{
+			state_ = widget_state::hovered;
+		}
+		else
+		{
+			state_ = widget_state::normal;
 		}
 
 		auto val_result = validator_ != nullptr ? validator_(input_) : std::nullopt;
@@ -72,35 +102,22 @@ namespace vt::ui
 		ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 3.f);
 
 		bool is_empty = input_.empty();
-		bool push_password_font = is_password_ and !is_empty;
+		bool push_password_font = is_password() and !is_empty;
 		if (push_password_font)
 		{
 			ImGui::PushFont(ctx_.get_font(font_type::password));
 		}
 		if (!hint_.empty())
 		{
-			result = ImGui::InputTextWithHint(id_.c_str(), hint_.c_str(), &input_, input_flags);
+			result = ImGui::InputTextWithHint(id_.c_str(), hint_.c_str(), &input_, flags_);
 		}
 		else
 		{
-			result = ImGui::InputText(id_.c_str(), &input_, input_flags);
+			result = ImGui::InputText(id_.c_str(), &input_, flags_);
 		}
 		if (push_password_font)
 		{
 			ImGui::PopFont();
-		}
-
-		if (ImGui::IsItemFocused() and ImGui::IsItemActive())
-		{
-			state_ = widget_state::active;
-		}
-		else if (ImGui::IsItemHovered())
-		{
-			state_ = widget_state::hovered;
-		}
-		else
-		{
-			state_ = widget_state::normal;
 		}
 
 		static constexpr auto icon = icons::exclamation;
@@ -153,7 +170,7 @@ namespace vt::ui
 
 	bool text_input::is_password() const
 	{
-		return is_password_;
+		return (flags_ & ImGuiInputTextFlags_Password) != 0;
 	}
 
 	text_input::operator bool() const
