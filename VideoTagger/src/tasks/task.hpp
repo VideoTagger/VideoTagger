@@ -22,6 +22,8 @@ namespace vt
 	struct task
 	{
 	public:
+		using argument_type = type;
+
 		task() = default;
 		explicit task(std::shared_ptr<task_state<type>> state) : state_{ state } {}
 
@@ -324,6 +326,11 @@ namespace vt
 				return state_->get();
 			}
 		}
+
+		constexpr std::shared_ptr<task_state<type>> state()
+		{
+			return state_;
+		}
 	};
 
 	template<typename type>
@@ -332,6 +339,7 @@ namespace vt
 	public:
 		cancellable_task() = default;
 		cancellable_task(const cancellable_task&) = delete;
+		cancellable_task(cancellable_task&&) = default;
 		cancellable_task(cancellation_token&& token) : token_{ std::move(token) } {}
 		explicit cancellable_task(std::shared_ptr<cancellation_token> token, std::shared_ptr<task_state<type>> state) : token_{ token }, task<type>{ state } {}
 

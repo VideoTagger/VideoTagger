@@ -1001,6 +1001,7 @@ namespace vt
 			return;
 		}
 
+		ctx_.session.tasks.cancel_all();
 		ctx_.tasks.wait_for_all();
 
 		if (ctx_.current_project.has_value())

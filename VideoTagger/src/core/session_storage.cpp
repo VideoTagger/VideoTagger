@@ -25,7 +25,8 @@
 
 namespace vt
 {
-	session_storage::session_storage()
+	session_storage::session_storage() :
+		tasks{ ctx_.tasks }
 	{
 		ctx_.add_event_listener<segment_select_request_event>([this](const segment_select_request_event& event)
 		{
@@ -281,5 +282,6 @@ namespace vt
 		segment_drag_data_ = vt::segment_drag_data{};
 		current_video_group_id_ = invalid_video_group_id;
 		insert_segment_marks_.clear();
+		tasks.clear();
 	}
 }

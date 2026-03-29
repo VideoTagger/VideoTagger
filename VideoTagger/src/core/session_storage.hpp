@@ -8,6 +8,7 @@
 #include <video/video_pool.hpp>
 #include <impl/resettable.hpp>
 #include <events/event_source.hpp>
+#include <tasks/session_task_manager.hpp>
 
 namespace vt
 {
@@ -49,6 +50,8 @@ namespace vt
 		event_source event_source_{ "session" };
 
 	public:
+		session_task_manager tasks;
+		
 		const segment_id_map& selected_segments() const;
 		const segment_id_map& dragged_segments() const;
 		const segment_drag_data& segment_drag_data() const;

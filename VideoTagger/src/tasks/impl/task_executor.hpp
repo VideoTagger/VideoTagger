@@ -18,7 +18,6 @@ namespace vt::impl
 		{
 			static constexpr bool is_cancellable = is_task_cancellable<fn_type>;
 
-
 			if constexpr (is_cancellable)
 			{
 				using result_type = std::invoke_result_t<std::decay_t<fn_type>, cancellation_token&>;
