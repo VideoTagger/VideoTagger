@@ -6,12 +6,17 @@
 #include <core/debug.hpp>
 #include <utils/string.hpp>
 #include <core/app_context.hpp>
+#include <events/scripts/script_start_event.hpp>
 
 namespace vt::widgets
 {
 	console::console() : ui::window{ "Console", "console", "Console" }
 	{
 		set_icon(icons::terminal);
+		ctx_.add_event_listener<script_start_event>([this](const script_start_event& event)
+		{
+			on_run_script();
+		});
 	}
 
 	static uint32_t flag_color(console::entry::flag_type flag)
@@ -28,10 +33,10 @@ namespace vt::widgets
 	{
 		switch (flag)
 		{
-			case console::entry::flag_type::error: return "Error";
-			case console::entry::flag_type::warn: return "Warn";
-				//case console::entry::flag_type::info: break;
-			default: return "Info";
+			case console::entry::flag_type::error: return "error";
+			case console::entry::flag_type::warn: return "warn";
+			//case console::entry::flag_type::info: break;
+			default: return "info";
 		}
 	}
 
@@ -41,7 +46,7 @@ namespace vt::widgets
 		{
 			case console::entry::flag_type::error: return icons::error;
 			case console::entry::flag_type::warn: return icons::warning;
-				//case console::entry::flag_type::info: break;
+			//case console::entry::flag_type::info: break;
 			default: return icons::info;
 		}
 	}

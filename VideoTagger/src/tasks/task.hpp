@@ -4,6 +4,7 @@
 #include <type_traits>
 
 #include <tasks/task_state.hpp>
+#include <tasks/task_priority.hpp>
 #include <tasks/cancellation_token.hpp>
 #include <tasks/task_priority.hpp>
 

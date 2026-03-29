@@ -25,7 +25,6 @@
 #include <widgets/color_picker.hpp>
 #include <ui/popups/options_popup.hpp>
 #include <widgets/modal/tag_importer.hpp>
-#include <widgets/modal/script_progress.hpp>
 #include "displayed_videos_manager.hpp"
 #include <utils/json.hpp>
 #include <utils/vec.hpp>
@@ -37,6 +36,7 @@
 #include <ui/popups/segment_insert_conflict_popup.hpp>
 #include <ui/popups/segment_insert_popup.hpp>
 #include <ui/popups/tag_rename_failed_popup.hpp>
+#include <ui/popups/script_progress_popup.hpp>
 #include <ui/popups/messagebox_popup.hpp>
 
 #include <ui/ui_registry.hpp>
@@ -70,7 +70,6 @@ namespace vt
 		bool show_options_window = false;
 		bool show_about_window = false;
 		bool show_tag_importer_window = false;
-		bool show_script_progress = false;
 	};
 
 	///@brief Application context that holds all states and necessary data
@@ -84,12 +83,12 @@ namespace vt
 		std::optional<project> current_project;
 		widgets::project_selector project_selector;
 		ui::options_popup options{ &win_cfg.show_options_window };
-		widgets::modal::script_progress script_progress;
 		widgets::color_picker color_picker;
 		widgets::modal::tag_importer tag_importer;
 		ui::messagebox_popup messagebox;
 
 		//TODO: maybe add some popup manager
+		std::unique_ptr<ui::script_progress_popup> script_progress_popup;
 		std::unique_ptr<ui::segments_move_conflict_popup> segments_move_conflict_popup;
 		std::unique_ptr<ui::segment_insert_conflict_popup> segment_insert_conflict_popup;
 		std::unique_ptr<ui::segment_insert_popup> segment_insert_popup;
@@ -119,7 +118,6 @@ namespace vt
 		std::unordered_map<std::string, std::unique_ptr<video_importer>> video_importers;
 		std::optional<video_id_t> last_focused_video;
 		tag_attribute_instance* selected_attribute{};
-		utils::vec2<uint32_t>* gizmo_target{};
 
 		session_storage session;
 
@@ -138,6 +136,7 @@ namespace vt
 		bool reset_player_docking{};
 
 		void create_windows();
+		void create_popups();
 		void render_messagebox();
 
 		void change_theme(const theme& new_theme);

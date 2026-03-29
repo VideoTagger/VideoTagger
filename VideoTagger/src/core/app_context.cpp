@@ -29,6 +29,7 @@ namespace vt
 	app_context::app_context()
 	{
 		create_windows();
+		create_popups();
 	}
 
 	void app_context::create_windows()
@@ -70,6 +71,11 @@ namespace vt
 		auto& sandbox = create_window<ui::windows::sandbox>();
 		sandbox.set_opened(true);
 #endif
+	}
+
+	void app_context::create_popups()
+	{
+		
 	}
 
 	void app_context::render_messagebox()
@@ -267,11 +273,8 @@ namespace vt
 
 	void app_context::run_script(const std::filesystem::path& script_path)
 	{
-		auto& console = ctx_.get_window<widgets::console>();
-		console.on_run_script();
-
 		ctx_.script_eng.run(script_path);
-		ctx_.win_cfg.show_script_progress = true;
+		ctx_.script_progress_popup = ui::new_popup<ui::script_progress_popup>(nullptr);
 	}
 
 	void app_context::set_selected_attribute(tag_attribute_instance* attribute)

@@ -15,6 +15,20 @@
 #include <ImGuizmo.h>
 #include <events/system/system_color_scheme_changed_event.hpp>
 #include <updates/update_manager.hpp>
+#include <core/platform.hpp>
+#include <system/taskbar.hpp>
+
+#define NOMINMAX
+#ifndef WIN32_LEAN_AND_MEAN
+	#define WIN32_LEAN_AND_MEAN
+#endif
+#ifdef VT_OS_WINDOWS
+	#include <Windows.h>
+	#include <shobjidl.h>  // ITaskbarList3
+
+	#pragma comment(lib, "Ole32.lib")
+#endif
+
 
 namespace vt
 {
@@ -50,6 +64,15 @@ namespace vt
 	{
 		debug::init();
 		update_manager::init();
+
+#ifdef VT_OS_WINDOWS
+		if (!SUCCEEDED(CoInitialize(NULL)))
+		{
+			debug::error("Failed to initialize Windows COM library");
+			return false;
+		}
+#endif
+		taskbar::init();
 
 		SDL_SetHint(SDL_HINT_WINDOWS_NO_CLOSE_ON_ALT_F4, "1");
 		SDL_SetHint(SDL_HINT_IME_SHOW_UI, "1");
@@ -175,6 +198,10 @@ namespace vt
 		ImGui_ImplSDL2_Shutdown();
 		ImGui::DestroyContext();
 
+		taskbar::shutdown();
+#ifdef VT_OS_WINDOWS
+		CoUninitialize();
+#endif
 		audio::shutdown();
 		NFD::Quit();
 		SDL_Quit();

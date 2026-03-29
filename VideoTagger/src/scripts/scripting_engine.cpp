@@ -17,6 +17,8 @@
 #include "bindings/proxies.hpp"
 #include "script.hpp"
 #include <core/platform.hpp>
+#include <events/scripts/script_start_event.hpp>
+#include <events/scripts/script_end_event.hpp>
 
 namespace vt
 {
@@ -47,7 +49,7 @@ namespace vt
 			message = utils::string::trim_whitespace(message);
 			if (!message.empty())
 			{
-				debug::add_log(fmt::format("{}:{}", std::filesystem::relative(caller_info.path, ctx_.script_dir_filepath).string(), caller_info.line), "Info", "{}", message);
+				debug::add_log(fmt::format("{}:{}", std::filesystem::relative(caller_info.path, ctx_.script_dir_filepath).string(), caller_info.line), "info", "{}", message);
 				console.add_entry(widgets::console::entry::flag_type::info, message, caller_info);
 			}
 		})
@@ -66,7 +68,7 @@ namespace vt
 			message = utils::string::trim_whitespace(message);
 			if (!message.empty())
 			{
-				debug::add_log(fmt::format("{}:{}", std::filesystem::relative(caller_info.path, ctx_.script_dir_filepath).string(), caller_info.line), "Error", "{}", message);
+				debug::add_log(fmt::format("{}:{}", std::filesystem::relative(caller_info.path, ctx_.script_dir_filepath).string(), caller_info.line), "error", "{}", message);
 				console.add_entry(widgets::console::entry::flag_type::error, message, caller_info);
 			}
 		})
@@ -271,8 +273,9 @@ namespace vt
 
 	void scripting_engine::run(std::filesystem::path script_path)
 	{
-		ctx_.script_handle = script_handle(std::async(std::launch::async, [this, script_path]() mutable
+		auto task = ctx_.tasks.run([this, script_path]() mutable
 		{
+			ctx_.dispatch_event<script_start_event>("scripting-engine", script_path);
 			py::gil_scoped_acquire lock{};
 			try
 			{
@@ -354,20 +357,20 @@ namespace vt
 								sys.attr("exit")(py::int_(-1));
 							}
 							catch (...) {}
-							debug::add_log(fmt::format("{}:{}", std::filesystem::relative(file_name, ctx_.script_dir_filepath).string(), lineno), "Info", "{}", "Script interrupted");
+							debug::add_log(fmt::format("{}:{}", std::filesystem::relative(file_name, ctx_.script_dir_filepath).string(), lineno), "info", "{}", "Script interrupted");
 							console.add_entry(widgets::console::entry::flag_type::info, "Script interrupted", widgets::console::entry::source_info{ file_name, lineno });
 							return false;
 						}
 						else if (!message.empty())
 						{
-							debug::add_log(fmt::format("{}:{}", std::filesystem::relative(file_name, ctx_.script_dir_filepath).string(), lineno), "Error", "{}", message);
+							debug::add_log(fmt::format("{}:{}", std::filesystem::relative(file_name, ctx_.script_dir_filepath).string(), lineno), "error", "{}", message);
 							console.add_entry(widgets::console::entry::flag_type::error, message, widgets::console::entry::source_info{ file_name, lineno });
 						}
 					}
 					else
 					{
 						debug::error("{}", message);
-						console.add_entry(widgets::console::entry::flag_type::error, message, widgets::console::entry::source_info{ "VideoTagger", -1});
+						console.add_entry(widgets::console::entry::flag_type::error, message, widgets::console::entry::source_info{ "VideoTagger", -1 });
 					}
 				}
 				catch (const std::exception& iex)
@@ -376,7 +379,22 @@ namespace vt
 				}
 			}
 			return true;
-		}));
+		}, task_priority::highest);
+
+		task.then(ctx_.tasks.on_main(), [script_path](bool success)
+		{
+			if (success)
+			{
+				debug::log("Finished running script '{}'", script_path.u8string());
+			}
+			else
+			{
+				debug::error("Failed to run script '{}'", script_path.u8string());
+			}
+			ctx_.dispatch_event<script_end_event>("scripting-engine", script_path);
+			ctx_.script_progress_popup.reset();
+		});
+		ctx_.script_handle = script_handle(std::move(task));
 	}
 
 	void scripting_engine::interrupt()

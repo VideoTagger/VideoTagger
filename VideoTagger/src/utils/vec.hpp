@@ -1,5 +1,6 @@
 #pragma once
 #include <array>
+#include <vector>
 #include <cmath>
 #include <cstdint>
 #include <cstddef>
@@ -59,6 +60,21 @@ namespace vt::utils
 		static constexpr float distance(const vec& left, const vec& right)
 		{
 			return static_cast<float>(std::sqrt(std::pow((float)left[0] - right[0], 2.f) + std::pow((float)left[1] - right[1], 2.f)));
+		}
+
+		template<typename = std::enable_if_t<dims >= 2>>
+		static constexpr float distance(const vec& left, const std::vector<vec>& right)
+		{
+			auto mean_point = vec{};
+			for (const auto& point : right)
+			{
+				mean_point[0] += point[0];
+				mean_point[1] += point[1];
+			}
+			mean_point[0] /= right.size();
+			mean_point[1] /= right.size();
+
+			return distance(left, mean_point);
 		}
 
 		constexpr bool operator==(const vec& other) const

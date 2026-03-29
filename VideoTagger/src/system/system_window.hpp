@@ -6,6 +6,7 @@
 #include <type_traits>
 #include <ui/popup.hpp>
 #include <utils/vec.hpp>
+#include <system/taskbar.hpp>
 
 namespace vt
 {
@@ -47,6 +48,8 @@ namespace vt
 		void maximize();
 		void minimize();
 		void restore();
+
+		taskbar taskbar_proxy();
 
 		utils::vec2<int> position() const;
 		utils::vec2<int> size() const;

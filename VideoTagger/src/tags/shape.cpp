@@ -9,13 +9,42 @@
 #include <utils/intersection.hpp>
 #include <tags/tag.hpp>
 #include <utils/math.hpp>
-#include <widgets/time_input.hpp>
+#include <core/app_context.hpp>
+#include <events/gizmo/gizmo_set_targets_event.hpp>
 
+#include <widgets/time_input.hpp>
 #include <ui/widgets/common.hpp>
+
 
 namespace vt
 {
-	void draw_vertex_list(std::vector<utils::vec2<uint32_t>>& vertices, const utils::vec2<uint32_t>& max_size, utils::vec2<uint32_t>*& gizmo_target, bool modifiable, const std::function<void(utils::vec2<uint32_t>&)>& on_select)
+	void circle::set_target()
+	{
+		std::vector<utils::vec2<uint32_t>*> targets{ { &pos } };
+		ctx_.dispatch_event<gizmo_set_targets_event>("circle-instance", targets);
+	}
+
+	void polygon::set_target()
+	{
+		std::vector<utils::vec2<uint32_t>*> targets;
+		for (auto& vertex : vertices)
+		{
+			targets.push_back(&vertex);
+		}
+		ctx_.dispatch_event<gizmo_set_targets_event>("polygon-instance", targets);
+	}
+
+	void rectangle::set_target()
+	{
+		std::vector<utils::vec2<uint32_t>*> targets;
+		for (auto& vertex : vertices)
+		{
+			targets.push_back(&vertex);
+		}
+		ctx_.dispatch_event<gizmo_set_targets_event>("rectangle-instance", targets);
+	}
+
+	void draw_vertex_list(std::vector<utils::vec2<uint32_t>>& vertices, const utils::vec2<uint32_t>& max_size, bool modifiable, const std::function<void(utils::vec2<uint32_t>&)>& on_select)
 	{
 		const auto& style = ImGui::GetStyle();
 
@@ -26,7 +55,7 @@ namespace vt
 			if (modifiable and ui::icon_button(icons::add))
 			{
 				vertices.push_back({});
-				gizmo_target = nullptr;
+				ctx_.dispatch_event<gizmo_set_targets_event>("shape-instance");
 			}
 			if (modifiable)
 			{
@@ -42,7 +71,7 @@ namespace vt
 			for (size_t i = 0; i < vertices.size(); ++i)
 			{
 				ImGui::PushID(&vertices[i]);
-				bool selected = (gizmo_target == &vertices[i]);
+				bool selected = (ctx_.session.gizmo_contains_target(&vertices[i]));
 				ImGui::TableNextColumn();
 				auto cpos = ImGui::GetCursorPos();
 				if (ImGui::Selectable("##VertexSelectable", selected, ImGuiSelectableFlags_AllowItemOverlap | ImGuiSelectableFlags_AllowOverlap | ImGuiSelectableFlags_SpanAllColumns, { 0.f, ImGui::GetTextLineHeightWithSpacing() + 2 * style.FramePadding.y }))
@@ -87,7 +116,7 @@ namespace vt
 		}
 	}
 
-	void shape::draw(timestamp current_ts, bool lerp, const std::function<ImVec2(const ImVec2&)>& to_local_pos, const std::function<float(uint32_t)>& from_pixels, const ImVec2& tex_size, const ImVec2& viewport_size, uint32_t outline_color, uint32_t fill_color, bool show_points, const std::function<void(size_t)>& on_mouse_over) const
+	void shape::draw(timestamp current_ts, bool lerp, const std::function<ImVec2(const ImVec2& tex_pos)>& to_local_pos, const std::function<float(uint32_t pixels)>& from_pixels, const ImVec2& tex_size, const ImVec2& viewport_size, uint32_t outline_color, uint32_t fill_color, bool show_points, const std::function<void(size_t i, const std::vector<utils::vec2<uint32_t>*>& vertices)>& on_mouse_over)
 	{
 		float point_size = from_pixels(5);
 
@@ -104,8 +133,10 @@ namespace vt
 			case shape::type::none: return;
 			case shape::type::circle:
 			{
-				static auto draw_circle = [&](const circle& v, size_t i)
+				static auto draw_circle = [&](circle& v, size_t i)
 				{
+					std::vector<utils::vec2<uint32_t>*> verts;
+
 					float viewport_diagonal = std::sqrt(viewport_size.x * viewport_size.x + viewport_size.y * viewport_size.y);
 					float tex_diagonal = std::sqrt(tex_size.x * tex_size.x + tex_size.y * tex_size.y);
 					float scaled_radius = (float)v.radius * viewport_diagonal / tex_diagonal;
@@ -117,7 +148,8 @@ namespace vt
 
 					if (utils::intersection::is_in_circle(mouse_pos, local_pos, scaled_radius))
 					{
-						on_mouse_over(i);
+						verts.push_back(&v.pos);
+						on_mouse_over(i, verts);
 					}
 
 					if (show_points)
@@ -126,9 +158,9 @@ namespace vt
 					}
 				};
 
-				const auto it_prev = get_prev_or_current_keyframe<circle>(current_ts);
+				auto it_prev = get_prev_or_current_keyframe<circle>(current_ts);
 				if (!it_prev.has_value() or current_ts < it_prev.value()->first) return;
-				const auto& [keyframe_prev, regions_prev] = *it_prev.value();
+				auto& [keyframe_prev, regions_prev] = *it_prev.value();
 				auto size_prev = regions_prev.size();
 
 				const auto it_next = get_next_or_current_keyframe<circle>(current_ts);
@@ -143,7 +175,8 @@ namespace vt
 					//if region size changed then dont lerp those shapes
 					for (size_t i = 0; i < std::min(size_prev, size_next); ++i)
 					{
-						draw_circle(math::lerp(regions_prev[i], regions_next[i], alpha), i);
+						auto new_circle = math::lerp(regions_prev[i], regions_next[i], alpha);
+						draw_circle(new_circle, i);
 					}
 				}
 				else
@@ -157,8 +190,10 @@ namespace vt
 			break;
 			case shape::type::rectangle:
 			{
-				static auto draw_rect = [&](const rectangle& v, size_t i)
+				static auto draw_rect = [&](rectangle& v, size_t i)
 				{
+					std::vector<utils::vec2<uint32_t>*> verts;
+
 					auto min = to_local_pos(to_imvec2(v.vertices.at(0)));
 					auto max = to_local_pos(to_imvec2(v.vertices.at(1)));
 
@@ -167,7 +202,10 @@ namespace vt
 
 					if (utils::intersection::is_in_rect(mouse_pos, ImRect{ min, max }))
 					{
-						on_mouse_over(i);
+						verts.push_back(&v.vertices.at(0));
+						verts.push_back(&v.vertices.at(1));
+
+						on_mouse_over(i, verts);
 					}
 
 					if (show_points)
@@ -189,9 +227,9 @@ namespace vt
 					}
 				};
 
-				const auto it_prev = get_prev_or_current_keyframe<rectangle>(current_ts);
+				auto it_prev = get_prev_or_current_keyframe<rectangle>(current_ts);
 				if (!it_prev.has_value() or current_ts < it_prev.value()->first) return;
-				const auto& [keyframe_prev, regions_prev] = *it_prev.value();
+				auto& [keyframe_prev, regions_prev] = *it_prev.value();
 				auto size_prev = regions_prev.size();
 
 				const auto it_next = get_next_or_current_keyframe<rectangle>(current_ts);
@@ -206,7 +244,8 @@ namespace vt
 					//if region size changed then dont lerp those shapes
 					for (size_t i = 0; i < std::min(size_prev, size_next); ++i)
 					{
-						draw_rect(math::lerp(regions_prev[i], regions_next[i], alpha), i);
+						auto new_rect = math::lerp(regions_prev[i], regions_next[i], alpha);
+						draw_rect(new_rect, i);
 					}
 				}
 				else
@@ -220,8 +259,10 @@ namespace vt
 			break;
 			case shape::type::polygon:
 			{
-				static auto draw_poly = [&](const polygon& v, size_t i)
+				static auto draw_poly = [&](polygon& v, size_t i)
 				{
+					std::vector<utils::vec2<uint32_t>*> verts;
+
 					std::vector<ImVec2> vertices(v.vertices.size());
 					auto vert_int_size = static_cast<int>(vertices.size());
 					for (size_t i = 0; i < vertices.size(); ++i)
@@ -231,7 +272,11 @@ namespace vt
 
 					if (utils::intersection::is_in_polygon(mouse_pos, vertices))
 					{
-						on_mouse_over(i);
+						for (auto& vert : v.vertices)
+						{
+							verts.push_back(&vert);
+						}
+						on_mouse_over(i, verts);
 					}
 
 					if (utils::intersection::is_convex_polygon(vertices))
@@ -253,9 +298,9 @@ namespace vt
 					}
 				};
 
-				const auto it_prev = get_prev_or_current_keyframe<polygon>(current_ts);
+				auto it_prev = get_prev_or_current_keyframe<polygon>(current_ts);
 				if (!it_prev.has_value() or current_ts < it_prev.value()->first) return;
-				const auto& [keyframe_prev, regions_prev] = *it_prev.value();
+				auto& [keyframe_prev, regions_prev] = *it_prev.value();
 				auto size_prev = regions_prev.size();
 
 				const auto it_next = get_next_or_current_keyframe<polygon>(current_ts);
@@ -270,7 +315,8 @@ namespace vt
 					//if region size changed then dont lerp those shapes
 					for (size_t i = 0; i < std::min(size_prev, size_next); ++i)
 					{
-						draw_poly(math::lerp(regions_prev[i], regions_next[i], alpha), i);
+						auto new_poly = math::lerp(regions_prev[i], regions_next[i], alpha);
+						draw_poly(new_poly, i);
 					}
 				}
 				else
@@ -430,7 +476,7 @@ namespace vt
 		}
 	}
 
-	void shape::draw_data(const utils::vec2<uint32_t>& max_size, utils::vec2<uint32_t>*& gizmo_target, timestamp start_ts, timestamp end_ts, timestamp ts, bool is_timestamp, bool is_modifiable, bool& dirty_flag, const std::function<void(timestamp)>& on_seek)
+	void shape::draw_data(const utils::vec2<uint32_t>& max_size, timestamp start_ts, timestamp end_ts, timestamp ts, bool is_timestamp, bool is_modifiable, bool& dirty_flag, const std::function<void(timestamp)>& on_seek)
 	{
 		const auto& style = ImGui::GetStyle();
 
@@ -441,7 +487,7 @@ namespace vt
 			{
 				auto& map = get<std::map<timestamp, std::vector<circle>>>();
 
-				draw_keyframes("Circle", map, is_modifiable, is_timestamp, dirty_flag, start_ts, end_ts, ts, [&gizmo_target, &max_size, &style, is_modifiable, &map, this](timestamp keyframe, circle& v, size_t i)
+				draw_keyframes("Circle", map, is_modifiable, is_timestamp, dirty_flag, start_ts, end_ts, ts, [&max_size, &style, is_modifiable, &map, this](timestamp keyframe, circle& v, size_t i)
 				{
 					auto kf = keyframe;
 					if (widgets::begin_collapsible(std::to_string(i), "Circle", ImGuiTreeNodeFlags_DefaultOpen, shape::type_icon(type_), std::nullopt, [&, kf]()
@@ -455,18 +501,18 @@ namespace vt
 							}
 							if (ImGui::MenuItem(fmt::format("{} Set Target", icons::set_target).c_str()))
 							{
-								v.set_target(gizmo_target);
+								v.set_target();
 							}
 							ImGui::EndPopup();
 						}
 					}, i + 1))
 					{
 						auto cpos = ImGui::GetCursorPos();
-						bool selected = gizmo_target == &v.pos;
+						bool selected = ctx_.session.gizmo_contains_target(&v.pos);
 
 						if (ImGui::Selectable("##CircleSelectable", selected, ImGuiSelectableFlags_AllowItemOverlap | ImGuiSelectableFlags_AllowOverlap | ImGuiSelectableFlags_SpanAllColumns, ImVec2{ 0.f, ImGui::GetTextLineHeightWithSpacing() + 2 * style.FramePadding.y + style.ItemSpacing.y } * 2.f))
 						{
-							v.set_target(gizmo_target);
+							v.set_target();
 						}
 
 						ImGui::SetCursorPos(cpos);
@@ -494,9 +540,9 @@ namespace vt
 						widgets::end_collapsible();
 					}
 				},
-				[&gizmo_target, &dirty_flag]()
+				[&dirty_flag]()
 				{
-					gizmo_target = nullptr;
+					ctx_.dispatch_event<gizmo_set_targets_event>("circle-instance");
 					dirty_flag = true;
 				},
 				on_seek);
@@ -507,7 +553,7 @@ namespace vt
 				auto& map = get<std::map<timestamp, std::vector<rectangle>>>();
 
 				is_modifiable &= (is_timestamp and map.empty()) or !is_timestamp;
-				draw_keyframes("Rectangle", map, is_modifiable, is_timestamp, dirty_flag, start_ts, end_ts, ts, [&gizmo_target, &max_size, &style, is_modifiable, &map, this](timestamp keyframe, rectangle &v, size_t i)
+				draw_keyframes("Rectangle", map, is_modifiable, is_timestamp, dirty_flag, start_ts, end_ts, ts, [&max_size, &style, is_modifiable, &map, this](timestamp keyframe, rectangle &v, size_t i)
 				{
 					auto kf = keyframe;
 					if (widgets::begin_collapsible(std::to_string(i), "Rectangle", ImGuiTreeNodeFlags_DefaultOpen, shape::type_icon(type_), std::nullopt, [&]()
@@ -521,22 +567,22 @@ namespace vt
 							}
 							if (ImGui::MenuItem(fmt::format("{} Set Target", icons::set_target).c_str()))
 							{
-								v.set_target(gizmo_target);
+								v.set_target();
 							}
 							ImGui::EndPopup();
 						}
 					}, i + 1))
 					{
-						draw_vertex_list(v.vertices, max_size, gizmo_target, false, [&gizmo_target](utils::vec2<uint32_t>& vertex)
+						draw_vertex_list(v.vertices, max_size, false, [&](utils::vec2<uint32_t>& vertex)
 						{
-							gizmo_target = &vertex;
+							ctx_.dispatch_event<gizmo_set_targets_event>("rectangle-keyframes", { { &vertex } });
 						});
 						widgets::end_collapsible();
 					}
 				},
-				[&gizmo_target, &dirty_flag]()
+				[&dirty_flag]()
 				{
-					gizmo_target = nullptr;
+					ctx_.dispatch_event<gizmo_set_targets_event>("rectangle-instance");
 					dirty_flag = true;
 				},
 				on_seek);
@@ -547,7 +593,7 @@ namespace vt
 				auto& map = get<std::map<timestamp, std::vector<polygon>>>();
 
 				is_modifiable &= (is_timestamp and map.empty()) or !is_timestamp;
-				draw_keyframes("Polygon", map, is_modifiable, is_timestamp, dirty_flag, start_ts, end_ts, ts, [&gizmo_target, &max_size, &style, is_modifiable, &map, this](timestamp keyframe, polygon &v, size_t i)
+				draw_keyframes("Polygon", map, is_modifiable, is_timestamp, dirty_flag, start_ts, end_ts, ts, [&max_size, &style, is_modifiable, &map, this](timestamp keyframe, polygon &v, size_t i)
 				{
 					auto kf = keyframe;
 					if (widgets::begin_collapsible(std::to_string(i), "Polygon", ImGuiTreeNodeFlags_DefaultOpen, shape::type_icon(type_), std::nullopt, [&]()
@@ -561,22 +607,22 @@ namespace vt
 							}
 							if (ImGui::MenuItem(fmt::format("{} Set Target", icons::set_target).c_str()))
 							{
-								v.set_target(gizmo_target);
+								v.set_target();
 							}
 							ImGui::EndPopup();
 						}
 					}, i + 1))
 					{
-						draw_vertex_list(v.vertices, max_size, gizmo_target, true, [&gizmo_target](utils::vec2<uint32_t>& vertex)
+						draw_vertex_list(v.vertices, max_size, true, [](utils::vec2<uint32_t>& vertex)
 						{
-							gizmo_target = &vertex;
+							ctx_.dispatch_event<gizmo_set_targets_event>("polygon-keyframes", { { &vertex } });
 						});
 						widgets::end_collapsible();
 					}
 				},
-				[&gizmo_target, &dirty_flag]()
+				[&dirty_flag]()
 				{
-					gizmo_target = nullptr;
+					ctx_.dispatch_event<gizmo_set_targets_event>("polygon-instance");
 					dirty_flag = true;
 				},
 				on_seek);

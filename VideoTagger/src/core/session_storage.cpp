@@ -21,12 +21,20 @@
 
 #include <events/player/video_group_change_request_event.hpp>
 #include <events/player/video_group_changed_event.hpp>
+#include <events/gizmo/gizmo_set_targets_event.hpp>
+#include <events/gizmo/gizmo_move_targets_event.hpp>
 
 
 namespace vt
 {
 	session_storage::session_storage() :
 		tasks{ ctx_.tasks }
+	{
+		register_timeline_listeners();
+		register_gizmo_listeners();
+	}
+
+	void session_storage::register_timeline_listeners()
 	{
 		ctx_.add_event_listener<segment_select_request_event>([this](const segment_select_request_event& event)
 		{
@@ -115,14 +123,14 @@ namespace vt
 			segment_drag_data_.current_offset = event.current_offset();
 		});
 
-		ctx_.add_event_listener<end_segment_drag_event>([this](const end_segment_drag_event& e)
+		ctx_.add_event_listener<end_segment_drag_event>([this](const end_segment_drag_event& event)
 		{
 			if (!is_dragging_any_segment()) return;
 
 			segment_drag_data_.stage = segment_drag_stage::waiting_for_approval;
 		});
 
-		ctx_.add_event_listener<segments_moved_event>([this](const segments_moved_event& e)
+		ctx_.add_event_listener<segments_moved_event>([this](const segments_moved_event& event)
 		{
 			if (segment_drag_data_.stage != segment_drag_stage::waiting_for_approval) return;
 
@@ -159,12 +167,12 @@ namespace vt
 			}
 		});
 
-		ctx_.add_event_listener<tag_deleted_event>([this](const tag_deleted_event& e)
+		ctx_.add_event_listener<tag_deleted_event>([this](const tag_deleted_event& event)
 		{
-			if (!e.deleted()) return;
+			if (!event.deleted()) return;
 
-			selected_segments_.erase(e.tag_name());
-			dragged_segments_.erase(e.tag_name());
+			selected_segments_.erase(event.tag_name());
+			dragged_segments_.erase(event.tag_name());
 
 			if (dragged_segments_.empty())
 			{
@@ -172,25 +180,60 @@ namespace vt
 			}
 		});
 
-		ctx_.add_event_listener<tag_renamed_event>([this](const tag_renamed_event& e)
+		ctx_.add_event_listener<tag_renamed_event>([this](const tag_renamed_event& event)
 		{
-			if (!e.renamed()) return;
+			if (!event.renamed()) return;
 
-			auto selected_it = selected_segments_.find(e.tag_name());
+			auto selected_it = selected_segments_.find(event.tag_name());
 			if (selected_it != selected_segments_.end())
 			{
 				auto node = selected_segments_.extract(selected_it);
-				node.key() = e.new_name();
+				node.key() = event.new_name();
 				selected_segments_.insert(std::move(node));
 			}
 
-			auto dragged_it = dragged_segments_.find(e.tag_name());
+			auto dragged_it = dragged_segments_.find(event.tag_name());
 			if (dragged_it != dragged_segments_.end())
 			{
 				auto node = dragged_segments_.extract(dragged_it);
-				node.key() = e.new_name();
+				node.key() = event.new_name();
 				dragged_segments_.insert(std::move(node));
 			}
+		});
+	}
+
+	void session_storage::register_gizmo_listeners()
+	{
+		ctx_.add_event_listener<gizmo_move_targets_event>([this](const gizmo_move_targets_event& event)
+		{
+			auto type = event.move_type();
+			switch (type)
+			{
+				case gizmo_move_type::absolute:
+				{
+					for (const auto& target : gizmo_targets_)
+					{
+						target->at(0) = event.value().at(0);
+						target->at(1) = event.value().at(1);
+					}
+					break;
+				}
+				case gizmo_move_type::offset:
+				{
+					for (const auto& target : gizmo_targets_)
+					{
+						target->at(0) += event.value().at(0);
+						target->at(1) += event.value().at(1);
+					}
+					break;
+				}
+			}
+			ctx_.is_project_dirty = true;
+		});
+
+		ctx_.add_event_listener<gizmo_set_targets_event>([this](const gizmo_set_targets_event& event)
+		{
+			gizmo_targets_ = event.targets();
 		});
 	}
 
@@ -251,6 +294,44 @@ namespace vt
 		return !dragged_segments_.empty();
 	}
 
+	bool session_storage::gizmo_contains_target(const utils::vec2<uint32_t>* target) const
+	{
+		auto it = std::find_if(gizmo_targets_.begin(), gizmo_targets_.end(), [&](const auto& gizmo_target)
+		{
+			return gizmo_target == target;
+		});
+		return it != gizmo_targets_.end();
+	}
+
+	std::vector<utils::vec2<uint32_t>*> session_storage::gizmo_targets()
+	{
+		return gizmo_targets_;
+	}
+
+	const std::vector<utils::vec2<uint32_t>*>& session_storage::gizmo_targets() const
+	{
+		return gizmo_targets_;
+	}
+
+	bool session_storage::has_gizmo_targets() const
+	{
+		return !gizmo_targets_.empty();
+	}
+
+	utils::vec2<uint32_t> session_storage::mean_gizmo_target() const
+	{
+		utils::vec2<uint32_t> result;
+		for (const auto& target : gizmo_targets_)
+		{
+			result[0] += target->at(0);
+			result[1] += target->at(1);
+		}
+
+		result[0] /= gizmo_targets_.size();
+		result[1] /= gizmo_targets_.size();
+		return result;
+	}
+
 	std::vector<insert_segment_mark_data>::iterator session_storage::find_insert_segment_mark_by_tag(const std::string& tag)
 	{
 		return std::find_if(insert_segment_marks_.begin(), insert_segment_marks_.end(), [&](const auto& mark)
@@ -282,6 +363,8 @@ namespace vt
 		segment_drag_data_ = vt::segment_drag_data{};
 		current_video_group_id_ = invalid_video_group_id;
 		insert_segment_marks_.clear();
+		
+		gizmo_targets_.clear();
 		tasks.clear();
 	}
 }
