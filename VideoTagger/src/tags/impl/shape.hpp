@@ -10,6 +10,7 @@ namespace vt::impl
 	class shape
 	{
 	public:
+		shape() = default;
 		//virtual ~shape() = default;
 
 	private:

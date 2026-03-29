@@ -11,6 +11,11 @@ namespace vt
 
 	rectangle_shape::rectangle_shape(const utils::vec2<uint32_t>& start, const utils::vec2<uint32_t>& end) : polygon_shape{ { start, end } } {}
 
+	bool rectangle_shape::operator==(const rectangle_shape& other) const
+	{
+		return vertices == other.vertices;
+	}
+
 	void rectangle_shape::set_target()
 	{
 		std::vector<utils::vec2<uint32_t>*> targets;
@@ -19,10 +24,5 @@ namespace vt
 			targets.push_back(&vertex);
 		}
 		ctx_.dispatch_event<gizmo_set_targets_event>("rectangle-instance", targets);
-	}
-
-	bool rectangle_shape::operator==(const rectangle_shape& other) const
-	{
-		return vertices == other.vertices;
 	}
 }
