@@ -3,12 +3,12 @@
 #include "app_context.hpp"
 #include <fmt/format.h>
 #include <ui/windows/tag_manager.hpp>
-#include <widgets/video_widget.hpp>
 #include <widgets/video_player.hpp>
 #include <widgets/console.hpp>
 #include <widgets/project_selector.hpp>
 #include <widgets/theme_customizer.hpp>
 #include <ui/windows/inspector.hpp>
+#include <ui/windows/video_window.hpp>
 #include <ui/popups/options_popup.hpp>
 #include <widgets/shape_attributes.hpp>
 #include <widgets/localization_editor.hpp>
@@ -2515,7 +2515,18 @@ namespace vt
 					start_pos = point_pos;
 				}
 
-				widgets::draw_video_widget(video_data.video, video_data.display_texture, timestamp_in_range, is_widget_open, vid_id++, [&point_pos, start_pos, has_selected_attribute, selected_attribute, is_shape, has_target, &video_data, this](ImVec2 pos, ImVec2 size, ImVec2 tex_size)
+				//widgets::draw_video_widget(video_data.video, video_data.display_texture, timestamp_in_range, is_widget_open, vid_id++,
+				auto video_name = ctx_.current_project->videos.get(video_data.id)
+					.metadata()
+					.title.
+					value_or("Video");
+
+				ui::windows::video_window vid_win{ vid_id++ };
+				vid_win.set_video(video_data.video);
+				vid_win.set_texture(video_data.display_texture);
+				vid_win.set_active(timestamp_in_range);
+				vid_win.set_display_name(video_name);
+				vid_win.with_overlay([&point_pos, start_pos, has_selected_attribute, selected_attribute, is_shape, has_target, &video_data, this](ImVec2 pos, ImVec2 size, ImVec2 tex_size)
 				{
 					static auto from_tex_pos = [&pos, &tex_size, &size](const ImVec2 point) -> ImVec2
 					{
@@ -2949,6 +2960,9 @@ namespace vt
 					//auto local_pos = from_tex_pos(point_pos);
 					//draw_list->AddCircle(local_pos, 10.f, border_color);
 				});
+
+				vid_win.open();
+				vid_win.render();
 			}
 		}
 

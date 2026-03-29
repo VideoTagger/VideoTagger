@@ -217,7 +217,7 @@ namespace vt::widgets
 						for (size_t x = 0; x < columns; ++x)
 						{
 							size_t id = y * rows + x;
-							auto video_id = "Video##" + std::to_string(id);
+							auto video_id = "###video-window-" + std::to_string(id);
 
 							ImGui::DockBuilderSplitNode(temp_id, ImGuiDir_Right, 1.0f / columns, &temp_id, nullptr);
 							ImGui::DockBuilderDockWindow(video_id.c_str(), temp_id);
