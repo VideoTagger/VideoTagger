@@ -936,34 +936,21 @@ namespace vt
 			auto token = std::make_shared<cancellation_token>();
 			std::set<std::string> task_tags{ "video_resource", video_id_to_task_tag(event.video_id()) };
 
-			ctx_.session.tasks.run([vid_res](cancellation_token& token)
+			//TODO: don't capture token
+			ctx_.session.tasks.run([vid_res, token](cancellation_token&)
 			{
-				video_download_result result{ video_download_status::failed };
-				if (!vid_res->init_download())
-				{
-					return result;
-				}
-
-				result.status = video_download_status::in_progress;
-				while (result.status == video_download_status::in_progress)
-				{
-					if (token.is_cancelled())
-					{
-						vid_res->cancel_download();
-					}
-
-					result = vid_res->update_download();
-				}
-				return result;
+				return vid_res->download(token);
 			}, token, task_tags)
 			.then(ctx_.tasks.on_main(), [vid_res](const video_download_result& download_result)
 			{
-				vid_res->finalize_download(download_result);
-
 				switch (download_result.status)
 				{
 					case video_download_status::completed:
-						ctx_.is_project_dirty = true;
+						if (vid_res->file_path() != download_result.download_path)
+						{
+							vid_res->set_file_path(download_result.download_path.u8string());
+							ctx_.is_project_dirty = true;
+						}
 						ctx_.dispatch_event<video_download_finished_event>("video_resource", vid_res->id(), true);
 						break;
 

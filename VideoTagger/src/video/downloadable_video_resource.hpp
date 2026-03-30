@@ -7,6 +7,7 @@
 #include <optional>
 #include <nlohmann/json.hpp>
 #include "video_resource.hpp"
+#include <tasks/cancellation_token.hpp>
 
 namespace vt
 {
@@ -40,10 +41,8 @@ namespace vt
 		downloadable_video_resource(std::string importer_id, const nlohmann::ordered_json& json);
 		virtual ~downloadable_video_resource() = default;
 
-		bool init_download();
-		video_download_result update_download();
+		video_download_result download(std::shared_ptr<cancellation_token> token);
 		void cancel_download();
-		void finalize_download(const video_download_result& download_result);
 
 		float download_progress() const;
 		bool is_downloading() const;
@@ -59,13 +58,11 @@ namespace vt
 	protected:
 		void set_download_progress(float progress);
 
-		virtual bool on_init_download() = 0;
-		virtual video_download_result on_update_download(int64_t chunk_size, bool cancel) = 0;
-		virtual void on_finalize_download(const video_download_result& download_result) = 0;
+		virtual video_download_result on_download(std::shared_ptr<cancellation_token> token) = 0;
 
 	private:
 		mutable std::mutex download_progress_mutex_;
 		std::optional<float> download_progress_{};
-		std::atomic_bool cancel_download_{ false };
+		std::shared_ptr<cancellation_token> download_cancellation_token_;
 	};
 }

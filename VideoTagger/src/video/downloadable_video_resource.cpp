@@ -32,39 +32,23 @@ namespace vt
 		return download_progress_.has_value();
 	}
 
-	bool downloadable_video_resource::init_download()
+	video_download_result downloadable_video_resource::download(std::shared_ptr<cancellation_token> token)
 	{
-		if (is_downloading())
-		{
-			return false;
-		}
-
-		if (!on_init_download())
-		{
-			return false;
-		}
-
+		download_cancellation_token_ = token;
 		{
 			std::scoped_lock lock{ download_progress_mutex_ };
 			download_progress_ = 0.f;
 		}
-		cancel_download_ = false;
 
-		return true;
-	}
+		auto download_result = on_download(token);
 
-	video_download_result downloadable_video_resource::update_download()
-	{
-		if (!is_downloading())
 		{
-			video_download_result result;
-			result.status = video_download_status::not_started;
-			return result;
+			std::scoped_lock lock{ download_progress_mutex_ };
+			download_progress_.reset();
 		}
+		download_cancellation_token_ = nullptr;
 
-		static constexpr int64_t chunk_size = 1024 * 128;
-
-		return on_update_download(chunk_size, cancel_download_);
+		return download_result;
 	}
 
 	void downloadable_video_resource::cancel_download()
@@ -74,32 +58,7 @@ namespace vt
 			return;
 		}
 
-		cancel_download_ = true;
-	}
-
-	void downloadable_video_resource::finalize_download(const video_download_result& download_result)
-	{
-		if (download_result.status == video_download_status::in_progress or download_result.status == video_download_status::not_started)
-		{
-			return;
-		}
-
-		on_finalize_download(download_result);
-		
-		if (download_result.status == video_download_status::completed)
-		{
-			set_file_path(download_result.download_path.u8string());
-		}
-		else
-		{
-			std::filesystem::remove(download_result.download_path);
-		}
-
-		{
-			std::scoped_lock lock{ download_progress_mutex_ };
-			download_progress_ = std::nullopt;
-		}
-		cancel_download_ = false;
+		download_cancellation_token_->cancel();
 	}
 
 	bool downloadable_video_resource::remove_downloaded_file()
