@@ -6,11 +6,14 @@
 
 namespace vt::ui
 {
-	window::window(const std::string& id, const std::string& serialization_id, const std::string& display_name, ImGuiWindowFlags flags) :
-		id_{ id }, serialization_id_{ serialization_id }, display_name_{ display_name }, flags_{ flags }, is_open_{}, is_persistent_{ true },
+	window::window(const std::string& id, const std::string& serialization_id, const std::string& display_name, ImGuiWindowFlags flags, bool should_register) :
+		id_{ id }, serialization_id_{ serialization_id }, display_name_{ display_name }, flags_{ flags }, is_open_{}, is_persistent_{ true }, is_registered_{ should_register },
 		is_visible_{}, is_hovered_ {}, is_focused_{}
 	{
-		ctx_.dispatch_event<ui_window_register_event>(get_event_source(), *this);
+		if (is_registered_)
+		{
+			ctx_.dispatch_event<ui_window_register_event>(get_event_source(), *this);
+		}
 	}
 
 	window::~window()
@@ -19,7 +22,10 @@ namespace vt::ui
 		{
 			close();
 		}
-		ctx_.dispatch_event<ui_window_unregister_event>(get_event_source(), *this);
+		if (is_registered_)
+		{
+			ctx_.dispatch_event<ui_window_unregister_event>(get_event_source(), *this);
+		}
 	}
 
 	bool window::render()
@@ -49,6 +55,15 @@ namespace vt::ui
 			close();
 		}
 		return is_visible_;
+	}
+
+	bool window::open_and_render()
+	{
+		if (!is_open())
+		{
+			open();
+		}
+		return render();
 	}
 
 	void window::set_opened(bool value)
