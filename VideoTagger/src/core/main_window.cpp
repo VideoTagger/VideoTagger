@@ -54,6 +54,8 @@
 #include <events/timeline/segment_selected_event.hpp>
 #include <events/timeline/segment_deselect_request_event.hpp>
 #include <events/timeline/segment_deselected_event.hpp>
+#include <events/timeline/segment_select_all_request_event.hpp>
+#include <events/timeline/segment_deselect_all_request_event.hpp>
 #include <events/interceptors/update_segment_drag_interceptor.hpp>
 
 #include <events/tags/tag_add_request_event.hpp>
@@ -2883,6 +2885,7 @@ namespace vt
 											{
 												if (ImGui::IsMouseClicked(ImGuiMouseButton_Left) and hovered)
 												{
+													ctx_.dispatch_event<segment_deselect_all_request_event>(event_source_, segment_storage);
 													ctx_.dispatch_event<segment_select_request_event>(event_source_, segment_storage, tag.name, segment_id);
 													ctx_.set_selected_attribute(&attr);
 

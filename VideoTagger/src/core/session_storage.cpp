@@ -6,6 +6,8 @@
 #include <events/timeline/segment_selected_event.hpp>
 #include <events/timeline/segment_deselect_request_event.hpp>
 #include <events/timeline/segment_deselected_event.hpp>
+#include <events/timeline/segment_select_all_request_event.hpp>
+#include <events/timeline/segment_deselect_all_request_event.hpp>
 #include <events/timeline/segment_insert_mark_start.hpp>
 #include <events/timeline/segment_insert_mark_end.hpp>
 #include <events/timeline/begin_segment_drag_event.hpp>
@@ -60,6 +62,50 @@ namespace vt
 			}
 
 			ctx_.dispatch_event<segment_selected_event>(event.source(), event.storage(), event.tag(), event.id());
+		});
+
+		ctx_.add_event_listener<segment_select_all_request_event>([this](const segment_select_all_request_event& event)
+		{
+			const auto& segment_strg = ctx_.get_current_segment_storage();
+			if (&event.storage() != &segment_strg) return;
+
+			for (const auto& [tag, segments] : segment_strg)
+			{
+				for (const auto& [id, segment] : segments)
+				{
+					auto [_, inserted] = selected_segments_[tag].insert(id);
+					if (inserted)
+					{
+						ctx_.dispatch_event<segment_selected_event>(event.source(), event.storage(), tag, id);
+					}
+				}
+			}
+		});
+
+		ctx_.add_event_listener<segment_deselect_all_request_event>([this](const segment_deselect_all_request_event& event)
+		{
+			const auto& segment_strg = ctx_.get_current_segment_storage();
+			if (&event.storage() != &segment_strg) return;
+
+			for (auto storage_it = selected_segments_.begin(); storage_it != selected_segments_.end();)
+			{
+				std::string tag = storage_it->first;
+				auto& segments = storage_it->second;
+
+				for (auto segment_it = segments.begin(); segment_it != segments.end();)
+				{
+					segment_id id = *segment_it;
+					
+					segment_it = segments.erase(segment_it);
+					if (segment_it == segments.end())
+					{
+						storage_it = selected_segments_.erase(storage_it);
+						break;
+					}
+
+					ctx_.dispatch_event<segment_deselected_event>(event.source(), event.storage(), tag, id);
+				}
+			}
 		});
 
 		ctx_.add_event_listener<video_group_change_request_event>([this](const video_group_change_request_event& event)
