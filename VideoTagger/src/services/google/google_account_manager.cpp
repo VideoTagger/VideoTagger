@@ -282,8 +282,8 @@ namespace vt
 	{
 		account_login_popup_data data;
 		data.fields = {
-			account_login_popup_field_data{ "Client id", "client_id" },
-			account_login_popup_field_data{ "Client secret", "client_secret" }
+			account_login_popup_field_data{ "Client ID", "client_id", "", "Client ID..."},
+			account_login_popup_field_data{ "Client Secret", "client_secret", "", "Client Secret...", true}
 		};
 
 		data.show_file_load_button = true;
