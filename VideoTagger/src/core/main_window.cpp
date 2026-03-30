@@ -1015,7 +1015,7 @@ namespace vt
 			if (vid_res == nullptr)
 			{
 				debug::error("Video resource with id {} not found", event.video_id());
-				return std::nullopt;
+				return;
 			}
 
 			std::set<std::string> task_tags{ "video_resource", video_id_to_task_tag(event.video_id()) };
@@ -2752,10 +2752,10 @@ namespace vt
 				}
 
 				//widgets::draw_video_widget(video_data.video, video_data.display_texture, timestamp_in_range, is_widget_open, vid_id++,
-				auto video_name = ctx_.current_project->videos.get(video_data.id)
-					.metadata()
-					.title.
-					value_or("Video");
+				auto video_ptr = ctx_.current_project->videos.get(video_data.id);
+				if (video_ptr == nullptr) continue;
+
+				auto video_name = video_ptr->title();
 
 				auto& vid_win = vid_wins[vid_id++];
 				vid_win->set_active(timestamp_in_range);
