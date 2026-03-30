@@ -30,6 +30,8 @@ namespace vt::ui
 	public:
 		///@brief Renders the window
 		bool render();
+		///@brief Opens the window if it's not open, then renders it. Returns true if the window is visible after rendering, false otherwise
+		bool open_and_render();
 
 		void set_opened(bool value);
 		void set_persistent(bool value);

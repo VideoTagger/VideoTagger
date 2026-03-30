@@ -57,6 +57,15 @@ namespace vt::ui
 		return is_visible_;
 	}
 
+	bool window::open_and_render()
+	{
+		if (!is_open())
+		{
+			open();
+		}
+		return render();
+	}
+
 	void window::set_opened(bool value)
 	{
 		is_open_ = value;

@@ -18,6 +18,10 @@ namespace vt::ui::windows
 		video_stream* video_;
 		gl_texture* texture_;
 		uint64_t id_;
+		ImVec2 offset_;
+		ImVec2 last_mouse_pos_;
+		float scale_;
+		bool is_interactive_;
 		bool is_active_;
 
 	public:

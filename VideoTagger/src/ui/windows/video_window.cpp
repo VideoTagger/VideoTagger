@@ -8,7 +8,7 @@ namespace vt::ui::windows
 	video_window::video_window(uint64_t id) : window
 	{ "video-window-" + std::to_string(id), "video-window-" + std::to_string(id), "Video",
 		ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoSavedSettings, false
-	}, video_{}, texture_{}, is_active_{}, id_{ id }
+	}, video_{}, texture_{}, is_active_{}, is_interactive_{ true }, id_{ id }, scale_{ 1.0f }, offset_{}
 	{
 		set_persistent(false);
 		set_icon(icons::video);
@@ -114,11 +114,42 @@ namespace vt::ui::windows
 				image_size.y = scaled_height;
 			}
 
-			ImVec2 video_cursor_pos = { (image_avail_size.x - image_size.x) / 2, (image_avail_size.y - image_size.y) / 2 };
+			ImVec2 video_cursor_pos = { (image_avail_size.x - image_size.x) / 2 + offset_.x, (image_avail_size.y - image_size.y) / 2 + offset_.y };
+
+			image_size.x *= scale_;
+			image_size.y *= scale_;
 
 			ImGui::SetCursorPos({ video_cursor_pos });
+			const ImVec2 video_screen_pos = ImGui::GetCursorScreenPos();
 
-			auto video_screen_pos = ImGui::GetCursorScreenPos();
+			ImRect img_rect(video_cursor_pos, { video_cursor_pos.x + image_size.x, video_cursor_pos.y + image_size.y });
+			ImGui::Dummy(img_rect.GetSize());
+			const auto& io = ImGui::GetIO();
+			if (is_interactive_ and ImGui::IsItemHovered())
+			{
+				const auto mouse_offset = io.MousePos - video_cursor_pos;
+				if (ImGui::IsMouseClicked(ImGuiMouseButton_Left))
+				{
+					last_mouse_pos_ = mouse_offset;
+				}
+
+				if (ImGui::IsMouseDragging(ImGuiMouseButton_Left))
+				{
+					ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeAll);
+					offset_ += (mouse_offset - last_mouse_pos_) * (1.0f / scale_);
+				}
+				if (io.MouseWheel != 0)
+				{
+					auto scroll_dir = !std::signbit(io.MouseWheel) * 2 - 1;
+					auto new_scale = std::clamp(scale_ + scroll_dir * 0.1f, 0.1f, 10.0f);
+
+					// Adjusts the offset to keep the zoom centered on the mouse position
+					offset_ += (io.MousePos - video_screen_pos) * (1.0f - new_scale / scale_);
+					scale_ = new_scale;
+				}
+			}
+
+			ImGui::SetCursorPos({ video_cursor_pos });
 
 			ImGui::Image(reinterpret_cast<ImTextureID>((uintptr_t)texture_->id()), image_size);
 
