@@ -101,14 +101,14 @@ namespace vt::widgets
 		std::string base_get_url = "/drive/v3/files?fields=files(id, name)";
 		httplib::Client client{ "https://www.googleapis.com" };
 		auto& account = ctx_.get_account_manager<google_account_manager>();
-		auto access_token = account.access_token();
-		if (!access_token.has_value())
+		auto access_token_result = account.access_token();
+		if (access_token_result.status != get_access_token_status::success)
 		{
 			debug::error("Failed to obtain access token");
 			return false;
 		}
 
-		client.set_bearer_token_auth(*access_token);
+		client.set_bearer_token_auth(access_token_result.access_token);
 
 		std::string shared_or_my_files_param;
 		if (current_path_.front().id == shared_files_id)

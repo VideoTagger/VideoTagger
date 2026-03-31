@@ -21,7 +21,13 @@ namespace vt
 		}
 
 		httplib::Client client("https://www.googleapis.com");
-		client.set_bearer_token_auth(*account_manager.access_token());
+		auto access_token_result = account_manager.access_token();
+		if (access_token_result.status != get_access_token_status::success)
+		{
+			throw std::runtime_error("Failed to obtain access token");
+		}
+
+		client.set_bearer_token_auth(access_token_result.access_token);
 
 		auto get_result = client.Get(fmt::format("/drive/v3/files/{}/?fields=mimeType,videoMediaMetadata,name,sha256Checksum", file_id));
 		if (!get_result)
@@ -122,7 +128,14 @@ namespace vt
 		}
 
 		httplib::Client client("https://www.googleapis.com");
-		client.set_bearer_token_auth(*account_manager.access_token());
+
+		auto access_token_result = account_manager.access_token();
+		if (access_token_result.status != get_access_token_status::success)
+		{
+			return video_download_result{ video_download_status::failed };
+		}
+
+		client.set_bearer_token_auth(access_token_result.access_token);
 
 		std::filesystem::path file_path = ctx_.downloads_dir_filepath / file_id_;
 		std::filesystem::create_directories(ctx_.downloads_dir_filepath);

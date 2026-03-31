@@ -5,7 +5,14 @@
 
 namespace vt
 {
-	struct obtain_token_result
+	enum class obtain_token_error
+	{
+		request_failed,
+		invalid_response,
+		required_scopes_not_granted
+	};
+
+	struct obtain_token_result_data
 	{
 		std::string access_token;
 		std::string refresh_token;
@@ -13,6 +20,52 @@ namespace vt
 		std::chrono::steady_clock::time_point expire_tp;
 	};
 
+	class obtain_token_result
+	{
+	public:
+		explicit constexpr obtain_token_result(obtain_token_error status) : data_{ status } {}
+		explicit obtain_token_result(obtain_token_result_data data) : data_{ std::move(data) } {}
+
+	private:
+		std::variant<obtain_token_error, obtain_token_result_data> data_;
+
+	public:
+		constexpr obtain_token_error error() const
+		{
+			return std::get<obtain_token_error>(data_);
+		}
+
+		constexpr bool has_value() const
+		{
+			return std::holds_alternative<obtain_token_result_data>(data_);
+		}
+
+		constexpr const obtain_token_result_data& value() const
+		{
+			return std::get<obtain_token_result_data>(data_);
+		}
+
+		constexpr obtain_token_result_data& value()
+		{
+			return std::get<obtain_token_result_data>(data_);
+		}
+	};
+
+	enum class get_access_token_status
+	{
+		success,
+		refresh_failed_request_failed,
+		refresh_failed_invalid_response,
+		token_unavailable
+	};
+
+	struct get_access_token_result
+	{
+		get_access_token_status status;
+		std::string access_token;
+	};
+
+	//TODO: probably shouldn't store client secret
 	struct google_account_info
 	{
 		account_properties properties;
@@ -60,10 +113,9 @@ namespace vt
 
 		account_login_popup_data login_popup_data() override;
 
-		//TODO: error messages in the return value would be nice, would require something like std::expected
-		std::optional<obtain_token_result> obtain_access_token(const std::string& client_id, const std::string& client_secret, bool* cancel_token);
-		std::optional<obtain_token_result> refresh_access_token(const std::string& client_id, const std::string& client_secret, const std::string& refresh_token);
-		std::optional<std::string> access_token();
+		obtain_token_result obtain_access_token(const std::string& client_id, const std::string& client_secret, bool* cancel_token);
+		obtain_token_result refresh_access_token(const std::string& client_id, const std::string& client_secret, const std::string& refresh_token);
+		get_access_token_result access_token();
 		std::optional<std::string> obtain_user_name();
 		bool revoke_token();
 	

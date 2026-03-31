@@ -48,15 +48,15 @@ namespace vt::ui
 
 			auto& account_manager = ctx_.get_account_manager<google_account_manager>();
 
-			auto access_token = account_manager.access_token().value_or("");
-			if (access_token.empty())
+			auto access_token_result = account_manager.access_token();
+			if (access_token_result.status != get_access_token_status::success)
 			{
 				debug::error("Failed to obtain google access token");
 				return return_value;
 			}
 
 			httplib::Client client("https://www.googleapis.com");
-			client.set_bearer_token_auth(access_token);
+			client.set_bearer_token_auth(access_token_result.access_token);
 
 			nlohmann::json response_json;
 			{
