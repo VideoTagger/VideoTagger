@@ -135,9 +135,7 @@ namespace vt::ui
 
 	void begin_bigger_frames()
 	{
-		static constexpr float frame_padding_multiplier = 1.75f;
-		const auto& style = ImGui::GetStyle();
-		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, style.FramePadding * frame_padding_multiplier);
+		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, bigger_frame_size());
 	}
 
 	void end_bigger_frames()
@@ -516,6 +514,13 @@ namespace vt::ui
 	float toggle_height()
 	{
 		return ImGui::GetFrameHeightWithSpacing() * 0.85f;
+	}
+
+	ImVec2 bigger_frame_size()
+	{
+		static constexpr float frame_padding_multiplier = 1.75f;
+		const auto& style = ImGui::GetStyle();
+		return style.FramePadding * frame_padding_multiplier;
 	}
 
 	bool is_item_disabled()
