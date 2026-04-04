@@ -18,6 +18,7 @@ namespace vt::ui
 		std::string id_;
 		std::string input_;
 		std::string hint_;
+		float width_;
 		widget_state state_;
 		ImGuiInputFlags flags_;
 
@@ -27,6 +28,7 @@ namespace vt::ui
 		void set_hint(const std::string& hint);
 		void set_validator(const std::function<std::optional<std::string>(const std::string& text)>& validator = nullptr);
 		void set_is_password(bool value);
+		void set_width(float width = 0.f);
 
 		void focus() const;
 		void clear();

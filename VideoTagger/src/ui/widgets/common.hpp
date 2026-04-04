@@ -73,5 +73,6 @@ namespace vt::ui
 
 	float table_border_size();
 	float toggle_height();
+	ImVec2 bigger_frame_size();
 	bool is_item_disabled();
 }

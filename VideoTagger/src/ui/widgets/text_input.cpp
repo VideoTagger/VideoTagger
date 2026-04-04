@@ -9,7 +9,7 @@
 namespace vt::ui
 {
 	text_input::text_input(const std::string& id, const std::string& hint, const std::function<std::optional<std::string>(const std::string& text)>& validator) : text_input{ id, {}, hint, validator } {}
-	text_input::text_input(const std::string& id, const std::string& input, const std::string& hint, const std::function<std::optional<std::string>(const std::string& text)>& validator) : id_{ id }, input_{ input }, hint_{ hint }, validator_{ validator }, state_{ widget_state::normal }, flags_{} {}
+	text_input::text_input(const std::string& id, const std::string& input, const std::string& hint, const std::function<std::optional<std::string>(const std::string& text)>& validator) : id_{ id }, input_{ input }, hint_{ hint }, validator_{ validator }, state_{ widget_state::normal }, flags_{}, width_{} {}
 	
 	void text_input::set_flags(ImGuiInputFlags flags)
 	{
@@ -41,6 +41,11 @@ namespace vt::ui
 		{
 			flags_ &= ~ImGuiInputTextFlags_Password;
 		}
+	}
+
+	void text_input::set_width(float width)
+	{
+		width_ = width;
 	}
 
 	void text_input::focus() const
@@ -107,6 +112,14 @@ namespace vt::ui
 		{
 			ImGui::PushFont(ctx_.get_font(font_type::password));
 		}
+		if (width_ > 0.f)
+		{
+			ImGui::PushItemWidth(width_);
+		}
+		if (width_ < 0.f)
+		{
+			ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x);
+		}
 		if (!hint_.empty())
 		{
 			result = ImGui::InputTextWithHint(id_.c_str(), hint_.c_str(), &input_, flags_);
@@ -114,6 +127,10 @@ namespace vt::ui
 		else
 		{
 			result = ImGui::InputText(id_.c_str(), &input_, flags_);
+		}
+		if (width_ != 0.f)
+		{
+			ImGui::PopItemWidth();
 		}
 		if (push_password_font)
 		{
