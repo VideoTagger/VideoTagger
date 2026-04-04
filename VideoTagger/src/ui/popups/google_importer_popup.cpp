@@ -1,4 +1,5 @@
 #include "google_importer_popup.hpp"
+#include "google_importer_popup.hpp"
 
 #include <pch.hpp>
 
@@ -145,18 +146,21 @@ namespace vt::ui
 		browser.set_item_context_menu(browser_context_menu);
 	}
 
+	void google_importer_popup::pre_style()
+	{
+		auto viewport = ImGui::GetMainViewport();
+		ImGui::SetNextWindowSize(viewport->Size * 0.7f);
+	}
+
 	void google_importer_popup::on_display()
 	{
-		//auto window_size = ImGui::GetContentRegionMax() * 0.75f;
-		//ImGui::SetNextWindowSize(window_size, ImGuiCond_Appearing);
 	}
 
 	void google_importer_popup::on_render()
 	{
 		auto avail = ImGui::GetContentRegionAvail();
-		auto max_size = ImGui::GetContentRegionMax();
 
-		if (ImGui::BeginChild("##Browser", { max_size.x, avail.y * 0.6f }))
+		if (ImGui::BeginChild("##Browser", {avail.x, avail.y * 0.5f}))
 		{
 			if (browser.render())
 			{
@@ -184,7 +188,7 @@ namespace vt::ui
 
 		avail = ImGui::GetContentRegionAvail();
 
-		if (ImGui::BeginChild("#Add", { avail.x, ImGui::GetFrameHeightWithSpacing() + style.WindowPadding.y * 2 }, ImGuiChildFlags_FrameStyle))
+		if (ImGui::BeginChild("#Add", { avail.x, ImGui::GetFrameHeightWithSpacing() + style.FramePadding.y}, ImGuiChildFlags_FrameStyle | ImGuiChildFlags_AutoResizeY))
 		{
 			if (ui::icon_button(icons::add))
 			{
@@ -195,9 +199,8 @@ namespace vt::ui
 				}
 			}
 
-			avail = ImGui::GetContentRegionAvail();
-
 			ImGui::SameLine();
+			user_input.set_width(-1.f);
 			user_input.render();
 
 			//TODO: maybe put the list here
@@ -206,7 +209,9 @@ namespace vt::ui
 		ImGui::EndChild();
 
 		avail = ImGui::GetContentRegionAvail();
-		ImVec2 list_size = { avail.x, avail.y - ImGui::GetFrameHeight() - style.ItemSpacing.y };
+		ui::begin_bigger_frames();
+		ImVec2 list_size = { avail.x, avail.y - style.WindowPadding.y * 2 - ImGui::GetFrameHeight() };
+		ui::end_bigger_frames();
 		if (ImGui::BeginListBox("##ImportList", list_size))
 		{
 			ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, { 0, 0 });

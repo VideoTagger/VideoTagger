@@ -30,6 +30,7 @@ namespace vt::ui
 		widgets::google_drive_browser browser;
 
 	public:
+		virtual void pre_style() override;
 		virtual void on_display() override;
 		virtual void on_render() override;
 		virtual void on_close() override;

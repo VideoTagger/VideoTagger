@@ -237,7 +237,7 @@ namespace vt::widgets
 				for (size_t i = 0; i < current_path_.size(); ++i)
 				{
 					ImGui::SameLine();
-					if (ui::icon_button(current_path_[i].name, { 0.f, icon_button_size.y }))
+					if (ui::rounded_button(current_path_[i].name, { 0.f, icon_button_size.y }))
 					{
 						folder_index = i + 1;
 					}

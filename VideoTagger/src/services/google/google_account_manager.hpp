@@ -113,6 +113,7 @@ namespace vt
 
 		account_login_popup_data login_popup_data() override;
 
+		//TODO: use cancellation token
 		obtain_token_result obtain_access_token(const std::string& client_id, const std::string& client_secret, bool* cancel_token);
 		obtain_token_result refresh_access_token(const std::string& client_id, const std::string& client_secret, const std::string& refresh_token);
 		get_access_token_result access_token();
