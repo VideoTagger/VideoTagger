@@ -24,6 +24,7 @@ namespace vt::utils::oauth2
 
 	std::string generate_code_challenge(std::string_view code_verifier)
 	{
-		return utils::base64::encode(hash::sha256(code_verifier), utils::base64::base64_table::url, true);
+		auto code_verfier_hash = hash::sha256(code_verifier);
+		return utils::base64::encode(std::vector<uint8_t>{ code_verfier_hash.begin(), code_verfier_hash.end() }, utils::base64::base64_table::url, true);
 	}
 }

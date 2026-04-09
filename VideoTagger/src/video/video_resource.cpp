@@ -76,10 +76,9 @@ namespace vt
 		if (include_fields.sha256)
 		{
 			auto sha256 = utils::hash::sha256_file(path);
-			if (!sha256.empty())
+			if (sha256.has_value())
 			{
-				result.sha256 = std::array<uint8_t, utils::hash::sha256_byte_count>{};
-				std::copy_n(sha256.begin(), utils::hash::sha256_byte_count, result.sha256->begin());
+				result.sha256 = sha256;
 			}
 		}
 
@@ -117,14 +116,14 @@ namespace vt
 
 			file_path_ = path;
 			auto file_hash = utils::hash::sha256_file(path);
-			if (file_hash.empty())
+			if (!file_hash.has_value())
 			{
 				debug::warn("Failed to calculate hash for file at path: {}", path);
 				return;
 			}
 
 			make_metadata_include_fields fields;
-			if (metadata_.sha256.has_value() and std::equal(file_hash.begin(), file_hash.end(), metadata_.sha256->begin()))
+			if (metadata_.sha256.has_value() and file_hash == metadata_.sha256)
 			{
 				fields.title = !metadata_.title.has_value();
 				fields.width = metadata_.width == 0;
@@ -133,7 +132,14 @@ namespace vt
 				fields.duration = !metadata_.duration.has_value();
 			}
 
-			write_metadata_fields(metadata_, make_video_metadata_from_path(file_path_, fields), fields);
+			try
+			{
+				write_metadata_fields(metadata_, make_video_metadata_from_path(file_path_, fields), fields);
+			}
+			catch (const std::exception& e)
+			{
+				debug::warn("Failed to read metadata from file at path {}: {}", path, e.what());
+			}
 		}
 	}
 
