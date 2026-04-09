@@ -33,7 +33,7 @@ namespace vt
 
 	public:
 		template<typename fn_type>
-		auto then(fn_type&& fn, std::shared_ptr<cancellation_token> token = nullptr)
+		auto then(fn_type&& fn, std::optional<cancellation_token> token = std::nullopt)
 		{
 			if constexpr (std::is_void_v<type>)
 			{
@@ -48,9 +48,9 @@ namespace vt
 				{
 					using result_type = std::invoke_result_t<std::decay_t<fn_type>, cancellation_token&>;
 					auto new_state = std::make_shared<task_state<result_type>>();
-					if (token == nullptr)
+					if (!token.has_value())
 					{
-						token = std::make_shared<cancellation_token>();
+						token = cancellation_token{};
 					}
 
 					state_->add_callback([tok = token, state = state_, new_state, fn = std::forward<fn_type>(fn)]() mutable
@@ -106,9 +106,9 @@ namespace vt
 				{
 					using result_type = std::invoke_result_t<std::decay_t<fn_type>, type&, cancellation_token&>;
 					auto new_state = std::make_shared<task_state<result_type>>();
-					if (token == nullptr)
+					if (!token.has_value())
 					{
-						token = std::make_shared<cancellation_token>();
+						token = cancellation_token{};
 					}
 
 					state_->add_callback([tok = token, state = state_, new_state, fn = std::forward<fn_type>(fn)]() mutable
@@ -128,7 +128,7 @@ namespace vt
 							new_state->set_status(task_status::cancelled);
 						}
 					});
-					return cancellable_task<result_type>{ token, new_state };
+					return cancellable_task<result_type>{ *token, new_state };
 				}
 				else
 				{
@@ -154,7 +154,7 @@ namespace vt
 		}
 
 		template<typename executor_type, typename fn_type>
-		auto then(executor_type& executor, fn_type&& fn, std::shared_ptr<cancellation_token> token = nullptr, task_priority priority = task_priority::normal)
+		auto then(executor_type& executor, fn_type&& fn, std::optional<cancellation_token> token = std::nullopt, task_priority priority = task_priority::normal)
 		{
 			if constexpr (std::is_void_v<type>)
 			{
@@ -169,9 +169,9 @@ namespace vt
 				{
 					using result_type = std::invoke_result_t<std::decay_t<fn_type>, cancellation_token&>;
 					auto new_state = std::make_shared<task_state<result_type>>();
-					if (token == nullptr)
+					if (!token.has_value())
 					{
-						token = std::make_shared<cancellation_token>();
+						token = cancellation_token{};
 					}
 
 					state_->add_callback([tok = token, state = state_, &executor, new_state, fn = std::forward<fn_type>(fn), priority]() mutable
@@ -233,9 +233,9 @@ namespace vt
 				{
 					using result_type = std::invoke_result_t<std::decay_t<fn_type>, type&, cancellation_token&>;
 					auto new_state = std::make_shared<task_state<result_type>>();
-					if (token == nullptr)
+					if (!token.has_value())
 					{
-						token = std::make_shared<cancellation_token>();
+						token = cancellation_token{};
 					}
 
 					state_->add_callback([tok = token, state = state_, &executor, new_state, fn = std::forward<fn_type>(fn), priority]() mutable
@@ -342,13 +342,13 @@ namespace vt
 		cancellable_task(const cancellable_task&) = delete;
 		cancellable_task(cancellable_task&&) = default;
 		cancellable_task(cancellation_token&& token) : token_{ std::move(token) } {}
-		explicit cancellable_task(std::shared_ptr<cancellation_token> token, std::shared_ptr<task_state<type>> state) : token_{ token }, task<type>{ state } {}
+		explicit cancellable_task(cancellation_token token, std::shared_ptr<task_state<type>> state) : token_{ token }, task<type>{ state } {}
 
 	private:
-		std::shared_ptr<cancellation_token> token_;
+		cancellation_token token_;
 
 	public:
-		constexpr std::shared_ptr<cancellation_token> token()
+		constexpr cancellation_token token()
 		{
 			return token_;
 		}

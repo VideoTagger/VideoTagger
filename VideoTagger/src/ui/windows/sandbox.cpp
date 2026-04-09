@@ -48,7 +48,7 @@ namespace vt::ui::windows
 
 			if (ui::button("Test Cancellable Tasks"))
 			{
-				auto token = std::make_shared<cancellation_token>();
+				cancellation_token token;
 
 				auto ct = ctx_.tasks.run([](cancellation_token& token)
 				{
@@ -66,11 +66,11 @@ namespace vt::ui::windows
 					debug::log("Cancellable Job stopped");
 				}, token);
 
-				ctx_.tasks.run([tok = ct.token()]()
+				ctx_.tasks.run([tok = ct.token()]() mutable
 				{
 					std::this_thread::sleep_for(std::chrono::seconds(3));
 					debug::log("Cancelling cancellable job...");
-					tok->cancel();
+					tok.cancel();
 				});
 			}
 			return true;

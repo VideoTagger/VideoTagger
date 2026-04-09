@@ -14,7 +14,7 @@ namespace vt::impl
 		virtual ~task_executor() = default;
 
 		template<typename fn_type>
-		auto submit(fn_type&& fn, std::shared_ptr<cancellation_token> token = nullptr, task_priority priority = task_priority::normal)
+		auto submit(fn_type&& fn, std::optional<cancellation_token> token = std::nullopt, task_priority priority = task_priority::normal)
 		{
 			static constexpr bool is_cancellable = is_task_cancellable<fn_type>;
 
@@ -36,7 +36,7 @@ namespace vt::impl
 						state->set_value(fn(*tok));
 					}
 				}, priority });
-				return cancellable_task<result_type>{ token, state };
+				return cancellable_task<result_type>{ *token, state };
 			}
 			else
 			{
