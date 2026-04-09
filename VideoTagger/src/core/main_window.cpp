@@ -927,7 +927,7 @@ namespace vt
 				return;
 			}
 
-			if (vid_res->downloadable() != video_downloadable::yes)
+			if (vid_res->downloadable() != video_downloadable_status::downloadable)
 			{
 				debug::error("Video with id {} is not downloadable right now", event.video_id());
 				return;

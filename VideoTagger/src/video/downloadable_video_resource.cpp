@@ -40,6 +40,11 @@ namespace vt
 		}
 
 		auto download_result = on_download(token);
+		if (download_result.status != video_download_status::completed)
+		{
+			//TODO: consider whether this should always delete if download fails
+			std::filesystem::remove(download_result.download_path);
+		}
 
 		{
 			std::scoped_lock lock{ download_progress_mutex_ };

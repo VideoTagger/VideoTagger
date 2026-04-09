@@ -17,15 +17,17 @@ namespace vt
 
 		std::optional<video_resource_thumbnail> generate_thumbnail() const override;
 		void refresh() override;
-		video_downloadable downloadable() const override;
+		video_downloadable_status downloadable() const override;
 
 		void on_save(nlohmann::ordered_json& json) const override;
+
+		void update_downloadable();
 	
 	protected:
 		virtual video_download_result on_download(const cancellation_token& token) override;
 
 	private:
 		std::string file_id_;
-		video_downloadable downloadable_ = video_downloadable::yes;
+		video_downloadable_status downloadable_ = video_downloadable_status::downloadable;
 	};
 }

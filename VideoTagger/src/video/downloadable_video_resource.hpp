@@ -20,12 +20,12 @@ namespace vt
 		cancelled
 	};
 
-	enum class video_downloadable
+	enum class video_downloadable_status
 	{
-		yes,
-		no_connection,
-		no_deleted,
-		no_other
+		downloadable,
+		connection_error,
+		authorization_error,
+		not_available,
 	};
 
 	struct video_download_result
@@ -48,7 +48,7 @@ namespace vt
 
 		bool remove_downloaded_file();
 
-		virtual video_downloadable downloadable() const = 0;
+		virtual video_downloadable_status downloadable() const = 0;
 		virtual bool playable() const override;
 		virtual void context_menu_items(std::vector<video_resource_context_menu_item>& items) override;
 		virtual void icon_custom_draw(ImDrawList& draw_list, ImRect item_rect, ImRect image_rect) const override;
