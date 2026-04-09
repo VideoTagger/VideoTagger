@@ -808,7 +808,7 @@ namespace vt
 				bool from_cache;
 			};
 
-			auto token = std::make_shared<cancellation_token>();
+			cancellation_token token;
 			std::set<std::string> task_tags{ "video_resource", video_id_to_task_tag(event.video_id()) };
 
 			ctx_.session.tasks.run([video_id = event.video_id(), ignore_cache = event.ignore_cache()](cancellation_token& token) mutable -> std::optional<thumbnail_load_result>
@@ -915,7 +915,7 @@ namespace vt
 					return;
 				}
 				vid_res->set_thumbnail(thumbnail.texture());
-			}, nullptr, task_tags);
+			}, std::nullopt, task_tags);
 		});
 
 		ctx_.add_event_listener<video_start_download_request_event>([this](const video_start_download_request_event& event)
@@ -933,11 +933,10 @@ namespace vt
 				return;
 			}
 
-			auto token = std::make_shared<cancellation_token>();
-			std::set<std::string> task_tags{ "video_resource", video_id_to_task_tag(event.video_id()) };
+			cancellation_token token;
+			std::set<std::string> task_tags{ "video_resource", video_id_to_task_tag(event.video_id()), "download"};
 
-			//TODO: don't capture token
-			ctx_.session.tasks.run([vid_res, token](cancellation_token&)
+			ctx_.session.tasks.run([vid_res](cancellation_token& token)
 			{
 				return vid_res->download(token);
 			}, token, task_tags)
@@ -964,7 +963,7 @@ namespace vt
 
 					default: break;
 				}
-			}, nullptr, task_tags);
+			}, std::nullopt, task_tags);
 
 			ctx_.dispatch_event<video_download_started_event>(event_source_, event.video_id());
 		});
@@ -993,7 +992,7 @@ namespace vt
 				return;
 			}
 
-			vid_res->cancel_download();
+			ctx_.session.tasks.cancel_all_with_all({ "video_resource", video_id_to_task_tag(event.video_id()), "download" });
 		});
 
 		ctx_.add_event_listener<video_refresh_request_event>([this](const video_refresh_request_event& event)
@@ -1088,20 +1087,6 @@ namespace vt
 
 		ctx_.session.tasks.cancel_all();
 		ctx_.tasks.wait_for_all();
-
-		if (ctx_.current_project.has_value())
-		{
-			for (auto& [id, resource_ptr] : ctx_.current_project->videos)
-			{
-				auto downloadable_resource = dynamic_cast<downloadable_video_resource*>(resource_ptr.get());
-				if (downloadable_resource == nullptr)
-				{
-					continue;
-				}
-
-				downloadable_resource->cancel_download();
-			}
-		}
 
 		ctx_.last_focused_video = std::nullopt;
 		ctx_.set_selected_attribute(nullptr);

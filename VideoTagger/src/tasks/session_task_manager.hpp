@@ -2,6 +2,7 @@
 #include <vector>
 #include <memory>
 #include <mutex>
+#include <optional>
 
 #include "session_task_handle.hpp"
 #include "task_manager.hpp"
@@ -26,10 +27,10 @@ namespace vt
 
 	public:
 		template<typename fn_type>
-		auto then(fn_type&& fn, std::shared_ptr<cancellation_token> token = nullptr, const std::set<std::string>& tags = {});
+		auto then(fn_type&& fn, std::optional<cancellation_token> token = std::nullopt, const std::set<std::string>& tags = {});
 
 		template<typename executor_type, typename fn_type>
-		auto then(executor_type& executor, fn_type&& fn, std::shared_ptr<cancellation_token> token = nullptr, const std::set<std::string>& tags = {}, task_priority priority = task_priority::normal);
+		auto then(executor_type& executor, fn_type&& fn, std::optional<cancellation_token> token = std::nullopt, const std::set<std::string>& tags = {}, task_priority priority = task_priority::normal);
 
 		auto delay(std::chrono::milliseconds delay, const std::set<std::string>& tags);
 
@@ -53,7 +54,7 @@ namespace vt
 			return id_;
 		}
 
-		constexpr std::shared_ptr<cancellation_token> token()
+		constexpr cancellation_token token()
 		{
 			return task_.token();
 		}
@@ -90,7 +91,7 @@ namespace vt
 		};
 
 		template<typename fn_type>
-		auto run(fn_type&& fn, std::shared_ptr<cancellation_token> token, const std::set<std::string>& tags = {}, task_priority priority = task_priority::normal)
+		auto run(fn_type&& fn, cancellation_token token, const std::set<std::string>& tags = {}, task_priority priority = task_priority::normal)
 		{
 			return add(task_manager_->run(std::forward<fn_type>(fn), std::move(token), priority), tags);
 		};
@@ -102,7 +103,7 @@ namespace vt
 		};
 
 		template<typename fn_type>
-		auto run_on_main(fn_type&& fn, std::shared_ptr<cancellation_token> token, const std::set<std::string>& tags = {}, task_priority priority = task_priority::normal)
+		auto run_on_main(fn_type&& fn, std::optional<cancellation_token> token, const std::set<std::string>& tags = {}, task_priority priority = task_priority::normal)
 		{
 			return add(task_manager_->run_on_main(std::forward<fn_type>(fn), std::move(token), priority), tags);
 		};
@@ -163,14 +164,14 @@ namespace vt
 
 	template<typename task_type>
 	template<typename fn_type>
-	inline auto session_task_wrapper<task_type>::then(fn_type&& fn, std::shared_ptr<cancellation_token> token, const std::set<std::string>& tags)
+	inline auto session_task_wrapper<task_type>::then(fn_type&& fn, std::optional<cancellation_token> token, const std::set<std::string>& tags)
 	{
 		return session_->add(task_.then(std::forward<fn_type>(fn), std::move(token)), tags);
 	}
 
 	template<typename task_type>
 	template<typename executor_type, typename fn_type>
-	inline auto session_task_wrapper<task_type>::then(executor_type& executor, fn_type&& fn, std::shared_ptr<cancellation_token> token, const std::set<std::string>& tags, task_priority priority)
+	inline auto session_task_wrapper<task_type>::then(executor_type& executor, fn_type&& fn, std::optional<cancellation_token> token, const std::set<std::string>& tags, task_priority priority)
 	{
 		return session_->add(task_.then(executor, std::forward<fn_type>(fn), std::move(token), priority), tags);
 	}

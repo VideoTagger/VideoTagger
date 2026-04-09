@@ -4,6 +4,7 @@
 #include <functional>
 #include <set>
 #include <tasks/task.hpp>
+#include <optional>
 #include <tasks/cancellation_token.hpp>
 #include <utils/random.hpp>
 
@@ -30,8 +31,8 @@ namespace vt
 		}
 
 	private:
-		std::shared_ptr<cancellation_token> cancellation_token_;
 		std::function<void()> await_fn_;
+		std::optional<cancellation_token> cancellation_token_;
 		std::set<std::string> tags_;
 		session_task_id_t id_{};
 

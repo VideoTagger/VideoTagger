@@ -5,7 +5,7 @@ namespace vt
 {
 	void session_task_handle::cancel()
 	{
-		if (cancellation_token_ != nullptr)
+		if (cancellation_token_.has_value())
 		{
 			cancellation_token_->cancel();
 		}

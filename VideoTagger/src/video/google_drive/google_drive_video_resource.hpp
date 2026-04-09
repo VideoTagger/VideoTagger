@@ -22,7 +22,7 @@ namespace vt
 		void on_save(nlohmann::ordered_json& json) const override;
 	
 	protected:
-		virtual video_download_result on_download(std::shared_ptr<cancellation_token> token) override;
+		virtual video_download_result on_download(const cancellation_token& token) override;
 
 	private:
 		std::string file_id_;

@@ -32,9 +32,8 @@ namespace vt
 		return download_progress_.has_value();
 	}
 
-	video_download_result downloadable_video_resource::download(std::shared_ptr<cancellation_token> token)
+	video_download_result downloadable_video_resource::download(const cancellation_token& token)
 	{
-		download_cancellation_token_ = token;
 		{
 			std::scoped_lock lock{ download_progress_mutex_ };
 			download_progress_ = 0.f;
@@ -46,19 +45,8 @@ namespace vt
 			std::scoped_lock lock{ download_progress_mutex_ };
 			download_progress_.reset();
 		}
-		download_cancellation_token_ = nullptr;
 
 		return download_result;
-	}
-
-	void downloadable_video_resource::cancel_download()
-	{
-		if (!is_downloading())
-		{
-			return;
-		}
-
-		download_cancellation_token_->cancel();
 	}
 
 	bool downloadable_video_resource::remove_downloaded_file()

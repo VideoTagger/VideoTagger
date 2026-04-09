@@ -41,8 +41,7 @@ namespace vt
 		downloadable_video_resource(std::string importer_id, const nlohmann::ordered_json& json);
 		virtual ~downloadable_video_resource() = default;
 
-		video_download_result download(std::shared_ptr<cancellation_token> token);
-		void cancel_download();
+		video_download_result download(const cancellation_token& token);
 
 		float download_progress() const;
 		bool is_downloading() const;
@@ -58,11 +57,10 @@ namespace vt
 	protected:
 		void set_download_progress(float progress);
 
-		virtual video_download_result on_download(std::shared_ptr<cancellation_token> token) = 0;
+		virtual video_download_result on_download(const cancellation_token& token) = 0;
 
 	private:
 		mutable std::mutex download_progress_mutex_;
 		std::optional<float> download_progress_{};
-		std::shared_ptr<cancellation_token> download_cancellation_token_;
 	};
 }

@@ -114,7 +114,7 @@ namespace vt
 		json["file-id"] = file_id_;
 	}
 
-	video_download_result google_drive_video_resource::on_download(std::shared_ptr<cancellation_token> token)
+	video_download_result google_drive_video_resource::on_download(const cancellation_token& token)
 	{
 		if (!ctx_.is_account_manager_registered<google_account_manager>())
 		{
@@ -147,9 +147,10 @@ namespace vt
 			return video_download_result{ video_download_status::failed };
 		}
 
+		//TODO: consider downloading in chunks to avoid loading the whole file in memory.
 		auto get_result = client.Get(fmt::format("/drive/v3/files/{}/?alt=media", file_id_), [this, token](uint64_t current_size, uint64_t total_size)
 		{
-			if (token->is_cancelled())
+			if (token.is_cancelled())
 			{
 				return false;
 			}
