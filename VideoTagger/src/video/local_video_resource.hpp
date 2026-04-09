@@ -13,5 +13,6 @@ namespace vt
 		local_video_resource(const nlohmann::ordered_json& json);
 
 		bool playable() const override;
+		virtual void context_menu_items(std::vector<video_resource_context_menu_item>& items) override;
 	};
 }
