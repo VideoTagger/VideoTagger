@@ -538,7 +538,7 @@ namespace vt
 			{
 				debug::log("Updating theme list");
 				ctx_.themes = theme_list;
-			}, nullptr, priority);
+			}, std::nullopt, priority);
 		});
 
 		ctx_.add_event_listener<fetch_scripts_event>([this](const fetch_scripts_event& event)
@@ -554,7 +554,7 @@ namespace vt
 			{
 				debug::log("Updating script list");
 				ctx_.scripts = script_list;
-			}, nullptr, task_priority::low);
+			}, std::nullopt, task_priority::low);
 		});
 	}
 
