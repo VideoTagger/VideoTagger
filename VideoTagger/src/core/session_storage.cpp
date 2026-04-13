@@ -29,7 +29,8 @@
 
 namespace vt
 {
-	session_storage::session_storage()
+	session_storage::session_storage() :
+		tasks{ ctx_.tasks }
 	{
 		register_timeline_listeners();
 		register_gizmo_listeners();
@@ -410,5 +411,6 @@ namespace vt
 		insert_segment_marks_.clear();
 		
 		gizmo_targets_.clear();
+		tasks.clear();
 	}
 }

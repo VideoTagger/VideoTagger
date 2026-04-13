@@ -109,15 +109,23 @@ namespace vt
 		{
 			auto& console = ctx_.get_window<widgets::console>();
 			debug::error("Failed to refresh access token for service {}", service_id());
-			account_info_.properties = properties;
 			console.add_entry(widgets::console::entry::flag_type::error, "Google account: failed to log in", widgets::console::entry::source_info{ "VideoTagger", -1 });
+
+			if (result.error() == obtain_token_error::invalid_response)
+			{
+				properties.erase("refresh_token");
+			}
+
+			account_info_.properties = properties;
 			return;
 		}
 
-		properties["access_token"] = std::move(result->access_token);
-		properties["scope"] = std::move(result->scope);
+		auto& value = result.value();
+		properties["access_token"] = std::move(value.access_token);
+		properties["refresh_token"] = std::move(value.refresh_token);
+		properties["scope"] = std::move(value.scope);
 
-		account_info_.expire_tp = result->expire_tp;
+		account_info_.expire_tp = value.expire_tp;
 		account_info_.properties = properties;
 	}
 
@@ -156,8 +164,6 @@ namespace vt
 
 	bool google_account_manager::on_log_in(const account_properties& properties, bool* cancel_token)
 	{
-		//TODO: if refresh token is present obtain token from it
-
 		std::string client_id = properties.at("client_id");
 		std::string client_secret = properties.at("client_secret");
 		std::string refresh_token;
@@ -171,11 +177,12 @@ namespace vt
 			auto result = refresh_access_token(client_id, client_secret, properties.at("refresh_token"));
 			if (result.has_value())
 			{
+				auto& value = result.value();
 				refresh_success = true;
-				refresh_token = properties.at("refresh_token");
-				access_token = std::move(result->access_token);
-				scope = std::move(result->scope);
-				expire_tp = result->expire_tp;
+				refresh_token = std::move(value.refresh_token);
+				access_token = std::move(value.access_token);
+				scope = std::move(value.scope);
+				expire_tp = value.expire_tp;
 			}
 		}
 
@@ -188,10 +195,11 @@ namespace vt
 				return false;
 			}
 
-			refresh_token = std::move(result->refresh_token);
-			access_token = std::move(result->access_token);
-			scope = std::move(result->scope);
-			expire_tp = result->expire_tp;
+			auto& value = result.value();
+			refresh_token = std::move(value.refresh_token);
+			access_token = std::move(value.access_token);
+			scope = std::move(value.scope);
+			expire_tp = value.expire_tp;
 		}
 
 		account_info_.properties["client_id"] = client_id;
@@ -226,9 +234,11 @@ namespace vt
 			return false;
 		}
 
-		account_info_.properties["access_token"] = result->access_token;
-		account_info_.properties["refresh_token"] = result->refresh_token;
-		account_info_.expire_tp = result->expire_tp;
+		auto& value = result.value();
+
+		account_info_.properties["access_token"] = std::move(value.access_token);
+		account_info_.properties["refresh_token"] = std::move(value.refresh_token);
+		account_info_.expire_tp = value.expire_tp;
 
 		return true;
 	}
@@ -282,8 +292,8 @@ namespace vt
 	{
 		account_login_popup_data data;
 		data.fields = {
-			account_login_popup_field_data{ "Client id", "client_id" },
-			account_login_popup_field_data{ "Client secret", "client_secret" }
+			account_login_popup_field_data{ "Client ID", "client_id", "", "Client ID..."},
+			account_login_popup_field_data{ "Client Secret", "client_secret", "", "Client Secret...", true}
 		};
 
 		data.show_file_load_button = true;
@@ -291,7 +301,7 @@ namespace vt
 		return data;
 	}
 
-	std::optional<obtain_token_result> google_account_manager::obtain_access_token(const std::string& client_id, const std::string& client_secret, bool* cancel_token)
+	obtain_token_result google_account_manager::obtain_access_token(const std::string& client_id, const std::string& client_secret, bool* cancel_token)
 	{
 		std::string code_verifier = utils::oauth2::generate_code_verifier();
 		std::string code_challenge = utils::oauth2::generate_code_challenge(code_verifier);
@@ -335,6 +345,7 @@ namespace vt
 				if (req.params.count("code") == 0)
 				{
 					on_fail(req.params.find("error")->second);
+					result = obtain_token_result{ obtain_token_error::invalid_response };
 					return;
 				}
 
@@ -355,35 +366,43 @@ namespace vt
 				{
 					debug::error("POST failed: {}", httplib::to_string(post_result.error()));
 					on_fail("Failed to obtain access token");
+					result = obtain_token_result{ obtain_token_error::request_failed };
 					return;
 				}
 				if (post_result->status != 200)
 				{
 					debug::error("Got response: {} {}", post_result->status, post_result->reason);
 					on_fail("Failed to obtain access token");
+					result = obtain_token_result{ obtain_token_error::invalid_response };
 					return;
 				}
 
-				//TODO: handle errors?
-				result = obtain_token_result{};
 				auto json = nlohmann::json::parse(post_result->body);
-				result->access_token = json.at("access_token");
-				result->refresh_token = json.at("refresh_token");
-				result->expire_tp = std::chrono::steady_clock::now() + std::chrono::seconds{ int(json.at("expires_in")) };
-				result->scope = utils::string::split(json.at("scope"), ' ');
-
-				std::vector<std::string> required_scopes(request_scope_.begin(), request_scope_.end());
-
-				std::sort(result->scope.begin(), result->scope.end());
-				std::sort(required_scopes.begin(), required_scopes.end());
-
-				if (required_scopes != result->scope)
+				if (!json.contains("access_token") or !json.contains("refresh_token") or !json.contains("expires_in") or !json.contains("scope"))
 				{
-					debug::error("User didn't grant all the required scopes");
-					result.reset();
-					on_fail("Not all required permissions were granted");
+					on_fail("Failed to obtain access token");
+					result = obtain_token_result{ obtain_token_error::invalid_response };
 					return;
 				}
+
+				obtain_token_result_data result_data;
+				result_data.access_token = json.at("access_token");
+				result_data.refresh_token = json.at("refresh_token");
+				result_data.expire_tp = std::chrono::steady_clock::now() + std::chrono::seconds{ int(json.at("expires_in")) };
+				result_data.scope = utils::string::split(json.at("scope"), ' ');
+
+				//TODO: do this better
+				std::vector<std::string> required_scopes(request_scope_.begin(), request_scope_.end());
+				std::sort(result_data.scope.begin(), result_data.scope.end());
+				std::sort(required_scopes.begin(), required_scopes.end());
+				if (required_scopes != result_data.scope)
+				{
+					on_fail("Not all required permissions were granted");
+					result = obtain_token_result{ obtain_token_error::required_scopes_not_granted };
+					return;
+				}
+
+				result = obtain_token_result{ std::move(result_data) };
 
 				res.set_content(service_account_manager::success_page(), "text/html");
 
@@ -406,15 +425,10 @@ namespace vt
 			future.wait();
 		}
 
-		if (!result.has_value())
-		{
-			return std::nullopt;
-		}
-
-		return result;
+		return *result;
 	}
 
-	std::optional<obtain_token_result> google_account_manager::refresh_access_token(const std::string& client_id, const std::string& client_secret, const std::string& refresh_token)
+	obtain_token_result google_account_manager::refresh_access_token(const std::string& client_id, const std::string& client_secret, const std::string& refresh_token)
 	{
 		httplib::Client client("https://oauth2.googleapis.com");
 		httplib::Params params
@@ -427,55 +441,67 @@ namespace vt
 		auto post_result = client.Post("/token", params);
 		if (!post_result)
 		{
-			debug::error("POST failed: {}", httplib::to_string(post_result.error()));
-			return std::nullopt;
+			return obtain_token_result{ obtain_token_error::request_failed };
 		}
 		if (post_result->status != 200)
 		{
-			debug::error("Got response: {} {}", post_result->status, post_result->reason);
-			return std::nullopt;
+			return obtain_token_result{ obtain_token_error::invalid_response };
 		}
 
-		obtain_token_result result;
-
-		//TODO: handle errors?
 		auto json = nlohmann::json::parse(post_result->body);
-		result.access_token = json.at("access_token");
-		result.expire_tp = std::chrono::steady_clock::now() + std::chrono::seconds{ int(json.at("expires_in")) };
-		result.scope = utils::string::split(json.at("scope"), ' ');
+		if (!json.contains("access_token") or !json.contains("expires_in") or !json.contains("scope"))
+		{
+			return obtain_token_result{ obtain_token_error::invalid_response };
+		}
 
-		return result;
+		obtain_token_result_data result_data;
+		result_data.access_token = json.at("access_token");
+		result_data.refresh_token = refresh_token;
+		result_data.expire_tp = std::chrono::steady_clock::now() + std::chrono::seconds{ int(json.at("expires_in")) };
+		result_data.scope = utils::string::split(json.at("scope"), ' ');
+
+		return obtain_token_result{ result_data };
 	}
 
-	std::optional<std::string> google_account_manager::access_token()
+	get_access_token_result google_account_manager::access_token()
 	{
 		if (account_info_.access_token_expired())
 		{
 			auto result = refresh_access_token(account_info_.client_id(), account_info_.client_secret(), account_info_.refresh_token());
 			if (!result.has_value())
 			{
-				debug::error("Failed to refresh access token for service {}", service_id());
-				return std::nullopt;
+				switch (result.error())
+				{
+				case obtain_token_error::request_failed: return get_access_token_result{ get_access_token_status::refresh_failed_request_failed };
+				case obtain_token_error::invalid_response: return get_access_token_result{ get_access_token_status::refresh_failed_invalid_response };
+				}
 			}
 
-			account_info_.properties["access_token"] = std::move(result->access_token);
-			account_info_.properties["scope"] = std::move(result->scope);
-
-			account_info_.expire_tp = result->expire_tp;
+			auto& value = result.value();
+			account_info_.properties["access_token"] = std::move(value.access_token);
+			account_info_.properties["refresh_token"] = std::move(value.refresh_token);
+			account_info_.properties["scope"] = std::move(value.scope);
+			account_info_.expire_tp = value.expire_tp;
 		}
 
 		if (!account_info_.properties.contains("access_token"))
 		{
-			return std::nullopt;
+			return get_access_token_result{ get_access_token_status::token_unavailable };
 		}
 
-		return account_info_.access_token();
+		return  get_access_token_result{ get_access_token_status::success, account_info_.access_token() };
 	}
 
 	std::optional<std::string> google_account_manager::obtain_user_name()
 	{
 		httplib::Client client("https://www.googleapis.com");
-		client.set_bearer_token_auth(*access_token());
+		auto access_token_result = access_token();
+		if (access_token_result.status != get_access_token_status::success)
+		{
+			return std::nullopt;
+		}
+
+		client.set_bearer_token_auth(access_token_result.access_token);
 		auto get_result = client.Get("/oauth2/v3/userinfo");
 		if (!get_result)
 		{

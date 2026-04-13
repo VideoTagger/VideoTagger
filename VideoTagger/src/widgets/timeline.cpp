@@ -711,7 +711,7 @@ namespace vt::widgets
 			{
 				float normalized_mouse_x = math::normalize(ImGui::GetMousePos().x, cell_rect->Min.x, cell_rect->Max.x, 0.f, 1.f);
 				timestamp mouse_timestamp = to_timestamp_full_span(normalized_mouse_x);
-				if (ImGui::IsMouseDown(ImGuiMouseButton_Left) and (!is_dragging_span_left_grab_ and !is_dragging_span_right_grab_))
+				if (ImGui::IsMouseClicked(ImGuiMouseButton_Left) and (!is_dragging_span_left_grab_ and !is_dragging_span_right_grab_))
 				{
 					if (is_left_grab_hovered)
 					{

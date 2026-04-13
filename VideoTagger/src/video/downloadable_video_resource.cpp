@@ -4,21 +4,12 @@
 #include <utils/thumbnail.hpp>
 #include <ui/icons.hpp>
 
+#include <events/video_resource/video_start_download_request_event.hpp>
+#include <events/video_resource/video_cancel_download_request_event.hpp>
+#include <events/video_resource/video_delete_downloaded_file_request_event.hpp>
+
 namespace vt
 {
-	bool video_download_result::is_done() const
-	{
-		return result.wait_for(std::chrono::seconds{ 0 }) == std::future_status::ready;
-	}
-
-	void video_download_result::cancel()
-	{
-		if (data != nullptr)
-		{
-			data->cancel = true;
-		}
-	}
-
 	downloadable_video_resource::downloadable_video_resource(std::string importer_id, video_id_t id, video_resource_metadata metadata) :
 		video_resource(std::move(importer_id), std::move(id), std::move(metadata))
 	{
@@ -29,30 +20,38 @@ namespace vt
 	{
 	}
 
-	video_download_result downloadable_video_resource::download_task()
+	float downloadable_video_resource::download_progress() const
 	{
-		video_download_result result;
-		result.data = std::make_shared<video_download_data>();
-
-		auto task = [this](std::shared_ptr<video_download_data> data)
-		{
-			return on_download(data);
-		};
-
-		result.result = std::async(std::launch::async, task, result.data);
-		download_data_ = result.data;
-		return result;
+		std::scoped_lock lock{ download_progress_mutex_ };
+		return download_progress_.value_or(0.f);
 	}
 
-	std::optional<float> downloadable_video_resource::download_progress() const
+	bool downloadable_video_resource::is_downloading() const
 	{
-		auto ptr = download_data_.lock();
-		if (ptr == nullptr)
+		std::scoped_lock lock{ download_progress_mutex_ };
+		return download_progress_.has_value();
+	}
+
+	video_download_result downloadable_video_resource::download(const cancellation_token& token)
+	{
 		{
-			return std::nullopt;
+			std::scoped_lock lock{ download_progress_mutex_ };
+			download_progress_ = 0.f;
 		}
 
-		return ptr->progress;
+		auto download_result = on_download(token);
+		if (download_result.status != video_download_status::completed)
+		{
+			//TODO: consider whether this should always delete if download fails
+			std::filesystem::remove(download_result.download_path);
+		}
+
+		{
+			std::scoped_lock lock{ download_progress_mutex_ };
+			download_progress_.reset();
+		}
+
+		return download_result;
 	}
 
 	bool downloadable_video_resource::remove_downloaded_file()
@@ -86,11 +85,22 @@ namespace vt
 		remove_downloaded_file();
 	}
 
+	void downloadable_video_resource::set_download_progress(float progress)
+	{
+		if (!is_downloading())
+		{
+			return;
+		}
+
+		std::scoped_lock lock{ download_progress_mutex_ };
+		download_progress_ = progress;
+	}
+
 	void downloadable_video_resource::context_menu_items(std::vector<video_resource_context_menu_item>& items)
 	{
 		video_resource::context_menu_items(items);
 
-		if (download_progress() == std::nullopt)
+		if (!is_downloading())
 		{
 			if (!playable())
 			{
@@ -98,17 +108,16 @@ namespace vt
 				item.name = fmt::format("{} Download", icons::download);
 				item.function = [id = id()]()
 				{
-					ctx_.current_project->schedule_video_download(id);
+					ctx_.dispatch_event<video_start_download_request_event>("video_resource", id);
 				};
 				items.push_back(std::move(item));
 			}
 			else
 			{
 				video_resource_context_menu_item item;
-				item.function = [this]()
+				item.function = [id = id()]()
 				{
-					//TODO: should be done through the project so it can remove it from displayed videos or something
-					remove_downloaded_file();
+					ctx_.dispatch_event<video_delete_downloaded_file_request_event>("video_resource", id);
 				};
 				item.name = fmt::format("{} Remove Local File", icons::delete_);
 				item.disabled = ctx_.displayed_videos.contains(id());
@@ -123,15 +132,9 @@ namespace vt
 		{
 			video_resource_context_menu_item item;
 			item.name = fmt::format("{} Cancel Download", icons::download_off);
-			item.function = [this]()
+			item.function = [id = id()]()
 			{
-				auto ptr = download_data_.lock();
-				if (ptr == nullptr)
-				{
-					return;
-				}
-
-				ptr->cancel = true;
+				ctx_.dispatch_event<video_cancel_download_request_event>("video_resource", id);
 			};
 			items.push_back(std::move(item));
 		}
@@ -149,11 +152,10 @@ namespace vt
 			ImVec4 progress_bar_color = { 0.9f, 0.0f, 0.0f, 1.0f };
 			float progress_bar_fraction = 1.f;
 
-			auto download_prog = download_progress();
-			if (download_prog.has_value())
+			if (is_downloading())
 			{
 				progress_bar_color = { 0.0f, 0.9f, 0.0f, 1.0f };
-				progress_bar_fraction = download_prog.value();
+				progress_bar_fraction = download_progress();
 			}
 
 			ImGui::SetCursorScreenPos(progress_bar_pos);

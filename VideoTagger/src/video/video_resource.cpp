@@ -2,6 +2,10 @@
 #include "video_resource.hpp"
 #include <core/app_context.hpp>
 #include <ui/icons.hpp>
+#include <fmt/format.h>
+
+#include <events/video_resource/video_delete_request_event.hpp>
+#include <events/video_resource/video_refresh_request_event.hpp>
 
 namespace vt
 {
@@ -72,10 +76,9 @@ namespace vt
 		if (include_fields.sha256)
 		{
 			auto sha256 = utils::hash::sha256_file(path);
-			if (!sha256.empty())
+			if (sha256.has_value())
 			{
-				result.sha256 = std::array<uint8_t, utils::hash::sha256_byte_count>{};
-				std::copy_n(sha256.begin(), utils::hash::sha256_byte_count, result.sha256->begin());
+				result.sha256 = sha256;
 			}
 		}
 
@@ -101,6 +104,7 @@ namespace vt
 		importer_id_{ std::move(importer_id) }, id_{ make_video_id_from_json(json) }
 	{
 		//TODO: could verify the hash
+		metadata_.deserialize(json);
 		if (json.contains("file-path"))
 		{
 			std::string path = json.at("file-path");
@@ -111,18 +115,31 @@ namespace vt
 			}
 
 			file_path_ = path;
-
-			metadata_.deserialize(json);
+			auto file_hash = utils::hash::sha256_file(path);
+			if (!file_hash.has_value())
+			{
+				debug::warn("Failed to calculate hash for file at path: {}", path);
+				return;
+			}
 
 			make_metadata_include_fields fields;
-			fields.title = !metadata_.title.has_value();
-			fields.width = !metadata_.width.has_value();
-			fields.height = !metadata_.height.has_value();
-			fields.fps = !metadata_.fps.has_value();
-			fields.duration = !metadata_.duration.has_value();
-			fields.sha256 = !metadata_.sha256.has_value();
+			if (metadata_.sha256.has_value() and file_hash == metadata_.sha256)
+			{
+				fields.title = !metadata_.title.has_value();
+				fields.width = metadata_.width == 0;
+				fields.height = metadata_.height == 0;
+				fields.fps = !metadata_.fps.has_value();
+				fields.duration = !metadata_.duration.has_value();
+			}
 
-			write_metadata_fields(metadata_, make_video_metadata_from_path(file_path_, fields), fields);
+			try
+			{
+				write_metadata_fields(metadata_, make_video_metadata_from_path(file_path_, fields), fields);
+			}
+			catch (const std::exception& e)
+			{
+				debug::warn("Failed to read metadata from file at path {}: {}", path, e.what());
+			}
 		}
 	}
 
@@ -151,7 +168,47 @@ namespace vt
 		return file_path_;
 	}
 
+	std::string video_resource::title() const
+	{
+		return metadata_.title.value_or(fmt::format("{}", id_));
+	}
+
+	std::string video_resource::sha256() const
+	{
+		return metadata_.sha256_string();
+	}
+
+	int video_resource::width() const
+	{
+		return metadata_.width;
+	}
+
+	int video_resource::height() const
+	{
+		return metadata_.height;
+	}
+
 	void video_resource::on_remove() {}
+
+	bool video_resource::has_same_hash(const video_resource& other) const
+	{
+		return metadata_.sha256.has_value() and other.metadata_.sha256.has_value() and metadata_.sha256 == other.metadata_.sha256;
+	}
+
+	bool video_resource::has_hash() const
+	{
+		return metadata_.sha256.has_value();
+	}
+
+	bool video_resource::has_title() const
+	{
+		return metadata_.title.has_value();
+	}
+
+	bool video_resource::has_thumbnail() const
+	{
+		return thumbnail_.has_value();
+	}
 
 	video_stream video_resource::video() const
 	{
@@ -169,9 +226,9 @@ namespace vt
 		{
 			video_resource_context_menu_item item;
 			item.function = [id = id()]()
-				{
-					ctx_.current_project->schedule_remove_video(id);
-				};
+			{
+				ctx_.dispatch_event<video_delete_request_event>("video_resource", id);
+			};
 			item.name = fmt::format("{} Remove", icons::delete_);
 			item.disabled = ctx_.displayed_videos.contains(id());
 			if (item.disabled)
@@ -183,9 +240,9 @@ namespace vt
 		{
 			video_resource_context_menu_item item;
 			item.function = [id = id()]()
-				{
-					ctx_.current_project->schedule_video_refresh(id);
-				};
+			{
+				ctx_.dispatch_event<video_refresh_request_event>("video_resource", id);
+			};
 			item.name = fmt::format("{} {}", icons::refresh, "Refresh");
 			items.push_back(std::move(item));
 		}
@@ -193,7 +250,7 @@ namespace vt
 
 	void video_resource::icon_custom_draw(ImDrawList&, ImRect, ImRect) const {}
 
-	std::optional<video_resource_thumbnail> video_resource::generate_thumbnail()
+	std::optional<video_resource_thumbnail> video_resource::generate_thumbnail() const
 	{
 		video_stream video;
 		if (!video.open_file(file_path(), ctx_.app_settings.hardware_acceleration))
@@ -226,9 +283,13 @@ namespace vt
 		return std::make_optional<video_resource_thumbnail>(std::move(thumbnail));
 	}
 
-	std::function<void()> video_resource::on_refresh_task()
+	bool video_resource::can_async_refresh() const
 	{
-		return nullptr;
+		return true;
+	}
+
+	void video_resource::refresh()
+	{
 	}
 
 	void video_resource::set_metadata(const video_resource_metadata& metadata)
@@ -237,14 +298,8 @@ namespace vt
 		{
 			metadata_.title = metadata.title;
 		}
-		if (metadata.width.has_value())
-		{
-			metadata_.width = metadata.width;
-		}
-		if (metadata.height.has_value())
-		{
-			metadata_.height = metadata.height;
-		}
+		metadata_.width = metadata.width;
+		metadata_.height = metadata.height;
 		if (metadata.fps.has_value())
 		{
 			metadata_.fps = metadata.fps;
@@ -297,6 +352,16 @@ namespace vt
 		
 	}
 
+	void video_resource::mark_for_removal()
+	{
+		marked_for_removal_ = true;
+	}
+
+	bool video_resource::is_marked_for_removal() const
+	{
+		return marked_for_removal_;
+	}
+
 	std::string video_resource_metadata::sha256_string() const
 	{
 		if (!sha256.has_value())
@@ -315,14 +380,8 @@ namespace vt
 		{
 			result["title"] = *title;
 		}
-		if (width.has_value())
-		{
-			result["width"] = *width;
-		}
-		if (height.has_value())
-		{
-			result["height"] = *height;
-		}
+		result["width"] = width;
+		result["height"] = height;
 		if (fps.has_value())
 		{
 			result["fps"] = *fps;

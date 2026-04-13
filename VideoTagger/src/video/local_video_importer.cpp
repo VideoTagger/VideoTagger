@@ -6,66 +6,18 @@
 #include <utils/filesystem.hpp>
 #include <utils/string.hpp>
 
+#include <events/video_resource/video_open_importer_request_event.hpp>
+#include <events/video_resource/local_video_import_request_event.hpp>
+
 namespace vt
 {
-	std::string local_video_importer::importer_id() const
+	local_video_importer::local_video_importer()
 	{
-		return static_importer_id;
-	}
-
-	std::string local_video_importer::importer_display_name() const
-	{
-		return static_importer_display_name;
-	}
-
-	std::string local_video_importer::importer_display_icon() const
-	{
-		return static_importer_display_icon;
-	}
-
-	std::unique_ptr<video_resource> local_video_importer::import_video(video_id_t id, std::any data)
-	{
-		if (!data.has_value() or data.type() != typeid(import_arguments))
+		open_importer_handle_ = ctx_.add_event_listener<video_open_importer_request_event>([this](const video_open_importer_request_event& event)
 		{
-			return nullptr;
-		}
+			if (event.importer_id() != importer_id()) return;
 
-		import_arguments import_data = std::any_cast<import_arguments>(data);
-
-		return import_video(id, import_data.path);
-	}
-
-	std::unique_ptr<video_resource> local_video_importer::import_video(video_id_t id, const std::filesystem::path& path)
-	{
-		try
-		{
-			return std::make_unique<local_video_resource>(id, path);
-		}
-		catch (const std::exception& ex)
-		{
-			debug::error("Importer {}\nFailed to import video {} from path {}\nError: {}", importer_id(), id, path.u8string(), ex.what());
-			return nullptr;
-		}
-	}
-
-	std::unique_ptr<video_resource> local_video_importer::import_video(const nlohmann::ordered_json& json)
-	{
-		try
-		{
-			return std::make_unique<local_video_resource>(json);
-		}
-		catch (const std::exception& ex)
-		{
-			debug::error("Importer {}\nFailed to import video from json\nError: {}", importer_id(), ex.what());
-			return nullptr;
-		}
-	}
-
-	std::function<bool(std::vector<std::any>&)> local_video_importer::prepare_video_import_task()
-	{
-		return [](std::vector<std::any>& import_data)
-		{
-			if (!ctx_.current_project.has_value()) return false;
+			if (!ctx_.current_project.has_value()) return;
 
 			static std::vector<std::string> vid_exts(ctx_.valid_video_extensions.begin(), ctx_.valid_video_extensions.end());
 
@@ -93,14 +45,56 @@ namespace vt
 						}
 					}
 
-					import_arguments imp_data;
-					imp_data.path = path;
-					import_data.push_back(imp_data);
+					ctx_.dispatch_event<local_video_import_request_event>("local_video_importer", path);
 				}
 			}
+		});
+	}
 
-			return true;
-		};
+	local_video_importer::~local_video_importer()
+	{
+		ctx_.get_event_dispatcher<video_open_importer_request_event>().remove_event_listener(open_importer_handle_);
+	}
+
+	std::string local_video_importer::importer_id() const
+	{
+		return static_importer_id;
+	}
+
+	std::string local_video_importer::importer_display_name() const
+	{
+		return static_importer_display_name;
+	}
+
+	std::string local_video_importer::importer_display_icon() const
+	{
+		return static_importer_display_icon;
+	}
+
+	std::shared_ptr<video_resource> local_video_importer::import_video(video_id_t id, const std::filesystem::path& path)
+	{
+		try
+		{
+			return std::make_shared<local_video_resource>(id, path);
+		}
+		catch (const std::exception& ex)
+		{
+			debug::error("Importer {}\nFailed to import video {} from path {}\nError: {}", importer_id(), id, path.u8string(), ex.what());
+			return nullptr;
+		}
+	}
+
+	std::shared_ptr<video_resource> local_video_importer::import_video(const nlohmann::ordered_json& json)
+	{
+		try
+		{
+			return std::make_shared<local_video_resource>(json);
+		}
+		catch (const std::exception& ex)
+		{
+			debug::error("Importer {}\nFailed to import video from json\nError: {}", importer_id(), ex.what());
+			return nullptr;
+		}
 	}
 
 	bool local_video_importer::available()
