@@ -72,6 +72,15 @@ namespace vt
 		video_resource(std::string importer_id, const nlohmann::ordered_json& json);
 		virtual ~video_resource() = default;
 
+	private:
+		video_id_t id_{};
+		std::string importer_id_;
+		video_resource_metadata metadata_;
+		std::optional<gl_texture> thumbnail_;
+		std::string file_path_;
+		bool marked_for_removal_ = false; //TODO: should probably be moved to video_pool
+
+	public:
 		const std::string& importer_id() const;
 		video_id_t id() const;
 		const video_resource_metadata& metadata() const;
@@ -117,14 +126,6 @@ namespace vt
 
 		void mark_for_removal();
 		bool is_marked_for_removal() const;
-
-	private:
-		video_id_t id_{};
-		std::string importer_id_;
-		video_resource_metadata metadata_;
-		std::optional<gl_texture> thumbnail_;
-		std::string file_path_;
-		bool marked_for_removal_ = false; //TODO: should probably be moved to video_pool
 	};
 
 	inline constexpr void write_metadata_fields(video_resource_metadata& target, const video_resource_metadata& source, make_metadata_include_fields fields)

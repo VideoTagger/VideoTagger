@@ -12,7 +12,12 @@ namespace vt
 	public:
 		google_drive_video_resource(video_id_t id, std::string file_id);
 		google_drive_video_resource(const nlohmann::ordered_json& json);
+	
+	private:
+		std::string file_id_;
+		video_downloadable_status downloadable_ = video_downloadable_status::downloadable;
 
+	public:
 		const std::string& file_id() const;
 
 		std::optional<video_resource_thumbnail> generate_thumbnail() const override;
@@ -22,12 +27,8 @@ namespace vt
 		void on_save(nlohmann::ordered_json& json) const override;
 
 		void update_downloadable();
-	
+
 	protected:
 		virtual video_download_result on_download(const cancellation_token& token) override;
-
-	private:
-		std::string file_id_;
-		video_downloadable_status downloadable_ = video_downloadable_status::downloadable;
 	};
 }

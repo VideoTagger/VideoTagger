@@ -15,7 +15,11 @@ namespace vt
 
 		local_video_importer();
 		~local_video_importer();
+	
+	private:
+		event_listener_handle open_importer_handle_;
 
+	public:
 		std::string importer_id() const override;
 		std::string importer_display_name() const override;
 		std::string importer_display_icon() const override;
@@ -24,8 +28,5 @@ namespace vt
 		std::shared_ptr<video_resource> import_video(const nlohmann::ordered_json& json) override;
 
 		bool available() override;
-
-	private:
-		event_listener_handle open_importer_handle_;
 	};
 }
