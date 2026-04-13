@@ -79,7 +79,7 @@ namespace vt
 		return result;
 	}
 
-	bool project::import_video(std::shared_ptr<video_resource>&& vid_resource, std::optional<video_group_id_t> group_id, bool check_hash, bool set_project_dirty)
+	bool project::import_video(std::shared_ptr<video_resource> vid_resource, std::optional<video_group_id_t> group_id, bool check_hash, bool set_project_dirty)
 	{
 		if (vid_resource == nullptr)
 		{

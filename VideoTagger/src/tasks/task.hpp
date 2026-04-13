@@ -113,7 +113,7 @@ namespace vt
 
 					state_->add_callback([tok = token, state = state_, new_state, fn = std::forward<fn_type>(fn)]() mutable
 					{
-						auto& value = state->get();
+						const auto& value = state->get();
 						if constexpr (std::is_void_v<result_type>)
 						{
 							fn(value, *tok);
@@ -137,7 +137,7 @@ namespace vt
 
 					state_->add_callback([state = state_, new_state, fn = std::forward<fn_type>(fn)]() mutable
 					{
-						auto& value = state->get();
+						const auto& value = state->get();
 						if constexpr (std::is_void_v<result_type>)
 						{
 							fn(value);
@@ -242,7 +242,7 @@ namespace vt
 					{
 						executor.run({ [tok, state, new_state, fn, priority]() mutable
 						{
-							auto& value = state->get();
+							const auto& value = state->get();
 							if constexpr (std::is_void_v<result_type>)
 							{
 								fn(value, *tok);
@@ -269,7 +269,7 @@ namespace vt
 					{
 						executor.run({ [state, new_state, fn, priority]() mutable
 						{
-							auto& value = state->get();
+							const auto& value = state->get();
 							if constexpr (std::is_void_v<result_type>)
 							{
 								fn(value);

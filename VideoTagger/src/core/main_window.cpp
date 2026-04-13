@@ -154,7 +154,7 @@ namespace vt
 			auto& importer = ctx_.get_video_importer<importer_type>();
 			return importer.import_video(std::forward<import_args>(args)...);
 		})
-		.then(ctx_.session.tasks.on_main(), [](std::shared_ptr<video_resource>& vid_res)
+		.then(ctx_.session.tasks.on_main(), [](const std::shared_ptr<video_resource>& vid_res)
 		{
 			if (vid_res == nullptr)
 			{
@@ -162,7 +162,7 @@ namespace vt
 			}
 
 			video_id_t video_id = vid_res->id();
-			if (!ctx_.current_project->import_video(std::move(vid_res), utils::random::get_uuid()))
+			if (!ctx_.current_project->import_video(vid_res, utils::random::get_uuid()))
 			{
 				return;
 			}
