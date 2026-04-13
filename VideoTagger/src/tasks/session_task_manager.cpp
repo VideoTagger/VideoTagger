@@ -39,7 +39,7 @@ namespace vt
 		(*it)->cancel();
 	}
 
-	void session_task_manager::cancel_all_with(const std::string& tag)
+	void session_task_manager::cancel_with_one(const std::string& tag)
 	{
 		std::scoped_lock lock{ tasks_mutex_ };
 		for (auto it = find_by_tag(tag); it != tasks_.end(); it = find_by_tag(tag, ++it))
@@ -48,7 +48,7 @@ namespace vt
 		}
 	}
 
-	void session_task_manager::cancel_all_with_any(const std::set<std::string>& tags)
+	void session_task_manager::cancel_with_any(const std::set<std::string>& tags)
 	{
 		std::scoped_lock lock{ tasks_mutex_ };
 		for (auto it = find_by_any_tag(tags); it != tasks_.end(); it = find_by_any_tag(tags, ++it))
@@ -57,7 +57,7 @@ namespace vt
 		}
 	}
 
-	void session_task_manager::cancel_all_with_all(const std::set<std::string>& tags)
+	void session_task_manager::cancel_with_all(const std::set<std::string>& tags)
 	{
 		std::scoped_lock lock{ tasks_mutex_ };
 		for (auto it = find_by_all_tags(tags); it != tasks_.end(); it = find_by_all_tags(tags, ++it))
@@ -90,7 +90,7 @@ namespace vt
 		task_handle_ptr->await();
 	}
 
-	void session_task_manager::await_all_with(const std::string& tag)
+	void session_task_manager::await_with_one(const std::string& tag)
 	{
 		std::vector<std::shared_ptr<session_task_handle>> task_handles;
 		{
@@ -106,7 +106,7 @@ namespace vt
 		}
 	}
 
-	void session_task_manager::await_all_with_any(const std::set<std::string>& tags)
+	void session_task_manager::await_with_any(const std::set<std::string>& tags)
 	{
 		std::vector<std::shared_ptr<session_task_handle>> task_handles;
 		{
@@ -122,7 +122,7 @@ namespace vt
 		}
 	}
 
-	void session_task_manager::await_all_with_all(const std::set<std::string>& tags)
+	void session_task_manager::await_with_all(const std::set<std::string>& tags)
 	{
 		std::vector<std::shared_ptr<session_task_handle>> task_handles;
 		{

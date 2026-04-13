@@ -140,15 +140,15 @@ namespace vt
 		void clear();
 
 		void cancel(session_task_id_t id);
-		void cancel_all_with(const std::string& tag);
-		void cancel_all_with_any(const std::set<std::string>& tags);
-		void cancel_all_with_all(const std::set<std::string>& tags);
+		void cancel_with_one(const std::string& tag);
+		void cancel_with_any(const std::set<std::string>& tags);
+		void cancel_with_all(const std::set<std::string>& tags);
 		void cancel_all();
 
 		void await(session_task_id_t id);
-		void await_all_with(const std::string& tag);
-		void await_all_with_any(const std::set<std::string>& tags);
-		void await_all_with_all(const std::set<std::string>& tags);
+		void await_with_one(const std::string& tag);
+		void await_with_any(const std::set<std::string>& tags);
+		void await_with_all(const std::set<std::string>& tags);
 		void await_all();
 
 	private:

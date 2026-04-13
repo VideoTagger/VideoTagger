@@ -992,7 +992,7 @@ namespace vt
 				return;
 			}
 
-			ctx_.session.tasks.cancel_all_with_all({ "video_resource", video_id_to_task_tag(event.video_id()), "download" });
+			ctx_.session.tasks.cancel_with_all({ "video_resource", video_id_to_task_tag(event.video_id()), "download" });
 		});
 
 		ctx_.add_event_listener<video_refresh_request_event>([this](const video_refresh_request_event& event)
@@ -1035,8 +1035,8 @@ namespace vt
 			{
 				std::set<std::string> task_tags = { "video_resource", video_id_to_task_tag(video_id) };
 
-				ctx_.session.tasks.cancel_all_with_all(task_tags);
-				ctx_.session.tasks.await_all_with_all(task_tags);
+				ctx_.session.tasks.cancel_with_all(task_tags);
+				ctx_.session.tasks.await_with_all(task_tags);
 			})
 			.then(ctx_.tasks.on_main(), [this, video_id = event.video_id()]()
 			{
