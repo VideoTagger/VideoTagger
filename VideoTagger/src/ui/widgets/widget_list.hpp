@@ -26,13 +26,16 @@ namespace vt::ui
 		}
 
 		template<typename widget_type, typename... arguments>
-		constexpr widget_list& add(arguments&&... args)
+		constexpr widget_type& add(arguments&&... args)
 		{
-			widgets_.emplace_back(std::make_unique<widget_type>(std::forward<arguments>(args)...));
-			return *this;
+			auto ptr = std::make_unique<widget_type>(std::forward<arguments>(args)...);
+			auto raw_ptr = ptr.get();
+			widgets_.emplace_back(std::move(ptr));
+
+			return *raw_ptr;
 		}
 
-		constexpr widget_list& add_raw(const std::function<bool()>& render_callback)
+		constexpr raw_widget& add_raw(const std::function<bool()>& render_callback)
 		{
 			return add<raw_widget>(render_callback);
 		}
@@ -40,6 +43,31 @@ namespace vt::ui
 		void clear()
 		{
 			widgets_.clear();
+		}
+
+		bool empty() const
+		{
+			return widgets_.empty();
+		}
+
+		size_t size() const
+		{
+			return widgets_.size();
+		}
+
+		widget& at(size_t index)
+		{
+			return *widgets_[index];
+		}
+
+		widget& front()
+		{
+			return *widgets_.front();
+		}
+
+		widget& back()
+		{
+			return *widgets_.back();
 		}
 	};
 }

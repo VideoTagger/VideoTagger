@@ -137,6 +137,8 @@ extern "C"
 #include <events/video_resource/video_download_started_event.hpp>
 #include <events/video_resource/video_download_canceled_event.hpp>
 #include <events/video_resource/video_download_finished_event.hpp>
+#include <events/video_resource/video_open_in_explorer_request_event.hpp>
+#include <events/video_resource/video_locate_request_event.hpp>
 
 
 namespace vt
@@ -1060,6 +1062,42 @@ namespace vt
 			}
 
 			ctx_.dispatch_event<video_downloaded_file_deleted_event>(event_source_, event.video_id());
+		});
+
+		ctx_.add_event_listener<video_open_in_explorer_request_event>([this](const video_open_in_explorer_request_event& event)
+		{
+			auto vid_res = ctx_.current_project->videos.get(event.video_id());
+			if (vid_res == nullptr) return;
+
+			auto absolute_path = std::filesystem::absolute(vid_res->file_path());
+			utils::filesystem::open_in_explorer(absolute_path.parent_path());
+		});
+
+		ctx_.add_event_listener<video_locate_request_event>([this](const video_locate_request_event& event)
+		{
+			auto vid_res = ctx_.current_project->videos.get(event.video_id());
+			if (vid_res == nullptr) return;
+
+			static utils::dialog_filters filters
+			{
+				{ "Video", utils::filesystem::concat_extensions(std::vector<std::string>(ctx_.valid_video_extensions.begin(), ctx_.valid_video_extensions.end())) },
+			};
+
+			auto absolute_path = std::filesystem::absolute(vid_res->file_path());
+			auto result = utils::filesystem::get_file(absolute_path, filters);
+			if (!result) return;
+
+			auto hash = utils::hash::sha256_file(result.path);
+			if (!hash.has_value()) return;
+
+			if (hash != vid_res->metadata().sha256)
+			{
+				debug::error("Selected file has different hash than the original file, can't use it as a replacement");
+				return;
+			}
+
+			vid_res->set_file_path(result.path.u8string());
+			ctx_.is_project_dirty = true;
 		});
 	}
 

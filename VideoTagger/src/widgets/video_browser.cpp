@@ -64,24 +64,9 @@ namespace vt::widgets
 			open = widgets::tile(fmt::format("video{}", id).c_str(), label, tile_size, image_size, image,
 			[&](const std::string& label)
 			{
-				std::vector<video_resource_context_menu_item> context_items;
+				ui::widget_list context_items;
 				vid_resource.context_menu_items(context_items);
-				for (auto& item : context_items)
-				{
-					if (item.disabled) ImGui::BeginDisabled(item.disabled);
-
-					if (ImGui::MenuItem(item.name.c_str()))
-					{
-						item.function();
-					}
-
-					if (item.disabled) ImGui::EndDisabled();
-
-					if (!item.tooltip.empty())
-					{
-						ui::tooltip(item.tooltip);
-					}
-				}
+				context_items.render();
 			},
 			[=](const std::string& label)
 			{

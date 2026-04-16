@@ -4,9 +4,7 @@
 #include <utils/thumbnail.hpp>
 #include <ui/icons.hpp>
 
-#include <events/video_resource/video_start_download_request_event.hpp>
-#include <events/video_resource/video_cancel_download_request_event.hpp>
-#include <events/video_resource/video_delete_downloaded_file_request_event.hpp>
+#include <ui/menu_items/video_resource_menu_items.hpp>
 
 namespace vt
 {
@@ -96,7 +94,7 @@ namespace vt
 		download_progress_ = progress;
 	}
 
-	void downloadable_video_resource::context_menu_items(std::vector<video_resource_context_menu_item>& items)
+	void downloadable_video_resource::context_menu_items(ui::widget_list& items)
 	{
 		video_resource::context_menu_items(items);
 
@@ -104,39 +102,26 @@ namespace vt
 		{
 			if (!playable())
 			{
-				video_resource_context_menu_item item;
-				item.name = fmt::format("{} Download", icons::download);
-				item.function = [id = id()]()
+				auto& item = items.add<ui::video_resource_menu_download>(id());
+				if (downloadable() != video_downloadable_status::downloadable)
 				{
-					ctx_.dispatch_event<video_start_download_request_event>("video_resource", id);
-				};
-				items.push_back(std::move(item));
+					item.set_enabled(false);
+					item.set_tooltip(ctx_.lang->get("tooltip.video_resource.not_downloadable"));
+				}
 			}
 			else
 			{
-				video_resource_context_menu_item item;
-				item.function = [id = id()]()
+				auto& item = items.add<ui::video_resource_menu_delete_downloaded_file>(id());
+				if (ctx_.displayed_videos.contains(id()))
 				{
-					ctx_.dispatch_event<video_delete_downloaded_file_request_event>("video_resource", id);
-				};
-				item.name = fmt::format("{} Remove Local File", icons::delete_);
-				item.disabled = ctx_.displayed_videos.contains(id());
-				if (item.disabled)
-				{
-					item.tooltip = "Can't remove video file while it's being played";
+					item.set_enabled(false);
+					item.set_tooltip(ctx_.lang->get("tooltip.video_resource.in_use"));
 				}
-				items.push_back(std::move(item));
 			}
 		}
 		else
 		{
-			video_resource_context_menu_item item;
-			item.name = fmt::format("{} Cancel Download", icons::download_off);
-			item.function = [id = id()]()
-			{
-				ctx_.dispatch_event<video_cancel_download_request_event>("video_resource", id);
-			};
-			items.push_back(std::move(item));
+			auto& item = items.add<ui::video_resource_menu_cancel_download>(id());
 		}
 	}
 

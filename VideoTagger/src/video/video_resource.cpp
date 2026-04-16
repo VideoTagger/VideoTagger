@@ -6,6 +6,7 @@
 
 #include <events/video_resource/video_delete_request_event.hpp>
 #include <events/video_resource/video_refresh_request_event.hpp>
+#include <ui/menu_items/video_resource_menu_items.hpp>
 
 namespace vt
 {
@@ -221,30 +222,18 @@ namespace vt
 		return result;
 	}
 
-	void video_resource::context_menu_items(std::vector<video_resource_context_menu_item>& items)
+	void video_resource::context_menu_items(ui::widget_list& items)
 	{
 		{
-			video_resource_context_menu_item item;
-			item.function = [id = id()]()
+			auto& item = items.add<ui::video_resource_menu_delete>(id());
+			if (ctx_.displayed_videos.contains(id()))
 			{
-				ctx_.dispatch_event<video_delete_request_event>("video_resource", id);
-			};
-			item.name = fmt::format("{} Remove", icons::delete_);
-			item.disabled = ctx_.displayed_videos.contains(id());
-			if (item.disabled)
-			{
-				item.tooltip = "Can't remove video while it's being played";
+				item.set_enabled(false);
+				item.set_tooltip(ctx_.lang->get("tooltip.video_resource.in_use"));
 			}
-			items.push_back(std::move(item));
 		}
 		{
-			video_resource_context_menu_item item;
-			item.function = [id = id()]()
-			{
-				ctx_.dispatch_event<video_refresh_request_event>("video_resource", id);
-			};
-			item.name = fmt::format("{} {}", icons::refresh, "Refresh");
-			items.push_back(std::move(item));
+			auto& item = items.add<ui::video_resource_menu_refresh>(id());
 		}
 	}
 

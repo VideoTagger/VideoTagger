@@ -9,6 +9,7 @@
 #include "video_stream.hpp"
 #include <utils/hash.hpp>
 #include <imgui.h>
+#include <ui/widgets/widget_list.hpp>
 
 namespace vt
 {
@@ -57,14 +58,6 @@ namespace vt
 	extern video_resource_metadata make_video_metadata_from_path(const std::filesystem::path& path, make_metadata_include_fields = {});
 	extern video_id_t make_video_id_from_json(const nlohmann::ordered_json& json);
 
-	struct video_resource_context_menu_item
-	{
-		std::string name;
-		std::function<void()> function;
-		bool disabled = false;
-		std::string tooltip;
-	};
-
 	class video_resource
 	{
 	public:
@@ -105,7 +98,7 @@ namespace vt
 
 		virtual bool playable() const = 0;
 		virtual video_stream video() const;
-		virtual void context_menu_items(std::vector<video_resource_context_menu_item>& items);
+		virtual void context_menu_items(ui::widget_list& items);
 		virtual void icon_custom_draw(ImDrawList& draw_list, ImRect item_rect, ImRect image_rect) const;
 		virtual void on_remove();
 		
