@@ -3117,7 +3117,7 @@ namespace vt
 											if (!attr.has<shape>()) continue;
 
 											bool is_selected = selected_attribute == &attr;
-											bool show_points = is_selected;
+											bool show_points = is_selected and is_keyframe;
 
 											auto& shape = attr.get<vt::shape>();
 											draw_list->PushClipRect(top_left, bottom_right, true);
