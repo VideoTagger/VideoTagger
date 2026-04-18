@@ -1,6 +1,6 @@
 #include "pch.hpp"
 #include "bind_shapes.hpp"
-#include <tags/shape.hpp>
+#include <attributes/shape.hpp>
 #include "bind_shapes.hpp"
 #include <pybind11/operators.h>
 

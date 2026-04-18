@@ -4,7 +4,7 @@
 #include <memory>
 #include <typeinfo>
 #include <unordered_map>
-#include <tags/impl/attribute_factory.hpp>
+#include <attributes/impl/attribute_factory.hpp>
 #include <core/debug.hpp>
 #include <utils/json.hpp>
 

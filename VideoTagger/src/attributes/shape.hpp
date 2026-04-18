@@ -9,7 +9,7 @@
 #include <core/debug.hpp>
 #include <utils/vec.hpp>
 #include <utils/math.hpp>
-#include <tags/impl/shape.hpp>
+#include <attributes/impl/shape.hpp>
 
 
 namespace vt

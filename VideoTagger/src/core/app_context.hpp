@@ -43,7 +43,7 @@
 #include <events/event_storage.hpp>
 #include <tasks/task_manager.hpp>
 #include "session_storage.hpp"
-#include <tags/attribute_registry.hpp>
+#include <attributes/attribute_registry.hpp>
 
 namespace vt
 {

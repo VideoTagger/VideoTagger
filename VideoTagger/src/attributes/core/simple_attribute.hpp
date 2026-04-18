@@ -1,5 +1,5 @@
 #pragma once
-#include <tags/impl/attribute.hpp>
+#include <attributes/impl/attribute.hpp>
 
 namespace vt
 {

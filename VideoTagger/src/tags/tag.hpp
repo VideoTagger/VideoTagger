@@ -7,7 +7,7 @@
 #include <utils/color.hpp>
 #include <utils/string.hpp>
 #include <charconv>
-#include "shape.hpp"
+#include <attributes/shape.hpp>
 #include <core/types.hpp>
 
 namespace vt

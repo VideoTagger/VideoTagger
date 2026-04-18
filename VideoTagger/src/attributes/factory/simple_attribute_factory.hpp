@@ -1,10 +1,9 @@
 #pragma once
-#include <tags/impl/attribute.hpp>
-#include <tags/impl/attribute_factory.hpp>
+#include <attributes/impl/attribute.hpp>
+#include <attributes/impl/attribute_factory.hpp>
 
-#include <tags/attributes/simple_attribute.hpp>
-#include <tags/attributes/simple_attribute_instance.hpp>
-
+#include <attributes/core/simple_attribute.hpp>
+#include <attributes/core/simple_attribute_instance.hpp>
 namespace vt
 {
 	template<typename attribute_type>

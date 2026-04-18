@@ -23,7 +23,7 @@
 #ifdef VT_DEBUG
 	#include <ui/windows/sandbox.hpp>
 #endif
-#include <tags/factory/simple_attribute_factory.hpp>
+#include <attributes/factory/simple_attribute_factory.hpp>
 
 namespace vt
 {

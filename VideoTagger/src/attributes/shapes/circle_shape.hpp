@@ -2,7 +2,7 @@
 #include <vector>
 #include <cstdint>
 #include <utils/vec.hpp>
-#include <tags/impl/shape.hpp>
+#include <attributes/impl/shape.hpp>
 
 namespace vt
 {

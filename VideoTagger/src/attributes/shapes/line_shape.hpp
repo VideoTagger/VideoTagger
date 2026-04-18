@@ -1,5 +1,5 @@
 #pragma once
-#include <tags/shapes/points_shape.hpp>
+#include <attributes/shapes/points_shape.hpp>
 
 namespace vt
 {
