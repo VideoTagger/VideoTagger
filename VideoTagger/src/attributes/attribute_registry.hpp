@@ -58,25 +58,21 @@ namespace vt
 		}
 
 		template<typename factory_type, typename... arguments, typename = std::enable_if_t<std::is_base_of_v<impl::attribute_factory, factory_type> and std::is_constructible_v<factory_type, const std::string&, arguments...>>>
-		void new_factory(const std::string& name, uint32_t color, arguments&&... args)
+		factory_type* new_factory(const std::string& name, uint32_t color, arguments&&... args)
 		{
 			debug::log_src("attribute-registry", "Registering attribute factory with name: '{}' and type: {}", name, typeid(factory_type).name());
 			//TODO: Check for duplicate names
-			registry_[name] = { std::make_unique<factory_type>(name, std::forward<arguments>(args)...), color };
+			auto factory = std::make_unique<factory_type>(name, std::forward<arguments>(args)...);
+			auto factory_ptr = factory.get();
+			registry_[name] = { std::move(factory), color };
+			return factory_ptr;
 		}
 
-		virtual std::unique_ptr<impl::attribute> create(const std::string& name)
+		virtual std::unique_ptr<impl::attribute> create(const std::string& type_name, const std::string& name)
 		{
-			auto factory = get_factory(name);
+			auto factory = get_factory(type_name);
 			if (factory == nullptr) return nullptr;
-			return factory->create();
-		}
-
-		virtual std::unique_ptr<impl::attribute_instance> instantiate(const std::string& name)
-		{
-			auto factory = get_factory(name);
-			if (factory == nullptr) return nullptr;
-			return factory->instantiate();
+			return factory->new_attribute(name);
 		}
 
 	private:

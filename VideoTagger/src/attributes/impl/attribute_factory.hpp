@@ -22,7 +22,6 @@ namespace vt::impl
 
 		virtual ~attribute_factory() = default;
 
-		virtual std::unique_ptr<attribute> create() = 0;
-		virtual std::unique_ptr<attribute_instance> instantiate() = 0;
+		virtual std::unique_ptr<attribute> new_attribute(const std::string& name) = 0;
 	};
 }

@@ -11,7 +11,6 @@ namespace vt::impl
 		shape_factory(const std::string& name) : attribute_factory{ name } {}
 
 	public:
-		virtual std::unique_ptr<impl::attribute> create() = 0;
-		virtual std::unique_ptr<impl::attribute_instance> instantiate() = 0;
+		virtual std::unique_ptr<impl::attribute> create(const std::string& name) = 0;
 	};
 }
