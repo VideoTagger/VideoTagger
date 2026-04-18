@@ -44,7 +44,7 @@ namespace vt
 				return nullptr;
 			}
 			debug::log_src("attribute-registry", "Derializing attribute with type: '{}'", type);
-
+			//TODO: deserialization
 		}
 
 		std::vector<std::string> attribute_names() const
@@ -57,12 +57,12 @@ namespace vt
 			return result;
 		}
 
-		template<typename factory_type, typename... arguments, typename = std::enable_if_t<std::is_base_of_v<impl::attribute_factory, factory_type> and std::is_constructible_v<factory_type, arguments...>>>
+		template<typename factory_type, typename... arguments, typename = std::enable_if_t<std::is_base_of_v<impl::attribute_factory, factory_type> and std::is_constructible_v<factory_type, const std::string&, arguments...>>>
 		void new_factory(const std::string& name, uint32_t color, arguments&&... args)
 		{
 			debug::log_src("attribute-registry", "Registering attribute factory with name: '{}' and type: {}", name, typeid(factory_type).name());
 			//TODO: Check for duplicate names
-			registry_[name] = { std::make_unique<factory_type>(std::forward<arguments>(args)...), color };
+			registry_[name] = { std::make_unique<factory_type>(name, std::forward<arguments>(args)...), color };
 		}
 
 		virtual std::unique_ptr<impl::attribute> create(const std::string& name)

@@ -9,6 +9,10 @@ namespace vt
 	template<typename attribute_type>
 	class simple_attribute_factory : public impl::attribute_factory
 	{
+	public:
+		simple_attribute_factory(const std::string& name) : impl::attribute_factory{ name } {}
+
+	public:
 		virtual std::unique_ptr<impl::attribute> create() override
 		{
 			return std::make_unique<simple_attribute<attribute_type>>();
