@@ -16,4 +16,24 @@ namespace vt
 		std::vector<utils::vec2<uint32_t>*> targets{ { &pos } };
 		ctx_.dispatch_event<gizmo_set_targets_event>(source, targets);
 	}
+
+	[[nodiscard]] nlohmann::ordered_json circle_shape::serialize() const
+	{
+		nlohmann::ordered_json json;
+		json["position"] = pos;
+		json["radius"] = radius;
+		return json;
+	}
+
+	void circle_shape::deserialize(const nlohmann::ordered_json& json)
+	{
+		if (json.contains("position"))
+		{
+			pos = json["position"];
+		}
+		if (json.contains("radius") and json["radius"].is_number_integer())
+		{
+			radius = json["radius"];
+		}
+	}
 }

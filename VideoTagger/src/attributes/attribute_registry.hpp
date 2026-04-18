@@ -68,7 +68,7 @@ namespace vt
 			return factory_ptr;
 		}
 
-		virtual std::unique_ptr<impl::attribute> create(const std::string& type_name, const std::string& name)
+		virtual std::unique_ptr<impl::attribute> new_attribute(const std::string& type_name, const std::string& name)
 		{
 			auto factory = get_factory(type_name);
 			if (factory == nullptr) return nullptr;

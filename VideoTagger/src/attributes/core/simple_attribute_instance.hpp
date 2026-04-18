@@ -39,14 +39,15 @@ namespace vt
 
 		[[nodiscard]] virtual nlohmann::ordered_json serialize() const override
 		{
-			nlohmann::ordered_json json = impl::attribute_ref<simple_attribute<type>>::serialize();
+			//nlohmann::ordered_json json = impl::attribute_ref<simple_attribute<type>>::serialize();
+			nlohmann::ordered_json json;
 			json["value"] = value();
 			return json;
 		}
 
 		virtual void deserialize(const nlohmann::ordered_json& json) override
 		{
-			impl::attribute_ref<simple_attribute<type>>::deserialize(json);
+			//impl::attribute_ref<simple_attribute<type>>::deserialize(json);
 			if (json.contains("value"))
 			{
 				value_ = json["value"].get<type>();

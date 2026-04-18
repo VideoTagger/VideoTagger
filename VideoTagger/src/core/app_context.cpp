@@ -25,6 +25,13 @@
 #endif
 #include <attributes/factory/simple_attribute_factory.hpp>
 
+#include <attributes/factory/shape_factory.hpp>
+#include <attributes/shapes/rectangle_shape.hpp>
+#include <attributes/shapes/circle_shape.hpp>
+#include <attributes/shapes/line_shape.hpp>
+#include <attributes/shapes/points_shape.hpp>
+#include <attributes/shapes/polygon_shape.hpp>
+
 namespace vt
 {
 	app_context::app_context()
@@ -36,11 +43,17 @@ namespace vt
 
 	void app_context::init_attribute_registry()
 	{
+		static constexpr auto shape_color = 0xFF0097FF;
 		attr_registry.new_factory<simple_attribute_factory<bool>>("bool", 0xFF000092);
 		attr_registry.new_factory<simple_attribute_factory<double>>("float", 0xFF32C94C);
 		attr_registry.new_factory<simple_attribute_factory<int64_t>>("integer", 0xFFC49B4E);
 		attr_registry.new_factory<simple_attribute_factory<std::string>>("string", 0xFF3F7C46);
-		//shape: 0xFF0097FF
+		
+		attr_registry.new_factory<shape_factory<rectangle_shape>>("rectangle", shape_color);
+		attr_registry.new_factory<shape_factory<circle_shape>>("circle", shape_color);
+		attr_registry.new_factory<shape_factory<line_shape>>("line", shape_color);
+		attr_registry.new_factory<shape_factory<points_shape>>("points", shape_color);
+		attr_registry.new_factory<shape_factory<polygon_shape>>("polygon", shape_color);
 	}
 
 	void app_context::create_windows()

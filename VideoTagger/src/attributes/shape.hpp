@@ -455,7 +455,7 @@ namespace vt
 	}
 
 	template<>
-	inline constexpr circle math::lerp(const circle& start, const circle& end, float alpha)
+	inline circle math::lerp(const circle& start, const circle& end, float alpha)
 	{
 		return circle
 		{

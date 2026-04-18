@@ -20,4 +20,19 @@ namespace vt
 		}
 		ctx_.dispatch_event<gizmo_set_targets_event>(source, targets);
 	}
+
+	[[nodiscard]] nlohmann::ordered_json points_shape::serialize() const
+	{
+		nlohmann::ordered_json json;
+		json["points"] = points;
+		return json;
+	}
+
+	void points_shape::deserialize(const nlohmann::ordered_json& json)
+	{
+		if (json.contains("points") and json["points"].is_array())
+		{
+			points = json["points"];
+		}
+	}
 }

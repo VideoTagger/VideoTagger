@@ -20,5 +20,8 @@ namespace vt
 		bool operator==(const circle_shape& other) const;
 
 		virtual void set_target(event_source source) override;
+
+		[[nodiscard]] virtual nlohmann::ordered_json serialize() const override;
+		virtual void deserialize(const nlohmann::ordered_json& json) override;
 	};
 }

@@ -16,4 +16,19 @@ namespace vt
 		std::vector<utils::vec2<uint32_t>*> targets{ { &start,  &end } };
 		ctx_.dispatch_event<gizmo_set_targets_event>(source, targets);
 	}
+
+	[[nodiscard]] nlohmann::ordered_json rectangle_shape::serialize() const
+	{
+		nlohmann::ordered_json json;
+		json["points"] = std::vector{ start, end };
+		return json;
+	}
+
+	void rectangle_shape::deserialize(const nlohmann::ordered_json& json)
+	{
+		if (json.contains("points") and json["points"].is_array())
+		{
+			auto points = json["points"].get<std::vector<utils::vec2<uint32_t>>>();
+		}
+	}
 }
