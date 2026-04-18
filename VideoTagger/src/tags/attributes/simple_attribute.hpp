@@ -4,7 +4,7 @@
 namespace vt
 {
 	template<typename type>
-	struct trivial_attribute : public impl::attribute
+	struct simple_attribute : public impl::attribute
 	{
 
 	};

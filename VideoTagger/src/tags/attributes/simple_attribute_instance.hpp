@@ -4,10 +4,10 @@
 namespace vt
 {
 	template<typename type>
-	struct trivial_attribute_instance : public impl::attribute_instance
+	struct simple_attribute_instance : public impl::attribute_instance
 	{
 	public:
-		trivial_attribute_instance(const type& value = {}) : value_{ value } {}
+		simple_attribute_instance(const type& value = {}) : value_{ value } {}
 
 	private:
 		type value_;
