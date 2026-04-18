@@ -1,0 +1,23 @@
+#pragma once
+#include <vector>
+#include <cstdint>
+#include <utils/vec.hpp>
+#include <tags/impl/shape.hpp>
+
+namespace vt
+{
+	class points_shape : public impl::shape
+	{
+	public:
+		points_shape() = default;
+		points_shape(const std::vector<utils::vec2<uint32_t>>& points);
+
+	public:
+		std::vector<utils::vec2<uint32_t>> points;
+
+	public:
+		bool operator==(const points_shape& other) const;
+
+		virtual void set_target(event_source source) override;
+	};
+}

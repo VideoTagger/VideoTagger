@@ -19,6 +19,6 @@ namespace vt
 	public:
 		bool operator==(const circle_shape& other) const;
 
-		virtual void set_target() override;
+		virtual void set_target(event_source source) override;
 	};
 }

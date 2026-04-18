@@ -2891,13 +2891,13 @@ namespace vt
 
 							if (ImGui::MenuItem(fmt::format("{} Add Region", shape.type_icon(shape.get_type())).c_str(), nullptr, nullptr, is_keyframe))
 							{
-								shape.visit([current_ts, &is_keyframe](auto& map)
+								shape.visit([current_ts, &is_keyframe, this](auto& map)
 								{
 									if constexpr (!std::is_same_v<std::monostate, std::remove_const_t<std::remove_reference_t<decltype(map)>>>)
 									{
 										auto& keyframe = map.at(current_ts);
 										keyframe.push_back({});
-										keyframe.back().set_target();
+										keyframe.back().set_target(event_source_);
 										ctx_.is_project_dirty = true;
 									}
 								});

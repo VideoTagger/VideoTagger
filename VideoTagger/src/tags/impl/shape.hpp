@@ -1,4 +1,5 @@
 #pragma once
+#include <events/event_source.hpp>
 
 namespace vt::impl
 {
@@ -17,6 +18,6 @@ namespace vt::impl
 		shape_config cfg_;
 
 	public:
-		virtual void set_target() = 0;
+		virtual void set_target(event_source source) = 0;
 	};
 }

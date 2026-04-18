@@ -22,7 +22,7 @@ namespace vt
 		utils::vec2<uint32_t> pos;
 		uint32_t radius = 1;
 
-		virtual void set_target() override;
+		virtual void set_target(event_source source) override;
 
 		constexpr bool operator==(const circle& other) const
 		{
@@ -37,7 +37,7 @@ namespace vt
 
 		std::vector<utils::vec2<uint32_t>> vertices;
 
-		virtual void set_target() override;
+		virtual void set_target(event_source source) override;
 
 		bool operator==(const polygon& other) const
 		{
@@ -57,7 +57,7 @@ namespace vt
 
 		}
 
-		virtual void set_target() override;
+		virtual void set_target(event_source source) override;
 
 		bool operator==(const rectangle& other) const
 		{

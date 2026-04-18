@@ -11,9 +11,9 @@ namespace vt
 		return radius == other.radius and pos == other.pos;
 	}
 
-	void circle_shape::set_target()
+	void circle_shape::set_target(event_source source)
 	{
 		std::vector<utils::vec2<uint32_t>*> targets{ { &pos } };
-		ctx_.dispatch_event<gizmo_set_targets_event>("circle-instance", targets);
+		ctx_.dispatch_event<gizmo_set_targets_event>(source, targets);
 	}
 }

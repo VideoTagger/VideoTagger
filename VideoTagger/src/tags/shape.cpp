@@ -18,30 +18,30 @@
 
 namespace vt
 {
-	void circle::set_target()
+	void circle::set_target(event_source source)
 	{
 		std::vector<utils::vec2<uint32_t>*> targets{ { &pos } };
-		ctx_.dispatch_event<gizmo_set_targets_event>("circle-instance", targets);
+		ctx_.dispatch_event<gizmo_set_targets_event>(source, targets);
 	}
 
-	void polygon::set_target()
+	void polygon::set_target(event_source source)
 	{
 		std::vector<utils::vec2<uint32_t>*> targets;
 		for (auto& vertex : vertices)
 		{
 			targets.push_back(&vertex);
 		}
-		ctx_.dispatch_event<gizmo_set_targets_event>("polygon-instance", targets);
+		ctx_.dispatch_event<gizmo_set_targets_event>(source, targets);
 	}
 
-	void rectangle::set_target()
+	void rectangle::set_target(event_source source)
 	{
 		std::vector<utils::vec2<uint32_t>*> targets;
 		for (auto& vertex : vertices)
 		{
 			targets.push_back(&vertex);
 		}
-		ctx_.dispatch_event<gizmo_set_targets_event>("rectangle-instance", targets);
+		ctx_.dispatch_event<gizmo_set_targets_event>(source, targets);
 	}
 
 	void draw_vertex_list(std::vector<utils::vec2<uint32_t>>& vertices, const utils::vec2<uint32_t>& max_size, bool modifiable, const std::function<void(utils::vec2<uint32_t>&)>& on_select)
@@ -479,6 +479,7 @@ namespace vt
 	void shape::draw_data(const utils::vec2<uint32_t>& max_size, timestamp start_ts, timestamp end_ts, timestamp ts, bool is_timestamp, bool is_modifiable, bool& dirty_flag, const std::function<void(timestamp)>& on_seek)
 	{
 		const auto& style = ImGui::GetStyle();
+		event_source temp_source{ "shape::draw_data" };
 
 		switch (type_)
 		{
@@ -487,7 +488,7 @@ namespace vt
 			{
 				auto& map = get<std::map<timestamp, std::vector<circle>>>();
 
-				draw_keyframes("Circle", map, is_modifiable, is_timestamp, dirty_flag, start_ts, end_ts, ts, [&max_size, &style, is_modifiable, &map, this](timestamp keyframe, circle& v, size_t i)
+				draw_keyframes("Circle", map, is_modifiable, is_timestamp, dirty_flag, start_ts, end_ts, ts, [&max_size, &style, is_modifiable, &map, temp_source,  this](timestamp keyframe, circle& v, size_t i)
 				{
 					auto kf = keyframe;
 					if (widgets::begin_collapsible(std::to_string(i), "Circle", ImGuiTreeNodeFlags_DefaultOpen, shape::type_icon(type_), std::nullopt, [&, kf]()
@@ -501,7 +502,7 @@ namespace vt
 							}
 							if (ImGui::MenuItem(fmt::format("{} Set Target", icons::set_target).c_str()))
 							{
-								v.set_target();
+								v.set_target(temp_source);
 							}
 							ImGui::EndPopup();
 						}
@@ -512,7 +513,7 @@ namespace vt
 
 						if (ImGui::Selectable("##CircleSelectable", selected, ImGuiSelectableFlags_AllowItemOverlap | ImGuiSelectableFlags_AllowOverlap | ImGuiSelectableFlags_SpanAllColumns, ImVec2{ 0.f, ImGui::GetTextLineHeightWithSpacing() + 2 * style.FramePadding.y + style.ItemSpacing.y } * 2.f))
 						{
-							v.set_target();
+							v.set_target(temp_source);
 						}
 
 						ImGui::SetCursorPos(cpos);
@@ -540,9 +541,9 @@ namespace vt
 						widgets::end_collapsible();
 					}
 				},
-				[&dirty_flag]()
+				[&dirty_flag, temp_source]()
 				{
-					ctx_.dispatch_event<gizmo_set_targets_event>("circle-instance");
+					ctx_.dispatch_event<gizmo_set_targets_event>(temp_source);
 					dirty_flag = true;
 				},
 				on_seek);
@@ -553,7 +554,7 @@ namespace vt
 				auto& map = get<std::map<timestamp, std::vector<rectangle>>>();
 
 				is_modifiable &= (is_timestamp and map.empty()) or !is_timestamp;
-				draw_keyframes("Rectangle", map, is_modifiable, is_timestamp, dirty_flag, start_ts, end_ts, ts, [&max_size, &style, is_modifiable, &map, this](timestamp keyframe, rectangle &v, size_t i)
+				draw_keyframes("Rectangle", map, is_modifiable, is_timestamp, dirty_flag, start_ts, end_ts, ts, [&max_size, &style, is_modifiable, &map, temp_source, this](timestamp keyframe, rectangle &v, size_t i)
 				{
 					auto kf = keyframe;
 					if (widgets::begin_collapsible(std::to_string(i), "Rectangle", ImGuiTreeNodeFlags_DefaultOpen, shape::type_icon(type_), std::nullopt, [&]()
@@ -567,22 +568,22 @@ namespace vt
 							}
 							if (ImGui::MenuItem(fmt::format("{} Set Target", icons::set_target).c_str()))
 							{
-								v.set_target();
+								v.set_target(temp_source);
 							}
 							ImGui::EndPopup();
 						}
 					}, i + 1))
 					{
-						draw_vertex_list(v.vertices, max_size, false, [&](utils::vec2<uint32_t>& vertex)
+						draw_vertex_list(v.vertices, max_size, false, [temp_source](utils::vec2<uint32_t>& vertex)
 						{
-							ctx_.dispatch_event<gizmo_set_targets_event>("rectangle-keyframes", { { &vertex } });
+							ctx_.dispatch_event<gizmo_set_targets_event>(temp_source, { { &vertex } });
 						});
 						widgets::end_collapsible();
 					}
 				},
-				[&dirty_flag]()
+				[&dirty_flag, temp_source]()
 				{
-					ctx_.dispatch_event<gizmo_set_targets_event>("rectangle-instance");
+					ctx_.dispatch_event<gizmo_set_targets_event>(temp_source);
 					dirty_flag = true;
 				},
 				on_seek);
@@ -593,7 +594,7 @@ namespace vt
 				auto& map = get<std::map<timestamp, std::vector<polygon>>>();
 
 				is_modifiable &= (is_timestamp and map.empty()) or !is_timestamp;
-				draw_keyframes("Polygon", map, is_modifiable, is_timestamp, dirty_flag, start_ts, end_ts, ts, [&max_size, &style, is_modifiable, &map, this](timestamp keyframe, polygon &v, size_t i)
+				draw_keyframes("Polygon", map, is_modifiable, is_timestamp, dirty_flag, start_ts, end_ts, ts, [&max_size, &style, is_modifiable, &map, temp_source, this](timestamp keyframe, polygon &v, size_t i)
 				{
 					auto kf = keyframe;
 					if (widgets::begin_collapsible(std::to_string(i), "Polygon", ImGuiTreeNodeFlags_DefaultOpen, shape::type_icon(type_), std::nullopt, [&]()
@@ -607,22 +608,22 @@ namespace vt
 							}
 							if (ImGui::MenuItem(fmt::format("{} Set Target", icons::set_target).c_str()))
 							{
-								v.set_target();
+								v.set_target(temp_source);
 							}
 							ImGui::EndPopup();
 						}
 					}, i + 1))
 					{
-						draw_vertex_list(v.vertices, max_size, true, [](utils::vec2<uint32_t>& vertex)
+						draw_vertex_list(v.vertices, max_size, true, [temp_source](utils::vec2<uint32_t>& vertex)
 						{
-							ctx_.dispatch_event<gizmo_set_targets_event>("polygon-keyframes", { { &vertex } });
+							ctx_.dispatch_event<gizmo_set_targets_event>(temp_source, { { &vertex } });
 						});
 						widgets::end_collapsible();
 					}
 				},
-				[&dirty_flag]()
+				[&dirty_flag, temp_source]()
 				{
-					ctx_.dispatch_event<gizmo_set_targets_event>("polygon-instance");
+					ctx_.dispatch_event<gizmo_set_targets_event>(temp_source);
 					dirty_flag = true;
 				},
 				on_seek);
