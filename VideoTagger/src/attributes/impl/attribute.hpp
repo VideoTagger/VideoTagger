@@ -27,10 +27,13 @@ namespace vt::impl
 
 		attribute_factory* factory() const;
 
+		std::unique_ptr<impl::attribute_instance> deserialize_instance(const nlohmann::ordered_json& json);
+
 		[[nodiscard]] virtual nlohmann::ordered_json serialize() const override;
 		virtual void deserialize(const nlohmann::ordered_json& json) override;
 
 		virtual std::unique_ptr<impl::attribute_instance> instantiate() = 0;
+
 
 		template<typename type, typename = std::enable_if_t<std::is_base_of_v<impl::attribute_instance, type>>>
 		std::unique_ptr<type> instantiate()

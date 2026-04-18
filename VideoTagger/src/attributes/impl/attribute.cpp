@@ -31,6 +31,13 @@ namespace vt::impl
 		return factory_;
 	}
 
+	std::unique_ptr<impl::attribute_instance> attribute::deserialize_instance(const nlohmann::ordered_json& json)
+	{
+		auto instance = instantiate();
+		instance->deserialize(json);
+		return instance;
+	}
+
 	[[nodiscard]] nlohmann::ordered_json attribute::serialize() const
 	{
 		nlohmann::ordered_json result;
