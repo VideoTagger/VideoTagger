@@ -51,11 +51,11 @@ namespace vt
 			}
 			if (level == AV_LOG_ERROR)
 			{
-				debug::add_log("FFmpeg", "Error", "{}", message);
+				debug::add_log("FFmpeg", "error", "{}", message);
 			}
 			else
 			{
-				debug::add_log("FFmpeg", "Panic!", "{}", message);
+				debug::add_log("FFmpeg", "panic!", "{}", message);
 			}
 		}
 	}

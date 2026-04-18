@@ -137,8 +137,6 @@ namespace vt
 		bool reset_layout{};
 		bool reset_player_docking{};
 
-		bool pause_player = false;
-
 		void init_attribute_registry();
 
 		void create_windows();

@@ -96,7 +96,7 @@ namespace vt
 			return status_;
 		}
 
-		type get()
+		const type& get()
 		{
 			std::unique_lock lock(mutex_);
 			cv_.wait(lock, [&]

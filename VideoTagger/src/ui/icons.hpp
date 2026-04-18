@@ -4,7 +4,7 @@
 
 namespace vt::icons
 {
-	//https://fonts.google.com/icons?icon.set=Material+Symbols
+	//https://fonts.google.com/icons?icon.set=Material+Symbols%5Cn%5Cn&icon.style=Sharp
 
 	inline constexpr auto dots_hor = "\xee\x97\x93";
 	inline constexpr auto play = "\xee\x80\xb7";

@@ -116,6 +116,18 @@ namespace vt::widgets
 		dock_window_count_ = count;
 	}
 
+	bool video_player::prepare_video_windows(size_t count)
+	{
+		if (count == video_windows_.size()) return false;
+
+		video_windows_.clear();
+		for (uint64_t i = 0; i < count; ++i)
+		{
+			video_windows_.push_back(std::make_unique<ui::windows::video_window>(i));
+		}
+		return true;
+	}
+
 	const video_player_data& video_player::data() const
 	{
 		return data_;
@@ -145,6 +157,11 @@ namespace vt::widgets
 	loop_mode video_player::loop_mode() const
 	{
 		return loop_mode_;
+	}
+
+	std::vector<std::unique_ptr<ui::windows::video_window>>& video_player::video_windows()
+	{
+		return video_windows_;
 	}
 
 	nlohmann::ordered_json video_player::serialize() const
@@ -194,6 +211,7 @@ namespace vt::widgets
 				if (node != nullptr)
 				{
 					debug::log("Redocking videos...");
+
 					auto node_size = node->Size;
 					ImGui::DockBuilderRemoveNode(dock_node_id);
 					auto dockspace_flags = ImGuiDockNodeFlags_AutoHideTabBar | ImGuiDockNodeFlags_PassthruCentralNode;
@@ -217,7 +235,7 @@ namespace vt::widgets
 						for (size_t x = 0; x < columns; ++x)
 						{
 							size_t id = y * rows + x;
-							auto video_id = "Video##" + std::to_string(id);
+							auto video_id = "###video-window-" + std::to_string(id);
 
 							ImGui::DockBuilderSplitNode(temp_id, ImGuiDir_Right, 1.0f / columns, &temp_id, nullptr);
 							ImGui::DockBuilderDockWindow(video_id.c_str(), temp_id);

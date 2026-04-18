@@ -1,7 +1,9 @@
 #pragma once
+#include <memory>
 #include <chrono>
 #include <functional>
 #include <ui/window.hpp>
+#include <ui/windows/video_window.hpp>
 
 namespace vt
 {
@@ -37,6 +39,7 @@ namespace vt::widgets
 	{
 	public:
 		video_player();
+		video_player(const video_player&) = delete;
 
 	private:
 		video_player_data data_;
@@ -46,6 +49,7 @@ namespace vt::widgets
 		bool is_playing_;
 		bool autoplay_;
 
+		std::vector<std::unique_ptr<ui::windows::video_window>> video_windows_;
 		std::optional<event_source> playback_suspend_source_;
 
 	public:
@@ -55,6 +59,7 @@ namespace vt::widgets
 		void update_data(video_player_data data, bool is_playing);
 		void reset_data();
 		void dock_windows(size_t count);
+		bool prepare_video_windows(size_t count);
 		const video_player_data& data() const;
 
 		void set_loop_mode(loop_mode value);
@@ -63,6 +68,8 @@ namespace vt::widgets
 		bool is_playing() const;
 		bool should_autoplay() const;
 		loop_mode loop_mode() const;
+
+		std::vector<std::unique_ptr<ui::windows::video_window>>& video_windows();
 
 		[[nodiscard]] nlohmann::ordered_json serialize() const override;
 		void deserialize(const nlohmann::ordered_json& json) override;

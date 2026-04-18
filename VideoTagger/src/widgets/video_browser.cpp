@@ -9,6 +9,9 @@
 #include <ui/icons.hpp>
 #include <ui/widgets/common.hpp>
 
+#include <events/video_resource/video_refresh_request_event.hpp>
+#include <events/video_resource/video_open_importer_request_event.hpp>
+
 namespace vt::widgets
 {
 	video_browser::video_browser() : ui::window{ "Video Browser", "video-browser", "Video Browser", ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse }
@@ -26,8 +29,7 @@ namespace vt::widgets
 		{
 			const auto& theme = ctx_.current_theme;
 
-			const auto& metadata = vid_resource.metadata();
-			std::string label = metadata.title.value_or("");
+			std::string label = vid_resource.title();
 			ImVec2 image_tile_size{ tile_size.x * 0.9f, tile_size.x * 0.9f };
 
 			ImVec2 image_size = image_tile_size;
@@ -46,8 +48,8 @@ namespace vt::widgets
 			}
 			else
 			{
-				float scaled_width = *metadata.width * image_tile_size.y / *metadata.height;
-				float scaled_height = image_tile_size.x * *metadata.height / *metadata.width;
+				float scaled_width = vid_resource.width() * image_tile_size.y / vid_resource.height();
+				float scaled_height = image_tile_size.x * vid_resource.height() / vid_resource.width();
 
 				if (scaled_width < image_tile_size.x)
 				{
@@ -62,24 +64,9 @@ namespace vt::widgets
 			open = widgets::tile(fmt::format("video{}", id).c_str(), label, tile_size, image_size, image,
 			[&](const std::string& label)
 			{
-				std::vector<video_resource_context_menu_item> context_items;
+				ui::widget_list context_items;
 				vid_resource.context_menu_items(context_items);
-				for (auto& item : context_items)
-				{
-					if (item.disabled) ImGui::BeginDisabled(item.disabled);
-
-					if (ImGui::MenuItem(item.name.c_str()))
-					{
-						item.function();
-					}
-
-					if (item.disabled) ImGui::EndDisabled();
-
-					if (!item.tooltip.empty())
-					{
-						ui::tooltip(item.tooltip);
-					}
-				}
+				context_items.render();
 			},
 			[=](const std::string& label)
 			{
@@ -174,7 +161,7 @@ namespace vt::widgets
 				{
 					for (auto& [id, vid_resource] : ctx_.current_project->videos)
 					{
-						ctx_.current_project->schedule_video_refresh(id);
+						ctx_.dispatch_event<video_refresh_request_event>(get_event_source(), id);
 					}
 				}
 			}
@@ -189,7 +176,7 @@ namespace vt::widgets
 				std::string item_name = fmt::format("{} Import From {}", importer->importer_display_icon(), importer->importer_display_name());
 				if (ImGui::MenuItem(item_name.c_str()))
 				{
-					ctx_.current_project->prepare_video_import(importer_id);
+					ctx_.dispatch_event<video_open_importer_request_event>(get_event_source(), importer_id);
 				}
 			}
 

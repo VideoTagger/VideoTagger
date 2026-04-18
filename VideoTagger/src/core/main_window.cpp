@@ -2,13 +2,17 @@
 #include "main_window.hpp"
 #include "app_context.hpp"
 #include <fmt/format.h>
+#define STB_IMAGE_IMPLEMENTATION
+#include <stb_image.h>
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include <stb_image_write.h>
 #include <ui/windows/tag_manager.hpp>
-#include <widgets/video_widget.hpp>
 #include <widgets/video_player.hpp>
 #include <widgets/console.hpp>
 #include <widgets/project_selector.hpp>
 #include <widgets/theme_customizer.hpp>
 #include <ui/windows/inspector.hpp>
+#include <ui/windows/video_window.hpp>
 #include <ui/popups/options_popup.hpp>
 #include <widgets/shape_attributes.hpp>
 #include <widgets/localization_editor.hpp>
@@ -18,7 +22,6 @@
 #include <widgets/controls.hpp>
 #include <widgets/modal/keybind_popup.hpp>
 #include <widgets/modal/keybind_options_popup.hpp>
-#include <widgets/insert_segment_popup.hpp>
 #include <widgets/timeline.hpp>
 #include <ui/icons.hpp>
 #include <embeds/about.hpp>
@@ -54,6 +57,8 @@
 #include <events/timeline/segment_selected_event.hpp>
 #include <events/timeline/segment_deselect_request_event.hpp>
 #include <events/timeline/segment_deselected_event.hpp>
+#include <events/timeline/segment_select_all_request_event.hpp>
+#include <events/timeline/segment_deselect_all_request_event.hpp>
 #include <events/interceptors/update_segment_drag_interceptor.hpp>
 
 #include <events/tags/tag_add_request_event.hpp>
@@ -113,12 +118,69 @@ extern "C"
 #include <events/filesystem/fetch_themes_event.hpp>
 #include <events/filesystem/fetch_scripts_event.hpp>
 
+#include <video/google_drive/google_drive_video_importer.hpp>
+#include <video/local_video_importer.hpp>
+
+#include <events/video_resource/google_drive_video_import_request_event.hpp>
+#include <events/video_resource/local_video_import_request_event.hpp>
+#include <events/video_resource/video_imported_event.hpp>
+#include <events/video_resource/video_load_thumbnail_request_event.hpp>
+#include <events/video_resource/video_open_importer_request_event.hpp>
+#include <events/video_resource/video_start_download_request_event.hpp>
+#include <events/video_resource/video_cancel_download_request_event.hpp>
+#include <events/video_resource/video_download_started_event.hpp>
+#include <events/video_resource/video_refresh_request_event.hpp>
+#include <events/video_resource/video_delete_request_event.hpp>
+#include <events/video_resource/video_deleted_event.hpp>
+#include <events/video_resource/video_delete_downloaded_file_request_event.hpp>
+#include <events/video_resource/video_downloaded_file_deleted_event.hpp>
+#include <events/video_resource/video_download_started_event.hpp>
+#include <events/video_resource/video_download_canceled_event.hpp>
+#include <events/video_resource/video_download_finished_event.hpp>
+#include <events/video_resource/video_open_in_explorer_request_event.hpp>
+#include <events/video_resource/video_locate_request_event.hpp>
+
+
 namespace vt
 {
+	template <typename importer_type, typename... import_args>
+	void handle_video_import_request(import_args&&... args)
+	{
+		if (!ctx_.is_video_importer_registered<importer_type>())
+		{
+			return;
+		}
+
+		ctx_.session.tasks.run([args...]() mutable
+		{
+			auto& importer = ctx_.get_video_importer<importer_type>();
+			return importer.import_video(std::forward<import_args>(args)...);
+		})
+		.then(ctx_.session.tasks.on_main(), [](const std::shared_ptr<video_resource>& vid_res)
+		{
+			if (vid_res == nullptr)
+			{
+				return;
+			}
+
+			video_id_t video_id = vid_res->id();
+			if (!ctx_.current_project->import_video(vid_res, utils::random::get_uuid()))
+			{
+				return;
+			}
+
+			if (ctx_.app_settings.load_thumbnails)
+			{
+				ctx_.dispatch_event<video_load_thumbnail_request_event>("main_window", video_id, false, true);
+			}
+			ctx_.dispatch_event<video_imported_event>("main_window", video_id);
+		});
+	}
+
 	static void show_debug_info()
 	{
-		SDL_version compiled;
-		SDL_version linked;
+		SDL_version compiled{};
+		SDL_version linked{};
 		SDL_VERSION(&compiled);
 		SDL_GetVersion(&linked);
 		debug::log("VideoTagger Version: {}", VT_VERSION);
@@ -135,6 +197,7 @@ namespace vt
 	main_window::main_window(const system_window_config& cfg) : system_window{ cfg }, event_source_{ "main_window" }
 	{
 		register_listeners();
+		register_video_resource_listeners();
 
 		show_debug_info();
 
@@ -536,7 +599,7 @@ namespace vt
 			{
 				debug::log("Updating theme list");
 				ctx_.themes = theme_list;
-			}, nullptr, priority);
+			}, std::nullopt, priority);
 		});
 
 		ctx_.add_event_listener<fetch_scripts_event>([this](const fetch_scripts_event& event)
@@ -552,7 +615,7 @@ namespace vt
 			{
 				debug::log("Updating script list");
 				ctx_.scripts = script_list;
-			}, nullptr, task_priority::low);
+			}, std::nullopt, task_priority::low);
 		});
 	}
 
@@ -689,15 +752,20 @@ namespace vt
 
 			for (auto& group_inf : ctx_.current_project->video_groups.at(event.new_group_id()))
 			{
-				auto& vid_resource = ctx_.current_project->videos.get(group_inf.id);
-				const auto& metadata = vid_resource.metadata();
-				if (!vid_resource.playable())
+				auto vid_resource = ctx_.current_project->videos.get(group_inf.id);
+				if (vid_resource == nullptr)
 				{
-					debug::error("Video {} with id {} is not available", metadata.title.has_value() ? *metadata.title : "[UNTITLED]", vid_resource.id());
+					debug::error("Video resource with id {} not found for video group {}", group_inf.id, event.new_group_id());
 					continue;
 				}
 
-				ctx_.displayed_videos.insert(vid_resource.id(), vid_resource.video(), group_inf.offset, *metadata.width, *metadata.height);
+				if (!vid_resource->playable())
+				{
+					debug::error("Video {} with hash {} is not available", vid_resource->title(), vid_resource->sha256());
+					continue;
+				}
+
+				ctx_.displayed_videos.insert(group_inf.id, vid_resource->video(), group_inf.offset, vid_resource->width(), vid_resource->height());
 			}
 
 			ctx_.reset_player_docking = true;
@@ -722,10 +790,329 @@ namespace vt
 		});
 	}
 
+	void main_window::register_video_resource_listeners()
+	{
+		ctx_.add_event_listener<google_drive_video_import_request_event>([this](const google_drive_video_import_request_event& event)
+		{
+			handle_video_import_request<google_drive_video_importer>(video_importer::generate_video_id(), event.file_id());
+		});
+
+		ctx_.add_event_listener<local_video_import_request_event>([this](const local_video_import_request_event& event)
+		{
+			handle_video_import_request<local_video_importer>(video_importer::generate_video_id(), event.filepath());
+		});
+
+		ctx_.add_event_listener<video_load_thumbnail_request_event>([this](const video_load_thumbnail_request_event& event)
+		{
+			struct thumbnail_load_result
+			{
+				video_resource_thumbnail thumbnail;
+				bool from_cache;
+			};
+
+			cancellation_token token;
+			std::set<std::string> task_tags{ "video_resource", video_id_to_task_tag(event.video_id()) };
+
+			ctx_.session.tasks.run([video_id = event.video_id(), ignore_cache = event.ignore_cache()](cancellation_token& token) mutable -> std::optional<thumbnail_load_result>
+			{
+				auto vid_res = ctx_.current_project->videos.get(video_id);
+				if (vid_res == nullptr)
+				{
+					debug::error("Video resource with id {} not found", video_id);
+					return std::nullopt;
+				}
+
+				std::filesystem::path thumbnail_path = ctx_.thumbnail_dir_filepath / vid_res->sha256();
+
+				if (token.is_cancelled())
+				{
+					return std::nullopt;
+				}
+
+				if (!ignore_cache)
+				{
+					int image_width;
+					int image_height;
+					int image_channels;
+					uint8_t* image_data = stbi_load(thumbnail_path.u8string().c_str(), &image_width, &image_height, &image_channels, 3);
+					if (image_data != nullptr)
+					{
+						if (image_channels != 3)
+						{
+							debug::error("Thumbnail image {} has invalid number of channels: {}", thumbnail_path.u8string(), image_channels);
+							stbi_image_free(image_data);
+							return std::nullopt;
+						}
+
+						video_resource_thumbnail thumbnail
+						{
+							std::vector<uint8_t>(image_data, image_data + image_width * image_height * image_channels),
+							image_width,
+							image_height
+						};
+						stbi_image_free(image_data);
+
+						return thumbnail_load_result{ std::move(thumbnail), true };
+					}
+				}
+
+				if (token.is_cancelled())
+				{
+					return std::nullopt;
+				}
+
+				auto thumbnail = vid_res->generate_thumbnail();
+				if (!thumbnail.has_value())
+				{
+					debug::error("Failed to generate thumbnail for video {}", video_id);
+					return std::nullopt;
+				}
+
+				return thumbnail_load_result{ std::move(*thumbnail), false };
+			}, token, task_tags)
+			.then([video_id = event.video_id(), cache_result = event.cache_result()](const std::optional<thumbnail_load_result>& load_result, cancellation_token& token) -> std::optional<thumbnail_load_result>
+			{
+				if (!load_result.has_value())
+				{
+					return load_result;
+				}
+
+				auto vid_res = ctx_.current_project->videos.get(video_id);
+				if (vid_res == nullptr)
+				{
+					debug::error("Video resource with id {} not found", video_id);
+					return std::nullopt;
+				}
+				std::filesystem::path thumbnail_path = ctx_.thumbnail_dir_filepath / vid_res->sha256();
+				const auto& [thumbnail, from_cache] = *load_result;
+
+				if (token.is_cancelled())
+				{
+					return std::nullopt;
+				}
+
+				if (cache_result and !from_cache)
+				{
+					std::filesystem::create_directories(ctx_.thumbnail_dir_filepath);
+					if (!stbi_write_png(thumbnail_path.u8string().c_str(), thumbnail.width, thumbnail.height, 3, thumbnail.pixels.data(), thumbnail.width * 3))
+					{
+						debug::error("Failed to save thumbnail to {}", thumbnail_path.u8string());
+					}
+				}
+
+				return load_result;
+			}, token, task_tags)
+			.then(ctx_.tasks.on_main(), [video_id = event.video_id()](const std::optional<thumbnail_load_result>& load_result)
+			{
+				if (!load_result.has_value())
+				{
+					return;
+				}
+
+				auto& [thumbnail, from_cache] = *load_result;
+				auto vid_res = ctx_.current_project->videos.get(video_id);
+				if (vid_res == nullptr)
+				{
+					debug::error("Video resource with id {} not found", video_id);
+					return;
+				}
+				vid_res->set_thumbnail(thumbnail.texture());
+			}, std::nullopt, task_tags);
+		});
+
+		ctx_.add_event_listener<video_start_download_request_event>([this](const video_start_download_request_event& event)
+		{
+			auto vid_res = ctx_.current_project->videos.get<downloadable_video_resource>(event.video_id());
+			if (vid_res == nullptr)
+			{
+				debug::error("Video with id {} is not a downloadable resource", event.video_id());
+				return;
+			}
+
+			if (vid_res->downloadable() != video_downloadable_status::downloadable)
+			{
+				debug::error("Video with id {} is not downloadable right now", event.video_id());
+				return;
+			}
+
+			cancellation_token token;
+			std::set<std::string> task_tags{ "video_resource", video_id_to_task_tag(event.video_id()), "download"};
+
+			ctx_.session.tasks.run([vid_res](cancellation_token& token)
+			{
+				return vid_res->download(token);
+			}, token, task_tags)
+			.then(ctx_.tasks.on_main(), [vid_res](const video_download_result& download_result)
+			{
+				switch (download_result.status)
+				{
+					case video_download_status::completed:
+						if (vid_res->file_path() != download_result.download_path)
+						{
+							vid_res->set_file_path(download_result.download_path.u8string());
+							ctx_.is_project_dirty = true;
+						}
+						ctx_.dispatch_event<video_download_finished_event>("video_resource", vid_res->id(), true);
+						break;
+
+					case video_download_status::failed:
+						ctx_.dispatch_event<video_download_finished_event>("video_resource", vid_res->id(), false);
+						break;
+
+					case video_download_status::cancelled:
+						ctx_.dispatch_event<video_download_canceled_event>("video_resource", vid_res->id());
+						break;
+
+					default: break;
+				}
+			}, std::nullopt, task_tags);
+
+			ctx_.dispatch_event<video_download_started_event>(event_source_, event.video_id());
+		});
+
+		ctx_.add_event_listener<video_download_finished_event>([this](const video_download_finished_event& event)
+		{
+			auto vid_res = ctx_.current_project->videos.get<downloadable_video_resource>(event.video_id());
+			if (vid_res == nullptr)
+			{
+				debug::error("Video with id {} is not a downloadable resource", event.video_id());
+				return;
+			}
+
+			if (event.successful() and !vid_res->has_thumbnail())
+			{
+				ctx_.dispatch_event<video_load_thumbnail_request_event>("video_resource", event.video_id(), false, true);
+			}
+		});
+
+		ctx_.add_event_listener<video_cancel_download_request_event>([this](const video_cancel_download_request_event& event)
+		{
+			auto vid_res = ctx_.current_project->videos.get<downloadable_video_resource>(event.video_id());
+			if (vid_res == nullptr)
+			{
+				debug::error("Video with id {} is not a downloadable resource", event.video_id());
+				return;
+			}
+
+			ctx_.session.tasks.cancel_with_all({ "video_resource", video_id_to_task_tag(event.video_id()), "download" });
+		});
+
+		ctx_.add_event_listener<video_refresh_request_event>([this](const video_refresh_request_event& event)
+		{
+			auto vid_res = ctx_.current_project->videos.get(event.video_id());
+			if (vid_res == nullptr)
+			{
+				debug::error("Video resource with id {} not found", event.video_id());
+				return;
+			}
+
+			std::set<std::string> task_tags{ "video_resource", video_id_to_task_tag(event.video_id()) };
+
+			if (vid_res->can_async_refresh())
+			{
+				ctx_.session.tasks.run([vid_res]()
+				{
+					vid_res->refresh();
+				}, task_tags);
+			}
+			else
+			{
+				ctx_.session.tasks.run_on_main([vid_res]()
+				{
+					vid_res->refresh();
+				}, task_tags);
+			}
+		});
+
+		ctx_.add_event_listener<video_delete_request_event>([this](const video_delete_request_event& event)
+		{
+			auto vid = ctx_.current_project->videos.get(event.video_id());
+			if (vid == nullptr)
+			{
+				return;
+			}
+			vid->mark_for_removal();
+
+			ctx_.session.tasks.run([video_id = event.video_id()]()
+			{
+				std::set<std::string> task_tags = { "video_resource", video_id_to_task_tag(video_id) };
+
+				ctx_.session.tasks.cancel_with_all(task_tags);
+				ctx_.session.tasks.await_with_all(task_tags);
+			})
+			.then(ctx_.tasks.on_main(), [this, video_id = event.video_id()]()
+			{
+				ctx_.current_project->remove_video(video_id);
+				ctx_.dispatch_event<video_deleted_event>(event_source_, video_id, true);
+			});
+		});
+
+		ctx_.add_event_listener<video_delete_downloaded_file_request_event>([this](const video_delete_downloaded_file_request_event& event)
+		{
+			auto vid_res = ctx_.current_project->videos.get<downloadable_video_resource>(event.video_id());
+			if (vid_res == nullptr)
+			{
+				debug::error("Video with id {} is not a downloadable resource", event.video_id());
+				return;
+			}
+
+			if (!vid_res->remove_downloaded_file())
+			{
+				return;
+			}
+
+			ctx_.dispatch_event<video_downloaded_file_deleted_event>(event_source_, event.video_id());
+		});
+
+		ctx_.add_event_listener<video_open_in_explorer_request_event>([this](const video_open_in_explorer_request_event& event)
+		{
+			auto vid_res = ctx_.current_project->videos.get(event.video_id());
+			if (vid_res == nullptr) return;
+
+			auto absolute_path = std::filesystem::absolute(vid_res->file_path());
+			utils::filesystem::open_in_explorer(absolute_path.parent_path());
+		});
+
+		ctx_.add_event_listener<video_locate_request_event>([this](const video_locate_request_event& event)
+		{
+			auto vid_res = ctx_.current_project->videos.get(event.video_id());
+			if (vid_res == nullptr) return;
+
+			static utils::dialog_filters filters
+			{
+				{ "Video", utils::filesystem::concat_extensions(std::vector<std::string>(ctx_.valid_video_extensions.begin(), ctx_.valid_video_extensions.end())) },
+			};
+
+			auto absolute_path = std::filesystem::absolute(vid_res->file_path());
+			auto result = utils::filesystem::get_file(absolute_path, filters);
+			if (!result) return;
+
+			auto hash = utils::hash::sha256_file(result.path);
+			if (!hash.has_value()) return;
+
+			if (hash != vid_res->metadata().sha256)
+			{
+				debug::error("Selected file has different hash than the original file, can't use it as a replacement");
+				return;
+			}
+
+			vid_res->set_file_path(result.path.u8string());
+			ctx_.is_project_dirty = true;
+		});
+	}
+
 	void main_window::on_open_project()
 	{
 		ctx_.main_window->set_subtitle(ctx_.current_project->name);
 		ctx_.get_window<widgets::console>().clear();
+
+		for (auto& [video_id, _] : ctx_.current_project->videos)
+		{
+			if (ctx_.app_settings.load_thumbnails)
+			{
+				ctx_.dispatch_event<video_load_thumbnail_request_event>("project", video_id, false, true);
+			}
+		}
 	}
 
 	void main_window::on_close_project(bool should_shutdown)
@@ -736,15 +1123,8 @@ namespace vt
 			return;
 		}
 
+		ctx_.session.tasks.cancel_all();
 		ctx_.tasks.wait_for_all();
-
-		if (ctx_.current_project.has_value())
-		{
-			for (auto& download_task : ctx_.current_project->video_download_tasks)
-			{
-				download_task.task.cancel();
-			}
-		}
 
 		ctx_.last_focused_video = std::nullopt;
 		ctx_.set_selected_attribute(nullptr);
@@ -1692,7 +2072,7 @@ namespace vt
 						std::string menu_importer_name = fmt::format("{} {}", importer->importer_display_icon(), importer->importer_display_name());
 						if (ImGui::MenuItem(menu_importer_name.c_str()))
 						{
-							ctx_.current_project->prepare_video_import(importer_id);
+							ctx_.dispatch_event<video_open_importer_request_event>(event_source_, importer_id);
 						}
 					}
 
@@ -2183,159 +2563,9 @@ namespace vt
 
 	void main_window::draw_main_app()
 	{
-
 		if (!ctx_.current_project.has_value()) return;
 		draw_menubar();
 		if (!ctx_.current_project.has_value()) return;
-
-
-		{
-			static bool was_popup_opened = false;
-			static bool resume_video = false;
-			if (ctx_.pause_player)
-			{
-				if (!was_popup_opened)
-				{
-					was_popup_opened = true;
-					resume_video = ctx_.displayed_videos.is_playing();
-					ctx_.displayed_videos.set_playing(false);
-				}
-			}
-			else
-			{
-				if (was_popup_opened)
-				{
-					was_popup_opened = false;
-					ctx_.displayed_videos.set_playing(resume_video);
-					resume_video = false;
-				}
-			}
-
-			ctx_.pause_player = false;
-		}
-
-		{
-			auto& tasks = ctx_.current_project->prepare_video_import_tasks;
-			for (auto it = tasks.begin(); it != tasks.end();)
-			{
-				auto& task = *it;
-				if (!task())
-				{
-					++it;
-					continue;
-				}
-
-				for (auto& import_data : task.import_data)
-				{
-					ctx_.current_project->schedule_video_import(task.importer_id, std::move(import_data), utils::random::get_uuid());
-				}
-				it = tasks.erase(it);
-			}
-		}
-
-		{
-			auto& tasks = ctx_.current_project->video_import_tasks;
-			for (auto it = tasks.begin(); it != tasks.end();)
-			{
-				auto& task = *it;
-				if (task.task.wait_for(std::chrono::seconds{}) != std::future_status::ready)
-				{
-					++it;
-					continue;
-				}
-
-				auto vid_resource = task.task.get();
-				if (vid_resource != nullptr)
-				{
-					video_id_t video_id = vid_resource->id();
-					if (ctx_.current_project->import_video(std::move(vid_resource), task.group_id))
-					{
-						if (ctx_.app_settings.load_thumbnails)
-						{
-							ctx_.current_project->schedule_load_thumbnail(video_id);
-						}
-					}
-				}
-				it = tasks.erase(it);
-			}
-		}
-
-		{
-			auto& tasks = ctx_.current_project->load_thumbnail_tasks;
-			for (auto it = tasks.begin(); it != tasks.end();)
-			{
-				auto& task = *it;
-				if (!task())
-				{
-					debug::error("Failed to generate thumbnail");
-				}
-
-				it = tasks.erase(it);
-				//TODO: set some frame time limit;
-				break;
-			}
-		}
-
-		{
-			auto& tasks = ctx_.current_project->video_download_tasks;
-			auto& console = ctx_.get_window<widgets::console>();
-			for (auto it = tasks.begin(); it != tasks.end();)
-			{
-				auto& task = *it;
-				if (!task.task.is_done())
-				{
-					++it;
-					continue;
-				}
-
-				std::string video_name = "NAME_UNKNOWN";
-				if (ctx_.current_project->videos.contains(task.video_id))
-				{
-					video_name = ctx_.current_project->videos.get(task.video_id).metadata().title.value_or(video_name);
-				}
-
-				auto status = task.task.result.get();
-				if (status == video_download_status::failure)
-				{
-					debug::error("Failed to download video {} ({})", video_name, task.video_id);
-					console.add_entry(widgets::console::entry::flag_type::error, fmt::format("Failed to download video {} ({})", video_name, task.video_id), widgets::console::entry::source_info{ "VideoTagger", -1 });
-				}
-				else
-				{
-					debug::log("Downloaded video {} ({})", video_name, task.video_id);
-					dynamic_cast<downloadable_video_resource&>(ctx_.current_project->videos.get(task.video_id)).set_file_path(task.task.data->download_path.u8string());
-					console.add_entry(widgets::console::entry::flag_type::info, fmt::format("Downloaded video {} ({})", video_name, task.video_id), widgets::console::entry::source_info{ "VideoTagger", -1 });
-				}
-
-				it = tasks.erase(it);
-			}
-		}
-
-		{
-			auto& tasks = ctx_.current_project->video_refresh_tasks;
-			for (auto it = tasks.begin(); it != tasks.end();)
-			{
-				auto& task = *it;
-				if (task.task.wait_for(std::chrono::seconds{}) != std::future_status::ready)
-				{
-					++it;
-					continue;
-				}
-
-				it = tasks.erase(it);
-			}
-		}
-
-		{
-			auto& tasks = ctx_.current_project->remove_video_tasks;
-			for (auto it = tasks.begin(); it != tasks.end();)
-			{
-				auto& task = *it;
-				task.task.get();
-
-				it = tasks.erase(it);
-			}
-		}
 
 		//TODO: probably should be done somewhere else
 		ctx_.update_current_video_group();
@@ -2440,6 +2670,19 @@ namespace vt
 			}
 		}
 
+		if (ctx_.is_video_importer_registered<google_drive_video_importer>())
+		{
+			auto& importer = ctx_.get_video_importer<google_drive_video_importer>();
+
+			if (importer.open_importer_popup)
+			{
+				importer.importer_popup.open();
+				importer.open_importer_popup = false;
+			}
+
+			importer.importer_popup.render();
+		}
+
 		auto& timeline = ctx_.get_window<widgets::timeline>();
 		bool v = true;
 		if (ctx_.session.current_video_group_id() != invalid_video_group_id)
@@ -2495,6 +2738,9 @@ namespace vt
 				ctx_.dispatch_event<gizmo_set_targets_event>(event_source_);
 			}
 
+			bool reconfigure = player.prepare_video_windows(ctx_.displayed_videos.size());
+			auto& vid_wins = player.video_windows();
+
 
 			uint64_t vid_id{};
 			for (auto& video_data : ctx_.displayed_videos)
@@ -2515,440 +2761,464 @@ namespace vt
 					start_pos = point_pos;
 				}
 
-				widgets::draw_video_widget(video_data.video, video_data.display_texture, timestamp_in_range, is_widget_open, vid_id++, [&point_pos, start_pos, has_selected_attribute, selected_attribute, is_shape, has_target, &video_data, this](ImVec2 pos, ImVec2 size, ImVec2 tex_size)
+				//widgets::draw_video_widget(video_data.video, video_data.display_texture, timestamp_in_range, is_widget_open, vid_id++,
+				auto video_ptr = ctx_.current_project->videos.get(video_data.id);
+				if (video_ptr == nullptr) continue;
+
+				auto video_name = video_ptr->title();
+
+				auto& vid_win = vid_wins[vid_id++];
+				vid_win->set_active(timestamp_in_range);
+				
+				if (reconfigure)
 				{
-					static auto from_tex_pos = [&pos, &tex_size, &size](const ImVec2 point) -> ImVec2
+					vid_win->set_display_name(video_name);
+					vid_win->set_video(video_data.video);
+					vid_win->set_texture(video_data.display_texture);
+				}
+
+				if (true)
+				{
+					//TODO: Overlays shouldn't be cleared every frame, rewrite the overlay to not copy values - it should get them by itself
+					vid_win->clear_overlays();
+					vid_win->with_overlay([&point_pos, start_pos, has_selected_attribute, selected_attribute, is_shape, has_target, &video_data, this](ImVec2 pos, ImVec2 size, ImVec2 tex_size)
 					{
-						return pos + (point / tex_size) * size;
-					};
-
-					static auto to_tex_pos = [&pos, &tex_size, &size](const ImVec2 point) -> utils::vec2<uint32_t>
-					{
-						ImVec2 tex_coords = (point - pos) / size * tex_size;
-						return utils::vec2<uint32_t>{ static_cast<uint32_t>(std::round(tex_coords.x)), static_cast<uint32_t>(std::round(tex_coords.y)) };
-					};
-
-					static auto from_pixels = [&tex_size, &size](uint32_t value) -> float
-					{
-						float viewport_diagonal = utils::intersection::length(size);
-						float tex_diagonal = utils::intersection::length(tex_size);
-						return (float)value * viewport_diagonal / tex_diagonal;
-					};
-
-					static auto to_pixels = [&tex_size, &size](float value) -> uint32_t
-					{
-						float viewport_diagonal = utils::intersection::length(size);
-						float tex_diagonal = utils::intersection::length(tex_size);
-						return (uint32_t)(value * tex_diagonal / viewport_diagonal);
-					};
-
-					ImGuiIO& io = ImGui::GetIO();
-					bool hovered = ImGui::IsWindowHovered();
-					bool focused = ImGui::IsWindowFocused();
-					auto border_color = hovered ? 0xFF00FF00 : 0xFF0000FF;
-					float border_thickness = 2.0f;
-
-					if (focused)
-					{
-						ctx_.last_focused_video = video_data.id;
-					}
-
-					bool last_focused = ctx_.last_focused_video == video_data.id;
-
-					bool is_polygon = is_shape and selected_attribute->get<shape>().get_type() == shape::type::polygon;
-
-					ImVec2 add_point_pos{};
-					bool add_point{};
-
-					auto current_ts = ctx_.displayed_videos.current_timestamp_as_timestamp();
-					bool can_add_point{};
-
-					bool is_keyframe{};
-					if (is_shape)
-					{
-						const auto& shape = selected_attribute->get<vt::shape>();
-						shape.visit([current_ts, &is_keyframe](const auto& map)
+						static auto from_tex_pos = [&pos, &tex_size, &size](const ImVec2 point) -> ImVec2
 						{
-							if constexpr (!std::is_same_v<std::monostate, std::remove_const_t<std::remove_reference_t<decltype(map)>>>)
+							return pos + (point / tex_size) * size;
+						};
+
+						static auto to_tex_pos = [&pos, &tex_size, &size](const ImVec2 point) -> utils::vec2<uint32_t>
+						{
+							ImVec2 tex_coords = (point - pos) / size * tex_size;
+							return utils::vec2<uint32_t>{ static_cast<uint32_t>(std::round(tex_coords.x)), static_cast<uint32_t>(std::round(tex_coords.y)) };
+						};
+
+						static auto from_pixels = [&tex_size, &size](uint32_t value) -> float
+						{
+							float viewport_diagonal = utils::intersection::length(size);
+							float tex_diagonal = utils::intersection::length(tex_size);
+							return (float)value * viewport_diagonal / tex_diagonal;
+						};
+
+						static auto to_pixels = [&tex_size, &size](float value) -> uint32_t
+						{
+							float viewport_diagonal = utils::intersection::length(size);
+							float tex_diagonal = utils::intersection::length(tex_size);
+							return (uint32_t)(value * tex_diagonal / viewport_diagonal);
+						};
+
+						ImGuiIO& io = ImGui::GetIO();
+						bool hovered = ImGui::IsWindowHovered();
+						bool focused = ImGui::IsWindowFocused();
+						auto border_color = hovered ? 0xFF00FF00 : 0xFF0000FF;
+						float border_thickness = 2.0f;
+
+						if (focused)
+						{
+							ctx_.last_focused_video = video_data.id;
+						}
+
+						bool last_focused = ctx_.last_focused_video == video_data.id;
+
+						bool is_polygon = is_shape and selected_attribute->get<shape>().get_type() == shape::type::polygon;
+
+						ImVec2 add_point_pos{};
+						bool add_point{};
+
+						auto current_ts = ctx_.displayed_videos.current_timestamp_as_timestamp();
+						bool can_add_point{};
+
+						bool is_keyframe{};
+						if (is_shape)
+						{
+							const auto& shape = selected_attribute->get<vt::shape>();
+							shape.visit([current_ts, &is_keyframe](const auto& map)
 							{
-								auto it = map.find(current_ts);
-								if (it != map.end())
+								if constexpr (!std::is_same_v<std::monostate, std::remove_const_t<std::remove_reference_t<decltype(map)>>>)
 								{
-									is_keyframe = true;
+									auto it = map.find(current_ts);
+									if (it != map.end())
+									{
+										is_keyframe = true;
+									}
 								}
-							}
-						});
-					}
+							});
+						}
 
-					if (is_polygon)
-					{
-						const auto& shape = selected_attribute->get<vt::shape>();
-						can_add_point = is_keyframe;
-					}
-
-					if (last_focused and is_shape and ImGui::BeginPopupContextItem("##VideoCtxMenu"))
-					{
-						auto& shape = selected_attribute->get<vt::shape>();
-						bool close = false;
-						const auto& style = ImGui::GetStyle();
-
-						if (can_add_point and ImGui::MenuItem("Add Point", nullptr, nullptr))
+						if (is_polygon)
 						{
-							add_point_pos = ImGui::GetWindowPos();
+							const auto& shape = selected_attribute->get<vt::shape>();
+							can_add_point = is_keyframe;
+						}
+
+						if (last_focused and is_shape and ImGui::BeginPopupContextItem("##VideoCtxMenu"))
+						{
+							auto& shape = selected_attribute->get<vt::shape>();
+							bool close = false;
+							const auto& style = ImGui::GetStyle();
+
+							if (can_add_point and ImGui::MenuItem("Add Point", nullptr, nullptr))
+							{
+								add_point_pos = ImGui::GetWindowPos();
+								add_point = true;
+							}
+
+							if (ImGui::MenuItem(fmt::format("{} Add Keyframe", icons::add_keyframe).c_str(), nullptr, nullptr, !is_keyframe))
+							{
+								shape.visit([current_ts, &is_keyframe, &shape](auto& map)
+								{
+									if constexpr (!std::is_same_v<std::monostate, std::remove_const_t<std::remove_reference_t<decltype(map)>>>)
+									{
+										auto it = map.lower_bound(current_ts);
+										if (map.empty())
+										{
+											map[current_ts].push_back({});
+										}
+										else
+										{
+											if (it != map.begin() and (it == map.end() or it->first != current_ts))
+											{
+												--it;
+											}
+											map[current_ts] = it->second;
+										}
+										is_keyframe = true;
+										ctx_.is_project_dirty = true;
+									}
+								});
+							}
+
+							if (ImGui::MenuItem(fmt::format("{} Add Region", shape.type_icon(shape.get_type())).c_str(), nullptr, nullptr, is_keyframe))
+							{
+								shape.visit([current_ts, &is_keyframe](auto& map)
+								{
+									if constexpr (!std::is_same_v<std::monostate, std::remove_const_t<std::remove_reference_t<decltype(map)>>>)
+									{
+										auto& keyframe = map.at(current_ts);
+										keyframe.push_back({});
+										keyframe.back().set_target();
+										ctx_.is_project_dirty = true;
+									}
+								});
+							}
+
+							if (ImGui::BeginMenu("Transform", has_target))
+							{
+								auto icon_size = ImGui::CalcTextSize(icons::align_center).x;
+								ImGui::PushStyleVar(ImGuiStyleVar_CellPadding, ImVec2{});
+								if (ImGui::BeginTable("##AlignTable", 3, ImGuiTableFlags_NoSavedSettings | ImGuiTableFlags_BordersInner, { 3.f * (icon_size + 2 * style.FramePadding.x), 0.f }))
+								{
+									ImGui::TableNextRow();
+									ImGui::TableNextColumn();
+									if (ui::icon_button(icons::align_horizontal_center))
+									{
+										point_pos.x = tex_size.x / 2;
+										close = true;
+									}
+									ui::tooltip("Align Horizontal Center");
+									ImGui::TableNextColumn();
+									if (ui::icon_button(icons::align_vertical_top))
+									{
+										point_pos.y = 0;
+										close = true;
+									}
+									ui::tooltip("Align Vertical Top");
+
+									ImGui::TableNextRow();
+									ImGui::TableNextColumn();
+									if (ui::icon_button(icons::align_horizontal_left))
+									{
+										point_pos.x = 0;
+										close = true;
+									}
+									ui::tooltip("Align Horizontal Left");
+									ImGui::TableNextColumn();
+									if (ui::icon_button(icons::align_center))
+									{
+										point_pos = tex_size / 2;
+										close = true;
+									}
+									ui::tooltip("Align Center");
+									ImGui::TableNextColumn();
+									if (ui::icon_button(icons::align_horizontal_right))
+									{
+										point_pos.x = tex_size.x;
+										close = true;
+									}
+									ui::tooltip("Align Horizontal Right");
+
+									ImGui::TableNextRow();
+									ImGui::TableNextColumn();
+									if (ui::icon_button(icons::align_vertical_center))
+									{
+										point_pos.y = tex_size.y / 2;
+										close = true;
+									}
+									ui::tooltip("Align Vertical Center");
+									ImGui::TableNextColumn();
+									if (ui::icon_button(icons::align_vertical_bottom))
+									{
+										point_pos.y = tex_size.y;
+										close = true;
+									}
+									ui::tooltip("Align Vertical Bottom");
+
+									ImGui::EndTable();
+								}
+								ImGui::PopStyleVar();
+								ImGui::EndMenu();
+							}
+
+							if (close)
+							{
+								utils::vec2<uint32_t> offset = { (uint32_t)(point_pos.x - start_pos.x), (uint32_t)(point_pos.y - start_pos.y) };
+								ctx_.dispatch_event<gizmo_move_targets_event>(event_source_, ctx_.session.gizmo_targets(), offset);
+								ImGui::CloseCurrentPopup();
+							}
+							ImGui::EndPopup();
+						}
+
+						if (!add_point and can_add_point and (ImGui::IsKeyDown(ImGuiKey_LeftShift) or ImGui::IsKeyDown(ImGuiKey_RightShift)) and ImGui::IsMouseClicked(ImGuiMouseButton_Left) and hovered)
+						{
+							add_point_pos = ImGui::GetMousePos();
 							add_point = true;
 						}
-
-						if (ImGui::MenuItem(fmt::format("{} Add Keyframe", icons::add_keyframe).c_str(), nullptr, nullptr, !is_keyframe))
+						else if (is_shape and !add_point and ImGui::IsMouseClicked(ImGuiMouseButton_Left) and hovered)
 						{
-							shape.visit([current_ts, &is_keyframe, &shape](auto& map)
+							auto& shape = selected_attribute->get<vt::shape>();
+							auto closest_target = shape.closest_point(current_ts, to_tex_pos(ImGui::GetMousePos()), from_pixels(10));
+							if (closest_target != nullptr)
 							{
-								if constexpr (!std::is_same_v<std::monostate, std::remove_const_t<std::remove_reference_t<decltype(map)>>>)
+								ctx_.dispatch_event<gizmo_set_targets_event>(event_source_, { { closest_target } });
+							}
+						}
+
+						if (add_point and can_add_point and is_polygon)
+						{
+							auto& shape = selected_attribute->get<vt::shape>();
+							auto& map = shape.get_map<polygon>();
+							auto& polygons = map.at(current_ts); //this keyframe definitely exists, it was checked before
+
+							auto it = std::find_if(polygons.begin(), polygons.end(), [](const polygon& poly)
+							{
+								for (const auto& vertex : poly.vertices)
 								{
-									auto it = map.lower_bound(current_ts);
-									if (map.empty())
-									{
-										map[current_ts].push_back({});
-									}
-									else
-									{
-										if (it != map.begin() and (it == map.end() or it->first != current_ts))
-										{
-											--it;
-										}
-										map[current_ts] = it->second;
-									}
-									is_keyframe = true;
-									ctx_.is_project_dirty = true;
+									if (ctx_.session.gizmo_contains_target(&vertex)) return true;
 								}
+								return false;
 							});
-						}
 
-						if (ImGui::MenuItem(fmt::format("{} Add Region", shape.type_icon(shape.get_type())).c_str(), nullptr, nullptr, is_keyframe))
-						{
-							shape.visit([current_ts, &is_keyframe](auto& map)
+							bool all_empty = true;
+							for (const auto& poly : polygons)
 							{
-								if constexpr (!std::is_same_v<std::monostate, std::remove_const_t<std::remove_reference_t<decltype(map)>>>)
+								if (!poly.vertices.empty())
 								{
-									auto& keyframe = map.at(current_ts);
-									keyframe.push_back({});
-									keyframe.back().set_target();
-									ctx_.is_project_dirty = true;
-								}
-							});
-						}
-
-						if (ImGui::BeginMenu("Transform", has_target))
-						{
-							auto icon_size = ImGui::CalcTextSize(icons::align_center).x;
-							ImGui::PushStyleVar(ImGuiStyleVar_CellPadding, ImVec2{});
-							if (ImGui::BeginTable("##AlignTable", 3, ImGuiTableFlags_NoSavedSettings | ImGuiTableFlags_BordersInner, { 3.f * (icon_size + 2 * style.FramePadding.x), 0.f }))
-							{
-								ImGui::TableNextRow();
-								ImGui::TableNextColumn();
-								if (ui::icon_button(icons::align_horizontal_center))
-								{
-									point_pos.x = tex_size.x / 2;
-									close = true;
-								}
-								ui::tooltip("Align Horizontal Center");
-								ImGui::TableNextColumn();
-								if (ui::icon_button(icons::align_vertical_top))
-								{
-									point_pos.y = 0;
-									close = true;
-								}
-								ui::tooltip("Align Vertical Top");
-
-								ImGui::TableNextRow();
-								ImGui::TableNextColumn();
-								if (ui::icon_button(icons::align_horizontal_left))
-								{
-									point_pos.x = 0;
-									close = true;
-								}
-								ui::tooltip("Align Horizontal Left");
-								ImGui::TableNextColumn();
-								if (ui::icon_button(icons::align_center))
-								{
-									point_pos = tex_size / 2;
-									close = true;
-								}
-								ui::tooltip("Align Center");
-								ImGui::TableNextColumn();
-								if (ui::icon_button(icons::align_horizontal_right))
-								{
-									point_pos.x = tex_size.x;
-									close = true;
-								}
-								ui::tooltip("Align Horizontal Right");
-
-								ImGui::TableNextRow();
-								ImGui::TableNextColumn();
-								if (ui::icon_button(icons::align_vertical_center))
-								{
-									point_pos.y = tex_size.y / 2;
-									close = true;
-								}
-								ui::tooltip("Align Vertical Center");
-								ImGui::TableNextColumn();
-								if (ui::icon_button(icons::align_vertical_bottom))
-								{
-									point_pos.y = tex_size.y;
-									close = true;
-								}
-								ui::tooltip("Align Vertical Bottom");
-
-								ImGui::EndTable();
-							}
-							ImGui::PopStyleVar();
-							ImGui::EndMenu();
-						}
-
-						if (close)
-						{
-							utils::vec2<uint32_t> offset = { (uint32_t)(point_pos.x - start_pos.x), (uint32_t)(point_pos.y - start_pos.y) };
-							ctx_.dispatch_event<gizmo_move_targets_event>(event_source_, ctx_.session.gizmo_targets(), offset);
-							ImGui::CloseCurrentPopup();
-						}
-						ImGui::EndPopup();
-					}
-
-					if (!add_point and can_add_point and (ImGui::IsKeyDown(ImGuiKey_LeftShift) or ImGui::IsKeyDown(ImGuiKey_RightShift)) and ImGui::IsMouseClicked(ImGuiMouseButton_Left) and hovered)
-					{
-						add_point_pos = ImGui::GetMousePos();
-						add_point = true;
-					}
-					else if (is_shape and !add_point and ImGui::IsMouseClicked(ImGuiMouseButton_Left) and hovered)
-					{
-						auto& shape = selected_attribute->get<vt::shape>();
-						auto closest_target = shape.closest_point(current_ts, to_tex_pos(ImGui::GetMousePos()), from_pixels(10));
-						if (closest_target != nullptr)
-						{
-							ctx_.dispatch_event<gizmo_set_targets_event>(event_source_, { { closest_target } });
-						}
-					}
-
-					if (add_point and can_add_point and is_polygon)
-					{
-						auto& shape = selected_attribute->get<vt::shape>();
-						auto& map = shape.get_map<polygon>();
-						auto& polygons = map.at(current_ts); //this keyframe definitely exists, it was checked before
-
-						auto it = std::find_if(polygons.begin(), polygons.end(), [](const polygon& poly)
-						{
-							for (const auto& vertex : poly.vertices)
-							{
-								if (ctx_.session.gizmo_contains_target(&vertex)) return true;
-							}
-							return false;
-						});
-
-						bool all_empty = true;
-						for (const auto& poly : polygons)
-						{
-							if (!poly.vertices.empty())
-							{
-								all_empty = false;
-								break;
-							}
-						}
-
-						if (all_empty)
-						{
-							polygons.front().vertices.push_back({ to_tex_pos(add_point_pos) });
-						}
-						else if (it == polygons.end())
-						{
-							//add new polygon with that point
-							polygons.push_back(polygon{ { to_tex_pos(add_point_pos) } });
-						}
-						else
-						{
-							auto& polygon = *it;
-							auto& pos = add_point_pos;
-
-							auto closest_it = polygon.vertices.end();
-							float min_distance = std::numeric_limits<float>::infinity();
-
-							for (auto it = polygon.vertices.begin(); it != polygon.vertices.end(); ++it)
-							{
-								auto next_it = std::next(it);
-								if (next_it == polygon.vertices.end())
-								{
-									next_it = polygon.vertices.begin();
-								}
-
-								const auto& vertex1 = *it;
-								const auto& vertex2 = *next_it;
-
-								float new_distance = utils::intersection::distance_to_segment(pos, from_tex_pos({ (float)vertex1[0], (float)vertex1[1] }), from_tex_pos({ (float)vertex2[0], (float)vertex2[1] }));
-
-
-								if (new_distance < min_distance)
-								{
-									min_distance = new_distance;
-									closest_it = it;
+									all_empty = false;
+									break;
 								}
 							}
 
-							if (closest_it != polygon.vertices.end())
+							if (all_empty)
 							{
-								auto next_it = std::next(closest_it);
-								if (next_it == polygon.vertices.end())
-								{
-									next_it = polygon.vertices.begin();
-								}
-
-								auto new_target = &*polygon.vertices.insert(next_it, to_tex_pos(pos));
-								ctx_.dispatch_event<gizmo_set_targets_event>(event_source_, { { new_target } });
+								polygons.front().vertices.push_back({ to_tex_pos(add_point_pos) });
+							}
+							else if (it == polygons.end())
+							{
+								//add new polygon with that point
+								polygons.push_back(polygon{ { to_tex_pos(add_point_pos) } });
 							}
 							else
 							{
-								auto new_target = &*polygon.vertices.insert(closest_it, to_tex_pos(pos));
-								ctx_.dispatch_event<gizmo_set_targets_event>(event_source_, { { new_target } });
+								auto& polygon = *it;
+								auto& pos = add_point_pos;
+
+								auto closest_it = polygon.vertices.end();
+								float min_distance = std::numeric_limits<float>::infinity();
+
+								for (auto it = polygon.vertices.begin(); it != polygon.vertices.end(); ++it)
+								{
+									auto next_it = std::next(it);
+									if (next_it == polygon.vertices.end())
+									{
+										next_it = polygon.vertices.begin();
+									}
+
+									const auto& vertex1 = *it;
+									const auto& vertex2 = *next_it;
+
+									float new_distance = utils::intersection::distance_to_segment(pos, from_tex_pos({ (float)vertex1[0], (float)vertex1[1] }), from_tex_pos({ (float)vertex2[0], (float)vertex2[1] }));
+
+
+									if (new_distance < min_distance)
+									{
+										min_distance = new_distance;
+										closest_it = it;
+									}
+								}
+
+								if (closest_it != polygon.vertices.end())
+								{
+									auto next_it = std::next(closest_it);
+									if (next_it == polygon.vertices.end())
+									{
+										next_it = polygon.vertices.begin();
+									}
+
+									auto new_target = &*polygon.vertices.insert(next_it, to_tex_pos(pos));
+									ctx_.dispatch_event<gizmo_set_targets_event>(event_source_, { { new_target } });
+								}
+								else
+								{
+									auto new_target = &*polygon.vertices.insert(closest_it, to_tex_pos(pos));
+									ctx_.dispatch_event<gizmo_set_targets_event>(event_source_, { { new_target } });
+								}
 							}
 						}
-					}
 
-					auto draw_list = ImGui::GetWindowDrawList();
-					//draw_list->AddRectFilled(top_left, bottom_right, overlay_color);
-					/*draw_list->AddLine(top_left, bottom_right, border_color, border_thickness);
-					draw_list->AddLine(top_right, bottom_left, border_color, border_thickness);*/
+						auto draw_list = ImGui::GetWindowDrawList();
+						//draw_list->AddRectFilled(top_left, bottom_right, overlay_color);
+						/*draw_list->AddLine(top_left, bottom_right, border_color, border_thickness);
+						draw_list->AddLine(top_right, bottom_left, border_color, border_thickness);*/
 
-					ImVec2 top_left = { pos.x, pos.y };
-					ImVec2 top_right = { pos.x + size.x, pos.y };
-					ImVec2 bottom_left = { pos.x, pos.y + size.y };
-					ImVec2 bottom_right = { pos.x + size.x, pos.y + size.y };
+						ImVec2 top_left = { pos.x, pos.y };
+						ImVec2 top_right = { pos.x + size.x, pos.y };
+						ImVec2 bottom_left = { pos.x, pos.y + size.y };
+						ImVec2 bottom_right = { pos.x + size.x, pos.y + size.y };
 
-					float left = 0.0f;
-					float right = tex_size.x;
-					float bottom = tex_size.y;
-					float top = 0.f;
-					float near_z = -1.0f;
-					float far_z = 1.0f;
+						float left = 0.0f;
+						float right = tex_size.x;
+						float bottom = tex_size.y;
+						float top = 0.f;
+						float near_z = -1.0f;
+						float far_z = 1.0f;
 
-					//shape drawing
-					std::string tooltip;
-					for (const auto& displayed_tag : ctx_.current_project->displayed_tags)
-					{
-						auto& segment_storage = ctx_.get_current_segment_storage();
-						auto it = segment_storage.find(displayed_tag);
-						if (it == segment_storage.end()) continue;
-						auto& tag = ctx_.current_project->tags.at(it->first);
-						auto fill_color = (tag.color & ~0xFF000000) | 0x80000000;
-
-						auto& segments = it->second;
-						for (auto& [segment_id, segment] : segments)
+						//shape drawing
+						std::string tooltip;
+						for (const auto& displayed_tag : ctx_.current_project->displayed_tags)
 						{
-							bool is_onscreen = current_ts >= segment.start and current_ts <= segment.end;
-							if (is_onscreen)
+							auto& segment_storage = ctx_.get_current_segment_storage();
+							auto it = segment_storage.find(displayed_tag);
+							if (it == segment_storage.end()) continue;
+							auto& tag = ctx_.current_project->tags.at(it->first);
+							auto fill_color = (tag.color & ~0xFF000000) | 0x80000000;
+
+							auto& segments = it->second;
+							for (auto& [segment_id, segment] : segments)
 							{
-								auto segment_attr_it = segment.attributes.find(video_data.id);
-								if (segment_attr_it != segment.attributes.end())
+								bool is_onscreen = current_ts >= segment.start and current_ts <= segment.end;
+								if (is_onscreen)
 								{
-									for (auto& [attr_name, attr] : segment_attr_it->second)
+									auto segment_attr_it = segment.attributes.find(video_data.id);
+									if (segment_attr_it != segment.attributes.end())
 									{
-										if (!attr.has<shape>()) continue;
-
-										bool is_selected = selected_attribute == &attr;
-										bool show_points = is_selected;
-
-										auto& shape = attr.get<vt::shape>();
-										draw_list->PushClipRect(top_left, bottom_right, true);
-										
-										shape.draw(current_ts, !is_keyframe and shape.interpolate, from_tex_pos, from_pixels, tex_size, size, is_selected ? ctx_.current_theme.get_rgba(theme_color::selection_normal) : tag.color, fill_color, show_points, [&, this](size_t i, const std::vector<utils::vec2<uint32_t>*>& vertices)
+										for (auto& [attr_name, attr] : segment_attr_it->second)
 										{
-											if (ImGui::IsMouseClicked(ImGuiMouseButton_Left) and hovered)
-											{
-												ctx_.dispatch_event<segment_select_request_event>(event_source_, segment_storage, tag.name, segment_id);
-												ctx_.set_selected_attribute(&attr);
+											if (!attr.has<shape>()) continue;
 
-												if (is_keyframe and !vertices.empty() and !ImGuizmo::IsOver())
+											bool is_selected = selected_attribute == &attr;
+											bool show_points = is_selected;
+
+											auto& shape = attr.get<vt::shape>();
+											draw_list->PushClipRect(top_left, bottom_right, true);
+
+											shape.draw(current_ts, !is_keyframe and shape.interpolate, from_tex_pos, from_pixels, tex_size, size, is_selected ? ctx_.current_theme.get_rgba(theme_color::selection_normal) : tag.color, fill_color, show_points, [&, this](size_t i, const std::vector<utils::vec2<uint32_t>*>& vertices)
+											{
+												if (ImGui::IsMouseClicked(ImGuiMouseButton_Left) and hovered)
 												{
-													ctx_.dispatch_event<gizmo_set_targets_event>(event_source_, vertices);
+													ctx_.dispatch_event<segment_deselect_all_request_event>(event_source_, segment_storage);
+													ctx_.dispatch_event<segment_select_request_event>(event_source_, segment_storage, tag.name, segment_id);
+													ctx_.set_selected_attribute(&attr);
+
+													if (is_keyframe and !vertices.empty() and !ImGuizmo::IsOver())
+													{
+														ctx_.dispatch_event<gizmo_set_targets_event>(event_source_, vertices);
+													}
 												}
-											}
-											tooltip = fmt::format("Tag: {}\nAttribute: {}\nID: {}", tag.name, attr_name, i + 1);
-										});
+												tooltip = fmt::format("Tag: {}\nAttribute: {}\nID: {}", tag.name, attr_name, i + 1);
+											});
+										}
 									}
 								}
 							}
 						}
-					}
 
-					if (hovered and !tooltip.empty() and !ImGuizmo::IsOver())
-					{
-						ImGui::SetMouseCursor(ImGuiMouseCursor_Hand);
-						ui::tooltip(tooltip);
-					}
-
-					if (!is_keyframe and has_target)
-					{
-						ctx_.dispatch_event<gizmo_set_targets_event>(event_source_);
-					}
-
-					if (last_focused and has_target and is_keyframe)
-					{
-						auto wpos = ImGui::GetWindowPos();
-						auto wsize = ImGui::GetWindowSize();
-
-						float translation[3]{ point_pos.x, point_pos.y, 0.0f };
-						float rotation[3]{};
-						float scale[3] = { 1.f, 1.f, 1.f };
-
-						float target[3]
+						if (hovered and !tooltip.empty() and !ImGuizmo::IsOver())
 						{
-							utils::matrix::front[0], //translation[0] + utils::matrix::front[0],
-							utils::matrix::front[1], //translation[1] + utils::matrix::front[1],
-							utils::matrix::front[2], //translation[2] + utils::matrix::front[2]
-						};
-
-						float cam_distance = 0.f;
-						float cam_angle[2]{};
-						float eye[3]
-						{
-							std::cos(cam_angle[1]) * std::cos(cam_angle[0]) * cam_distance,
-							std::sin(cam_angle[0]) * cam_distance,
-							std::sin(cam_angle[1]) * std::cos(cam_angle[0]) * cam_distance
-						};
-						utils::matrix view_mat = (utils::matrix::look_at(eye, target));
-
-						utils::matrix proj_mat = utils::matrix::ortho(left, right, bottom, top, near_z, far_z);
-						ImGuizmo::SetRect(pos.x, pos.y, size.x, size.y);
-
-						utils::matrix mod{};
-						auto& gizmo_style = ImGuizmo::GetStyle();
-
-						gizmo_style.CenterCircleSize = ctx_.app_settings.scale_gizmos ? from_pixels(5) : 5.f;
-						gizmo_style.ScaleLineCircleSize = gizmo_style.CenterCircleSize;
-						gizmo_style.TranslationLineThickness = 2.f * gizmo_style.CenterCircleSize / 3.f;
-						gizmo_style.TranslationLineArrowSize = 1.5f * gizmo_style.TranslationLineThickness;
-						ImGuizmo::SetOrthographic(true);
-						ImGuizmo::SetDrawlist();
-
-						float snap[3]{ 1.00f, 1.00f, 1.00f };
-						ImVec2 obj_size{ 5, 100.f };
-						float bounds[] = { -obj_size.y / 2, -obj_size.x / 2, 0.f, obj_size.y / 2, obj_size.x / 2, 0.f };
-						ImGuizmo::RecomposeMatrixFromComponents(translation, rotation, scale, mod.data);
-						if (ImGuizmo::Manipulate(view_mat.data, proj_mat.data, ImGuizmo::OPERATION::TRANSLATE_X | ImGuizmo::OPERATION::TRANSLATE_Y/* | ImGuizmo::OPERATION::BOUNDS*/, ImGuizmo::MODE::LOCAL, mod.data, nullptr, snap, nullptr/*bounds*/))
-						{
-							ImGuizmo::DecomposeMatrixToComponents(mod.data, translation, rotation, scale);
-							point_pos.x = std::clamp(translation[0], 0.0f, tex_size.x);
-							point_pos.y = std::clamp(translation[1], 0.0f, tex_size.y);
-
-							utils::vec2<uint32_t> offset{ (uint32_t)(point_pos.x - start_pos.x), (uint32_t)(point_pos.y - start_pos.y) };
-							ctx_.dispatch_event<gizmo_move_targets_event>(event_source_, ctx_.session.gizmo_targets(), offset);
+							ImGui::SetMouseCursor(ImGuiMouseCursor_Hand);
+							ui::tooltip(tooltip);
 						}
-					}
 
-					//window focus frame
-					if (ctx_.session.is_any_segment_selected() and last_focused and ctx_.last_focused_video.has_value())
-					{
-						draw_list->AddRect(top_left, bottom_right, ctx_.current_theme.get_rgba(theme_color::selection_normal), 0, 0, border_thickness);
-					}
-					//auto local_pos = from_tex_pos(point_pos);
-					//draw_list->AddCircle(local_pos, 10.f, border_color);
-				});
+						if (!is_keyframe and has_target)
+						{
+							ctx_.dispatch_event<gizmo_set_targets_event>(event_source_);
+						}
+
+						if (last_focused and has_target and is_keyframe)
+						{
+							auto wpos = ImGui::GetWindowPos();
+							auto wsize = ImGui::GetWindowSize();
+
+							float translation[3]{ point_pos.x, point_pos.y, 0.0f };
+							float rotation[3]{};
+							float scale[3] = { 1.f, 1.f, 1.f };
+
+							float target[3]
+							{
+								utils::matrix::front[0], //translation[0] + utils::matrix::front[0],
+								utils::matrix::front[1], //translation[1] + utils::matrix::front[1],
+								utils::matrix::front[2], //translation[2] + utils::matrix::front[2]
+							};
+
+							float cam_distance = 0.f;
+							float cam_angle[2]{};
+							float eye[3]
+							{
+								std::cos(cam_angle[1]) * std::cos(cam_angle[0]) * cam_distance,
+								std::sin(cam_angle[0]) * cam_distance,
+								std::sin(cam_angle[1]) * std::cos(cam_angle[0]) * cam_distance
+							};
+							utils::matrix view_mat = (utils::matrix::look_at(eye, target));
+
+							utils::matrix proj_mat = utils::matrix::ortho(left, right, bottom, top, near_z, far_z);
+							ImGuizmo::SetRect(pos.x, pos.y, size.x, size.y);
+
+							utils::matrix mod{};
+							auto& gizmo_style = ImGuizmo::GetStyle();
+
+							gizmo_style.CenterCircleSize = ctx_.app_settings.scale_gizmos ? from_pixels(5) : 5.f;
+							gizmo_style.ScaleLineCircleSize = gizmo_style.CenterCircleSize;
+							gizmo_style.TranslationLineThickness = 2.f * gizmo_style.CenterCircleSize / 3.f;
+							gizmo_style.TranslationLineArrowSize = 1.5f * gizmo_style.TranslationLineThickness;
+							ImGuizmo::SetOrthographic(true);
+							ImGuizmo::SetDrawlist();
+
+							float snap[3]{ 1.00f, 1.00f, 1.00f };
+							ImVec2 obj_size{ 5, 100.f };
+							float bounds[] = { -obj_size.y / 2, -obj_size.x / 2, 0.f, obj_size.y / 2, obj_size.x / 2, 0.f };
+							ImGuizmo::RecomposeMatrixFromComponents(translation, rotation, scale, mod.data);
+							if (ImGuizmo::Manipulate(view_mat.data, proj_mat.data, ImGuizmo::OPERATION::TRANSLATE_X | ImGuizmo::OPERATION::TRANSLATE_Y/* | ImGuizmo::OPERATION::BOUNDS*/, ImGuizmo::MODE::LOCAL, mod.data, nullptr, snap, nullptr/*bounds*/))
+							{
+								ImGuizmo::DecomposeMatrixToComponents(mod.data, translation, rotation, scale);
+								point_pos.x = std::clamp(translation[0], 0.0f, tex_size.x);
+								point_pos.y = std::clamp(translation[1], 0.0f, tex_size.y);
+
+								utils::vec2<uint32_t> offset{ (uint32_t)(point_pos.x - start_pos.x), (uint32_t)(point_pos.y - start_pos.y) };
+								ctx_.dispatch_event<gizmo_move_targets_event>(event_source_, ctx_.session.gizmo_targets(), offset);
+							}
+						}
+
+						//window focus frame
+						if (ctx_.session.is_any_segment_selected() and last_focused and ctx_.last_focused_video.has_value())
+						{
+							draw_list->AddRect(top_left, bottom_right, ctx_.current_theme.get_rgba(theme_color::selection_normal), 0, 0, border_thickness);
+						}
+						//auto local_pos = from_tex_pos(point_pos);
+						//draw_list->AddCircle(local_pos, 10.f, border_color);
+					});
+				}
+
+				vid_win->open_and_render();
 			}
 		}
 

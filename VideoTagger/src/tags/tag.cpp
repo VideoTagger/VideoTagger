@@ -3,6 +3,7 @@
 
 #include <widgets/controls.hpp>
 #include <ui/widgets/common.hpp>
+#include <ui/widgets/text_input.hpp>
 #include "tag_timeline.hpp"
 #include <core/app_context.hpp>
 
@@ -101,7 +102,9 @@ namespace vt
 					if (!has<std::string>()) *this = std::string{};
 					v = get<std::string>();
 				}
-				if (ImGui::InputTextWithHint("##AttributeString", "Empty", &v))
+
+				ui::text_input input("##AttributeString", v, "Empty");
+				if (input.render())
 				{
 					*this = v;
 				}

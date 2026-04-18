@@ -33,8 +33,6 @@ namespace vt::widgets
 		{
 			const auto& theme = ctx_.current_theme;
 
-			const auto& metadata = vid_resource.metadata();
-
 			ImVec2 image_tile_size{ tile_size.x * 0.9f, tile_size.x * 0.9f };
 
 			ImVec2 image_size = image_tile_size;
@@ -52,8 +50,8 @@ namespace vt::widgets
 			}
 			else
 			{
-				float scaled_width = *metadata.width * image_tile_size.y / *metadata.height;
-				float scaled_height = image_tile_size.x * *metadata.height / *metadata.width;
+				float scaled_width = vid_resource.width() * image_tile_size.y / vid_resource.height();
+				float scaled_height = image_tile_size.x * vid_resource.height() / vid_resource.width();
 
 				if (scaled_width < image_tile_size.x)
 				{
@@ -64,7 +62,7 @@ namespace vt::widgets
 					image_size.y = scaled_height;
 				}
 			}
-			std::string label = metadata.title.value_or("");
+			std::string label = vid_resource.title();
 			open |= widgets::tile(fmt::format("video{}", vid_resource.id()).c_str(), label, tile_size, image_size, image,
 			[&](const std::string& label)
 			{
@@ -441,7 +439,7 @@ namespace vt::widgets
 						auto& vgroup = ctx_.current_project->video_groups.at(current_video_group);
 						for (auto& vinfo : vgroup)
 						{
-							auto& vid_resource = pool.get(vinfo.id);
+							auto vid_resource = pool.get(vinfo.id);
 
 							bool open_video{};
 							bool remove_video{};
@@ -453,7 +451,7 @@ namespace vt::widgets
 								for (const auto& token : tokens)
 								{
 									auto ttoken = utils::string::trim_whitespace(token);
-									std::string name = utils::string::to_lowercase(vid_resource.metadata().title.value_or(""));
+									std::string name = utils::string::to_lowercase(vid_resource->metadata().title.value_or(""));
 									passes_filter &= name.find(ttoken) != std::string::npos;
 								}
 
@@ -462,7 +460,7 @@ namespace vt::widgets
 							}
 
 							ImGui::TableNextColumn();
-							draw_video_tile(vid_resource, tile_size, open_video, remove_video, open_video_properties, vid_resource.thumbnail() ? vid_resource.thumbnail()->id() : 0);
+							draw_video_tile(*vid_resource, tile_size, open_video, remove_video, open_video_properties, vid_resource->thumbnail() ? vid_resource->thumbnail()->id() : 0);
 							if (remove_video)
 							{
 								auto& vgroup = ctx_.current_project->video_groups.at(current_video_group);

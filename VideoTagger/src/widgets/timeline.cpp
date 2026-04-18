@@ -12,6 +12,8 @@
 
 #include <events/timeline/segment_select_request_event.hpp>
 #include <events/timeline/segment_deselect_request_event.hpp>
+#include <events/timeline/segment_deselect_all_request_event.hpp>
+#include <events/timeline/segment_select_all_request_event.hpp>
 #include <events/timeline/begin_segment_drag_event.hpp>
 #include <events/timeline/update_segment_drag_event.hpp>
 #include <events/timeline/end_segment_drag_event.hpp>
@@ -368,7 +370,7 @@ namespace vt::widgets
 					{
 						if (!ImGui::IsKeyDown(ImGuiKey_ModCtrl))
 						{
-							event_deselect_all_segments(storage);
+							ctx_.dispatch_event<segment_deselect_all_request_event>(event_source_, storage);
 						}
 
 						ctx_.dispatch_event<segment_select_request_event>(event_source_, storage, tag.name, current_segment_id);
@@ -709,7 +711,7 @@ namespace vt::widgets
 			{
 				float normalized_mouse_x = math::normalize(ImGui::GetMousePos().x, cell_rect->Min.x, cell_rect->Max.x, 0.f, 1.f);
 				timestamp mouse_timestamp = to_timestamp_full_span(normalized_mouse_x);
-				if (ImGui::IsMouseDown(ImGuiMouseButton_Left) and (!is_dragging_span_left_grab_ and !is_dragging_span_right_grab_))
+				if (ImGui::IsMouseClicked(ImGuiMouseButton_Left) and (!is_dragging_span_left_grab_ and !is_dragging_span_right_grab_))
 				{
 					if (is_left_grab_hovered)
 					{
@@ -852,19 +854,6 @@ namespace vt::widgets
 			{
 				if (!predicate(tag_name, segment_id)) continue;
 				
-				ctx_.dispatch_event<segment_deselect_request_event>(event_source_, storage, tag_name, segment_id);
-			}
-		}
-	}
-
-	void timeline::event_deselect_all_segments(segment_storage& storage)
-	{
-		segment_id_map selected_segments_copy = ctx_.session.selected_segments();
-
-		for (const auto& [tag_name, segments] : selected_segments_copy)
-		{
-			for (const auto& segment_id : segments)
-			{
 				ctx_.dispatch_event<segment_deselect_request_event>(event_source_, storage, tag_name, segment_id);
 			}
 		}
@@ -1115,7 +1104,7 @@ namespace vt::widgets
 					}
 					else if (!is_hovering_segment_ and ImGui::IsMouseClicked(ImGuiMouseButton_Left))
 					{
-						event_deselect_all_segments(segments);
+						ctx_.dispatch_event<segment_deselect_all_request_event>(event_source_, segments);
 					}
 				}
 			}

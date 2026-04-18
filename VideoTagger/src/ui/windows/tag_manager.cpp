@@ -8,6 +8,7 @@
 #include <core/app_context.hpp>
 #include <utils/drag_drop.hpp>
 #include <utils/string.hpp>
+#include <ui/widgets/text_input.hpp>
 #include <events/tags/tag_add_request_event.hpp>
 #include <events/tags/tag_rename_request_event.hpp>
 #include <events/tags/tag_delete_request_event.hpp>
@@ -30,9 +31,11 @@ namespace vt::ui::windows
 		ImGui::SameLine();
 		ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
 		std::string new_name = name;
-		if (ImGui::InputText("##TagAttributeName", &new_name, ImGuiInputTextFlags_AutoSelectAll | ImGuiInputTextFlags_EnterReturnsTrue))
+		ui::text_input input("##TagAttributeName", new_name, "Attribute Name...");
+		input.set_flags(ImGuiInputTextFlags_AutoSelectAll | ImGuiInputTextFlags_EnterReturnsTrue);
+		if (input.render())
 		{
-			on_name_change(new_name);
+			on_name_change(input.trimmed_input());
 		}
 		ImGui::TableNextColumn();
 
@@ -230,55 +233,57 @@ namespace vt::ui::windows
 					if (node_open)
 					{
 						ui::card([&]()
+						{
+							ImGui::TableNextColumn();
+							ImGui::Columns(2, "##TagColumnSeparator");
+							ImGui::Text("Name");
+							ImGui::NextColumn();
+							ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
+
+							//TODO: Add filtering & read the tag with a new name since std::map is used as a container (why not std::vector??)
+
+							tag_name_ = tag.name;
+							ui::text_input input("##TagNameInput", tag_name_, "Tag Name...");
+							input.set_flags(ImGuiInputTextFlags_AutoSelectAll | ImGuiInputTextFlags_EnterReturnsTrue);
+							if (input.render())
 							{
-								ImGui::TableNextColumn();
-								ImGui::Columns(2, "##TagColumnSeparator");
-								ImGui::Text("Name");
-								ImGui::NextColumn();
-								ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
-
-								//TODO: Add filtering & read the tag with a new name since std::map is used as a container (why not std::vector??)
-
-								tag_name_ = tag.name;
-								if (ImGui::InputText("##TagNameInput", &tag_name_, ImGuiInputTextFlags_AutoSelectAll | ImGuiInputTextFlags_EnterReturnsTrue))
-								{
-									rename_tag_popup_ = std::make_unique<rename_tag_popup>(event_source_, tag.name, tag_name_);
-								}
-								ImGui::NextColumn();
-								ImGui::TextUnformatted("Color");
-								ImGui::NextColumn();
-								if (ui::color_button("##ColorButton", color, color_button_flags))
-								{
-									color_ref_ = it;
-									open_color_picker = true;
-								}
-								if (ImGui::IsItemHovered())
-								{
-									ImGui::SetMouseCursor(ImGuiMouseCursor_Hand);
-								}
-								ImGui::Columns();
+								rename_tag_popup_ = std::make_unique<rename_tag_popup>(event_source_, tag.name, tag_name_);
+							}
+							ImGui::NextColumn();
+							ImGui::TextUnformatted("Color");
+							ImGui::NextColumn();
+							if (ui::color_button("##ColorButton", color, color_button_flags))
+							{
+								color_ref_ = it;
+								open_color_picker = true;
+							}
+							if (ImGui::IsItemHovered())
+							{
+								ImGui::SetMouseCursor(ImGuiMouseCursor_Hand);
+							}
+							ImGui::Columns();
 
 
-								// Attributes
+							// Attributes
+							{
+								ImGui::Separator();
+								const auto& theme = ctx_.current_theme;
+								//ImGui::PushStyleColor(ImGuiCol_TableBorderStrong, ImGui::GetStyleColorVec4(ImGuiCol_Border));
+								ImGui::PushStyleColor(ImGuiCol_TableRowBg, theme.get_float4(theme_color::background_secondary));
+								ImGui::PushStyleColor(ImGuiCol_TableRowBgAlt, theme.get_float4(theme_color::background_secondary));
+								if (ImGui::BeginTable("##Attributes", 2, ImGuiTableFlags_BordersOuter, { ImGui::GetContentRegionAvail().x - ui::table_border_size(), 0 }))
 								{
-									ImGui::Separator();
-									const auto& theme = ctx_.current_theme;
-									//ImGui::PushStyleColor(ImGuiCol_TableBorderStrong, ImGui::GetStyleColorVec4(ImGuiCol_Border));
-									ImGui::PushStyleColor(ImGuiCol_TableRowBg, theme.get_float4(theme_color::background_secondary));
-									ImGui::PushStyleColor(ImGuiCol_TableRowBgAlt, theme.get_float4(theme_color::background_secondary));
-									if (ImGui::BeginTable("##Attributes", 2, ImGuiTableFlags_BordersOuter, { ImGui::GetContentRegionAvail().x - ui::table_border_size(), 0 }))
+									ImGui::TableSetupColumn("Name");
+									ImGui::TableSetupColumn("Type");
+
+									ImGui::TableNextColumn();
+									if (ui::icon_button(icons::add))
 									{
-										ImGui::TableSetupColumn("Name");
-										ImGui::TableSetupColumn("Type");
-
-										ImGui::TableNextColumn();
-										if (ui::icon_button(icons::add))
-										{
-											add_tag_attribute_popup_ = std::make_unique<add_tag_attribute_popup>(event_source_, tag_name_);
-										}
-										ImGui::SameLine();
-										ImGui::AlignTextToFramePadding();
-										ImGui::TextUnformatted("Attributes");
+										add_tag_attribute_popup_ = std::make_unique<add_tag_attribute_popup>(event_source_, tag_name_);
+									}
+									ImGui::SameLine();
+									ImGui::AlignTextToFramePadding();
+									ImGui::TextUnformatted("Attributes");
 
 										if (!tag.attributes.empty())
 										{
@@ -310,23 +315,23 @@ namespace vt::ui::windows
 												ctx_.is_project_dirty = true;
 											});
 
-											if (next)
-											{
-												++it;
-											}
-										}
-
-										if (!new_name_candidate.empty())
+										if (next)
 										{
-											auto node = tag.attributes.extract(new_name_candidate);
-											node.key() = new_name;
-											tag.attributes.insert(std::move(node));
+											++it;
 										}
-										ImGui::EndTable();
 									}
-									ImGui::PopStyleColor(2); //3
+
+									if (!new_name_candidate.empty())
+									{
+										auto node = tag.attributes.extract(new_name_candidate);
+										node.key() = new_name;
+										tag.attributes.insert(std::move(node));
+									}
+									ImGui::EndTable();
 								}
-							});
+								ImGui::PopStyleColor(2); //3
+							}
+						});
 						widgets::end_collapsible();
 					}
 

@@ -9,6 +9,7 @@
 #include <impl/resettable.hpp>
 #include <events/event_source.hpp>
 #include <utils/vec.hpp>
+#include <tasks/session_task_manager.hpp>
 
 namespace vt
 {
@@ -52,9 +53,11 @@ namespace vt
 		event_source event_source_{ "session" };
 
 	public:
+		session_task_manager tasks;
+		
 		void register_timeline_listeners();
 		void register_gizmo_listeners();
-
+		
 		const segment_id_map& selected_segments() const;
 		const segment_id_map& dragged_segments() const;
 		const segment_drag_data& segment_drag_data() const;

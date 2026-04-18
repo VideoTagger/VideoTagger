@@ -11,7 +11,7 @@ namespace vt::ui
 	struct window : public impl::renderable, vt::impl::serializable
 	{
 	public:
-		window(const std::string& id, const std::string& serialization_id, const std::string& display_name, ImGuiWindowFlags flags = 0);
+		window(const std::string& id, const std::string& serialization_id, const std::string& display_name, ImGuiWindowFlags flags = 0, bool should_register = false);
 		virtual ~window();
 
 	private:
@@ -25,10 +25,13 @@ namespace vt::ui
 		bool is_hovered_;
 		bool is_focused_;
 		bool is_persistent_;
+		bool is_registered_;
 
 	public:
 		///@brief Renders the window
 		bool render();
+		///@brief Opens the window if it's not open, then renders it. Returns true if the window is visible after rendering, false otherwise
+		bool open_and_render();
 
 		void set_opened(bool value);
 		void set_persistent(bool value);

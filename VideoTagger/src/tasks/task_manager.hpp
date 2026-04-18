@@ -22,11 +22,11 @@ namespace vt
 		template<typename fn_type>
 		auto run(fn_type&& fn, task_priority priority = task_priority::normal)
 		{
-			return thread_pool_executor_.submit(std::forward<fn_type>(fn), nullptr, priority);
+			return thread_pool_executor_.submit(std::forward<fn_type>(fn), std::nullopt, priority);
 		};
 
 		template<typename fn_type>
-		auto run(fn_type&& fn, std::shared_ptr<cancellation_token> token, task_priority priority = task_priority::normal)
+		auto run(fn_type&& fn, cancellation_token token, task_priority priority = task_priority::normal)
 		{
 			return thread_pool_executor_.submit(std::forward<fn_type>(fn), token, priority);
 		};
@@ -34,11 +34,11 @@ namespace vt
 		template<typename fn_type>
 		auto run_on_main(fn_type&& fn, task_priority priority = task_priority::normal)
 		{
-			return main_thread_executor_.submit(std::forward<fn_type>(fn), nullptr, priority);
+			return main_thread_executor_.submit(std::forward<fn_type>(fn), std::nullopt, priority);
 		};
 
 		template<typename fn_type>
-		auto run_on_main(fn_type&& fn, std::shared_ptr<cancellation_token> token, task_priority priority = task_priority::normal)
+		auto run_on_main(fn_type&& fn, cancellation_token token, task_priority priority = task_priority::normal)
 		{
 			return main_thread_executor_.submit(std::forward<fn_type>(fn), token, priority);
 		};

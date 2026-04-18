@@ -6,6 +6,8 @@
 #include <core/debug.hpp>
 #include <core/app_context.hpp>
 
+#include <ui/menu_items/video_resource_menu_items.hpp>
+
 namespace vt
 {
 	local_video_resource::local_video_resource(video_id_t id, std::filesystem::path path) :
@@ -28,5 +30,19 @@ namespace vt
 	bool local_video_resource::playable() const
 	{
 		return std::filesystem::is_regular_file(file_path());
+	}
+
+	void local_video_resource::context_menu_items(ui::widget_list& items)
+	{
+		video_resource::context_menu_items(items);
+
+		if (playable())
+		{
+			items.add<ui::video_resource_menu_open_in_explorer>(id());
+		}
+		else
+		{
+			items.add<ui::video_resource_menu_locate>(id());
+		}
 	}
 }
