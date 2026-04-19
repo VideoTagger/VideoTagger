@@ -23,6 +23,8 @@ namespace vt::ui
 	void end_bigger_frames();
 	void begin_modal_style();
 	void end_modal_style();
+	void begin_rounded_window_style();
+	void end_rounded_window_style();
 	///@}
 	
 	///@defgroup ui_text UI Text

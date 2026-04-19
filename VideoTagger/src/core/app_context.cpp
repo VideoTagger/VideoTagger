@@ -16,6 +16,7 @@
 #include <widgets/timeline.hpp>
 #include <ui/windows/inspector.hpp>
 #include <ui/windows/tag_manager.hpp>
+#include <ui/windows/toolbar.hpp>
 #include <ui/popups/messagebox_popup.hpp>
 #include <embeds/en_US_lang.hpp>
 #include <core/platform.hpp>
@@ -90,6 +91,9 @@ namespace vt
 
 		auto& tag_manager = create_window<ui::windows::tag_manager>();
 		tag_manager.set_opened(true);
+
+		auto& toolbar = create_window<ui::windows::toolbar>();
+		toolbar.set_opened(false);
 
 #ifdef VT_DEBUG
 		auto& sandbox = create_window<ui::windows::sandbox>();

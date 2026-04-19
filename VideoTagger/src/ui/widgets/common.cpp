@@ -146,14 +146,26 @@ namespace vt::ui
     void begin_modal_style()
     {
 		const auto& style = ImGui::GetStyle();
-		ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 8.f);
+		begin_rounded_window_style();
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, style.WindowPadding * 2);
 		ImGui::SetNextWindowPos(ImGui::GetMainViewport()->GetCenter(), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
     }
 
 	void end_modal_style()
 	{
-		ImGui::PopStyleVar(2);
+		end_rounded_window_style();
+		ImGui::PopStyleVar();
+	}
+
+	void begin_rounded_window_style()
+	{
+		const auto& style = ImGui::GetStyle();
+		ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 8.f);
+	}
+
+	void end_rounded_window_style()
+	{
+		ImGui::PopStyleVar();
 	}
 
 	void label(const std::string& label)

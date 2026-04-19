@@ -11,7 +11,7 @@ namespace vt::ui
 	struct window : public impl::renderable, vt::impl::serializable
 	{
 	public:
-		window(const std::string& id, const std::string& serialization_id, const std::string& display_name, ImGuiWindowFlags flags = 0, bool should_register = false);
+		window(const std::string& id, const std::string& serialization_id, const std::string& display_name, ImGuiWindowFlags flags = 0, bool should_register = true);
 		virtual ~window();
 
 	private:
