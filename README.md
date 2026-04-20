@@ -97,6 +97,7 @@ uv run ./scripts/vpk_package.py
 - [cpp-httplib](https://github.com/yhirose/cpp-httplib)
 - [OpenSSL](https://github.com/openssl/openssl)
 - [FreeType](https://gitlab.freedesktop.org/freetype/freetype)
+- [OpenCV](https://github.com/opencv/opencv)
 
 ## License
 This software is licensed under the [MIT License](/LICENSE).
