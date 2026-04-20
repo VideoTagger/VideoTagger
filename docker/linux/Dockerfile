@@ -21,6 +21,7 @@ libglib2.0-dev \
 libgtk2.0-dev \
 libgl1-mesa-dev \
 libssl-dev \
+libopencv-dev \
 && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app

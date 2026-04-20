@@ -7,6 +7,7 @@ function(vt_setup_cpp_common TARGET_NAME)
 
 	if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
 		target_compile_options(${TARGET_NAME} PRIVATE -Wno-changes-meaning)
+		target_compile_options(${TARGET_NAME} PRIVATE -Wno-attributes)
 		#target_link_libraries(${TARGET_NAME} PRIVATE ${CMAKE_DL_LIBS})
 	endif()
 
