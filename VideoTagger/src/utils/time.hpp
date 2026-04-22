@@ -1,7 +1,6 @@
 #pragma once
 #include <chrono>
 #include <string>
-#include "timestamp.hpp"
 #include <utils/json.hpp>
 
 namespace vt::utils::time
@@ -15,17 +14,4 @@ namespace vt::utils::time
 	std::string time_to_string(int64_t milliseconds, const char* format = default_time_format);
 	int64_t parse_time_to_ms(const std::string& input, char separator = ':');
 	std::string utc_timestamp();
-}
-
-namespace vt
-{
-	inline void to_json(nlohmann::ordered_json& json, const timestamp& ts)
-	{
-		json = utils::time::time_to_string(ts.total_milliseconds.count());
-	}
-
-	inline void from_json(const nlohmann::ordered_json& json, timestamp& ts)
-	{
-		ts.total_milliseconds = std::chrono::milliseconds(utils::time::parse_time_to_ms(json));
-	}
 }

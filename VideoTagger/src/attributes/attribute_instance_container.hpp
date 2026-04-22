@@ -3,7 +3,7 @@
 #include <core/types.hpp>
 #include <unordered_map>
 
-#include <tags/impl/attribute_instance.hpp>
+#include <attributes/impl/attribute_instance.hpp>
 
 namespace vt
 {

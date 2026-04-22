@@ -21,7 +21,26 @@ namespace vt
 
 		virtual void set_target(event_source source) override;
 
+		virtual bool contains(utils::vec2<uint32_t> point) const override;
+		virtual const utils::vec2<uint32_t>* closest_point(utils::vec2<uint32_t> point, float max_distance = std::numeric_limits<float>::infinity()) const override;
+
+		virtual void render_shape(utils::vec2<uint32_t> shape_space, ImRect draw_rect, uint32_t outline_color, uint32_t fill_color) override;
+		virtual void render_points(float radius, utils::vec2<uint32_t> shape_space, ImRect draw_rect, uint32_t outline_color, uint32_t fill_color) override;
+
 		[[nodiscard]] virtual nlohmann::ordered_json serialize() const override;
 		virtual void deserialize(const nlohmann::ordered_json& json) override;
 	};
+}
+
+namespace vt::math
+{
+	template<>
+	circle_shape shape_lerp<circle_shape>(const circle_shape& start, const circle_shape& end, float alpha)
+	{
+		return circle_shape
+		{
+			math::lerp(start.pos, end.pos, alpha), //pos lerp
+			math::lerp(start.radius, end.radius, alpha) //radius lerp
+		};
+	}
 }

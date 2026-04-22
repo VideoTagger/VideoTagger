@@ -37,6 +37,11 @@ namespace vt
 			value_ = {};
 		}
 
+		virtual void render_properties() override
+		{
+
+		}
+
 		[[nodiscard]] virtual nlohmann::ordered_json serialize() const override
 		{
 			//nlohmann::ordered_json json = impl::attribute_ref<simple_attribute<type>>::serialize();

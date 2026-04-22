@@ -120,7 +120,7 @@ namespace vt
 	 * @param rhs Flag to check for.
 	 * @return true if lhs contains flag rhs, false otherwise.
 	 */
-	inline constexpr bool operator& (segment_part lhs, segment_part rhs)
+	inline constexpr bool operator&(segment_part lhs, segment_part rhs)
 	{
 		return static_cast<uint8_t>(lhs) & static_cast<uint8_t>(rhs);
 	}

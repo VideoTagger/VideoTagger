@@ -42,14 +42,4 @@ namespace vt::impl
 			return std::unique_ptr<type>{ reinterpret_cast<type*>(ptr.release()) };
 		}
 	};
-
-	inline void to_json(nlohmann::ordered_json& json, const attribute& attr)
-	{
-		json = attr.serialize();
-	}
-
-	inline void from_json(const nlohmann::ordered_json& json, attribute& attr)
-	{
-		attr.deserialize(json);
-	}
 }

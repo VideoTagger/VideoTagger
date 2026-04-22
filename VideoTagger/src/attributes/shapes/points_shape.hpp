@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <utils/vec.hpp>
 #include <attributes/impl/shape.hpp>
+#include <core/debug.hpp>
 
 namespace vt
 {
@@ -20,7 +21,33 @@ namespace vt
 
 		virtual void set_target(event_source source) override;
 
+		virtual bool contains(utils::vec2<uint32_t> point) const override;
+		virtual const utils::vec2<uint32_t>* closest_point(utils::vec2<uint32_t> point, float max_distance = std::numeric_limits<float>::infinity()) const override;
+
+		virtual void render_shape(utils::vec2<uint32_t> shape_space, ImRect draw_rect, uint32_t outline_color, uint32_t fill_color) override;
+		virtual void render_points(float radius, utils::vec2<uint32_t> shape_space, ImRect draw_rect, uint32_t outline_color, uint32_t fill_color) override;
+
 		[[nodiscard]] virtual nlohmann::ordered_json serialize() const override;
 		virtual void deserialize(const nlohmann::ordered_json& json) override;
 	};
+}
+
+namespace vt::math
+{
+	template<typename shape_type, typename = std::enable_if_t<std::is_base_of_v<points_shape, shape_type>>>
+	shape_type shape_lerp<shape_type>(const shape_type& start, const shape_type& end, float alpha)
+	{
+		if (start.points.size() != end.points.size())
+		{
+			debug::panic("Can't interpolate between shapes with different number of points");
+		}
+
+		shape_type result{};
+		result.points.reserve(start.points.size());
+		for (size_t i = 0; i < start.points.size(); ++i)
+		{
+			result.points.push_back(math::lerp(start.points[i], end.points[i], alpha));
+		}
+		return result;
+	}
 }

@@ -1,0 +1,364 @@
+#pragma once
+#include <type_traits>
+#include <map>
+#include <optional>
+#include <impl/serializable.hpp>
+#include <attributes/impl/shape.hpp>
+#include <utils/timestamp.hpp>
+#include <utils/iterator_range.hpp>
+#include <attributes/impl/interpolated_shape_predictor.hpp>
+#include <attributes/predictors/dummy_shape_predictor.hpp>
+
+namespace vt
+{
+	template<typename shape_type, typename = std::enable_if_t<std::is_base_of_v<impl::shape, shape_type>>>
+	class region_data : public impl::serializable
+	{
+	public:
+		using iterator = typename std::map<timestamp, shape_type>::iterator;
+		using const_iterator = typename std::map<timestamp, shape_type>::const_iterator;
+
+		region_data() :
+			interpolator_{ std::make_unique<dummy_shape_predictor<shape_type>>() }, interpolation_keyframe_timestamps_(interpolator_->data_point_count()),
+			interpolation_keyframe_shapes_(interpolator_->data_point_count()) {}
+
+	private:
+		std::map<timestamp, shape_type> keyframes_;
+		std::unique_ptr<impl::interpolated_shape_predictor<shape_type>> interpolator_;
+
+		std::vector<timestamp> interpolation_keyframe_timestamps_;
+		std::vector<shape_type> interpolation_keyframe_shapes_;
+
+	public:
+		/**
+		 * @brief Insert a new keyframe or replace an existing one
+		 * @param ts Timestamp of the keyframe
+		 * @param shape Keyframe shape
+		 * @return Reference to the inserted shape
+		 */
+		shape_type& insert_keyframe(timestamp ts, const shape_type& shape)
+		{
+			auto& value = keyframes_[ts];
+			value = shape;
+			return value;
+		}
+
+		/**
+		 * @brief Erase a keyframe
+		 * @param ts Timestamp of the keyframe to erase
+		 * @return true if a keyframe was erased, false otherwise
+		 */
+		bool erase_keyframe(timestamp ts)
+		{
+			return keyframes_.erase(ts) != 0;
+		}
+
+		/**
+		 * @brief Find the keyframe at the timestamp or the closest one after it
+		 * @param ts Keyframe timestamp to search for
+		 * @return const_iterator to the found element. If ts is after the last keyframe or there are no keyframes, returns end()
+		 */
+		const_iterator next_or_current_keyframe(timestamp ts) const
+		{
+			return keyframes_.lower_bound(ts);
+		}
+
+		/**
+		 * @brief Find the keyframe at the timestamp or the closest one after it
+		 * @param ts Keyframe timestamp to search for
+		 * @return iterator to the found element. If ts is after the last keyframe or there are no keyframes, returns end()
+		 */
+		iterator next_or_current_keyframe(timestamp ts)
+		{
+			return keyframes_.lower_bound(ts);
+		}
+
+		/**
+		 * @brief Find the closest keyframe after the timestamp
+		 * @param ts Keyframe timestamp to search for
+		 * @return const_iterator to the found element. If ts is after the last keyframe or there are no keyframes, returns end()
+		 */
+		const_iterator next_keyframe(timestamp ts) const
+		{
+			return keyframes_.upper_bound(ts);
+		}
+		
+		/**
+		 * @brief Find the closest keyframe after the timestamp
+		 * @param ts Keyframe timestamp to search for
+		 * @return iterator to the found element. If ts is after the last keyframe or there are no keyframes, returns end()
+		 */
+		iterator next_keyframe(timestamp ts)
+		{
+			return keyframes_.upper_bound(ts);
+		}
+
+		/**
+		 * @brief Find the keyframe at the timestamp or the closest one before it
+		 * @param ts Keyframe timestamp to search for
+		 * @return const_iterator to the found element. If ts is before the first keyframe or there are no keyframes, returns end()
+		 */
+		const_iterator previous_or_current_keyframe(timestamp ts) const
+		{
+			if (keyframes_.empty()) return end();
+
+			auto it = keyframes_.lower_bound(ts);
+			if (it != end() and it->first == ts) return it;
+			if (it == begin()) return end();
+
+			return --it;
+		}
+
+		/**
+		 * @brief Find the keyframe at the timestamp or the closest one before it
+		 * @param ts Keyframe timestamp to search for
+		 * @return iterator to the found element. If ts is before the first keyframe or there are no keyframes, returns end()
+		 */
+		iterator previous_or_current_keyframe(timestamp ts)
+		{
+			if (keyframes_.empty())
+			{
+				return end();
+			}
+
+			auto it = keyframes_.lower_bound(ts);
+			if (it != end() and it->first == ts) return it;
+			if (it == begin()) return end();
+
+			return --it;
+		}
+
+		/**
+		 * @brief Find the closest keyframe before the timestamp
+		 * @param ts Keyframe timestamp to search for
+		 * @return const_iterator to the found element. If ts is before the first keyframe or there are no keyframes, returns end()
+		 */
+		const_iterator previous_keyframe(timestamp ts) const
+		{
+			auto it = keyframes_.lower_bound(ts);
+			if (it == begin()) return end();
+
+			return --it;
+		}
+
+		/**
+		 * @brief Find the closest keyframe before the timestamp
+		 * @param ts Keyframe timestamp to search for
+		 * @return iterator to the found element. If ts is before the first keyframe or there are no keyframes, returns end()
+		 */
+		iterator previous_keyframe(timestamp ts)
+		{
+			auto it = keyframes_.lower_bound(ts);
+			if (it == begin()) return end();
+
+			return --it;
+		}
+
+		/**
+		 * @brief Find the closest keyframe to the timestamp
+		 * @param ts Keyframe timestamp to search for
+		 * @return const_iterator to the found element. If there are no keyframes, returns end()
+		 */
+		const_iterator closest_keyframe(timestamp ts) const
+		{
+			if (keyframes_.empty()) return end();
+
+			auto it = next_or_current_keyframe(ts);
+			if (it != end() and it->first == ts) return it;
+
+			return --it;
+		}
+
+		/**
+		 * @brief Find the closest keyframe to the timestamp
+		 * @param ts Keyframe timestamp to search for
+		 * @return const_iterator to the found element. If there are no keyframes, returns end()
+		 */
+		iterator closest_keyframe(timestamp ts)
+		{
+			if (keyframes_.empty()) return end();
+
+			auto it = next_or_current_keyframe(ts);
+			if (it != end() and it->first == ts) return it;
+
+			return --it;
+		}
+
+		/// @return Whether the timestamp is within the bound of this shape i.e. is within
+		/// [min_keyframe_timestamp; max_keyframe_timestamp] or is greater than min_keyframe_timestamp
+		/// if there is only one keyframe. false if there are no keyframes.
+		bool is_timestamp_in_bounds(timestamp ts) const
+		{
+			if (keyframes_.empty()) return false;
+
+			auto start = keyframes_.begin()->first;
+			auto end = keyframes_.rbegin()->first;
+
+			if (keyframes_.size() == 1)
+			{
+				return start <= ts;
+			}
+
+			return start <= ts and ts <= end;
+		}
+
+		bool update_interpolation_keyframes_(timestamp ts)
+		{
+			static constexpr auto update_vectors = [](const std::vector<iterator>& its, std::vector<timestamp>& ts, std::vector<shape_type>& sh)
+			{
+				if (ts.size() != its.size())
+				{
+					ts.resize(its.size());
+				}
+				if (sh.size() != its.size())
+				{
+					sh.resize(its.size());
+				}
+
+				for (size_t i = 0; i < its.size(); ++i)
+				{
+					ts[i] = its[i]->first;
+					sh[i] = its[i]->second;
+				}
+			};
+
+			if (!is_timestamp_in_bounds(ts))
+			{
+				return false;
+			}
+
+			static std::vector<iterator> keyframe_its;
+			size_t data_point_count = interpolation_keyframe_timestamps_.size();
+			keyframe_its.reserve(data_point_count);
+			keyframe_its.clear();
+
+			{
+				auto it = previous_or_current_keyframe(ts);
+				if (it == end()) return false;
+
+				keyframe_its.push_back(it);
+
+				if (data_point_count == 1)
+				{
+					update_vectors(keyframe_its, interpolation_keyframe_timestamps_, interpolation_keyframe_shapes_);
+					return true;
+				}
+
+				++it;
+				if (it == end()) return true;
+
+				keyframe_its.push_back(it);
+				if (data_point_count == 2)
+				{
+					update_vectors(keyframe_its, interpolation_keyframe_timestamps_, interpolation_keyframe_shapes_);
+					return true;
+				}
+
+			}
+
+			//TODO: Handle more points
+			return false;
+		}
+
+		/**
+		 * @brief Get the shape instance at the given timestamp
+		 * 
+		 * @param ts Timestamp of the desired shape.
+		 * @return Shape instance at the given timestamp. If there wasn't a keyframe at ts interpolation is used to create the shape.
+		 * Empty if ts was outside bounds or interpolation failed
+		 */
+		std::optional<shape_type> get_shape_at(timestamp ts) const
+		{
+			if (keyframes_.empty()) return std::nullopt;
+
+			{
+				auto it = keyframes_.find(ts);
+				if (it != keyframes_.end()) return it->second;
+			}
+
+			if (!update_interpolation_keyframes_(ts)) return std::nullopt;
+		
+			return interpolator_->stateless_predict(interpolation_keyframe_shapes_, interpolation_keyframe_timestamps_, ts);
+		}
+
+		/**
+		 * @brief Set the interpolation method used when getting a shape inbetween keyframes
+		 * 
+		 * @param interpolator Instance of the interpolator to use. If nullptr, sets the interpolation method to dummy_shape_predictor
+		 */
+		void set_interpolator(std::unique_ptr<impl::interpolated_shape_predictor<shape_type>>&& interpolator)
+		{
+			if (interpolator == nullptr)
+			{
+				interpolator_ = std::make_unique<dummy_shape_predictor<shape_type>>();
+				return;
+			}
+
+			interpolator_ = std::move(interpolator);
+			interpolation_keyframe_timestamps_.resize(interpolator_->data_point_count());
+			interpolation_keyframe_shapes_.resize(interpolator_->data_point_count());
+		}
+
+		iterator begin()
+		{
+			return keyframes_.begin();
+		}
+
+		const_iterator begin() const
+		{
+			return keyframes_.begin();
+		}
+
+		const_iterator cbegin() const
+		{
+			return keyframes_.cbegin();
+		}
+
+		iterator end()
+		{
+			return keyframes_.end();
+		}
+
+		const_iterator end() const
+		{
+			return keyframes_.end();
+		}
+
+		const_iterator cend() const
+		{
+			return keyframes_.cend();
+		}
+
+		[[nodiscard]] virtual nlohmann::ordered_json serialize() const override
+		{
+			auto keyframes_json = nlohmann::ordered_json::array();
+			for (auto& [keyframe_ts, shape] : keyframes_)
+			{
+				auto keyframe_json = nlohmann::ordered_json{};
+				keyframe_json["timestamp"] = keyframe_ts;
+				keyframe_json["shape"] = shape;
+				keyframes_json.push_back(keyframe_json);
+			}
+
+			return keyframes_json;
+		}
+
+		virtual void deserialize(const nlohmann::ordered_json& json) override
+		{
+			if (!json.is_array())
+			{
+				return;
+			}
+
+			for (auto& keyframe_json : json)
+			{
+				if (!keyframe_json.contains("timestamp") or !keyframe_json.contains("shape"))
+				{
+					continue;
+				}
+
+				keyframes_[keyframe_json.at("timestamp").get<timestamp>()] = keyframe_json.at("shape").get<shape_type>();
+			}
+		};
+	};
+}

@@ -1,6 +1,7 @@
 #include "points_shape.hpp"
 #include <core/app_context.hpp>
 #include <events/gizmo/gizmo_set_targets_event.hpp>
+#include <utils/intersection.hpp>
 
 namespace vt
 {
@@ -19,6 +20,48 @@ namespace vt
 			targets.push_back(&vertex);
 		}
 		ctx_.dispatch_event<gizmo_set_targets_event>(source, targets);
+	}
+
+	bool points_shape::contains(utils::vec2<uint32_t> point) const
+	{
+		for (auto& p : points)
+		{
+			if (p == point) return true;
+		}
+		return false;
+	}
+
+	const utils::vec2<uint32_t>* points_shape::closest_point(utils::vec2<uint32_t> point, float max_distance) const
+	{
+		float distance = std::numeric_limits<float>::infinity();
+		const utils::vec2<uint32_t>* result{};
+		for (auto& p : points)
+		{
+			float new_distance = utils::vec2<uint32_t>::distance(p, point);
+			if (new_distance < distance)
+			{
+				result = &p;
+				distance = new_distance;
+			}
+		}
+		return distance <= max_distance ? result : nullptr;
+	}
+
+	void points_shape::render_shape(utils::vec2<uint32_t> shape_space, ImRect draw_rect, uint32_t outline_color, uint32_t fill_color)
+	{
+
+	}
+
+	void points_shape::render_points(float radius, utils::vec2<uint32_t> shape_space, ImRect draw_rect, uint32_t outline_color, uint32_t fill_color)
+	{
+		auto draw_list = ImGui::GetWindowDrawList();
+		for (auto& point : points)
+		{
+			auto scaled_point = impl::shape::scale_point(point, shape_space, draw_rect);
+
+			draw_list->AddCircleFilled(scaled_point, radius, fill_color);
+			draw_list->AddCircleFilled(scaled_point, radius / 2.f, outline_color);
+		}
 	}
 
 	[[nodiscard]] nlohmann::ordered_json points_shape::serialize() const
