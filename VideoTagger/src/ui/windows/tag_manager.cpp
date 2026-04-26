@@ -39,7 +39,15 @@ namespace vt::ui::windows
 		input.set_flags(ImGuiInputTextFlags_AutoSelectAll | ImGuiInputTextFlags_EnterReturnsTrue);
 		if (input.render())
 		{
-			on_name_change(input.trimmed_input());
+			auto input_str = input.trimmed_input();
+			if (!input_str.empty())
+			{
+				on_name_change(input.trimmed_input());
+			}
+			else
+			{
+				input.set_input(name);
+			}
 		}
 		ImGui::TableNextColumn();
 		auto type_name = utils::string::to_titlecase(attr.type_name());
