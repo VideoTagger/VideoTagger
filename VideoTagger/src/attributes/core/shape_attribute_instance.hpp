@@ -24,12 +24,12 @@ namespace vt
 		std::unordered_map<region_id_t, region_data<shape_type>> regions_;
 
 	public:
-		const std::unordered_map<region_id_t, region_data<shape_type>>& shapes() const
+		const std::unordered_map<region_id_t, region_data<shape_type>>& regions() const
 		{
 			return regions_;
 		}
 
-		std::unordered_map<region_id_t, region_data<shape_type>>& shapes()
+		std::unordered_map<region_id_t, region_data<shape_type>>& regions()
 		{
 			return regions_;
 		}
@@ -49,20 +49,9 @@ namespace vt
 
 		}
 
-		virtual void render_overlay(const tag& attribute_tag, video_id_t video_id, ImRect draw_rect, int video_width, int video_height, timestamp current_ts) override
+		virtual void render_overlay() override
 		{
-			for (auto& [_, region] : regions_)
-			{
-				auto shape_opt = region.get_shape_at(current_ts);
-				if (!shape_opt.has_value()) continue;
 
-				bool is_selected = false;
-
-				auto fill_color = (tag.color & ~0xFF000000) | 0x80000000;
-				auto outline_color = is_selected ? ctx_.current_theme.get_rgba(theme_color::selection_normal) : tag.color;
-
-				shape_opt->render({ video_width, video_height }, draw_rect, outline_color, fill_color, 5.f);
-			}
 		}
 	};
 }

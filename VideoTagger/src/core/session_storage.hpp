@@ -10,6 +10,7 @@
 #include <events/event_source.hpp>
 #include <utils/vec.hpp>
 #include <tasks/session_task_manager.hpp>
+#include <attributes/impl/attribute_instance.hpp>
 
 namespace vt
 {
@@ -48,6 +49,8 @@ namespace vt
 		video_group_id_t current_video_group_id_{ invalid_video_group_id };
 		std::vector<insert_segment_mark_data> insert_segment_marks_;
 
+		impl::attribute_instance* selected_attribute_instance_{};
+
 		std::vector<utils::vec2<uint32_t>*> gizmo_targets_;
 
 		event_source event_source_{ "session" };
@@ -63,6 +66,8 @@ namespace vt
 		const segment_drag_data& segment_drag_data() const;
 		video_group_id_t current_video_group_id() const;
 		const std::vector<insert_segment_mark_data>& insert_segment_marks() const;
+
+		const impl::attribute_instance* selected_attribute_instance() const;
 
 		bool is_segment_selected(const std::string& tag, segment_id id) const;
 		bool is_any_segment_selected() const;

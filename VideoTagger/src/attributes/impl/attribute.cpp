@@ -1,6 +1,7 @@
 #include "attribute.hpp"
-#include <attributes/impl/attribute_factory.hpp>
 #include <core/debug.hpp>
+#include <attributes/impl/attribute_factory.hpp>
+#include <attributes/impl/attribute_instance.hpp>
 
 namespace vt::impl
 {
@@ -9,11 +10,6 @@ namespace vt::impl
 	void attribute::set_name(const std::string& name)
 	{
 		name_ = name;
-	}
-
-	std::string& attribute::name()
-	{
-		return name_;
 	}
 
 	const std::string& attribute::name() const

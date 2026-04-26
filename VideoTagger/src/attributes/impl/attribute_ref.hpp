@@ -8,28 +8,18 @@ namespace vt::impl
 	struct attribute_ref : public attribute_instance
 	{
 	public:
-		attribute_ref(type* ref) : ref_{ ref } {}
+		attribute_ref(type* ref) : attribute_instance{ ref } {}
 		virtual ~attribute_ref() = default;
-
-	private:
-		type* ref_;
 
 	public:
 		type* attribute()
 		{
-			return ref_;
+			return reinterpret_cast<type*>(attribute_impl());
 		}
 
 		const type* attribute() const
 		{
-			return ref_;
-		}
-
-		[[nodiscard]] virtual nlohmann::ordered_json serialize() const override
-		{
-			nlohmann::ordered_json result;
-			result["type"] = ref_->type_name();
-			return result;
+			return reinterpret_cast<const type*>(attribute_impl());
 		}
 	};
 }

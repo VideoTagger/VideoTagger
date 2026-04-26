@@ -366,4 +366,57 @@ namespace vt
 		}
 		return visible;
 	}
+
+	nlohmann::ordered_json tag::serialize() const
+	{
+		nlohmann::ordered_json json;
+		json["name"] = name;
+		json["color"] = utils::color::to_string(color);
+
+		auto json_attributes = nlohmann::ordered_json::array();
+		for (const auto& [name, attr] : attributes)
+		{
+			json_attributes.push_back(attr->serialize());
+		}
+		json["attributes"] = json_attributes;
+		return json;
+	}
+
+	void tag::deserialize(const nlohmann::ordered_json& json)
+	{
+		if (!json.contains("name") or !json.contains("color")) return;
+
+		name = json["name"];
+		auto col_str = json["color"].get<std::string>();
+		utils::color::parse_string(col_str, color);
+
+		if (json.contains("attributes"))
+		{
+			for (const auto& attr_data : json["attributes"])
+			{
+				auto attr = ctx_.attr_registry.deserialize_attribute(attr_data);
+				auto attr_name = attr->name();
+				attributes.try_emplace(std::move(attr_name), std::move(attr));
+			}
+		}
+	}
+
+	std::unique_ptr<impl::attribute_instance> tag::deserialize_attribute_instance(const nlohmann::ordered_json& json) const
+	{
+		if (!json.contains("name") or !json.contains("type"))
+		{
+			debug::error("Invalid attribute instance JSON structure, missing 'name' or 'type' field");
+			return nullptr;
+		}
+
+		std::string attr_name = json["name"];
+		auto attr_it = attributes.find(attr_name);
+		if (attr_it == attributes.end())
+		{
+			debug::error("No attribute with name '{}' found in tag '{}'", attr_name, name);
+			return nullptr;			
+		}
+
+		return attr_it->second->deserialize_instance(json);
+	}
 }

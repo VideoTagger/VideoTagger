@@ -22,7 +22,7 @@ namespace vt
 		std::unordered_map<std::string, attribute_registry_entry> registry_;
 
 	public:
-		std::unique_ptr<impl::attribute> derialize(const nlohmann::ordered_json& json)
+		std::unique_ptr<impl::attribute> deserialize_attribute(const nlohmann::ordered_json& json)
 		{
 			if (!json.is_object())
 			{
@@ -43,8 +43,13 @@ namespace vt
 				debug::error("No attribute factory registered with name '{}'", type);
 				return nullptr;
 			}
-			debug::log_src("attribute-registry", "Derializing attribute with type: '{}'", type);
-			//TODO: deserialization
+			debug::log_src("attribute-registry", "Deserializing attribute with type: '{}'", type);
+			if (!json.contains("name") or !json["name"].is_string())
+			{
+				debug::error("Invalid attribute JSON structure, missing or invalid 'name' field");
+			}
+			auto name = json["name"].get<std::string>();
+			return factory->new_attribute(name);
 		}
 
 		std::vector<std::string> attribute_names() const

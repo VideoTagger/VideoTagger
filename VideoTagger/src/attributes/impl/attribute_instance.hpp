@@ -2,15 +2,20 @@
 #include <type_traits>
 #include <impl/resettable.hpp>
 #include <impl/serializable.hpp>
-
-#include <video/video_pool.hpp>
+#include <attributes/impl/attribute.hpp>
 
 namespace vt::impl
 {
 	struct attribute_instance : public resettable, public serializable
 	{
+	public:
+		attribute_instance(impl::attribute* attribute) : attribute_{ attribute } {}
 		virtual ~attribute_instance() = default;
 
+	private:
+		impl::attribute* attribute_;
+
+	public:
 		virtual void reset() override {}
 
 		template<typename type, typename = std::enable_if_t<std::is_base_of_v<attribute_instance, type>>>
@@ -25,7 +30,25 @@ namespace vt::impl
 			return dynamic_cast<const type*>(this);
 		}
 
+		impl::attribute* attribute_impl()
+		{
+			return attribute_;
+		}
+
+		impl::attribute* attribute_impl() const
+		{
+			return attribute_;
+		}
+
+		[[nodiscard]] virtual nlohmann::ordered_json serialize() const override
+		{
+			nlohmann::ordered_json result;
+			result["name"] = attribute_->name();
+			result["type"] = attribute_->type_name();
+			return result;
+		}
+
 		virtual void render_properties() {};
-		virtual void render_overlay(const tag& attribute_tag, video_id_t video_id, ImRect draw_rect, int video_width, int video_height, timestamp current_ts) {};
+		virtual void render_overlay() {};
 	};
 }

@@ -118,7 +118,6 @@ namespace vt
 		std::unordered_map<std::string, std::unique_ptr<service_account_manager>> account_managers;
 		std::unordered_map<std::string, std::unique_ptr<video_importer>> video_importers;
 		std::optional<video_id_t> last_focused_video;
-		tag_attribute_instance* selected_attribute{};
 		attribute_registry attr_registry;
 
 		session_storage session;
@@ -179,11 +178,9 @@ namespace vt
 		std::vector<std::string> lang_names() const;
 
 		void run_script(const std::filesystem::path& script_path);
-		void set_selected_attribute(tag_attribute_instance* attribute);
 
 		ImFont* get_font(font_type type = font_type::normal) const;
 		std::optional<utils::vec2<uint32_t>> get_active_video_tex_size() const;
-		tag_attribute_instance* get_selected_attribute() const;
 
 		static std::filesystem::path storage_path();
 	};

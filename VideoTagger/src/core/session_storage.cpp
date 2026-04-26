@@ -308,6 +308,11 @@ namespace vt
 		return insert_segment_marks_;
 	}
 
+	const impl::attribute_instance* session_storage::selected_attribute_instance() const
+	{
+		return selected_attribute_instance_;
+	}
+
 	bool session_storage::is_segment_selected(const std::string& tag, segment_id id) const
 	{
 		return segment_id_map_contains(selected_segments_, tag, id);

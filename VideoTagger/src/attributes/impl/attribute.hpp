@@ -2,11 +2,11 @@
 #include <string>
 #include <memory>
 #include <impl/serializable.hpp>
-#include <attributes/impl/attribute_instance.hpp>
 
 namespace vt::impl
 {
-	struct attribute_factory;
+	struct attribute_instance;
+	class attribute_factory;
 
 	struct attribute : public serializable
 	{
@@ -21,7 +21,6 @@ namespace vt::impl
 	public:
 		void set_name(const std::string& name);
 
-		std::string& name();
 		const std::string& name() const;
 		const std::string& type_name() const;
 

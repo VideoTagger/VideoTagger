@@ -25,8 +25,7 @@
 	#include <ui/windows/sandbox.hpp>
 #endif
 #include <attributes/factory/simple_attribute_factory.hpp>
-
-#include <attributes/factory/shape_factory.hpp>
+#include <attributes/factory/shape_attribute_factory.hpp>
 #include <attributes/shapes/rectangle_shape.hpp>
 #include <attributes/shapes/circle_shape.hpp>
 #include <attributes/shapes/line_shape.hpp>
@@ -50,11 +49,11 @@ namespace vt
 		attr_registry.new_factory<simple_attribute_factory<int64_t>>("integer", 0xFFC49B4E);
 		attr_registry.new_factory<simple_attribute_factory<std::string>>("string", 0xFF3F7C46);
 		
-		attr_registry.new_factory<shape_factory<rectangle_shape>>("rectangle", shape_color);
-		attr_registry.new_factory<shape_factory<circle_shape>>("circle", shape_color);
-		attr_registry.new_factory<shape_factory<line_shape>>("line", shape_color);
-		attr_registry.new_factory<shape_factory<points_shape>>("points", shape_color);
-		attr_registry.new_factory<shape_factory<polygon_shape>>("polygon", shape_color);
+		attr_registry.new_factory<shape_attribute_factory<rectangle_shape>>("rectangle", shape_color);
+		attr_registry.new_factory<shape_attribute_factory<circle_shape>>("circle", shape_color);
+		attr_registry.new_factory<shape_attribute_factory<line_shape>>("line", shape_color);
+		attr_registry.new_factory<shape_attribute_factory<points_shape>>("points", shape_color);
+		attr_registry.new_factory<shape_attribute_factory<polygon_shape>>("polygon", shape_color);
 	}
 
 	void app_context::create_windows()
@@ -305,11 +304,6 @@ namespace vt
 		ctx_.script_progress_popup = ui::new_popup<ui::script_progress_popup>(nullptr);
 	}
 
-	void app_context::set_selected_attribute(tag_attribute_instance* attribute)
-	{
-		ctx_.selected_attribute = attribute;
-	}
-
     ImFont* app_context::get_font(font_type type) const
     {
 		return fonts.at(type);
@@ -323,11 +317,6 @@ namespace vt
 		auto it = ctx_.displayed_videos.find(focused_id.value());
 		if (it == ctx_.displayed_videos.end()) return std::nullopt;
 		return utils::vec2<uint32_t>{ (uint32_t)it->display_texture.width(), (uint32_t)it->display_texture.height() };
-	}
-
-	tag_attribute_instance* app_context::get_selected_attribute() const
-	{
-		return ctx_.selected_attribute;
 	}
 
     std::filesystem::path app_context::storage_path()
