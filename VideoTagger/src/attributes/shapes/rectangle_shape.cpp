@@ -80,3 +80,16 @@ namespace vt
 		}
 	}
 }
+
+namespace vt::math
+{
+	template<>
+	inline rectangle_shape shape_lerp<rectangle_shape>(const rectangle_shape& start, const rectangle_shape& end, float alpha)
+	{
+		return rectangle_shape
+		{
+			math::lerp(start.start, end.start, alpha),
+			math::lerp(start.end, end.end, alpha)
+		};
+	}
+}

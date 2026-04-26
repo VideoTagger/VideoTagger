@@ -3,7 +3,7 @@
 
 namespace vt
 {
-    std::pair<tag_storage::iterator, tag_validate_result> tag_storage::insert(const tag& tag)
+    std::pair<tag_storage::iterator, tag_validate_result> tag_storage::insert(tag&& tag)
     {
 		auto validate_result = validate_tag_name(tag.name);
 		if (validate_result != tag_validate_result::ok)
@@ -11,7 +11,7 @@ namespace vt
 			return { tags_.end(), validate_result };
 		}
 
-		auto [it, inserted] = tags_.try_emplace(tag.name, tag);
+		auto [it, inserted] = tags_.try_emplace(tag.name, std::move(tag));
 		if (!inserted)
 		{
 			return { iterator(it), tag_validate_result::invalid };

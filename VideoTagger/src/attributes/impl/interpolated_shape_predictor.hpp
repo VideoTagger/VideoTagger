@@ -48,7 +48,7 @@ namespace vt::impl
 			return stateless_predict(shape_instances, timestamps, *current_ts);
 		}
 
-		virtual is_stateless() final
+		virtual bool is_stateless() override final
 		{
 			return true;
 		}

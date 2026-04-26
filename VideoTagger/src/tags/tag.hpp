@@ -20,6 +20,11 @@ namespace vt
 		std::map<std::string, std::unique_ptr<impl::attribute>> attributes;
 
 		tag(const std::string& name, uint32_t color) : name{ name }, color{ color | 0xff000000 } {}
+		tag(const tag&) = delete;
+		tag(tag&&) = default;
+
+		tag& operator=(const tag&) = delete;
+		tag& operator=(tag&&) = default;
 
 		bool draw_attributes(bool& dirty_flag, const std::function<void()>& on_add_new);
 		bool draw_attribute_instances(const struct tag_segment& selected_segment, video_id_t video_id, bool& dirty_flag) const;

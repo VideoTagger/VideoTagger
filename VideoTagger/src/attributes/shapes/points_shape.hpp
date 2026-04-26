@@ -35,7 +35,7 @@ namespace vt
 namespace vt::math
 {
 	template<typename shape_type, typename = std::enable_if_t<std::is_base_of_v<points_shape, shape_type>>>
-	shape_type shape_lerp(const shape_type& start, const shape_type& end, float alpha)
+	inline shape_type shape_lerp(const shape_type& start, const shape_type& end, float alpha)
 	{
 		if (start.points.size() != end.points.size())
 		{

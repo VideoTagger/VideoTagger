@@ -17,74 +17,74 @@ static constexpr ImGuiColorEditFlags color_button_flags = ImGuiColorEditFlags_No
 
 namespace vt::ui::windows
 {
-	static void draw_tag_attribute(const std::string& name, tag_attribute& attr, const std::function<void(const std::string&)>& on_name_change, const std::function<void(tag_attribute::type)>& on_type_change, const std::function<void()>& on_delete)
-	{
-		const auto& style = ImGui::GetStyle();
+	//static void draw_tag_attribute(const std::string& name, tag_attribute& attr, const std::function<void(const std::string&)>& on_name_change, const std::function<void(tag_attribute::type)>& on_type_change, const std::function<void()>& on_delete)
+	//{
+	//	const auto& style = ImGui::GetStyle();
 
-		bool selected{};
-		bool row_hovered = widgets::table_hovered_row_style();
+	//	bool selected{};
+	//	bool row_hovered = widgets::table_hovered_row_style();
 
-		ImGui::PushID(&attr);
-		ImGui::TableNextColumn();
-		ImGui::BeginGroup();
-		widgets::frame_color_indicator(3.f, tag_attribute::type_color(attr.type_));
-		ImGui::SameLine();
-		ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
-		std::string new_name = name;
-		ui::text_input input("##TagAttributeName", new_name, "Attribute Name...");
-		input.set_flags(ImGuiInputTextFlags_AutoSelectAll | ImGuiInputTextFlags_EnterReturnsTrue);
-		if (input.render())
-		{
-			on_name_change(input.trimmed_input());
-		}
-		ImGui::TableNextColumn();
+	//	ImGui::PushID(&attr);
+	//	ImGui::TableNextColumn();
+	//	ImGui::BeginGroup();
+	//	widgets::frame_color_indicator(3.f, tag_attribute::type_color(attr.type_));
+	//	ImGui::SameLine();
+	//	ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
+	//	std::string new_name = name;
+	//	ui::text_input input("##TagAttributeName", new_name, "Attribute Name...");
+	//	input.set_flags(ImGuiInputTextFlags_AutoSelectAll | ImGuiInputTextFlags_EnterReturnsTrue);
+	//	if (input.render())
+	//	{
+	//		on_name_change(input.trimmed_input());
+	//	}
+	//	ImGui::TableNextColumn();
 
-		int current_type = (int)attr.type_;
-		ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
-		if (ImGui::Combo("##TagAttributeType", &current_type, tag_attribute::types_str, (int)tag_attribute::type_count))
-		{
-			on_type_change((tag_attribute::type)current_type);
-		}
+	//	int current_type = (int)attr.type_;
+	//	ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
+	//	if (ImGui::Combo("##TagAttributeType", &current_type, tag_attribute::types_str, (int)tag_attribute::type_count))
+	//	{
+	//		on_type_change((tag_attribute::type)current_type);
+	//	}
 
-		switch (attr.type_)
-		{
-		case tag_attribute::type::bool_: ui::tooltip("Value: True/False"); break;
-		case tag_attribute::type::float_: ui::tooltip("Value: Float (64 bit)"); break;
-		case tag_attribute::type::integer: ui::tooltip("Value: Integer (64 bit)"); break;
-		case tag_attribute::type::string: ui::tooltip("Value: Text"); break;
-		case tag_attribute::type::shape:
-		{
-			std::string shapes;
-			size_t i{};
-			for (auto type : shape::types)
-			{
-				shapes += utils::string::to_titlecase(shape::type_str(type));
-				if (++i < shape::types.size())
-				{
-					shapes += "/";
-				}
-			}
-			ui::tooltip(fmt::format("Value: {}", shapes).c_str());
-		}
-		break;
-		}
+	//	switch (attr.type_)
+	//	{
+	//	case tag_attribute::type::bool_: ui::tooltip("Value: True/False"); break;
+	//	case tag_attribute::type::float_: ui::tooltip("Value: Float (64 bit)"); break;
+	//	case tag_attribute::type::integer: ui::tooltip("Value: Integer (64 bit)"); break;
+	//	case tag_attribute::type::string: ui::tooltip("Value: Text"); break;
+	//	case tag_attribute::type::shape:
+	//	{
+	//		std::string shapes;
+	//		size_t i{};
+	//		for (auto type : shape::types)
+	//		{
+	//			shapes += utils::string::to_titlecase(shape::type_str(type));
+	//			if (++i < shape::types.size())
+	//			{
+	//				shapes += "/";
+	//			}
+	//		}
+	//		ui::tooltip(fmt::format("Value: {}", shapes).c_str());
+	//	}
+	//	break;
+	//	}
 
-		ImGui::EndGroup();
-		if (ImGui::BeginPopupContextItem("##TagAttributeCtxMenu"))
-		{
-			std::string menu_name = fmt::format("{} Delete", icons::delete_);
-			if (ImGui::MenuItem(menu_name.c_str()))
-			{
-				on_delete();
-			}
-			ImGui::EndPopup();
-		}
-		if (row_hovered and ImGui::IsMouseClicked(1))
-		{
-			ImGui::OpenPopup("##TagAttributeCtxMenu");
-		}
-		ImGui::PopID();
-	}
+	//	ImGui::EndGroup();
+	//	if (ImGui::BeginPopupContextItem("##TagAttributeCtxMenu"))
+	//	{
+	//		std::string menu_name = fmt::format("{} Delete", icons::delete_);
+	//		if (ImGui::MenuItem(menu_name.c_str()))
+	//		{
+	//			on_delete();
+	//		}
+	//		ImGui::EndPopup();
+	//	}
+	//	if (row_hovered and ImGui::IsMouseClicked(1))
+	//	{
+	//		ImGui::OpenPopup("##TagAttributeCtxMenu");
+	//	}
+	//	ImGui::PopID();
+	//}
 
 	tag_manager::tag_manager() :
 		window{ "Tag Manager", "tag-manager", "Tag Manager", ImGuiWindowFlags_NoScrollbar }
@@ -285,40 +285,40 @@ namespace vt::ui::windows
 									ImGui::AlignTextToFramePadding();
 									ImGui::TextUnformatted("Attributes");
 
-										if (!tag.attributes.empty())
-										{
-											ImGui::BeginDisabled();
-											ImGui::TableHeadersRow();
-											ImGui::EndDisabled();
-										}
-										std::string new_name_candidate;
-										std::string new_name;
-										for (auto it = tag.attributes.begin(); it != tag.attributes.end();)
-										{
-											bool next = true;
-											auto& [name, attr] = *it;
-											ImGui::TableNextRow();
-											draw_tag_attribute(name, attr,
-											[&new_name_candidate, &new_name, &name](const std::string& nname)
-											{
-												new_name_candidate = name;
-												new_name = nname;
-											},
-											[&attr](const tag_attribute::type new_type)
-											{
-												attr.type_ = new_type;
-											},
-											[&tag, &it, &name, &next]()
-											{
-												it = tag.attributes.erase(it);
-												next = false;
-												ctx_.is_project_dirty = true;
-											});
+									if (!tag.attributes.empty())
+									{
+										ImGui::BeginDisabled();
+										ImGui::TableHeadersRow();
+										ImGui::EndDisabled();
+									}
+									std::string new_name_candidate;
+									std::string new_name;
+									for (auto it = tag.attributes.begin(); it != tag.attributes.end();)
+									{
+										//bool next = true;
+										//auto& [name, attr] = *it;
+										//ImGui::TableNextRow();
+										//draw_tag_attribute(name, attr,
+										//[&new_name_candidate, &new_name, &name](const std::string& nname)
+										//{
+										//	new_name_candidate = name;
+										//	new_name = nname;
+										//},
+										//[&attr](const tag_attribute::type new_type)
+										//{
+										//	attr.type_ = new_type;
+										//},
+										//[&tag, &it, &name, &next]()
+										//{
+										//	it = tag.attributes.erase(it);
+										//	next = false;
+										//	ctx_.is_project_dirty = true;
+										//});
 
-										if (next)
-										{
-											++it;
-										}
+										//if (next)
+										//{
+										//	++it;
+										//}
 									}
 
 									if (!new_name_candidate.empty())

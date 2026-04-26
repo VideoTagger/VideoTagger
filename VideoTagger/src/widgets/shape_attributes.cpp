@@ -16,7 +16,7 @@ namespace vt::widgets
 	{
 		if (ctx_.session.current_video_group_id() != invalid_video_group_id and ctx_.last_focused_video.has_value() and ctx_.session.is_any_segment_selected())
 		{
-			auto selected_attr_inst = ctx_.get_selected_attribute();
+			/*auto selected_attr_inst = ctx_.get_selected_attribute();
 			auto active_vid_size = ctx_.get_active_video_tex_size();
 			auto current_ts = ctx_.displayed_videos.current_timestamp_as_timestamp();
 
@@ -72,7 +72,7 @@ namespace vt::widgets
 			{
 				ctx_.dispatch_event<gizmo_set_targets_event>(ev_src);
 				ui::centered_text("Select a shape attribute in the inspector to display its properties...", ImGui::GetContentRegionMax());
-			}
+			}*/
 		}
 		else
 		{

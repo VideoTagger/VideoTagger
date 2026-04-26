@@ -12,10 +12,10 @@ void vt::bindings::bind_tags(pybind11::module_& module)
 	.def(py::init<const std::string&, uint32_t>())
 	.def_readwrite("name", &tag::name)
 	.def_readwrite("color", &tag::color)
-	.def("add_attribute", [](tag& t, const std::string& name, tag_attribute::type type) -> tag_attribute&
-	{
-		return t.attributes[name] = tag_attribute{ type };
-	})
+	//.def("add_attribute", [](tag& t, const std::string& name, tag_attribute::type type) -> tag_attribute&
+	//{
+	//	return t.attributes[name] = tag_attribute{ type };
+	//})
 	.def("remove_attribute", [](tag& t, const std::string& name)
 	{
 		t.attributes.erase(name);

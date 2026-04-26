@@ -1,6 +1,7 @@
 #include "video_window.hpp"
 #include <widgets/slider.hpp>
 #include <ui/widgets/common.hpp>
+#include <utils/timestamp.hpp>
 #include <ui/icons.hpp>
 
 namespace vt::ui::windows

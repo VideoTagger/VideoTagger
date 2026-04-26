@@ -279,7 +279,7 @@ namespace vt::ui::windows
 			auto& selected_tag = ctx_.current_project->tags.at(first_active_tag);
 			ImGui::BeginDisabled(selected_tag.attributes.empty());
 			auto& timeline = ctx_.get_current_segment_storage().at(first_active_tag);
-			selected_tag.draw_attribute_instances(timeline.at(first_active_segment_id), ctx_.last_focused_video.value(), ctx_.is_project_dirty);
+			//selected_tag.draw_attribute_instances(timeline.at(first_active_segment_id), ctx_.last_focused_video.value(), ctx_.is_project_dirty);
 			ImGui::EndDisabled();
 		}
 

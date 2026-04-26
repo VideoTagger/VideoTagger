@@ -17,9 +17,8 @@ namespace vt::ui
 
 			return std::nullopt;
 		} },
-		type_combo_{ "##TagAttributeTypeCombo", std::vector<std::string>(std::begin(tag_attribute::types_str), std::end(tag_attribute::types_str)), 0 }
-	{
-	}
+		type_combo_{ "##TagAttributeTypeCombo", ctx_.attr_registry.attribute_names(), 0 }
+	{}
 
 	void add_tag_attribute_popup::on_display()
 	{
@@ -42,11 +41,11 @@ namespace vt::ui
 			{
 			case 0:
 			{
-				tag_attribute attribute{ static_cast<tag_attribute::type>(type_combo_.selected()) };
+				//tag_attribute attribute{ static_cast<tag_attribute::type>(type_combo_.selected()) };
 
-				//TODO: should use an event
-				ctx_.current_project->tags.at(tag_name_).attributes.insert({ attribute_input_.input(), attribute });
-				ctx_.is_project_dirty = true;
+				////TODO: should use an event
+				//ctx_.current_project->tags.at(tag_name_).attributes.insert({ attribute_input_.input(), attribute });
+				//ctx_.is_project_dirty = true;
 				close();
 				break;
 			}

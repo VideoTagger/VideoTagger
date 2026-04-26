@@ -4,10 +4,11 @@
 #include <attributes/impl/shape.hpp>
 #include <attributes/impl/attribute.hpp>
 #include <attributes/impl/attribute_factory.hpp>
+#include <attributes/core/shape_attribute_instance.hpp>
 
 namespace vt
 {
-	template<typename shape_type, typename = std::enable_if_t<std::is_base_of_v<impl::shape, shape_type>>>
+	template<typename shape_type>
 	class shape_attribute : public impl::attribute
 	{
 	public:

@@ -114,7 +114,7 @@ namespace vt
 		}
 	}
 
-	tag_timeline_insert_result tag_timeline::insert(timestamp time_start, timestamp time_end, const segment_attribute_instances_container& attributes)
+	tag_timeline_insert_result tag_timeline::insert(timestamp time_start, timestamp time_end, segment_attribute_instances_container&& attributes)
 	{
 		if (time_start > time_end)
 		{
@@ -150,12 +150,12 @@ namespace vt
 		update_id_map_(insert_it + 1, segments_.end(), 1);
 		id_map_.try_emplace(id, insert_it - segments_.begin());
 
-		attribute_instances_[id] = attributes;
+		attribute_instances_[id] = std::move(attributes);
 
 		return tag_timeline_insert_result(id, merged_segments);
 	}
 
-	tag_timeline_insert_result tag_timeline::insert(timestamp ts, const segment_attribute_instances_container& attributes)
+	tag_timeline_insert_result tag_timeline::insert(timestamp ts, segment_attribute_instances_container&& attributes)
 	{
 		auto prepare_result = prepare_insert_(ts);
 		if (prepare_result.has_value())
@@ -168,20 +168,20 @@ namespace vt
 		update_id_map_(insert_it + 1, segments_.end(), 1);
 		id_map_.try_emplace(id, insert_it - segments_.begin());
 
-		attribute_instances_[id] = attributes;
+		attribute_instances_[id] = std::move(attributes);
 
 		return tag_timeline_insert_result(id, {});
 	}
 
-	tag_timeline_insert_result tag_timeline::insert(tag_segment segment, const segment_attribute_instances_container& attributes)
+	tag_timeline_insert_result tag_timeline::insert(tag_segment segment, segment_attribute_instances_container&& attributes)
 	{
 		if (segment.type() == tag_segment_type::timestamp)
 		{
-			return insert(segment.start, attributes);
+			return insert(segment.start, std::move(attributes));
 		}
 		else
 		{
-			return insert(segment.start, segment.end, attributes);
+			return insert(segment.start, segment.end, std::move(attributes));
 		}
 	}
 

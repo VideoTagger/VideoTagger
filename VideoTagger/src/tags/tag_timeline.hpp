@@ -215,6 +215,11 @@ namespace vt
 		using reverse_iterator = std::vector<segment_with_id>::const_reverse_iterator;
 
 		tag_timeline() = default;
+		tag_timeline(const tag_timeline&) = delete;
+		tag_timeline(tag_timeline&&) = default;
+
+		tag_timeline& operator=(const tag_timeline&) = delete;
+		tag_timeline& operator=(tag_timeline&&) = default;
 
 	private:
 		std::vector<segment_with_id> segments_;
@@ -234,7 +239,7 @@ namespace vt
 		 * @param attributes Optional attributes associated with the segment.
 		 * @return Struct containing information about the result of the insert operation.
 		 */
-		tag_timeline_insert_result insert(timestamp time_start, timestamp time_end, const segment_attribute_instances_container& attributes = {});
+		tag_timeline_insert_result insert(timestamp time_start, timestamp time_end, segment_attribute_instances_container&& attributes = {});
 
 		/**
 		 * @brief Insert a new timestamp segment
@@ -246,7 +251,7 @@ namespace vt
 		 * @param attributes Optional attributes associated with the segment.
 		 * @return Struct containing information about the result of the insert operation.
 		 */
-		tag_timeline_insert_result insert(timestamp ts, const segment_attribute_instances_container& attributes = {});
+		tag_timeline_insert_result insert(timestamp ts, segment_attribute_instances_container&& attributes = {});
 
 		/**
 		 * @brief Insert a new segment
@@ -258,7 +263,7 @@ namespace vt
 		 * @param attributes Optional attributes associated with the segment.
 		 * @return Struct containing information about the result of the insert operation.
 		 */
-		tag_timeline_insert_result insert(tag_segment segment, const segment_attribute_instances_container& attributes = {});
+		tag_timeline_insert_result insert(tag_segment segment, segment_attribute_instances_container&& attributes = {});
 
 		/**
 		 * @brief Erase a segment by its id
@@ -557,7 +562,7 @@ namespace vt
 					}
 				}
 
-				tag_segments.insert(segment, attributes);
+				tag_segments.insert(segment, std::move(attributes));
 			}
 		}
 	}

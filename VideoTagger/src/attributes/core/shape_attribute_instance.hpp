@@ -3,7 +3,6 @@
 #include <unordered_map>
 
 #include <attributes/region_data.hpp>
-#include <attributes/core/shape_attribute.hpp>
 #include <attributes/impl/attribute_ref.hpp>
 #include <attributes/impl/shape.hpp>
 #include <core/app_context.hpp>
@@ -13,6 +12,9 @@
 namespace vt
 {
 	using region_id_t = uint64_t;
+
+	template<typename shape_type>
+	class shape_attribute;
 
 	template<typename shape_type, typename = std::enable_if_t<std::is_base_of_v<impl::shape, shape_type>>>
 	class shape_attribute_instance : public impl::attribute_ref<shape_attribute<shape_type>>
@@ -34,12 +36,12 @@ namespace vt
 			return regions_;
 		}
 
-		const region_data& get_region(region_id_t id) const
+		const region_data<shape_type>& get_region(region_id_t id) const
 		{
 			return regions_.at(id);
 		}
 
-		region_data& get_region(region_id_t id)
+		region_data<shape_type>& get_region(region_id_t id)
 		{
 			return regions_.at(id);
 		}
