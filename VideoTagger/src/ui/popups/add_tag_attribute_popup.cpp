@@ -41,11 +41,11 @@ namespace vt::ui
 			{
 			case 0:
 			{
-				//tag_attribute attribute{ static_cast<tag_attribute::type>(type_combo_.selected()) };
-
 				////TODO: should use an event
-				//ctx_.current_project->tags.at(tag_name_).attributes.insert({ attribute_input_.input(), attribute });
-				//ctx_.is_project_dirty = true;
+				auto attribute = ctx_.attr_registry.new_attribute(type_combo_.selected_item(), attribute_input_.input());
+				ctx_.current_project->tags.at(tag_name_).attributes.try_emplace(attribute_input_.input(), std::move(attribute));
+				ctx_.is_project_dirty = true;
+
 				close();
 				break;
 			}

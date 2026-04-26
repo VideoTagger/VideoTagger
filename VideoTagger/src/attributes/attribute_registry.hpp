@@ -10,10 +10,15 @@
 
 namespace vt
 {
+	struct attribute_specification
+	{
+		uint32_t color;
+	};
+
 	struct attribute_registry_entry
 	{
 		std::unique_ptr<impl::attribute_factory> factory;
-		uint32_t color;
+		attribute_specification spec;
 	};
 
 	class attribute_registry
@@ -30,7 +35,7 @@ namespace vt
 				return nullptr;
 			}
 
-			if (!json.contains("type") or !json.is_string())
+			if (!json.contains("type") or !json["type"].is_string())
 			{
 				debug::error("Invalid attribute JSON structure, missing or invalid 'type' field");
 				return nullptr;
@@ -69,8 +74,20 @@ namespace vt
 			//TODO: Check for duplicate names
 			auto factory = std::make_unique<factory_type>(name, std::forward<arguments>(args)...);
 			auto factory_ptr = factory.get();
-			registry_[name] = { std::move(factory), color };
+			attribute_specification spec{ color };
+			registry_[name] = { std::move(factory), spec };
 			return factory_ptr;
+		}
+
+		const attribute_specification* get_attr_spec(const std::string& name) const
+		{
+			auto it = registry_.find(name);
+			if (it == registry_.end())
+			{
+				debug::error("No attribute factory registered with name '{}'", name);
+				return nullptr;
+			}
+			return &it->second.spec;
 		}
 
 		virtual std::unique_ptr<impl::attribute> new_attribute(const std::string& type_name, const std::string& name)
