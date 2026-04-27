@@ -26,9 +26,6 @@ namespace vt
 		tag& operator=(const tag&) = delete;
 		tag& operator=(tag&&) = default;
 
-		bool draw_attributes(bool& dirty_flag, const std::function<void()>& on_add_new);
-		bool draw_attribute_instances(const struct tag_segment& selected_segment, video_id_t video_id, bool& dirty_flag) const;
-
 		virtual nlohmann::ordered_json serialize() const override;
 		virtual void deserialize(const nlohmann::ordered_json& json) override;
 

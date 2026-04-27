@@ -16,17 +16,10 @@ namespace vt
 			return render_property(name, typed_inst->value());
 		}
 
-		template<typename value_type>
-		bool render_property(const std::string& name, value_type& value)
+		void render_property_name(const std::string& name, uint32_t attr_color) const
 		{
-			static constexpr auto line_width = 3.f;
 			const auto& style = ImGui::GetStyle();
-
-			bool was_modified{};
 			bool has_value = true;
-			auto attr_color = ctx_.attr_registry.get_attr_spec(type_name())->color;
-
-			ImGui::TableNextColumn();
 
 			ImGui::AlignTextToFramePadding();
 			widgets::color_indicator(3.f, attr_color, 1.f, ImGui::GetFrameHeight());
@@ -57,6 +50,19 @@ namespace vt
 
 			//	draw_list->AddRectFilled(cell_rect.Min, cell_rect.Max, attr_color, 3.f);
 			//}
+		}
+
+		template<typename value_type>
+		bool render_property(const std::string& name, value_type& value)
+		{
+			static constexpr auto line_width = 3.f;
+			const auto& style = ImGui::GetStyle();
+
+			bool was_modified{};
+			auto attr_color = ctx_.attr_registry.get_attr_spec(type_name())->color;
+
+			ImGui::TableNextColumn();
+			render_property_name(name, attr_color);
 
 			ImGui::TableNextColumn();
 			auto prop_id = fmt::format("##Property:{}", name);
