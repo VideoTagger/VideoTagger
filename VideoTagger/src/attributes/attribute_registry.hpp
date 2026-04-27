@@ -67,6 +67,16 @@ namespace vt
 			return result;
 		}
 
+		std::vector<std::string> title_attribute_names() const
+		{
+			std::vector<std::string> result;
+			for (auto& [name, _] : registry_)
+			{
+				result.push_back(utils::string::to_titlecase(name));
+			}
+			return result;
+		}
+
 		template<typename factory_type, typename... arguments, typename = std::enable_if_t<std::is_base_of_v<impl::attribute_factory, factory_type> and std::is_constructible_v<factory_type, const std::string&, arguments...>>>
 		factory_type* new_factory(const std::string& name, uint32_t color, arguments&&... args)
 		{
