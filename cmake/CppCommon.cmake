@@ -11,6 +11,7 @@ function(vt_setup_cpp_common TARGET_NAME)
 		#target_link_libraries(${TARGET_NAME} PRIVATE ${CMAKE_DL_LIBS})
 	endif()
 
+    set_property(TARGET ${TARGET_NAME} PROPERTY DEBUG_WORKING_DIRECTORY "${PROJECT_BINARY_DIR}")
 	# Turns on standard conformance for Microsoft Visual C++ compiler
 	if (MSVC)
 		target_compile_options(${TARGET_NAME} PRIVATE 
