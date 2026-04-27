@@ -282,36 +282,86 @@ namespace vt::ui::windows
 			auto& segment_attribute_instances = timeline.segment_attribute_instances(first_active_segment_id);
 
 			auto& group = ctx_.current_project->video_groups.at(group_id);
-			for (auto& group_info : group)
-			{
-				auto vid_id = group_info.id;
-				for (auto& [attr_name, attr] : selected_tag.attributes)
-				{
-					auto& vid_instances = segment_attribute_instances[vid_id];
-					auto it = std::find_if(vid_instances.begin(), vid_instances.end(), [&attr_name](const auto& instance)
-					{
-						return instance->attribute_impl()->name() == attr_name;
-					});
+			auto collapsible_flags = ui::is_item_disabled() ? 0 : ImGuiTreeNodeFlags_DefaultOpen;
+			const auto& theme = ctx_.current_theme;
 
-					std::unique_ptr<vt::impl::attribute_instance> instance;
-					bool was_modified{};
-					if (it == vid_instances.end())
+			//if (ui::is_item_disabled())
+			//{
+			//	ImGui::SetNextItemOpen(false, ImGuiCond_Appearing);
+			//}
+			//TODO: ImGui::BeginDisabled if there are no attribute instances to show
+			//bool visible = widgets::begin_collapsible("##Attributes", "Attributes", collapsible_flags, icons::attribute);
+			//if (visible)
+			ImGui::SeparatorText("Attributes");
+			{
+				for (auto& group_info : group)
+				{
+					auto vid_id = group_info.id;
+					auto video_name = ctx_.current_project->videos.get(vid_id)->title();
+					
+					ImGui::BeginDisabled(selected_tag.attributes.empty());
+					if (ui::is_item_disabled())
 					{
-						ImGui::TextUnformatted(("Attribute: " + attr_name).c_str());
-						// No instance of this attribute for the current video, create a new temporary instance
-						instance = attr->instantiate();
-						was_modified = attr->render_instance_properties(instance);
-						if (was_modified)
-						{
-							vid_instances.push_back(std::move(instance));
-						}
+						ImGui::SetNextItemOpen(false, ImGuiCond_Appearing);
 					}
-					else
+					auto vid_id_attrs_id = fmt::format("##Attributes-{}", vid_id);
+					bool vid_id_visible = widgets::begin_collapsible(vid_id_attrs_id, video_name, collapsible_flags, icons::video);
+					ImGui::EndDisabled();
+					if (vid_id_visible)
 					{
-						auto& instance = *it;
-						was_modified = attr->render_instance_properties(instance);
+						auto table_flags = ImGuiTableFlags_BordersInnerV | ImGuiTableFlags_Resizable | ImGuiTableFlags_NoSavedSettings | ImGuiTableFlags_RowBg;
+						ImGui::PushStyleVar(ImGuiStyleVar_CellPadding, ImVec2{ style.CellPadding.x + style.ItemSpacing.x, style.CellPadding.y });
+						ImGui::PushStyleColor(ImGuiCol_TableRowBg, theme.get_float4(theme_color::background_tertiary));
+						ImGui::PushStyleColor(ImGuiCol_TableRowBgAlt, theme.get_float4(theme_color::background_tertiary));
+						
+						auto result = ImGui::BeginTable("##Card", 2, table_flags);
+						if (result)
+						{
+							ImGui::TableNextRow();
+							auto draw_list = ImGui::GetWindowDrawList();
+
+							for (auto& [attr_name, attr] : selected_tag.attributes)
+							{
+								auto attr_color = ctx_.attr_registry.get_attr_spec(attr->type_name())->color;
+
+								auto& vid_instances = segment_attribute_instances[vid_id];
+								auto it = std::find_if(vid_instances.begin(), vid_instances.end(), [&attr_name](const auto& instance)
+								{
+									if (instance == nullptr) return false;
+									return instance->attribute_impl()->name() == attr_name;
+								});
+
+								auto id = fmt::format("##{}-{}", attr_name, vid_id);
+
+								bool was_modified{};
+								if (it == vid_instances.end())
+								{
+									// No instance of this attribute for the current video, create a new temporary instance
+									auto instance = attr->instantiate();
+									ImGui::PushID(id.c_str());
+									was_modified = attr->render_instance_properties(instance);
+									ImGui::PopID();
+									if (was_modified)
+									{
+										vid_instances.push_back(std::move(instance));
+									}
+								}
+								else
+								{
+									auto& instance = *it;
+									ImGui::PushID(id.c_str());
+									was_modified = attr->render_instance_properties(instance);
+									ImGui::PopID();
+								}
+							}
+							ImGui::EndTable();
+						}
+						ImGui::PopStyleColor(2);
+						ImGui::PopStyleVar();
+						widgets::end_collapsible();
 					}
 				}
+				//widgets::end_collapsible();
 			}
 			
 			//selected_tag.draw_attribute_instances(timeline.at(first_active_segment_id), ctx_.last_focused_video.value(), ctx_.is_project_dirty);

@@ -434,11 +434,27 @@ namespace vt::ui
 	bool checkbox(const std::string& label, bool& value)
 	{
 		auto& style = ImGui::GetStyle();
+		const auto& theme = ctx_.current_theme;
 
 		bool result{};
+		bool is_disabled = ui::is_item_disabled();
+		if (value)
+		{
+			ImGui::PushStyleColor(ImGuiCol_CheckMark, theme.get_float4(theme_color::text_inverted));
+			ImGui::PushStyleColor(ImGuiCol_FrameBg, is_disabled ? theme.get_float4(theme_color::secondary_light) : theme.get_float4(theme_color::accent_light));
+			ImGui::PushStyleColor(ImGuiCol_FrameBgHovered, theme.get_float4(theme_color::accent_medium));
+			ImGui::PushStyleColor(ImGuiCol_FrameBgActive, theme.get_float4(theme_color::accent_dark));
+		}
+
 		ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 3);
+		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2{ style.FramePadding.x, style.FramePadding.y } / 3.f);
+		bool last_value = value;
 		result = ImGui::Checkbox(label.c_str(), &value);
-		ImGui::PopStyleVar();
+		ImGui::PopStyleVar(2);
+		if (last_value)
+		{
+			ImGui::PopStyleColor(4);
+		}
 		return result;
 	}
 

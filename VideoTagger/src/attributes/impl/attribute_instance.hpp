@@ -40,6 +40,11 @@ namespace vt::impl
 			return attribute_;
 		}
 
+		const std::string& attribute_name() const
+		{
+			return attribute_->name();
+		}
+
 		[[nodiscard]] virtual nlohmann::ordered_json serialize() const override
 		{
 			nlohmann::ordered_json result;
