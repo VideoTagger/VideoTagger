@@ -24,6 +24,7 @@ namespace vt::ui::windows
 
 	private:
 		void register_listeners();
+		void render_attribute_instances(const tag& selected_tag);
 
 		std::pair<std::string, segment_id> first_selected_segment() const;
 	};

@@ -31,6 +31,8 @@ namespace vt::impl
 		[[nodiscard]] virtual nlohmann::ordered_json serialize() const override;
 		virtual void deserialize(const nlohmann::ordered_json& json) override;
 
+		virtual bool render_instance_properties(std::unique_ptr<impl::attribute_instance>& instance) { return false; };
+
 		virtual std::unique_ptr<impl::attribute_instance> instantiate() = 0;
 
 

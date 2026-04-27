@@ -274,13 +274,47 @@ namespace vt::ui::windows
 			ctx_.dispatch_event<end_segment_drag_event>(event_source, segments, ctx_.session.dragged_segments(), grab_part_, current_offset_);
 		}
 
-		if (!more_than_one_segment_active and ctx_.session.current_video_group_id() != invalid_video_group_id and ctx_.last_focused_video.has_value())
+		auto group_id = ctx_.session.current_video_group_id();
+		if (!more_than_one_segment_active and group_id != invalid_video_group_id)
 		{
 			auto& selected_tag = ctx_.current_project->tags.at(first_active_tag);
-			ImGui::BeginDisabled(selected_tag.attributes.empty());
-			auto& timeline = ctx_.get_current_segment_storage().at(first_active_tag);
+			auto& timeline = segments.at(first_active_tag);
+			auto& segment_attribute_instances = timeline.segment_attribute_instances(first_active_segment_id);
+
+			auto& group = ctx_.current_project->video_groups.at(group_id);
+			for (auto& group_info : group)
+			{
+				auto vid_id = group_info.id;
+				for (auto& [attr_name, attr] : selected_tag.attributes)
+				{
+					auto& vid_instances = segment_attribute_instances[vid_id];
+					auto it = std::find_if(vid_instances.begin(), vid_instances.end(), [&attr_name](const auto& instance)
+					{
+						return instance->attribute_impl()->name() == attr_name;
+					});
+
+					std::unique_ptr<vt::impl::attribute_instance> instance;
+					bool was_modified{};
+					if (it == vid_instances.end())
+					{
+						ImGui::TextUnformatted(("Attribute: " + attr_name).c_str());
+						// No instance of this attribute for the current video, create a new temporary instance
+						instance = attr->instantiate();
+						was_modified = attr->render_instance_properties(instance);
+						if (was_modified)
+						{
+							vid_instances.push_back(std::move(instance));
+						}
+					}
+					else
+					{
+						auto& instance = *it;
+						was_modified = attr->render_instance_properties(instance);
+					}
+				}
+			}
+			
 			//selected_tag.draw_attribute_instances(timeline.at(first_active_segment_id), ctx_.last_focused_video.value(), ctx_.is_project_dirty);
-			ImGui::EndDisabled();
 		}
 
 		ImGui::EndChild();

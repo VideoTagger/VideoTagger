@@ -434,8 +434,8 @@ namespace vt
 		 */
 		const tag_segment& at(segment_id id) const;
 
-		const segment_attribute_instances_container& segment_attributes(segment_id id) const;
-		segment_attribute_instances_container& segment_attributes(segment_id id);
+		const segment_attribute_instances_container& segment_attribute_instances(segment_id id) const;
+		segment_attribute_instances_container& segment_attribute_instances(segment_id id);
 
 		iterator begin() const;
 		iterator end() const;
@@ -467,6 +467,12 @@ namespace vt
 		iterator upper_bound_(timestamp ts) const;
 		iterator upper_bound_(iterator begin, timestamp ts) const;
 		void update_id_map_(iterator update_begin, iterator update_end, ptrdiff_t offset);
+		
+		bool erase_(segment_id id, bool erase_attributes);
+		iterator erase_(iterator it, bool erase_attributes);
+		iterator erase_(iterator it_begin, iterator it_end, bool erase_attributes);
+		template<typename Pred>
+		iterator erase_if_(iterator it_begin, iterator it_end, Pred predicate, bool erase_attributes);
 
 		void find_overlapping_(std::set<segment_id>& result, segment_id segment, segment_part part, timestamp offset, const std::set<segment_id>& ignored_segments) const;
 		void find_overlapping_(std::set<segment_id>& result, timestamp start, timestamp end, segment_id ignored_segment, const std::set<segment_id>& ignored_segments) const;
@@ -495,7 +501,7 @@ namespace vt
 			{
 				auto segment_json = segment.serialize();
 
-				const auto& segment_attr_instances = tag_segments.segment_attributes(id);
+				const auto& segment_attr_instances = tag_segments.segment_attribute_instances(id);
 				auto& segment_attributes_json = segment_json["attributes"];
 				for (auto& [video_id, attr_instances] : segment_attr_instances)
 				{
@@ -503,9 +509,12 @@ namespace vt
 					video_attr_instances_json = nlohmann::ordered_json::array();
 					for (auto& attr_instance : attr_instances)
 					{
+						if (attr_instance == nullptr) continue;
+
 						video_attr_instances_json.push_back(attr_instance->serialize());
 					}
 				}
+				json_tag_segments.push_back(segment_json);
 			}
 			json.push_back(json_tag_segments_data);
 		}
@@ -570,6 +579,12 @@ namespace vt
 	template<typename Pred>
 	inline tag_timeline::iterator tag_timeline::erase_if(iterator it_begin, iterator it_end, Pred predicate)
 	{
+		return erase_if_(it_begin, it_end, predicate, true);
+	}
+
+	template<typename Pred>
+	inline tag_timeline::iterator tag_timeline::erase_if_(iterator it_begin, iterator it_end, Pred predicate, bool erase_attributes)
+	{
 		ptrdiff_t erased_count = 0;
 		auto it = it_begin;
 		while (it != it_end)
@@ -583,6 +598,10 @@ namespace vt
 			auto end_distance = std::distance(it, it_end);
 
 			id_map_.erase(it->id);
+			if (erase_attributes)
+			{
+				attribute_instances_.erase(it->id);
+			}
 			it = segments_.erase(it);
 			it_end = it + (end_distance - 1);
 			erased_count++;

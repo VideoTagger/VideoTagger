@@ -106,6 +106,7 @@ namespace vt
 		if (json.contains("timestamp"))
 		{
 			start = json["timestamp"];
+			end = start;
 		}
 		else if (json.contains("start") and json.contains("end"))
 		{
@@ -187,44 +188,17 @@ namespace vt
 
 	bool tag_timeline::erase(segment_id id)
 	{
-		auto map_it = id_map_.find(id);
-		if (map_it == id_map_.end())
-		{
-			return false;
-		}
-
-		auto index = map_it->second;
-		auto it = segments_.begin() + index;
-		it = segments_.erase(it);
-		id_map_.erase(id);
-		update_id_map_(it, segments_.end(), -1);
-		attribute_instances_.erase(id);
-
-		return true;
+		return erase_(id, true);
 	}
 
 	tag_timeline::iterator tag_timeline::erase(iterator it)
 	{
-		auto id = it->id;
-		it = segments_.erase(it);
-		id_map_.erase(id);
-		update_id_map_(it, segments_.end(), -1);
-		attribute_instances_.erase(id);
-
-		return it;
+		return erase_(it, true);
 	}
 
 	tag_timeline::iterator tag_timeline::erase(iterator it_begin, iterator it_end)
 	{
-		for (iterator it = it_begin; it != it_end; ++it)
-		{
-			id_map_.erase(it->id);
-			attribute_instances_.erase(it->id);
-		}
-		auto update_it = segments_.erase(it_begin, it_end);
-		update_id_map_(update_it, segments_.end(), -static_cast<int64_t>(std::distance(it_begin, it_end)));
-
-		return update_it;
+		return erase_(it_begin, it_end, true);
 	}
 
 	tag_timeline_move_result tag_timeline::move(segment_id id, timestamp new_start, timestamp new_end)
@@ -426,12 +400,12 @@ namespace vt
 		return segments_.at(id_map_.at(id)).segment;
 	}
 
-	const segment_attribute_instances_container& tag_timeline::segment_attributes(segment_id id) const
+	const segment_attribute_instances_container& tag_timeline::segment_attribute_instances(segment_id id) const
 	{
 		return attribute_instances_.at(id);
 	}
 
-	segment_attribute_instances_container& tag_timeline::segment_attributes(segment_id id)
+	segment_attribute_instances_container& tag_timeline::segment_attribute_instances(segment_id id)
 	{
 		return attribute_instances_.at(id);
 	}
@@ -549,8 +523,8 @@ namespace vt
 			});
 		}
 
-		auto moved_segment = std::move(segments_.at(id_map_.at(id)).segment);
-		erase(id);
+		tag_segment moved_segment = std::move(segments_.at(id_map_.at(id)).segment);
+		erase_(id, false);
 		moved_segment.set(new_start, new_end);
 		insert_no_check_(id, std::move(moved_segment));
 
@@ -568,8 +542,8 @@ namespace vt
 			return tag_timeline_move_result(id, {id}, result_id);
 		}
 
-		auto moved_segment = std::move(segments_.at(id_map_.at(id)).segment);
-		erase(id);
+		tag_segment moved_segment = std::move(segments_.at(id_map_.at(id)).segment);
+		erase_(id, false);
 		moved_segment.set(ts);
 		insert_no_check_(id, std::move(moved_segment));
 
@@ -621,6 +595,58 @@ namespace vt
 		{
 			id_map_.at(it->id) += offset;
 		}
+	}
+
+	bool tag_timeline::erase_(segment_id id, bool erase_attributes)
+	{
+		auto map_it = id_map_.find(id);
+		if (map_it == id_map_.end())
+		{
+			return false;
+		}
+
+		auto index = map_it->second;
+		auto it = segments_.begin() + index;
+		it = segments_.erase(it);
+		id_map_.erase(id);
+		update_id_map_(it, segments_.end(), -1);
+
+		if (erase_attributes)
+		{
+			attribute_instances_.erase(id);
+		}
+
+		return true;
+	}
+
+	tag_timeline::iterator tag_timeline::erase_(iterator it, bool erase_attributes)
+	{
+		auto id = it->id;
+		it = segments_.erase(it);
+		id_map_.erase(id);
+		update_id_map_(it, segments_.end(), -1);
+		if (erase_attributes)
+		{
+			attribute_instances_.erase(id);
+		}
+
+		return it;
+	}
+
+	tag_timeline::iterator tag_timeline::erase_(iterator it_begin, iterator it_end, bool erase_attributes)
+	{
+		for (iterator it = it_begin; it != it_end; ++it)
+		{
+			id_map_.erase(it->id);
+			if (erase_attributes)
+			{
+				attribute_instances_.erase(it->id);
+			}
+		}
+		auto update_it = segments_.erase(it_begin, it_end);
+		update_id_map_(update_it, segments_.end(), -static_cast<int64_t>(std::distance(it_begin, it_end)));
+
+		return update_it;
 	}
 
 	void tag_timeline::find_overlapping_(std::set<segment_id>& result, segment_id segment, segment_part part, timestamp offset, const std::set<segment_id>& ignored_segments) const
