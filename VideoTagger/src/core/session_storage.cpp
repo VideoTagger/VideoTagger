@@ -416,6 +416,7 @@ namespace vt
 		insert_segment_marks_.clear();
 		
 		gizmo_targets_.clear();
+		toolbar.reset();
 		tasks.clear();
 	}
 }

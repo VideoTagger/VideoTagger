@@ -83,6 +83,11 @@ namespace vt::ui
 		return active_tool_;
 	}
 
+	void toolbar_session_data::reset()
+	{
+		remove_non_persistent(source_);
+	}
+
 	void toolbar_session_data::add_default_tools(event_source source)
 	{
 		toolbar_tool arrow_tool

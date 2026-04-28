@@ -3,6 +3,7 @@
 #include <vector>
 #include <string>
 
+#include <impl/resettable.hpp>
 #include <events/event_source.hpp>
 
 namespace vt::ui
@@ -16,7 +17,7 @@ namespace vt::ui
 		bool is_persistent = false;
 	};
 
-	struct toolbar_session_data
+	struct toolbar_session_data : public vt::impl::resettable
 	{
 	public:
 		toolbar_session_data();
@@ -36,6 +37,8 @@ namespace vt::ui
 
 		const std::vector<std::unique_ptr<toolbar_tool>>& tools() const;
 		const std::string& active_tool() const;
+
+		virtual void reset() override;
 
 	private:
 		void add_default_tools(event_source source);
