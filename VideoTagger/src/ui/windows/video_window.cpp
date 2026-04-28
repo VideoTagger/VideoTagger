@@ -265,7 +265,7 @@ namespace vt::ui::windows
 					static constexpr float min_speed = 0.25f;
 					static constexpr float max_speed = 8.0f;
 
-					ImGui::SetNextItemWidth(speed_control_size_x);
+					//ImGui::SetNextItemWidth(speed_control_size_x);
 					//if (ImGui::DragFloat("##VideoPlayerSpeed", &speed, 0.1f, min_speed, max_speed, "%.2fx", ImGuiSliderFlags_AlwaysClamp))
 					//{
 					//	video.set_speed(speed);
