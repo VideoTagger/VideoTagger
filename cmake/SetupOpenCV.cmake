@@ -48,7 +48,6 @@ function(vt_setup_opencv TARGET_NAME)
         target_link_libraries(${TARGET_NAME} PRIVATE
             opencv_core
             opencv_imgproc
-            ${opencv_libs}
         )
     else()
         find_package(OpenCV REQUIRED)
