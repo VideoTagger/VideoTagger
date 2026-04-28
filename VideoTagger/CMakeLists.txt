@@ -93,6 +93,7 @@ target_link_libraries(${PROJECT_NAME} PRIVATE nfd)
 
 #target_compile_definitions(${PROJECT_NAME} PRIVATE IMGUI_ENABLE_FREETYPE)
 set(SKIP_INSTALL_ALL ON)
+set(FT_DISABLE_ZLIB TRUE CACHE BOOL "Disable FreeType zlib support" FORCE)
 add_subdirectory("${PROJECT_SOURCE_DIR}/vendor/FreeType")
 target_link_libraries(${PROJECT_NAME} PRIVATE freetype)
 target_include_directories(${PROJECT_NAME} PRIVATE ${FREETYPE_INCLUDE_DIRS})
