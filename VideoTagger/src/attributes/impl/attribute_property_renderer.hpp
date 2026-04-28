@@ -1,6 +1,6 @@
 #pragma once
 #include <fmt/format.h>
-#include <ImGui.h>
+#include <imgui.h>
 #include <widgets/controls.hpp>
 #include <ui/widgets/common.hpp>
 #include <ui/widgets/text_input.hpp>
