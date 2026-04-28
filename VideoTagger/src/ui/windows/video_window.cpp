@@ -3,6 +3,7 @@
 #include <ui/widgets/common.hpp>
 #include <utils/timestamp.hpp>
 #include <ui/icons.hpp>
+#include <core/app_context.hpp>
 
 namespace vt::ui::windows
 {
@@ -126,7 +127,9 @@ namespace vt::ui::windows
 			ImRect img_rect(video_cursor_pos, { video_cursor_pos.x + image_size.x, video_cursor_pos.y + image_size.y });
 			ImGui::Dummy(img_rect.GetSize());
 			const auto& io = ImGui::GetIO();
-			if (is_interactive_ and ImGui::IsItemHovered())
+
+			bool is_move_tool_active = ctx_.session.toolbar.is_tool_active("move");
+			if (is_move_tool_active and is_interactive_ and ImGui::IsItemHovered())
 			{
 				const auto mouse_offset = io.MousePos - video_cursor_pos;
 				if (ImGui::IsMouseClicked(ImGuiMouseButton_Left))

@@ -98,6 +98,14 @@ namespace vt::ui
 			true,
 		};
 		add_tool(source, arrow_tool);
+		toolbar_tool move_tool
+		{
+			"move",
+			icons::tool_move,
+			"Move",
+			true,
+		};
+		add_tool(source, move_tool);
 	}
 
 	void toolbar_session_data::register_listeners(event_source source)

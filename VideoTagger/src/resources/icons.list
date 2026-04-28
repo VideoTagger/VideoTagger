@@ -104,3 +104,4 @@ move_item:f1ff # move_item
 line_start_circle:f816 # line_start_circle
 line_end_circle:f81b # line_end_circle
 tool_arrow:f82f # arrow_selector_tool
+tool_move:e925 # pan_tool
