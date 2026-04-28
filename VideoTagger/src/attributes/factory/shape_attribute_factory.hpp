@@ -1,7 +1,6 @@
 #pragma once
 #include <memory>
 #include <string>
-#include "simple_attribute_factory.hpp"
 #include <attributes/impl/shape.hpp>
 #include <attributes/core/shape_attribute.hpp>
 #include <attributes/impl/attribute_factory.hpp>

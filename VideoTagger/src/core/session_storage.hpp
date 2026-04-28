@@ -11,6 +11,7 @@
 #include <utils/vec.hpp>
 #include <tasks/session_task_manager.hpp>
 #include <attributes/impl/attribute_instance.hpp>
+#include <ui/toolbar_tool.hpp>
 
 namespace vt
 {
@@ -57,6 +58,7 @@ namespace vt
 
 	public:
 		session_task_manager tasks;
+		ui::toolbar_session_data toolbar;
 		
 		void register_timeline_listeners();
 		void register_gizmo_listeners();
