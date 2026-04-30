@@ -90,22 +90,9 @@ namespace vt::ui
 
 	void toolbar_session_data::add_default_tools(event_source source)
 	{
-		toolbar_tool arrow_tool
-		{
-			"select",
-			icons::tool_arrow,
-			"Select",
-			true,
-		};
-		add_tool(source, arrow_tool);
-		toolbar_tool move_tool
-		{
-			"move",
-			icons::tool_move,
-			"Move",
-			true,
-		};
-		add_tool(source, move_tool);
+		add_tool(source, toolbar_tool{ "select", icons::tool_arrow, "Select", true });
+		add_tool(source, toolbar_tool{ "move", icons::tool_move, "Move", true });
+		add_tool(source, toolbar_tool{ "magnifier", icons::search, "Zoom In/Out", true });
 	}
 
 	void toolbar_session_data::register_listeners(event_source source)

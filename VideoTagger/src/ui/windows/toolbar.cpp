@@ -52,6 +52,7 @@ namespace vt::ui::windows
 
 		ImGui::SetNextWindowViewport(ImGui::GetMainViewport()->ID);
 
+		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, style.WindowPadding / 2.f);
 		ui::begin_rounded_window_style();
 		ImGui::PushStyleColor(ImGuiCol_WindowBg, ctx_.current_theme.get_float4(theme_color::background_secondary));
 
@@ -79,6 +80,7 @@ namespace vt::ui::windows
 		{
 			ImGui::PopStyleColor();
 			ui::end_rounded_window_style();
+			ImGui::PopStyleVar();
 		}
 	}
 
@@ -136,6 +138,6 @@ namespace vt::ui::windows
 		const auto& tools = toolbar.tools();
 		auto button_size = ImGui::GetFrameHeightWithSpacing();
 		auto grabber_height = ImGui::GetFrameHeightWithSpacing();
-		return grabber_height + button_size * tools.size() + style.WindowPadding.y * 2.f;
+		return grabber_height + button_size * tools.size() + style.WindowPadding.y; // style.WindowPadding.y * 2 / 2
 	}
 }

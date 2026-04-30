@@ -33,6 +33,8 @@ namespace vt::ui::windows
 		void set_texture(gl_texture& texture);
 		void set_active(bool value);
 
+		void on_zoom(float zoom_factor, ImVec2 video_screen_pos, ImVec2 zoom_center);
+
 		virtual void pre_style() override;
 		virtual void post_style() override;
 

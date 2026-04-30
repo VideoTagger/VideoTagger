@@ -50,6 +50,13 @@ namespace vt::ui::windows
 		is_active_ = value;
 	}
 
+	void video_window::on_zoom(float zoom_factor, ImVec2 video_screen_pos, ImVec2 zoom_center)
+	{
+		auto new_scale = std::clamp(scale_ * zoom_factor, 0.1f, 10.0f);
+		offset_ += (zoom_center - video_screen_pos) * (1.0f - new_scale / scale_);
+		scale_ = new_scale;
+	}
+
 	void video_window::pre_style()
 	{
 		if (video_->is_open())
@@ -129,27 +136,46 @@ namespace vt::ui::windows
 			const auto& io = ImGui::GetIO();
 
 			bool is_move_tool_active = ctx_.session.toolbar.is_tool_active("move");
-			if (is_move_tool_active and is_interactive_ and ImGui::IsItemHovered())
+			bool is_zoom_tool_active = ctx_.session.toolbar.is_tool_active("magnifier");
+			if (is_interactive_)
 			{
-				const auto mouse_offset = io.MousePos - video_cursor_pos;
-				if (ImGui::IsMouseClicked(ImGuiMouseButton_Left))
-				{
-					last_mouse_pos_ = mouse_offset;
-				}
+				bool is_vid_hovered = ImGui::IsItemHovered();
+				bool is_win_hovered = ImGui::IsWindowHovered();
 
-				if (ImGui::IsMouseDragging(ImGuiMouseButton_Left))
+				if (is_move_tool_active)
 				{
-					ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeAll);
-					offset_ += (mouse_offset - last_mouse_pos_) * (1.0f / scale_);
-				}
-				if (io.MouseWheel != 0)
-				{
-					auto scroll_dir = !std::signbit(io.MouseWheel) * 2 - 1;
-					auto new_scale = std::clamp(scale_ + scroll_dir * 0.1f, 0.1f, 10.0f);
+					const auto mouse_offset = io.MousePos - video_cursor_pos;
+					
+					if (is_win_hovered)
+					{
+						if (ImGui::IsMouseClicked(ImGuiMouseButton_Left))
+						{
+							last_mouse_pos_ = mouse_offset;
+						}
 
-					// Adjusts the offset to keep the zoom centered on the mouse position
-					offset_ += (io.MousePos - video_screen_pos) * (1.0f - new_scale / scale_);
-					scale_ = new_scale;
+						if (ImGui::IsMouseDragging(ImGuiMouseButton_Left))
+						{
+							ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeAll);
+							offset_ += (mouse_offset - last_mouse_pos_) * (1.0f / scale_);
+						}
+					}
+
+					if (is_vid_hovered and io.MouseWheel != 0)
+					{
+						auto zoom_factor = 1.0f + (io.MouseWheel > 0 ? 0.1f : -0.1f);
+						on_zoom(zoom_factor, video_screen_pos, io.MousePos);
+					}
+				}
+				if (is_zoom_tool_active and is_vid_hovered)
+				{
+					if (ImGui::IsMouseClicked(ImGuiMouseButton_Left))
+					{
+						on_zoom(1.1f, video_screen_pos, io.MousePos);
+					}
+					else if (ImGui::IsMouseClicked(ImGuiMouseButton_Right))
+					{
+						on_zoom(0.9f, video_screen_pos, io.MousePos);
+					}
 				}
 			}
 
