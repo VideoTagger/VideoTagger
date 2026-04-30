@@ -133,14 +133,14 @@ namespace vt::widgets
 						auto tint_color = theme.get_float4(theme_color::icon_thumbnail);
 
 						bool tile_active = tile(fmt::format("group{}", group_id).c_str(), label, tile_size, image_tile_size, image,
-							[&remove_group](const std::string& label)
+						[&remove_group](const std::string& label)
 						{
 							if (ImGui::MenuItem("Remove"))
 							{
 								remove_group = true;
 							}
 						},
-							[&remove_group, gid = group_id](const std::string& label)
+						[&remove_group, gid = group_id](const std::string& label)
 						{
 							//TODO: This will display "..." when it gets removed, try to fix that
 							if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_SourceNoHoldToOpenOthers))
