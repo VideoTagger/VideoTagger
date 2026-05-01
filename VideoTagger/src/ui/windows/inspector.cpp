@@ -3,6 +3,7 @@
 
 #include <widgets/time_input.hpp>
 #include <widgets/controls.hpp>
+#include <widgets/video_player.hpp>
 #include <tags/tag_timeline.hpp>
 #include <utils/time.hpp>
 #include <ui/icons.hpp>
@@ -294,6 +295,9 @@ namespace vt::ui::windows
 			//if (visible)
 			ImGui::SeparatorText("Attributes");
 			{
+				show_player_video_ids(is_focused() and !group.empty());
+
+				size_t vid_view_id{};
 				for (auto& group_info : group)
 				{
 					auto vid_id = group_info.id;
@@ -305,7 +309,7 @@ namespace vt::ui::windows
 						ImGui::SetNextItemOpen(false, ImGuiCond_Appearing);
 					}
 					auto vid_id_attrs_id = fmt::format("##Attributes-{}", vid_id);
-					bool vid_id_visible = widgets::begin_collapsible(vid_id_attrs_id, video_name, collapsible_flags, icons::video);
+					bool vid_id_visible = widgets::begin_collapsible(vid_id_attrs_id, video_name, collapsible_flags, icons::video, std::nullopt, nullptr, vid_view_id + 1);
 					ImGui::EndDisabled();
 					if (vid_id_visible)
 					{
@@ -360,6 +364,7 @@ namespace vt::ui::windows
 						ImGui::PopStyleVar();
 						widgets::end_collapsible();
 					}
+					++vid_view_id;
 				}
 				//widgets::end_collapsible();
 			}
@@ -368,6 +373,12 @@ namespace vt::ui::windows
 		}
 
 		ImGui::EndChild();
+	}
+
+	void inspector::show_player_video_ids(bool value)
+	{
+		auto& player = ctx_.get_window<widgets::video_player>();
+		player.set_show_video_ids(value);
 	}
 
 	void inspector::register_listeners()

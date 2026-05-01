@@ -23,6 +23,7 @@ namespace vt::ui::windows
 		virtual void on_render() override;
 
 	private:
+		void show_player_video_ids(bool value);
 		void register_listeners();
 		void render_attribute_instances(const tag& selected_tag);
 

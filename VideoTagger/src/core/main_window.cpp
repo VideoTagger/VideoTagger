@@ -2766,7 +2766,7 @@ namespace vt
 
 				auto video_name = video_ptr->title();
 
-				auto& vid_win = vid_wins[vid_id++];
+				auto& vid_win = vid_wins[vid_id];
 				vid_win->set_active(timestamp_in_range);
 				
 				if (reconfigure)
@@ -2780,6 +2780,37 @@ namespace vt
 				{
 					//TODO: Overlays shouldn't be cleared every frame, rewrite the overlay to not copy values - it should get them by itself
 					vid_win->clear_overlays();
+					vid_win->with_overlay([vid_id](ImVec2 pos, ImVec2 size, ImVec2 tex_size)
+					{
+						auto& player = ctx_.get_window<widgets::video_player>();
+						if (!player.show_video_ids()) return;
+
+						static constexpr float win_padding = 10.f;
+						static constexpr float text_padding = 10.f;
+
+						const auto& style = ImGui::GetStyle();
+						const auto& theme = ctx_.current_theme;
+						auto draw_list = ImGui::GetWindowDrawList();
+						auto win_rect = ImGui::GetCurrentWindow()->InnerRect;
+
+						auto cpos = ImGui::GetCursorPos();
+						ImGui::PushFont(ctx_.get_font(font_type::h1));
+						std::string text = std::to_string(vid_id + 1);
+						ImVec2 text_size = ImGui::CalcTextSize(text.c_str());
+						float text_side = std::max(text_size.x, text_size.y);
+						text_side += 2 * text_padding;
+
+						ImRect bg_rect = ImRect{ win_rect.Min.x, win_rect.Max.y - text_side, win_rect.Min.x + text_side, win_rect.Max.y };
+						bg_rect.Translate({ win_padding, -win_padding });
+						auto text_pos = ImVec2{ bg_rect.Min.x + (bg_rect.GetWidth() - text_size.x) * 0.5f, bg_rect.Min.y + text_padding };
+
+						auto color = theme.get_float4(theme_color::text_inverted);
+						color.w *= 0.75f;
+						auto color_u32 = ImGui::GetColorU32(color);
+						draw_list->AddRectFilled(bg_rect.Min, bg_rect.Max, color_u32, 7.f);
+						ImGui::RenderText(text_pos, text.c_str());
+						ImGui::PopFont();
+					});
 					//vid_win->with_overlay([&point_pos, start_pos, has_selected_attribute, selected_attribute, is_shape, has_target, &video_data, this](ImVec2 pos, ImVec2 size, ImVec2 tex_size)
 					//{
 					//	static auto from_tex_pos = [&pos, &tex_size, &size](const ImVec2 point) -> ImVec2
@@ -3217,6 +3248,7 @@ namespace vt
 					//});
 				}
 
+				++vid_id;
 				vid_win->open_and_render();
 			}
 		}

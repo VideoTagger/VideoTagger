@@ -33,7 +33,7 @@ namespace vt::widgets
 		return static_cast<size_t>(std::pow(2, std::ceil(std::log2(n))));
 	}
 
-	video_player::video_player() : ui::window{ "Video Player", "video-player", "Video Player", ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse }, dock_window_count_{}, speed_{ 1.0f }, is_playing_{}, autoplay_{}, loop_mode_{}
+	video_player::video_player() : ui::window{ "Video Player", "video-player", "Video Player", ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse }, dock_window_count_{}, speed_{ 1.0f }, is_playing_{}, autoplay_{}, loop_mode_{}, show_video_ids_{}
 	{
 		set_icon(icons::play);
 
@@ -138,6 +138,11 @@ namespace vt::widgets
 		loop_mode_ = value;
 	}
 
+	void video_player::set_show_video_ids(bool value)
+	{
+		show_video_ids_ = value;
+	}
+
 	void video_player::set_playing(bool value)
 	{
 		is_playing_ = value;
@@ -157,6 +162,11 @@ namespace vt::widgets
 	loop_mode video_player::loop_mode() const
 	{
 		return loop_mode_;
+	}
+
+	bool video_player::show_video_ids() const
+	{
+		return show_video_ids_;
 	}
 
 	std::vector<std::unique_ptr<ui::windows::video_window>>& video_player::video_windows()

@@ -43,8 +43,8 @@ namespace vt::ui
 			{
 				on_display();
 			}
-			is_hovered_ = ImGui::IsWindowHovered();
-			is_focused_ = ImGui::IsWindowFocused();
+			is_hovered_ = ImGui::IsWindowHovered(ImGuiHoveredFlags_ChildWindows) or ImGui::IsWindowHovered();
+			is_focused_ = ImGui::IsWindowFocused(ImGuiFocusedFlags_ChildWindows) or ImGui::IsWindowFocused();
 
 			const auto pos = ImGui::GetWindowPos();
 			const auto size = ImGui::GetWindowSize();
