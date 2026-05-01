@@ -8,7 +8,8 @@
 namespace vt::ui::windows
 {
 	video_window::video_window(uint64_t id) : window
-	{ "video-window-" + std::to_string(id), "video-window-" + std::to_string(id), "Video",
+	{
+		"video-window-" + std::to_string(id), "video-window-" + std::to_string(id), "Video",
 		ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoSavedSettings, false
 	}, video_{}, texture_{}, is_active_{}, is_interactive_{ true }, id_{ id }, scale_{ 1.0f }, offset_{}
 	{
