@@ -23,7 +23,7 @@ namespace vt::ui
 			ctx_.dispatch_event<video_group_remove_video_event>("group-video-tile", group_id_, video().id());
 		});
 
-		menu.add<ui::menu_generic_button>(icons::property, "Properties", [this]()
+		menu.add<ui::menu_generic_button>(icons::settings, "Properties", [this]()
 		{
 			auto video_id = video().id();
 			auto& group = ctx_.current_project->video_groups.at(group_id_);
