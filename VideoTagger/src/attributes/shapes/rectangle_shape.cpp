@@ -2,6 +2,7 @@
 #include <events/gizmo/gizmo_set_targets_event.hpp>
 #include <core/app_context.hpp>
 #include <utils/intersection.hpp>
+#include <core/debug.hpp>
 
 namespace vt
 {
@@ -43,7 +44,7 @@ namespace vt
 	{
 		auto draw_list = ImGui::GetWindowDrawList();
 		auto scaled_start = impl::shape::scale_point(start, shape_space, draw_rect);
-		auto scaled_end = impl::shape::scale_point(start, shape_space, draw_rect);
+		auto scaled_end = impl::shape::scale_point(end, shape_space, draw_rect);
 
 		draw_list->AddRectFilled(scaled_start, scaled_end, fill_color);
 		draw_list->AddRect(scaled_start, scaled_end, outline_color);
@@ -53,15 +54,17 @@ namespace vt
 	{
 		auto draw_list = ImGui::GetWindowDrawList();
 		ImVec2 scaled_start = impl::shape::scale_point(start, shape_space, draw_rect);
-		ImVec2 scaled_end = impl::shape::scale_point(start, shape_space, draw_rect);
+		ImVec2 scaled_end = impl::shape::scale_point(end, shape_space, draw_rect);
 
 		for (auto& p : { scaled_start, scaled_end })
 		{
 			draw_list->AddCircleFilled(p, radius, fill_color);
 		}
-		for (auto& p : { scaled_start, scaled_end })
+
+		auto size = scaled_start - scaled_end;
+		for (auto& p : { scaled_start + ImVec2{ size.x, 0 }, scaled_end + ImVec2{ 0, size.y } })
 		{
-			draw_list->AddCircleFilled(p, radius / 2.f, outline_color);
+			draw_list->AddCircleFilled(p, radius / 2.f, fill_color);
 		}
 	}
 
@@ -74,22 +77,20 @@ namespace vt
 
 	void rectangle_shape::deserialize(const nlohmann::ordered_json& json)
 	{
-		if (json.contains("points") and json["points"].is_array())
+		if (!json.contains("points") or !json["points"].is_array())
 		{
-			auto points = json["points"].get<std::vector<utils::vec2<uint32_t>>>();
+			debug::error("Invalid JSON: missing 'points' array");
+			return;
 		}
-	}
-}
 
-namespace vt::math
-{
-	template<>
-	inline rectangle_shape shape_lerp<rectangle_shape>(const rectangle_shape& start, const rectangle_shape& end, float alpha)
-	{
-		return rectangle_shape
+		auto points = json["points"].get<std::vector<utils::vec2<uint32_t>>>();
+		if (points.size() != 2)
 		{
-			math::lerp(start.start, end.start, alpha),
-			math::lerp(start.end, end.end, alpha)
-		};
+			debug::error("Invalid JSON: 'points' array must contain exactly 2 points");
+			return;
+		}
+
+		start = points[0];
+		end = points[1];
 	}
 }

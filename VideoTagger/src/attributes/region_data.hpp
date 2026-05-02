@@ -8,6 +8,7 @@
 #include <utils/iterator_range.hpp>
 #include <attributes/impl/interpolated_shape_predictor.hpp>
 #include <attributes/predictors/dummy_shape_predictor.hpp>
+#include <core/app_context.hpp>
 
 namespace vt
 {
@@ -19,15 +20,15 @@ namespace vt
 		using const_iterator = typename std::map<timestamp, shape_type>::const_iterator;
 
 		region_data() :
-			interpolator_{ std::make_unique<dummy_shape_predictor<shape_type>>() }, interpolation_keyframe_timestamps_(interpolator_->data_point_count()),
+			interpolator_{ std::make_unique<dummy_shape_predictor<shape_type>>("dummy")}, interpolation_keyframe_timestamps_(interpolator_->data_point_count()),
 			interpolation_keyframe_shapes_(interpolator_->data_point_count()) {}
 
 	private:
 		std::map<timestamp, shape_type> keyframes_;
 		std::unique_ptr<impl::interpolated_shape_predictor<shape_type>> interpolator_;
 
-		std::vector<timestamp> interpolation_keyframe_timestamps_;
-		std::vector<shape_type> interpolation_keyframe_shapes_;
+		mutable std::vector<timestamp> interpolation_keyframe_timestamps_;
+		mutable std::vector<shape_type> interpolation_keyframe_shapes_;
 
 	public:
 		/**
@@ -202,9 +203,9 @@ namespace vt
 			return start <= ts and ts <= end;
 		}
 
-		bool update_interpolation_keyframes_(timestamp ts)
+		bool update_interpolation_keyframes_(timestamp ts) const
 		{
-			static constexpr auto update_vectors = [](const std::vector<iterator>& its, std::vector<timestamp>& ts, std::vector<shape_type>& sh)
+			static constexpr auto update_vectors = [](const std::vector<const_iterator>& its, std::vector<timestamp>& ts, std::vector<shape_type>& sh)
 			{
 				if (ts.size() != its.size())
 				{
@@ -227,7 +228,7 @@ namespace vt
 				return false;
 			}
 
-			static std::vector<iterator> keyframe_its;
+			static std::vector<const_iterator> keyframe_its;
 			size_t data_point_count = interpolation_keyframe_timestamps_.size();
 			keyframe_its.reserve(data_point_count);
 			keyframe_its.clear();
@@ -290,7 +291,7 @@ namespace vt
 		{
 			if (interpolator == nullptr)
 			{
-				interpolator_ = std::make_unique<dummy_shape_predictor<shape_type>>();
+				interpolator_ = std::make_unique<dummy_shape_predictor<shape_type>>("dummy");
 				return;
 			}
 
@@ -331,7 +332,15 @@ namespace vt
 
 		[[nodiscard]] virtual nlohmann::ordered_json serialize() const override
 		{
-			auto keyframes_json = nlohmann::ordered_json::array();
+			nlohmann::ordered_json json;
+
+			if (interpolator_->name() != "dummy")
+			{
+				json["interpolator"] = interpolator_->name();
+			}
+
+			auto& keyframes_json = json["keyframes"];
+			keyframes_json = nlohmann::ordered_json::array();
 			for (auto& [keyframe_ts, shape] : keyframes_)
 			{
 				auto keyframe_json = nlohmann::ordered_json{};
@@ -340,17 +349,26 @@ namespace vt
 				keyframes_json.push_back(keyframe_json);
 			}
 
-			return keyframes_json;
+			return json;
 		}
 
 		virtual void deserialize(const nlohmann::ordered_json& json) override
 		{
-			if (!json.is_array())
+			if (!json.contains("keyframes")) return;
+
+			if (json.contains("interpolator"))
 			{
-				return;
+				std::string interpolator_name = json["interpolator"];
+				auto& registry = ctx_.get_shape_predictor_registry<shape_type>();
+				auto interpolator = registry.new_interpolator(interpolator_name);
+				if (interpolator == nullptr)
+				{
+					debug::error("JSON contained unknown interpolator '{}'", interpolator_name);
+				}
+				set_interpolator(std::move(interpolator));
 			}
 
-			for (auto& keyframe_json : json)
+			for (auto& keyframe_json : json["keyframes"])
 			{
 				if (!keyframe_json.contains("timestamp") or !keyframe_json.contains("shape"))
 				{

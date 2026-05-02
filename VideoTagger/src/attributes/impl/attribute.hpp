@@ -26,6 +26,7 @@ namespace vt::impl
 
 		attribute_factory* factory() const;
 
+		static nlohmann::ordered_json serialize_instance(const impl::attribute_instance& instance);
 		std::unique_ptr<impl::attribute_instance> deserialize_instance(const nlohmann::ordered_json& json);
 
 		[[nodiscard]] virtual nlohmann::ordered_json serialize() const override;

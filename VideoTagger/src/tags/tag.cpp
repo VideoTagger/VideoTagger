@@ -403,9 +403,9 @@ namespace vt
 
 	std::unique_ptr<impl::attribute_instance> tag::deserialize_attribute_instance(const nlohmann::ordered_json& json) const
 	{
-		if (!json.contains("name") or !json.contains("type"))
+		if (!json.contains("name"))
 		{
-			debug::error("Invalid attribute instance JSON structure, missing 'name' or 'type' field");
+			debug::error("Invalid attribute instance JSON structure, missing 'name' field");
 			return nullptr;
 		}
 

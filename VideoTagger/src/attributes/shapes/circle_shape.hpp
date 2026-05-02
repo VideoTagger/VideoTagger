@@ -32,3 +32,15 @@ namespace vt
 	};
 }
 
+namespace vt::math
+{
+	template<>
+	inline circle_shape shape_lerp<circle_shape>(const circle_shape& start, const circle_shape& end, float alpha)
+	{
+		return circle_shape
+		{
+			math::lerp(start.pos, end.pos, alpha), //pos lerp
+			math::lerp(start.radius, end.radius, alpha) //radius lerp
+		};
+	}
+}

@@ -2,6 +2,7 @@
 #include <core/app_context.hpp>
 #include <events/gizmo/gizmo_set_targets_event.hpp>
 #include <utils/intersection.hpp>
+#include <core/debug.hpp>
 
 namespace vt
 {
@@ -60,7 +61,6 @@ namespace vt
 			auto scaled_point = impl::shape::scale_point(point, shape_space, draw_rect);
 
 			draw_list->AddCircleFilled(scaled_point, radius, fill_color);
-			draw_list->AddCircleFilled(scaled_point, radius / 2.f, outline_color);
 		}
 	}
 
@@ -73,9 +73,12 @@ namespace vt
 
 	void points_shape::deserialize(const nlohmann::ordered_json& json)
 	{
-		if (json.contains("points") and json["points"].is_array())
+		if (!json.contains("points") or !json["points"].is_array())
 		{
-			points = json["points"];
+			debug::error("Invalid JSON: missing 'points' array");
+			return;
 		}
+
+		points = json["points"];
 	}
 }

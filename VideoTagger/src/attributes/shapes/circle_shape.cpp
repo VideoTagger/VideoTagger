@@ -2,6 +2,7 @@
 #include <core/app_context.hpp>
 #include <events/gizmo/gizmo_set_targets_event.hpp>
 #include <utils/intersection.hpp>
+#include <core/debug.hpp>
 
 namespace vt
 {
@@ -33,7 +34,7 @@ namespace vt
 	{
 		auto draw_list = ImGui::GetWindowDrawList();
 		auto scaled_pos = impl::shape::scale_point(pos, shape_space, draw_rect);
-		auto scaled_radius = impl::shape::scale_point({ radius, radius }, shape_space, draw_rect);
+		auto scaled_radius = impl::shape::scale_point({ radius, radius }, shape_space, ImRect{ {}, draw_rect.GetSize() });
 
 		draw_list->AddEllipseFilled(scaled_pos, scaled_radius, fill_color);
 		draw_list->AddEllipse(scaled_pos, scaled_radius, outline_color);
@@ -45,7 +46,6 @@ namespace vt
 		auto scaled_pos = impl::shape::scale_point(pos, shape_space, draw_rect);
 
 		draw_list->AddCircleFilled(scaled_pos, radius, fill_color);
-		draw_list->AddCircleFilled(scaled_pos, radius / 2.f, outline_color);
 	}
 
 	[[nodiscard]] nlohmann::ordered_json circle_shape::serialize() const
@@ -58,26 +58,19 @@ namespace vt
 
 	void circle_shape::deserialize(const nlohmann::ordered_json& json)
 	{
-		if (json.contains("position"))
+		if (!json.contains("position"))
 		{
-			pos = json["position"];
+			debug::error("Invalid JSON: missing 'position' field");
+			return;
 		}
-		if (json.contains("radius") and json["radius"].is_number_integer())
-		{
-			radius = json["radius"];
-		}
-	}
-}
 
-namespace vt::math
-{
-	template<>
-	circle_shape shape_lerp<circle_shape>(const circle_shape& start, const circle_shape& end, float alpha)
-	{
-		return circle_shape
+		if (!json.contains("radius") or !json["radius"].is_number_integer())
 		{
-			math::lerp(start.pos, end.pos, alpha), //pos lerp
-			math::lerp(start.radius, end.radius, alpha) //radius lerp
-		};
+			debug::error("Invalid JSON: missing or invalid 'radius' field");
+			return;
+		}
+
+		pos = json["position"];
+		radius = json["radius"];
 	}
 }
