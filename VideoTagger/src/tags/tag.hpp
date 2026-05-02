@@ -8,7 +8,6 @@
 #include <core/types.hpp>
 #include <impl/serializable.hpp>
 #include <attributes/impl/attribute.hpp>
-#include <attributes/attribute_registry.hpp>
 
 namespace vt
 {

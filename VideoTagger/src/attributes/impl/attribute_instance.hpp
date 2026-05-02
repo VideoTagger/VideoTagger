@@ -3,6 +3,8 @@
 #include <impl/resettable.hpp>
 #include <impl/serializable.hpp>
 #include <attributes/impl/attribute.hpp>
+#include <tags/tag.hpp>
+#include <utils/timestamp.hpp>
 
 namespace vt::impl
 {
@@ -45,15 +47,11 @@ namespace vt::impl
 			return attribute_->name();
 		}
 
-		[[nodiscard]] virtual nlohmann::ordered_json serialize() const override
+		const std::string& attribute_type_name() const
 		{
-			nlohmann::ordered_json result;
-			result["name"] = attribute_->name();
-			result["type"] = attribute_->type_name();
-			return result;
+			return attribute_->type_name();
 		}
 
-		virtual void render_properties() {};
-		virtual void render_overlay() {};
+		virtual void render_overlay(const tag& attribute_tag, timestamp ts, ImVec2 pos, ImVec2 size, ImVec2 tex_size) {}
 	};
 }

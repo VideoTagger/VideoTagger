@@ -34,15 +34,15 @@ namespace vt
 
 namespace vt::math
 {
-	template<typename shape_type, typename = std::enable_if_t<std::is_base_of_v<points_shape, shape_type>>>
-	inline shape_type shape_lerp(const shape_type& start, const shape_type& end, float alpha)
+	template<>
+	inline points_shape shape_lerp<points_shape>(const points_shape& start, const points_shape& end, float alpha)
 	{
 		if (start.points.size() != end.points.size())
 		{
 			debug::panic("Can't interpolate between shapes with different number of points");
 		}
 
-		shape_type result{};
+		points_shape result{};
 		result.points.reserve(start.points.size());
 		for (size_t i = 0; i < start.points.size(); ++i)
 		{

@@ -19,6 +19,7 @@
 #include "tag_storage.hpp"
 #include <core/types.hpp>
 #include <attributes/impl/attribute_instance.hpp>
+#include <attributes/impl/attribute.hpp>
 
 namespace vt
 {
@@ -511,7 +512,7 @@ namespace vt
 					{
 						if (attr_instance == nullptr) continue;
 
-						video_attr_instances_json.push_back(attr_instance->serialize());
+						video_attr_instances_json.push_back(impl::attribute::serialize_instance(*attr_instance));
 					}
 				}
 				json_tag_segments.push_back(segment_json);

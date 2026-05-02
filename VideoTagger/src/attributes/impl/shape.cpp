@@ -8,7 +8,8 @@ namespace vt::impl
 	}
 	ImVec2 shape::scale_point(utils::vec2<uint32_t> point, utils::vec2<uint32_t> point_space, ImRect draw_rect)
 	{
-		return { 
+		return
+		{
 			scale_value(point[0], point_space[0], draw_rect.Min.x, draw_rect.Max.x),
 			scale_value(point[1], point_space[1], draw_rect.Min.y, draw_rect.Max.y)
 		};

@@ -2811,6 +2811,34 @@ namespace vt
 						ImGui::RenderText(text_pos, text.c_str());
 						ImGui::PopFont();
 					});
+					
+					vid_win->with_overlay([video_id = video_data.id](ImVec2 pos, ImVec2 size, ImVec2 tex_size)
+					{
+						auto current_ts = ctx_.displayed_videos.current_timestamp_as_timestamp();
+						
+						auto& segment_storage = ctx_.get_current_segment_storage();
+						for (auto& [tag_name, segments] : segment_storage)
+						{
+							auto& tag = ctx_.current_project->tags.at(tag_name);
+
+							auto segment_it = segments.find(current_ts);
+							if (segment_it == segments.end()) continue;
+
+							auto& segment_attr_instances = segments.segment_attribute_instances(segment_it->id);
+							auto video_attr_it = segment_attr_instances.find(video_id);
+							if (video_attr_it == segment_attr_instances.end()) continue;
+
+							auto& video_attr_instances = video_attr_it->second;
+							for (auto& attr_instance_ptr : video_attr_instances)
+							{
+								if (attr_instance_ptr == nullptr) continue;
+
+								attr_instance_ptr->render_overlay(tag, current_ts, pos, size, tex_size);
+							}
+						}
+					});
+					
+
 					//vid_win->with_overlay([&point_pos, start_pos, has_selected_attribute, selected_attribute, is_shape, has_target, &video_data, this](ImVec2 pos, ImVec2 size, ImVec2 tex_size)
 					//{
 					//	static auto from_tex_pos = [&pos, &tex_size, &size](const ImVec2 point) -> ImVec2

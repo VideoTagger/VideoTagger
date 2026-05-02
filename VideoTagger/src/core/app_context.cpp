@@ -32,6 +32,9 @@
 #include <attributes/shapes/points_shape.hpp>
 #include <attributes/shapes/polygon_shape.hpp>
 
+#include <attributes/factory/dummy_shape_predictor_factory.hpp>
+#include <attributes/factory/linear_shape_predictor_factory.hpp>
+
 namespace vt
 {
 	app_context::app_context()
@@ -39,6 +42,7 @@ namespace vt
 		create_windows();
 		create_popups();
 		init_attribute_registry();
+		init_shape_predictor_registries();
 	}
 
 	void app_context::init_attribute_registry()
@@ -54,6 +58,22 @@ namespace vt
 		attr_registry.new_factory<shape_attribute_factory<line_shape>>("line", shape_color, icons::tool_line);
 		attr_registry.new_factory<shape_attribute_factory<points_shape>>("points", shape_color, icons::tool_points);
 		attr_registry.new_factory<shape_attribute_factory<polygon_shape>>("polygon", shape_color, icons::shape_polygon);
+	}
+
+	void app_context::init_shape_predictor_registries()
+	{
+		std::apply([](auto&&... registry)
+		{
+			auto register_interpolators = [](auto& reg)
+			{
+				using shape_type = typename std::remove_reference_t<decltype(reg)>::shape_type;
+				reg.new_factory<dummy_shape_predictor_factory<shape_type>>("dummy");
+				reg.new_factory<linear_shape_predictor_factory<shape_type>>("linear");
+			};
+
+			(register_interpolators(registry), ...);
+
+		}, shape_predictor_registries);
 	}
 
 	void app_context::create_windows()
