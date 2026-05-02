@@ -2780,6 +2780,32 @@ namespace vt
 				{
 					//TODO: Overlays shouldn't be cleared every frame, rewrite the overlay to not copy values - it should get them by itself
 					vid_win->clear_overlays();
+					vid_win->with_overlay([video_id = video_data.id](ImVec2 pos, ImVec2 size, ImVec2 tex_size)
+					{
+						auto current_ts = ctx_.displayed_videos.current_timestamp_as_timestamp();
+
+						auto& segment_storage = ctx_.get_current_segment_storage();
+						for (auto& [tag_name, segments] : segment_storage)
+						{
+							auto& tag = ctx_.current_project->tags.at(tag_name);
+
+							auto segment_it = segments.find(current_ts);
+							if (segment_it == segments.end()) continue;
+
+							auto& segment_attr_instances = segments.segment_attribute_instances(segment_it->id);
+							auto video_attr_it = segment_attr_instances.find(video_id);
+							if (video_attr_it == segment_attr_instances.end()) continue;
+
+							auto& video_attr_instances = video_attr_it->second;
+							for (auto& attr_instance_ptr : video_attr_instances)
+							{
+								if (attr_instance_ptr == nullptr) continue;
+
+								attr_instance_ptr->render_overlay(tag, current_ts, pos, size, tex_size);
+							}
+						}
+					});
+
 					vid_win->with_overlay([vid_id](ImVec2 pos, ImVec2 size, ImVec2 tex_size)
 					{
 						auto& player = ctx_.get_window<widgets::video_player>();
@@ -2810,32 +2836,6 @@ namespace vt
 						draw_list->AddRectFilled(bg_rect.Min, bg_rect.Max, color_u32, 7.f);
 						ImGui::RenderText(text_pos, text.c_str());
 						ImGui::PopFont();
-					});
-					
-					vid_win->with_overlay([video_id = video_data.id](ImVec2 pos, ImVec2 size, ImVec2 tex_size)
-					{
-						auto current_ts = ctx_.displayed_videos.current_timestamp_as_timestamp();
-						
-						auto& segment_storage = ctx_.get_current_segment_storage();
-						for (auto& [tag_name, segments] : segment_storage)
-						{
-							auto& tag = ctx_.current_project->tags.at(tag_name);
-
-							auto segment_it = segments.find(current_ts);
-							if (segment_it == segments.end()) continue;
-
-							auto& segment_attr_instances = segments.segment_attribute_instances(segment_it->id);
-							auto video_attr_it = segment_attr_instances.find(video_id);
-							if (video_attr_it == segment_attr_instances.end()) continue;
-
-							auto& video_attr_instances = video_attr_it->second;
-							for (auto& attr_instance_ptr : video_attr_instances)
-							{
-								if (attr_instance_ptr == nullptr) continue;
-
-								attr_instance_ptr->render_overlay(tag, current_ts, pos, size, tex_size);
-							}
-						}
 					});
 					
 
