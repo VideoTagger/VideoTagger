@@ -26,5 +26,34 @@ namespace vt
 		{
 			return std::make_unique<shape_attribute<shape_type>>(this, name);
 		}
+
+		virtual std::unique_ptr<ui::toolbar_tool> new_tool(const tag& tag) const
+		{
+			return new_tool_impl<shape_tool<shape_type>>(tag);
+		}
+
+		template<typename tool_type, typename = std::enable_if_t<std::is_base_of_v<ui::toolbar_tool, tool_type>>>
+		std::unique_ptr<ui::toolbar_tool> new_tool_impl(const tag& tag) const
+		{
+			return std::make_unique<tool_type>(name(), icon(), utils::string::to_titlecase(name()), tag);
+		}
+	};
+
+	/**
+	 * @brief Same as shape_attribute_factory but allows specifying a custom tool type. The tool type must be default constructible and derive from ui::toolbar_tool
+	 * 
+	 * @sa Use shape_attribute_factory if you don't need a custom tool type
+	 */
+	template<typename shape_type, typename tool_type, typename = std::enable_if_t<std::is_base_of_v<impl::shape, shape_type> and std::is_base_of_v<ui::toolbar_tool, tool_type>>>
+	class shape_attribute_factory_ex : public shape_attribute_factory<shape_type>
+	{
+	public:
+		shape_attribute_factory_ex(const std::string& name, const std::string& icon) : shape_attribute_factory<shape_type>{ name, icon } {}
+
+	public:
+		virtual std::unique_ptr<ui::toolbar_tool> new_tool(const tag& tag) const override
+		{
+			return this->template new_tool_impl<tool_type>(tag);
+		}
 	};
 }

@@ -56,6 +56,42 @@ namespace vt::utils
 			return data[index];
 		}
 
+		constexpr bool operator<(const vec& other) const
+		{
+			for (size_t i = 0; i < dims; ++i)
+			{
+				if (data[i] >= other.data[i]) return false;
+			}
+			return true;
+		}
+
+		constexpr bool operator<=(const vec& other) const
+		{
+			for (size_t i = 0; i < dims; ++i)
+			{
+				if (data[i] > other.data[i]) return false;
+			}
+			return true;
+		}
+
+		constexpr bool operator>(const vec& other) const
+		{
+			for (size_t i = 0; i < dims; ++i)
+			{
+				if (data[i] <= other.data[i]) return false;
+			}
+			return true;
+		}
+
+		constexpr bool operator>=(const vec& other) const
+		{
+			for (size_t i = 0; i < dims; ++i)
+			{
+				if (data[i] < other.data[i]) return false;
+			}
+			return true;
+		}
+
 		template<typename = std::enable_if_t<dims >= 2>>
 		static constexpr float distance(const vec& left, const vec& right)
 		{
@@ -80,6 +116,11 @@ namespace vt::utils
 		constexpr bool operator==(const vec& other) const
 		{
 			return data == other.data;
+		}
+
+		constexpr bool operator!=(const vec& other) const
+		{
+			return data != other.data;
 		}
 	};
 

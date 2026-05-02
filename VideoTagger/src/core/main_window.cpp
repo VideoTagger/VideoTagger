@@ -2772,7 +2772,7 @@ namespace vt
 				if (reconfigure)
 				{
 					vid_win->set_display_name(video_name);
-					vid_win->set_video(video_data.video);
+					vid_win->set_video(video_data.video, video_data.id);
 					vid_win->set_texture(video_data.display_texture);
 				}
 
@@ -2780,7 +2780,8 @@ namespace vt
 				{
 					//TODO: Overlays shouldn't be cleared every frame, rewrite the overlay to not copy values - it should get them by itself
 					vid_win->clear_overlays();
-					vid_win->with_overlay([video_id = video_data.id](ImVec2 pos, ImVec2 size, ImVec2 tex_size)
+					//Segment Attribute Instance Overlays
+					vid_win->with_overlay([](video_id_t video_id, ImVec2 pos, ImVec2 size, ImVec2 tex_size)
 					{
 						auto current_ts = ctx_.displayed_videos.current_timestamp_as_timestamp();
 
@@ -2806,7 +2807,22 @@ namespace vt
 						}
 					});
 
-					vid_win->with_overlay([vid_id](ImVec2 pos, ImVec2 size, ImVec2 tex_size)
+					//Tool overlays
+					vid_win->with_overlay([](video_id_t video_id, ImVec2 pos, ImVec2 size, ImVec2 tex_size)
+					{
+						auto& tb_tools = ctx_.session.toolbar.tools();
+						auto it = tb_tools.find(ctx_.session.toolbar.active_tool());
+						if (it == tb_tools.end()) return;
+
+						auto& tools = it->second;
+						for (const auto& tool : tools)
+						{
+							tool->render_overlay(video_id, pos, size, tex_size);
+						}
+					});
+
+					//Video ID Overlay
+					vid_win->with_overlay([vid_id](video_id_t video_id, ImVec2 pos, ImVec2 size, ImVec2 tex_size)
 					{
 						auto& player = ctx_.get_window<widgets::video_player>();
 						if (!player.show_video_ids()) return;

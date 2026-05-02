@@ -23,6 +23,14 @@ namespace vt::ui
 		ctx_.dispatch_event<toolbar_register_tool_event>(source, *ptr);
 	}
 
+    void toolbar_session_data::add_tool(event_source source, std::unique_ptr<toolbar_tool>&& tool)
+    {
+		auto ptr = tool.get();
+		tools_[tool->id].push_back(std::move(tool));
+
+		ctx_.dispatch_event<toolbar_register_tool_event>(source, *ptr);
+	}
+
 	void toolbar_session_data::remove_tool(event_source source, const std::string& tool_id)
 	{
 		auto& tools = tools_;
@@ -73,6 +81,25 @@ namespace vt::ui
 		return active_tool_ == tool_id;
 	}
 
+	void toolbar_session_data::reset_active_tool(event_source source)
+	{
+		if (!active_tool_.empty())
+		{
+			for (const auto& [id, tools] : tools_)
+			{
+				for (const auto& tool : tools)
+				{
+					if (tool->is_persistent)
+					{
+						ctx_.dispatch_event<toolbar_tool_changed_event>(source, *tool);
+						return;
+					}
+				}
+			}
+			ctx_.dispatch_event<toolbar_tool_changed_event>(source, toolbar_tool{});
+		}
+	}
+
 	const std::unordered_map<std::string, std::vector<std::unique_ptr<toolbar_tool>>>& toolbar_session_data::tools() const
 	{
 		return tools_;
@@ -109,7 +136,7 @@ namespace vt::ui
 		{
 			if (active_tool_ == event.tool().id)
 			{
-				ctx_.dispatch_event<toolbar_tool_changed_event>(source, toolbar_tool{});
+				reset_active_tool(source);
 			}
 		});
 

@@ -367,7 +367,17 @@ namespace vt
 	//	return visible;
 	//}
 
-	nlohmann::ordered_json tag::serialize() const
+uint32_t tag::fill_color() const
+{
+	return (color & ~0xFF000000) | 0x80000000;
+}
+
+uint32_t tag::outline_color() const
+{
+	return color;
+}
+
+nlohmann::ordered_json tag::serialize() const
 	{
 		nlohmann::ordered_json json;
 		json["name"] = name;

@@ -56,15 +56,14 @@ namespace vt
 				for (const auto& [tag, segment_ids] : selected_segments)
 				{
 					const auto& selected_segment = *segment_ids.begin();
-					auto& tag_data = ctx_.current_project->tags.at(tag);
+					const auto& tag_data = ctx_.current_project->tags.at(tag);
 					auto it = tag_data.attributes.find(name());
 					if (it == tag_data.attributes.end()) return;
 
 					debug::log("Registering toolbar tool with type: '{}' for shape attribute '{}'", type_name(), name());
 
 					auto shape_factory = reinterpret_cast<shape_attribute_factory<shape_type>*>(factory());
-					shape_tool<shape_type> tool{ type_name(), shape_factory->icon(), utils::string::to_titlecase(type_name()) };
-					ctx_.session.toolbar.add_tool(event.source(), tool);
+					ctx_.session.toolbar.add_tool(event.source(), std::move(shape_factory->new_tool(tag_data)));
 				}
 			});
 		}

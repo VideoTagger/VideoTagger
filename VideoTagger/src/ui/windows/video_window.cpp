@@ -11,13 +11,13 @@ namespace vt::ui::windows
 	{
 		"video-window-" + std::to_string(id), "video-window-" + std::to_string(id), "Video",
 		ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoSavedSettings, false
-	}, video_{}, texture_{}, is_active_{}, is_interactive_{ true }, id_{ id }, scale_{ 1.0f }, offset_{}
+	}, video_{}, texture_{}, is_active_{}, is_interactive_{ true }, id_{ id }, video_id_{}, scale_{ 1.0f }, offset_{}
 	{
 		set_persistent(false);
 		set_icon(icons::video);
 	}
 
-	video_window& video_window::with_overlay(const std::function<void(ImVec2 pos, ImVec2 size, ImVec2 tex_size)>& overlay)
+	video_window& video_window::with_overlay(const std::function<void(video_id_t video_id, ImVec2 pos, ImVec2 size, ImVec2 tex_size)>& overlay)
 	{
 		overlays_.push_back(overlay);
 		return *this;
@@ -28,17 +28,18 @@ namespace vt::ui::windows
 		overlays_.clear();
 	}
 
-	void video_window::render_overlays(ImVec2 pos, ImVec2 size, ImVec2 tex_size)
+	void video_window::render_overlays(video_id_t video_id, ImVec2 pos, ImVec2 size, ImVec2 tex_size)
 	{
 		for (const auto& overlay : overlays_)
 		{
-			overlay(pos, size, tex_size);
+			overlay(video_id, pos, size, tex_size);
 		}
 	}
 
-	void video_window::set_video(video_stream& video)
+	void video_window::set_video(video_stream& video, video_id_t video_id)
 	{
 		video_ = &video;
+		video_id_ = video_id;
 	}
 
 	void video_window::set_texture(gl_texture& texture)
@@ -204,7 +205,7 @@ namespace vt::ui::windows
 			}
 			else
 			{
-				render_overlays(video_screen_pos, image_size, { (float)texture_->width(), (float)texture_->height() });
+				render_overlays(video_id_, video_screen_pos, image_size, { (float)texture_->width(), (float)texture_->height() });
 			}
 
 			const auto& current_frame = video_->current_frame();
