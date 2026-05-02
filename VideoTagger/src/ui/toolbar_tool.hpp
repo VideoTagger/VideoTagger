@@ -2,6 +2,7 @@
 #include <memory>
 #include <vector>
 #include <string>
+#include <unordered_map>
 
 #include <impl/resettable.hpp>
 #include <events/event_source.hpp>
@@ -23,7 +24,7 @@ namespace vt::ui
 		toolbar_session_data();
 
 	private:
-		std::vector<std::unique_ptr<toolbar_tool>> tools_;
+		std::unordered_map<std::string, std::vector<std::unique_ptr<toolbar_tool>>> tools_;
 		std::string active_tool_;
 		event_source source_;
 
@@ -35,7 +36,7 @@ namespace vt::ui
 		void request_register_tools(event_source source);
 		bool is_tool_active(const std::string& tool_id) const;
 
-		const std::vector<std::unique_ptr<toolbar_tool>>& tools() const;
+		const std::unordered_map<std::string, std::vector<std::unique_ptr<toolbar_tool>>>& tools() const;
 		const std::string& active_tool() const;
 
 		virtual void reset() override;

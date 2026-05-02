@@ -7,6 +7,7 @@
 #include <events/system/window/system_window_resize_event.hpp>
 #include <events/toolbar/toolbar_register_tool_event.hpp>
 #include <events/toolbar/toolbar_unregister_tool_event.hpp>
+#include <events/timeline/segment_selected_event.hpp>
 
 namespace vt::ui::windows
 {
@@ -31,6 +32,19 @@ namespace vt::ui::windows
 		ctx_.add_event_listener<toolbar_unregister_tool_event>([this](const toolbar_unregister_tool_event& event)
 		{
 			reset_pos_ = true;
+		});
+
+		ctx_.add_event_listener<segment_selected_event>([this](const segment_selected_event& event)
+		{
+			auto& tb_data = data();
+			auto source = get_event_source();
+			tb_data.remove_non_persistent(source);
+
+			bool is_only_one_segment_selected = ctx_.session.is_one_segment_selected();
+			if (is_only_one_segment_selected)
+			{
+				tb_data.request_register_tools(source);
+			}
 		});
 	}
 
@@ -114,15 +128,17 @@ namespace vt::ui::windows
 		}
 		
 		const auto& tools = toolbar.tools();
-		for (size_t i = 0; i < tools.size(); ++i)
+		for (const auto& [tool_id, tool_instances] : tools)
 		{
-			const auto& tool = tools[i];
-			bool is_selected = toolbar.is_tool_active(tool->id);
-			if (ui::icon_toggle_button(tool->icon, is_selected) and !is_selected)
+			for (const auto& tool : tool_instances)
 			{
-				ctx_.dispatch_event<toolbar_tool_changed_event>(source, *tool);
+				bool is_selected = toolbar.is_tool_active(tool->id);
+				if (ui::icon_toggle_button(tool->icon, is_selected) and !is_selected)
+				{
+					ctx_.dispatch_event<toolbar_tool_changed_event>(source, *tool);
+				}
+				ui::tooltip(tool->tooltip);
 			}
-			ui::tooltip(tool->tooltip);
 		}
 	}
 

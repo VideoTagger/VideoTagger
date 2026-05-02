@@ -318,6 +318,17 @@ namespace vt
 		return segment_id_map_contains(selected_segments_, tag, id);
 	}
 
+	bool session_storage::is_one_segment_selected() const
+	{
+		if (selected_segments_.size() > 1) return false;
+
+		for (const auto& [_, segments] : selected_segments_)
+		{
+			if (segments.size() > 1) return false;
+		}
+		return true;
+	}
+
 	bool session_storage::is_any_segment_selected() const
 	{
 		return !selected_segments_.empty();

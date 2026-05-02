@@ -18,7 +18,7 @@ namespace vt::ui
 	{
 		auto tool_ptr = std::make_unique<toolbar_tool>(tool);
 		auto ptr = tool_ptr.get();
-		tools_.push_back(std::move(tool_ptr));
+		tools_[tool.id].push_back(std::move(tool_ptr));
 
 		ctx_.dispatch_event<toolbar_register_tool_event>(source, *ptr);
 	}
@@ -26,14 +26,10 @@ namespace vt::ui
 	void toolbar_session_data::remove_tool(event_source source, const std::string& tool_id)
 	{
 		auto& tools = tools_;
-		auto it = std::find_if(tools.begin(), tools.end(), [&tool_id](const std::unique_ptr<toolbar_tool>& tool)
-		{
-			return tool->id == tool_id;
-		});
-
+		auto it = tools.find(tool_id);
 		if (it != tools.end())
 		{
-			ctx_.dispatch_event<toolbar_unregister_tool_event>(source, *it->get());
+			ctx_.dispatch_event<toolbar_unregister_tool_event>(source, *it->second.front());
 			tools.erase(it);
 		}
 	}
@@ -42,9 +38,10 @@ namespace vt::ui
 	{
 		for (auto it = tools_.begin(); it != tools_.end();)
 		{
-			if (!(*it)->is_persistent)
+			auto& tool_instances = it->second;
+			if (!tool_instances.front()->is_persistent)
 			{
-				ctx_.dispatch_event<toolbar_unregister_tool_event>(source, *it->get());
+				ctx_.dispatch_event<toolbar_unregister_tool_event>(source, *tool_instances.front());
 				it = tools_.erase(it);
 			}
 			else
@@ -56,9 +53,12 @@ namespace vt::ui
 
 	void toolbar_session_data::clear_tools(event_source source)
 	{
-		for (auto& tool : tools_)
+		for (auto& [tool_id, tools] : tools_)
 		{
-			ctx_.dispatch_event<toolbar_unregister_tool_event>(source, *tool);
+			for (auto& tool : tools)
+			{
+				ctx_.dispatch_event<toolbar_unregister_tool_event>(source, *tool);
+			}
 		}
 		tools_.clear();
 	}
@@ -73,7 +73,7 @@ namespace vt::ui
 		return active_tool_ == tool_id;
 	}
 
-	const std::vector<std::unique_ptr<toolbar_tool>>& toolbar_session_data::tools() const
+	const std::unordered_map<std::string, std::vector<std::unique_ptr<toolbar_tool>>>& toolbar_session_data::tools() const
 	{
 		return tools_;
 	}
