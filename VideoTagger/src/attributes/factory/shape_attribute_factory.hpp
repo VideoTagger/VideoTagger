@@ -11,9 +11,17 @@ namespace vt
 	class shape_attribute_factory : public impl::attribute_factory
 	{
 	public:
-		shape_attribute_factory(const std::string& name) : impl::attribute_factory{ name } {}
+		shape_attribute_factory(const std::string& name, const std::string& icon) : impl::attribute_factory{ name }, icon_{ icon } {}
+
+	private:
+		std::string icon_;
 
 	public:
+		const std::string& icon() const
+		{
+			return icon_;
+		}
+
 		virtual std::unique_ptr<impl::attribute> new_attribute(const std::string& name) override
 		{
 			return std::make_unique<shape_attribute<shape_type>>(this, name);

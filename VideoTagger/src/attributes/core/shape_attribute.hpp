@@ -7,9 +7,13 @@
 #include <attributes/impl/attribute_property_renderer.hpp>
 #include <core/app_context.hpp>
 #include <events/toolbar/toolbar_register_request_event.hpp>
+#include <attributes/tools/shape_tool.hpp>
 
 namespace vt
 {
+	template<typename shape_type, typename>
+	class shape_attribute_factory;
+
 	template<typename shape_type>
 	class shape_attribute : public impl::attribute, public impl::attribute_property_renderer
 	{
@@ -56,7 +60,11 @@ namespace vt
 					auto it = tag_data.attributes.find(name());
 					if (it == tag_data.attributes.end()) return;
 
-					debug::log("TODO: register toolbar tool for shape attribute {}", name());
+					debug::log("Registering toolbar tool with type: '{}' for shape attribute '{}'", type_name(), name());
+
+					auto shape_factory = reinterpret_cast<shape_attribute_factory<shape_type>*>(factory());
+					shape_tool<shape_type> tool{ type_name(), shape_factory->icon(), utils::string::to_titlecase(type_name()) };
+					ctx_.session.toolbar.add_tool(event.source(), tool);
 				}
 			});
 		}

@@ -49,11 +49,11 @@ namespace vt
 		attr_registry.new_factory<simple_attribute_factory<int64_t>>("integer", 0xFFC49B4E);
 		attr_registry.new_factory<simple_attribute_factory<std::string>>("string", 0xFF3F7C46);
 		
-		attr_registry.new_factory<shape_attribute_factory<rectangle_shape>>("rectangle", shape_color);
-		attr_registry.new_factory<shape_attribute_factory<circle_shape>>("circle", shape_color);
-		attr_registry.new_factory<shape_attribute_factory<line_shape>>("line", shape_color);
-		attr_registry.new_factory<shape_attribute_factory<points_shape>>("points", shape_color);
-		attr_registry.new_factory<shape_attribute_factory<polygon_shape>>("polygon", shape_color);
+		attr_registry.new_factory<shape_attribute_factory<rectangle_shape>>("rectangle", shape_color, icons::shape_rectangle);
+		attr_registry.new_factory<shape_attribute_factory<circle_shape>>("circle", shape_color, icons::shape_circle);
+		attr_registry.new_factory<shape_attribute_factory<line_shape>>("line", shape_color, icons::tool_line);
+		attr_registry.new_factory<shape_attribute_factory<points_shape>>("points", shape_color, icons::tool_points);
+		attr_registry.new_factory<shape_attribute_factory<polygon_shape>>("polygon", shape_color, icons::shape_polygon);
 	}
 
 	void app_context::create_windows()
