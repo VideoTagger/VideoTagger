@@ -1070,7 +1070,7 @@ namespace vt
 			if (vid_res == nullptr) return;
 
 			auto absolute_path = std::filesystem::absolute(vid_res->file_path());
-			utils::filesystem::open_in_explorer(absolute_path.parent_path());
+			utils::filesystem::open_file_in_explorer(absolute_path);
 		});
 
 		ctx_.add_event_listener<video_locate_request_event>([this](const video_locate_request_event& event)

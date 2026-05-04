@@ -218,10 +218,10 @@ namespace vt::widgets
 				std::string menu_name = fmt::format("{} {}", icons::folder, ctx_.lang->get("show_in_explorer").c_str());
 				if (ImGui::MenuItem(menu_name.c_str()))
 				{
-					auto path = std::filesystem::absolute(project.path.parent_path()).u8string();
+					auto path = std::filesystem::absolute(project.path).u8string();
 					if (!path.empty())
 					{
-						utils::filesystem::open_in_explorer(path);
+						utils::filesystem::open_file_in_explorer(path);
 					}
 				}
 			}

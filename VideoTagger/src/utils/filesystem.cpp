@@ -1,6 +1,19 @@
 #include "pch.hpp"
 #include "string.hpp"
 #include "filesystem.hpp"
+#include <core/platform.hpp>
+
+#ifdef VT_OS_WINDOWS
+	#ifndef WIN32_LEAN_AND_MEAN
+		#define WIN32_LEAN_AND_MEAN
+	#endif
+	#ifndef NOMINMAX
+		#define NOMINMAX
+	#endif
+	#include <shlobj.h>
+	#include <shobjidl.h>
+	#include <windows.h>
+#endif
 
 static nfdu8char_t* make_nfd_path(const std::string& input)
 {
@@ -107,6 +120,30 @@ namespace vt::utils
 			SDL_OpenURL(uri.c_str());
 		});
 		thread.detach();
+	}
+
+    void filesystem::open_file_in_explorer(const std::filesystem::path& path)
+    {
+#ifdef VT_OS_WINDOWS
+		PIDLIST_ABSOLUTE pidl_folder = nullptr;
+
+		auto result = SHParseDisplayName(path.c_str(), nullptr, &pidl_folder, 0, nullptr);
+		if (!SUCCEEDED(result))
+		{
+			open_in_explorer(std::filesystem::absolute(path.parent_path()));
+			return;
+		}
+
+		PCUITEMID_CHILD pidl_item = ILFindLastID(pidl_folder);
+		PIDLIST_ABSOLUTE pidl_parent = ILClone(pidl_folder);
+		ILRemoveLastID(pidl_parent);
+
+		SHOpenFolderAndSelectItems(pidl_parent, 1, &pidl_item, 0);
+		CoTaskMemFree(pidl_folder);
+		CoTaskMemFree(pidl_parent);
+#else
+		open_in_explorer(path);
+#endif
 	}
 
 	std::string filesystem::concat_extensions(const std::vector<std::string>& extensions)
