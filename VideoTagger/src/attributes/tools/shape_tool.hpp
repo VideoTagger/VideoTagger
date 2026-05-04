@@ -95,5 +95,31 @@ namespace vt
 
 			return true;
 		}
+
+		bool can_insert_region() const
+		{
+			if (!ctx_.session.is_one_segment_selected()) return false;
+
+			auto segment_opt = ctx_.session.any_selected_segment();
+			const auto& [tag_name, segment_id] = *segment_opt;
+			if (tag_name != tag_->name) return false;
+
+			auto& segments = ctx_.get_current_segment_storage().at(tag_name);
+			bool result = segments
+				.at(segment_id)
+				.is_in_bounds(ctx_.displayed_videos.current_timestamp_as_timestamp());
+			return result;
+		}
+
+		///@return result of can_insert_region. Also sets mouse cursor to not-allowed if insertion is not allowed
+		bool insert_allowed_cursor()
+		{
+			bool result = can_insert_region();
+			if (!result and ImGui::IsWindowHovered())
+			{
+				ImGui::SetMouseCursor(ImGuiMouseCursor_NotAllowed);
+			}
+			return result;
+		}
 	};
 }

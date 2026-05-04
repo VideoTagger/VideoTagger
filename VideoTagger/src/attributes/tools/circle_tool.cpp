@@ -21,7 +21,7 @@ namespace vt
 
 		if (!shape_data.has_value())
 		{
-			if (!ImGui::IsWindowHovered()) return;
+			if (!ImGui::IsWindowHovered() or !insert_allowed_cursor()) return;
 
 			if (ImGui::IsMouseClicked(ImGuiMouseButton_Left))
 			{
@@ -31,7 +31,7 @@ namespace vt
 		}
 		else
 		{
-			if (!ImGui::IsWindowFocused()) return;
+			if (!ImGui::IsWindowFocused() or !insert_allowed_cursor()) return;
 
 			if (ImGui::IsMouseDragging(ImGuiMouseButton_Left))
 			{
