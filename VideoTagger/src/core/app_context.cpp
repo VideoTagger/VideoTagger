@@ -35,6 +35,7 @@
 #include <attributes/factory/dummy_shape_predictor_factory.hpp>
 #include <attributes/factory/linear_shape_predictor_factory.hpp>
 #include <attributes/tools/rectangle_tool.hpp>
+#include <attributes/tools/circle_tool.hpp>
 
 namespace vt
 {
@@ -55,7 +56,7 @@ namespace vt
 		attr_registry.new_factory<simple_attribute_factory<std::string>>("string", 0xFF3F7C46);
 		
 		attr_registry.new_factory<shape_attribute_factory_ex<rectangle_shape, rectangle_tool>>("rectangle", shape_color, icons::shape_rectangle);
-		attr_registry.new_factory<shape_attribute_factory<circle_shape>>("circle", shape_color, icons::shape_circle);
+		attr_registry.new_factory<shape_attribute_factory_ex<circle_shape, circle_tool>>("circle", shape_color, icons::shape_circle);
 		attr_registry.new_factory<shape_attribute_factory<line_shape>>("line", shape_color, icons::tool_line);
 		attr_registry.new_factory<shape_attribute_factory<points_shape>>("points", shape_color, icons::tool_points);
 		attr_registry.new_factory<shape_attribute_factory<polygon_shape>>("polygon", shape_color, icons::shape_polygon);

@@ -13,7 +13,6 @@ namespace vt
 
 		auto& shape_data = data();
 
-		//TODO: Move this somewhere outside
 		static auto to_texture_space = [](const ImVec2& screen_pos, ImVec2 pos, ImVec2 size, ImVec2 tex_size) -> utils::vec2<uint32_t>
 		{
 			return math::scale_vec2(screen_pos, pos, pos + size, utils::vec2<uint32_t>{}, utils::vec2<uint32_t>{ static_cast<uint32_t>(tex_size.x), static_cast<uint32_t>(tex_size.y) });

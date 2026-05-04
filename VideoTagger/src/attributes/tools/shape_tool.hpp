@@ -87,7 +87,7 @@ namespace vt
 				instance_it = video_attr_instances.end() - 1;
 			}
 
-			auto* instance = dynamic_cast<shape_attribute_instance<rectangle_shape>*>(instance_it->get());
+			auto* instance = dynamic_cast<shape_attribute_instance<shape_type>*>(instance_it->get());
 			if (instance == nullptr) return false;
 
 			instance->insert_region(ctx_.displayed_videos.current_timestamp_as_timestamp(), *data_);
