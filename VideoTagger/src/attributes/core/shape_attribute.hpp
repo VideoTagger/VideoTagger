@@ -55,7 +55,11 @@ namespace vt
 				if (!ctx_.session.is_one_segment_selected()) return;
 
 				auto segment_opt = ctx_.session.any_selected_segment();
-				const auto& [tag_name, segment] = *segment_opt;
+				const auto& [tag_name, segment_id] = *segment_opt;
+
+				auto& segments = ctx_.get_current_segment_storage().at(tag_name);
+				if (!segments.at(segment_id).is_in_bounds(ctx_.displayed_videos.current_timestamp_as_timestamp())) return;
+
 				const auto& tag_data = ctx_.current_project->tags.at(tag_name);
 				auto attribute_it = tag_data.attributes.find(name());
 				if (attribute_it == tag_data.attributes.end()) return;
