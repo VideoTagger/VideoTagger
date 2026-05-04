@@ -40,21 +40,21 @@ namespace vt
 		return distance <= max_distance ? result : nullptr;
 	}
 
-	void rectangle_shape::render_shape(utils::vec2<uint32_t> shape_space, ImRect draw_rect, uint32_t outline_color, uint32_t fill_color)
+	void rectangle_shape::render_shape(utils::vec2<uint32_t> shape_space, ImVec2 draw_min, ImVec2 draw_max, uint32_t fill_color, uint32_t outline_color)
 	{
 		auto draw_list = ImGui::GetWindowDrawList();
-		auto scaled_start = impl::shape::scale_point(start, shape_space, draw_rect);
-		auto scaled_end = impl::shape::scale_point(end, shape_space, draw_rect);
+		auto scaled_start = math::scale_vec2(start, utils::vec2<uint32_t>{}, shape_space, draw_min, draw_max);
+		auto scaled_end = math::scale_vec2(end, utils::vec2<uint32_t>{}, shape_space, draw_min, draw_max);
 
 		draw_list->AddRectFilled(scaled_start, scaled_end, fill_color);
 		draw_list->AddRect(scaled_start, scaled_end, outline_color);
 	}
 
-	void rectangle_shape::render_points(float radius, utils::vec2<uint32_t> shape_space, ImRect draw_rect, uint32_t outline_color, uint32_t fill_color)
+	void rectangle_shape::render_points(float radius, utils::vec2<uint32_t> shape_space, ImVec2 draw_min, ImVec2 draw_max, uint32_t fill_color, uint32_t outline_color)
 	{
 		auto draw_list = ImGui::GetWindowDrawList();
-		ImVec2 scaled_start = impl::shape::scale_point(start, shape_space, draw_rect);
-		ImVec2 scaled_end = impl::shape::scale_point(end, shape_space, draw_rect);
+		ImVec2 scaled_start = math::scale_vec2(start, utils::vec2<uint32_t>{}, shape_space, draw_min, draw_max);
+		ImVec2 scaled_end = math::scale_vec2(end, utils::vec2<uint32_t>{}, shape_space, draw_min, draw_max);
 
 		for (auto& p : { scaled_start, scaled_end })
 		{

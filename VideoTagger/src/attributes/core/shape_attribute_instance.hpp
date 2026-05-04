@@ -120,7 +120,7 @@ namespace vt
 				auto fill_color = (attribute_tag.color & ~0xFF000000) | 0x80000000;
 				auto outline_color = attribute_tag.color;
 				auto shape_space = utils::vec2<uint32_t>{ static_cast<uint32_t>(tex_size.x), static_cast<uint32_t>(tex_size.y) };
-				shape_opt->render_shape(shape_space, ImRect{ pos, pos + size }, outline_color, fill_color);
+				shape_opt->render_shape(shape_space, pos, pos + size, fill_color, outline_color);
 			}
 		}
 	};

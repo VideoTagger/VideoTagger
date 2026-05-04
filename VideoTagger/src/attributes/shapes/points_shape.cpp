@@ -48,17 +48,17 @@ namespace vt
 		return distance <= max_distance ? result : nullptr;
 	}
 
-	void points_shape::render_shape(utils::vec2<uint32_t> shape_space, ImRect draw_rect, uint32_t outline_color, uint32_t fill_color)
+	void points_shape::render_shape(utils::vec2<uint32_t> shape_space, ImVec2 draw_min, ImVec2 draw_max, uint32_t fill_color, uint32_t outline_color)
 	{
 
 	}
 
-	void points_shape::render_points(float radius, utils::vec2<uint32_t> shape_space, ImRect draw_rect, uint32_t outline_color, uint32_t fill_color)
+	void points_shape::render_points(float radius, utils::vec2<uint32_t> shape_space, ImVec2 draw_min, ImVec2 draw_max, uint32_t fill_color, uint32_t outline_color)
 	{
 		auto draw_list = ImGui::GetWindowDrawList();
 		for (auto& point : points)
 		{
-			auto scaled_point = impl::shape::scale_point(point, shape_space, draw_rect);
+			auto scaled_point = math::scale_vec2(point, utils::vec2<uint32_t>{}, shape_space, draw_min, draw_max);
 
 			draw_list->AddCircleFilled(scaled_point, radius, fill_color);
 		}

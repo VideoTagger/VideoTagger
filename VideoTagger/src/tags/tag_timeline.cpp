@@ -85,6 +85,11 @@ namespace vt
         return type() == tag_segment_type::timestamp;
     }
 
+	bool tag_segment::is_in_bounds(timestamp ts) const
+	{
+		return start <= ts and ts <= end;
+	}
+
 	nlohmann::ordered_json tag_segment::serialize() const
 	{
 		nlohmann::ordered_json json;

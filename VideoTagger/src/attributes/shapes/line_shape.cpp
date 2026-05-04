@@ -20,14 +20,14 @@ namespace vt
 		return false;
 	}
 
-	void line_shape::render_shape(utils::vec2<uint32_t> shape_space, ImRect draw_rect, uint32_t outline_color, uint32_t fill_color)
+	void line_shape::render_shape(utils::vec2<uint32_t> shape_space, ImVec2 draw_min, ImVec2 draw_max, uint32_t fill_color, uint32_t outline_color)
 	{
 		auto draw_list = ImGui::GetWindowDrawList();
 
 		for (size_t i = 1; i < points.size(); ++i)
 		{
-			auto scaled_p1 = impl::shape::scale_point(points[i - 1], shape_space, draw_rect);
-			auto scaled_p2 = impl::shape::scale_point(points[i], shape_space, draw_rect);
+			auto scaled_p1 = math::scale_vec2(points[i - 1], utils::vec2<uint32_t>{}, shape_space, draw_min, draw_max);
+			auto scaled_p2 = math::scale_vec2(points[i], utils::vec2<uint32_t>{}, shape_space, draw_min, draw_max);
 
 			draw_list->AddLine(scaled_p1, scaled_p2, outline_color);
 		}

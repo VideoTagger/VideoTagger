@@ -17,14 +17,14 @@ namespace vt
 		return utils::intersection::is_in_polygon(ImVec2(point[0], point[1]), ps);
 	}
 
-	void polygon_shape::render_shape(utils::vec2<uint32_t> shape_space, ImRect draw_rect, uint32_t outline_color, uint32_t fill_color)
+	void polygon_shape::render_shape(utils::vec2<uint32_t> shape_space, ImVec2 draw_min, ImVec2 draw_max, uint32_t fill_color, uint32_t outline_color)
 	{
 		auto draw_list = ImGui::GetWindowDrawList();
 
 		std::vector<ImVec2> ps(points.size());
 		for (size_t i = 0; i < ps.size(); ++i)
 		{
-			ps[i] = shape::scale_point(points[i], shape_space, draw_rect);
+			ps[i] = math::scale_vec2(points[i], utils::vec2<uint32_t>{}, shape_space, draw_min, draw_max);
 		}
 
 		if (utils::intersection::is_convex_polygon(ps))

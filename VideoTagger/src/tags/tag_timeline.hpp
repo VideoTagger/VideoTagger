@@ -183,6 +183,9 @@ namespace vt
 		///@return True if the segment is a timestamp, false otherwise.
 		bool is_timestamp() const;
 
+		///@return Whether the given timestamp is within the bound of the segment
+		bool is_in_bounds(timestamp ts) const;
+
 		[[nodiscard]] virtual nlohmann::ordered_json serialize() const override;
 		virtual void deserialize(const nlohmann::ordered_json& json) override;
 	};

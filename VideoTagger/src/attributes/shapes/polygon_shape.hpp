@@ -12,7 +12,7 @@ namespace vt
 	public:
 		virtual bool contains(utils::vec2<uint32_t> point) const override;
 
-		virtual void render_shape(utils::vec2<uint32_t> shape_space, ImRect draw_rect, uint32_t outline_color, uint32_t fill_color) override;
+		virtual void render_shape(utils::vec2<uint32_t> shape_space, ImVec2 draw_min, ImVec2 draw_max, uint32_t fill_color, uint32_t outline_color) override;
 	};
 }
 

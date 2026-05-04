@@ -34,4 +34,43 @@ namespace vt::math
 	{
 		return type((1.f - alpha) * start + alpha * end);
 	}
+
+	/**
+	 * @brief Scale a value to the given range
+	 * @param value The value to scale
+	 * @param value_min The minimum of the current value range
+	 * @param value_max The maximum of the current value range
+	 * @param target_min The minimum of the target value range
+	 * @param target_max The maximum of the target value range
+	 * @tparam from_type The type of the input value and its range
+	 * @tparam to_type The type of the output value and its range
+	 * @return The value scaled to the target range
+	 */
+	template<typename from_type, typename to_type>
+	inline constexpr to_type scale_value(from_type value, from_type value_min, from_type value_max, to_type target_min, to_type target_max)
+	{
+		value = std::clamp(value, value_min, value_max);
+		return target_min + ((value - value_min) * (target_max - target_min)) / (value_max - value_min);
+	}
+
+	/**
+	 * @brief Scale a 2D vector to the given range
+	 * @param value The vector to scale
+	 * @param value_min The minimum of the current vector range
+	 * @param value_max The maximum of the current vector range
+	 * @param target_min The minimum of the target vector range
+	 * @param target_max The maximum of the target vector range
+	 * @tparam from_type The type of the input vector and its range. Must support operator[] and have at least 2 elements.
+	 * @tparam to_type The type of the output vector and its range. Must support operator[] and have at least 2 elements.
+	 * @return The vector scaled to the target range
+	 */
+	template<typename from_type, typename to_type>
+	inline constexpr to_type scale_vec2(from_type value, from_type value_min, from_type value_max, to_type target_min, to_type target_max)
+	{
+		return
+		{
+			scale_value(value[0], value_min[0], value_max[0], target_min[0], target_max[0]),
+			scale_value(value[1], value_min[1], value_max[1], target_min[1], target_max[1])
+		};
+	}
 }
