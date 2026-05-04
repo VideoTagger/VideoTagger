@@ -142,7 +142,7 @@ namespace vt::utils
 		CoTaskMemFree(pidl_folder);
 		CoTaskMemFree(pidl_parent);
 #else
-		open_in_explorer(path);
+		open_in_explorer(std::filesystem::absolute(path.parent_path()));
 #endif
 	}
 
