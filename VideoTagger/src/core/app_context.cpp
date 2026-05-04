@@ -113,7 +113,7 @@ namespace vt
 		tag_manager.set_opened(true);
 
 		auto& toolbar = create_window<ui::windows::toolbar>();
-		toolbar.set_opened(false);
+		toolbar.set_opened(true);
 
 #ifdef VT_DEBUG
 		auto& sandbox = create_window<ui::windows::sandbox>();
