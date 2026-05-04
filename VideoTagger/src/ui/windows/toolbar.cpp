@@ -8,6 +8,7 @@
 #include <events/toolbar/toolbar_register_tool_event.hpp>
 #include <events/toolbar/toolbar_unregister_tool_event.hpp>
 #include <events/timeline/segment_selected_event.hpp>
+#include <events/timeline/segment_deselected_event.hpp>
 
 namespace vt::ui::windows
 {
@@ -45,6 +46,13 @@ namespace vt::ui::windows
 			{
 				tb_data.request_register_tools(source);
 			}
+		});
+
+		ctx_.add_event_listener<segment_deselected_event>([this](const segment_deselected_event& event)
+		{
+			auto& tb_data = data();
+			auto source = get_event_source();
+			tb_data.remove_non_persistent(source);
 		});
 	}
 

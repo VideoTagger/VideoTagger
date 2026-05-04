@@ -98,13 +98,13 @@ namespace vt
 					segment_id id = *segment_it;
 					
 					segment_it = segments.erase(segment_it);
+					ctx_.dispatch_event<segment_deselected_event>(event.source(), event.storage(), tag, id);
+					
 					if (segment_it == segments.end())
 					{
 						storage_it = selected_segments_.erase(storage_it);
 						break;
 					}
-
-					ctx_.dispatch_event<segment_deselected_event>(event.source(), event.storage(), tag, id);
 				}
 			}
 		});
