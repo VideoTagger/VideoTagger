@@ -74,7 +74,9 @@ namespace vt
 		bool is_segment_selected(const std::string& tag, segment_id id) const;
 		bool is_one_segment_selected() const;
 		bool is_any_segment_selected() const;
-		bool more_than_one_segment_selected() const;
+		bool is_more_than_one_segment_selected() const;
+		std::optional<std::pair<std::string, segment_id>> any_selected_segment() const;
+		std::optional<segment_id> any_selected_segment(const std::string& tag) const;
 
 		bool is_segment_dragged(const std::string& tag, segment_id id) const;
 		bool is_dragging_any_segment() const;

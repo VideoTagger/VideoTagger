@@ -14,6 +14,7 @@ namespace vt::impl
 		virtual ~shape() = default;
 
 	public:
+		//TODO: make this more generic and move somewhere into utils
 		static float scale_value(uint32_t value, uint32_t max_value, float draw_start, float draw_end);
 		static ImVec2 scale_point(utils::vec2<uint32_t> point, utils::vec2<uint32_t> point_space, ImRect draw_rect);
 
@@ -27,9 +28,6 @@ namespace vt::impl
 		virtual void render_shape(utils::vec2<uint32_t> shape_space, ImRect draw_rect, uint32_t outline_color, uint32_t fill_color) = 0;
 		virtual void render_points(float radius, utils::vec2<uint32_t> shape_space, ImRect draw_rect, uint32_t outline_color, uint32_t fill_color) = 0;
 		void render(utils::vec2<uint32_t> shape_space, ImRect draw_rect, uint32_t outline_color, uint32_t fill_color, std::optional<float> point_radius);
-
-		//[[nodiscard]] virtual nlohmann::ordered_json serialize() const = 0;
-		//virtual void deserialize(const nlohmann::ordered_json& json) = 0;
 	};
 }
 

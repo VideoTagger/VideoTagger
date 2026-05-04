@@ -320,13 +320,7 @@ namespace vt
 
 	bool session_storage::is_one_segment_selected() const
 	{
-		if (selected_segments_.size() > 1) return false;
-
-		for (const auto& [_, segments] : selected_segments_)
-		{
-			if (segments.size() > 1) return false;
-		}
-		return true;
+		return is_any_segment_selected() and !is_more_than_one_segment_selected();
 	}
 
 	bool session_storage::is_any_segment_selected() const
@@ -334,7 +328,7 @@ namespace vt
 		return !selected_segments_.empty();
 	}
 
-	bool session_storage::more_than_one_segment_selected() const
+	bool session_storage::is_more_than_one_segment_selected() const
 	{
 		size_t count = 0;
 		for (const auto& [_, segments] : selected_segments_)
@@ -344,6 +338,30 @@ namespace vt
 		}
 
 		return false;
+	}
+
+	std::optional<std::pair<std::string, segment_id>> session_storage::any_selected_segment() const
+	{
+		for (auto& [tag, seg] : selected_segments_)
+		{
+			if (!seg.empty())
+			{
+				return std::make_pair(tag, *seg.begin());
+			}
+		}
+
+		return std::nullopt;
+	}
+
+	std::optional<segment_id> session_storage::any_selected_segment(const std::string& tag) const
+	{
+		auto it = selected_segments_.find(tag);
+		if (it == selected_segments_.end()) return std::nullopt;
+
+		const auto& segments = it->second;
+		if (segments.empty()) return std::nullopt;
+
+		return *segments.begin();
 	}
 
 	bool session_storage::is_segment_dragged(const std::string& tag, segment_id id) const

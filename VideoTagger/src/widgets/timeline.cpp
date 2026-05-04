@@ -377,7 +377,7 @@ namespace vt::widgets
 						is_selected = true;
 					}
 
-					if (part != segment_part::both and ctx_.session.more_than_one_segment_selected())
+					if (part != segment_part::both and ctx_.session.is_more_than_one_segment_selected())
 					{
 						event_deselect_segments_if(storage, [&tag, &current_segment_id](const std::string& unselect_tag, segment_id unselect_id)
 						{

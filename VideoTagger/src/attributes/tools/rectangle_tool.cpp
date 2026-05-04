@@ -2,6 +2,7 @@
 #include <algorithm>
 #include "rectangle_tool.hpp"
 #include <utils/vec.hpp>
+#include <core/app_context.hpp>
 
 namespace vt
 {
@@ -63,7 +64,7 @@ namespace vt
 			}
 			else if (ImGui::IsMouseReleased(ImGuiMouseButton_Left))
 			{
-				//TODO: Actually insert the region into the attribute instance instead of just resetting the shape data
+				insert_region(video_id);
 				reset();
 			}
 		}

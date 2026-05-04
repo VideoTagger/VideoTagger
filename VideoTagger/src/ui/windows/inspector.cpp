@@ -61,10 +61,10 @@ namespace vt::ui::windows
 		bool modified_timestamp = false;
 		const auto& style = ImGui::GetStyle();
 
-		auto [first_active_tag, first_active_segment_id] = first_selected_segment();
+		auto [first_active_tag, first_active_segment_id] = *ctx_.session.any_selected_segment();
 		const auto& first_active_segment = segments.at(first_active_tag).at(first_active_segment_id);
 
-		bool more_than_one_segment_active = ctx_.session.more_than_one_segment_selected();
+		bool more_than_one_segment_active = ctx_.session.is_more_than_one_segment_selected();
 
 		tag_segment_type segment_type{};
 		if (more_than_one_segment_active)
@@ -399,22 +399,5 @@ namespace vt::ui::windows
 			grab_part_ = segment_part::none;
 			current_offset_ = timestamp::zero();
 		});
-	}
-
-	std::pair<std::string, segment_id> inspector::first_selected_segment() const
-	{
-		std::string tag_name;
-		segment_id selected_segment_id = invalid_segment_id;
-		for (auto& [tag, seg] : ctx_.session.selected_segments())
-		{
-			if (!seg.empty())
-			{
-				tag_name = tag;
-				selected_segment_id = *seg.begin();
-				break;
-			}
-		}
-
-		return { tag_name, selected_segment_id };
 	}
 }

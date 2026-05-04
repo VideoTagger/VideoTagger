@@ -8,6 +8,8 @@
 #include <impl/resettable.hpp>
 #include <core/app_context.hpp>
 #include <ui/windows/toolbar.hpp>
+#include <attributes/core/shape_attribute.hpp>
+#include <attributes/core/shape_attribute_instance.hpp>
 
 namespace vt
 {
@@ -15,11 +17,13 @@ namespace vt
 	class shape_tool : public ui::toolbar_tool, public impl::resettable
 	{
 	public:
-		shape_tool(const std::string& id, const std::string& icon, const std::string& tooltip, const tag& tag) : ui::toolbar_tool{ id, icon, tooltip }, data_{}, tag_{ &tag } {}
+		shape_tool(const std::string& id, const std::string& icon, const std::string& tooltip, const tag& tag, const std::string& attribute_name) :
+			ui::toolbar_tool{ id, icon, tooltip }, data_{}, tag_{ &tag }, attribute_name_{ attribute_name } {}
 
 	private:
 		std::optional<shape_type> data_;
 		const tag* tag_;
+		std::string attribute_name_;
 
 	public:
 		std::optional<shape_type>& data()
@@ -30,6 +34,11 @@ namespace vt
 		const std::optional<shape_type>& data() const
 		{
 			return data_;
+		}
+
+		const std::string& attribute_name()
+		{
+			return attribute_name_;
 		}
 
 		const tag& get_tag() const
@@ -54,6 +63,37 @@ namespace vt
 					ctx_.session.toolbar.reset_active_tool("shape-tool");
 				});
 			}
+		}
+
+		bool insert_region(video_id_t video_id)
+		{
+			//TODO: consider making region insertion an event
+			
+			auto selected_segment_opt = ctx_.session.any_selected_segment(tag_->name);
+			if (!selected_segment_opt.has_value()) return false;
+
+			auto& segment_attr_instances = ctx_.get_current_segment_storage().at(tag_->name).segment_attribute_instances(*selected_segment_opt);
+			auto& video_attr_instances = segment_attr_instances.at(video_id);
+
+			auto instance_it = std::find_if(video_attr_instances.begin(), video_attr_instances.end(), [this](const auto& ptr)
+			{
+				return ptr != nullptr and ptr->attribute_name() == attribute_name();
+			});
+
+			if (instance_it == video_attr_instances.end())
+			{
+				const auto& attribute = tag_->attributes.at(attribute_name());
+				video_attr_instances.push_back(attribute->instantiate());
+				instance_it = video_attr_instances.end() - 1;
+			}
+
+			auto* instance = dynamic_cast<shape_attribute_instance<rectangle_shape>*>(instance_it->get());
+			if (instance == nullptr) return false;
+
+			instance->insert_region(ctx_.displayed_videos.current_timestamp_as_timestamp(), *data_);
+			ctx_.is_project_dirty = true;
+
+			return true;
 		}
 	};
 }

@@ -35,8 +35,11 @@ namespace vt
 	public:
 		virtual bool render_instance_properties(std::unique_ptr<impl::attribute_instance>& instance)
 		{
+			auto* typed_inst = instance->as<shape_attribute_instance<shape_type>>();
+			if (typed_inst == nullptr) return false;
+
 			const auto& name = instance->attribute_name();
-			auto typed_inst = instance->as<shape_attribute_instance<shape_type>>();
+
 			return render_property(name, type_name(), typed_inst->regions());
 		}
 
@@ -49,22 +52,18 @@ namespace vt
 		{
 			tool_register_handle_ = ctx_.add_event_listener<toolbar_register_request_event>([this](const toolbar_register_request_event& event)
 			{
-				const auto& selected_segments = ctx_.session.selected_segments();
-				bool is_one_segment_selected = ctx_.session.is_one_segment_selected();
-				if (!is_one_segment_selected) return;
+				if (!ctx_.session.is_one_segment_selected()) return;
 
-				for (const auto& [tag, segment_ids] : selected_segments)
-				{
-					const auto& selected_segment = *segment_ids.begin();
-					const auto& tag_data = ctx_.current_project->tags.at(tag);
-					auto it = tag_data.attributes.find(name());
-					if (it == tag_data.attributes.end()) return;
+				auto segment_opt = ctx_.session.any_selected_segment();
+				const auto& [tag_name, segment] = *segment_opt;
+				const auto& tag_data = ctx_.current_project->tags.at(tag_name);
+				auto attribute_it = tag_data.attributes.find(name());
+				if (attribute_it == tag_data.attributes.end()) return;
+				
+				debug::log("Registering toolbar tool with type: '{}' for shape attribute '{}'", type_name(), name());
 
-					debug::log("Registering toolbar tool with type: '{}' for shape attribute '{}'", type_name(), name());
-
-					auto shape_factory = reinterpret_cast<shape_attribute_factory<shape_type>*>(factory());
-					ctx_.session.toolbar.add_tool(event.source(), std::move(shape_factory->new_tool(tag_data)));
-				}
+				auto shape_factory = reinterpret_cast<shape_attribute_factory<shape_type>*>(factory());
+				ctx_.session.toolbar.add_tool(event.source(), std::move(shape_factory->new_tool(tag_data, name())));
 			});
 		}
 	};

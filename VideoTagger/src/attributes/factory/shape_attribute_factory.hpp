@@ -27,15 +27,15 @@ namespace vt
 			return std::make_unique<shape_attribute<shape_type>>(this, name);
 		}
 
-		virtual std::unique_ptr<ui::toolbar_tool> new_tool(const tag& tag) const
+		virtual std::unique_ptr<ui::toolbar_tool> new_tool(const tag& tag, const std::string& attribute_name) const
 		{
-			return new_tool_impl<shape_tool<shape_type>>(tag);
+			return new_tool_impl<shape_tool<shape_type>>(tag, attribute_name);
 		}
 
 		template<typename tool_type, typename = std::enable_if_t<std::is_base_of_v<ui::toolbar_tool, tool_type>>>
-		std::unique_ptr<ui::toolbar_tool> new_tool_impl(const tag& tag) const
+		std::unique_ptr<ui::toolbar_tool> new_tool_impl(const tag& tag, const std::string& attribute_name) const
 		{
-			return std::make_unique<tool_type>(name(), icon(), utils::string::to_titlecase(name()), tag);
+			return std::make_unique<tool_type>(name(), icon(), utils::string::to_titlecase(name()), tag, attribute_name);
 		}
 	};
 
@@ -51,9 +51,9 @@ namespace vt
 		shape_attribute_factory_ex(const std::string& name, const std::string& icon) : shape_attribute_factory<shape_type>{ name, icon } {}
 
 	public:
-		virtual std::unique_ptr<ui::toolbar_tool> new_tool(const tag& tag) const override
+		virtual std::unique_ptr<ui::toolbar_tool> new_tool(const tag& tag, const std::string& attribute_name) const override
 		{
-			return this->template new_tool_impl<tool_type>(tag);
+			return this->template new_tool_impl<tool_type>(tag, attribute_name);
 		}
 	};
 }
