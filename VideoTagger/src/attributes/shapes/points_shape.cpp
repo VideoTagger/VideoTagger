@@ -50,7 +50,7 @@ namespace vt
 
 	void points_shape::render_shape(utils::vec2<uint32_t> shape_space, ImVec2 draw_min, ImVec2 draw_max, uint32_t fill_color, uint32_t outline_color)
 	{
-
+		render_points(3.f, shape_space, draw_min, draw_max, fill_color, outline_color);
 	}
 
 	void points_shape::render_points(float radius, utils::vec2<uint32_t> shape_space, ImVec2 draw_min, ImVec2 draw_max, uint32_t fill_color, uint32_t outline_color)
@@ -61,7 +61,13 @@ namespace vt
 			auto scaled_point = math::scale_vec2(point, utils::vec2<uint32_t>{}, shape_space, draw_min, draw_max);
 
 			draw_list->AddCircleFilled(scaled_point, radius, fill_color);
+			draw_list->AddCircle(scaled_point, radius, outline_color);
 		}
+	}
+
+	void points_shape::render(utils::vec2<uint32_t> shape_space, ImVec2 draw_min, ImVec2 draw_max, uint32_t fill_color, uint32_t outline_color, std::optional<float> point_radius)
+	{
+		render_points(point_radius.value_or(3.f), shape_space, draw_min, draw_max, fill_color, outline_color);
 	}
 
 	[[nodiscard]] nlohmann::ordered_json points_shape::serialize() const

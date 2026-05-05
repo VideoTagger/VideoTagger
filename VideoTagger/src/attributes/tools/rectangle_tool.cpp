@@ -48,7 +48,11 @@ namespace vt
 
 				shape_data->start = { minmax_x.first, minmax_y.first };
 				shape_data->end = { minmax_x.second, minmax_y.second };
-				insert_region(video_id);
+
+				if (shape_data->start != shape_data->end)
+				{
+					insert_region(video_id);
+				}
 				reset();
 			}
 		}

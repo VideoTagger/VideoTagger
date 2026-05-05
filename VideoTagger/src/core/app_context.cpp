@@ -36,6 +36,9 @@
 #include <attributes/factory/linear_shape_predictor_factory.hpp>
 #include <attributes/tools/rectangle_tool.hpp>
 #include <attributes/tools/circle_tool.hpp>
+#include <attributes/tools/points_tool.hpp>
+#include <attributes/tools/line_tool.hpp>
+#include <attributes/tools/polygon_tool.hpp>
 
 namespace vt
 {
@@ -57,9 +60,9 @@ namespace vt
 		
 		attr_registry.new_factory<shape_attribute_factory_ex<rectangle_shape, rectangle_tool>>("rectangle", shape_color, icons::shape_rectangle);
 		attr_registry.new_factory<shape_attribute_factory_ex<circle_shape, circle_tool>>("circle", shape_color, icons::shape_circle);
-		attr_registry.new_factory<shape_attribute_factory<line_shape>>("line", shape_color, icons::tool_line);
-		attr_registry.new_factory<shape_attribute_factory<points_shape>>("points", shape_color, icons::tool_points);
-		attr_registry.new_factory<shape_attribute_factory<polygon_shape>>("polygon", shape_color, icons::shape_polygon);
+		attr_registry.new_factory<shape_attribute_factory_ex<points_shape, points_tool>>("points", shape_color, icons::tool_points);
+		attr_registry.new_factory<shape_attribute_factory_ex<line_shape, line_tool>>("line", shape_color, icons::tool_line);
+		attr_registry.new_factory<shape_attribute_factory_ex<polygon_shape, polygon_tool>>("polygon", shape_color, icons::shape_polygon);
 	}
 
 	void app_context::init_shape_predictor_registries()

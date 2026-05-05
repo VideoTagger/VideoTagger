@@ -20,6 +20,9 @@ namespace vt
 		shape_tool(const std::string& id, const std::string& icon, const std::string& tooltip, const tag& tag, const std::string& attribute_name) :
 			ui::toolbar_tool{ id, icon, tooltip }, data_{}, tag_{ &tag }, attribute_name_{ attribute_name } {}
 
+	protected:
+		std::optional<video_id_t> active_video_;
+
 	private:
 		std::optional<shape_type> data_;
 		const tag* tag_;
@@ -49,6 +52,7 @@ namespace vt
 		virtual void reset() override
 		{
 			data_.reset();
+			active_video_.reset();
 		}
 
 		virtual void render_overlay(video_id_t video_id, ImVec2 pos, ImVec2 size, ImVec2 tex_size) override
@@ -73,7 +77,7 @@ namespace vt
 			if (!selected_segment_opt.has_value()) return false;
 
 			auto& segment_attr_instances = ctx_.get_current_segment_storage().at(tag_->name).segment_attribute_instances(*selected_segment_opt);
-			auto& video_attr_instances = segment_attr_instances.at(video_id);
+			auto& video_attr_instances = segment_attr_instances[video_id];
 
 			auto instance_it = std::find_if(video_attr_instances.begin(), video_attr_instances.end(), [this](const auto& ptr)
 			{

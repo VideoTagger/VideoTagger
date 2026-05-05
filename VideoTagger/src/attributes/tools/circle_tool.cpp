@@ -58,7 +58,10 @@ namespace vt
 			}
 			else if (ImGui::IsMouseReleased(ImGuiMouseButton_Left))
 			{
-				insert_region(video_id);
+				if (shape_data->radius != 0)
+				{
+					insert_region(video_id);
+				}
 				reset();
 			}
 		}

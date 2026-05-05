@@ -32,4 +32,9 @@ namespace vt
 			draw_list->AddLine(scaled_p1, scaled_p2, outline_color);
 		}
 	}
+
+	void line_shape::render(utils::vec2<uint32_t> shape_space, ImVec2 draw_min, ImVec2 draw_max, uint32_t fill_color, uint32_t outline_color, std::optional<float> point_radius)
+	{
+		shape::render(shape_space, draw_min, draw_max, fill_color, outline_color, point_radius);
+	}
 }
