@@ -355,6 +355,11 @@ namespace vt
 		return current_video_group_id_;
 	}
 
+	bool session_storage::is_any_video_group_active() const
+	{
+		return current_video_group_id_ != invalid_video_group_id;
+	}
+
 	const std::vector<insert_segment_mark_data>& session_storage::insert_segment_marks() const
 	{
 		return insert_segment_marks_;

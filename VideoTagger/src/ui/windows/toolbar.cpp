@@ -59,7 +59,7 @@ namespace vt::ui::windows
 	void toolbar::pre_style()
 	{
 		const auto& player = ctx_.get_window<widgets::video_player>();
-		bool is_player_visible = player.is_visible();
+		bool is_player_visible = player.is_visible() and ctx_.session.is_any_video_group_active();
 		set_hidden(!is_player_visible);
 		if (!is_player_visible)
 		{
