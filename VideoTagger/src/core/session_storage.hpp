@@ -67,6 +67,7 @@ namespace vt
 		const segment_id_map& dragged_segments() const;
 		const segment_drag_data& segment_drag_data() const;
 		video_group_id_t current_video_group_id() const;
+		bool is_any_video_group_active() const;
 		const std::vector<insert_segment_mark_data>& insert_segment_marks() const;
 
 		const impl::attribute_instance* selected_attribute_instance() const;
