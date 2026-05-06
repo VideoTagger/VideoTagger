@@ -23,7 +23,6 @@
 
 namespace vt
 {
-	using segment_id = uint64_t;
 	using segment_id_map = std::unordered_map<std::string, std::set<segment_id>>;
 	inline constexpr auto invalid_segment_id = segment_id{ 0 };
 

@@ -139,6 +139,8 @@ extern "C"
 #include <events/video_resource/video_download_finished_event.hpp>
 #include <events/video_resource/video_open_in_explorer_request_event.hpp>
 #include <events/video_resource/video_locate_request_event.hpp>
+#include <events/attributes/region_select_request_event.hpp>
+#include <events/attributes/region_deselect_request_event.hpp>
 
 
 namespace vt
@@ -2781,7 +2783,7 @@ namespace vt
 					//TODO: Overlays shouldn't be cleared every frame, rewrite the overlay to not copy values - it should get them by itself
 					vid_win->clear_overlays();
 					//Segment Attribute Instance Overlays
-					vid_win->with_overlay([](video_id_t video_id, ImVec2 pos, ImVec2 size, ImVec2 tex_size)
+					vid_win->with_overlay([source = vid_win->get_event_source()](video_id_t video_id, ImVec2 pos, ImVec2 size, ImVec2 tex_size)
 					{
 						auto current_ts = ctx_.displayed_videos.current_timestamp_as_timestamp();
 
@@ -2802,7 +2804,28 @@ namespace vt
 							{
 								if (attr_instance_ptr == nullptr) continue;
 
-								attr_instance_ptr->render_overlay(tag, current_ts, pos, size, tex_size);
+								attr_instance_ptr->render_overlay(tag, segment_it->id, current_ts, pos, size, tex_size);
+							}
+						}
+
+						bool window_hovered = ImGui::IsWindowHovered();
+						bool select_tool_active = ctx_.session.toolbar.is_tool_active("select");
+						const auto& hovered_regions = ctx_.session.hovered_regions();
+
+						if (window_hovered and select_tool_active)
+						{
+							if (ImGui::IsMouseClicked(ImGuiMouseButton_Left))
+							{
+								if (!hovered_regions.empty())
+								{
+									//TODO: select segment
+									auto& region_data = hovered_regions.front();
+									ctx_.dispatch_event<region_select_request_event>(source, region_data.segment, *region_data.attribute_instance, region_data.region_id);
+								}
+								else if (ctx_.session.is_any_region_selected())
+								{
+									ctx_.dispatch_event<region_deselect_request_event>(source);
+								}
 							}
 						}
 					});

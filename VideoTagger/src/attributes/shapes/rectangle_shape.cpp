@@ -61,8 +61,8 @@ namespace vt
 			draw_list->AddCircleFilled(p, radius, fill_color);
 		}
 
-		auto size = scaled_start - scaled_end;
-		for (auto& p : { scaled_start + ImVec2{ size.x, 0 }, scaled_end + ImVec2{ 0, size.y } })
+		auto size = scaled_end - scaled_start;
+		for (auto& p : { scaled_start + ImVec2{ size.x, 0 }, scaled_start + ImVec2{ 0, size.y } })
 		{
 			draw_list->AddCircleFilled(p, radius / 2.f, fill_color);
 		}

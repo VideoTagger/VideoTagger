@@ -26,6 +26,12 @@
 #include <events/gizmo/gizmo_set_targets_event.hpp>
 #include <events/gizmo/gizmo_move_targets_event.hpp>
 
+#include <events/attributes/region_select_request_event.hpp>
+#include <events/attributes/region_selected_event.hpp>
+#include <events/attributes/region_deselect_request_event.hpp>
+#include <events/attributes/region_deselected_event.hpp>
+#include <events/attributes/region_hover_started_event.hpp>
+#include <events/attributes/region_hover_ended_event.hpp>
 
 namespace vt
 {
@@ -34,6 +40,7 @@ namespace vt
 	{
 		register_timeline_listeners();
 		register_gizmo_listeners();
+		register_attribute_listeners();
 	}
 
 	void session_storage::register_timeline_listeners()
@@ -283,6 +290,51 @@ namespace vt
 		});
 	}
 
+	void session_storage::register_attribute_listeners()
+	{
+		ctx_.add_event_listener<region_select_request_event>([this](const region_select_request_event& event)
+		{
+			selected_region_data region_data{ event.segment(), &event.attribute_instance(), event.region_id()};
+
+			if (selected_region_.has_value())
+			{
+				if (*selected_region_ == region_data)
+				{
+					return;
+				}
+
+				ctx_.dispatch_event<region_deselected_event>(event.source(), selected_region_->segment, *selected_region_->attribute_instance, selected_region_->region_id);
+			}
+
+			selected_region_ = region_data;
+
+			ctx_.dispatch_event<region_selected_event>(event.source(), event.segment(), event.attribute_instance(), event.region_id());
+		});
+
+		ctx_.add_event_listener<region_deselect_request_event>([this](const region_deselect_request_event& event)
+		{
+			if (!selected_region_.has_value()) return;
+
+			ctx_.dispatch_event<region_deselected_event>(event.source(), selected_region_->segment, *selected_region_->attribute_instance, selected_region_->region_id);
+			selected_region_.reset();
+		});
+
+		ctx_.add_event_listener<region_hover_started_event>([this](const region_hover_started_event& event)
+		{
+			if (is_region_hovered(&event.attribute_instance(), event.region_id())) return;
+
+			hovered_regions_.push_back({ event.segment(), &event.attribute_instance(), event.region_id() });
+		});
+
+		ctx_.add_event_listener<region_hover_ended_event>([this](const region_hover_ended_event& event)
+		{
+			auto it = std::find(hovered_regions_.begin(), hovered_regions_.end(), selected_region_data{ event.segment(), &event.attribute_instance(), event.region_id() });
+			if (it == hovered_regions_.end()) return;
+			
+			hovered_regions_.erase(it);
+		});
+	}
+
 	const segment_id_map& session_storage::selected_segments() const
 	{
 		return selected_segments_;
@@ -308,9 +360,36 @@ namespace vt
 		return insert_segment_marks_;
 	}
 
-	const impl::attribute_instance* session_storage::selected_attribute_instance() const
+	const std::optional<selected_region_data>& session_storage::selected_region() const
 	{
-		return selected_attribute_instance_;
+		return selected_region_;
+	}
+
+	bool session_storage::is_region_selected(impl::attribute_instance* attribute_instance, region_id_t region_id) const
+	{
+		if (!selected_region_.has_value()) return false;
+
+		return selected_region_->attribute_instance == attribute_instance and selected_region_->region_id == region_id;
+	}
+
+	bool session_storage::is_any_region_selected() const
+	{
+		return selected_region_.has_value();
+	}
+
+	const std::vector<selected_region_data>& session_storage::hovered_regions() const
+	{
+		return hovered_regions_;
+	}
+
+	bool session_storage::is_region_hovered(impl::attribute_instance* attribute_instance, region_id_t region_id) const
+	{
+		return std::find(hovered_regions_.begin(), hovered_regions_.end(), selected_region_data{ invalid_segment_id, attribute_instance, region_id }) != hovered_regions_.end();
+	}
+
+	bool session_storage::is_any_region_hovered() const
+	{
+		return !hovered_regions_.empty();
 	}
 
 	bool session_storage::is_segment_selected(const std::string& tag, segment_id id) const
@@ -443,6 +522,8 @@ namespace vt
 		segment_drag_data_ = vt::segment_drag_data{};
 		current_video_group_id_ = invalid_video_group_id;
 		insert_segment_marks_.clear();
+		selected_region_.reset();
+		hovered_regions_.clear();
 		
 		gizmo_targets_.clear();
 		toolbar.reset();

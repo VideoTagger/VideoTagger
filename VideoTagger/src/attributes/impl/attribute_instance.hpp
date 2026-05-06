@@ -5,6 +5,7 @@
 #include <attributes/impl/attribute.hpp>
 #include <tags/tag.hpp>
 #include <utils/timestamp.hpp>
+#include <core/types.hpp>
 
 namespace vt::impl
 {
@@ -52,6 +53,6 @@ namespace vt::impl
 			return attribute_->type_name();
 		}
 
-		virtual void render_overlay(const tag& attribute_tag, timestamp ts, ImVec2 pos, ImVec2 size, ImVec2 tex_size) {}
+		virtual void render_overlay(const tag& attribute_tag, segment_id segment, timestamp ts, ImVec2 pos, ImVec2 size, ImVec2 tex_size) {}
 	};
 }

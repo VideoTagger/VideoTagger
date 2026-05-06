@@ -12,6 +12,7 @@
 #include <tasks/session_task_manager.hpp>
 #include <attributes/impl/attribute_instance.hpp>
 #include <ui/toolbar_tool.hpp>
+#include <core/types.hpp>
 
 namespace vt
 {
@@ -37,6 +38,23 @@ namespace vt
 		event_source begin_drag_source{};
 	};
 
+	struct selected_region_data
+	{
+		segment_id segment;
+		impl::attribute_instance* attribute_instance{};
+		region_id_t region_id{};
+
+		constexpr bool operator==(const selected_region_data& other) const
+		{
+			return attribute_instance == other.attribute_instance and region_id == other.region_id;
+		}
+
+		constexpr bool operator!=(const selected_region_data& other) const
+		{
+			return !(*this == other);
+		}
+	};
+
 	///@brief Storage for temporary data related to the current session
 	class session_storage : public impl::resettable
 	{
@@ -50,18 +68,21 @@ namespace vt
 		video_group_id_t current_video_group_id_{ invalid_video_group_id };
 		std::vector<insert_segment_mark_data> insert_segment_marks_;
 
-		impl::attribute_instance* selected_attribute_instance_{};
+		std::optional<selected_region_data> selected_region_;
 
 		std::vector<utils::vec2<uint32_t>*> gizmo_targets_;
 
+		std::vector<selected_region_data> hovered_regions_;
+
 		event_source event_source_{ "session" };
 
+		void register_timeline_listeners();
+		void register_gizmo_listeners();
+		void register_attribute_listeners();
+	
 	public:
 		session_task_manager tasks;
 		ui::toolbar_session_data toolbar;
-		
-		void register_timeline_listeners();
-		void register_gizmo_listeners();
 		
 		const segment_id_map& selected_segments() const;
 		const segment_id_map& dragged_segments() const;
@@ -69,7 +90,13 @@ namespace vt
 		video_group_id_t current_video_group_id() const;
 		const std::vector<insert_segment_mark_data>& insert_segment_marks() const;
 
-		const impl::attribute_instance* selected_attribute_instance() const;
+		const std::optional<selected_region_data>& selected_region() const;
+		bool is_region_selected(impl::attribute_instance* attribute_instance, region_id_t region_id) const;
+		bool is_any_region_selected() const;
+
+		const std::vector<selected_region_data>& hovered_regions() const;
+		bool is_region_hovered(impl::attribute_instance* attribute_instance, region_id_t region_id) const;
+		bool is_any_region_hovered() const;
 
 		bool is_segment_selected(const std::string& tag, segment_id id) const;
 		bool is_one_segment_selected() const;

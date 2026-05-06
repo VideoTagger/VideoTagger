@@ -603,9 +603,12 @@ namespace vt::widgets
 		ImRect left_grab_rect{ ImVec2{ timespan_rect.Min.x - grab_width, timespan_rect.Min.y }, ImVec2{ timespan_rect.Min.x, timespan_rect.Max.y } };
 		ImRect right_grab_rect{ ImVec2{ timespan_rect.Max.x, timespan_rect.Min.y }, ImVec2{ timespan_rect.Max.x + grab_width, timespan_rect.Max.y } };
 
-		is_hovered = enabled_ and ImGui::IsMouseHoveringRect(timespan_rect.Min, timespan_rect.Max);
-		is_left_grab_hovered = ImGui::IsMouseHoveringRect(left_grab_rect.Min, left_grab_rect.Max);
-		is_right_grab_hovered = ImGui::IsMouseHoveringRect(right_grab_rect.Min, right_grab_rect.Max);
+		if (ImGui::IsWindowHovered())
+		{
+			is_hovered = enabled_ and ImGui::IsMouseHoveringRect(timespan_rect.Min, timespan_rect.Max);
+			is_left_grab_hovered = ImGui::IsMouseHoveringRect(left_grab_rect.Min, left_grab_rect.Max);
+			is_right_grab_hovered = ImGui::IsMouseHoveringRect(right_grab_rect.Min, right_grab_rect.Max);
+		}
 
 		bool is_left_grab_enabled = enabled_ and is_left_grab_hovered;
 		bool is_right_grab_enabled = enabled_ and is_right_grab_hovered;
@@ -1128,7 +1131,7 @@ namespace vt::widgets
 			ctx_popup_->render();
 
 			const auto& segment_drag_data = ctx_.session.segment_drag_data();
-			if (ctx_.session.is_dragging_any_segment() and segment_drag_data.begin_drag_source == event_source_)
+			if (segment_drag_data.stage == segment_drag_stage::dragging and segment_drag_data.begin_drag_source == event_source_)
 			{
 				float normalized_mouse_x = math::normalize(ImGui::GetMousePos().x, cell_rect->Min.x, cell_rect->Max.x, 0.f, 1.f);
 				timestamp mouse_timestamp = to_timestamp(normalized_mouse_x);
