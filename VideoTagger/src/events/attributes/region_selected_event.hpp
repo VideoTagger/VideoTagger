@@ -6,7 +6,7 @@ namespace vt
 	class region_selected_event : public region_event
 	{
 	public:
-		region_selected_event(segment_id segment, impl::attribute_instance& attribute_instance, region_id_t region_id) :
-			region_event{ segment, attribute_instance, region_id } {}
+		region_selected_event(const std::string& tag_name, segment_id segment, impl::attribute_instance& attribute_instance, region_id_t region_id) :
+			region_event{ tag_name, segment, attribute_instance, region_id } {}
 	};
 }

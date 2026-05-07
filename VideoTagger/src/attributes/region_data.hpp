@@ -54,6 +54,16 @@ namespace vt
 			return keyframes_.erase(ts) != 0;
 		}
 
+		const_iterator find_keyframe(timestamp ts) const
+		{
+			return keyframes_.find(ts);
+		}
+
+		iterator find_keyframe(timestamp ts)
+		{
+			return keyframes_.find(ts);
+		}
+
 		/**
 		 * @brief Find the keyframe at the timestamp or the closest one after it
 		 * @param ts Keyframe timestamp to search for

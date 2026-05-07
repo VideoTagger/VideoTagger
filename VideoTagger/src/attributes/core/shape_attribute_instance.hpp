@@ -8,11 +8,13 @@
 #include <core/app_context.hpp>
 #include <utils/random.hpp>
 #include <utils/math.hpp>
+#include <core/types.hpp>
 #include <events/attributes/region_hover_started_event.hpp>
 #include <events/attributes/region_hover_ended_event.hpp>
-#include <core/types.hpp>
+#include <events/gizmo/gizmo_set_targets_event.hpp>
 
 #include <imgui.h>
+#include <ImGuizmo.h>
 
 namespace vt
 {
@@ -112,10 +114,11 @@ namespace vt
 			}
 		}
 
-		virtual void render_overlay(const tag& attribute_tag, segment_id segment, timestamp ts, ImVec2 pos, ImVec2 size, ImVec2 tex_size) override
+		virtual void render_overlay(const tag& attribute_tag, segment_id segment, timestamp ts, video_id_t video_id, ImVec2 pos, ImVec2 size, ImVec2 tex_size) override
 		{
 			bool window_hovered = ImGui::IsWindowHovered();
 			bool select_tool_active = ctx_.session.toolbar.is_tool_active("select");
+			bool is_over_gizmo = ImGuizmo::IsOver() and ctx_.session.has_gizmo_targets();
 
 			for (auto& [region_id, region] : regions_)
 			{
@@ -134,20 +137,44 @@ namespace vt
 				if (window_hovered and select_tool_active)
 				{
 					auto video_mouse_pos = math::scale_vec2(ImGui::GetMousePos(), pos, pos + size, utils::vec2<uint32_t>{}, utils::vec2<uint32_t>{ static_cast<uint32_t>(tex_size.x), static_cast<uint32_t>(tex_size.y) });
-					if (shape_opt->contains(video_mouse_pos))
+					is_hovered = shape_opt->contains(video_mouse_pos);
+					
+					if (is_hovered)
 					{
-						is_hovered = true;
-						// session already checks if region is already hovered, no need to check that here
-						ctx_.dispatch_event<region_hover_started_event>("shape_attribute_instance", segment, *this, region_id);
+						// session checks if region was already hovered, no need to check that here
+						ctx_.dispatch_event<region_hover_started_event>("shape_attribute_instance", attribute_tag.name, segment, *this, region_id);
+					}
 
-						ImGui::SetMouseCursor(ImGuiMouseCursor_Hand);
-						ui::tooltip(fmt::format("Tag: {}\nAttribute: {}", attribute_tag.name, this->attribute_name()));
+					//TODO: add event for hovering points (like above for regions) and move this to main_window
+					if (ImGui::IsMouseClicked(ImGuiMouseButton_Left) and !is_over_gizmo)
+					{
+						auto keyframe_it = region.find_keyframe(ts);
+						if (keyframe_it != region.end())
+						{
+							auto& [_, shape] = *keyframe_it;
+
+							auto* point = shape.closest_point(video_mouse_pos, 6.f);
+							std::vector<utils::vec2<uint32_t>*> targets;
+							if (point != nullptr)
+							{
+								targets = { point };
+							}
+							else if (is_hovered)
+							{
+								targets = shape.get_all_points();
+							}
+
+							if (ctx_.session.has_gizmo_targets() or !targets.empty())
+							{
+								ctx_.dispatch_event<gizmo_set_targets_event>("shape_attribute_instance", video_id, targets);
+							}
+						}
 					}
 				}
 
 				if (!is_hovered)
 				{
-					ctx_.dispatch_event<region_hover_ended_event>("shape_attribute_instance", segment, *this, region_id);
+					ctx_.dispatch_event<region_hover_ended_event>("shape_attribute_instance", attribute_tag.name, segment, *this, region_id);
 				}
 			}
 		}

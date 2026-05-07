@@ -13,7 +13,8 @@ namespace vt
 	struct gizmo_move_targets_event : public gizmo_targets_event
 	{
 	public:
-		gizmo_move_targets_event(const std::vector<utils::vec2<uint32_t>*>& targets, const utils::vec2<uint32_t>& value, gizmo_move_type type = gizmo_move_type::offset) : gizmo_targets_event{ targets }, value_{ value }, type_{ type } {}
+		gizmo_move_targets_event(video_id_t video_id, const std::vector<utils::vec2<uint32_t>*>& targets, const utils::vec2<uint32_t>& value, gizmo_move_type type = gizmo_move_type::offset) :
+			gizmo_targets_event{ video_id, targets }, value_{ value }, type_{ type } {}
 
 	private:
 		utils::vec2<uint32_t> value_;

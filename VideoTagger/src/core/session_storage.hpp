@@ -40,6 +40,7 @@ namespace vt
 
 	struct selected_region_data
 	{
+		std::string tag_name;
 		segment_id segment;
 		impl::attribute_instance* attribute_instance{};
 		region_id_t region_id{};
@@ -53,6 +54,12 @@ namespace vt
 		{
 			return !(*this == other);
 		}
+	};
+
+	struct gizmo_data
+	{
+		video_id_t video_id{};
+		std::vector<utils::vec2<uint32_t>*> targets;
 	};
 
 	///@brief Storage for temporary data related to the current session
@@ -70,7 +77,7 @@ namespace vt
 
 		std::optional<selected_region_data> selected_region_;
 
-		std::vector<utils::vec2<uint32_t>*> gizmo_targets_;
+		gizmo_data gizmo_data_;
 
 		std::vector<selected_region_data> hovered_regions_;
 
@@ -110,7 +117,7 @@ namespace vt
 		bool is_dragging_any_segment() const;
 
 		bool gizmo_contains_target(const utils::vec2<uint32_t>* target) const;
-		std::vector<utils::vec2<uint32_t>*> gizmo_targets();
+		video_id_t gizmo_video_id() const;
 		const std::vector<utils::vec2<uint32_t>*>& gizmo_targets() const;
 		bool has_gizmo_targets() const;
 		utils::vec2<uint32_t> mean_gizmo_target() const;

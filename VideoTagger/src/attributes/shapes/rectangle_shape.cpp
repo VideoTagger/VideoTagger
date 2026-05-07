@@ -13,10 +13,10 @@ namespace vt
 		return start == other.start and end == other.end;
 	}
 
-	void rectangle_shape::set_target(event_source source)
+	void rectangle_shape::set_target(event_source source, video_id_t video_id)
 	{
 		std::vector<utils::vec2<uint32_t>*> targets{ { &start,  &end } };
-		ctx_.dispatch_event<gizmo_set_targets_event>(source, targets);
+		ctx_.dispatch_event<gizmo_set_targets_event>(source, video_id, targets);
 	}
 
 	bool rectangle_shape::contains(utils::vec2<uint32_t> point) const
@@ -24,20 +24,25 @@ namespace vt
 		return utils::intersection::is_in_rect(ImVec2(point[0], point[1]), ImRect{ ImVec2(start[0], start[1]), { ImVec2(end[0], end[1]) }});
 	}
 
-	const utils::vec2<uint32_t>* rectangle_shape::closest_point(utils::vec2<uint32_t> point, float max_distance) const
+	utils::vec2<uint32_t>* rectangle_shape::closest_point(utils::vec2<uint32_t> point, float max_distance)
 	{
 		float distance = std::numeric_limits<float>::infinity();
-		const utils::vec2<uint32_t>* result{};
-		for (auto& p : { start, end })
+		utils::vec2<uint32_t>* result{};
+		for (auto* p : { &start, &end })
 		{
-			float new_distance = utils::vec2<uint32_t>::distance(p, point);
+			float new_distance = utils::vec2<uint32_t>::distance(*p, point);
 			if (new_distance < distance)
 			{
-				result = &p;
+				result = p;
 				distance = new_distance;
 			}
 		}
 		return distance <= max_distance ? result : nullptr;
+	}
+
+	std::vector<utils::vec2<uint32_t>*> rectangle_shape::get_all_points()
+	{
+		return { &start, &end };
 	}
 
 	void rectangle_shape::render_shape(utils::vec2<uint32_t> shape_space, ImVec2 draw_min, ImVec2 draw_max, uint32_t fill_color, uint32_t outline_color)

@@ -2804,23 +2804,32 @@ namespace vt
 							{
 								if (attr_instance_ptr == nullptr) continue;
 
-								attr_instance_ptr->render_overlay(tag, segment_it->id, current_ts, pos, size, tex_size);
+								attr_instance_ptr->render_overlay(tag, segment_it->id, current_ts, video_id, pos, size, tex_size);
 							}
 						}
 
 						bool window_hovered = ImGui::IsWindowHovered();
 						bool select_tool_active = ctx_.session.toolbar.is_tool_active("select");
 						const auto& hovered_regions = ctx_.session.hovered_regions();
+						bool is_over_gizmo = ImGuizmo::IsOver() and ctx_.session.has_gizmo_targets();
 
-						if (window_hovered and select_tool_active)
+						if (window_hovered and select_tool_active and !is_over_gizmo)
 						{
+							if (!hovered_regions.empty())
+							{
+								auto& region_data = hovered_regions.front();
+
+								ImGui::SetMouseCursor(ImGuiMouseCursor_Hand);
+								ui::tooltip(fmt::format("Tag: {}\nAttribute: {}", region_data.tag_name, region_data.attribute_instance->attribute_name()));
+							}
+
 							if (ImGui::IsMouseClicked(ImGuiMouseButton_Left))
 							{
 								if (!hovered_regions.empty())
 								{
 									//TODO: select segment
 									auto& region_data = hovered_regions.front();
-									ctx_.dispatch_event<region_select_request_event>(source, region_data.segment, *region_data.attribute_instance, region_data.region_id);
+									ctx_.dispatch_event<region_select_request_event>(source, region_data.tag_name, region_data.segment, *region_data.attribute_instance, region_data.region_id);
 								}
 								else if (ctx_.session.is_any_region_selected())
 								{
@@ -2877,6 +2886,79 @@ namespace vt
 						ImGui::PopFont();
 					});
 					
+					vid_win->with_overlay([source = vid_win->get_event_source(), has_target, &point_pos, &start_pos](video_id_t video_id, ImVec2 pos, ImVec2 size, ImVec2 tex_size)
+					{
+						bool select_tool_active = ctx_.session.toolbar.is_tool_active("select");
+						if (!select_tool_active or ctx_.session.gizmo_video_id() != video_id) return;
+
+						static auto from_pixels = [&tex_size, &size](uint32_t value) -> float
+						{
+							float viewport_diagonal = utils::intersection::length(size);
+							float tex_diagonal = utils::intersection::length(tex_size);
+							return (float)value * viewport_diagonal / tex_diagonal;
+						};
+
+						if (has_target)
+						{
+							float left = 0.0f;
+							float right = tex_size.x;
+							float bottom = tex_size.y;
+							float top = 0.f;
+							float near_z = -1.0f;
+							float far_z = 1.0f;
+
+							auto wpos = ImGui::GetWindowPos();
+							auto wsize = ImGui::GetWindowSize();
+
+							float translation[3]{ point_pos.x, point_pos.y, 0.0f };
+							float rotation[3]{};
+							float scale[3] = { 1.f, 1.f, 1.f };
+
+							float target[3]
+							{
+								utils::matrix::front[0], //translation[0] + utils::matrix::front[0],
+								utils::matrix::front[1], //translation[1] + utils::matrix::front[1],
+								utils::matrix::front[2], //translation[2] + utils::matrix::front[2]
+							};
+
+							float cam_distance = 0.f;
+							float cam_angle[2]{};
+							float eye[3]
+							{
+								std::cos(cam_angle[1]) * std::cos(cam_angle[0]) * cam_distance,
+								std::sin(cam_angle[0]) * cam_distance,
+								std::sin(cam_angle[1]) * std::cos(cam_angle[0]) * cam_distance
+							};
+							utils::matrix view_mat = (utils::matrix::look_at(eye, target));
+
+							utils::matrix proj_mat = utils::matrix::ortho(left, right, bottom, top, near_z, far_z);
+							ImGuizmo::SetRect(pos.x, pos.y, size.x, size.y);
+
+							utils::matrix mod{};
+							auto& gizmo_style = ImGuizmo::GetStyle();
+
+							gizmo_style.CenterCircleSize = ctx_.app_settings.scale_gizmos ? from_pixels(5) : 5.f;
+							gizmo_style.ScaleLineCircleSize = gizmo_style.CenterCircleSize;
+							gizmo_style.TranslationLineThickness = 2.f * gizmo_style.CenterCircleSize / 3.f;
+							gizmo_style.TranslationLineArrowSize = 1.5f * gizmo_style.TranslationLineThickness;
+							ImGuizmo::SetOrthographic(true);
+							ImGuizmo::SetDrawlist();
+
+							float snap[3]{ 1.00f, 1.00f, 1.00f };
+							ImVec2 obj_size{ 5, 100.f };
+							float bounds[] = { -obj_size.y / 2, -obj_size.x / 2, 0.f, obj_size.y / 2, obj_size.x / 2, 0.f };
+							ImGuizmo::RecomposeMatrixFromComponents(translation, rotation, scale, mod.data);
+							if (ImGuizmo::Manipulate(view_mat.data, proj_mat.data, ImGuizmo::OPERATION::TRANSLATE_X | ImGuizmo::OPERATION::TRANSLATE_Y/* | ImGuizmo::OPERATION::BOUNDS*/, ImGuizmo::MODE::LOCAL, mod.data, nullptr, snap, nullptr/*bounds*/))
+							{
+								ImGuizmo::DecomposeMatrixToComponents(mod.data, translation, rotation, scale);
+								point_pos.x = std::clamp(translation[0], 0.0f, tex_size.x);
+								point_pos.y = std::clamp(translation[1], 0.0f, tex_size.y);
+
+								utils::vec2<uint32_t> offset{ (uint32_t)(point_pos.x - start_pos.x), (uint32_t)(point_pos.y - start_pos.y) };
+								ctx_.dispatch_event<gizmo_move_targets_event>(source, video_id, ctx_.session.gizmo_targets(), offset);
+							}
+						}
+					});
 
 					//vid_win->with_overlay([&point_pos, start_pos, has_selected_attribute, selected_attribute, is_shape, has_target, &video_data, this](ImVec2 pos, ImVec2 size, ImVec2 tex_size)
 					//{

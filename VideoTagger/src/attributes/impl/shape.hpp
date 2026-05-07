@@ -4,6 +4,7 @@
 #include <utils/vec.hpp>
 #include <optional>
 #include <imgui.h>
+#include <core/types.hpp>
 
 namespace vt::impl
 {
@@ -14,10 +15,11 @@ namespace vt::impl
 		virtual ~shape() = default;
 
 	public:
-		virtual void set_target(event_source source) = 0;
+		virtual void set_target(event_source source, video_id_t video_id) = 0;
 
-		virtual const utils::vec2<uint32_t>* closest_point(utils::vec2<uint32_t> point, float max_distance = std::numeric_limits<float>::infinity()) const = 0;
-		utils::vec2<uint32_t>* closest_point(utils::vec2<uint32_t> point, float max_distance = std::numeric_limits<float>::infinity());
+		virtual utils::vec2<uint32_t>* closest_point(utils::vec2<uint32_t> point, float max_distance = std::numeric_limits<float>::infinity()) = 0;
+
+		virtual std::vector<utils::vec2<uint32_t>*> get_all_points() = 0;
 
 		virtual bool contains(utils::vec2<uint32_t> point) const = 0;
 

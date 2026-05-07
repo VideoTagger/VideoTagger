@@ -264,7 +264,7 @@ namespace vt
 			{
 				case gizmo_move_type::absolute:
 				{
-					for (const auto& target : gizmo_targets_)
+					for (const auto& target : gizmo_data_.targets)
 					{
 						target->at(0) = event.value().at(0);
 						target->at(1) = event.value().at(1);
@@ -273,7 +273,7 @@ namespace vt
 				}
 				case gizmo_move_type::offset:
 				{
-					for (const auto& target : gizmo_targets_)
+					for (const auto& target : gizmo_data_.targets)
 					{
 						target->at(0) += event.value().at(0);
 						target->at(1) += event.value().at(1);
@@ -286,7 +286,8 @@ namespace vt
 
 		ctx_.add_event_listener<gizmo_set_targets_event>([this](const gizmo_set_targets_event& event)
 		{
-			gizmo_targets_ = event.targets();
+			gizmo_data_.video_id = event.video_id();
+			gizmo_data_.targets = event.targets();
 		});
 	}
 
@@ -294,7 +295,7 @@ namespace vt
 	{
 		ctx_.add_event_listener<region_select_request_event>([this](const region_select_request_event& event)
 		{
-			selected_region_data region_data{ event.segment(), &event.attribute_instance(), event.region_id()};
+			selected_region_data region_data{ event.tag_name(), event.segment(), &event.attribute_instance(), event.region_id()};
 
 			if (selected_region_.has_value())
 			{
@@ -303,19 +304,19 @@ namespace vt
 					return;
 				}
 
-				ctx_.dispatch_event<region_deselected_event>(event.source(), selected_region_->segment, *selected_region_->attribute_instance, selected_region_->region_id);
+				ctx_.dispatch_event<region_deselected_event>(event.source(), selected_region_->tag_name, selected_region_->segment, *selected_region_->attribute_instance, selected_region_->region_id);
 			}
 
 			selected_region_ = region_data;
 
-			ctx_.dispatch_event<region_selected_event>(event.source(), event.segment(), event.attribute_instance(), event.region_id());
+			ctx_.dispatch_event<region_selected_event>(event.source(), event.tag_name(), event.segment(), event.attribute_instance(), event.region_id());
 		});
 
 		ctx_.add_event_listener<region_deselect_request_event>([this](const region_deselect_request_event& event)
 		{
 			if (!selected_region_.has_value()) return;
 
-			ctx_.dispatch_event<region_deselected_event>(event.source(), selected_region_->segment, *selected_region_->attribute_instance, selected_region_->region_id);
+			ctx_.dispatch_event<region_deselected_event>(event.source(), selected_region_->tag_name, selected_region_->segment, *selected_region_->attribute_instance, selected_region_->region_id);
 			selected_region_.reset();
 		});
 
@@ -323,12 +324,15 @@ namespace vt
 		{
 			if (is_region_hovered(&event.attribute_instance(), event.region_id())) return;
 
-			hovered_regions_.push_back({ event.segment(), &event.attribute_instance(), event.region_id() });
+			hovered_regions_.push_back({ event.tag_name(), event.segment(), &event.attribute_instance(), event.region_id() });
 		});
 
 		ctx_.add_event_listener<region_hover_ended_event>([this](const region_hover_ended_event& event)
 		{
-			auto it = std::find(hovered_regions_.begin(), hovered_regions_.end(), selected_region_data{ event.segment(), &event.attribute_instance(), event.region_id() });
+			auto it = std::find_if(hovered_regions_.begin(), hovered_regions_.end(), [&event](const selected_region_data& region_data)
+			{
+				return region_data.attribute_instance == &event.attribute_instance() and region_data.region_id == event.region_id();
+			});
 			if (it == hovered_regions_.end()) return;
 			
 			hovered_regions_.erase(it);
@@ -389,7 +393,11 @@ namespace vt
 
 	bool session_storage::is_region_hovered(impl::attribute_instance* attribute_instance, region_id_t region_id) const
 	{
-		return std::find(hovered_regions_.begin(), hovered_regions_.end(), selected_region_data{ invalid_segment_id, attribute_instance, region_id }) != hovered_regions_.end();
+		auto it = std::find_if(hovered_regions_.begin(), hovered_regions_.end(), [attribute_instance, region_id](const selected_region_data& region_data)
+		{
+			return region_data.attribute_instance == attribute_instance and region_data.region_id == region_id;
+		});
+		return it != hovered_regions_.end();
 	}
 
 	bool session_storage::is_any_region_hovered() const
@@ -460,39 +468,39 @@ namespace vt
 
 	bool session_storage::gizmo_contains_target(const utils::vec2<uint32_t>* target) const
 	{
-		auto it = std::find_if(gizmo_targets_.begin(), gizmo_targets_.end(), [&](const auto& gizmo_target)
+		auto it = std::find_if(gizmo_data_.targets.begin(), gizmo_data_.targets.end(), [&](const auto& gizmo_target)
 		{
 			return gizmo_target == target;
 		});
-		return it != gizmo_targets_.end();
+		return it != gizmo_data_.targets.end();
 	}
 
-	std::vector<utils::vec2<uint32_t>*> session_storage::gizmo_targets()
+	video_id_t session_storage::gizmo_video_id() const
 	{
-		return gizmo_targets_;
+		return gizmo_data_.video_id;
 	}
 
 	const std::vector<utils::vec2<uint32_t>*>& session_storage::gizmo_targets() const
 	{
-		return gizmo_targets_;
+		return gizmo_data_.targets;
 	}
 
 	bool session_storage::has_gizmo_targets() const
 	{
-		return !gizmo_targets_.empty();
+		return !gizmo_data_.targets.empty();
 	}
 
 	utils::vec2<uint32_t> session_storage::mean_gizmo_target() const
 	{
 		utils::vec2<uint32_t> result;
-		for (const auto& target : gizmo_targets_)
+		for (const auto& target : gizmo_data_.targets)
 		{
 			result[0] += target->at(0);
 			result[1] += target->at(1);
 		}
 
-		result[0] /= gizmo_targets_.size();
-		result[1] /= gizmo_targets_.size();
+		result[0] /= gizmo_data_.targets.size();
+		result[1] /= gizmo_data_.targets.size();
 		return result;
 	}
 
@@ -530,7 +538,8 @@ namespace vt
 		selected_region_.reset();
 		hovered_regions_.clear();
 		
-		gizmo_targets_.clear();
+		gizmo_data_.video_id = 0;
+		gizmo_data_.targets.clear();
 		toolbar.reset();
 		tasks.clear();
 	}

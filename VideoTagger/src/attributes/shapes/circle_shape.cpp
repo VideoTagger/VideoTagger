@@ -13,10 +13,10 @@ namespace vt
 		return radius == other.radius and pos == other.pos;
 	}
 
-	void circle_shape::set_target(event_source source)
+	void circle_shape::set_target(event_source source, video_id_t video_id)
 	{
 		std::vector<utils::vec2<uint32_t>*> targets{ { &pos } };
-		ctx_.dispatch_event<gizmo_set_targets_event>(source, targets);
+		ctx_.dispatch_event<gizmo_set_targets_event>(source, video_id, targets);
 	}
 
 	bool circle_shape::contains(utils::vec2<uint32_t> point) const
@@ -24,10 +24,15 @@ namespace vt
 		return utils::intersection::is_in_circle(ImVec2(point[0], point[1]), ImVec2(pos[0], pos[1]), radius);
 	}
 
-	const utils::vec2<uint32_t>* circle_shape::closest_point(utils::vec2<uint32_t> point, float max_distance) const
+	utils::vec2<uint32_t>* circle_shape::closest_point(utils::vec2<uint32_t> point, float max_distance)
 	{
 		if (utils::vec2<uint32_t>::distance(pos, point) > max_distance) return nullptr;
 		return &pos;
+	}
+
+	std::vector<utils::vec2<uint32_t>*> circle_shape::get_all_points()
+	{
+		return { &pos };
 	}
 
 	void circle_shape::render_shape(utils::vec2<uint32_t> shape_space, ImVec2 draw_min, ImVec2 draw_max, uint32_t fill_color, uint32_t outline_color)

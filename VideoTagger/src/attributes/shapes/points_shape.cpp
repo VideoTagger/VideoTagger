@@ -13,14 +13,14 @@ namespace vt
 		return points == other.points;
 	}
 
-    void points_shape::set_target(event_source source)
+    void points_shape::set_target(event_source source, video_id_t video_id)
 	{
 		std::vector<utils::vec2<uint32_t>*> targets;
 		for (auto& vertex : points)
 		{
 			targets.push_back(&vertex);
 		}
-		ctx_.dispatch_event<gizmo_set_targets_event>(source, targets);
+		ctx_.dispatch_event<gizmo_set_targets_event>(source, video_id, targets);
 	}
 
 	bool points_shape::contains(utils::vec2<uint32_t> point) const
@@ -32,10 +32,10 @@ namespace vt
 		return false;
 	}
 
-	const utils::vec2<uint32_t>* points_shape::closest_point(utils::vec2<uint32_t> point, float max_distance) const
+	utils::vec2<uint32_t>* points_shape::closest_point(utils::vec2<uint32_t> point, float max_distance)
 	{
 		float distance = std::numeric_limits<float>::infinity();
-		const utils::vec2<uint32_t>* result{};
+		utils::vec2<uint32_t>* result{};
 		for (auto& p : points)
 		{
 			float new_distance = utils::vec2<uint32_t>::distance(p, point);
@@ -46,6 +46,16 @@ namespace vt
 			}
 		}
 		return distance <= max_distance ? result : nullptr;
+	}
+
+	std::vector<utils::vec2<uint32_t>*> points_shape::get_all_points()
+	{
+		std::vector<utils::vec2<uint32_t>*> result(points.size());
+		for (size_t i = 0; i < points.size(); ++i)
+		{
+			result[i] = &points[i];
+		}
+		return result;
 	}
 
 	void points_shape::render_shape(utils::vec2<uint32_t> shape_space, ImVec2 draw_min, ImVec2 draw_max, uint32_t fill_color, uint32_t outline_color)

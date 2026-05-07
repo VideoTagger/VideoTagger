@@ -53,6 +53,6 @@ namespace vt::impl
 			return attribute_->type_name();
 		}
 
-		virtual void render_overlay(const tag& attribute_tag, segment_id segment, timestamp ts, ImVec2 pos, ImVec2 size, ImVec2 tex_size) {}
+		virtual void render_overlay(const tag& attribute_tag, segment_id segment, timestamp ts, video_id_t video_id, ImVec2 pos, ImVec2 size, ImVec2 tex_size) {}
 	};
 }
