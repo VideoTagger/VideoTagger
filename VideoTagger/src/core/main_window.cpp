@@ -2827,7 +2827,6 @@ namespace vt
 							{
 								if (!hovered_regions.empty())
 								{
-									//TODO: select segment
 									auto& region_data = hovered_regions.front();
 									ctx_.dispatch_event<region_select_request_event>(source, region_data.tag_name, region_data.segment, *region_data.attribute_instance, region_data.region_id);
 								}

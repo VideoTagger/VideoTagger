@@ -301,6 +301,8 @@ namespace vt
 			{
 				if (*selected_region_ == region_data)
 				{
+					ctx_.dispatch_event<segment_deselect_all_request_event>(event.source(), ctx_.get_current_segment_storage());
+					ctx_.dispatch_event<segment_select_request_event>(event.source(), ctx_.get_current_segment_storage(), event.tag_name(), event.segment());
 					return;
 				}
 
@@ -310,6 +312,9 @@ namespace vt
 			selected_region_ = region_data;
 
 			ctx_.dispatch_event<region_selected_event>(event.source(), event.tag_name(), event.segment(), event.attribute_instance(), event.region_id());
+			
+			ctx_.dispatch_event<segment_deselect_all_request_event>(event.source(), ctx_.get_current_segment_storage());
+			ctx_.dispatch_event<segment_select_request_event>(event.source(), ctx_.get_current_segment_storage(), event.tag_name(), event.segment());
 		});
 
 		ctx_.add_event_listener<region_deselect_request_event>([this](const region_deselect_request_event& event)
