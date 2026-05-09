@@ -8,6 +8,7 @@
 #include <core/app_context.hpp>
 #include <events/toolbar/toolbar_register_request_event.hpp>
 #include <attributes/tools/shape_tool.hpp>
+#include <ui/toolbar/toolbar_group.hpp>
 
 namespace vt
 {
@@ -63,7 +64,8 @@ namespace vt
 				debug::log("Registering toolbar tool with type: '{}' for shape attribute '{}'", type_name(), name());
 
 				auto shape_factory = reinterpret_cast<shape_attribute_factory<shape_type>*>(factory());
-				ctx_.session.toolbar.add_tool(event.source(), std::move(shape_factory->new_tool(tag_data, name())));
+				auto& tool_group = ctx_.session.toolbar.group("shapes");
+				tool_group.add_tool(event.source(), shape_factory->tool_specification(), std::move(shape_factory->new_tool(tag_data, name())));
 			});
 		}
 	};

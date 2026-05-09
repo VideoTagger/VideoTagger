@@ -2841,14 +2841,16 @@ namespace vt
 					//Tool overlays
 					vid_win->with_overlay([](video_id_t video_id, ImVec2 pos, ImVec2 size, ImVec2 tex_size)
 					{
-						auto& tb_tools = ctx_.session.toolbar.tools();
-						auto it = tb_tools.find(ctx_.session.toolbar.active_tool());
-						if (it == tb_tools.end()) return;
-
-						auto& tools = it->second;
-						for (const auto& tool : tools)
+						for (const auto& [id, group] : ctx_.session.toolbar.groups())
 						{
-							tool->render_overlay(video_id, pos, size, tex_size);
+							auto it = group.find(ctx_.session.toolbar.active_tool());
+							if (it == group.end()) continue;
+
+							const auto& entry = it->second;
+							for (const auto& tool : entry.tools())
+							{
+								tool->render_overlay(video_id, pos, size, tex_size);
+							}
 						}
 					});
 

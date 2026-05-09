@@ -1,6 +1,6 @@
 #pragma once
 #include <ui/window.hpp>
-#include <ui/toolbar_tool.hpp>
+#include <ui/toolbar/toolbar_session_data.hpp>
 
 namespace vt::ui::windows
 {

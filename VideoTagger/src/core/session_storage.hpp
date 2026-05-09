@@ -11,7 +11,8 @@
 #include <utils/vec.hpp>
 #include <tasks/session_task_manager.hpp>
 #include <attributes/impl/attribute_instance.hpp>
-#include <ui/toolbar_tool.hpp>
+#include <ui/toolbar/toolbar_group.hpp>
+#include <ui/toolbar/toolbar_session_data.hpp>
 #include <core/types.hpp>
 
 namespace vt

@@ -1,0 +1,55 @@
+#pragma once
+#include <vector>
+#include <memory>
+#include <ui/toolbar/toolbar_tool.hpp>
+#include <ui/toolbar/toolbar_session_data.hpp>
+#include <ui/toolbar/toolbar_tool_specification.hpp>
+
+namespace vt::ui
+{
+	struct toolbar_group;
+
+	struct toolbar_group_entry
+	{
+	public:
+		using tool_container = std::vector<std::unique_ptr<toolbar_tool>>;
+		using iterator = tool_container::iterator;
+		using const_iterator = tool_container::const_iterator;
+
+		toolbar_group_entry(toolbar_group& group, const toolbar_tool_specification& spec = {});
+
+	private:
+		toolbar_group* group_;
+		toolbar_tool_specification spec_;
+		tool_container tools_;
+		size_t sort_index_;
+
+	public:
+		void add_tool(event_source source, const toolbar_tool& tool);
+		void add_tool(event_source source, std::unique_ptr<toolbar_tool>&& tool);
+
+		void clear(event_source source);
+
+		void set_sort_index(size_t index);
+
+		iterator begin();
+		const_iterator begin() const;
+		iterator end();
+		const_iterator end() const;
+
+		std::unique_ptr<toolbar_tool>& front();
+		const std::unique_ptr<toolbar_tool>& front() const;
+		std::unique_ptr<toolbar_tool>& back();
+		const std::unique_ptr<toolbar_tool>& back() const;
+
+		const tool_container& tools() const;
+		toolbar_group& group();
+		const toolbar_group& group() const;
+		const toolbar_tool_specification& specification() const;
+
+		size_t tool_count() const;
+		bool is_empty() const;
+
+		bool operator<(const toolbar_group_entry& other) const;
+	};
+}
