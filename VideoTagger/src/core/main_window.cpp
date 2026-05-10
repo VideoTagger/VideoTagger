@@ -35,7 +35,7 @@
 #include <utils/string.hpp>
 #include <system/messagebox.hpp>
 #include <ui/widgets/common.hpp>
-#include <ui/widgets/slider.hpp>
+#include <ui/widgets/themed_slider.hpp>
 #include <ui/widgets/settings_expander.hpp>
 
 #include <updates/update_manager.hpp>
@@ -1856,23 +1856,16 @@ namespace vt
 		.add_raw([]()
 		{
 			auto& io = ImGui::GetIO();
-			static constexpr auto accent_color = ImVec4{ 0.2588f, 0.6f, 0.8784f, 1.f };
-			static constexpr auto accent_color_hover = ImVec4{ 0.2f, 0.5098f, 0.7804f, 1.f };
 
 			auto avail_area = ImGui::GetContentRegionAvail();
 
-			ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 4.f);
-			ImGui::PushStyleColor(ImGuiCol_SliderGrab, accent_color_hover);
-			ImGui::PushStyleColor(ImGuiCol_SliderGrabActive, accent_color);
-			static ui::slider<float> font_slider(0.5f, 2.0f, io.FontGlobalScale, { avail_area.x, ImGui::GetFrameHeight() });
+			static ui::themed_slider<float> font_slider(0.5f, 2.0f, io.FontGlobalScale, { avail_area.x, ImGui::GetFrameHeight() });
 			font_slider.set_step(0.005f);
 			font_slider.render_with_label("Font Scale");
 			font_slider.set_on_change_callback([&io](float old_value, float value)
 			{
 				io.FontGlobalScale = value;
 			});
-			ImGui::PopStyleVar();
-			ImGui::PopStyleColor(2);
 			return true;
 		})
 #endif

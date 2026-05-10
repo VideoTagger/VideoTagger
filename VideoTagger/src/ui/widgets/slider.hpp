@@ -26,16 +26,32 @@ namespace vt::ui
 		bool is_tooltip_enabled_;
 
 	public:
+		constexpr void set_thickness(float thickness)
+		{
+			thickness_ = thickness;
+		}
+
+		constexpr void set_tooltip_enabled(bool enabled)
+		{
+			is_tooltip_enabled_ = enabled;
+		}
+
+		virtual void pre_style() {}
+		virtual void post_style() {}
+
 		virtual bool render() override
 		{
+			pre_style();
 			const auto& style = ImGui::GetStyle();
 			auto draw_list = ImGui::GetWindowDrawList();
 
 			auto draw_rect = raw_slider<type>::rect();
 			auto full_height = draw_rect.GetHeight();
 			auto circle_radius = 0.9f * full_height / 2.f;
+			raw_slider<type>::set_padding(ImVec2{ circle_radius, 0.f });
+			draw_rect = raw_slider<type>::rect();
 
-			ImGui::SetCursorPosX(ImGui::GetCursorPosX() + circle_radius);
+			//ImGui::SetCursorPosX(ImGui::GetCursorPosX() + circle_radius);
 			bool result = raw_slider<type>::render();
 			if (!result) return false;
 
@@ -59,6 +75,7 @@ namespace vt::ui
 			draw_list->AddRectFilled(ImVec2{ x, center_y - thickness / 2.f }, ImVec2{ draw_rect.Max.x, center_y + thickness / 2.f }, bg_color, style.FrameRounding, ImDrawFlags_RoundCornersBottomRight | ImDrawFlags_RoundCornersTopRight);
 			draw_list->AddCircleFilled(grab_pos, circle_radius, bg_color);
 			draw_list->AddCircleFilled(grab_pos, (is_grab_hovered and enabled) ? full_height / 3.25f : full_height / 4.f, grab_color);
+			post_style();
 
 			auto step = raw_slider<type>::step();
 			if (enabled)
@@ -92,11 +109,6 @@ namespace vt::ui
 				}
 			}
 			return result;
-		}
-
-		constexpr void set_thickness(float thickness)
-		{
-			thickness_ = thickness;
 		}
 	};
 }

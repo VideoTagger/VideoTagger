@@ -2,6 +2,7 @@
 #include <memory>
 #include <chrono>
 #include <functional>
+#include <ui/widgets/themed_slider.hpp>
 #include <ui/window.hpp>
 #include <ui/windows/video_window.hpp>
 
@@ -42,6 +43,7 @@ namespace vt::widgets
 		video_player(const video_player&) = delete;
 
 	private:
+		ui::themed_slider<int64_t> progress_;
 		video_player_data data_;
 		size_t dock_window_count_;
 		loop_mode loop_mode_;

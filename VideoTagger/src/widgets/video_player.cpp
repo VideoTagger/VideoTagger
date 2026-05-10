@@ -33,7 +33,8 @@ namespace vt::widgets
 		return static_cast<size_t>(std::pow(2, std::ceil(std::log2(n))));
 	}
 
-	video_player::video_player() : ui::window{ "Video Player", "video-player", "Video Player", ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse }, dock_window_count_{}, speed_{ 1.0f }, is_playing_{}, autoplay_{}, loop_mode_{}, show_video_ids_{}
+	video_player::video_player() : ui::window{ "Video Player", "video-player", "Video Player", ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse },
+		progress_{}, dock_window_count_{}, speed_{ 1.0f }, is_playing_{}, autoplay_{}, loop_mode_{}, show_video_ids_{}
 	{
 		set_icon(icons::play);
 
@@ -89,6 +90,18 @@ namespace vt::widgets
 			if (&event.player() != this) return;
 			
 			data_.current_ts = event.timestamp();
+			progress_.set_value(data_.current_ts.count());
+		});
+
+		progress_.set_tooltip_enabled(false);
+		progress_.set_step(1);
+		progress_.set_on_change_callback([this](int64_t old_value, int64_t new_value)
+		{
+			if (old_value == new_value) return;
+			data_.current_ts = std::chrono::nanoseconds{ new_value };
+
+			ctx_.dispatch_event<seek_request_event>(get_event_source(), *this, data_.current_ts);
+			std::invoke(callbacks.on_seek, data_.current_ts);
 		});
 	}
 
@@ -105,6 +118,7 @@ namespace vt::widgets
 
 	void video_player::reset_data()
 	{
+		progress_.set_value(0);
 		data_.current_ts = {};
 		data_.start_ts = {};
 		data_.end_ts = {};
@@ -269,11 +283,15 @@ namespace vt::widgets
 		auto progress_size = ImVec2{ ImGui::GetContentRegionAvail().x, text_height };
 		if (has_child_videos)
 		{
-			if (slider_scalar("##VideoProgressBar", ImGuiDataType_U64, progress_size, text_height / 5.f, &data_.current_ts, &min_ts, &data_.end_ts, "", ImGuiSliderFlags_AlwaysClamp))
-			{
-				ctx_.dispatch_event<seek_request_event>(get_event_source(), *this, data_.current_ts);
-				std::invoke(callbacks.on_seek, data_.current_ts);
-			}
+			//if (slider_scalar("##VideoProgressBar", ImGuiDataType_U64, progress_size, text_height / 5.f, &data_.current_ts, &min_ts, &data_.end_ts, "", ImGuiSliderFlags_AlwaysClamp))
+			//{
+			//	ctx_.dispatch_event<seek_request_event>(get_event_source(), *this, data_.current_ts);
+			//	std::invoke(callbacks.on_seek, data_.current_ts);
+			//}
+
+			progress_.set_size(progress_size);
+			progress_.set_range(min_ts.count(), data_.end_ts.count());
+			progress_.render();
 		}
 		else
 		{

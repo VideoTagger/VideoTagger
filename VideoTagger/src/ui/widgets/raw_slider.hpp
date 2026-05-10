@@ -16,12 +16,13 @@ namespace vt::ui
 	struct raw_slider : public widget
 	{
 	public:
-		constexpr raw_slider(type min = std::numeric_limits<type>::min(), type max = std::numeric_limits<type>::max(), type value = {}, const ImVec2& size = {}) : min_{ min }, max_{ max }, value_{ value }, step_{}, size_ { size } {}
+		constexpr raw_slider(type min = std::numeric_limits<type>::min(), type max = std::numeric_limits<type>::max(), type value = {}, const ImVec2& size = {}) : min_{ min }, max_{ max }, value_{ value }, step_{}, size_ { size }, padding_{} {}
 
 	private:
 		std::function<void(type old_value, type new_value)> on_change_;
 		ImVec2 pos_;
 		ImVec2 size_;
+		ImVec2 padding_;
 		type min_;
 		type max_;
 		type value_;
@@ -117,6 +118,11 @@ namespace vt::ui
 			size_ = size;
 		}
 
+		constexpr void set_padding(const ImVec2& padding)
+		{
+			padding_ = padding;
+		}
+
 		constexpr void set_pannable(bool is_pannable)
 		{
 			is_pannable_ = is_pannable;
@@ -164,7 +170,7 @@ namespace vt::ui
 
 		constexpr ImRect rect() const
 		{
-			return ImRect{ pos_, ImVec2{ pos_.x + size_.x, pos_.y + size_.y } };
+			return ImRect{ ImVec2{ pos_.x + padding_.x, pos_.y + padding_.y }, ImVec2{ pos_.x + size_.x - padding_.x, pos_.y + size_.y - padding_.y } };
 		}
 	};
 }
