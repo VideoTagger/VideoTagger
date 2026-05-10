@@ -1,12 +1,12 @@
 #pragma once
 #include <ui/window.hpp>
 
-namespace vt::widgets
+namespace vt::ui::windows
 {
-	class shape_attributes : public ui::window
+	class region_attributes : public ui::window
 	{
 	public:
-		shape_attributes();
+		region_attributes();
 
 	public:
 		virtual void on_render() override;

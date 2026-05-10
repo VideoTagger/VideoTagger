@@ -42,6 +42,7 @@ namespace vt
 	{
 		std::string tag_name;
 		segment_id segment;
+		video_id_t video_id;
 		impl::attribute_instance* attribute_instance{};
 		region_id_t region_id{};
 

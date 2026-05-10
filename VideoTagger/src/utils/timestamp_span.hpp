@@ -15,5 +15,17 @@ namespace vt::utils
 		{
 			return (end - start).total_milliseconds.count();
 		}
+
+		constexpr bool contains(timestamp ts) const
+		{
+			return start <= ts and ts <= end;
+		}
+
+		constexpr int compare(timestamp ts) const
+		{
+			if (ts < start) return -1;
+			if (ts > end) return 1;
+			return 0;
+		}
 	};
 }
