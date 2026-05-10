@@ -14,7 +14,7 @@
 #include <ui/windows/inspector.hpp>
 #include <ui/windows/video_window.hpp>
 #include <ui/popups/options_popup.hpp>
-#include <ui/windows/region_attributes.hpp>
+#include <ui/windows/region_inspector.hpp>
 #include <widgets/localization_editor.hpp>
 #include <widgets/video_group_queue.hpp>
 #include <widgets/video_group_browser.hpp>
@@ -3472,7 +3472,7 @@ namespace vt
 			
 			ImGui::DockBuilderDockWindow(ctx_.get_window<ui::windows::inspector>().name().c_str(), dock_right_up);
 			ImGui::DockBuilderDockWindow(ctx_.get_window<ui::windows::tag_manager>().name().c_str(), main_dock_right);
-			ImGui::DockBuilderDockWindow(ctx_.get_window<ui::windows::region_attributes>().name().c_str(), main_dock_right);
+			ImGui::DockBuilderDockWindow(ctx_.get_window<ui::windows::region_inspector>().name().c_str(), main_dock_right);
 			ImGui::DockBuilderDockWindow(ctx_.get_window<widgets::video_group_queue>().name().c_str(), main_dock_down);
 			ImGui::DockBuilderDockWindow(ctx_.get_window<widgets::video_player>().name().c_str(), main_dock_up);
 			ImGui::DockBuilderDockWindow(ctx_.get_window<widgets::localization_editor>().name().c_str(), main_dock_up);

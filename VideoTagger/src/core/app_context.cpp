@@ -9,7 +9,7 @@
 #include <widgets/console.hpp>
 #include <widgets/video_group_queue.hpp>
 #include <widgets/localization_editor.hpp>
-#include <ui/windows/region_attributes.hpp>
+#include <ui/windows/region_inspector.hpp>
 #include <widgets/video_group_browser.hpp>
 #include <widgets/video_browser.hpp>
 #include <widgets/video_player.hpp>
@@ -95,8 +95,8 @@ namespace vt
 		//TODO: Remove this when localization editor is openable via the menu bar
 		localization_editor.set_opened(true);
 
-		auto& region_attributes = create_window<ui::windows::region_attributes>();
-		region_attributes.set_opened(true);
+		auto& region_inspector = create_window<ui::windows::region_inspector>();
+		region_inspector.set_opened(true);
 
 		auto& group_browser = create_window<widgets::video_group_browser>();
 		group_browser.set_opened(true);

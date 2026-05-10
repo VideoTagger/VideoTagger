@@ -1,5 +1,5 @@
 #include "pch.hpp"
-#include "region_attributes.hpp"
+#include "region_inspector.hpp"
 #include <core/app_context.hpp>
 #include <ui/icons.hpp>
 #include <events/player/seek_request_event.hpp>
@@ -9,12 +9,12 @@
 
 namespace vt::ui::windows
 {
-	region_attributes::region_attributes() : ui::window{ "Region Attributes", "region-attributes", "Region Attributes", ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse }
+	region_inspector::region_inspector() : ui::window{ "Region Inspector", "region-inspector", "Region Inspector", ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse }
 	{
 		set_icon(icons::shape);
 	}
 
-	void region_attributes::on_render()
+	void region_inspector::on_render()
 	{
 		if (ctx_.session.current_video_group_id() == invalid_video_group_id or !ctx_.session.is_any_region_selected())
 		{

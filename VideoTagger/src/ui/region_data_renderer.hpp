@@ -5,6 +5,7 @@
 #include <core/app_context.hpp>
 
 #include <ui/widgets/combo.hpp>
+#include <widgets/time_input.hpp>
 
 #include <events/player/seek_request_event.hpp>
 
@@ -34,22 +35,53 @@ namespace vt::ui
 				return;
 			}
 
+			auto selection_color = ctx_.current_theme.get_rgba(theme_color::selection_normal);
+
 			auto& [_, region] = *region_it;
 
-			auto& predictor_registry = ctx_.get_shape_predictor_registry<shape_type>();
-			size_t interpolator_index = predictor_registry.interpolator_index(region.interpolator_name()).value_or(0);
-			interpolator_combo_.set_selected(interpolator_index);
-			if (interpolator_combo_.render_with_label("Interpolation", true))
+			const auto& style = ImGui::GetStyle();
+			const auto& theme = ctx_.current_theme;
+			auto collapsible_flags = ui::is_item_disabled() ? 0 : ImGuiTreeNodeFlags_DefaultOpen;
+			bool properties_visible = widgets::begin_collapsible("##Properties", "Properties", collapsible_flags, icons::property);
+			if (properties_visible)
 			{
-				ctx_.dispatch_event<region_set_interpolator_request_event>(source, region_data.tag_name, region_data.segment, region_data.video_id,
-					*region_data.attribute_instance, region_data.region_id, interpolator_combo_.selected_item());
+				auto table_flags = ImGuiTableFlags_BordersInnerV | ImGuiTableFlags_Resizable | ImGuiTableFlags_NoSavedSettings | ImGuiTableFlags_RowBg;
+				ImGui::PushStyleVar(ImGuiStyleVar_CellPadding, ImVec2{ style.CellPadding.x + style.ItemSpacing.x, style.CellPadding.y });
+				ImGui::PushStyleColor(ImGuiCol_TableRowBg, theme.get_float4(theme_color::background_tertiary));
+				ImGui::PushStyleColor(ImGuiCol_TableRowBgAlt, theme.get_float4(theme_color::background_tertiary));
+
+				auto result = ImGui::BeginTable("##Card", 2, table_flags);
+				if (result)
+				{
+					ImGui::TableNextRow();
+
+					ImGui::TableNextColumn();
+					ImGui::AlignTextToFramePadding();
+					ImGui::Indent();
+					ImGui::TextUnformatted("Interpolation");
+
+					ImGui::TableNextColumn();
+					auto& predictor_registry = ctx_.get_shape_predictor_registry<shape_type>();
+					size_t interpolator_index = predictor_registry.interpolator_index(region.interpolator_name()).value_or(0);
+					interpolator_combo_.set_selected(interpolator_index);
+					if (interpolator_combo_.render())
+					{
+						ctx_.dispatch_event<region_set_interpolator_request_event>(source, region_data.tag_name, region_data.segment, region_data.video_id,
+							*region_data.attribute_instance, region_data.region_id, interpolator_combo_.selected_item());
+					}
+					
+					ImGui::EndTable();
+				}
+				ImGui::PopStyleColor(2);
+				ImGui::PopStyleVar();
+				widgets::end_collapsible();
 			}
 
 			const auto& segment = ctx_.get_current_segment_storage().at(region_data.tag_name).at(region_data.segment);
 			bool is_current_ts_in_bounds = segment.contains(current_ts);
 
 			ImGui::BeginDisabled(!is_current_ts_in_bounds);
-			bool add_keyframe_pressed = ui::icon_button(icons::add_keyframe);
+			bool add_keyframe_pressed = ui::icon_button(icons::add);
 			ImGui::EndDisabled();
 
 			if (add_keyframe_pressed)
@@ -82,7 +114,8 @@ namespace vt::ui
 
 				bool erased = false;
 				auto collapsible_label = fmt::format("##Keyframe{}{}", region_data.region_id, ts.total_milliseconds.count());
-				bool is_collapsible_open = widgets::begin_collapsible(collapsible_label, utils::time::time_to_string(ts.total_milliseconds.count()), 0, keyframe_icon, std::nullopt, [&]()
+				auto icon_color = is_current_keyframe ? std::optional{ ImGui::ColorConvertU32ToFloat4(selection_color) } : std::optional<ImVec4>{};
+				bool is_collapsible_open = widgets::begin_collapsible(collapsible_label, utils::time::time_to_string(ts.total_milliseconds.count()), 0, keyframe_icon, icon_color, [&]()
 				{
 					auto popup_label = fmt::format("KeyframeCtx{}{}", region_data.region_id, ts.total_milliseconds.count());
 					if (ImGui::BeginPopupContextItem(popup_label.c_str()))
