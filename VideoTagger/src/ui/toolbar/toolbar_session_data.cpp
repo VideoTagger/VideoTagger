@@ -74,6 +74,11 @@ namespace vt::ui
 		return groups_.at(group_id);
 	}
 
+	std::map<std::string, ui::toolbar_group>& toolbar_session_data::groups()
+	{
+		return groups_;
+	}
+
 	const std::map<std::string, ui::toolbar_group>& toolbar_session_data::groups() const
 	{
 		return groups_;

@@ -19,9 +19,10 @@ namespace vt::ui
 		toolbar_group_entry(toolbar_group& group, const toolbar_tool_specification& spec = {});
 
 	private:
-		toolbar_group* group_;
-		toolbar_tool_specification spec_;
 		tool_container tools_;
+		toolbar_tool_specification spec_;
+		toolbar_group* group_;
+		toolbar_tool* active_tool_;
 		size_t sort_index_;
 
 	public:
@@ -31,6 +32,10 @@ namespace vt::ui
 		void clear(event_source source);
 
 		void set_sort_index(size_t index);
+		void set_active_tool(toolbar_tool& tool);
+
+		toolbar_tool* active_tool();
+		const toolbar_tool* active_tool() const;
 
 		iterator begin();
 		const_iterator begin() const;

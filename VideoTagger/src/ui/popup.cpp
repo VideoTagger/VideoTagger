@@ -77,13 +77,17 @@ namespace vt::ui
 
 			if (flags() & ImGuiWindowFlags_NoTitleBar)
 			{
-				const auto& style = ImGui::GetStyle();
+				auto disp_name = display_name();
+				if (!disp_name.empty())
+				{
+					const auto& style = ImGui::GetStyle();
+					ImGui::PushFont(ctx_.get_font(font_type::h3_bold));
+					ImGui::TextUnformatted(disp_name.c_str());
+					ImGui::PopFont();
 
-				ImGui::PushFont(ctx_.get_font(font_type::h3_bold));
-				ImGui::TextUnformatted(display_name().c_str());
-				ImGui::PopFont();
-				post_title_render();
-				ui::vertical_item_spacer(ImGui::GetTextLineHeight() * 0.75f);
+					post_title_render();
+					ui::vertical_item_spacer(ImGui::GetTextLineHeight() * 0.75f);
+				}
 			}
 			on_render();
 			post_render();

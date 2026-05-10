@@ -30,6 +30,7 @@ namespace vt::ui
 
 		ui::toolbar_group& group(const std::string& group_id);
 		const ui::toolbar_group& group(const std::string& group_id) const;
+		std::map<std::string, ui::toolbar_group>& groups();
 		const std::map<std::string, ui::toolbar_group>& groups() const;
 		const std::string& active_tool() const;
 

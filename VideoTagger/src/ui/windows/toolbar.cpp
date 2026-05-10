@@ -17,7 +17,7 @@ namespace vt::ui::windows
 		"Toolbar", "toolbar", "Toolbar",
 		ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoDocking |
 		ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove
-	}, reset_pos_{}
+	}, reset_pos_{}, tool_popup_{ new_popup<ui::toolbar_tool_popup>() }
 	{
 		set_icon(icons::tool_arrow);
 		set_persistent(false);
@@ -108,7 +108,7 @@ namespace vt::ui::windows
 
 	void toolbar::on_render()
 	{
-		const auto& toolbar = data();
+		auto& toolbar = data();
 		const auto source = get_event_source();
 		auto grabber_height = ImGui::GetTextLineHeight();
 
@@ -136,7 +136,7 @@ namespace vt::ui::windows
 		}
 		
 		bool render_separator = false;
-		for (const auto& [group_id, group] : toolbar.groups())
+		for (auto& [group_id, group] : toolbar.groups())
 		{
 			if (group.empty()) continue;
 
@@ -145,21 +145,50 @@ namespace vt::ui::windows
 				render_separator = false;
 				ImGui::Separator();
 			}
-			for (const auto& pair : group.entries_sorted())
+			for (auto& pair : group.entries_sorted())
 			{
-				auto [tool_id, entry] = pair;
+				auto& [tool_id, entry] = pair;
 
 				const auto& spec = entry->specification();
 				bool is_selected = toolbar.is_tool_active(spec.id);
-				//TODO: Handle multiple instances
-				if (ui::icon_toggle_button(spec.icon, is_selected) and !is_selected)
+				bool has_many_tools = entry->tool_count() > 1;
+				
+				bool was_toggled = false;
+				if (ui::icon_toggle_button(spec.icon, is_selected)) // and !is_selected
 				{
-					ctx_.dispatch_event<toolbar_tool_changed_event>(source, group , *entry, *entry->front());
+					was_toggled = true;
 				}
+
+				bool should_be_selected = !is_selected and was_toggled;
+
+				auto toggle_pos = ImGui::GetItemRectMin();
 				ui::tooltip(spec.tooltip);
 				render_separator = true;
+
+				if (is_selected and has_many_tools)
+				{
+					auto window = ImGui::GetCurrentWindow();
+					auto window_rect = window->Rect();
+
+					ImVec2 popup_pos{ window_rect.Max.x, toggle_pos.y };
+					tool_popup_->set_position(popup_pos);
+				}
+
+				if (was_toggled)
+				{
+					if (has_many_tools)
+					{
+						tool_popup_->open();
+					}
+				}
+				if (should_be_selected)
+				{
+					tool_popup_->set_active_entry(entry);
+					ctx_.dispatch_event<toolbar_tool_changed_event>(source, group, *entry, *entry->front());
+				}
 			}
 		}
+		tool_popup_->render();
 	}
 
 	toolbar_session_data& toolbar::data()

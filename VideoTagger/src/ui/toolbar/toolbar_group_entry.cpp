@@ -6,13 +6,17 @@
 
 namespace vt::ui
 {
-	toolbar_group_entry::toolbar_group_entry(toolbar_group& group, const toolbar_tool_specification& spec) : group_{ &group }, spec_{ spec }, sort_index_{} {}
+	toolbar_group_entry::toolbar_group_entry(toolbar_group& group, const toolbar_tool_specification& spec) : group_{ &group }, spec_{ spec }, active_tool_{}, sort_index_{} {}
 
 	void toolbar_group_entry::add_tool(event_source source, const toolbar_tool& tool)
 	{
 		auto tool_ptr = std::make_unique<toolbar_tool>(tool);
 		auto ptr = tool_ptr.get();
 
+		if (active_tool_ == nullptr)
+		{
+			set_active_tool(*ptr);
+		}
 		tools_.push_back(std::move(tool_ptr));
 		ctx_.dispatch_event<toolbar_register_tool_event>(source, *group_, *this, *ptr);
 	}
@@ -36,6 +40,21 @@ namespace vt::ui
 	void toolbar_group_entry::set_sort_index(size_t index)
 	{
 		sort_index_ = index;
+	}
+
+	void toolbar_group_entry::set_active_tool(toolbar_tool& tool)
+	{
+		active_tool_ = &tool;
+	}
+
+	toolbar_tool* toolbar_group_entry::active_tool()
+	{
+		return active_tool_;
+	}
+
+	const toolbar_tool* toolbar_group_entry::active_tool() const
+	{
+		return active_tool_;
 	}
 
 	toolbar_group_entry::iterator toolbar_group_entry::begin()

@@ -25,8 +25,8 @@ namespace vt
 
 	private:
 		std::optional<shape_type> data_;
-		const tag* tag_;
 		std::string attribute_name_;
+		const tag* tag_;
 
 	public:
 		std::optional<shape_type>& data()
@@ -124,6 +124,11 @@ namespace vt
 				ImGui::SetMouseCursor(ImGuiMouseCursor_NotAllowed);
 			}
 			return result;
+		}
+
+		virtual std::string display_name() const override
+		{
+			return attribute_name_;
 		}
 	};
 }
