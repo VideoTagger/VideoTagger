@@ -14,7 +14,7 @@
 #include <ui/windows/inspector.hpp>
 #include <ui/windows/video_window.hpp>
 #include <ui/popups/options_popup.hpp>
-#include <widgets/shape_attributes.hpp>
+#include <ui/windows/region_attributes.hpp>
 #include <widgets/localization_editor.hpp>
 #include <widgets/video_group_queue.hpp>
 #include <widgets/video_group_browser.hpp>
@@ -2829,11 +2829,12 @@ namespace vt
 								if (!hovered_regions.empty())
 								{
 									auto& region_data = hovered_regions.front();
-									ctx_.dispatch_event<region_select_request_event>(source, region_data.tag_name, region_data.segment, *region_data.attribute_instance, region_data.region_id);
+									ctx_.dispatch_event<region_select_request_event>(source, region_data.tag_name, region_data.segment, region_data.video_id, *region_data.attribute_instance, region_data.region_id);
 								}
 								else if (ctx_.session.is_any_region_selected())
 								{
 									ctx_.dispatch_event<region_deselect_request_event>(source);
+									ctx_.dispatch_event<gizmo_set_targets_event>(source, video_id, std::vector<utils::vec2<uint32_t>*>{});
 								}
 							}
 						}
@@ -3478,7 +3479,7 @@ namespace vt
 			
 			ImGui::DockBuilderDockWindow(ctx_.get_window<ui::windows::inspector>().name().c_str(), dock_right_up);
 			ImGui::DockBuilderDockWindow(ctx_.get_window<ui::windows::tag_manager>().name().c_str(), main_dock_right);
-			ImGui::DockBuilderDockWindow(ctx_.get_window<widgets::shape_attributes>().name().c_str(), main_dock_right);
+			ImGui::DockBuilderDockWindow(ctx_.get_window<ui::windows::region_attributes>().name().c_str(), main_dock_right);
 			ImGui::DockBuilderDockWindow(ctx_.get_window<widgets::video_group_queue>().name().c_str(), main_dock_down);
 			ImGui::DockBuilderDockWindow(ctx_.get_window<widgets::video_player>().name().c_str(), main_dock_up);
 			ImGui::DockBuilderDockWindow(ctx_.get_window<widgets::localization_editor>().name().c_str(), main_dock_up);

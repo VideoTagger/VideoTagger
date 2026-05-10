@@ -11,6 +11,8 @@
 #include <attributes/core/shape_attribute.hpp>
 #include <attributes/core/shape_attribute_instance.hpp>
 
+#include <events/attributes/region_insert_request_event.hpp>
+
 namespace vt
 {
 	template<typename shape_type, typename = std::enable_if_t<std::is_base_of_v<impl::shape, shape_type>>>
@@ -71,8 +73,6 @@ namespace vt
 
 		bool insert_region(video_id_t video_id)
 		{
-			//TODO: consider making region insertion an event
-			
 			auto selected_segment_opt = ctx_.session.any_selected_segment(tag_->name);
 			if (!selected_segment_opt.has_value()) return false;
 
@@ -91,11 +91,8 @@ namespace vt
 				instance_it = video_attr_instances.end() - 1;
 			}
 
-			auto* instance = dynamic_cast<shape_attribute_instance<shape_type>*>(instance_it->get());
-			if (instance == nullptr) return false;
-
-			instance->insert_region(ctx_.displayed_videos.current_timestamp_as_timestamp(), *data_);
-			ctx_.is_project_dirty = true;
+			ctx_.dispatch_event<region_insert_request_event<shape_type>>("shape_tool", tag_->name, *selected_segment_opt, video_id, *(instance_it->get()),
+				ctx_.displayed_videos.current_timestamp_as_timestamp(), *data_);
 
 			return true;
 		}
@@ -111,7 +108,7 @@ namespace vt
 			auto& segments = ctx_.get_current_segment_storage().at(tag_name);
 			bool result = segments
 				.at(segment_id)
-				.is_in_bounds(ctx_.displayed_videos.current_timestamp_as_timestamp());
+				.contains(ctx_.displayed_videos.current_timestamp_as_timestamp());
 			return result;
 		}
 

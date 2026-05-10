@@ -9,6 +9,7 @@
 #include <attributes/impl/interpolated_shape_predictor.hpp>
 #include <attributes/predictors/dummy_shape_predictor.hpp>
 #include <core/app_context.hpp>
+#include <utils/timestamp_span.hpp>
 
 namespace vt
 {
@@ -51,14 +52,46 @@ namespace vt
 		 */
 		bool erase_keyframe(timestamp ts)
 		{
-			return keyframes_.erase(ts) != 0;
+			auto it = keyframes_.find(ts);
+			if (it == keyframes_.end()) return false;
+			
+			keyframes_.erase(it);
+			return true;
 		}
 
+		/**
+		 * @brief Erase a keyframe
+		 * @param it const_iterator to the keyframe to erase
+		 * @return iterator to the next keyframe after it or end() if there are no more keyframes
+		 */
+		iterator erase_keyframe(const_iterator it)
+		{
+			auto timestamp_it = std::find(interpolation_keyframe_timestamps_.begin(), interpolation_keyframe_timestamps_.end(), it->first);
+			if (timestamp_it != interpolation_keyframe_timestamps_.end())
+			{
+				auto index = timestamp_it - interpolation_keyframe_timestamps_.begin();
+				interpolation_keyframe_timestamps_.erase(timestamp_it);
+				interpolation_keyframe_shapes_.erase(interpolation_keyframe_shapes_.begin() + index);
+			}
+
+			return keyframes_.erase(it);
+		}
+
+		/**
+		 * @brief Find a keyframe at the specified timestamp
+		 * @param ts Timestamp of the keyframe
+		 * @return const_iterator to the found element or end() if the keyframe doesn't exist 
+		 */
 		const_iterator find_keyframe(timestamp ts) const
 		{
 			return keyframes_.find(ts);
 		}
-
+		
+		/**
+		 * @brief Find a keyframe at the specified timestamp
+		 * @param ts Timestamp of the keyframe
+		 * @return iterator to the found element or end() if the keyframe doesn't exist
+		 */
 		iterator find_keyframe(timestamp ts)
 		{
 			return keyframes_.find(ts);
@@ -301,13 +334,55 @@ namespace vt
 		{
 			if (interpolator == nullptr)
 			{
-				interpolator_ = std::make_unique<dummy_shape_predictor<shape_type>>("dummy");
-				return;
+				auto& registry = ctx_.get_shape_predictor_registry<shape_type>();
+				interpolator_ = registry.new_default_interpolator();
+				if (interpolator_ == nullptr)
+				{
+					debug::panic("No default interpolator registered");
+				}
+			}
+			else
+			{
+				interpolator_ = std::move(interpolator);
 			}
 
-			interpolator_ = std::move(interpolator);
 			interpolation_keyframe_timestamps_.resize(interpolator_->data_point_count());
 			interpolation_keyframe_shapes_.resize(interpolator_->data_point_count());
+		}
+
+		utils::timestamp_span keyframes_timespan() const
+		{
+			if (empty()) return {};
+
+			auto start_ts = begin()->first;
+			auto end_ts = (--end())->first;
+
+			return { start_ts, end_ts };
+		}
+
+		impl::interpolated_shape_predictor<shape_type>& interpolator()
+		{
+			return *interpolator_;
+		}
+
+		const impl::interpolated_shape_predictor<shape_type>& interpolator() const
+		{
+			return *interpolator_;
+		}
+
+		const std::string& interpolator_name() const
+		{
+			return interpolator_->name();
+		}
+
+		bool empty() const
+		{
+			return keyframes_.empty();
+		}
+
+		size_t size() const
+		{
+			return keyframes_.size();
 		}
 
 		iterator begin()
@@ -387,6 +462,9 @@ namespace vt
 
 				keyframes_[keyframe_json.at("timestamp").get<timestamp>()] = keyframe_json.at("shape").get<shape_type>();
 			}
-		};
+		}
 	};
+
+	template<typename shape_type>
+	using region_data_container = std::unordered_map<region_id_t, region_data<shape_type>>;
 }

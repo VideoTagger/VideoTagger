@@ -9,12 +9,24 @@
 #include <utils/random.hpp>
 #include <utils/math.hpp>
 #include <core/types.hpp>
-#include <events/attributes/region_hover_started_event.hpp>
-#include <events/attributes/region_hover_ended_event.hpp>
-#include <events/gizmo/gizmo_set_targets_event.hpp>
+#include <ui/region_data_renderer.hpp>
 
 #include <imgui.h>
 #include <ImGuizmo.h>
+
+#include <events/attributes/region_hover_started_event.hpp>
+#include <events/attributes/region_hover_ended_event.hpp>
+#include <events/attributes/region_insert_request_event.hpp>
+#include <events/attributes/region_inserted_event.hpp>
+#include <events/attributes/region_delete_request_event.hpp>
+#include <events/attributes/region_deleted_event.hpp>
+#include <events/attributes/region_keyframe_insert_request_event.hpp>
+#include <events/attributes/region_keyframe_inserted_event.hpp>
+#include <events/attributes/region_keyframe_delete_request_event.hpp>
+#include <events/attributes/region_keyframe_deleted_event.hpp>
+#include <events/attributes/region_set_interpolator_request_event.hpp>
+
+#include <events/gizmo/gizmo_set_targets_event.hpp>
 
 namespace vt
 {
@@ -22,13 +34,97 @@ namespace vt
 	class shape_attribute;
 
 	template<typename shape_type, typename = std::enable_if_t<std::is_base_of_v<impl::shape, shape_type>>>
-	class shape_attribute_instance : public impl::attribute_ref<shape_attribute<shape_type>>
+	class shape_attribute_instance : public impl::attribute_ref<shape_attribute<shape_type>>, public ui::region_data_renderer<shape_type>
 	{
 	public:
-		shape_attribute_instance(shape_attribute<shape_type>* ref) : impl::attribute_ref<shape_attribute<shape_type>>{ ref } {}
+		shape_attribute_instance(shape_attribute<shape_type>* ref) :
+			impl::attribute_ref<shape_attribute<shape_type>>{ ref }, ui::region_data_renderer<shape_type>{ regions_ }, event_source_{ "shape_attribute_instance" }
+		{
+			region_insert_request_handle_ = ctx_.add_event_listener<region_insert_request_event<shape_type>>([this](const region_insert_request_event<shape_type>& event)
+			{
+				if (&event.attribute_instance() != this) return;
+
+				auto region_id = insert_region(event.timestamp(), event.shape());
+				ctx_.dispatch_event<region_inserted_event>(event_source_, event.tag_name(), event.segment(), event.video_id(), *this, region_id);
+				ctx_.is_project_dirty = true;
+			});
+
+			region_delete_request_handle_ = ctx_.add_event_listener<region_delete_request_event>([this](const region_delete_request_event& event)
+			{
+				if (&event.attribute_instance() != this) return;
+
+				if (!regions_.erase(event.region_id())) return;
+
+				ctx_.dispatch_event<region_deleted_event>(event_source_, event.tag_name(), event.segment(), event.video_id(), *this, event.region_id());
+				ctx_.is_project_dirty = true;
+			});
+
+			region_keyframe_insert_request_handle_ = ctx_.add_event_listener<region_keyframe_insert_request_event<shape_type>>([this](const region_keyframe_insert_request_event<shape_type>& event)
+			{
+				if (&event.attribute_instance() != this) return;
+
+				auto it = regions_.find(event.region_id());
+				if (it == regions_.end()) return;
+
+				it->second.insert_keyframe(event.timestamp(), event.shape());
+
+				ctx_.dispatch_event<region_keyframe_inserted_event>(event_source_, event.tag_name(), event.segment(), event.video_id(), *this, event.region_id(), event.timestamp());
+				ctx_.is_project_dirty = true;
+			});
+
+			region_keyframe_delete_request_handle_ = ctx_.add_event_listener<region_keyframe_delete_request_event>([this](const region_keyframe_delete_request_event& event)
+			{
+				if (&event.attribute_instance() != this) return;
+
+				auto it = regions_.find(event.region_id());
+				if (it == regions_.end()) return;
+
+				auto& region = it->second;
+				if (!region.erase_keyframe(event.timestamp())) return;
+
+				ctx_.dispatch_event<region_keyframe_deleted_event>(event_source_, event.tag_name(), event.segment(), event.video_id(), *this, event.region_id(), event.timestamp());
+				ctx_.is_project_dirty = true;
+
+				if (!region.empty()) return;
+				regions_.erase(it);
+
+				ctx_.dispatch_event<region_deleted_event>(event_source_, event.tag_name(), event.segment(), event.video_id(), *this, event.region_id());
+			});
+
+			region_set_interpolator_request_handle_ = ctx_.add_event_listener<region_set_interpolator_request_event>([this](const region_set_interpolator_request_event& event)
+			{
+				if (&event.attribute_instance() != this) return;
+
+				auto it = regions_.find(event.region_id());
+				if (it == regions_.end()) return;
+
+				auto& region = it->second;
+				if (region.interpolator_name() == event.interpolator_name()) return;
+
+				auto& predictor_registry = ctx_.get_shape_predictor_registry<shape_type>();
+				region.set_interpolator(predictor_registry.new_interpolator(event.interpolator_name()));
+				ctx_.is_project_dirty = true;
+			});
+		}
+
+		~shape_attribute_instance()
+		{
+			ctx_.get_event_dispatcher<region_insert_request_event<shape_type>>().remove_event_listener(region_insert_request_handle_);
+			ctx_.get_event_dispatcher<region_delete_request_event>().remove_event_listener(region_delete_request_handle_);
+			ctx_.get_event_dispatcher<region_keyframe_insert_request_event<shape_type>>().remove_event_listener(region_keyframe_insert_request_handle_);
+			ctx_.get_event_dispatcher<region_keyframe_delete_request_event>().remove_event_listener(region_keyframe_delete_request_handle_);
+			ctx_.get_event_dispatcher<region_set_interpolator_request_event>().remove_event_listener(region_set_interpolator_request_handle_);
+		}
 
 	private:
-		std::unordered_map<region_id_t, region_data<shape_type>> regions_;
+		region_data_container<shape_type> regions_;
+		event_source event_source_;
+
+		event_listener_handle region_insert_request_handle_;
+		event_listener_handle region_delete_request_handle_;
+		event_listener_handle region_keyframe_insert_request_handle_;
+		event_listener_handle region_keyframe_delete_request_handle_;
+		event_listener_handle region_set_interpolator_request_handle_;
 
 	public:
 		const std::unordered_map<region_id_t, region_data<shape_type>>& regions() const
@@ -142,7 +238,7 @@ namespace vt
 					if (is_hovered)
 					{
 						// session checks if region was already hovered, no need to check that here
-						ctx_.dispatch_event<region_hover_started_event>("shape_attribute_instance", attribute_tag.name, segment, *this, region_id);
+						ctx_.dispatch_event<region_hover_started_event>(event_source_, attribute_tag.name, segment, video_id, *this, region_id);
 					}
 
 					//TODO: add event for hovering points (like above for regions) and move this to main_window
@@ -166,7 +262,7 @@ namespace vt
 
 							if (ctx_.session.has_gizmo_targets() or !targets.empty())
 							{
-								ctx_.dispatch_event<gizmo_set_targets_event>("shape_attribute_instance", video_id, targets);
+								ctx_.dispatch_event<gizmo_set_targets_event>(event_source_, video_id, targets);
 							}
 						}
 					}
@@ -174,7 +270,7 @@ namespace vt
 
 				if (!is_hovered)
 				{
-					ctx_.dispatch_event<region_hover_ended_event>("shape_attribute_instance", attribute_tag.name, segment, *this, region_id);
+					ctx_.dispatch_event<region_hover_ended_event>(event_source_, attribute_tag.name, video_id, segment, *this, region_id);
 				}
 			}
 		}

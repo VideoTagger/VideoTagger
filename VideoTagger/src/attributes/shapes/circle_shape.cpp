@@ -53,6 +53,60 @@ namespace vt
 		draw_list->AddCircleFilled(scaled_pos, radius, fill_color);
 	}
 
+	bool circle_shape::render_data(event_source source, video_id_t video_id, utils::vec2<uint32_t> shape_space)
+	{
+		bool edited = false;
+
+		const auto& style = ImGui::GetStyle();
+
+		if (ImGui::BeginTable("##CircleData", 2, ImGuiTableFlags_BordersOuter))
+		{
+			bool selected = ctx_.session.gizmo_contains_target(&pos);
+			ImGui::TableNextColumn();
+			auto cpos = ImGui::GetCursorPos();
+			auto selectable_flags = ImGuiSelectableFlags_AllowItemOverlap | ImGuiSelectableFlags_AllowOverlap | ImGuiSelectableFlags_SpanAllColumns;
+			if (ImGui::Selectable("##PointSelectable", selected, selectable_flags, { 0.f, ImGui::GetTextLineHeightWithSpacing() + 2 * style.FramePadding.y }))
+			{
+				ctx_.dispatch_event<gizmo_set_targets_event>(source, video_id, std::vector<utils::vec2<uint32_t>*>{ &pos });
+			}
+
+			ImGui::SetCursorPos(cpos);
+
+			ImGui::AlignTextToFramePadding();
+			ImGui::Indent();
+			ImGui::TextUnformatted("Position");
+			ImGui::Unindent();
+
+			ImGui::TableNextColumn();
+
+			if (widgets::positon_control(pos, shape_space))
+			{
+				edited = true;
+			}
+
+			ImGui::TableNextColumn();
+
+			ImGui::AlignTextToFramePadding();
+			ImGui::Indent();
+			ImGui::TextUnformatted("Radius");
+			ImGui::Unindent();
+
+			ImGui::TableNextColumn();
+
+			auto max = std::min(shape_space[0], shape_space[1]) / 2;
+			auto min = 1u;
+			if (ImGui::DragScalar("##y", ImGuiDataType_U32, &radius, 1.f, &min, &max, "%d", ImGuiSliderFlags_AlwaysClamp))
+			{
+				radius = std::clamp(radius, min, max);
+				edited = true;
+			}
+
+			ImGui::EndTable();
+		}
+
+		return edited;
+	}
+
 	[[nodiscard]] nlohmann::ordered_json circle_shape::serialize() const
 	{
 		nlohmann::ordered_json json;

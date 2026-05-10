@@ -9,7 +9,7 @@
 #include <widgets/console.hpp>
 #include <widgets/video_group_queue.hpp>
 #include <widgets/localization_editor.hpp>
-#include <widgets/shape_attributes.hpp>
+#include <ui/windows/region_attributes.hpp>
 #include <widgets/video_group_browser.hpp>
 #include <widgets/video_browser.hpp>
 #include <widgets/video_player.hpp>
@@ -72,8 +72,8 @@ namespace vt
 			auto register_interpolators = [](auto& reg)
 			{
 				using shape_type = typename std::remove_reference_t<decltype(reg)>::shape_type;
-				reg.new_factory<dummy_shape_predictor_factory<shape_type>>("dummy");
-				reg.new_factory<linear_shape_predictor_factory<shape_type>>("linear");
+				reg.new_factory<dummy_shape_predictor_factory<shape_type>>("None");
+				reg.new_factory<linear_shape_predictor_factory<shape_type>>("Linear");
 			};
 
 			(register_interpolators(registry), ...);
@@ -95,8 +95,8 @@ namespace vt
 		//TODO: Remove this when localization editor is openable via the menu bar
 		localization_editor.set_opened(true);
 
-		auto& shape_attributes = create_window<widgets::shape_attributes>();
-		shape_attributes.set_opened(true);
+		auto& region_attributes = create_window<ui::windows::region_attributes>();
+		region_attributes.set_opened(true);
 
 		auto& group_browser = create_window<widgets::video_group_browser>();
 		group_browser.set_opened(true);

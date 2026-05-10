@@ -80,6 +80,53 @@ namespace vt
 		render_points(point_radius.value_or(3.f), shape_space, draw_min, draw_max, fill_color, outline_color);
 	}
 
+	bool points_shape::render_data(event_source source, video_id_t video_id, utils::vec2<uint32_t> shape_space)
+	{
+		bool edited = false;
+
+		const auto& style = ImGui::GetStyle();
+
+		if (ImGui::BeginTable("##PointsList", 2, ImGuiTableFlags_BordersOuter))
+		{
+			for (size_t i = 0; i < points.size(); ++i)
+			{
+				ImGui::PushID(&points[i]);
+				bool selected = (ctx_.session.gizmo_contains_target(&points[i]));
+				ImGui::TableNextColumn();
+				auto cpos = ImGui::GetCursorPos();
+				auto selectable_flags = ImGuiSelectableFlags_AllowItemOverlap | ImGuiSelectableFlags_AllowOverlap | ImGuiSelectableFlags_SpanAllColumns;
+				if (ImGui::Selectable("##PointSelectable", selected, selectable_flags, { 0.f, ImGui::GetTextLineHeightWithSpacing() + 2 * style.FramePadding.y }))
+				{
+					ctx_.dispatch_event<gizmo_set_targets_event>(source, video_id, std::vector<utils::vec2<uint32_t>*>{ &points[i] });
+				}
+				
+				ImGui::SetCursorPos(cpos);
+
+				ImGui::AlignTextToFramePadding();
+				ImGui::Indent();
+				ImGui::TextUnformatted("Point");
+				ImGui::Unindent();
+				ImGui::SameLine();
+				ImGui::BeginDisabled();
+				ImGui::AlignTextToFramePadding();
+				ImGui::Text("[%zu]", i + 1);
+				ImGui::EndDisabled();
+
+				ImGui::TableNextColumn();
+
+				if (widgets::positon_control(points[i], shape_space))
+				{
+					edited = true;
+				}
+
+				ImGui::PopID();
+			}
+			ImGui::EndTable();
+		}
+
+		return edited;
+	}
+
 	[[nodiscard]] nlohmann::ordered_json points_shape::serialize() const
 	{
 		nlohmann::ordered_json json;

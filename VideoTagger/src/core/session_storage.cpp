@@ -32,6 +32,7 @@
 #include <events/attributes/region_deselected_event.hpp>
 #include <events/attributes/region_hover_started_event.hpp>
 #include <events/attributes/region_hover_ended_event.hpp>
+#include <events/attributes/region_deleted_event.hpp>
 
 namespace vt
 {
@@ -295,7 +296,7 @@ namespace vt
 	{
 		ctx_.add_event_listener<region_select_request_event>([this](const region_select_request_event& event)
 		{
-			selected_region_data region_data{ event.tag_name(), event.segment(), &event.attribute_instance(), event.region_id()};
+			selected_region_data region_data{ event.tag_name(), event.segment(), event.video_id(), &event.attribute_instance(), event.region_id()};
 
 			if (selected_region_.has_value())
 			{
@@ -306,12 +307,13 @@ namespace vt
 					return;
 				}
 
-				ctx_.dispatch_event<region_deselected_event>(event.source(), selected_region_->tag_name, selected_region_->segment, *selected_region_->attribute_instance, selected_region_->region_id);
+				ctx_.dispatch_event<region_deselected_event>(event.source(), selected_region_->tag_name, selected_region_->segment, selected_region_->video_id,
+					*selected_region_->attribute_instance, selected_region_->region_id);
 			}
 
 			selected_region_ = region_data;
 
-			ctx_.dispatch_event<region_selected_event>(event.source(), event.tag_name(), event.segment(), event.attribute_instance(), event.region_id());
+			ctx_.dispatch_event<region_selected_event>(event.source(), event.tag_name(), event.segment(), event.video_id(), event.attribute_instance(), event.region_id());
 			
 			ctx_.dispatch_event<segment_deselect_all_request_event>(event.source(), ctx_.get_current_segment_storage());
 			ctx_.dispatch_event<segment_select_request_event>(event.source(), ctx_.get_current_segment_storage(), event.tag_name(), event.segment());
@@ -321,7 +323,8 @@ namespace vt
 		{
 			if (!selected_region_.has_value()) return;
 
-			ctx_.dispatch_event<region_deselected_event>(event.source(), selected_region_->tag_name, selected_region_->segment, *selected_region_->attribute_instance, selected_region_->region_id);
+			ctx_.dispatch_event<region_deselected_event>(event.source(), selected_region_->tag_name, selected_region_->segment, selected_region_->video_id,
+				*selected_region_->attribute_instance, selected_region_->region_id);
 			selected_region_.reset();
 		});
 
@@ -329,7 +332,7 @@ namespace vt
 		{
 			if (is_region_hovered(&event.attribute_instance(), event.region_id())) return;
 
-			hovered_regions_.push_back({ event.tag_name(), event.segment(), &event.attribute_instance(), event.region_id() });
+			hovered_regions_.push_back({ event.tag_name(), event.segment(), event.video_id(), &event.attribute_instance(), event.region_id()});
 		});
 
 		ctx_.add_event_listener<region_hover_ended_event>([this](const region_hover_ended_event& event)
@@ -341,6 +344,15 @@ namespace vt
 			if (it == hovered_regions_.end()) return;
 			
 			hovered_regions_.erase(it);
+		});
+
+		ctx_.add_event_listener<region_deleted_event>([this](const region_deleted_event& event)
+		{
+			if (!selected_region_.has_value()) return;
+
+			if (selected_region_->attribute_instance != &event.attribute_instance() or selected_region_->region_id != event.region_id()) return;
+
+			ctx_.dispatch_event<region_deselect_request_event>(event.source());
 		});
 	}
 
