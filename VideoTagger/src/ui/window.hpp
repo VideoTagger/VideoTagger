@@ -39,6 +39,7 @@ namespace vt::ui
 		void set_opened(bool value);
 		void set_persistent(bool value);
 		void set_hidden(bool value);
+		void focus();
 		void open();
 		void close();
 

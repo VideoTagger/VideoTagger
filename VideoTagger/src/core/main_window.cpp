@@ -771,6 +771,7 @@ namespace vt
 			}
 
 			ctx_.reset_player_docking = true;
+			player.focus();
 		}, event_listener_priority::highest);
 
 		ctx_.add_event_listener<playback_reached_end_event>([&player, this](const playback_reached_end_event& event)
