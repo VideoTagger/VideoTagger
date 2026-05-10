@@ -117,14 +117,60 @@ namespace vt::ui
 		return spec_;
 	}
 
-	size_t toolbar_group_entry::tool_count() const
+    const std::string& toolbar_group_entry::tool_id() const
+    {
+		return spec_.id;
+    }
+
+    size_t toolbar_group_entry::tool_count() const
 	{
 		return tools_.size();
 	}
 
-	bool toolbar_group_entry::is_empty() const
+	bool toolbar_group_entry::empty() const
 	{
 		return tools_.empty();
+	}
+
+	bool toolbar_group_entry::has_id(const std::string& id) const
+	{
+		return spec_.id == id;
+	}
+
+	bool toolbar_group_entry::has_any_tool_body() const
+	{
+		for (const auto& tool : tools_)
+		{
+			if (tool->has_body())
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+
+	void toolbar_group_entry::on_activate()
+	{
+		if (active_tool_ != nullptr)
+		{
+			active_tool_->on_activate();
+		}
+	}
+
+	void toolbar_group_entry::on_deactivate()
+	{
+		if (active_tool_ != nullptr)
+		{
+			active_tool_->on_deativate();
+		}
+	}
+
+	void toolbar_group_entry::on_done()
+	{
+		if (active_tool_ != nullptr)
+		{
+			active_tool_->on_done();
+		}
 	}
 
 	bool toolbar_group_entry::operator<(const toolbar_group_entry& other) const

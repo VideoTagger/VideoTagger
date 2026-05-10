@@ -173,6 +173,16 @@ namespace vt::ui
 			return items_;
 		}
 
+		[[nodiscard]] constexpr size_t item_count() const
+		{
+			return items_.size();
+		}
+
+		[[nodiscard]] constexpr bool empty() const
+		{
+			return items_.empty();
+		}
+
 		[[nodiscard]] constexpr const std::string& id() const
 		{
 			return id_;

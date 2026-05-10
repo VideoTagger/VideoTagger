@@ -2,13 +2,13 @@
 #include <ui/icons.hpp>
 
 #include <core/app_context.hpp>
-#include <events/toolbar/toolbar_tool_changed_event.hpp>
 #include <widgets/video_player.hpp>
 #include <events/system/window/system_window_resize_event.hpp>
 #include <events/toolbar/toolbar_register_tool_event.hpp>
 #include <events/toolbar/toolbar_unregister_tool_event.hpp>
 #include <events/timeline/segment_selected_event.hpp>
 #include <events/timeline/segment_deselected_event.hpp>
+#include <events/toolbar/toolbar_tool_change_request.hpp>
 
 namespace vt::ui::windows
 {
@@ -151,7 +151,7 @@ namespace vt::ui::windows
 
 				const auto& spec = entry->specification();
 				bool is_selected = toolbar.is_tool_active(spec.id);
-				bool has_many_tools = entry->tool_count() > 1;
+				bool should_show_popup = (entry->tool_count() > 1) or entry->has_any_tool_body();
 				
 				bool was_toggled = false;
 				if (ui::icon_toggle_button(spec.icon, is_selected)) // and !is_selected
@@ -165,7 +165,7 @@ namespace vt::ui::windows
 				ui::tooltip(spec.tooltip);
 				render_separator = true;
 
-				if (is_selected and has_many_tools)
+				if (is_selected and should_show_popup)
 				{
 					auto window = ImGui::GetCurrentWindow();
 					auto window_rect = window->Rect();
@@ -176,7 +176,7 @@ namespace vt::ui::windows
 
 				if (was_toggled)
 				{
-					if (has_many_tools)
+					if (should_show_popup)
 					{
 						tool_popup_->open();
 					}
@@ -184,7 +184,7 @@ namespace vt::ui::windows
 				if (should_be_selected)
 				{
 					tool_popup_->set_active_entry(entry);
-					ctx_.dispatch_event<toolbar_tool_changed_event>(source, group, *entry, *entry->front());
+					ctx_.dispatch_event<toolbar_tool_change_request_event>(source, group, *entry, *entry->front());
 				}
 			}
 		}

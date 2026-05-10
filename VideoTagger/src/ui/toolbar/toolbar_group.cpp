@@ -65,9 +65,9 @@ namespace vt::ui
 
 	void toolbar_group::clear(event_source source)
 	{
-		for (const auto& [id, entry] : entries_)
+		for (auto& [id, entry] : entries_)
 		{
-			for (const auto& tool : entry.tools())
+			for (auto& tool : entry.tools())
 			{
 				ctx_.dispatch_event<toolbar_unregister_tool_event>(source, *this, entry, *tool);
 			}

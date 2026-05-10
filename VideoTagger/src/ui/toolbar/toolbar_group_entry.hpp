@@ -52,8 +52,15 @@ namespace vt::ui
 		const toolbar_group& group() const;
 		const toolbar_tool_specification& specification() const;
 
+		const std::string& tool_id() const;
 		size_t tool_count() const;
-		bool is_empty() const;
+		bool empty() const;
+		bool has_id(const std::string& tool_id) const;
+		bool has_any_tool_body() const;
+
+		void on_activate();
+		void on_deactivate();
+		void on_done();
 
 		bool operator<(const toolbar_group_entry& other) const;
 	};

@@ -2844,11 +2844,10 @@ namespace vt
 					{
 						for (auto& [id, group] : ctx_.session.toolbar.groups())
 						{
-							auto it = group.find(ctx_.session.toolbar.active_tool());
-							if (it == group.end()) continue;
+							auto* entry = ctx_.session.toolbar.active_entry();
+							if (entry == nullptr) continue;
 
-							auto& entry = it->second;
-							auto* active_tool = entry.active_tool();
+							auto* active_tool = entry->active_tool();
 							if (active_tool == nullptr) continue;
 
 							active_tool->render_overlay(video_id, pos, size, tex_size);

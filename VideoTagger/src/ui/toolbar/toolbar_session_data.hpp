@@ -10,6 +10,7 @@
 namespace vt::ui
 {
 	struct toolbar_group;
+	struct toolbar_group_entry;
 
 	struct toolbar_session_data : public vt::impl::resettable
 	{
@@ -18,7 +19,7 @@ namespace vt::ui
 
 	private:
 		std::map<std::string, ui::toolbar_group> groups_;
-		std::string active_tool_;
+		toolbar_group_entry* active_entry_;
 		event_source source_;
 
 	public:
@@ -32,7 +33,9 @@ namespace vt::ui
 		const ui::toolbar_group& group(const std::string& group_id) const;
 		std::map<std::string, ui::toolbar_group>& groups();
 		const std::map<std::string, ui::toolbar_group>& groups() const;
-		const std::string& active_tool() const;
+
+		toolbar_group_entry* active_entry();
+		const toolbar_group_entry* active_entry() const;
 
 		virtual void reset() override;
 

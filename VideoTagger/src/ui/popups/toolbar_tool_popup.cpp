@@ -76,11 +76,13 @@ namespace vt::ui
 	{
 		if (active_entry_ == nullptr) return;
 
+		ImGui::BeginDisabled(popup_entries_.item_count() <= 1);
 		if (popup_entries_.render_with_label("Context"))
 		{
 			const auto& selected_item = popup_entries_.selected_item();
 			active_entry_->set_active_tool(*selected_item.tool);
 		}
+		ImGui::EndDisabled();
 	}
 
 	void toolbar_tool_popup::render_body()

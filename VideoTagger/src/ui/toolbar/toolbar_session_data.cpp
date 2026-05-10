@@ -2,14 +2,16 @@
 
 #include <core/app_context.hpp>
 #include <ui/toolbar/toolbar_group.hpp>
+#include <ui/toolbar/toolbar_group_entry.hpp>
 #include <events/toolbar/toolbar_register_tool_event.hpp>
 #include <events/toolbar/toolbar_unregister_tool_event.hpp>
 #include <events/toolbar/toolbar_register_request_event.hpp>
 #include <events/toolbar/toolbar_tool_changed_event.hpp>
+#include <events/toolbar/toolbar_tool_change_request.hpp>
 
 namespace vt::ui
 {
-	toolbar_session_data::toolbar_session_data() : source_{ "toolbar-session-data" }
+	toolbar_session_data::toolbar_session_data() : source_{ "toolbar-session-data" }, active_entry_{}
 	{
 		register_listeners(source_);
 		add_default_tools(source_);
@@ -38,25 +40,25 @@ namespace vt::ui
 
 	bool toolbar_session_data::is_tool_active(const std::string& tool_id) const
 	{
-		return active_tool_ == tool_id;
+		return active_entry_ != nullptr and active_entry_->has_id(tool_id);
 	}
 
 	void toolbar_session_data::reset_active_tool(event_source source)
 	{
-		if (!active_tool_.empty())
+		if (active_entry_ != nullptr)
 		{
-			for (const auto& [id, group] : groups_)
+			for (auto& [id, group] : groups_)
 			{
-				for (const auto& [id, entry] : group)
+				for (auto& [id, entry] : group)
 				{
 					const auto& spec = entry.specification();
 					if (spec.is_persistent)
 					{
 						for (auto& tool : entry)
 						{
-							ctx_.dispatch_event<toolbar_tool_changed_event>(source, group, entry, *tool);
+							ctx_.dispatch_event<toolbar_tool_change_request_event>(source, group, entry, *tool);
+							return;
 						}
-						return;
 					}
 				}
 			}
@@ -84,9 +86,14 @@ namespace vt::ui
 		return groups_;
 	}
 
-	const std::string& toolbar_session_data::active_tool() const
+	toolbar_group_entry* toolbar_session_data::active_entry()
 	{
-		return active_tool_;
+		return active_entry_;
+	}
+
+	const toolbar_group_entry* toolbar_session_data::active_entry() const
+	{
+		return active_entry_;
 	}
 
 	void toolbar_session_data::reset()
@@ -106,11 +113,12 @@ namespace vt::ui
 
 	void toolbar_session_data::register_listeners(event_source source)
 	{
+		//TODO: Unregister listeners in destructor
 		ctx_.add_event_listener<toolbar_register_tool_event>([this, source](const toolbar_register_tool_event& event)
 		{
-			if (active_tool_.empty())
+			if (active_entry_ == nullptr)
 			{
-				ctx_.dispatch_event<toolbar_tool_changed_event>(source, event.group(), event.group_entry(), event.tool());
+				ctx_.dispatch_event<toolbar_tool_change_request_event>(source, event.group(), event.group_entry(), event.tool());
 			}
 		});
 
@@ -118,31 +126,52 @@ namespace vt::ui
 		{
 			const auto& entry = event.group_entry();
 			const auto& spec = entry.specification();
-			if (active_tool_ == spec.id)
+			if (active_entry_ != nullptr and active_entry_->has_id(spec.id))
 			{
 				reset_active_tool(source);
 			}
 		});
 
-		ctx_.add_event_listener<toolbar_tool_changed_event>([this](const toolbar_tool_changed_event& event)
+		ctx_.add_event_listener<toolbar_tool_change_request_event>([this](const toolbar_tool_change_request_event& event)
 		{
-			const auto& group = event.group();
-			const auto& entry = event.group_entry();
+			auto& group = event.group();
+			auto& entry = event.group_entry();
 			const auto& spec = entry.specification();
+			auto& tool = event.tool();
 			auto new_id = spec.id;
 
-			if (active_tool_ == new_id) return;
+			bool is_null = active_entry_ == nullptr;
+			if (!is_null and active_entry_->has_id(new_id)) return;
 
 			if (new_id.empty())
 			{
-				active_tool_.clear();
+				if (!is_null)
+				{
+					active_entry_->on_deactivate();
+				}
+				active_entry_ = nullptr;
 				debug::log("Toolbar: Active tool cleared");
 			}
 			else
 			{
 				debug::log("Toolbar: Active tool changed to '{}'", new_id);
-				active_tool_ = new_id;
+				if (!is_null)
+				{
+					active_entry_->on_deactivate();
+				}
+				active_entry_ = &entry;
+				active_entry_->set_active_tool(tool);
+				if (!is_null)
+				{
+					active_entry_->on_activate();
+				}
 			}
+			ctx_.dispatch_event<toolbar_tool_changed_event>(event.source(), group, entry, tool);
 		});
+
+		//ctx_.add_event_listener<toolbar_tool_changed_event>([this](const toolbar_tool_changed_event& event)
+		//{
+		//	
+		//});
 	}
 }
