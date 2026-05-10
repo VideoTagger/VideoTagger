@@ -93,6 +93,11 @@ namespace vt::ui
 		is_hidden_ = value;
 	}
 
+    void window::focus()
+    {
+		ImGui::SetWindowFocus(name().c_str());
+	}
+
 	void window::open()
 	{
 		set_opened(true);

@@ -32,10 +32,15 @@ namespace vt
 			return new_tool_impl<shape_tool<shape_type>>(tag, attribute_name);
 		}
 
+		virtual ui::toolbar_tool_specification tool_specification() const
+		{
+			return ui::toolbar_tool_specification{ name(), icon(), utils::string::to_titlecase(name())};
+		}
+
 		template<typename tool_type, typename = std::enable_if_t<std::is_base_of_v<ui::toolbar_tool, tool_type>>>
 		std::unique_ptr<ui::toolbar_tool> new_tool_impl(const tag& tag, const std::string& attribute_name) const
 		{
-			return std::make_unique<tool_type>(name(), icon(), utils::string::to_titlecase(name()), tag, attribute_name);
+			return std::make_unique<tool_type>(tag, attribute_name);
 		}
 	};
 

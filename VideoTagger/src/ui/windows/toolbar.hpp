@@ -1,6 +1,8 @@
 #pragma once
+#include <memory>
 #include <ui/window.hpp>
-#include <ui/toolbar_tool.hpp>
+#include <ui/toolbar/toolbar_session_data.hpp>
+#include <ui/popups/toolbar_tool_popup.hpp>
 
 namespace vt::ui::windows
 {
@@ -10,6 +12,7 @@ namespace vt::ui::windows
 		toolbar();
 
 	private:
+		std::unique_ptr<ui::toolbar_tool_popup> tool_popup_;
 		bool reset_pos_;
 
 	public:

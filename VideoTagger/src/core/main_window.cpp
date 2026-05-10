@@ -771,6 +771,7 @@ namespace vt
 			}
 
 			ctx_.reset_player_docking = true;
+			player.focus();
 		}, event_listener_priority::highest);
 
 		ctx_.add_event_listener<playback_reached_end_event>([&player, this](const playback_reached_end_event& event)
@@ -2842,14 +2843,15 @@ namespace vt
 					//Tool overlays
 					vid_win->with_overlay([](video_id_t video_id, ImVec2 pos, ImVec2 size, ImVec2 tex_size)
 					{
-						auto& tb_tools = ctx_.session.toolbar.tools();
-						auto it = tb_tools.find(ctx_.session.toolbar.active_tool());
-						if (it == tb_tools.end()) return;
-
-						auto& tools = it->second;
-						for (const auto& tool : tools)
+						for (auto& [id, group] : ctx_.session.toolbar.groups())
 						{
-							tool->render_overlay(video_id, pos, size, tex_size);
+							auto* entry = ctx_.session.toolbar.active_entry();
+							if (entry == nullptr) continue;
+
+							auto* active_tool = entry->active_tool();
+							if (active_tool == nullptr) continue;
+
+							active_tool->render_overlay(video_id, pos, size, tex_size);
 						}
 					});
 

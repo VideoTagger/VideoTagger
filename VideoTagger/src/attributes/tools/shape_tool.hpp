@@ -2,7 +2,7 @@
 #include <imgui.h>
 #include <optional>
 #include <type_traits>
-#include <ui/toolbar_tool.hpp>
+#include <ui/toolbar/toolbar_tool.hpp>
 #include <tags/tag.hpp>
 #include <attributes/impl/shape.hpp>
 #include <impl/resettable.hpp>
@@ -19,16 +19,16 @@ namespace vt
 	class shape_tool : public ui::toolbar_tool, public impl::resettable
 	{
 	public:
-		shape_tool(const std::string& id, const std::string& icon, const std::string& tooltip, const tag& tag, const std::string& attribute_name) :
-			ui::toolbar_tool{ id, icon, tooltip }, data_{}, tag_{ &tag }, attribute_name_{ attribute_name } {}
+		shape_tool(const tag& tag, const std::string& attribute_name) :
+			data_{}, tag_{ &tag }, attribute_name_{ attribute_name } {}
 
 	protected:
 		std::optional<video_id_t> active_video_;
 
 	private:
 		std::optional<shape_type> data_;
-		const tag* tag_;
 		std::string attribute_name_;
+		const tag* tag_;
 
 	public:
 		std::optional<shape_type>& data()
@@ -121,6 +121,11 @@ namespace vt
 				ImGui::SetMouseCursor(ImGuiMouseCursor_NotAllowed);
 			}
 			return result;
+		}
+
+		virtual std::string display_name() const override
+		{
+			return attribute_name_;
 		}
 	};
 }

@@ -1,6 +1,7 @@
 #pragma once
+#include <ui/toolbar/toolbar_tool.hpp>
+#include <ui/toolbar/toolbar_group.hpp>
 #include <events/toolbar/toolbar_event.hpp>
-#include <ui/toolbar_tool.hpp>
 
 namespace vt
 {
@@ -8,14 +9,28 @@ namespace vt
 	struct toolbar_tool_event : public toolbar_event
 	{
 	public:
-		constexpr toolbar_tool_event(const ui::toolbar_tool& tool) : tool_{ &tool } {}
+		constexpr toolbar_tool_event(ui::toolbar_group& group, ui::toolbar_group_entry& group_entry, ui::toolbar_tool& tool) : group_{ &group }, group_entry_{ &group_entry }, tool_ { &tool } {}
 
 	private:
-		const ui::toolbar_tool* tool_;
+		ui::toolbar_group* group_;
+		ui::toolbar_group_entry* group_entry_;
+		ui::toolbar_tool* tool_;
 
 	public:
+		///@return Reference to the toolbar group associated with this event
+		constexpr ui::toolbar_group& group() const
+		{
+			return *group_;
+		}
+
+		///@return Reference to the toolbar group entry associated with this event
+		constexpr ui::toolbar_group_entry& group_entry() const
+		{
+			return *group_entry_;
+		}
+
 		///@return Reference to the toolbar tool associated with this event
-		constexpr const ui::toolbar_tool& tool() const
+		constexpr ui::toolbar_tool& tool() const
 		{
 			return *tool_;
 		}

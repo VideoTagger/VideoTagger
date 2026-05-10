@@ -168,6 +168,17 @@ namespace vt::ui
 		ImGui::PopStyleVar();
 	}
 
+	void begin_rounded_popup_style()
+	{
+		const auto& style = ImGui::GetStyle();
+		ImGui::PushStyleVar(ImGuiStyleVar_PopupRounding, 8.f);
+	}
+
+	void end_rounded_popup_style()
+	{
+		ImGui::PopStyleVar();
+	}
+
 	void label(const std::string& label)
 	{
 		ImGui::PushStyleColor(ImGuiCol_Button, {});

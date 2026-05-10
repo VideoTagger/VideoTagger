@@ -2,7 +2,6 @@
 #include <memory>
 #include <string>
 #include "attribute.hpp"
-#include "attribute_instance.hpp"
 
 namespace vt::impl
 {
