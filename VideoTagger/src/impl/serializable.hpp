@@ -7,8 +7,8 @@ namespace vt::impl
 	{
 		virtual ~serializable() = default;
 		
-		[[nodiscard]] virtual nlohmann::ordered_json serialize() const { return {}; };
-		virtual void deserialize(const nlohmann::ordered_json& json) {};
+		[[nodiscard]] virtual nlohmann::ordered_json serialize() const { return {}; }
+		virtual void deserialize(const nlohmann::ordered_json& json) {}
 	};
 
 	inline void to_json(nlohmann::ordered_json& json, const serializable& ref)

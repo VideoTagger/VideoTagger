@@ -2,11 +2,11 @@
 #include <string>
 #include <memory>
 #include <impl/serializable.hpp>
-#include <attributes/impl/attribute_instance.hpp>
 
 namespace vt::impl
 {
-	struct attribute_factory;
+	struct attribute_instance;
+	class attribute_factory;
 
 	struct attribute : public serializable
 	{
@@ -21,16 +21,18 @@ namespace vt::impl
 	public:
 		void set_name(const std::string& name);
 
-		std::string& name();
 		const std::string& name() const;
 		const std::string& type_name() const;
 
 		attribute_factory* factory() const;
 
+		static nlohmann::ordered_json serialize_instance(const impl::attribute_instance& instance);
 		std::unique_ptr<impl::attribute_instance> deserialize_instance(const nlohmann::ordered_json& json);
 
 		[[nodiscard]] virtual nlohmann::ordered_json serialize() const override;
 		virtual void deserialize(const nlohmann::ordered_json& json) override;
+
+		virtual bool render_instance_properties(std::unique_ptr<impl::attribute_instance>& instance) { return false; };
 
 		virtual std::unique_ptr<impl::attribute_instance> instantiate() = 0;
 
@@ -42,14 +44,4 @@ namespace vt::impl
 			return std::unique_ptr<type>{ reinterpret_cast<type*>(ptr.release()) };
 		}
 	};
-
-	inline void to_json(nlohmann::ordered_json& json, const attribute& attr)
-	{
-		json = attr.serialize();
-	}
-
-	inline void from_json(const nlohmann::ordered_json& json, attribute& attr)
-	{
-		attr.deserialize(json);
-	}
 }

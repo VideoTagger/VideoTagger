@@ -67,12 +67,12 @@ void vt::bindings::bind_group(pybind11::module_& module)
 	.def("add_group", [](video_group_playlist& p, const video_group& g) -> bool
 	{
 		auto& groups = ctx_.current_project->video_groups;
-		auto it = std::find_if(groups.begin(), groups.end(), [&g](const std::pair<video_group_id_t, video_group>& group)
-		{
-			return group.second.display_name == g.display_name;
-		});
-		if (it == groups.end()) return false;
-		p.insert(p.end(), it->first);
+		//auto it = std::find_if(groups.begin(), groups.end(), [&g](const std::pair<video_group_id_t, video_group>& group)
+		//{
+		//	return group.second.display_name == g.display_name;
+		//});
+		//if (it == groups.end()) return false;
+		//p.insert(p.end(), it->first);
 		return true;
 	})
 	.def("current_group", [](video_group_playlist& p) -> std::optional<video_group*>

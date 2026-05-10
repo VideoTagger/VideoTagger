@@ -30,6 +30,8 @@ namespace vt
 			mode |= ENABLE_VIRTUAL_TERMINAL_PROCESSING;
 			SetConsoleMode(console, mode);
 		}
+
+		SetConsoleOutputCP(CP_UTF8);
 #endif
 	}
 

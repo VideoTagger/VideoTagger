@@ -1,9 +1,8 @@
 #pragma once
 #include <memory>
-#include <vector>
-#include <string>
 #include <ui/window.hpp>
-#include <ui/toolbar_tool.hpp>
+#include <ui/toolbar/toolbar_session_data.hpp>
+#include <ui/popups/toolbar_tool_popup.hpp>
 
 namespace vt::ui::windows
 {
@@ -13,20 +12,16 @@ namespace vt::ui::windows
 		toolbar();
 
 	private:
-		std::vector<std::unique_ptr<toolbar_tool>> tools_;
-		std::string active_tool_;
+		std::unique_ptr<ui::toolbar_tool_popup> tool_popup_;
+		bool reset_pos_;
 
 	public:
-		void add_tool(const toolbar_tool& tool);
-		void remove_tool(const std::string& tool_id);
-		void clear_tools();
-
 		virtual void pre_style() override;
 		virtual void post_style() override;
 
 		virtual void on_render() override;
 	private:
-		void add_default_tools();
-		void register_listeners();
+		toolbar_session_data& data();
+		float calc_win_height();
 	};
 }

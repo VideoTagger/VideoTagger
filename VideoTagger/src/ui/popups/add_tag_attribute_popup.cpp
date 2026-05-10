@@ -8,7 +8,7 @@ namespace vt::ui
 {
 	add_tag_attribute_popup::add_tag_attribute_popup(event_source source, const std::string& tag_name, std::optional<bool*> open) :
 		modal_popup("add-tag-attribute-popup", open), event_source_{ source }, tag_name_{ tag_name },
-		attribute_input_{ "##TagAttributeNameInput", "", [](const std::string& input) -> std::optional<std::string>
+		attribute_input_{ "##TagAttributeNameInput", "Attribute Name...", [](const std::string& input) -> std::optional<std::string>
 		{
 			if (input.empty())
 			{
@@ -17,9 +17,8 @@ namespace vt::ui
 
 			return std::nullopt;
 		} },
-		type_combo_{ "##TagAttributeTypeCombo", std::vector<std::string>(std::begin(tag_attribute::types_str), std::end(tag_attribute::types_str)), 0 }
-	{
-	}
+		type_combo_{ "##TagAttributeTypeCombo", ctx_.attr_registry.title_attribute_names(), 0 }
+	{}
 
 	void add_tag_attribute_popup::on_display()
 	{
@@ -42,11 +41,11 @@ namespace vt::ui
 			{
 			case 0:
 			{
-				tag_attribute attribute{ static_cast<tag_attribute::type>(type_combo_.selected()) };
-
-				//TODO: should use an event
-				ctx_.current_project->tags.at(tag_name_).attributes.insert({ attribute_input_.input(), attribute });
+				////TODO: should use an event
+				auto attribute = ctx_.attr_registry.new_attribute(utils::string::to_lowercase(type_combo_.selected_item()), attribute_input_.input());
+				ctx_.current_project->tags.at(tag_name_).attributes.try_emplace(attribute_input_.input(), std::move(attribute));
 				ctx_.is_project_dirty = true;
+
 				close();
 				break;
 			}

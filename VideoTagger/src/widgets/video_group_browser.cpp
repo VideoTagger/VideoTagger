@@ -7,16 +7,26 @@
 #include <utils/thumbnail.hpp>
 #include <utils/string.hpp>
 #include "modal/create_group_popup.hpp"
-#include "modal/video_properties_popup.hpp"
 #include <ui/icons.hpp>
 #include <ui/widgets/common.hpp>
+#include <ui/widgets/group_video_tile.hpp>
+
 #include "controls.hpp"
+#include <events/video_group/video_group_remove_video_event.hpp>
+#include <events/video_group/video_open_properties_request_event.hpp>
+#include <events/video_group/video_change_offset_request_event.hpp>
+#include <events/video_group/video_change_offset_event.hpp>
 
 namespace vt::widgets
 {
-	video_group_browser::video_group_browser() : ui::window{ "Video Group Browser", "video-group-browser", "Video Group Browser", ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse }
+	static constexpr ImVec2 tile_size{ 65.f, 105.f };
+
+	video_group_browser::video_group_browser() :
+		ui::window{ "Video Group Browser", "video-group-browser", "Video Group Browser", ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse },
+		video_properties_popup_{ std::move(ui::new_popup<ui::video_properties_popup>(get_event_source(), &open_properties_)) }, open_properties_{}
 	{
 		set_icon(icons::browser);
+		register_listeners();
 	}
 
 	void video_group_browser::on_open_video(video_id_t video_id)
@@ -28,67 +38,6 @@ namespace vt::widgets
 
 	void video_group_browser::on_render()
     {
-		//TODO: would be nice to just use the function from video_browser
-		static auto draw_video_tile = [this](const video_resource& vid_resource, ImVec2 tile_size, bool& open, bool& remove, bool& properties, GLuint image = 0)
-		{
-			const auto& theme = ctx_.current_theme;
-
-			ImVec2 image_tile_size{ tile_size.x * 0.9f, tile_size.x * 0.9f };
-
-			ImVec2 image_size = image_tile_size;
-			ImVec2 uv0{ 0, 0 };
-			ImVec2 uv1{ 1, 1 };
-			ImVec4 tint_color{ 1, 1, 1, 1 };
-			if (image == 0)
-			{
-				image = utils::thumbnail::font_texture();
-				auto glyph = utils::thumbnail::find_glyph(utils::thumbnail::video_icon);
-				uv0 = glyph.uv0;
-				uv1 = glyph.uv1;
-
-				tint_color = theme.get_float4(theme_color::icon_thumbnail);
-			}
-			else
-			{
-				float scaled_width = vid_resource.width() * image_tile_size.y / vid_resource.height();
-				float scaled_height = image_tile_size.x * vid_resource.height() / vid_resource.width();
-
-				if (scaled_width < image_tile_size.x)
-				{
-					image_size.x = scaled_width;
-				}
-				else if (scaled_height < image_tile_size.y)
-				{
-					image_size.y = scaled_height;
-				}
-			}
-			std::string label = vid_resource.title();
-			open |= widgets::tile(fmt::format("video{}", vid_resource.id()).c_str(), label, tile_size, image_size, image,
-			[&](const std::string& label)
-			{
-				//TODO: Temporarily disabled, enable this later
-				/*
-				if (ImGui::MenuItem("Open"))
-				{
-					open = true;
-				}
-				*/
-				if (ImGui::MenuItem("Remove"))
-				{
-					remove = true;
-				}
-				if (ImGui::MenuItem("Properties"))
-				{
-					properties = true;
-				}
-			},
-			nullptr,
-			[&vid_resource](ImDrawList& draw_list, ImRect item_rect, ImRect image_rect)
-			{
-				vid_resource.icon_custom_draw(draw_list, item_rect, image_rect);
-			}, uv0, uv1, false, tint_color);
-		};
-
 		static auto group_ctx_menu = [](bool& open, bool& remove, bool& enqueue, bool can_enqueue)
 		{
 			if (ImGui::MenuItem("Add to queue", nullptr, nullptr, can_enqueue))
@@ -170,7 +119,7 @@ namespace vt::widgets
 		if (true or ctx_.current_project->videos.size() > 0)
 		{
 			ImVec2 img_tile_size{ ctx_.app_settings.thumbnail_size, ctx_.app_settings.thumbnail_size };
-			ImVec2 tile_size = img_tile_size + style.ItemSpacing + style.CellPadding / 2;
+			ImVec2 old_tile_size = img_tile_size + style.ItemSpacing + style.CellPadding / 2;
 			auto avail = ImGui::GetContentRegionAvail() - ImVec2{ 0, ImGui::GetTextLineHeightWithSpacing() };
 			avail.x *= 0.80f;
 
@@ -391,7 +340,7 @@ namespace vt::widgets
 							}
 
 							ImGui::TableNextColumn();
-							draw_group_tile(group, gid, tile_size, open_group, remove_group, enqueue_group, can_enqueue);
+							draw_group_tile(group, gid, old_tile_size, open_group, remove_group, enqueue_group, can_enqueue);
 							if (remove_group)
 							{
 								if (current_video_group == gid)
@@ -441,10 +390,6 @@ namespace vt::widgets
 						{
 							auto vid_resource = pool.get(vinfo.id);
 
-							bool open_video{};
-							bool remove_video{};
-							bool open_video_properties{};
-
 							//filtering
 							{
 								bool passes_filter = true;
@@ -460,28 +405,8 @@ namespace vt::widgets
 							}
 
 							ImGui::TableNextColumn();
-							draw_video_tile(*vid_resource, tile_size, open_video, remove_video, open_video_properties, vid_resource->thumbnail() ? vid_resource->thumbnail()->id() : 0);
-							if (remove_video)
-							{
-								auto& vgroup = ctx_.current_project->video_groups.at(current_video_group);
-								vgroup.erase(vinfo.id);
-								ctx_.is_project_dirty = true;
-								break;
-							}
-
-							static std::chrono::nanoseconds offset;
-							ImGui::PushID((void*)vinfo.id);
-							if (open_video_properties)
-							{
-								offset = vinfo.offset;
-								ImGui::OpenPopup("Video Properties");
-							}
-
-							if (video_properties_popup("Video Properties", offset))
-							{
-								vinfo.offset = offset;
-							}
-							ImGui::PopID();
+							ui::group_video_tile tile{ *vid_resource, current_video_group, tile_size };
+							tile.render();
 
 							/*
 							if (open_video and !metadata->is_widget_open)
@@ -580,5 +505,41 @@ namespace vt::widgets
 			dragged_videos.clear();
 			group_name.clear();
 		}
+
+		video_properties_popup_->open_and_render(open_properties_);
     }
+
+	void video_group_browser::register_listeners()
+	{
+		ctx_.add_event_listener<video_group_remove_video_event>([](const video_group_remove_video_event& event)
+		{
+			ctx_.tasks.run_on_main([group_id = event.group_id(), video_id = event.video_id()]()
+			{
+				auto& vgroup = ctx_.current_project->video_groups.at(group_id);
+				vgroup.erase(video_id);
+				ctx_.is_project_dirty = true;
+			});
+		});
+
+		ctx_.add_event_listener<video_open_properties_request_event>([this](const video_open_properties_request_event& event)
+		{
+			video_properties_popup_->set_video_id(event.video_id());
+			video_properties_popup_->set_video_group_id(event.group_id());
+			video_properties_popup_->set_offset(event.offset());
+			open_properties_ = true;
+		});
+
+		ctx_.add_event_listener<video_change_offset_request_event>([this](const video_change_offset_request_event& event)
+		{
+			auto& group = ctx_.current_project->video_groups.at(event.group_id());
+			auto it = group.find(event.video_id());
+			if (it != group.end())
+			{
+				it->offset = event.offset();
+				ctx_.is_project_dirty = true;
+
+				ctx_.dispatch_event<video_change_offset_event>(get_event_source(), event.group_id(), event.video_id(), event.offset());
+			}
+		});
+	}
 }

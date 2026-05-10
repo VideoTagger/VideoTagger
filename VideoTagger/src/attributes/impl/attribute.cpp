@@ -1,6 +1,7 @@
 #include "attribute.hpp"
-#include <attributes/impl/attribute_factory.hpp>
 #include <core/debug.hpp>
+#include <attributes/impl/attribute_factory.hpp>
+#include <attributes/impl/attribute_instance.hpp>
 
 namespace vt::impl
 {
@@ -9,11 +10,6 @@ namespace vt::impl
 	void attribute::set_name(const std::string& name)
 	{
 		name_ = name;
-	}
-
-	std::string& attribute::name()
-	{
-		return name_;
 	}
 
 	const std::string& attribute::name() const
@@ -31,10 +27,36 @@ namespace vt::impl
 		return factory_;
 	}
 
+	nlohmann::ordered_json attribute::serialize_instance(const impl::attribute_instance& instance)
+	{
+		nlohmann::ordered_json json;
+		json["name"] = instance.attribute_name();
+		json["value"] = instance;
+		return json;
+	}
+
 	std::unique_ptr<impl::attribute_instance> attribute::deserialize_instance(const nlohmann::ordered_json& json)
 	{
+		if (!json.contains("name"))
+		{
+			debug::error("Invalid attribute instance JSON: missing 'name' field");
+			return nullptr;
+		}
+
+		if (!json["name"].is_string())
+		{
+			debug::error("Invalid attribute instance JSON: 'name' field must be a string");
+			return nullptr;
+		}
+
+		if (json["name"] != name())
+		{
+			debug::error("Attribute instance name mismatch during deserialization. Expected '{}', got '{}'", name(), json["name"].get<std::string>());
+			return nullptr;
+		}
+
 		auto instance = instantiate();
-		instance->deserialize(json);
+		instance->deserialize(json["value"]);
 		return instance;
 	}
 

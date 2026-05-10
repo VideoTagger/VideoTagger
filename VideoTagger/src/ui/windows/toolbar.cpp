@@ -2,9 +2,13 @@
 #include <ui/icons.hpp>
 
 #include <core/app_context.hpp>
-#include <events/toolbar/toolbar_tool_changed_event.hpp>
+#include <widgets/video_player.hpp>
+#include <events/system/window/system_window_resize_event.hpp>
 #include <events/toolbar/toolbar_register_tool_event.hpp>
 #include <events/toolbar/toolbar_unregister_tool_event.hpp>
+#include <events/timeline/segment_selected_event.hpp>
+#include <events/timeline/segment_deselected_event.hpp>
+#include <events/toolbar/toolbar_tool_change_request.hpp>
 
 namespace vt::ui::windows
 {
@@ -13,49 +17,55 @@ namespace vt::ui::windows
 		"Toolbar", "toolbar", "Toolbar",
 		ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoDocking |
 		ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove
-	}, active_tool_{}
+	}, reset_pos_{}, tool_popup_{ new_popup<ui::toolbar_tool_popup>() }
 	{
 		set_icon(icons::tool_arrow);
 		set_persistent(false);
 
-		register_listeners();
-		add_default_tools();
-	}
-
-	void toolbar::add_tool(const toolbar_tool& tool)
-	{
-		auto tool_ptr = std::make_unique<toolbar_tool>(tool);
-		auto ptr = tool_ptr.get();
-		tools_.push_back(std::move(tool_ptr));
-
-		ctx_.dispatch_event<toolbar_register_tool_event>(get_event_source(), *ptr);
-	}
-
-	void toolbar::remove_tool(const std::string& tool_id)
-	{
-		auto it = std::find_if(tools_.begin(), tools_.end(), [&tool_id](const std::unique_ptr<toolbar_tool>& tool)
+		ctx_.add_event_listener<system_window_resize_event>([this](const system_window_resize_event& event)
 		{
-			return tool->id == tool_id;
+			reset_pos_ = true;
+		});
+		ctx_.add_event_listener<toolbar_register_tool_event>([this](const toolbar_register_tool_event& event)
+		{
+			reset_pos_ = true;
+		});
+		ctx_.add_event_listener<toolbar_unregister_tool_event>([this](const toolbar_unregister_tool_event& event)
+		{
+			reset_pos_ = true;
 		});
 
-		if (it != tools_.end())
+		ctx_.add_event_listener<segment_selected_event>([this](const segment_selected_event& event)
 		{
-			ctx_.dispatch_event<toolbar_unregister_tool_event>(get_event_source(), *it->get());
-			tools_.erase(it);
-		}
-	}
+			auto& tb_data = data();
+			auto source = get_event_source();
+			tb_data.remove_non_persistent(source);
 
-	void toolbar::clear_tools()
-	{
-		for (auto& tool : tools_)
+			bool is_only_one_segment_selected = ctx_.session.is_one_segment_selected();
+			if (is_only_one_segment_selected)
+			{
+				tb_data.request_register_tools(source);
+			}
+		});
+
+		ctx_.add_event_listener<segment_deselected_event>([this](const segment_deselected_event& event)
 		{
-			ctx_.dispatch_event<toolbar_unregister_tool_event>(get_event_source(), *tool);
-		}
-		tools_.clear();
+			auto& tb_data = data();
+			auto source = get_event_source();
+			tb_data.remove_non_persistent(source);
+		});
 	}
 
 	void toolbar::pre_style()
 	{
+		const auto& player = ctx_.get_window<widgets::video_player>();
+		bool is_player_visible = player.is_visible() and ctx_.session.is_any_video_group_active();
+		set_hidden(!is_player_visible);
+		if (!is_player_visible)
+		{
+			return;
+		}
+
 		const auto& style = ImGui::GetStyle();
 		
 		ImGuiWindowClass win_class;
@@ -64,24 +74,47 @@ namespace vt::ui::windows
 
 		ImGui::SetNextWindowViewport(ImGui::GetMainViewport()->ID);
 
+		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, style.WindowPadding / 2.f);
 		ui::begin_rounded_window_style();
 		ImGui::PushStyleColor(ImGuiCol_WindowBg, ctx_.current_theme.get_float4(theme_color::background_secondary));
+
+		auto player_rect = player.draw_rect();
+		if (player_rect.has_value())
+		{
+			auto win_pos = player_rect->Min;
+			win_pos.x += style.WindowPadding.x;
+			win_pos.y = (player_rect->Min.y + player_rect->Max.y) / 2.f - calc_win_height() / 2.f;
+			ImGui::SetNextWindowPos(win_pos, reset_pos_ ? ImGuiCond_Always : ImGuiCond_Appearing);
+			if (reset_pos_)
+			{
+				ctx_.tasks.run([this]()
+				{
+					std::this_thread::sleep_for(std::chrono::milliseconds(100));
+					reset_pos_ = false;
+				});
+			}
+		}
 	}
 
 	void toolbar::post_style()
 	{
-		ImGui::PopStyleColor();
-		ui::end_rounded_window_style();
+		if (!is_hidden())
+		{
+			ImGui::PopStyleColor();
+			ui::end_rounded_window_style();
+			ImGui::PopStyleVar();
+		}
 	}
 
 	void toolbar::on_render()
 	{
+		auto& toolbar = data();
 		const auto source = get_event_source();
+		auto grabber_height = ImGui::GetTextLineHeight();
 
 		const auto& style = ImGui::GetStyle();
 		auto draw_list = ImGui::GetWindowDrawList();
 		auto win_pos = ImGui::GetWindowPos();
-		auto grabber_height = ImGui::GetTextLineHeight();
 		ImRect grabber_rect{ win_pos, win_pos + ImVec2{ ImGui::GetWindowWidth(), grabber_height }};
 		grabber_rect.Min += ImVec2{ style.WindowPadding.x, style.WindowPadding.y };
 		grabber_rect.Max.x -= style.WindowPadding.x;
@@ -102,63 +135,86 @@ namespace vt::ui::windows
 			ImGui::SetMouseCursor(ImGuiMouseCursor_Hand);
 		}
 		
-		for (size_t i = 0; i < tools_.size(); ++i)
+		bool render_separator = false;
+		for (auto& [group_id, group] : toolbar.groups())
 		{
-			const auto& tool = tools_[i];
-			bool is_selected = (active_tool_ == tool->id);
-			if (ui::icon_toggle_button(tool->icon, is_selected) and !is_selected)
+			if (group.empty()) continue;
+
+			if (render_separator)
 			{
-				ctx_.dispatch_event<toolbar_tool_changed_event>(source, *tool);
+				render_separator = false;
+				ImGui::Separator();
 			}
-			ui::tooltip(tool->tooltip);
+			for (auto& pair : group.entries_sorted())
+			{
+				auto& [tool_id, entry] = pair;
+
+				const auto& spec = entry->specification();
+				bool is_selected = toolbar.is_tool_active(spec.id);
+				bool should_show_popup = (entry->tool_count() > 1) or entry->has_any_tool_body();
+				
+				bool was_toggled = false;
+				if (ui::icon_toggle_button(spec.icon, is_selected)) // and !is_selected
+				{
+					was_toggled = true;
+				}
+
+				bool should_be_selected = !is_selected and was_toggled;
+
+				auto toggle_pos = ImGui::GetItemRectMin();
+				ui::tooltip(spec.tooltip);
+				render_separator = true;
+
+				if (is_selected and should_show_popup)
+				{
+					auto window = ImGui::GetCurrentWindow();
+					auto window_rect = window->Rect();
+
+					ImVec2 popup_pos{ window_rect.Max.x, toggle_pos.y };
+					tool_popup_->set_position(popup_pos);
+				}
+
+				if (was_toggled)
+				{
+					if (should_show_popup)
+					{
+						tool_popup_->open();
+					}
+				}
+				if (should_be_selected)
+				{
+					tool_popup_->set_active_entry(entry);
+					ctx_.dispatch_event<toolbar_tool_change_request_event>(source, group, *entry, *entry->front());
+				}
+			}
 		}
+		tool_popup_->render();
 	}
 
-	void toolbar::add_default_tools()
+	toolbar_session_data& toolbar::data()
 	{
-		toolbar_tool arrow_tool
-		{
-			"select",
-			icons::tool_arrow,
-			"Select"
-		};
-		add_tool(arrow_tool);
+		return ctx_.session.toolbar;
 	}
 
-	void toolbar::register_listeners()
+	float toolbar::calc_win_height()
 	{
-		auto source = get_event_source();
-		ctx_.add_event_listener<toolbar_register_tool_event>([this, source](const toolbar_register_tool_event& event)
-		{
-			if (active_tool_.empty())
-			{
-				ctx_.dispatch_event<toolbar_tool_changed_event>(source, event.tool());
-			}
-		});
+		const auto& style = ImGui::GetStyle();
+		const auto& toolbar = data();
+		const auto& groups = toolbar.groups();
+		auto button_size = ImGui::GetFrameHeightWithSpacing();
+		auto grabber_height = ImGui::GetFrameHeightWithSpacing();
+		auto separator_height = button_size;
 
-		ctx_.add_event_listener<toolbar_unregister_tool_event>([this, source](const toolbar_unregister_tool_event& event)
+		size_t tool_count = 0;
+		size_t separator_count = 0;
+		for (const auto& [group_id, group] : groups)
 		{
-			if (active_tool_ == event.tool().id)
+			tool_count += group.size();
+			if (!group.empty())
 			{
-				ctx_.dispatch_event<toolbar_tool_changed_event>(source, toolbar_tool{});
+				++separator_count;
 			}
-		});
-
-		ctx_.add_event_listener<toolbar_tool_changed_event>([this](const toolbar_tool_changed_event& event)
-		{
-			auto new_id = event.tool().id;
-			if (active_tool_ == new_id) return;
-
-			if (new_id.empty())
-			{
-				active_tool_.clear();
-				debug::log("Toolbar: Active tool cleared");
-			}
-			else
-			{
-				debug::log("Toolbar: Active tool changed to '{}'", new_id);
-				active_tool_ = new_id;
-			}
-		});
+		}
+		return grabber_height + button_size * tool_count + separator_count * separator_height + style.WindowPadding.y; // style.WindowPadding.y * 2 / 2
 	}
 }

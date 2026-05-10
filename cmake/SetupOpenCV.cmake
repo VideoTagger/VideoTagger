@@ -1,6 +1,6 @@
 function(vt_setup_opencv TARGET_NAME)
     if(WIN32)
-        # set(BUILD_SHARED_LIBS OFF CACHE INTERNAL "Disable shared libraries")
+        set(BUILD_SHARED_LIBS OFF CACHE INTERNAL "Disable shared libraries")
         set(BUILD_WITH_STATIC_CRT OFF CACHE BOOL "Force OpenCV to use dynamic CRT (/MD) to match project" FORCE)
         set(BUILD_TESTS OFF CACHE INTERNAL "Disable tests")
         set(BUILD_PERF_TESTS OFF CACHE INTERNAL "Disable performance tests")
@@ -25,7 +25,7 @@ function(vt_setup_opencv TARGET_NAME)
         set(INSTALL_PYTHON_EXAMPLES OFF CACHE INTERNAL "")
         set(OPENCV_GENERATE_SETUPVARS OFF CACHE INTERNAL "")
 
-        add_subdirectory("${PROJECT_SOURCE_DIR}/vendor/opencv" EXCLUDE_FROM_ALL)
+        add_subdirectory("${PROJECT_SOURCE_DIR}/vendor/opencv" "${CMAKE_BINARY_DIR}/opencv_build" EXCLUDE_FROM_ALL)
 
         if(DEFINED CV_CORE_INCLUDES)
             target_include_directories(${TARGET_NAME} PRIVATE ${CV_CORE_INCLUDES})
@@ -39,16 +39,14 @@ function(vt_setup_opencv TARGET_NAME)
         message(STATUS "OpenCV include directories: ${opencv_includes}")
         target_link_directories(${TARGET_NAME} PRIVATE
             "${PROJECT_BINARY_DIR}/vendor/opencv/lib"
-            "${PROJECT_BINARY_DIR}/vendor/opencv/3rdparty/lib"
+            #"${PROJECT_BINARY_DIR}/vendor/opencv/3rdparty/lib"
         )
         target_include_directories(${TARGET_NAME} PRIVATE
             ${CMAKE_BINARY_DIR}
-            ${opencv_includes}
         )
         target_link_libraries(${TARGET_NAME} PRIVATE
             opencv_core
             opencv_imgproc
-            ${opencv_libs}
         )
     else()
         find_package(OpenCV REQUIRED)

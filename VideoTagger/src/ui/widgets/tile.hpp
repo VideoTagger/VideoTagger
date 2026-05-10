@@ -39,10 +39,14 @@ namespace vt::ui
 		void set_double_clickable(bool value);
 		void set_has_context_menu(bool value);
 
-		void set_image(GLuint image);
+		void swap_image(GLuint image);
 		void set_image(GLuint image, const ImVec2 uv0 = ImVec2{ 0, 0 }, const ImVec2 uv1 = ImVec2{ 1, 1 });
 		void set_image_size(const ImVec2& image_size);
 		void set_image_tint_color(uint32_t tint_color);
+		void set_image_tint_color(const ImVec4& tint_color);
+		void set_uv0(const ImVec2& uv0);
+		void set_uv1(const ImVec2& uv1);
+		void set_uv(const ImVec2& uv0, const ImVec2& uv1);
 
 		void set_padding(const ImVec2& padding);
 		void set_text_padding(const ImVec2& padding);
@@ -68,6 +72,7 @@ namespace vt::ui
 		bool has_borders() const;
 
 		virtual bool render() override;
+		virtual std::string id();
 	protected:
 		virtual void on_drag() {};
 		virtual void on_select() {};

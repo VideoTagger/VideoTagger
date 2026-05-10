@@ -37,8 +37,15 @@ namespace vt
 		static constexpr std::string_view forbidden_characters = "\t\n\r\a\b\v\f\"\'\\/<>|:?*";
 		static constexpr std::string_view forbidden_edge_characters = " "; // tag name can't contain these characters at the very start or end
 
+		tag_storage() = default;
+		tag_storage(const tag_storage&) = delete;
+		tag_storage(tag_storage&&) = default;
+
+		tag_storage& operator=(const tag_storage&) = delete;
+		tag_storage& operator=(tag_storage&&) = default;
+
 		//TODO: maybe make use a special return type like in rename
-		std::pair<iterator, tag_validate_result> insert(const tag& tag);
+		std::pair<iterator, tag_validate_result> insert(tag&& tag);
 		std::pair<iterator, tag_validate_result> insert(const std::string& name, uint32_t color);
 		std::pair<iterator, tag_validate_result> insert(const std::string& name);
 		bool erase(const std::string& name);
@@ -157,7 +164,7 @@ namespace vt
 			from_json(tag_data, tag);
 			
 			if (tag.name.empty()) continue;
-			ts.insert(tag);
+			ts.insert(std::move(tag));
 		}
 	}
 }

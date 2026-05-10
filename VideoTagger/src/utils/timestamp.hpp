@@ -1,6 +1,7 @@
 #pragma once
 
 #include <chrono>
+#include "time.hpp"
 
 namespace vt
 {
@@ -159,4 +160,14 @@ namespace vt
 			return total_milliseconds >= rhs.total_milliseconds;
 		}
 	};
+
+	inline void to_json(nlohmann::ordered_json& json, const timestamp& ts)
+	{
+		json = utils::time::time_to_string(ts.total_milliseconds.count());
+	}
+
+	inline void from_json(const nlohmann::ordered_json& json, timestamp& ts)
+	{
+		ts.total_milliseconds = std::chrono::milliseconds(utils::time::parse_time_to_ms(json));
+	}
 }

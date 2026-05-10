@@ -31,7 +31,18 @@ namespace vt
 
 		video_group() = default;
 		video_group(const std::string& name, const std::vector<video_info>& video_ids);
+		
+		video_group(const video_group&) = delete;
+		video_group(video_group&&) = default;
 
+		video_group& operator=(const video_group&) = delete;
+		video_group& operator=(video_group&&) = default;
+
+	private:
+		container video_ids_;
+		segment_storage segments_;
+
+	public:
 		bool insert(video_info video_info);
 		bool erase(video_id_t video_id);
 
@@ -58,10 +69,6 @@ namespace vt
 		iterator end();
 		const_iterator end() const;
 		const_iterator cend() const;
-
-	private:
-		container video_ids_;
-		segment_storage segments_;
 	};
 
 	enum class video_pool_erase_result

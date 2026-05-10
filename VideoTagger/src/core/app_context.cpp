@@ -9,7 +9,7 @@
 #include <widgets/console.hpp>
 #include <widgets/video_group_queue.hpp>
 #include <widgets/localization_editor.hpp>
-#include <widgets/shape_attributes.hpp>
+#include <ui/windows/region_attributes.hpp>
 #include <widgets/video_group_browser.hpp>
 #include <widgets/video_browser.hpp>
 #include <widgets/video_player.hpp>
@@ -25,13 +25,20 @@
 	#include <ui/windows/sandbox.hpp>
 #endif
 #include <attributes/factory/simple_attribute_factory.hpp>
-
-#include <attributes/factory/shape_factory.hpp>
+#include <attributes/factory/shape_attribute_factory.hpp>
 #include <attributes/shapes/rectangle_shape.hpp>
 #include <attributes/shapes/circle_shape.hpp>
 #include <attributes/shapes/line_shape.hpp>
 #include <attributes/shapes/points_shape.hpp>
 #include <attributes/shapes/polygon_shape.hpp>
+
+#include <attributes/factory/dummy_shape_predictor_factory.hpp>
+#include <attributes/factory/linear_shape_predictor_factory.hpp>
+#include <attributes/tools/rectangle_tool.hpp>
+#include <attributes/tools/circle_tool.hpp>
+#include <attributes/tools/points_tool.hpp>
+#include <attributes/tools/line_tool.hpp>
+#include <attributes/tools/polygon_tool.hpp>
 
 namespace vt
 {
@@ -40,6 +47,7 @@ namespace vt
 		create_windows();
 		create_popups();
 		init_attribute_registry();
+		init_shape_predictor_registries();
 	}
 
 	void app_context::init_attribute_registry()
@@ -50,11 +58,27 @@ namespace vt
 		attr_registry.new_factory<simple_attribute_factory<int64_t>>("integer", 0xFFC49B4E);
 		attr_registry.new_factory<simple_attribute_factory<std::string>>("string", 0xFF3F7C46);
 		
-		attr_registry.new_factory<shape_factory<rectangle_shape>>("rectangle", shape_color);
-		attr_registry.new_factory<shape_factory<circle_shape>>("circle", shape_color);
-		attr_registry.new_factory<shape_factory<line_shape>>("line", shape_color);
-		attr_registry.new_factory<shape_factory<points_shape>>("points", shape_color);
-		attr_registry.new_factory<shape_factory<polygon_shape>>("polygon", shape_color);
+		attr_registry.new_factory<shape_attribute_factory_ex<rectangle_shape, rectangle_tool>>("rectangle", shape_color, icons::shape_rectangle);
+		attr_registry.new_factory<shape_attribute_factory_ex<circle_shape, circle_tool>>("circle", shape_color, icons::shape_circle);
+		attr_registry.new_factory<shape_attribute_factory_ex<points_shape, points_tool>>("points", shape_color, icons::tool_points);
+		attr_registry.new_factory<shape_attribute_factory_ex<line_shape, line_tool>>("line", shape_color, icons::tool_line);
+		attr_registry.new_factory<shape_attribute_factory_ex<polygon_shape, polygon_tool>>("polygon", shape_color, icons::shape_polygon);
+	}
+
+	void app_context::init_shape_predictor_registries()
+	{
+		std::apply([](auto&&... registry)
+		{
+			auto register_interpolators = [](auto& reg)
+			{
+				using shape_type = typename std::remove_reference_t<decltype(reg)>::shape_type;
+				reg.new_factory<dummy_shape_predictor_factory<shape_type>>("None");
+				reg.new_factory<linear_shape_predictor_factory<shape_type>>("Linear");
+			};
+
+			(register_interpolators(registry), ...);
+
+		}, shape_predictor_registries);
 	}
 
 	void app_context::create_windows()
@@ -71,8 +95,8 @@ namespace vt
 		//TODO: Remove this when localization editor is openable via the menu bar
 		localization_editor.set_opened(true);
 
-		auto& shape_attributes = create_window<widgets::shape_attributes>();
-		shape_attributes.set_opened(true);
+		auto& region_attributes = create_window<ui::windows::region_attributes>();
+		region_attributes.set_opened(true);
 
 		auto& group_browser = create_window<widgets::video_group_browser>();
 		group_browser.set_opened(true);
@@ -93,7 +117,7 @@ namespace vt
 		tag_manager.set_opened(true);
 
 		auto& toolbar = create_window<ui::windows::toolbar>();
-		toolbar.set_opened(false);
+		toolbar.set_opened(true);
 
 #ifdef VT_DEBUG
 		auto& sandbox = create_window<ui::windows::sandbox>();
@@ -305,11 +329,6 @@ namespace vt
 		ctx_.script_progress_popup = ui::new_popup<ui::script_progress_popup>(nullptr);
 	}
 
-	void app_context::set_selected_attribute(tag_attribute_instance* attribute)
-	{
-		ctx_.selected_attribute = attribute;
-	}
-
     ImFont* app_context::get_font(font_type type) const
     {
 		return fonts.at(type);
@@ -323,11 +342,6 @@ namespace vt
 		auto it = ctx_.displayed_videos.find(focused_id.value());
 		if (it == ctx_.displayed_videos.end()) return std::nullopt;
 		return utils::vec2<uint32_t>{ (uint32_t)it->display_texture.width(), (uint32_t)it->display_texture.height() };
-	}
-
-	tag_attribute_instance* app_context::get_selected_attribute() const
-	{
-		return ctx_.selected_attribute;
 	}
 
     std::filesystem::path app_context::storage_path()

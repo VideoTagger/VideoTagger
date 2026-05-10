@@ -63,20 +63,20 @@ void vt::bindings::bind_project(pybind11::module_& module)
 		p.ref.remove_video(v.id);
 		return true;
 	})
-	.def("find_group", [](const vt_project& p, const std::string& name) -> std::optional<video_group>
-	{
-		auto it = p.ref.video_groups.end();
-		for (auto& [id, group] : p.ref.video_groups)
-		{
-			if (group.display_name == name) return group;
-		}
-		return std::nullopt;
-	})
-	.def("add_group", [](vt_project& p, const video_group& group) -> bool
-	{
-		auto segments = group.segments();
-		return p.ref.video_groups.insert({ utils::random::get_uuid(), group }).second;
-	})
+	//.def("find_group", [](const vt_project& p, const std::string& name) -> std::optional<video_group>
+	//{
+	//	auto it = p.ref.video_groups.end();
+	//	for (auto& [id, group] : p.ref.video_groups)
+	//	{
+	//		if (group.display_name == name) return group;
+	//	}
+	//	return std::nullopt;
+	//})
+	//.def("add_group", [](vt_project& p, const video_group& group) -> bool
+	//{
+	//	auto segments = group.segments();
+	//	return p.ref.video_groups.insert({ utils::random::get_uuid(), group }).second;
+	//})
 	.def_property_readonly("group_queue", [](const vt_project& p) -> video_group_playlist&
 	{
 		return p.ref.video_group_playlist;

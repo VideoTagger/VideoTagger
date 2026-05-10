@@ -1,20 +1,23 @@
 #include "video_window.hpp"
 #include <widgets/slider.hpp>
 #include <ui/widgets/common.hpp>
+#include <utils/timestamp.hpp>
 #include <ui/icons.hpp>
+#include <core/app_context.hpp>
 
 namespace vt::ui::windows
 {
 	video_window::video_window(uint64_t id) : window
-	{ "video-window-" + std::to_string(id), "video-window-" + std::to_string(id), "Video",
+	{
+		"video-window-" + std::to_string(id), "video-window-" + std::to_string(id), "Video",
 		ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoSavedSettings, false
-	}, video_{}, texture_{}, is_active_{}, is_interactive_{ true }, id_{ id }, scale_{ 1.0f }, offset_{}
+	}, video_{}, texture_{}, is_active_{}, is_interactive_{ true }, id_{ id }, video_id_{}, scale_{ 1.0f }, offset_{}
 	{
 		set_persistent(false);
 		set_icon(icons::video);
 	}
 
-	video_window& video_window::with_overlay(const std::function<void(ImVec2 pos, ImVec2 size, ImVec2 tex_size)>& overlay)
+	video_window& video_window::with_overlay(const std::function<void(video_id_t video_id, ImVec2 pos, ImVec2 size, ImVec2 tex_size)>& overlay)
 	{
 		overlays_.push_back(overlay);
 		return *this;
@@ -25,17 +28,18 @@ namespace vt::ui::windows
 		overlays_.clear();
 	}
 
-	void video_window::render_overlays(ImVec2 pos, ImVec2 size, ImVec2 tex_size)
+	void video_window::render_overlays(video_id_t video_id, ImVec2 pos, ImVec2 size, ImVec2 tex_size)
 	{
 		for (const auto& overlay : overlays_)
 		{
-			overlay(pos, size, tex_size);
+			overlay(video_id, pos, size, tex_size);
 		}
 	}
 
-	void video_window::set_video(video_stream& video)
+	void video_window::set_video(video_stream& video, video_id_t video_id)
 	{
 		video_ = &video;
+		video_id_ = video_id;
 	}
 
 	void video_window::set_texture(gl_texture& texture)
@@ -46,6 +50,13 @@ namespace vt::ui::windows
 	void video_window::set_active(bool value)
 	{
 		is_active_ = value;
+	}
+
+	void video_window::on_zoom(float zoom_factor, ImVec2 video_screen_pos, ImVec2 zoom_center)
+	{
+		auto new_scale = std::clamp(scale_ * zoom_factor, 0.1f, 10.0f);
+		offset_ += (zoom_center - video_screen_pos) * (1.0f - new_scale / scale_);
+		scale_ = new_scale;
 	}
 
 	void video_window::pre_style()
@@ -125,27 +136,48 @@ namespace vt::ui::windows
 			ImRect img_rect(video_cursor_pos, { video_cursor_pos.x + image_size.x, video_cursor_pos.y + image_size.y });
 			ImGui::Dummy(img_rect.GetSize());
 			const auto& io = ImGui::GetIO();
-			if (is_interactive_ and ImGui::IsItemHovered())
+
+			bool is_move_tool_active = ctx_.session.toolbar.is_tool_active("move");
+			bool is_zoom_tool_active = ctx_.session.toolbar.is_tool_active("magnifier");
+			if (is_interactive_)
 			{
-				const auto mouse_offset = io.MousePos - video_cursor_pos;
-				if (ImGui::IsMouseClicked(ImGuiMouseButton_Left))
-				{
-					last_mouse_pos_ = mouse_offset;
-				}
+				bool is_vid_hovered = ImGui::IsItemHovered();
+				bool is_win_hovered = ImGui::IsWindowHovered();
 
-				if (ImGui::IsMouseDragging(ImGuiMouseButton_Left))
+				if (is_move_tool_active)
 				{
-					ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeAll);
-					offset_ += (mouse_offset - last_mouse_pos_) * (1.0f / scale_);
-				}
-				if (io.MouseWheel != 0)
-				{
-					auto scroll_dir = !std::signbit(io.MouseWheel) * 2 - 1;
-					auto new_scale = std::clamp(scale_ + scroll_dir * 0.1f, 0.1f, 10.0f);
+					const auto mouse_offset = io.MousePos - video_cursor_pos;
+					
+					if (is_win_hovered)
+					{
+						if (ImGui::IsMouseClicked(ImGuiMouseButton_Left))
+						{
+							last_mouse_pos_ = mouse_offset;
+						}
 
-					// Adjusts the offset to keep the zoom centered on the mouse position
-					offset_ += (io.MousePos - video_screen_pos) * (1.0f - new_scale / scale_);
-					scale_ = new_scale;
+						if (ImGui::IsMouseDragging(ImGuiMouseButton_Left))
+						{
+							ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeAll);
+							offset_ += (mouse_offset - last_mouse_pos_) * (1.0f / scale_);
+						}
+					}
+
+					if (is_vid_hovered and io.MouseWheel != 0)
+					{
+						auto zoom_factor = 1.0f + (io.MouseWheel > 0 ? 0.1f : -0.1f);
+						on_zoom(zoom_factor, video_screen_pos, io.MousePos);
+					}
+				}
+				if (is_zoom_tool_active and is_vid_hovered)
+				{
+					if (ImGui::IsMouseClicked(ImGuiMouseButton_Left))
+					{
+						on_zoom(1.1f, video_screen_pos, io.MousePos);
+					}
+					else if (ImGui::IsMouseClicked(ImGuiMouseButton_Right))
+					{
+						on_zoom(0.9f, video_screen_pos, io.MousePos);
+					}
 				}
 			}
 
@@ -173,7 +205,7 @@ namespace vt::ui::windows
 			}
 			else
 			{
-				render_overlays(video_screen_pos, image_size, { (float)texture_->width(), (float)texture_->height() });
+				render_overlays(video_id_, video_screen_pos, image_size, { (float)texture_->width(), (float)texture_->height() });
 			}
 
 			const auto& current_frame = video_->current_frame();
@@ -261,7 +293,7 @@ namespace vt::ui::windows
 					static constexpr float min_speed = 0.25f;
 					static constexpr float max_speed = 8.0f;
 
-					ImGui::SetNextItemWidth(speed_control_size_x);
+					//ImGui::SetNextItemWidth(speed_control_size_x);
 					//if (ImGui::DragFloat("##VideoPlayerSpeed", &speed, 0.1f, min_speed, max_speed, "%.2fx", ImGuiSliderFlags_AlwaysClamp))
 					//{
 					//	video.set_speed(speed);

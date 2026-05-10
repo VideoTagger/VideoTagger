@@ -284,13 +284,13 @@ namespace vt
 			const auto& current_frame = vid.current_frame().value();
 
 			auto video_next_ts = current_frame.next_timestamp() + video_data.offset;
-			auto distance = video_next_ts - current_ts;
+			auto distance = std::chrono::abs(video_next_ts - current_ts);
 			if (distance <= std::chrono::nanoseconds{ 0 })
 			{
 				continue;
 			}
 
-			if (distance < (return_value - current_ts))
+			if (distance < std::chrono::abs(return_value - current_ts))
 			{
 				return_value = video_next_ts;
 			}
@@ -326,53 +326,24 @@ namespace vt
 
 	std::chrono::nanoseconds displayed_videos_manager::previous_frame_timestamp() const
 	{
-		//std::chrono::nanoseconds return_value{};
-		//for (auto& video_data : videos_)
-		//{
-		//	const auto& vid = video_data.video;
-		//	auto video_previous_ts = vid.current_timestamp() + video_data.offset;
-		//	while (video_previous_ts >= current_timestamp())
-		//	{
-		//		video_previous_ts -= vid.frame_time();
-		//	}
-		//	auto distance = current_timestamp_ - video_previous_ts;
-		//	if (distance <= std::chrono::nanoseconds{ 0 })
-		//	{
-		//		continue;
-		//	}
-
-		//	if (distance < (current_timestamp_ - return_value))
-		//	{
-		//		return_value = video_previous_ts;
-		//	}
-		//}
-
-		//return return_value;
-
-		std::chrono::nanoseconds return_value{};
+		std::chrono::nanoseconds return_value = duration();
 
 		auto current_ts = frame_clock_current_timestamp();
 		for (auto& video_data : videos_)
 		{
-			if (!video_data.is_timestamp_in_range(current_ts))
-			{
-				continue;
-			}
-
 			const auto& vid = video_data.video;
-			int64_t current_frame_number = (current_ts - video_data.offset) / vid.frame_time();
-			auto video_previous_ts = current_frame_number * vid.frame_time() + video_data.offset;
-			if (video_previous_ts == current_ts)
-			{
-				video_previous_ts -= vid.frame_time();
-			}
+			if (!vid.current_frame().has_value()) continue;
 
-			auto distance = current_ts - video_previous_ts;
+			const auto& current_frame = vid.current_frame().value();
+
+			auto video_previous_ts = current_frame.timestamp() - current_frame.duration() + video_data.offset;
+			auto distance = std::chrono::abs(video_previous_ts - current_ts);
 			if (distance <= std::chrono::nanoseconds{ 0 })
 			{
 				continue;
 			}
-			if (distance < (current_ts - return_value))
+
+			if (distance < std::chrono::abs(return_value - current_ts))
 			{
 				return_value = video_previous_ts;
 			}

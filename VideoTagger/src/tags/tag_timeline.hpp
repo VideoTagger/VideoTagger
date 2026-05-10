@@ -8,6 +8,7 @@
 #include <optional>
 #include <vector>
 #include <variant>
+#include <charconv>
 
 #include <core/debug.hpp>
 #include <utils/json.hpp>
@@ -17,10 +18,11 @@
 #include "tag.hpp"
 #include "tag_storage.hpp"
 #include <core/types.hpp>
+#include <attributes/impl/attribute_instance.hpp>
+#include <attributes/impl/attribute.hpp>
 
 namespace vt
 {
-	using segment_id = uint64_t;
 	using segment_id_map = std::unordered_map<std::string, std::set<segment_id>>;
 	inline constexpr auto invalid_segment_id = segment_id{ 0 };
 
@@ -120,15 +122,14 @@ namespace vt
 	 * @param rhs Flag to check for.
 	 * @return true if lhs contains flag rhs, false otherwise.
 	 */
-	inline constexpr bool operator& (segment_part lhs, segment_part rhs)
+	inline constexpr bool operator&(segment_part lhs, segment_part rhs)
 	{
 		return static_cast<uint8_t>(lhs) & static_cast<uint8_t>(rhs);
 	}
 
 	///@brief A struct representing a segment or timestamp appearing on the timeline
-	struct tag_segment
+	struct tag_segment : impl::serializable
 	{
-		using attribute_instance_container = std::unordered_map<video_id_t, std::unordered_map<std::string, tag_attribute_instance>>;
 		///@brief Minimum segment length in milliseconds
 		static constexpr auto min_segment_size = std::chrono::milliseconds{ 1 };
 		///@brief The default segment length in milliseconds used when creating a segment on the timeline
@@ -137,7 +138,7 @@ namespace vt
 		timestamp start{};
 		timestamp end{};
 
-		mutable attribute_instance_container attributes;
+		tag_segment() = default;
 
 		/**
 		 * @brief Construct a segment (tag_segment with different start and end)
@@ -146,7 +147,7 @@ namespace vt
 		 * @param time_end End time of the segment.
 		 * @param attributes Optional attributes associated with the segment.
 		 */
-		tag_segment(timestamp time_start, timestamp time_end, const attribute_instance_container& attributes = {});
+		tag_segment(timestamp time_start, timestamp time_end);
 
 		/**
 		 * @brief Construct a timestamp (tag_segment with the same start and end)
@@ -154,7 +155,7 @@ namespace vt
 		 * @param ts Timestamp of the segment.
 		 * @param attributes Optional attributes associated with the segment.
 		 */
-		tag_segment(timestamp ts, const attribute_instance_container& attributes = {});
+		tag_segment(timestamp ts);
 
 		/**  
 		 * @brief Set the start and end time of the segment. If the tag_segment is currently a timestamp, it will become a segment
@@ -180,14 +181,22 @@ namespace vt
 
 		///@return True if the segment is a timestamp, false otherwise.
 		bool is_timestamp() const;
+
+		///@return Whether the given timestamp is within the bound of the segment
+		bool contains(timestamp ts) const;
+
+		[[nodiscard]] virtual nlohmann::ordered_json serialize() const override;
+		virtual void deserialize(const nlohmann::ordered_json& json) override;
 	};
+	
+	using segment_attribute_instances_container = std::unordered_map<video_id_t, std::vector<std::unique_ptr<impl::attribute_instance>>>;
 
 	struct segment_with_id
 	{
-		segment_with_id(segment_id id, timestamp time_start, timestamp time_end, const tag_segment::attribute_instance_container& attributes = {}) :
-			id{ id }, segment{ time_start, time_end, attributes } {}
-		segment_with_id(segment_id id, timestamp ts, const tag_segment::attribute_instance_container& attributes = {}) :
-			id{ id }, segment{ ts, attributes } {}
+		segment_with_id(segment_id id, timestamp time_start, timestamp time_end) :
+			id{ id }, segment{ time_start, time_end } {}
+		segment_with_id(segment_id id, timestamp ts) :
+			id{ id }, segment{ ts } {}
 		segment_with_id(segment_id id, tag_segment&& segment) :
 			id{ id }, segment{ std::move(segment) } {}
 
@@ -209,10 +218,16 @@ namespace vt
 		using reverse_iterator = std::vector<segment_with_id>::const_reverse_iterator;
 
 		tag_timeline() = default;
+		tag_timeline(const tag_timeline&) = delete;
+		tag_timeline(tag_timeline&&) = default;
+
+		tag_timeline& operator=(const tag_timeline&) = delete;
+		tag_timeline& operator=(tag_timeline&&) = default;
 
 	private:
 		std::vector<segment_with_id> segments_;
 		std::unordered_map<segment_id, size_t> id_map_;
+		std::unordered_map<segment_id, segment_attribute_instances_container> attribute_instances_;
 
 	public:
 		/** 
@@ -227,7 +242,7 @@ namespace vt
 		 * @param attributes Optional attributes associated with the segment.
 		 * @return Struct containing information about the result of the insert operation.
 		 */
-		tag_timeline_insert_result insert(timestamp time_start, timestamp time_end, const tag_segment::attribute_instance_container& attributes = {});
+		tag_timeline_insert_result insert(timestamp time_start, timestamp time_end, segment_attribute_instances_container&& attributes = {});
 
 		/**
 		 * @brief Insert a new timestamp segment
@@ -239,7 +254,19 @@ namespace vt
 		 * @param attributes Optional attributes associated with the segment.
 		 * @return Struct containing information about the result of the insert operation.
 		 */
-		tag_timeline_insert_result insert(timestamp ts, const tag_segment::attribute_instance_container& attributes = {});
+		tag_timeline_insert_result insert(timestamp ts, segment_attribute_instances_container&& attributes = {});
+
+		/**
+		 * @brief Insert a new segment
+		 *
+		 * Invalidates all iterators and references to the segments.
+		 * If the inserted segment overlaps with an existing segments it won't be inserted.
+		 *
+		 * @param segment The segment to insert.
+		 * @param attributes Optional attributes associated with the segment.
+		 * @return Struct containing information about the result of the insert operation.
+		 */
+		tag_timeline_insert_result insert(tag_segment segment, segment_attribute_instances_container&& attributes = {});
 
 		/**
 		 * @brief Erase a segment by its id
@@ -410,6 +437,9 @@ namespace vt
 		 */
 		const tag_segment& at(segment_id id) const;
 
+		const segment_attribute_instances_container& segment_attribute_instances(segment_id id) const;
+		segment_attribute_instances_container& segment_attribute_instances(segment_id id);
+
 		iterator begin() const;
 		iterator end() const;
 		reverse_iterator rbegin() const;
@@ -440,6 +470,12 @@ namespace vt
 		iterator upper_bound_(timestamp ts) const;
 		iterator upper_bound_(iterator begin, timestamp ts) const;
 		void update_id_map_(iterator update_begin, iterator update_end, ptrdiff_t offset);
+		
+		bool erase_(segment_id id, bool erase_attributes);
+		iterator erase_(iterator it, bool erase_attributes);
+		iterator erase_(iterator it_begin, iterator it_end, bool erase_attributes);
+		template<typename Pred>
+		iterator erase_if_(iterator it_begin, iterator it_end, Pred predicate, bool erase_attributes);
 
 		void find_overlapping_(std::set<segment_id>& result, segment_id segment, segment_part part, timestamp offset, const std::set<segment_id>& ignored_segments) const;
 		void find_overlapping_(std::set<segment_id>& result, timestamp start, timestamp end, segment_id ignored_segment, const std::set<segment_id>& ignored_segments) const;
@@ -450,54 +486,6 @@ namespace vt
 	using segment_storage = std::unordered_map<std::string, tag_timeline>;
 
 	/**
-	 * @brief Serialize a tag_segment to JSON
-	 * 
-	 * @param json JSON object to serialize to.
-	 * @param segment The tag_segment to serialize.
-	 */
-	inline void to_json(nlohmann::ordered_json& json, const tag_segment& segment)
-	{
-		switch (segment.type())
-		{
-		case tag_segment_type::timestamp:
-		{
-			json["timestamp"] = segment.start;
-		}
-		break;
-		case tag_segment_type::segment:
-		{
-			json["start"] = segment.start;
-			json["end"] = segment.end;
-		}
-		break;
-		}
-
-		auto& json_attributes = json["attributes"];
-		for (const auto& [vid_id, attr_map] : segment.attributes)
-		{
-			auto& json_vid_attributes = json_attributes[std::to_string(vid_id)];
-			json_vid_attributes = nlohmann::json::array();
-			for (const auto& [name, attr] : attr_map)
-			{
-				if (attr.has_value())
-				{
-					auto json_attribute = nlohmann::ordered_json::object();
-					json_attribute["name"] = name;
-
-					attr.visit([&json_attribute](const auto& value)
-					{
-						if constexpr (!std::is_same_v<std::monostate, std::remove_cv_t<std::remove_reference_t<decltype(value)>>>)
-						{
-							json_attribute["value"] = value;
-						}
-					});
-					json_vid_attributes.push_back(json_attribute);
-				}
-			}
-		}
-	}
-
-	/**
 	 * @brief Serialize a segment_storage to JSON
 	 * 
 	 * @param json JSON object to serialize to.
@@ -505,16 +493,31 @@ namespace vt
 	 */
 	inline void to_json(nlohmann::ordered_json& json, const segment_storage& ss)
 	{
-		json = nlohmann::json::array();
+		json = nlohmann::ordered_json::array();
 		for (auto& [tag_name, tag_segments] : ss)
 		{
 			nlohmann::ordered_json json_tag_segments_data;
 			json_tag_segments_data["tag"] = tag_name;
 			auto& json_tag_segments = json_tag_segments_data["tag-segments"];
-			json_tag_segments = nlohmann::json::array();
+			json_tag_segments = nlohmann::ordered_json::array();
 			for (auto& [id, segment] : tag_segments)
 			{
-				json_tag_segments.push_back(segment);
+				auto segment_json = segment.serialize();
+
+				const auto& segment_attr_instances = tag_segments.segment_attribute_instances(id);
+				auto& segment_attributes_json = segment_json["attributes"];
+				for (auto& [video_id, attr_instances] : segment_attr_instances)
+				{
+					auto& video_attr_instances_json = segment_attributes_json[std::to_string(video_id)];
+					video_attr_instances_json = nlohmann::ordered_json::array();
+					for (auto& attr_instance : attr_instances)
+					{
+						if (attr_instance == nullptr) continue;
+
+						video_attr_instances_json.push_back(impl::attribute::serialize_instance(*attr_instance));
+					}
+				}
+				json_tag_segments.push_back(segment_json);
 			}
 			json.push_back(json_tag_segments_data);
 		}
@@ -536,13 +539,22 @@ namespace vt
 			}
 
 			std::string tag_name = json_group_segments["tag"];
-			auto& tag_segments = ss[tag_name];
-			for (auto& json_tag_segments : json_group_segments["tag-segments"])
+			if (!ts.contains(tag_name))
 			{
-				tag_segment::attribute_instance_container attributes;
-				if (json_tag_segments.contains("attributes"))
+				debug::error("Tag {} doesn't exist, skipping segments deserializing", tag_name);
+				continue;
+			}
+
+			auto& tag = ts.at(tag_name);
+			auto& tag_segments = ss[tag_name];
+			for (const auto& json_tag_segment : json_group_segments["tag-segments"])
+			{
+				auto segment = json_tag_segment.get<tag_segment>();
+
+				segment_attribute_instances_container attributes;
+				if (json_tag_segment.contains("attributes"))
 				{
-					for (const auto& [vid_id, vid_attributes] : json_tag_segments["attributes"].items())
+					for (const auto& [vid_id, vid_attributes] : json_tag_segment["attributes"].items())
 					{
 						video_id_t vid_id_int{};
 
@@ -553,41 +565,28 @@ namespace vt
 							continue;
 						}
 
-						for (const auto& json_attribute : vid_attributes)
-						{
-							if (!json_attribute.contains("name") or !json_attribute.contains("value"))
-							{
-								debug::error("Invalid tag attribute format encountered while deserializing");
-								continue;
-							}
-							auto attribute_name = json_attribute["name"].get<std::string>();
-							auto& tag = ts[tag_name];
-							if (!tag.attributes.count(attribute_name))
-							{
-								debug::error("Tag {} doesn't exist, skipping while deserializing", attribute_name);
-								continue;
-							}
+						auto& video_attribute_instances = attributes[vid_id_int];
 
-							auto& attribute = attributes[vid_id_int][attribute_name];
-							from_json(json_attribute["value"], attribute, tag.attributes.at(attribute_name).type_);
+						for (const auto& json_attribute_instance : vid_attributes)
+						{
+							video_attribute_instances.push_back(tag.deserialize_attribute_instance(json_attribute_instance));
 						}
 					}
 				}
 
-				if (json_tag_segments.contains("timestamp"))
-				{
-					tag_segments.insert(json_tag_segments["timestamp"].get<timestamp>(), attributes);
-				}
-				else if (json_tag_segments.contains("start") and json_tag_segments.contains("end"))
-				{
-					tag_segments.insert(json_tag_segments["start"].get<timestamp>(), json_tag_segments["end"].get<timestamp>(), attributes);
-				}
+				tag_segments.insert(segment, std::move(attributes));
 			}
 		}
 	}
 
 	template<typename Pred>
 	inline tag_timeline::iterator tag_timeline::erase_if(iterator it_begin, iterator it_end, Pred predicate)
+	{
+		return erase_if_(it_begin, it_end, predicate, true);
+	}
+
+	template<typename Pred>
+	inline tag_timeline::iterator tag_timeline::erase_if_(iterator it_begin, iterator it_end, Pred predicate, bool erase_attributes)
 	{
 		ptrdiff_t erased_count = 0;
 		auto it = it_begin;
@@ -602,6 +601,10 @@ namespace vt
 			auto end_distance = std::distance(it, it_end);
 
 			id_map_.erase(it->id);
+			if (erase_attributes)
+			{
+				attribute_instances_.erase(it->id);
+			}
 			it = segments_.erase(it);
 			it_end = it + (end_distance - 1);
 			erased_count++;

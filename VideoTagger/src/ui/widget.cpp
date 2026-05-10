@@ -7,6 +7,10 @@ namespace vt::ui
 {
 	bool widget::render_with_label(const std::string& label, bool sameline)
 	{
+		if (sameline)
+		{
+			ImGui::AlignTextToFramePadding();
+		}
 		ImGui::TextUnformatted(label.c_str());
 		if (sameline)
 		{

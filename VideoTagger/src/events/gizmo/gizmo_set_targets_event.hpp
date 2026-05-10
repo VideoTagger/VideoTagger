@@ -6,6 +6,6 @@ namespace vt
 	struct gizmo_set_targets_event : public gizmo_targets_event
 	{
 	public:
-		gizmo_set_targets_event(const std::vector<utils::vec2<uint32_t>*>& targets = {}) : gizmo_targets_event{ targets } {}
+		gizmo_set_targets_event(video_id_t video_id, const std::vector<utils::vec2<uint32_t>*>& targets = {}) : gizmo_targets_event{ video_id, targets } {}
 	};
 }
