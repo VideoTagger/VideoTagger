@@ -1,5 +1,8 @@
 #include "toolbar_tool_popup.hpp"
 #include <ui/widgets/common.hpp>
+#include <ui/widgets/widget_list.hpp>
+#include <ui/widgets/button_bar.hpp>
+#include <core/app_context.hpp>
 
 namespace vt::ui
 {
@@ -90,9 +93,37 @@ namespace vt::ui
 		if (active_entry_ == nullptr) return;
 
 		auto* active_tool = active_entry_->active_tool();
-		if (active_tool == nullptr or !active_tool->has_body()) return;
+		if (active_tool == nullptr) return;
 
-		ImGui::Separator();
-		active_tool->render_popup_body();
+		ui::widget_list list;
+		std::vector<std::pair<int, std::string>> buttons
+		{
+			{ 0, ctx_.lang->get("done") },
+		};
+		ui::button_bar<int> button_bar(buttons);
+		if (active_tool->has_body())
+		{
+			ImGui::Separator();
+			active_tool->render_popup_body(list, button_bar);
+		}
+		button_bar.set_default_button(0);
+		list.add_raw([&button_bar, active_tool, this]()
+		{
+			ui::vertical_item_spacer();
+			button_bar.render(0.f, true, [this, active_tool](const int& id)
+			{
+				if (id == 0)
+				{
+					active_tool->on_done();
+					close();
+				}
+				else
+				{
+					active_tool->on_button_click(id);
+				}
+			});
+			return true;
+		});
+		list.render();
 	}
 }

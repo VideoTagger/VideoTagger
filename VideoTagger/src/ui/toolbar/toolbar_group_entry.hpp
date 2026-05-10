@@ -61,6 +61,7 @@ namespace vt::ui
 		void on_activate();
 		void on_deactivate();
 		void on_done();
+		void on_button_click(int id);
 
 		bool operator<(const toolbar_group_entry& other) const;
 	};

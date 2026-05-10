@@ -173,6 +173,14 @@ namespace vt::ui
 		}
 	}
 
+	void toolbar_group_entry::on_button_click(int id)
+	{
+		if (active_tool_ != nullptr)
+		{
+			active_tool_->on_button_click(id);
+		}
+	}
+
 	bool toolbar_group_entry::operator<(const toolbar_group_entry& other) const
 	{
 		if (spec_.is_persistent and !other.spec_.is_persistent) return true;
