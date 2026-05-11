@@ -5,6 +5,9 @@
 #include <utils/thumbnail.hpp>
 #include <core/app_context.hpp>
 #include <system/messagebox.hpp>
+#include <image/image.hpp>
+#include <image/image_opencv.hpp>
+#include <opencv2/highgui.hpp>
 
 namespace vt::ui::windows
 {
@@ -83,6 +86,25 @@ namespace vt::ui::windows
 				messagebox::show("Info", "Info Message", messagebox_icon::info);
 				messagebox::show("Warning", "Warning Message", messagebox_icon::warning);
 				messagebox::show("Error", "Error Message", messagebox_icon::error);
+			}
+			return true;
+		});
+
+		widget_list_.add_raw([&]()
+		{
+			if (ui::button("Test Image"))
+			{
+				for (auto& data : ctx_.displayed_videos)
+				{
+					auto& stream = data.video;
+					image<image_pixel_format::rgb8> img({ stream.width(), stream.height() });
+					if (stream.update_from_current_frame(img))
+					{
+						auto cv_view = image_to_cvmat_view(img);
+						cv::imshow("Test Image", cv_view);
+					}
+					break;
+				}
 			}
 			return true;
 		});

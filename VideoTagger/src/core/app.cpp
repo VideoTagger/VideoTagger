@@ -18,6 +18,9 @@
 #include <core/platform.hpp>
 #include <system/taskbar.hpp>
 
+#include <opencv2/core.hpp>
+#include <opencv2/core/utils/logger.hpp>
+
 #define NOMINMAX
 #ifndef WIN32_LEAN_AND_MEAN
 	#define WIN32_LEAN_AND_MEAN
@@ -32,7 +35,7 @@
 
 namespace vt
 {
-	static void ffmpeg_callback(void* avcl, int level, const char* fmt, va_list va)
+	static void ffmpeg_log_callback(void* avcl, int level, const char* fmt, va_list va)
 	{
 		if (level == AV_LOG_QUIET) return;
 
@@ -58,6 +61,22 @@ namespace vt
 				debug::add_log("FFmpeg", "panic!", "{}", message);
 			}
 		}
+	}
+
+	static int opencv_log_callback(int status, const char* func_name, const char* err_msg, const char* file_name, int line, void* userdata)
+	{
+		// Redirect this to your own logger. Example:
+		// my_logger::error("OpenCV Error [{}] in {}: {} ({}:{})", status, func_name, err_msg, file_name, line);
+
+		// Return 0 to suppress OpenCV's default handling
+		debug::error_src(fmt::format("OpenCV {}:{} {}", file_name, line, func_name), "{} (code: {})", err_msg, status);
+		return 0;
+	}
+
+	static void redirect_opencv_logs()
+	{
+		cv::redirectError(opencv_log_callback);
+		cv::utils::logging::setLogLevel(cv::utils::logging::LOG_LEVEL_SILENT);
 	}
 
 	bool app::init(const system_window_config& main_config)
@@ -114,7 +133,8 @@ namespace vt
 		SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
 		SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
 		
-		av_log_set_callback(ffmpeg_callback);
+		av_log_set_callback(ffmpeg_log_callback);
+		redirect_opencv_logs();
 
 		IMGUI_CHECKVERSION();
 		ImGui::CreateContext();

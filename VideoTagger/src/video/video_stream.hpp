@@ -5,9 +5,11 @@
 #include <deque>
 #include <optional>
 #include <core/gl_texture.hpp>
+#include <image/image.hpp>
 
 #include "video_decoder.hpp"
 #include "frame_converter.hpp"
+
 
 namespace vt
 {
@@ -107,6 +109,15 @@ namespace vt
 		 * @return true if the texture was updated, false if there was no current frame or an error occurred.
 		 */
 		bool update_from_current_frame(gl_texture& texture);
+
+		/**
+		 * @brief Update the given image with the current frame
+		 * 
+		 * @param image The image to update with the current frame.
+		 * 
+		 * @return true if the image was updated, false if there was no current frame or an error occurred.
+		 */
+		bool update_from_current_frame(image<image_pixel_format::rgb8>& image);
 
 		/**
 		 * @brief Update the given pixel array with the current frame

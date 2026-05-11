@@ -20,6 +20,8 @@ function(vt_setup_opencv TARGET_NAME)
         set(BUILD_opencv_python_bindings_generator OFF CACHE INTERNAL "Disable Python bindings generator")
         set(BUILD_ZLIB ON CACHE INTERNAL "Enable ZLib")
 
+		set(HAVE_OPENGL ON CACHE INTERNAL "Enable OpenGL support")
+
         set(INSTALL_CREATE_DISTRIB OFF CACHE INTERNAL "")
         set(INSTALL_C_EXAMPLES OFF CACHE INTERNAL "")
         set(INSTALL_PYTHON_EXAMPLES OFF CACHE INTERNAL "")
@@ -42,12 +44,16 @@ function(vt_setup_opencv TARGET_NAME)
             #"${PROJECT_BINARY_DIR}/vendor/opencv/3rdparty/lib"
         )
         target_include_directories(${TARGET_NAME} PRIVATE
+			${opencv_includes}
             ${CMAKE_BINARY_DIR}
         )
         target_link_libraries(${TARGET_NAME} PRIVATE
             opencv_core
             opencv_imgproc
         )
+
+		# For testing
+		target_link_libraries(${TARGET_NAME} PRIVATE opencv_highgui)
     else()
         find_package(OpenCV REQUIRED)
         target_include_directories(${TARGET_NAME} PRIVATE ${OpenCV_INCLUDE_DIRS})
