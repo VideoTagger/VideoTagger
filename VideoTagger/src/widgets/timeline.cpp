@@ -13,8 +13,8 @@
 #include <events/timeline/segment_select_request_event.hpp>
 #include <events/timeline/segment_deselect_request_event.hpp>
 #include <events/timeline/segment_deselect_all_request_event.hpp>
-#include <events/timeline/segment_select_all_request_event.hpp>|
-#include <events/timeline/segment_select_one_request_event.hpp>|
+#include <events/timeline/segment_select_all_request_event.hpp>
+#include <events/timeline/segment_select_one_request_event.hpp>
 #include <events/timeline/begin_segment_drag_event.hpp>
 #include <events/timeline/update_segment_drag_event.hpp>
 #include <events/timeline/end_segment_drag_event.hpp>
