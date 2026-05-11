@@ -10,7 +10,6 @@
 #include <ui/widget.hpp>
 #include <ui/widgets/common.hpp>
 #include <ui/widget_state.hpp>
-
 #include <ui/impl/resettable.hpp>
 
 namespace vt::ui
@@ -19,16 +18,73 @@ namespace vt::ui
 	struct combo : public widget, impl::resettable
 	{
 	public:
-		constexpr combo(const std::string& id, const std::vector<value_type>& items, size_t selected = (size_t)(-1), const std::function<void(const std::pair<size_t, const value_type&>& item)>& callback = nullptr) : id_{ id }, items_{ items }, selected_{ selected }, callback_{ callback }, state_{ widget_state::normal } {}
+		constexpr combo(const std::string& id, const std::vector<value_type>& items, size_t selected = (size_t)(-1), const std::function<void(const std::pair<size_t, const value_type&>& item)>& callback = nullptr) : id_{ id }, items_{ items }, selected_{ selected }, callback_{ callback }, state_{ widget_state::normal }, available_width_{} {}
 
 	private:
 		std::vector<value_type> items_;
 		std::function<void(const std::pair<size_t, const value_type&>& item)> callback_;
 		std::string id_;
+		float available_width_;
 		size_t selected_;
 		widget_state state_;
 
 	public:
+		constexpr void set_items(const std::vector<value_type>& items)
+		{
+			items_ = items;
+			if (selected_ >= items_.size())
+			{
+				selected_ = 0;
+			}
+		}
+
+		constexpr void set_selected(size_t selected)
+		{
+			selected_ = std::clamp(selected, (size_t)0, items_.size() - 1);
+		}
+
+		///@brief Sets the available width for the combo box. When width > 0.f, the combo box will use all of the available content region width. (default: 0.f)
+		constexpr void set_available_width(float width)
+		{
+			available_width_ = width;
+		}
+
+		[[nodiscard]] constexpr size_t selected() const
+		{
+			return selected_;
+		}
+
+		[[nodiscard]] constexpr const value_type& selected_item() const
+		{
+			return items_.at(selected_);
+		}
+
+		[[nodiscard]] constexpr const std::vector<value_type>& items() const
+		{
+			return items_;
+		}
+
+		[[nodiscard]] constexpr size_t item_count() const
+		{
+			return items_.size();
+		}
+
+		[[nodiscard]] constexpr bool empty() const
+		{
+			return items_.empty();
+		}
+
+		[[nodiscard]] constexpr const std::string& id() const
+		{
+			return id_;
+		}
+
+		virtual void reset() override
+		{
+			selected_ = 0;
+			state_ = widget_state::normal;
+		}
+
 		virtual bool render() override
 		{
 			bool result{};
@@ -63,13 +119,15 @@ namespace vt::ui
 			{
 				bg_color = ImVec4{ 0.1961f, 0.1961f, 0.1961f, 1.f };
 			}
-
+			
 			ImVec4 accent_color{ 0.2588f, 0.6f, 0.8784f, 1.f };
 			ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 4.f);
 			ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 1.f);
 			ImGui::PushStyleColor(ImGuiCol_FrameBg, bg_color);
 			ImGui::PushStyleColor(ImGuiCol_Border, ImVec4{ 0.1882f, 0.1882f, 0.1882f, 1.f });
 			ImGui::PushStyleColor(ImGuiCol_BorderShadow, ImVec4{});
+
+			ImGui::PushItemWidth(available_width_ > 0.f ? available_width_ : ImGui::GetContentRegionAvail().x);
 			bool open = ImGui::BeginCombo(id_.c_str(), labels[selected_].c_str(), ImGuiComboFlags_NoArrowButton);
 			ImGui::PopStyleColor(3);
 			ImGui::PopStyleVar(2);
@@ -136,56 +194,6 @@ namespace vt::ui
 
 			ImGui::SetCursorPosX(cpos_x);
 			return result;
-		}
-
-		virtual void reset() override
-		{
-			selected_ = 0;
-			state_ = widget_state::normal;
-		}
-
-		constexpr void set_items(const std::vector<value_type>& items)
-		{
-			items_ = items;
-			if (selected_ >= items_.size())
-			{
-				selected_ = 0;
-			}
-		}
-
-		constexpr void set_selected(size_t selected)
-		{
-			selected_ = std::clamp(selected, (size_t)0, items_.size() - 1);
-		}
-
-		[[nodiscard]] constexpr size_t selected() const
-		{
-			return selected_;
-		}
-
-		[[nodiscard]] constexpr const value_type& selected_item() const
-		{
-			return items_.at(selected_);
-		}
-
-		[[nodiscard]] constexpr const std::vector<value_type>& items() const
-		{
-			return items_;
-		}
-
-		[[nodiscard]] constexpr size_t item_count() const
-		{
-			return items_.size();
-		}
-
-		[[nodiscard]] constexpr bool empty() const
-		{
-			return items_.empty();
-		}
-
-		[[nodiscard]] constexpr const std::string& id() const
-		{
-			return id_;
 		}
 
 		constexpr static void render(const std::string& id, const std::vector<value_type>& items, size_t selected = (size_t)(-1), const std::function<void(const std::pair<size_t, const value_type&>& item)>& callback = nullptr)
