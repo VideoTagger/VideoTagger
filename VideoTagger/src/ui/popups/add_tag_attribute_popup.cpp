@@ -3,19 +3,20 @@
 #include <core/app_context.hpp>
 #include <ui/widgets/text.hpp>
 #include <ui/widgets/button_bar.hpp>
+#include <events/attributes/attribute_add_request_event.hpp>
+#include <utils/name_validators.hpp>
 
 namespace vt::ui
 {
 	add_tag_attribute_popup::add_tag_attribute_popup(event_source source, const std::string& tag_name, std::optional<bool*> open) :
 		modal_popup("add-tag-attribute-popup", open), event_source_{ source }, tag_name_{ tag_name },
-		attribute_input_{ "##TagAttributeNameInput", "Attribute Name...", [](const std::string& input) -> std::optional<std::string>
+		attribute_input_{ "##TagAttributeNameInput", "Attribute Name...", [this](const std::string& input) -> std::optional<std::string>
 		{
-			if (input.empty())
-			{
-				return "Name cannot be empty";
-			}
+			const auto& tag = ctx_.current_project->tags.at(tag_name_);
+			auto validation_result = utils::basic_map_name_validate(input, tag.attributes);
+			if (validation_result == utils::name_validation_result::ok) return std::nullopt;
 
-			return std::nullopt;
+			return utils::name_validation_result_to_string(validation_result, *ctx_.lang);
 		} },
 		type_combo_{ "##TagAttributeTypeCombo", ctx_.attr_registry.title_attribute_names(), 0 }
 	{}
@@ -41,11 +42,7 @@ namespace vt::ui
 			{
 			case 0:
 			{
-				////TODO: should use an event
-				auto attribute = ctx_.attr_registry.new_attribute(utils::string::to_lowercase(type_combo_.selected_item()), attribute_input_.input());
-				ctx_.current_project->tags.at(tag_name_).attributes.try_emplace(attribute_input_.input(), std::move(attribute));
-				ctx_.is_project_dirty = true;
-
+				ctx_.dispatch_event<attribute_add_request_event>(event_source_, tag_name_, attribute_input_.input(), utils::string::to_lowercase(type_combo_.selected_item()));
 				close();
 				break;
 			}

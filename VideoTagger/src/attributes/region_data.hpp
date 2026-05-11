@@ -375,6 +375,11 @@ namespace vt
 			return interpolator_->name();
 		}
 
+		bool is_keyframe(timestamp ts) const
+		{
+			return keyframes_.find(ts) != keyframes_.end();
+		}
+
 		bool empty() const
 		{
 			return keyframes_.empty();

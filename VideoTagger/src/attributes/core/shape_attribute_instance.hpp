@@ -223,9 +223,11 @@ namespace vt
 
 				bool is_selected = ctx_.session.is_region_selected(this, region_id);
 				bool is_hovered = false;
+				bool is_keyframe = region.is_keyframe(ts);
+				bool show_points = is_selected or (is_keyframe and window_hovered);
 
 				auto outline_color = is_selected ? ctx_.current_theme.get_rgba(theme_color::selection_normal) : attribute_tag.outline_color();
-				auto point_size = is_selected ? std::optional<float>{ 3.f } : std::optional<float>{};
+				auto point_size = show_points ? std::optional<float>{ 3.f } : std::optional<float>{};
 
 				utils::vec2<uint32_t> shape_space{ static_cast<uint32_t>(tex_size.x), static_cast<uint32_t>(tex_size.y) };
 				shape_opt->render(shape_space, pos, pos + size, attribute_tag.fill_color(), outline_color, point_size);
@@ -249,7 +251,7 @@ namespace vt
 						{
 							auto& [_, shape] = *keyframe_it;
 
-							auto* point = shape.closest_point(video_mouse_pos, 6.f);
+							auto* point = shape.closest_point(video_mouse_pos, 60.f); //TODO: Replace 60.f, it's for testing
 							std::vector<utils::vec2<uint32_t>*> targets;
 							if (point != nullptr)
 							{

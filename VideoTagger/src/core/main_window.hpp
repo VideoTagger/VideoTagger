@@ -18,6 +18,7 @@ namespace vt
 		void register_listeners();
 		void register_player_listeners();
 		void register_video_resource_listeners();
+		void register_attribute_listeners();
 
 		void on_open_project();
 		void on_close_project(bool should_shutdown);

@@ -437,8 +437,43 @@ namespace vt
 		 */
 		const tag_segment& at(segment_id id) const;
 
+		/**
+		 * @brief Get attribute instances for the given segment
+		 * 
+		 * @param id ID of the segment
+		 * @return Const reference to the attribute instance container
+		 */
 		const segment_attribute_instances_container& segment_attribute_instances(segment_id id) const;
+		
+		/**
+		 * @brief Get attribute instances for the given segment
+		 *
+		 * @param id ID of the segment
+		 * @return Reference to the attribute instance container
+		 */
 		segment_attribute_instances_container& segment_attribute_instances(segment_id id);
+
+		/**
+		 * @brief Get all attribute instances
+		 *
+		 * @return Const reference to the attribute instance container
+		 */
+		const std::unordered_map<segment_id, segment_attribute_instances_container>& attribute_instances() const;
+
+		/**
+		 * @brief Get all attribute instances
+		 *
+		 * @return Reference to the attribute instance container
+		 */
+		std::unordered_map<segment_id, segment_attribute_instances_container>& attribute_instances();
+
+		/**
+		 * @brief Erased all instances of the given attribute
+		 * 
+		 * @param Name of the attribute
+		 * @return How many instances were erased
+		 */
+		size_t erase_attribute_instances(const std::string& attribute_name);
 
 		iterator begin() const;
 		iterator end() const;
