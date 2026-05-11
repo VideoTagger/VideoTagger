@@ -86,12 +86,12 @@ namespace vt::ui
 			return true;
 		}
 
-		constexpr void set_value(type value)
+		constexpr void set_value(type value, bool invoke_callback = true)
 		{
 			if (value_ == value) return;
 			auto old_value = value_;
 			value_ = value;
-			if (on_change_ != nullptr)
+			if (on_change_ != nullptr and invoke_callback)
 			{
 				on_change_(old_value, value_);
 			}
