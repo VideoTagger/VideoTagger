@@ -23,6 +23,8 @@
 
 #include <events/player/video_group_change_request_event.hpp>
 #include <events/player/video_group_changed_event.hpp>
+#include <events/player/seek_to_start_request_event.hpp>
+
 #include <events/gizmo/gizmo_set_targets_event.hpp>
 #include <events/gizmo/gizmo_move_targets_event.hpp>
 
@@ -143,6 +145,7 @@ namespace vt
 			dragged_segments_.clear();
 
 			ctx_.dispatch_event<video_group_changed_event>(event.source(), main_player, current_group_id, new_group_id);
+			ctx_.dispatch_event<seek_to_start_request_event>(event.source(), main_player);
 		});
 
 		ctx_.add_event_listener<segment_insert_mark_start>([this](const segment_insert_mark_start& event)
