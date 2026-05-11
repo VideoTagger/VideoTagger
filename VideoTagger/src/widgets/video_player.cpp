@@ -15,6 +15,7 @@
 #include <events/player/looping_changed_event.hpp>
 #include <events/player/looping_change_request_event.hpp>
 #include <events/player/seek_request_event.hpp>
+#include <events/player/seek_event.hpp>
 #include <events/player/seek_to_start_request_event.hpp>
 #include <events/player/seek_to_end_request_event.hpp>
 #include <events/player/seek_to_previous_frame_request_event.hpp>
@@ -23,7 +24,6 @@
 #include <events/player/skip_previous_request_event.hpp>
 #include <events/player/speed_changed_event.hpp>
 #include <events/player/speed_change_request_event.hpp>
-#include <events/player/seek_event.hpp>
 
 
 namespace vt::widgets
@@ -86,18 +86,11 @@ namespace vt::widgets
 			speed_ = event.speed();
 		});
 
-		ctx_.add_event_listener<seek_request_event>([this](const seek_request_event& event)
+		ctx_.add_event_listener<seek_event>([this](const seek_event& event)
 		{
 			if (&event.player() != this) return;
 			
 			data_.current_ts = event.timestamp();
-		});
-
-		ctx_.add_event_listener<seek_event>([this](const seek_event& event)
-		{
-			if (&event.player() != this) return;
-
-			progress_.set_value(data_.current_ts.count());
 		});
 
 		progress_.set_tooltip_enabled(false);
@@ -296,6 +289,7 @@ namespace vt::widgets
 			//	std::invoke(callbacks.on_seek, data_.current_ts);
 			//}
 
+			progress_.set_value(data_.current_ts.count(), false);
 			progress_.set_size(progress_size);
 			progress_.set_range(min_ts.count(), data_.end_ts.count());
 			progress_.render();

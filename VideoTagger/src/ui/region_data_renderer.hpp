@@ -57,7 +57,7 @@ namespace vt::ui
 
 					ImGui::TableNextColumn();
 					ImGui::AlignTextToFramePadding();
-					ImGui::Indent();
+					ImGui::SameLine();
 					ImGui::TextUnformatted("Interpolation");
 
 					ImGui::TableNextColumn();
@@ -77,7 +77,9 @@ namespace vt::ui
 				widgets::end_collapsible();
 			}
 
-			const auto& segment = ctx_.get_current_segment_storage().at(region_data.tag_name).at(region_data.segment);
+			const auto& segment = ctx_.get_current_segment_storage()
+				.at(region_data.tag_name)
+				.at(region_data.segment);
 			bool is_current_ts_in_bounds = segment.contains(current_ts);
 
 			ImGui::BeginDisabled(!is_current_ts_in_bounds);
