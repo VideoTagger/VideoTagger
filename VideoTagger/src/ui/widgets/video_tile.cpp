@@ -14,8 +14,13 @@ namespace vt::ui
 		set_image_padding({ 5, 5 });
 		set_text_padding({ 5, 5 });
 		//set_image_size({ 45, 45 });
+
+		auto vid_width = video.width();
+		auto vid_height = video.height();
+		auto aspect_ratio = static_cast<float>(vid_width) / vid_height;
+
 		ImVec2 image_tile_size = size * 0.9f;
-		image_tile_size.y = image_tile_size.x;
+		image_tile_size.y = image_tile_size.x / aspect_ratio;
 
 		auto extension = std::filesystem::path(video_->file_path()).extension().string();
 		if (!extension.empty())
