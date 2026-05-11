@@ -46,7 +46,6 @@ namespace vt::ui
 			if (properties_visible)
 			{
 				auto table_flags = ImGuiTableFlags_BordersInnerV | ImGuiTableFlags_Resizable | ImGuiTableFlags_NoSavedSettings | ImGuiTableFlags_RowBg;
-				ImGui::PushStyleVar(ImGuiStyleVar_CellPadding, ImVec2{ style.CellPadding.x + style.ItemSpacing.x, style.CellPadding.y });
 				ImGui::PushStyleColor(ImGuiCol_TableRowBg, theme.get_float4(theme_color::background_tertiary));
 				ImGui::PushStyleColor(ImGuiCol_TableRowBgAlt, theme.get_float4(theme_color::background_tertiary));
 
@@ -56,14 +55,15 @@ namespace vt::ui
 					ImGui::TableNextRow();
 
 					ImGui::TableNextColumn();
-					ImGui::AlignTextToFramePadding();
 					ImGui::SameLine();
+					ImGui::AlignTextToFramePadding();
 					ImGui::TextUnformatted("Interpolation");
 
 					ImGui::TableNextColumn();
 					auto& predictor_registry = ctx_.get_shape_predictor_registry<shape_type>();
 					size_t interpolator_index = predictor_registry.interpolator_index(region.interpolator_name()).value_or(0);
 					interpolator_combo_.set_selected(interpolator_index);
+
 					if (interpolator_combo_.render())
 					{
 						ctx_.dispatch_event<region_set_interpolator_request_event>(source, region_data.tag_name, region_data.segment, region_data.video_id,
@@ -73,7 +73,6 @@ namespace vt::ui
 					ImGui::EndTable();
 				}
 				ImGui::PopStyleColor(2);
-				ImGui::PopStyleVar();
 				widgets::end_collapsible();
 			}
 
