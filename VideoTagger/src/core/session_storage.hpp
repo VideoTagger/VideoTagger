@@ -44,6 +44,7 @@ namespace vt
 		std::string tag_name;
 		segment_id segment;
 		video_id_t video_id;
+		std::string attribute_name;
 		impl::attribute_instance* attribute_instance{};
 		region_id_t region_id{};
 
@@ -129,5 +130,8 @@ namespace vt
 		std::vector<insert_segment_mark_data>::iterator find_insert_segment_mark_by_id(uint64_t id);
 
 		virtual void reset() override;
+
+	private:
+		bool remove_hovered_region(impl::attribute_instance* attribute_instance, region_id_t region_id);
 	};
 }

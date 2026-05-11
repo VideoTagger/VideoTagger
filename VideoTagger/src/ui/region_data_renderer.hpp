@@ -134,7 +134,10 @@ namespace vt::ui
 
 				if (is_collapsible_open)
 				{
-					shape.render_data(source, region_data.video_id, shape_space);
+					if (shape.render_data(source, region_data.video_id, shape_space))
+					{
+						ctx_.is_project_dirty = true;
+					}
 					widgets::end_collapsible();
 				}
 			}

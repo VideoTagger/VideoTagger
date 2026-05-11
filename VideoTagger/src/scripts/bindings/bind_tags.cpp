@@ -3,6 +3,7 @@
 #include <core/app_context.hpp>
 #include "proxies.hpp"
 #include <events/tags/tag_add_request_event.hpp>
+#include <events/attributes/attribute_delete_request_event.hpp>
 
 void vt::bindings::bind_tags(pybind11::module_& module)
 {
@@ -18,7 +19,7 @@ void vt::bindings::bind_tags(pybind11::module_& module)
 	//})
 	.def("remove_attribute", [](tag& t, const std::string& name)
 	{
-		t.attributes.erase(name);
+		ctx_.dispatch_event<attribute_delete_request_event>("script", t.name, name);
 	})
 	.def("has_attribute", [](tag& t, const std::string& name) -> bool
 	{

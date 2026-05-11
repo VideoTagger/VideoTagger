@@ -3,10 +3,10 @@
 
 namespace vt::ui::windows
 {
-	class region_inspector : public ui::window
+	class region_properties : public ui::window
 	{
 	public:
-		region_inspector();
+		region_properties();
 
 	public:
 		virtual void on_render() override;

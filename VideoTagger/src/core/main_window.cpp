@@ -14,7 +14,7 @@
 #include <ui/windows/inspector.hpp>
 #include <ui/windows/video_window.hpp>
 #include <ui/popups/options_popup.hpp>
-#include <ui/windows/region_inspector.hpp>
+#include <ui/windows/region_properties.hpp>
 #include <widgets/localization_editor.hpp>
 #include <widgets/video_group_queue.hpp>
 #include <widgets/video_group_browser.hpp>
@@ -134,13 +134,18 @@ extern "C"
 #include <events/video_resource/video_deleted_event.hpp>
 #include <events/video_resource/video_delete_downloaded_file_request_event.hpp>
 #include <events/video_resource/video_downloaded_file_deleted_event.hpp>
-#include <events/video_resource/video_download_started_event.hpp>
 #include <events/video_resource/video_download_canceled_event.hpp>
 #include <events/video_resource/video_download_finished_event.hpp>
 #include <events/video_resource/video_open_in_explorer_request_event.hpp>
 #include <events/video_resource/video_locate_request_event.hpp>
 #include <events/attributes/region_select_request_event.hpp>
 #include <events/attributes/region_deselect_request_event.hpp>
+#include <events/attributes/attribute_add_request_event.hpp>
+#include <events/attributes/attribute_added_event.hpp>
+#include <events/attributes/attribute_delete_request_event.hpp>
+#include <events/attributes/attribute_deleted_event.hpp>
+#include <events/attributes/attribute_rename_request_event.hpp>
+#include <events/attributes/attribute_renamed_event.hpp>
 
 
 namespace vt
@@ -200,6 +205,7 @@ namespace vt
 	{
 		register_listeners();
 		register_video_resource_listeners();
+		register_attribute_listeners();
 
 		show_debug_info();
 
@@ -1101,6 +1107,73 @@ namespace vt
 
 			vid_res->set_file_path(result.path.u8string());
 			ctx_.is_project_dirty = true;
+		});
+	}
+
+	void main_window::register_attribute_listeners()
+	{
+		ctx_.add_event_listener<attribute_add_request_event>([this](const attribute_add_request_event& event)
+		{
+			auto& tags = ctx_.current_project->tags;
+			auto tag_it = tags.find(event.tag_name());
+			if (tag_it == tags.end()) return;
+
+			auto& attributes = tag_it->attributes;
+			auto attr_it = attributes.find(event.attribute_name());
+			if (attr_it != attributes.end()) return;
+
+			auto attr_ptr = ctx_.attr_registry.new_attribute(event.type_name(), event.attribute_name());
+			if (attr_ptr == nullptr) return;
+
+			auto [_, inserted] = attributes.try_emplace(event.attribute_name(), std::move(attr_ptr));
+			if (!inserted) return;
+
+			ctx_.is_project_dirty = true;
+			ctx_.dispatch_event<attribute_added_event>(event_source_, event.tag_name(), event.attribute_name());
+		});
+
+		ctx_.add_event_listener<attribute_delete_request_event>([this](const attribute_delete_request_event& event)
+		{
+			auto& tags = ctx_.current_project->tags;
+			auto tag_it = tags.find(event.tag_name());
+			if (tag_it == tags.end()) return;
+
+			auto& attributes = tag_it->attributes;
+			auto attr_it = attributes.find(event.attribute_name());
+			if (attr_it == attributes.end()) return;
+
+			for (auto& [_, group] : ctx_.current_project->video_groups)
+			{
+				auto& storage = group.segments();
+				auto segments_it = storage.find(event.tag_name());
+				if (segments_it == storage.end()) continue;
+
+				segments_it->second.erase_attribute_instances(event.attribute_name());
+			}
+
+			attributes.erase(attr_it);
+
+			ctx_.is_project_dirty = true;
+			ctx_.dispatch_event<attribute_deleted_event>(event_source_, event.tag_name(), event.attribute_name());
+		});
+
+		ctx_.add_event_listener<attribute_rename_request_event>([this](const attribute_rename_request_event& event)
+		{
+			auto& tags = ctx_.current_project->tags;
+			auto tag_it = tags.find(event.tag_name());
+			if (tag_it == tags.end()) return;
+
+			auto& attributes = tag_it->attributes;
+			auto attr_it = attributes.find(event.attribute_name());
+			if (attr_it == attributes.end()) return;
+			if (attributes.find(event.new_name()) != attributes.end()) return;
+
+			auto node = attributes.extract(attr_it);
+			node.key() = event.new_name();
+			attributes.insert(std::move(node));
+
+			ctx_.is_project_dirty = true;
+			ctx_.dispatch_event<attribute_renamed_event>(event_source_, event.tag_name(), event.attribute_name(), event.new_name());
 		});
 	}
 
@@ -3472,7 +3545,7 @@ namespace vt
 			
 			ImGui::DockBuilderDockWindow(ctx_.get_window<ui::windows::inspector>().name().c_str(), dock_right_up);
 			ImGui::DockBuilderDockWindow(ctx_.get_window<ui::windows::tag_manager>().name().c_str(), main_dock_right);
-			ImGui::DockBuilderDockWindow(ctx_.get_window<ui::windows::region_inspector>().name().c_str(), main_dock_right);
+			ImGui::DockBuilderDockWindow(ctx_.get_window<ui::windows::region_properties>().name().c_str(), main_dock_right);
 			ImGui::DockBuilderDockWindow(ctx_.get_window<widgets::video_group_queue>().name().c_str(), main_dock_down);
 			ImGui::DockBuilderDockWindow(ctx_.get_window<widgets::video_player>().name().c_str(), main_dock_up);
 			ImGui::DockBuilderDockWindow(ctx_.get_window<widgets::localization_editor>().name().c_str(), main_dock_up);

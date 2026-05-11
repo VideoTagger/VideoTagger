@@ -415,6 +415,40 @@ namespace vt
 		return attribute_instances_.at(id);
 	}
 
+	const std::unordered_map<segment_id, segment_attribute_instances_container>& tag_timeline::attribute_instances() const
+	{
+		return attribute_instances_;
+	}
+
+	std::unordered_map<segment_id, segment_attribute_instances_container>& tag_timeline::attribute_instances()
+	{
+		return attribute_instances_;
+	}
+
+	size_t tag_timeline::erase_attribute_instances(const std::string& attribute_name)
+	{
+		size_t erased = 0;
+		for (auto& [_, video_instances] : attribute_instances_)
+		{
+			for (auto& [_, instances] : video_instances)
+			{
+				for (auto it = instances.begin(); it != instances.end();)
+				{
+					if ((*it)->attribute_name() == attribute_name)
+					{
+						erased++;
+						it = instances.erase(it);
+						continue;
+					}
+
+					++it;
+				}
+			}
+		}
+
+		return erased;
+	}
+
 	tag_timeline::iterator tag_timeline::begin() const
 	{
 		return segments_.begin();

@@ -9,6 +9,9 @@
 #include <events/toolbar/toolbar_tool_changed_event.hpp>
 #include <events/toolbar/toolbar_tool_change_request.hpp>
 
+#include <events/attributes/attribute_added_event.hpp>
+#include <events/attributes/attribute_deleted_event.hpp>
+
 namespace vt::ui
 {
 	toolbar_session_data::toolbar_session_data() : source_{ "toolbar-session-data" }, active_entry_{}
@@ -138,7 +141,7 @@ namespace vt::ui
 			auto& entry = event.group_entry();
 			const auto& spec = entry.specification();
 			auto& tool = event.tool();
-			auto new_id = spec.id;
+			const auto& new_id = spec.id;
 
 			bool is_null = active_entry_ == nullptr;
 			if (!is_null and active_entry_->has_id(new_id)) return;
@@ -173,5 +176,17 @@ namespace vt::ui
 		//{
 		//	
 		//});
+
+		ctx_.add_event_listener<attribute_added_event>([this, source](const attribute_added_event& event)
+		{
+			remove_non_persistent(source);
+			request_register_tools(source);
+		});
+
+		ctx_.add_event_listener<attribute_deleted_event>([this, source](const attribute_deleted_event& event)
+		{
+			remove_non_persistent(source);
+			request_register_tools(source);
+		});
 	}
 }
