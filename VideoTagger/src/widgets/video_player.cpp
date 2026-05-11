@@ -23,6 +23,7 @@
 #include <events/player/skip_previous_request_event.hpp>
 #include <events/player/speed_changed_event.hpp>
 #include <events/player/speed_change_request_event.hpp>
+#include <events/player/seek_event.hpp>
 
 
 namespace vt::widgets
@@ -90,6 +91,12 @@ namespace vt::widgets
 			if (&event.player() != this) return;
 			
 			data_.current_ts = event.timestamp();
+		});
+
+		ctx_.add_event_listener<seek_event>([this](const seek_event& event)
+		{
+			if (&event.player() != this) return;
+
 			progress_.set_value(data_.current_ts.count());
 		});
 
@@ -98,10 +105,10 @@ namespace vt::widgets
 		progress_.set_on_change_callback([this](int64_t old_value, int64_t new_value)
 		{
 			if (old_value == new_value) return;
-			data_.current_ts = std::chrono::nanoseconds{ new_value };
+			auto new_ts = std::chrono::nanoseconds{ new_value };
 
-			ctx_.dispatch_event<seek_request_event>(get_event_source(), *this, data_.current_ts);
-			std::invoke(callbacks.on_seek, data_.current_ts);
+			ctx_.dispatch_event<seek_request_event>(get_event_source(), *this, new_ts);
+			std::invoke(callbacks.on_seek, new_ts);
 		});
 	}
 
