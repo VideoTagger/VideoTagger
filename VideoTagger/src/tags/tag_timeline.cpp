@@ -425,18 +425,22 @@ namespace vt
 		return attribute_instances_;
 	}
 
-	size_t tag_timeline::erase_attribute_instances(const std::string& attribute_name)
+	size_t tag_timeline::erase_attribute_instances(const std::string& attribute_name, std::function<void(segment_id, video_id_t, impl::attribute_instance*)> on_delete)
 	{
 		size_t erased = 0;
-		for (auto& [_, video_instances] : attribute_instances_)
+		for (auto& [id, video_instances] : attribute_instances_)
 		{
-			for (auto& [_, instances] : video_instances)
+			for (auto& [video_id, instances] : video_instances)
 			{
 				for (auto it = instances.begin(); it != instances.end();)
 				{
 					if ((*it)->attribute_name() == attribute_name)
 					{
 						erased++;
+						if (on_delete != nullptr)
+						{
+							on_delete(id, video_id, it->get());
+						}
 						it = instances.erase(it);
 						continue;
 					}
@@ -447,6 +451,21 @@ namespace vt
 		}
 
 		return erased;
+	}
+
+	void tag_timeline::erase_attribute_instances(segment_id id, std::function<void(video_id_t, impl::attribute_instance*)> on_delete)
+	{
+		for (auto& [video_id, instances] : attribute_instances_.at(id))
+		{
+			for (auto it = instances.begin(); it != instances.end(); ++it)
+			{
+				if (on_delete != nullptr)
+				{
+					on_delete(video_id, it->get());
+				}
+				it = instances.erase(it);
+			}
+		}
 	}
 
 	tag_timeline::iterator tag_timeline::begin() const

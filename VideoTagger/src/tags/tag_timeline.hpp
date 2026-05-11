@@ -470,10 +470,19 @@ namespace vt
 		/**
 		 * @brief Erased all instances of the given attribute
 		 * 
-		 * @param Name of the attribute
+		 * @param attribute_name Name of the attribute
+		 * @param on_delete Function called before the instance is deleted
 		 * @return How many instances were erased
 		 */
-		size_t erase_attribute_instances(const std::string& attribute_name);
+		size_t erase_attribute_instances(const std::string& attribute_name, std::function<void(segment_id, video_id_t, impl::attribute_instance*)> on_delete = nullptr);
+
+		/**
+		 * @brief Erased all instances of the given segment
+		 *
+		 * @param id ID of the segment
+		 * @param on_delete Function called before the instance is deleted
+		 */
+		void erase_attribute_instances(segment_id id, std::function<void(video_id_t, impl::attribute_instance*)> on_delete = nullptr);
 
 		iterator begin() const;
 		iterator end() const;

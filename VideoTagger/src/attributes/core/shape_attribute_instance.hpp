@@ -212,6 +212,8 @@ namespace vt
 
 		virtual void render_overlay(const tag& attribute_tag, segment_id segment, timestamp ts, video_id_t video_id, ImVec2 pos, ImVec2 size, ImVec2 tex_size) override
 		{
+			static constexpr float point_size = 3.f;
+
 			bool window_hovered = ImGui::IsWindowHovered();
 			bool select_tool_active = ctx_.session.toolbar.is_tool_active("select");
 			bool is_over_gizmo = ImGuizmo::IsOver() and ctx_.session.has_gizmo_targets();
@@ -227,10 +229,10 @@ namespace vt
 				bool show_points = is_selected or (is_keyframe and window_hovered);
 
 				auto outline_color = is_selected ? ctx_.current_theme.get_rgba(theme_color::selection_normal) : attribute_tag.outline_color();
-				auto point_size = show_points ? std::optional<float>{ 3.f } : std::optional<float>{};
+				auto render_point_size = show_points ? std::optional<float>{ point_size } : std::optional<float>{};
 
 				utils::vec2<uint32_t> shape_space{ static_cast<uint32_t>(tex_size.x), static_cast<uint32_t>(tex_size.y) };
-				shape_opt->render(shape_space, pos, pos + size, attribute_tag.fill_color(), outline_color, point_size);
+				shape_opt->render(shape_space, pos, pos + size, attribute_tag.fill_color(), outline_color, render_point_size);
 
 				if (window_hovered and select_tool_active)
 				{
@@ -243,15 +245,20 @@ namespace vt
 						ctx_.dispatch_event<region_hover_started_event>(event_source_, attribute_tag.name, segment, video_id, *this, region_id);
 					}
 
+					
 					//TODO: add event for hovering points (like above for regions) and move this to main_window
-					if (ImGui::IsMouseClicked(ImGuiMouseButton_Left) and !is_over_gizmo)
+					auto keyframe_it = region.find_keyframe(ts);
+					if (keyframe_it != region.end())
 					{
-						auto keyframe_it = region.find_keyframe(ts);
-						if (keyframe_it != region.end())
+						auto& [_, shape] = *keyframe_it;
+						auto* point = shape.closest_point(video_mouse_pos, math::scale_value(point_size, 0.f, size.x, 0.f, static_cast<float>(shape_space[0])));
+						if (point != nullptr)
 						{
-							auto& [_, shape] = *keyframe_it;
+							ImGui::SetMouseCursor(ImGuiMouseCursor_Hand);
+						}
 
-							auto* point = shape.closest_point(video_mouse_pos, 60.f); //TODO: Replace 60.f, it's for testing
+						if (ImGui::IsMouseClicked(ImGuiMouseButton_Left) and !is_over_gizmo)
+						{
 							std::vector<utils::vec2<uint32_t>*> targets;
 							if (point != nullptr)
 							{

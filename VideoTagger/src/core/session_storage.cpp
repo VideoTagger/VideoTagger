@@ -16,6 +16,7 @@
 #include <events/timeline/segments_moved_event.hpp>
 #include <events/timeline/segment_merged_event.hpp>
 #include <events/timeline/segment_deleted_event.hpp>
+#include <events/timeline/segment_select_one_request_event.hpp>
 
 #include <events/tags/tag_renamed_event.hpp>
 #include <events/tags/tag_deleted_event.hpp>
@@ -37,6 +38,7 @@
 #include <events/attributes/region_deleted_event.hpp>
 #include <events/attributes/attribute_deleted_event.hpp>
 #include <events/attributes/attribute_renamed_event.hpp>
+#include <events/attributes/attribute_instance_deleted_event.hpp>
 
 namespace vt
 {
@@ -74,7 +76,7 @@ namespace vt
 				return;
 			}
 
-			ctx_.dispatch_event<segment_selected_event>(event.source(), event.storage(), event.tag(), event.id());
+			ctx_.dispatch_event<segment_deselected_event>(event.source(), event.storage(), event.tag(), event.id());
 		});
 
 		ctx_.add_event_listener<segment_select_all_request_event>([this](const segment_select_all_request_event& event)
@@ -95,6 +97,22 @@ namespace vt
 			}
 		});
 
+		ctx_.add_event_listener<segment_select_one_request_event>([this](const segment_select_one_request_event& event)
+		{
+			const auto& segment_strg = ctx_.get_current_segment_storage();
+			if (&event.storage() != &segment_strg) return;
+
+			if (is_segment_selected(event.tag(), event.id()))
+			{
+				ctx_.dispatch_event<segment_deselect_all_request_event>(event.source(), event.storage(), segment_id_map{ { event.tag(), { event.id() } } });
+			}
+			else
+			{
+				ctx_.dispatch_event<segment_deselect_all_request_event>(event.source(), event.storage());
+				ctx_.dispatch_event<segment_select_request_event>(event.source(), event.storage(), event.tag(), event.id());
+			}
+		});
+
 		ctx_.add_event_listener<segment_deselect_all_request_event>([this](const segment_deselect_all_request_event& event)
 		{
 			const auto& segment_strg = ctx_.get_current_segment_storage();
@@ -105,9 +123,16 @@ namespace vt
 				std::string tag = storage_it->first;
 				auto& segments = storage_it->second;
 
+				bool increment_storage_it = true;
 				for (auto segment_it = segments.begin(); segment_it != segments.end();)
 				{
 					segment_id id = *segment_it;
+
+					if (event.is_excluded(tag, id))
+					{
+						++segment_it;
+						continue;
+					}
 					
 					segment_it = segments.erase(segment_it);
 					ctx_.dispatch_event<segment_deselected_event>(event.source(), event.storage(), tag, id);
@@ -115,8 +140,25 @@ namespace vt
 					if (segment_it == segments.end())
 					{
 						storage_it = selected_segments_.erase(storage_it);
+						increment_storage_it = false;
 						break;
 					}
+				}
+
+				if (increment_storage_it)
+				{
+					++storage_it;
+				}
+			}
+		});
+
+		ctx_.add_event_listener<segment_deselected_event>([this](const segment_deselected_event& event)
+		{
+			if (selected_region_.has_value())
+			{
+				if (selected_region_->tag_name == event.tag() and selected_region_->segment == event.id())
+				{
+					ctx_.dispatch_event<region_deselect_request_event>(event.source());
 				}
 			}
 		});
@@ -139,9 +181,14 @@ namespace vt
 				return;
 			}
 
+			if (current_video_group_id_ != invalid_video_group_id)
+			{
+				ctx_.dispatch_event<segment_deselect_all_request_event>(event.source(), ctx_.get_current_segment_storage());
+				ctx_.dispatch_event<region_deselect_request_event>(event.source());
+			}
+
 			current_video_group_id_ = new_group_id;
 			insert_segment_marks_.clear();
-			selected_segments_.clear();
 			dragged_segments_.clear();
 
 			ctx_.dispatch_event<video_group_changed_event>(event.source(), main_player, current_group_id, new_group_id);
@@ -258,6 +305,22 @@ namespace vt
 				node.key() = event.new_name();
 				dragged_segments_.insert(std::move(node));
 			}
+
+			if (selected_region_.has_value())
+			{
+				if (selected_region_->tag_name == event.tag_name())
+				{
+					selected_region_->tag_name = event.new_name();
+				}
+			}
+
+			for (auto& region : hovered_regions_)
+			{
+				if (region.tag_name == event.tag_name())
+				{
+					region.tag_name = event.new_name();
+				}
+			}
 		});
 	}
 
@@ -305,10 +368,12 @@ namespace vt
 
 			if (selected_region_.has_value())
 			{
+				bool is_already_selected = selected_region_->attribute_instance == &event.attribute_instance() and selected_region_->region_id == event.region_id();
+				if (is_already_selected) return;
+
 				if (*selected_region_ == region_data)
 				{
-					ctx_.dispatch_event<segment_deselect_all_request_event>(event.source(), ctx_.get_current_segment_storage());
-					ctx_.dispatch_event<segment_select_request_event>(event.source(), ctx_.get_current_segment_storage(), event.tag_name(), event.segment());
+					ctx_.dispatch_event<segment_select_one_request_event>(event.source(), ctx_.get_current_segment_storage(), event.tag_name(), event.segment());
 					return;
 				}
 
@@ -320,8 +385,7 @@ namespace vt
 
 			ctx_.dispatch_event<region_selected_event>(event.source(), event.tag_name(), event.segment(), event.video_id(), event.attribute_instance(), event.region_id());
 			
-			ctx_.dispatch_event<segment_deselect_all_request_event>(event.source(), ctx_.get_current_segment_storage());
-			ctx_.dispatch_event<segment_select_request_event>(event.source(), ctx_.get_current_segment_storage(), event.tag_name(), event.segment());
+			ctx_.dispatch_event<segment_select_one_request_event>(event.source(), ctx_.get_current_segment_storage(), event.tag_name(), event.segment());
 		});
 
 		ctx_.add_event_listener<region_deselect_request_event>([this](const region_deselect_request_event& event)
@@ -331,6 +395,8 @@ namespace vt
 			ctx_.dispatch_event<region_deselected_event>(event.source(), selected_region_->tag_name, selected_region_->segment, selected_region_->video_id,
 				*selected_region_->attribute_instance, selected_region_->region_id);
 			selected_region_.reset();
+			gizmo_data_.targets.clear();
+			gizmo_data_.video_id = 0;
 		});
 
 		ctx_.add_event_listener<region_hover_started_event>([this](const region_hover_started_event& event)
@@ -395,6 +461,27 @@ namespace vt
 				if (region_data.attribute_name != event.attribute_name()) continue;
 
 				region_data.attribute_name = event.attribute_name();
+			}
+		});
+
+		ctx_.add_event_listener<attribute_instance_deleted_event>([this](const attribute_instance_deleted_event& event)
+		{
+			if (selected_region_.has_value())
+			{
+				if (selected_region_->attribute_instance == event.attribute_instance())
+				{
+					ctx_.dispatch_event<region_deselect_request_event>(event.source());
+				}
+			}
+
+			for (auto it = hovered_regions_.begin(); it != hovered_regions_.end();)
+			{
+				if (it->attribute_instance == event.attribute_instance())
+				{
+					it = hovered_regions_.erase(it);
+					continue;
+				}
+				++it;
 			}
 		});
 	}

@@ -146,6 +146,7 @@ extern "C"
 #include <events/attributes/attribute_deleted_event.hpp>
 #include <events/attributes/attribute_rename_request_event.hpp>
 #include <events/attributes/attribute_renamed_event.hpp>
+#include <events/attributes/attribute_instance_deleted_event.hpp>
 
 
 namespace vt
@@ -359,6 +360,11 @@ namespace vt
 			auto it = storage.find(event.tag());
 			if (it != storage.end())
 			{
+				it->second.erase_attribute_instances(event.id(), [&event_source, &event](video_id_t, impl::attribute_instance* instance)
+				{
+					ctx_.dispatch_event<attribute_instance_deleted_event>(event_source, event.tag(), instance->attribute_name(), instance);
+				});
+
 				deleted = it->second.erase(event.id());
 				if (deleted)
 				{
@@ -1148,7 +1154,10 @@ namespace vt
 				auto segments_it = storage.find(event.tag_name());
 				if (segments_it == storage.end()) continue;
 
-				segments_it->second.erase_attribute_instances(event.attribute_name());
+				segments_it->second.erase_attribute_instances(event.attribute_name(), [this, &event](segment_id, video_id_t, impl::attribute_instance* instance)
+				{
+					ctx_.dispatch_event<attribute_instance_deleted_event>(event_source_, event.tag_name(), event.attribute_name(), instance);
+				});
 			}
 
 			attributes.erase(attr_it);
@@ -2909,16 +2918,12 @@ namespace vt
 					//Tool overlays
 					vid_win->with_overlay([](video_id_t video_id, ImVec2 pos, ImVec2 size, ImVec2 tex_size)
 					{
-						for (auto& [id, group] : ctx_.session.toolbar.groups())
-						{
-							auto* entry = ctx_.session.toolbar.active_entry();
-							if (entry == nullptr) continue;
+						auto* entry = ctx_.session.toolbar.active_entry();
+						if (entry == nullptr) return;
+						auto* active_tool = entry->active_tool();
+						if (active_tool == nullptr) return;
 
-							auto* active_tool = entry->active_tool();
-							if (active_tool == nullptr) continue;
-
-							active_tool->render_overlay(video_id, pos, size, tex_size);
-						}
+						active_tool->render_overlay(video_id, pos, size, tex_size);
 					});
 
 					//Video ID Overlay

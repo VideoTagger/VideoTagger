@@ -13,7 +13,8 @@
 #include <events/timeline/segment_select_request_event.hpp>
 #include <events/timeline/segment_deselect_request_event.hpp>
 #include <events/timeline/segment_deselect_all_request_event.hpp>
-#include <events/timeline/segment_select_all_request_event.hpp>
+#include <events/timeline/segment_select_all_request_event.hpp>|
+#include <events/timeline/segment_select_one_request_event.hpp>|
 #include <events/timeline/begin_segment_drag_event.hpp>
 #include <events/timeline/update_segment_drag_event.hpp>
 #include <events/timeline/end_segment_drag_event.hpp>
@@ -370,10 +371,13 @@ namespace vt::widgets
 					{
 						if (!ImGui::IsKeyDown(ImGuiKey_ModCtrl))
 						{
-							ctx_.dispatch_event<segment_deselect_all_request_event>(event_source_, storage);
+							ctx_.dispatch_event<segment_select_one_request_event>(event_source_, storage, tag.name, current_segment_id);
+						}
+						else
+						{
+							ctx_.dispatch_event<segment_select_request_event>(event_source_, storage, tag.name, current_segment_id);
 						}
 
-						ctx_.dispatch_event<segment_select_request_event>(event_source_, storage, tag.name, current_segment_id);
 						is_selected = true;
 					}
 
