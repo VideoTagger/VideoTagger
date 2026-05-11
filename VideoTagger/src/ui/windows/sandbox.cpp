@@ -100,7 +100,11 @@ namespace vt::ui::windows
 					image<image_pixel_format::rgb8> img({ stream.width(), stream.height() });
 					if (stream.update_from_current_frame(img))
 					{
-						auto cv_view = image_to_cvmat_view(img);
+						auto bgr_img = img.convert<image_pixel_format::bgr8>([](const image_pixel_format::rgb8& pixel)
+						{
+							return image_pixel_format::bgr8{ pixel.b, pixel.g, pixel.r };
+						});
+						auto cv_view = image_to_cvmat_view(bgr_img);
 						cv::imshow("Test Image", cv_view);
 					}
 					break;
