@@ -47,9 +47,13 @@ namespace vt::math
 	 * @return The value scaled to the target range
 	 */
 	template<typename from_type, typename to_type>
-	inline constexpr to_type scale_value(from_type value, from_type value_min, from_type value_max, to_type target_min, to_type target_max)
+	inline constexpr to_type scale_value(from_type value, from_type value_min, from_type value_max, to_type target_min, to_type target_max, bool clamp)
 	{
-		value = std::clamp(value, value_min, value_max);
+		if (clamp)
+		{
+			value = std::clamp(value, value_min, value_max);
+		}
+
 		return target_min + ((value - value_min) * (target_max - target_min)) / (value_max - value_min);
 	}
 
@@ -65,12 +69,12 @@ namespace vt::math
 	 * @return The vector scaled to the target range
 	 */
 	template<typename from_type, typename to_type>
-	inline constexpr to_type scale_vec2(from_type value, from_type value_min, from_type value_max, to_type target_min, to_type target_max)
+	inline constexpr to_type scale_vec2(from_type value, from_type value_min, from_type value_max, to_type target_min, to_type target_max, bool clamp)
 	{
 		return
 		{
-			scale_value(value[0], value_min[0], value_max[0], target_min[0], target_max[0]),
-			scale_value(value[1], value_min[1], value_max[1], target_min[1], target_max[1])
+			scale_value(value[0], value_min[0], value_max[0], target_min[0], target_max[0], clamp),
+			scale_value(value[1], value_min[1], value_max[1], target_min[1], target_max[1], clamp)
 		};
 	}
 }

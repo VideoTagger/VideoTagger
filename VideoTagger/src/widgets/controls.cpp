@@ -468,7 +468,7 @@ namespace vt::widgets
 		return row_hovered;
 	}
 
-	bool positon_control(utils::vec2<uint32_t>& pos, const utils::vec2<uint32_t>& max_size)
+	bool positon_control(utils::vec2<int>& pos, const utils::vec2<int>& min_size, const utils::vec2<int>& max_size)
 	{
 		bool result{};
 		const auto& style = ImGui::GetStyle();
@@ -492,9 +492,9 @@ namespace vt::widgets
 
 			ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
 			float x = (float)pos[0];
-			if (ImGui::DragScalar("##x", ImGuiDataType_U32, &pos[0], 1.f, 0, &max_size[0], "%d", ImGuiSliderFlags_AlwaysClamp))
+			if (ImGui::DragScalar("##x", ImGuiDataType_S32, &pos[0], 1.f, &min_size[0], &max_size[0], "%d", ImGuiSliderFlags_AlwaysClamp))
 			{
-				pos[0] = std::clamp(pos[0], 0u, max_size[0]);
+				pos[0] = std::clamp(pos[0], min_size[0], max_size[0]);
 				result = true;
 			}
 
@@ -507,9 +507,9 @@ namespace vt::widgets
 			ImGui::SameLine();
 
 			ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
-			if (ImGui::DragScalar("##y", ImGuiDataType_U32, &pos[1], 1.f, 0, &max_size[1], "%d", ImGuiSliderFlags_AlwaysClamp))
+			if (ImGui::DragScalar("##y", ImGuiDataType_S32, &pos[1], 1.f, &min_size[1], &max_size[1], "%d", ImGuiSliderFlags_AlwaysClamp))
 			{
-				pos[1] = std::clamp(pos[1], 0u, max_size[1]);
+				pos[1] = std::clamp(pos[1], min_size[1], max_size[1]);
 				result = true;
 			}
 			ImGui::EndTable();

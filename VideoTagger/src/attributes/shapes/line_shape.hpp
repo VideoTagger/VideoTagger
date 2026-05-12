@@ -7,13 +7,13 @@ namespace vt
 	{
 	public:
 		line_shape() = default;
-		line_shape(const std::vector<utils::vec2<uint32_t>>& points);
+		line_shape(const std::vector<utils::vec2<int>>& points);
 
 	public:
-		virtual bool contains(utils::vec2<uint32_t> point) const override;
+		virtual bool contains(utils::vec2<int> point) const override;
 
-		virtual void render_shape(utils::vec2<uint32_t> shape_space, ImVec2 draw_min, ImVec2 draw_max, uint32_t fill_color, uint32_t outline_color) override;
-		virtual void render(utils::vec2<uint32_t> shape_space, ImVec2 draw_min, ImVec2 draw_max, uint32_t fill_color, uint32_t outline_color, std::optional<float> point_radius) override;
+		virtual void render_shape(utils::vec2<int> shape_space, ImVec2 draw_min, ImVec2 draw_max, uint32_t fill_color, uint32_t outline_color) override;
+		virtual void render(utils::vec2<int> shape_space, ImVec2 draw_min, ImVec2 draw_max, uint32_t fill_color, uint32_t outline_color, std::optional<float> point_radius) override;
 	};
 }
 

@@ -338,14 +338,14 @@ namespace vt
 		return fonts.at(type);
     }
 
-	std::optional<utils::vec2<uint32_t>> app_context::get_active_video_tex_size() const
+	std::optional<utils::vec2<int>> app_context::get_active_video_tex_size() const
 	{
 		auto focused_id = ctx_.last_focused_video;
 		if (!focused_id.has_value()) return std::nullopt;
 
 		auto it = ctx_.displayed_videos.find(focused_id.value());
 		if (it == ctx_.displayed_videos.end()) return std::nullopt;
-		return utils::vec2<uint32_t>{ (uint32_t)it->display_texture.width(), (uint32_t)it->display_texture.height() };
+		return utils::vec2<int>{ it->display_texture.width(), it->display_texture.height() };
 	}
 
     std::filesystem::path app_context::storage_path()

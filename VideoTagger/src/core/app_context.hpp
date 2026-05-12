@@ -198,7 +198,7 @@ namespace vt
 		void run_script(const std::filesystem::path& script_path);
 
 		ImFont* get_font(font_type type = font_type::normal) const;
-		std::optional<utils::vec2<uint32_t>> get_active_video_tex_size() const;
+		std::optional<utils::vec2<int>> get_active_video_tex_size() const;
 
 		static std::filesystem::path storage_path();
 

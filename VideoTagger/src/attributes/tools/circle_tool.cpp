@@ -14,9 +14,9 @@ namespace vt
 		auto& shape_data = data();
 
 		//TODO: Move this somewhere outside
-		static auto to_texture_space = [](const ImVec2& screen_pos, ImVec2 pos, ImVec2 size, ImVec2 tex_size) -> utils::vec2<uint32_t>
+		static auto to_texture_space = [](const ImVec2& screen_pos, ImVec2 pos, ImVec2 size, ImVec2 tex_size) -> utils::vec2<int>
 		{
-			return math::scale_vec2(screen_pos, pos, pos + size, utils::vec2<uint32_t>{}, utils::vec2<uint32_t>{ static_cast<uint32_t>(tex_size.x), static_cast<uint32_t>(tex_size.y) });
+			return math::scale_vec2(screen_pos, pos, pos + size, utils::vec2<int>{}, utils::vec2<int>{ static_cast<int>(tex_size.x), static_cast<int>(tex_size.y) }, false);
 		};
 
 		if (!shape_data.has_value())
@@ -38,23 +38,10 @@ namespace vt
 				auto mouse_pos = ImGui::GetMousePos();
 
 				float circle_screen_radius = std::sqrt(std::pow((mouse_pos.x - start_mouse_pos_.x), 2) + std::pow((mouse_pos.y - start_mouse_pos_.y), 2)) / 2;
-
-				float left = pos.x;
-				float right = pos.x + size.x;
-				float top = pos.y;
-				float bottom = pos.y + size.y;
-
-				float max_radius_x = std::min(start_mouse_pos_.x - left, right - start_mouse_pos_.x);
-				float max_radius_y = std::min(start_mouse_pos_.y - top, bottom - start_mouse_pos_.y);
-
-				float max_radius = std::min(max_radius_x, max_radius_y);
-
-				circle_screen_radius = std::clamp(circle_screen_radius, 0.0f, max_radius);
-
-				shape_data->radius = math::scale_value(circle_screen_radius, 0.f, size.x, static_cast<uint32_t>(0), static_cast<uint32_t>(tex_size.x));
+				shape_data->radius = math::scale_value(circle_screen_radius, 0.f, size.x, static_cast<uint32_t>(0), static_cast<uint32_t>(tex_size.x), false);
 
 				const auto& tag = get_tag();
-				shape_data->render(utils::vec2<uint32_t>({ (uint32_t)tex_size.x, (uint32_t)tex_size.y }), pos, pos + size, tag.fill_color(), tag.outline_color(), std::nullopt);
+				shape_data->render(utils::vec2<int>({ static_cast<int>(tex_size.x), static_cast<int>(tex_size.y) }), pos, pos + size, tag.fill_color(), tag.outline_color(), std::nullopt);
 			}
 			else if (ImGui::IsMouseReleased(ImGuiMouseButton_Left))
 			{

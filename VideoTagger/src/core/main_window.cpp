@@ -2920,7 +2920,7 @@ namespace vt
 								else if (ctx_.session.is_any_region_selected())
 								{
 									ctx_.dispatch_event<region_deselect_request_event>(source);
-									ctx_.dispatch_event<gizmo_set_targets_event>(source, video_id, std::vector<utils::vec2<uint32_t>*>{});
+									ctx_.dispatch_event<gizmo_set_targets_event>(source, video_id, std::vector<utils::vec2<int>*>{});
 								}
 							}
 						}
@@ -2975,7 +2975,7 @@ namespace vt
 						bool select_tool_active = ctx_.session.toolbar.is_tool_active("select");
 						if (!select_tool_active or ctx_.session.gizmo_video_id() != video_id) return;
 
-						static auto from_pixels = [&tex_size, &size](uint32_t value) -> float
+						static auto from_pixels = [&tex_size, &size](int value) -> float
 						{
 							float viewport_diagonal = utils::intersection::length(size);
 							float tex_diagonal = utils::intersection::length(tex_size);
@@ -3035,10 +3035,13 @@ namespace vt
 							if (ImGuizmo::Manipulate(view_mat.data, proj_mat.data, ImGuizmo::OPERATION::TRANSLATE_X | ImGuizmo::OPERATION::TRANSLATE_Y/* | ImGuizmo::OPERATION::BOUNDS*/, ImGuizmo::MODE::LOCAL, mod.data, nullptr, snap, nullptr/*bounds*/))
 							{
 								ImGuizmo::DecomposeMatrixToComponents(mod.data, translation, rotation, scale);
-								point_pos.x = std::clamp(translation[0], 0.0f, tex_size.x);
-								point_pos.y = std::clamp(translation[1], 0.0f, tex_size.y);
+								//point_pos.x = std::clamp(translation[0], 0.0f, tex_size.x);
+								//point_pos.y = std::clamp(translation[1], 0.0f, tex_size.y);
 
-								utils::vec2<uint32_t> offset{ (uint32_t)(point_pos.x - start_pos.x), (uint32_t)(point_pos.y - start_pos.y) };
+								point_pos.x = translation[0];
+								point_pos.y = translation[1];
+
+								utils::vec2<int> offset{ static_cast<int>(point_pos.x - start_pos.x), static_cast<int>(point_pos.y - start_pos.y) };
 								ctx_.dispatch_event<gizmo_move_targets_event>(source, video_id, ctx_.session.gizmo_targets(), offset);
 							}
 						}

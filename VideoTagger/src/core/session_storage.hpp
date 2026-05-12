@@ -62,7 +62,7 @@ namespace vt
 	struct gizmo_data
 	{
 		video_id_t video_id{};
-		std::vector<utils::vec2<uint32_t>*> targets;
+		std::vector<utils::vec2<int>*> targets;
 	};
 
 	///@brief Storage for temporary data related to the current session
@@ -119,11 +119,11 @@ namespace vt
 		bool is_segment_dragged(const std::string& tag, segment_id id) const;
 		bool is_dragging_any_segment() const;
 
-		bool gizmo_contains_target(const utils::vec2<uint32_t>* target) const;
+		bool gizmo_contains_target(const utils::vec2<int>* target) const;
 		video_id_t gizmo_video_id() const;
-		const std::vector<utils::vec2<uint32_t>*>& gizmo_targets() const;
+		const std::vector<utils::vec2<int>*>& gizmo_targets() const;
 		bool has_gizmo_targets() const;
-		utils::vec2<uint32_t> mean_gizmo_target() const;
+		utils::vec2<int> mean_gizmo_target() const;
 
 		std::vector<insert_segment_mark_data>::iterator find_insert_segment_mark_by_tag(const std::string& tag);
 		std::vector<insert_segment_mark_data>::iterator find_insert_segment_mark_by_tag(const std::optional<std::string>& tag);

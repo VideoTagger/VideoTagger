@@ -38,5 +38,5 @@ namespace vt::widgets
 	extern bool table_is_row_hovered();
 	extern bool table_hovered_row_style();
 
-	extern bool positon_control(utils::vec2<uint32_t>& pos, const utils::vec2<uint32_t>& max_size);
+	extern bool positon_control(utils::vec2<int>& pos, const utils::vec2<int>& min_size = utils::vec2<int>::min(), const utils::vec2<int>& max_size = utils::vec2<int>::max());
 }

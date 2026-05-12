@@ -30,7 +30,7 @@ namespace vt::ui::windows
 			return;
 		}
 
-		auto video_size = utils::vec2<uint32_t>{ static_cast<uint32_t>(video_ptr->width()), static_cast<uint32_t>(video_ptr->height()) };
+		auto video_size = utils::vec2<int>{ video_ptr->width(), video_ptr->height() };
 		auto current_ts = ctx_.displayed_videos.current_timestamp_as_timestamp();
 
 		region_renderer.render_region_attributes(get_event_source(), video_size, current_ts, selected_region);

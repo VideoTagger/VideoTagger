@@ -231,12 +231,12 @@ namespace vt
 				auto outline_color = is_selected ? ctx_.current_theme.get_rgba(theme_color::selection_normal) : attribute_tag.outline_color();
 				auto render_point_size = show_points ? std::optional<float>{ point_size } : std::optional<float>{};
 
-				utils::vec2<uint32_t> shape_space{ static_cast<uint32_t>(tex_size.x), static_cast<uint32_t>(tex_size.y) };
+				utils::vec2<int> shape_space{ static_cast<int>(tex_size.x), static_cast<int>(tex_size.y) };
 				shape_opt->render(shape_space, pos, pos + size, attribute_tag.fill_color(), outline_color, render_point_size);
 
 				if (window_hovered and select_tool_active)
 				{
-					auto video_mouse_pos = math::scale_vec2(ImGui::GetMousePos(), pos, pos + size, utils::vec2<uint32_t>{}, utils::vec2<uint32_t>{ static_cast<uint32_t>(tex_size.x), static_cast<uint32_t>(tex_size.y) });
+					auto video_mouse_pos = math::scale_vec2(ImGui::GetMousePos(), pos, pos + size, utils::vec2<int>{}, utils::vec2<int>{ static_cast<int>(tex_size.x), static_cast<int>(tex_size.y) }, false);
 					is_hovered = shape_opt->contains(video_mouse_pos);
 					
 					if (is_hovered)
@@ -251,7 +251,7 @@ namespace vt
 					if (keyframe_it != region.end())
 					{
 						auto& [_, shape] = *keyframe_it;
-						auto* point = shape.closest_point(video_mouse_pos, math::scale_value(point_size, 0.f, size.x, 0.f, static_cast<float>(shape_space[0])));
+						auto* point = shape.closest_point(video_mouse_pos, math::scale_value(point_size, 0.f, size.x, 0.f, static_cast<float>(shape_space[0]), false));
 						if (point != nullptr)
 						{
 							ImGui::SetMouseCursor(ImGuiMouseCursor_Hand);
@@ -259,7 +259,7 @@ namespace vt
 
 						if (ImGui::IsMouseClicked(ImGuiMouseButton_Left) and !is_over_gizmo)
 						{
-							std::vector<utils::vec2<uint32_t>*> targets;
+							std::vector<utils::vec2<int>*> targets;
 							if (point != nullptr)
 							{
 								targets = { point };

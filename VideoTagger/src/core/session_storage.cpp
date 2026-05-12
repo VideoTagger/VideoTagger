@@ -377,8 +377,7 @@ namespace vt
 					return;
 				}
 
-				ctx_.dispatch_event<region_deselected_event>(event.source(), selected_region_->tag_name, selected_region_->segment, selected_region_->video_id,
-					*selected_region_->attribute_instance, selected_region_->region_id);
+				ctx_.dispatch_event<region_deselect_request_event>(event.source());
 			}
 
 			selected_region_ = region_data;
@@ -613,7 +612,7 @@ namespace vt
 		return !dragged_segments_.empty();
 	}
 
-	bool session_storage::gizmo_contains_target(const utils::vec2<uint32_t>* target) const
+	bool session_storage::gizmo_contains_target(const utils::vec2<int>* target) const
 	{
 		auto it = std::find_if(gizmo_data_.targets.begin(), gizmo_data_.targets.end(), [&](const auto& gizmo_target)
 		{
@@ -627,7 +626,7 @@ namespace vt
 		return gizmo_data_.video_id;
 	}
 
-	const std::vector<utils::vec2<uint32_t>*>& session_storage::gizmo_targets() const
+	const std::vector<utils::vec2<int>*>& session_storage::gizmo_targets() const
 	{
 		return gizmo_data_.targets;
 	}
@@ -637,9 +636,9 @@ namespace vt
 		return !gizmo_data_.targets.empty();
 	}
 
-	utils::vec2<uint32_t> session_storage::mean_gizmo_target() const
+	utils::vec2<int> session_storage::mean_gizmo_target() const
 	{
-		utils::vec2<uint32_t> result;
+		utils::vec2<int> result;
 		for (const auto& target : gizmo_data_.targets)
 		{
 			result[0] += target->at(0);

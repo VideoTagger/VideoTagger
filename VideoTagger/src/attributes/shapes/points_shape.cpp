@@ -6,7 +6,7 @@
 
 namespace vt
 {
-    points_shape::points_shape(const std::vector<utils::vec2<uint32_t>>& points) : points{ points } {}
+    points_shape::points_shape(const std::vector<utils::vec2<int>>& points) : points{ points } {}
 
 	bool points_shape::operator==(const points_shape& other) const
 	{
@@ -15,7 +15,7 @@ namespace vt
 
     void points_shape::set_target(event_source source, video_id_t video_id)
 	{
-		std::vector<utils::vec2<uint32_t>*> targets;
+		std::vector<utils::vec2<int>*> targets;
 		for (auto& vertex : points)
 		{
 			targets.push_back(&vertex);
@@ -23,7 +23,7 @@ namespace vt
 		ctx_.dispatch_event<gizmo_set_targets_event>(source, video_id, targets);
 	}
 
-	bool points_shape::contains(utils::vec2<uint32_t> point) const
+	bool points_shape::contains(utils::vec2<int> point) const
 	{
 		for (auto& p : points)
 		{
@@ -32,13 +32,13 @@ namespace vt
 		return false;
 	}
 
-	utils::vec2<uint32_t>* points_shape::closest_point(utils::vec2<uint32_t> point, float max_distance)
+	utils::vec2<int>* points_shape::closest_point(utils::vec2<int> point, float max_distance)
 	{
 		float distance = std::numeric_limits<float>::infinity();
-		utils::vec2<uint32_t>* result{};
+		utils::vec2<int>* result{};
 		for (auto& p : points)
 		{
-			float new_distance = utils::vec2<uint32_t>::distance(p, point);
+			float new_distance = utils::vec2<int>::distance(p, point);
 			if (new_distance < distance)
 			{
 				result = &p;
@@ -48,9 +48,9 @@ namespace vt
 		return distance <= max_distance ? result : nullptr;
 	}
 
-	std::vector<utils::vec2<uint32_t>*> points_shape::get_all_points()
+	std::vector<utils::vec2<int>*> points_shape::get_all_points()
 	{
-		std::vector<utils::vec2<uint32_t>*> result(points.size());
+		std::vector<utils::vec2<int>*> result(points.size());
 		for (size_t i = 0; i < points.size(); ++i)
 		{
 			result[i] = &points[i];
@@ -58,29 +58,29 @@ namespace vt
 		return result;
 	}
 
-	void points_shape::render_shape(utils::vec2<uint32_t> shape_space, ImVec2 draw_min, ImVec2 draw_max, uint32_t fill_color, uint32_t outline_color)
+	void points_shape::render_shape(utils::vec2<int> shape_space, ImVec2 draw_min, ImVec2 draw_max, uint32_t fill_color, uint32_t outline_color)
 	{
 		render_points(3.f, shape_space, draw_min, draw_max, fill_color, outline_color);
 	}
 
-	void points_shape::render_points(float radius, utils::vec2<uint32_t> shape_space, ImVec2 draw_min, ImVec2 draw_max, uint32_t fill_color, uint32_t outline_color)
+	void points_shape::render_points(float radius, utils::vec2<int> shape_space, ImVec2 draw_min, ImVec2 draw_max, uint32_t fill_color, uint32_t outline_color)
 	{
 		auto draw_list = ImGui::GetWindowDrawList();
 		for (auto& point : points)
 		{
-			auto scaled_point = math::scale_vec2(point, utils::vec2<uint32_t>{}, shape_space, draw_min, draw_max);
+			auto scaled_point = math::scale_vec2(point, utils::vec2<int>{}, shape_space, draw_min, draw_max, false);
 
 			draw_list->AddCircleFilled(scaled_point, radius, fill_color);
 			draw_list->AddCircle(scaled_point, radius, outline_color);
 		}
 	}
 
-	void points_shape::render(utils::vec2<uint32_t> shape_space, ImVec2 draw_min, ImVec2 draw_max, uint32_t fill_color, uint32_t outline_color, std::optional<float> point_radius)
+	void points_shape::render(utils::vec2<int> shape_space, ImVec2 draw_min, ImVec2 draw_max, uint32_t fill_color, uint32_t outline_color, std::optional<float> point_radius)
 	{
 		render_points(point_radius.value_or(3.f), shape_space, draw_min, draw_max, fill_color, outline_color);
 	}
 
-	bool points_shape::render_data(event_source source, video_id_t video_id, utils::vec2<uint32_t> shape_space)
+	bool points_shape::render_data(event_source source, video_id_t video_id, utils::vec2<int> shape_space)
 	{
 		bool edited = false;
 
@@ -97,7 +97,7 @@ namespace vt
 				auto selectable_flags = ImGuiSelectableFlags_AllowItemOverlap | ImGuiSelectableFlags_AllowOverlap | ImGuiSelectableFlags_SpanAllColumns;
 				if (ImGui::Selectable("##PointSelectable", selected, selectable_flags, { 0.f, ImGui::GetTextLineHeightWithSpacing() + 2 * style.FramePadding.y }))
 				{
-					ctx_.dispatch_event<gizmo_set_targets_event>(source, video_id, std::vector<utils::vec2<uint32_t>*>{ &points[i] });
+					ctx_.dispatch_event<gizmo_set_targets_event>(source, video_id, std::vector<utils::vec2<int>*>{ &points[i] });
 				}
 				
 				ImGui::SetCursorPos(cpos);
@@ -114,7 +114,7 @@ namespace vt
 
 				ImGui::TableNextColumn();
 
-				if (widgets::positon_control(points[i], shape_space))
+				if (widgets::positon_control(points[i]))
 				{
 					edited = true;
 				}

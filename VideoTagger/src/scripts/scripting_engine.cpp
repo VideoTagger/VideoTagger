@@ -121,28 +121,28 @@ namespace vt
 		bindings::bind_tags(this_module);
 		bindings::bind_tag_attributes(this_module);
 
-		py::class_<utils::vec2<uint32_t>>(this_module, "Vec2")
-		.def(py::init([](uint32_t x, uint32_t y)
+		py::class_<utils::vec2<int>>(this_module, "Vec2")
+		.def(py::init([](int x, int y)
 		{
-			return utils::vec2<uint32_t>{ x, y };
+			return utils::vec2<int>{ x, y };
 		}))
 		.def_property("x",
-		[](const utils::vec2<uint32_t>& v)
+		[](const utils::vec2<int>& v)
 		{
 			return v[0];
 		},
-		[](utils::vec2<uint32_t>& v, int64_t value)
+		[](utils::vec2<int>& v, int64_t value)
 		{
-			v[0] = static_cast<uint32_t>(std::min(static_cast<int64_t>(0), value));
+			v[0] = static_cast<int>(std::min(static_cast<int64_t>(0), value));
 		})
 		.def_property("y",
-		[](const utils::vec2<uint32_t>& v)
+		[](const utils::vec2<int>& v)
 		{
 			return v[1];
 		},
-		[](utils::vec2<uint32_t>& v, int64_t value)
+		[](utils::vec2<int>& v, int64_t value)
 		{
-			v[1] = static_cast<uint32_t>(std::min(static_cast<int64_t>(0), value));
+			v[1] = static_cast<int>(std::min(static_cast<int64_t>(0), value));
 		})
 		.def(py::self == py::self);
 

@@ -17,17 +17,17 @@ namespace vt::impl
 	public:
 		virtual void set_target(event_source source, video_id_t video_id) = 0;
 
-		virtual utils::vec2<uint32_t>* closest_point(utils::vec2<uint32_t> point, float max_distance = std::numeric_limits<float>::infinity()) = 0;
+		virtual utils::vec2<int>* closest_point(utils::vec2<int> point, float max_distance = std::numeric_limits<float>::infinity()) = 0;
 
-		virtual std::vector<utils::vec2<uint32_t>*> get_all_points() = 0;
+		virtual std::vector<utils::vec2<int>*> get_all_points() = 0;
 
-		virtual bool contains(utils::vec2<uint32_t> point) const = 0;
+		virtual bool contains(utils::vec2<int> point) const = 0;
 
-		virtual void render_shape(utils::vec2<uint32_t> shape_space, ImVec2 draw_min, ImVec2 draw_max, uint32_t fill_color, uint32_t outline_color) = 0;
-		virtual void render_points(float radius, utils::vec2<uint32_t> shape_space, ImVec2 draw_min, ImVec2 draw_max, uint32_t fill_color, uint32_t outline_color) = 0;
-		virtual void render(utils::vec2<uint32_t> shape_space, ImVec2 draw_min, ImVec2 draw_max, uint32_t fill_color, uint32_t outline_color, std::optional<float> point_radius);
+		virtual void render_shape(utils::vec2<int> shape_space, ImVec2 draw_min, ImVec2 draw_max, uint32_t fill_color, uint32_t outline_color) = 0;
+		virtual void render_points(float radius, utils::vec2<int> shape_space, ImVec2 draw_min, ImVec2 draw_max, uint32_t fill_color, uint32_t outline_color) = 0;
+		virtual void render(utils::vec2<int> shape_space, ImVec2 draw_min, ImVec2 draw_max, uint32_t fill_color, uint32_t outline_color, std::optional<float> point_radius);
 
-		virtual bool render_data(event_source source, video_id_t video_id, utils::vec2<uint32_t> shape_space) = 0;
+		virtual bool render_data(event_source source, video_id_t video_id, utils::vec2<int> shape_space) = 0;
 	};
 }
 

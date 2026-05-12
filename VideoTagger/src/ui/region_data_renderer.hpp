@@ -29,7 +29,7 @@ namespace vt::ui
 		ui::combo<std::string> interpolator_combo_;
 
 	public:
-		virtual void render_region_attributes(event_source source, utils::vec2<uint32_t> shape_space, timestamp current_ts, const selected_region_data& region_data) override
+		virtual void render_region_attributes(event_source source, utils::vec2<int> shape_space, timestamp current_ts, const selected_region_data& region_data) override
 		{
 			auto region_it = regions_->find(region_data.region_id);
 			if (region_it == regions_->end())

@@ -122,7 +122,22 @@ namespace vt::utils
 		{
 			return data != other.data;
 		}
+
+		static constexpr vec max();
+		static constexpr vec min();
 	};
+
+	template<typename type, size_t dims>
+	inline constexpr vec<type, dims> vec<type, dims>::max()
+	{
+		return vec<type, dims>{ std::numeric_limits<type>::max(), std::numeric_limits<type>::max() };
+	}
+	
+	template<typename type, size_t dims>
+	inline constexpr vec<type, dims> vec<type, dims>::min()
+	{
+		return vec<type, dims>{ std::numeric_limits<type>::min(), std::numeric_limits<type>::min() };
+	}
 
 	template<typename type, size_t dims>
 	inline constexpr vec<type, dims> operator+(const vec<type, dims>& left, const vec<type, dims>& right)
