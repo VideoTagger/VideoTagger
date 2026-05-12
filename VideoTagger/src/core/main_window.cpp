@@ -492,21 +492,10 @@ namespace vt
 
 		ctx_.add_event_listener<tag_delete_request_event>([event_source = event_source_](const tag_delete_request_event& event)
 		{
-			auto& tags = ctx_.current_project->tags;
-			bool deleted = tags.erase(event.tag_name());
-			if (deleted)
-			{
-				ctx_.is_project_dirty = true;
-			}
-
-			ctx_.dispatch_event<tag_deleted_event>(event_source, event.storage(), event.tag_name(), deleted);
-		});
-
-		ctx_.add_event_listener<tag_deleted_event>([event_source = event_source_](const tag_deleted_event& event)
-		{
-			if (!event.deleted()) return;
-
 			auto& project = *ctx_.current_project;
+			auto& tags = project.tags;
+			auto tag_it = tags.find(event.tag_name());
+			if (tag_it == tags.end()) return;
 
 			auto current_group_id = ctx_.session.current_video_group_id();
 
@@ -543,6 +532,26 @@ namespace vt
 			}
 
 			ctx_.dispatch_event<tag_change_display_request_event>(event_source, event.storage(), event.tag_name(), false);
+
+			std::vector<std::string> attribute_names;
+			attribute_names.reserve(tag_it->attributes.size());
+			for (auto& [name, _] : tag_it->attributes)
+			{
+				attribute_names.push_back(name);
+			}
+
+			for (auto& attr_name : attribute_names)
+			{
+				ctx_.dispatch_event<attribute_delete_request_event>(event_source, tag_it->name, attr_name);
+			}
+
+			bool deleted = tags.erase(event.tag_name());
+			if (deleted)
+			{
+				ctx_.is_project_dirty = true;
+			}
+
+			ctx_.dispatch_event<tag_deleted_event>(event_source, event.storage(), event.tag_name(), deleted);
 		});
 
 		ctx_.add_event_listener<tag_change_display_request_event>([event_source = event_source_](const tag_change_display_request_event& event)
@@ -2864,9 +2873,10 @@ namespace vt
 						auto current_ts = ctx_.displayed_videos.current_timestamp_as_timestamp();
 
 						auto& segment_storage = ctx_.get_current_segment_storage();
-						for (auto& [tag_name, segments] : segment_storage)
+						for (const auto& tag_name : ctx_.current_project->displayed_tags)
 						{
 							auto& tag = ctx_.current_project->tags.at(tag_name);
+							auto& segments = segment_storage.at(tag_name);
 
 							auto segment_it = segments.find(current_ts);
 							if (segment_it == segments.end()) continue;

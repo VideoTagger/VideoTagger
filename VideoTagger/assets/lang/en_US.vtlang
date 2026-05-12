@@ -91,7 +91,7 @@
 	"popup.new_tag.title": "Add New Tag",
 	"popup.new_tag.tag_name": "Name",
 	"popup.delete_tag.title": "Delete Tag",
-	"popup.delete_tag.warning": "All segments and keybinds associated with this tag will be deleted as well!",
+	"popup.delete_tag.warning": "All data (segments, attributes, etc.) associated with this tag will be deleted as well!",
 	"popup.rename_tag.title": "Rename Tag",
 	"template:2:popup.rename_tag_popup.message": "Are you sure you want to rename the tag \"{}\" to \"{}\"?",
 	"popup.timeline_context_menu.add_here.timestamp": "Timestamp",

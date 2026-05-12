@@ -25,6 +25,7 @@ namespace vt::ui
 
 		//TODO: should be colored
 		ui::text warning(ctx_.lang->get("popup.delete_tag.warning"));
+		warning.render();
 
 		//ImGui::TextColored({ 1.f, 170.f / 255.f, 50.f / 255.f, 1.f }, "All segments associated with this tag will be deleted as well!");
 

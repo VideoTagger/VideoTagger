@@ -457,7 +457,7 @@ namespace vt
 	{
 		for (auto& [video_id, instances] : attribute_instances_.at(id))
 		{
-			for (auto it = instances.begin(); it != instances.end(); ++it)
+			for (auto it = instances.begin(); it != instances.end();)
 			{
 				if (on_delete != nullptr)
 				{
