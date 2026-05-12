@@ -22,6 +22,7 @@ namespace vt::ui
 		std::string icon_;
 		ImGuiWindowFlags flags_;
 		ImRect window_rect_;
+		ImRect inner_rect_;
 		bool is_open_;
 		bool is_visible_;
 		bool is_hovered_;
@@ -53,6 +54,7 @@ namespace vt::ui
 		bool is_focused() const;
 
 		std::optional<ImRect> draw_rect() const;
+		std::optional<ImRect> inner_rect() const;
 
 		void set_id(const std::string& id);
 		void set_serialization_id(const std::string& serialization_id);

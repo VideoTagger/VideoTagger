@@ -275,6 +275,15 @@ namespace vt::ui
 		return result;
 	}
 
+    bool drag_handle(const ImVec2& size)
+    {
+		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4{});
+		ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4{});
+		bool result = icon_button(icons::drag_handle, size, ImGui::GetStyleColorVec4(ImGuiCol_TextDisabled));
+		ImGui::PopStyleColor(2);
+		return result;
+    }
+
 	bool icon_button(const std::string& label, const ImVec2& size, const ImVec4& color)
 	{
 		ImGui::PushStyleColor(ImGuiCol_Button, ImVec4{});

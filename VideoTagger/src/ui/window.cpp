@@ -49,6 +49,7 @@ namespace vt::ui
 			const auto pos = ImGui::GetWindowPos();
 			const auto size = ImGui::GetWindowSize();
 			window_rect_ = ImRect{ pos, ImVec2{ pos.x + size.x, pos.y + size.y } };
+			inner_rect_ = ImGui::GetCurrentWindow()->InnerRect;
 			on_render();
 		}
 		if (!is_hidden_)
@@ -145,6 +146,15 @@ namespace vt::ui
 			return std::nullopt;
 		}
 		return window_rect_;
+	}
+
+	std::optional<ImRect> window::inner_rect() const
+	{
+		if (!is_visible_ or is_hidden_)
+		{
+			return std::nullopt;
+		}
+		return inner_rect_;
 	}
 
 	void window::set_id(const std::string& id)

@@ -103,6 +103,7 @@ fit_area:ea10 # fit_screen
 fit_width:f779 # fit_width
 open_window:f710 # new_window
 move_item:f1ff # move_item
+drag_handle:e945 # drag_indicator
 line_start_circle:f816 # line_start_circle
 line_end_circle:f81b # line_end_circle
 tool_arrow:f82f # arrow_selector_tool
