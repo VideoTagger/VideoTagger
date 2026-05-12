@@ -48,6 +48,7 @@ namespace vt::ui
 	///@defgroup ui_buttons UI Buttons
 	///@{
 	bool rounded_button(const std::string& label, const ImVec2& size = ImVec2{});
+	bool drag_handle(const ImVec2& size = {});
 	bool icon_button(const std::string& label, const ImVec2& size = ImVec2{}, const ImVec4& color = ImGui::GetStyleColorVec4(ImGuiCol_Text));
 	bool icon_button_no_cursor(const std::string& label, const ImVec2& size = ImVec2{}, const ImVec4& color = ImGui::GetStyleColorVec4(ImGuiCol_Text));
 	bool icon_toggle_button(const std::string& label, bool is_toggled, const ImVec2& size = ImVec2{}, const ImVec4& color = ImGui::GetStyleColorVec4(ImGuiCol_Text));

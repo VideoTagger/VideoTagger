@@ -19,6 +19,7 @@
 #include <ui/windows/tag_manager.hpp>
 #include <ui/windows/toolbar.hpp>
 #include <ui/popups/messagebox_popup.hpp>
+#include <ui/windows/tool_properties.hpp>
 #include <embeds/en_US_lang.hpp>
 #include <core/platform.hpp>
 
@@ -122,6 +123,9 @@ namespace vt
 
 		auto& toolbar = create_window<ui::windows::toolbar>();
 		toolbar.set_opened(true);
+
+		auto& tool_properties = create_window<ui::windows::tool_properties>();
+		tool_properties.set_opened(true);
 
 #ifdef VT_DEBUG
 		auto& sandbox = create_window<ui::windows::sandbox>();

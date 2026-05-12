@@ -78,7 +78,7 @@ namespace vt::ui::windows
 		ui::begin_rounded_window_style();
 		ImGui::PushStyleColor(ImGuiCol_WindowBg, ctx_.current_theme.get_float4(theme_color::background_secondary));
 
-		auto player_rect = player.draw_rect();
+		auto player_rect = player.inner_rect();
 		if (player_rect.has_value())
 		{
 			auto win_pos = player_rect->Min;
@@ -113,16 +113,14 @@ namespace vt::ui::windows
 		auto grabber_height = ImGui::GetTextLineHeight();
 
 		const auto& style = ImGui::GetStyle();
-		auto draw_list = ImGui::GetWindowDrawList();
 		auto win_pos = ImGui::GetWindowPos();
 		ImRect grabber_rect{ win_pos, win_pos + ImVec2{ ImGui::GetWindowWidth(), grabber_height }};
-		grabber_rect.Min += ImVec2{ style.WindowPadding.x, style.WindowPadding.y };
+		grabber_rect.Min += style.WindowPadding;
 		grabber_rect.Max.x -= style.WindowPadding.x;
 
-		draw_list->AddRectFilled(grabber_rect.Min, grabber_rect.Max, ImGui::GetColorU32(ImGuiCol_Header), 3.f);
 		ImGui::SetCursorScreenPos(grabber_rect.Min);
 
-		ui::rounded_button("##ToolbarGrabber", ImVec2{ grabber_rect.Max.x - grabber_rect.Min.x, grabber_rect.Max.y - grabber_rect.Min.y });
+		ui::rounded_button("##ToolbarGrabber", grabber_rect.GetSize());
 
 		if (ImGui::IsItemActive())
 		{
@@ -132,7 +130,7 @@ namespace vt::ui::windows
 				win_pos += io.MouseDelta;
 				ImGui::SetWindowPos(win_pos);
 			}
-			ImGui::SetMouseCursor(ImGuiMouseCursor_Hand);
+			ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeAll);
 		}
 		
 		bool render_separator = false;
