@@ -12,6 +12,7 @@
 #include <widgets/project_selector.hpp>
 #include <widgets/theme_customizer.hpp>
 #include <ui/windows/inspector.hpp>
+#include <ui/windows/region_list.hpp>
 #include <ui/windows/video_window.hpp>
 #include <ui/popups/options_popup.hpp>
 #include <ui/windows/region_properties.hpp>
@@ -3559,6 +3560,7 @@ namespace vt
 			auto dock_right_up = ImGui::DockBuilderSplitNode(main_dock_right, ImGuiDir_Up, 0.5f, nullptr, &main_dock_right);
 			
 			ImGui::DockBuilderDockWindow(ctx_.get_window<ui::windows::inspector>().name().c_str(), dock_right_up);
+			ImGui::DockBuilderDockWindow(ctx_.get_window<ui::windows::region_list>().name().c_str(), dock_right_up);
 			ImGui::DockBuilderDockWindow(ctx_.get_window<ui::windows::tag_manager>().name().c_str(), main_dock_right);
 			ImGui::DockBuilderDockWindow(ctx_.get_window<ui::windows::region_properties>().name().c_str(), main_dock_right);
 			ImGui::DockBuilderDockWindow(ctx_.get_window<widgets::video_group_queue>().name().c_str(), main_dock_down);

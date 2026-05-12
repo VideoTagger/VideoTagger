@@ -15,6 +15,7 @@
 #include <widgets/video_player.hpp>
 #include <widgets/timeline.hpp>
 #include <ui/windows/inspector.hpp>
+#include <ui/windows/region_list.hpp>
 #include <ui/windows/tag_manager.hpp>
 #include <ui/windows/toolbar.hpp>
 #include <ui/popups/messagebox_popup.hpp>
@@ -113,6 +114,9 @@ namespace vt
 
 		auto& inspector = create_window<ui::windows::inspector>();
 		inspector.set_opened(true);
+
+		auto& region_list = create_window<ui::windows::region_list>();
+		region_list.set_opened(true);
 
 		auto& tag_manager = create_window<ui::windows::tag_manager>();
 		tag_manager.set_opened(true);

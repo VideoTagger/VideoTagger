@@ -1,4 +1,6 @@
 #pragma once
+#include <algorithm>
+
 #include <core/types.hpp>
 #include <attributes/region_data.hpp>
 #include <ui/impl/region_data_renderer.hpp>
@@ -148,6 +150,49 @@ namespace vt::ui
 				ctx_.dispatch_event<region_keyframe_delete_request_event>(source, region_data.tag_name, region_data.segment, region_data.video_id,
 					*region_data.attribute_instance, region_data.region_id, *erased_keyframe);
 			}
+		}
+
+		virtual bool render_region_list(event_source source, const std::string& attribute_name, uint32_t attribute_color, class vt::impl::attribute_instance* instance, std::optional<region_id_t>& selected_region) override
+		{
+			bool result = false;
+			if (regions_->empty()) return result;
+
+			ImGui::SeparatorText(attribute_name.c_str());
+			auto attr_id = fmt::format("##{}", attribute_name);
+
+			//bool attr_visible = widgets::begin_collapsible(attr_id, attribute_name, 0, icons::attribute, ImGui::ColorConvertU32ToFloat4(attribute_color));
+
+			//if (attr_visible)
+			//{
+
+			size_t list_item_count = std::min(regions_->size(), size_t{ 5 });
+
+			auto avail_size = ImGui::GetContentRegionAvail();
+			if (ImGui::BeginChild(attr_id.c_str(), { avail_size.x, ImGui::GetTextLineHeightWithSpacing() * list_item_count }))
+			{
+				for (auto& [region_id, region] : *regions_)
+				{
+					auto item_id = fmt::format("Region {}", region_id);
+					bool selected = ctx_.session.is_region_selected(instance, region_id);
+					if (ImGui::TreeNodeEx(item_id.c_str(), ImGuiTreeNodeFlags_Bullet | ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen | ImGuiTreeNodeFlags_SpanFullWidth))
+					{
+						if (ImGui::IsItemClicked())
+						{
+							selected_region = region_id;
+							result = true;
+						}
+					}
+					//if (ImGui::Selectable(item_id.c_str(), selected, ImGuiSelectableFlags_SpanAllColumns))
+					{
+						
+					}
+				}
+			}
+			ImGui::EndChild();
+			//	widgets::end_collapsible();
+			//}
+
+			return result;
 		}
 	};
 }

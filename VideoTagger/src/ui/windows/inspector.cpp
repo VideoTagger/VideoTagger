@@ -282,7 +282,6 @@ namespace vt::ui::windows
 			auto& timeline = segments.at(first_active_tag);
 			auto& segment_attribute_instances = timeline.segment_attribute_instances(first_active_segment_id);
 
-			auto& group = ctx_.current_project->video_groups.at(group_id);
 			auto collapsible_flags = ui::is_item_disabled() ? 0 : ImGuiTreeNodeFlags_DefaultOpen;
 			const auto& theme = ctx_.current_theme;
 
@@ -295,12 +294,12 @@ namespace vt::ui::windows
 			//if (visible)
 			ImGui::SeparatorText("Attributes");
 			{
-				show_player_video_ids(is_focused() and !group.empty());
+				show_player_video_ids(is_focused() and !ctx_.displayed_videos.empty());
 
 				size_t vid_view_id{};
-				for (auto& group_info : group)
+				for (auto& video_data : ctx_.displayed_videos)
 				{
-					auto vid_id = group_info.id;
+					auto vid_id = video_data.id;
 					auto video_name = ctx_.current_project->videos.get(vid_id)->title();
 					
 					ImGui::BeginDisabled(selected_tag.attributes.empty());
