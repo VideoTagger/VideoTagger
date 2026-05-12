@@ -30,6 +30,7 @@ namespace vt
 
 		mutable std::vector<timestamp> interpolation_keyframe_timestamps_;
 		mutable std::vector<shape_type> interpolation_keyframe_shapes_;
+		mutable std::vector<const_iterator> interpolation_keyframe_its;
 
 	public:
 		/**
@@ -248,7 +249,7 @@ namespace vt
 
 		bool update_interpolation_keyframes_(timestamp ts) const
 		{
-			static auto gather_keyframes = [this](std::vector<const_iterator>& keyframe_its, size_t data_point_count, timestamp ts) -> size_t
+			auto gather_keyframes = [this](std::vector<const_iterator>& keyframe_its, size_t data_point_count, timestamp ts) -> size_t
 			{
 				size_t gathered_count = 0;
 
@@ -278,24 +279,23 @@ namespace vt
 				return false;
 			}
 
-			static std::vector<const_iterator> keyframe_its;
 			size_t data_point_count = interpolation_keyframe_timestamps_.size();
 			
-			gather_keyframes(keyframe_its, data_point_count, ts);
+			gather_keyframes(interpolation_keyframe_its, data_point_count, ts);
 
-			if (interpolation_keyframe_timestamps_.size() != keyframe_its.size())
+			if (interpolation_keyframe_timestamps_.size() != interpolation_keyframe_its.size())
 			{
-				interpolation_keyframe_timestamps_.resize(keyframe_its.size());
+				interpolation_keyframe_timestamps_.resize(interpolation_keyframe_its.size());
 			}
-			if (interpolation_keyframe_shapes_.size() != keyframe_its.size())
+			if (interpolation_keyframe_shapes_.size() != interpolation_keyframe_its.size())
 			{
-				interpolation_keyframe_shapes_.resize(keyframe_its.size());
+				interpolation_keyframe_shapes_.resize(interpolation_keyframe_its.size());
 			}
 
-			for (size_t i = 0; i < keyframe_its.size(); ++i)
+			for (size_t i = 0; i < interpolation_keyframe_its.size(); ++i)
 			{
-				interpolation_keyframe_timestamps_[i] = keyframe_its[i]->first;
-				interpolation_keyframe_shapes_[i] = keyframe_its[i]->second;
+				interpolation_keyframe_timestamps_[i] = interpolation_keyframe_its[i]->first;
+				interpolation_keyframe_shapes_[i] = interpolation_keyframe_its[i]->second;
 			}
 
 			return true;
