@@ -26,6 +26,7 @@ namespace vt
 			{
 				auto click_pos = to_texture_space(ImGui::GetMousePos(), pos, size, tex_size);
 				shape_data.emplace(click_pos, click_pos);
+				active_video_ = video_id;
 			}
 		}
 		else
@@ -42,19 +43,33 @@ namespace vt
 			}
 			else if (ImGui::IsMouseReleased(ImGuiMouseButton_Left))
 			{
-				// Explicit type because without it minmax returns std::pair<const uint32_t&, const uint32_t&> which later breaks the assignment
-				std::pair<int, int> minmax_x = std::minmax(shape_data->start[0], shape_data->end[0]);
-				std::pair<int, int> minmax_y = std::minmax(shape_data->start[1], shape_data->end[1]);
-
-				shape_data->start = { minmax_x.first, minmax_y.first };
-				shape_data->end = { minmax_x.second, minmax_y.second };
-
-				if (shape_data->start != shape_data->end)
-				{
-					insert_region(video_id);
-				}
-				reset();
+				on_done();
 			}
 		}
+	}
+
+	void rectangle_tool::on_done()
+	{
+		if (!active_video_.has_value())
+		{
+			reset();
+			return;
+		}
+
+		auto& shape_data = data();
+
+		// Explicit type because without it minmax returns std::pair<const uint32_t&, const uint32_t&> which later breaks the assignment
+		std::pair<int, int> minmax_x = std::minmax(shape_data->start[0], shape_data->end[0]);
+		std::pair<int, int> minmax_y = std::minmax(shape_data->start[1], shape_data->end[1]);
+
+		shape_data->start = { minmax_x.first, minmax_y.first };
+		shape_data->end = { minmax_x.second, minmax_y.second };
+
+		if (shape_data->start != shape_data->end)
+		{
+			insert_region(*active_video_);
+		}
+
+		reset();
 	}
 }

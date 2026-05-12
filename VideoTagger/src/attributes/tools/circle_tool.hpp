@@ -15,5 +15,6 @@ namespace vt
 
 	public:
 		virtual void render_overlay(video_id_t video_id, ImVec2 pos, ImVec2 size, ImVec2 tex_size) override;
+		virtual void on_done() override;
 	};
 }

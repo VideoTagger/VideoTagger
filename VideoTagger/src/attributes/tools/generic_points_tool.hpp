@@ -51,11 +51,7 @@ namespace vt
 
 				if (ImGui::IsKeyPressed(ImGuiKey_Enter) and insert_allowed)
 				{
-					if (!shape_data->points.empty())
-					{
-						this->insert_region(video_id);
-					}
-					this->reset();
+					on_done();
 				}
 
 			}
@@ -63,6 +59,24 @@ namespace vt
 			{
 				this->reset();
 			}
+		}
+
+		virtual void on_done() override
+		{
+			if (!this->active_video_.has_value())
+			{
+				this->reset();
+				return;
+			}
+
+			auto& shape_data = this->data();
+
+			if (!shape_data->points.empty())
+			{
+				this->insert_region(*this->active_video_);
+			}
+
+			this->reset();
 		}
 	};
 }

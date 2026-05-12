@@ -27,6 +27,7 @@ namespace vt
 			{
 				start_mouse_pos_ = ImGui::GetMousePos();
 				shape_data.emplace(to_texture_space(start_mouse_pos_, pos, size, tex_size), 0);
+				active_video_ = video_id;
 			}
 		}
 		else
@@ -45,12 +46,25 @@ namespace vt
 			}
 			else if (ImGui::IsMouseReleased(ImGuiMouseButton_Left))
 			{
-				if (shape_data->radius != 0)
-				{
-					insert_region(video_id);
-				}
-				reset();
+				on_done();
 			}
 		}
+	}
+
+	void circle_tool::on_done()
+	{
+		if (!active_video_.has_value())
+		{
+			reset();
+			return;
+		}
+
+		auto& shape_data = this->data();
+
+		if (shape_data->radius != 0)
+		{
+			insert_region(*active_video_);
+		}
+		reset();
 	}
 }
