@@ -248,22 +248,29 @@ namespace vt
 
 		bool update_interpolation_keyframes_(timestamp ts) const
 		{
-			static constexpr auto update_vectors = [](const std::vector<const_iterator>& its, std::vector<timestamp>& ts, std::vector<shape_type>& sh)
+			static auto gather_keyframes = [this](std::vector<const_iterator>& keyframe_its, size_t data_point_count, timestamp ts) -> size_t
 			{
-				if (ts.size() != its.size())
-				{
-					ts.resize(its.size());
-				}
-				if (sh.size() != its.size())
-				{
-					sh.resize(its.size());
-				}
+				size_t gathered_count = 0;
 
-				for (size_t i = 0; i < its.size(); ++i)
-				{
-					ts[i] = its[i]->first;
-					sh[i] = its[i]->second;
-				}
+				keyframe_its.reserve(data_point_count);
+				keyframe_its.clear();
+
+				auto it = previous_or_current_keyframe(ts);
+				if (it == end()) return gathered_count;
+
+				keyframe_its.push_back(it);
+				++gathered_count;
+				if (data_point_count == gathered_count) return gathered_count;
+
+				++it;
+				if (it == end()) return gathered_count;
+
+				keyframe_its.push_back(it);
+				++gathered_count;
+				if (data_point_count == gathered_count) return gathered_count;
+
+				//TODO: Handle more points
+				return gathered_count;
 			};
 
 			if (!is_timestamp_in_bounds(ts))
@@ -273,35 +280,25 @@ namespace vt
 
 			static std::vector<const_iterator> keyframe_its;
 			size_t data_point_count = interpolation_keyframe_timestamps_.size();
-			keyframe_its.reserve(data_point_count);
-			keyframe_its.clear();
+			
+			gather_keyframes(keyframe_its, data_point_count, ts);
 
+			if (interpolation_keyframe_timestamps_.size() != keyframe_its.size())
 			{
-				auto it = previous_or_current_keyframe(ts);
-				if (it == end()) return false;
-
-				keyframe_its.push_back(it);
-
-				if (data_point_count == 1)
-				{
-					update_vectors(keyframe_its, interpolation_keyframe_timestamps_, interpolation_keyframe_shapes_);
-					return true;
-				}
-
-				++it;
-				if (it == end()) return true;
-
-				keyframe_its.push_back(it);
-				if (data_point_count == 2)
-				{
-					update_vectors(keyframe_its, interpolation_keyframe_timestamps_, interpolation_keyframe_shapes_);
-					return true;
-				}
-
+				interpolation_keyframe_timestamps_.resize(keyframe_its.size());
+			}
+			if (interpolation_keyframe_shapes_.size() != keyframe_its.size())
+			{
+				interpolation_keyframe_shapes_.resize(keyframe_its.size());
 			}
 
-			//TODO: Handle more points
-			return false;
+			for (size_t i = 0; i < keyframe_its.size(); ++i)
+			{
+				interpolation_keyframe_timestamps_[i] = keyframe_its[i]->first;
+				interpolation_keyframe_shapes_[i] = keyframe_its[i]->second;
+			}
+
+			return true;
 		}
 
 		/**

@@ -352,7 +352,7 @@ namespace vt
 			}
 		}
 
-		auto range_end_it = upper_bound_(time_end);
+		auto range_end_it = upper_bound_(range_begin_it, time_end);
 
 		return { range_begin_it, range_end_it };
 	}
@@ -365,20 +365,14 @@ namespace vt
 		}
 
 		auto it = lower_bound_(ts);
-		if (it == begin())
+		if (it != end())
 		{
-			if (it->segment.start == ts)
-			{
-				return it;
-			}
-			return end();
+			if (it->segment.start == ts) return it;
+			if (it == begin()) return end();
 		}
 
 		it = std::prev(it);
-		if (it->segment.end < ts)
-		{
-			return end();
-		}
+		if (it->segment.end < ts) return end();
 
 		return it;
 	}
