@@ -3,6 +3,7 @@
 #include <core/app_context.hpp>
 #include "proxies.hpp"
 #include <events/tags/tag_add_request_event.hpp>
+#include <events/attributes/attribute_delete_request_event.hpp>
 
 void vt::bindings::bind_tags(pybind11::module_& module)
 {
@@ -12,13 +13,13 @@ void vt::bindings::bind_tags(pybind11::module_& module)
 	.def(py::init<const std::string&, uint32_t>())
 	.def_readwrite("name", &tag::name)
 	.def_readwrite("color", &tag::color)
-	.def("add_attribute", [](tag& t, const std::string& name, tag_attribute::type type) -> tag_attribute&
-	{
-		return t.attributes[name] = tag_attribute{ type };
-	})
+	//.def("add_attribute", [](tag& t, const std::string& name, tag_attribute::type type) -> tag_attribute&
+	//{
+	//	return t.attributes[name] = tag_attribute{ type };
+	//})
 	.def("remove_attribute", [](tag& t, const std::string& name)
 	{
-		t.attributes.erase(name);
+		ctx_.dispatch_event<attribute_delete_request_event>("script", t.name, name);
 	})
 	.def("has_attribute", [](tag& t, const std::string& name) -> bool
 	{

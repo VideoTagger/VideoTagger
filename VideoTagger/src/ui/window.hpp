@@ -1,5 +1,6 @@
 #pragma once
 #include <string>
+#include <optional>
 #include <imgui.h>
 #include <ui/impl/renderable.hpp>
 #include <impl/serializable.hpp>
@@ -11,7 +12,7 @@ namespace vt::ui
 	struct window : public impl::renderable, vt::impl::serializable
 	{
 	public:
-		window(const std::string& id, const std::string& serialization_id, const std::string& display_name, ImGuiWindowFlags flags = 0, bool should_register = false);
+		window(const std::string& id, const std::string& serialization_id, const std::string& display_name, ImGuiWindowFlags flags = 0, bool should_register = true);
 		virtual ~window();
 
 	private:
@@ -20,12 +21,15 @@ namespace vt::ui
 		std::string display_name_;
 		std::string icon_;
 		ImGuiWindowFlags flags_;
+		ImRect window_rect_;
+		ImRect inner_rect_;
 		bool is_open_;
 		bool is_visible_;
 		bool is_hovered_;
 		bool is_focused_;
 		bool is_persistent_;
 		bool is_registered_;
+		bool is_hidden_;
 
 	public:
 		///@brief Renders the window
@@ -35,16 +39,22 @@ namespace vt::ui
 
 		void set_opened(bool value);
 		void set_persistent(bool value);
+		void set_hidden(bool value);
+		void focus();
 		void open();
 		void close();
 
 		bool is_open() const;
 		///@return true if the window's open state should be persisted across sessions, false otherwise.
 		bool is_persistent() const;
+		bool is_hidden() const;
 
 		bool is_visible() const;
 		bool is_hovered() const;
 		bool is_focused() const;
+
+		std::optional<ImRect> draw_rect() const;
+		std::optional<ImRect> inner_rect() const;
 
 		void set_id(const std::string& id);
 		void set_serialization_id(const std::string& serialization_id);

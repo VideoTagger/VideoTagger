@@ -563,7 +563,7 @@ namespace vt
 						from_json(json_group["segments"], vgroup.segments(), result.tags);
 					}
 
-					result.video_groups.insert({ id, vgroup });
+					result.video_groups.insert({ id, std::move(vgroup) });
 				}
 			}
 

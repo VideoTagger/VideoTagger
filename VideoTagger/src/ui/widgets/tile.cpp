@@ -7,11 +7,11 @@
 
 namespace vt::ui
 {
-	static bool debug_mode = false;
+	static constexpr bool debug_mode = false;
 
 	tile::tile(const std::string& label, const std::string& description, const ImVec2& size) :
 		label_{ label }, description_{ description }, size_{ size }, image_{},
-		is_double_clickable_{}, is_selectable_{}, is_selected_{}, is_hovered_{}, has_ctx_menu_{},
+		is_double_clickable_{}, is_selectable_{}, is_draggable_{}, is_selected_{}, is_hovered_{}, has_ctx_menu_{},
 		uv_{ { { 0, 0 }, { 1, 1 } } },
 		label_font_{ font_type::h5 }, description_font_{ font_type::h6 }, tint_color_{ 0xFFFFFFFF }
 	{
@@ -38,7 +38,7 @@ namespace vt::ui
 		has_ctx_menu_ = value;
 	}
 
-	void tile::set_image(GLuint image)
+	void tile::swap_image(GLuint image)
 	{
 		image_ = image;
 	}
@@ -58,6 +58,27 @@ namespace vt::ui
 	void tile::set_image_tint_color(uint32_t tint_color)
 	{
 		tint_color_ = tint_color;
+	}
+
+	void tile::set_image_tint_color(const ImVec4& tint_color)
+	{
+		tint_color_ = ImGui::ColorConvertFloat4ToU32(tint_color);
+	}
+
+	void tile::set_uv0(const ImVec2& uv0)
+	{
+		uv_[0] = uv0;
+	}
+
+	void tile::set_uv1(const ImVec2& uv1)
+	{
+		uv_[1] = uv1;
+	}
+
+	void tile::set_uv(const ImVec2& uv0, const ImVec2& uv1)
+	{
+		uv_[0] = uv0;
+		uv_[1] = uv1;
 	}
 
 	void tile::set_padding(const ImVec2& padding)
@@ -155,11 +176,12 @@ namespace vt::ui
 	{
 		static constexpr float rounding = 3.f;
 
+		ImGui::BeginGroup();
 		auto draw_list = ImGui::GetWindowDrawList();
 		auto cpos = ImGui::GetCursorScreenPos();
 		const auto& style = ImGui::GetStyle();
 
-		int selectable_flags = ImGuiSelectableFlags_None;
+		int selectable_flags = ImGuiSelectableFlags_None | ImGuiSelectableFlags_NoPadWithHalfSpacing;
 		if (is_double_clickable_)
 		{
 			selectable_flags |= ImGuiSelectableFlags_AllowDoubleClick;
@@ -171,12 +193,15 @@ namespace vt::ui
 		cpos -= style.FramePadding - ImVec2{ 0.f, border_size };
 
 		ImRect tile_rect{ cpos, cpos + full_size + style.FramePadding * 2.f - border_offset * 2.f };
-		is_hovered_ = ImGui::IsMouseHoveringRect(tile_rect.Min, tile_rect.Max);
+		tile_rect.Min += style.ItemSpacing * 0.5f;
+		tile_rect.Max -= style.ItemSpacing * 0.5f;
+
+		is_hovered_ = ImGui::IsMouseHoveringRect(tile_rect.Min, tile_rect.Max) and ImGui::IsWindowHovered();
 		float bottom_start_y = tile_rect.Min.y + tile_rect.GetHeight() / 2;
 		ImRect top_rect{ tile_rect.Min.x, tile_rect.Min.y, tile_rect.Max.x, bottom_start_y };
 		ImRect bottom_rect{ tile_rect.Min.x, bottom_start_y, tile_rect.Max.x, tile_rect.Max.y };
 
-		bool is_dragged = ImGui::IsMouseDragging(ImGuiMouseButton_Left);
+		bool is_dragged = ImGui::IsMouseDragging(ImGuiMouseButton_Left) and ImGui::IsWindowHovered();
 
 		//coloring
 		bool held = ImGui::IsMouseDown(ImGuiMouseButton_Left) and is_hovered_ and !is_dragged;
@@ -195,6 +220,7 @@ namespace vt::ui
 		auto color_dark = ImGui::ColorConvertFloat4ToU32(color_dark4);
 
 		auto& theme = ctx_.current_theme;
+		
 		render_frame(top_rect, bottom_rect, color, color_dark, rounding);
 		if (has_borders())
 		{
@@ -219,17 +245,23 @@ namespace vt::ui
 		ImGui::PushStyleColor(ImGuiCol_Header, ImVec4{});
 		ImGui::PushStyleColor(ImGuiCol_HeaderHovered, ImVec4{});
 		ImGui::PushStyleColor(ImGuiCol_HeaderActive, ImVec4{});
-		ImGui::PushID(this);
+
+		auto temp_id = id();
 
 		bool selected = is_selectable_ and is_selected_;
-		bool result = ImGui::Selectable("##Tile", &selected, selectable_flags, full_size);
+		bool result = ImGui::Selectable(fmt::format("##Tile:{}", temp_id).c_str(), &selected, selectable_flags, full_size);
 		if (is_selectable_)
 		{
 			is_selected_ = selected;
 		}
-		ImGui::PopID();
 		ImGui::PopStyleColor(3);
 		ImGui::PopStyleVar();
+
+		if constexpr (debug_mode)
+		{
+			ImRect selectable_rect{ ImGui::GetItemRectMin(), ImGui::GetItemRectMax() };
+			draw_list->AddRect(selectable_rect.Min, selectable_rect.Max, IM_COL32(0xFF, 0, 0xFF, 0xFF));
+		}
 
 		if (is_hovered_)
 		{
@@ -244,14 +276,12 @@ namespace vt::ui
 		}
 		if (has_ctx_menu_)
 		{
-			ImGui::PushID(this);
-			bool popup_open = ImGui::BeginPopupContextItem("##TileCtxMenu");
+			bool popup_open = ImGui::BeginPopupContextItem(fmt::format("##TileCtxMenu{}", temp_id).c_str());
 			if (popup_open)
 			{
 				on_context_menu();
 				ImGui::EndPopup();
 			}
-			ImGui::PopID();
 		}
 
 		if (is_draggable_ and ImGui::BeginDragDropSource(ImGuiDragDropFlags_SourceNoHoldToOpenOthers))
@@ -259,7 +289,13 @@ namespace vt::ui
 			on_drag();
 			ImGui::EndDragDropSource();
 		}
+		ImGui::EndGroup();
 		return result;
+	}
+
+	std::string tile::id()
+	{
+		return label_ + description_;
 	}
 
 	void tile::render_frame(const ImRect& top_rect, const ImRect& bottom_rect, uint32_t top_color, uint32_t bottom_color, float rounding)

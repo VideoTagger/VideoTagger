@@ -30,7 +30,7 @@ curl -LsSf https://astral.sh/uv/install.sh | sh
 
 On Linux install the following packages:
 ```shell
-build-essential pkg-config cmake ninja-build python3 python3-pip libsdl2-dev libavutil-dev libavcodec-dev libavformat-dev libswscale-dev python3-dev libgtk-3-dev libglib2.0-dev libgtk2.0-dev libgl1-mesa-dev libssl-dev
+build-essential pkg-config cmake ninja-build python3 python3-pip libsdl2-dev libavutil-dev libavcodec-dev libavformat-dev libswscale-dev python3-dev libgtk-3-dev libglib2.0-dev libgtk2.0-dev libgl1-mesa-dev libssl-dev libopencv-dev
 ```
 
 In the root directory run:
@@ -97,6 +97,7 @@ uv run ./scripts/vpk_package.py
 - [cpp-httplib](https://github.com/yhirose/cpp-httplib)
 - [OpenSSL](https://github.com/openssl/openssl)
 - [FreeType](https://gitlab.freedesktop.org/freetype/freetype)
+- [OpenCV](https://github.com/opencv/opencv)
 
 ## License
 This software is licensed under the [MIT License](/LICENSE).

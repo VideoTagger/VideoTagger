@@ -9,65 +9,64 @@
 #include <utils/drag_drop.hpp>
 #include <utils/string.hpp>
 #include <ui/widgets/text_input.hpp>
+
 #include <events/tags/tag_add_request_event.hpp>
 #include <events/tags/tag_rename_request_event.hpp>
 #include <events/tags/tag_delete_request_event.hpp>
+
+#include <events/attributes/attribute_delete_request_event.hpp>
+#include <events/attributes/attribute_rename_request_event.hpp>
+
+#include <attributes/impl/attribute.hpp>
+
+#include <utils/name_validators.hpp>
 
 static constexpr ImGuiColorEditFlags color_button_flags = ImGuiColorEditFlags_NoAlpha | ImGuiColorEditFlags_NoTooltip;
 
 namespace vt::ui::windows
 {
-	static void draw_tag_attribute(const std::string& name, tag_attribute& attr, const std::function<void(const std::string&)>& on_name_change, const std::function<void(tag_attribute::type)>& on_type_change, const std::function<void()>& on_delete)
+	static void draw_tag_attribute(const std::string& tag_name, const std::string& name, vt::impl::attribute& attr,
+		const std::function<void(const std::string&)>& on_name_change, const std::function<void()>& on_delete)
 	{
 		const auto& style = ImGui::GetStyle();
 
 		bool selected{};
 		bool row_hovered = widgets::table_hovered_row_style();
 
+		auto attr_spec = ctx_.attr_registry.get_attr_spec(attr.type_name());
+
 		ImGui::PushID(&attr);
 		ImGui::TableNextColumn();
 		ImGui::BeginGroup();
-		widgets::frame_color_indicator(3.f, tag_attribute::type_color(attr.type_));
+		widgets::frame_color_indicator(3.f, attr_spec->color);
 		ImGui::SameLine();
 		ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
 		std::string new_name = name;
-		ui::text_input input("##TagAttributeName", new_name, "Attribute Name...");
+
+		ui::text_input input("##TagAttributeName", new_name, "Attribute Name..."/*, [&tag_name](const std::string& input) -> std::optional<std::string>
+		{
+			const auto& tag = ctx_.current_project->tags.at(tag_name);
+			auto validation_result = utils::basic_map_name_validate(input, tag.attributes);
+			if (validation_result == utils::name_validation_result::ok) return std::nullopt;
+
+			return utils::name_validation_result_to_string(validation_result, *ctx_.lang);
+		}*/);
 		input.set_flags(ImGuiInputTextFlags_AutoSelectAll | ImGuiInputTextFlags_EnterReturnsTrue);
+
 		if (input.render())
 		{
-			on_name_change(input.trimmed_input());
+			if (input.is_valid())
+			{
+				on_name_change(input.trimmed_input());
+			}
+			else
+			{
+				input.set_input(name);
+			}
 		}
 		ImGui::TableNextColumn();
-
-		int current_type = (int)attr.type_;
-		ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
-		if (ImGui::Combo("##TagAttributeType", &current_type, tag_attribute::types_str, (int)tag_attribute::type_count))
-		{
-			on_type_change((tag_attribute::type)current_type);
-		}
-
-		switch (attr.type_)
-		{
-		case tag_attribute::type::bool_: ui::tooltip("Value: True/False"); break;
-		case tag_attribute::type::float_: ui::tooltip("Value: Float (64 bit)"); break;
-		case tag_attribute::type::integer: ui::tooltip("Value: Integer (64 bit)"); break;
-		case tag_attribute::type::string: ui::tooltip("Value: Text"); break;
-		case tag_attribute::type::shape:
-		{
-			std::string shapes;
-			size_t i{};
-			for (auto type : shape::types)
-			{
-				shapes += utils::string::to_titlecase(shape::type_str(type));
-				if (++i < shape::types.size())
-				{
-					shapes += "/";
-				}
-			}
-			ui::tooltip(fmt::format("Value: {}", shapes).c_str());
-		}
-		break;
-		}
+		auto type_name = utils::string::to_titlecase(attr.type_name());
+		ImGui::TextDisabled("%s", type_name.c_str());
 
 		ImGui::EndGroup();
 		if (ImGui::BeginPopupContextItem("##TagAttributeCtxMenu"))
@@ -183,19 +182,7 @@ namespace vt::ui::windows
 					}
 					++filter_passes;
 
-
-					//ImGui::TableNextColumn();
 					ImGui::PushID(id++);
-					/*
-					if (icon_button(icons::close))
-					{
-						tags.erase(tag.name);
-						ctx_.is_project_dirty = true;
-						ImGui::PopStyleVar();
-						ImGui::PopID();
-						break;
-					}
-					*/
 					auto color = ImGui::ColorConvertU32ToFloat4(tag.color);
 					bool open_color_picker = false;
 
@@ -242,12 +229,18 @@ namespace vt::ui::windows
 
 							//TODO: Add filtering & read the tag with a new name since std::map is used as a container (why not std::vector??)
 
-							tag_name_ = tag.name;
-							ui::text_input input("##TagNameInput", tag_name_, "Tag Name...");
+							ui::text_input input("##TagNameInput", tag.name, "Tag Name..."/*, [](const std::string& input) -> std::optional<std::string>
+							{
+								auto validation_result = utils::basic_map_name_validate(input, ctx_.current_project->tags);
+								if (validation_result == utils::name_validation_result::ok) return std::nullopt;
+
+								return utils::name_validation_result_to_string(validation_result, *ctx_.lang);
+							}*/);
 							input.set_flags(ImGuiInputTextFlags_AutoSelectAll | ImGuiInputTextFlags_EnterReturnsTrue);
+
 							if (input.render())
 							{
-								rename_tag_popup_ = std::make_unique<rename_tag_popup>(event_source_, tag.name, tag_name_);
+								rename_tag_popup_ = std::make_unique<rename_tag_popup>(event_source_, tag.name, input.trimmed_input());
 							}
 							ImGui::NextColumn();
 							ImGui::TextUnformatted("Color");
@@ -279,7 +272,7 @@ namespace vt::ui::windows
 									ImGui::TableNextColumn();
 									if (ui::icon_button(icons::add))
 									{
-										add_tag_attribute_popup_ = std::make_unique<add_tag_attribute_popup>(event_source_, tag_name_);
+										add_tag_attribute_popup_ = std::make_unique<add_tag_attribute_popup>(event_source_, tag.name);
 									}
 									ImGui::SameLine();
 									ImGui::AlignTextToFramePadding();
@@ -293,39 +286,31 @@ namespace vt::ui::windows
 									}
 									std::string new_name_candidate;
 									std::string new_name;
-									for (auto it = tag.attributes.begin(); it != tag.attributes.end();)
+									std::string deleted_attr_name;
+									for (auto it = tag.attributes.begin(); it != tag.attributes.end(); ++it)
 									{
-										bool next = true;
 										auto& [name, attr] = *it;
 										ImGui::TableNextRow();
-										draw_tag_attribute(name, attr,
+										draw_tag_attribute(tag.name, name, *attr,
 										[&new_name_candidate, &new_name, &name](const std::string& nname)
 										{
 											new_name_candidate = name;
 											new_name = nname;
 										},
-										[&attr](const tag_attribute::type new_type)
+										[&name, &deleted_attr_name]()
 										{
-											attr.type_ = new_type;
-										},
-										[&tag, &it, &name, &next]()
-										{
-											it = tag.attributes.erase(it);
-											next = false;
-											ctx_.is_project_dirty = true;
+											deleted_attr_name = name;
 										});
+									}
 
-										if (next)
-										{
-											++it;
-										}
+									if (!deleted_attr_name.empty())
+									{
+										ctx_.dispatch_event<attribute_delete_request_event>(event_source_, tag.name, deleted_attr_name);
 									}
 
 									if (!new_name_candidate.empty())
 									{
-										auto node = tag.attributes.extract(new_name_candidate);
-										node.key() = new_name;
-										tag.attributes.insert(std::move(node));
+										ctx_.dispatch_event<attribute_rename_request_event>(event_source_, tag.name, new_name_candidate, new_name);
 									}
 									ImGui::EndTable();
 								}

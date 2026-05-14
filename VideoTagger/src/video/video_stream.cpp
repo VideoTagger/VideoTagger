@@ -316,6 +316,20 @@ namespace vt
 		return frame_updated;
 	}
 
+	bool video_stream::update_from_current_frame(image<image_pixel_format::rgb8>& image)
+	{
+		static thread_local std::vector<uint8_t> conversion_buffer;
+
+		bool frame_updated = update_from_current_frame(conversion_buffer, image.width(), image.height());
+
+		if (frame_updated)
+		{
+			image.set_data(reinterpret_cast<image_pixel_format::rgb8*>(conversion_buffer.data()));
+		}
+
+		return frame_updated;
+	}
+
 	bool video_stream::update_from_current_frame(std::vector<uint8_t>& pixels, int width, int height)
 	{
 		if (!current_frame_.has_value())

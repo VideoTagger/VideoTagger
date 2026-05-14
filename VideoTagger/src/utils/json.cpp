@@ -21,7 +21,15 @@ namespace vt::utils::json
 		std::ifstream file(filepath);
 		if (file.is_open())
 		{
-			file >> result;
+			try
+			{
+				file >> result;
+			}
+			catch (std::exception ex)
+			{
+				debug::error(fmt::format("Couldn't load Json file: {}\nError:\n{}", filepath.string(), ex.what()));
+				return {};
+			}
 		}
 		else
 		{

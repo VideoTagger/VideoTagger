@@ -2,6 +2,7 @@
 #include "time.hpp"
 #include <iomanip>
 #include <sstream>
+#include "timestamp.hpp"
 
 namespace vt::utils::time
 {

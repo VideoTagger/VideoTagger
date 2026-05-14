@@ -15,6 +15,7 @@
 #include <events/player/looping_changed_event.hpp>
 #include <events/player/looping_change_request_event.hpp>
 #include <events/player/seek_request_event.hpp>
+#include <events/player/seek_event.hpp>
 #include <events/player/seek_to_start_request_event.hpp>
 #include <events/player/seek_to_end_request_event.hpp>
 #include <events/player/seek_to_previous_frame_request_event.hpp>
@@ -33,7 +34,8 @@ namespace vt::widgets
 		return static_cast<size_t>(std::pow(2, std::ceil(std::log2(n))));
 	}
 
-	video_player::video_player() : ui::window{ "Video Player", "video-player", "Video Player", ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse }, dock_window_count_{}, speed_{ 1.0f }, is_playing_{}, autoplay_{}, loop_mode_{}
+	video_player::video_player() : ui::window{ "Video Player", "video-player", "Video Player", ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse },
+		progress_{}, dock_window_count_{}, speed_{ 1.0f }, is_playing_{}, autoplay_{}, loop_mode_{}, show_video_ids_{}
 	{
 		set_icon(icons::play);
 
@@ -84,11 +86,22 @@ namespace vt::widgets
 			speed_ = event.speed();
 		});
 
-		ctx_.add_event_listener<seek_request_event>([this](const seek_request_event& event)
+		ctx_.add_event_listener<seek_event>([this](const seek_event& event)
 		{
 			if (&event.player() != this) return;
 			
 			data_.current_ts = event.timestamp();
+		});
+
+		progress_.set_tooltip_enabled(false);
+		progress_.set_step(1);
+		progress_.set_on_change_callback([this](int64_t old_value, int64_t new_value)
+		{
+			if (old_value == new_value) return;
+			auto new_ts = std::chrono::nanoseconds{ new_value };
+
+			ctx_.dispatch_event<seek_request_event>(get_event_source(), *this, new_ts);
+			std::invoke(callbacks.on_seek, new_ts);
 		});
 	}
 
@@ -105,6 +118,7 @@ namespace vt::widgets
 
 	void video_player::reset_data()
 	{
+		progress_.set_value(0);
 		data_.current_ts = {};
 		data_.start_ts = {};
 		data_.end_ts = {};
@@ -138,6 +152,11 @@ namespace vt::widgets
 		loop_mode_ = value;
 	}
 
+	void video_player::set_show_video_ids(bool value)
+	{
+		show_video_ids_ = value;
+	}
+
 	void video_player::set_playing(bool value)
 	{
 		is_playing_ = value;
@@ -157,6 +176,11 @@ namespace vt::widgets
 	loop_mode video_player::loop_mode() const
 	{
 		return loop_mode_;
+	}
+
+	bool video_player::show_video_ids() const
+	{
+		return show_video_ids_;
 	}
 
 	std::vector<std::unique_ptr<ui::windows::video_window>>& video_player::video_windows()
@@ -259,11 +283,16 @@ namespace vt::widgets
 		auto progress_size = ImVec2{ ImGui::GetContentRegionAvail().x, text_height };
 		if (has_child_videos)
 		{
-			if (slider_scalar("##VideoProgressBar", ImGuiDataType_U64, progress_size, text_height / 5.f, &data_.current_ts, &min_ts, &data_.end_ts, "", ImGuiSliderFlags_AlwaysClamp))
-			{
-				ctx_.dispatch_event<seek_request_event>(get_event_source(), *this, data_.current_ts);
-				std::invoke(callbacks.on_seek, data_.current_ts);
-			}
+			//if (slider_scalar("##VideoProgressBar", ImGuiDataType_U64, progress_size, text_height / 5.f, &data_.current_ts, &min_ts, &data_.end_ts, "", ImGuiSliderFlags_AlwaysClamp))
+			//{
+			//	ctx_.dispatch_event<seek_request_event>(get_event_source(), *this, data_.current_ts);
+			//	std::invoke(callbacks.on_seek, data_.current_ts);
+			//}
+
+			progress_.set_value(data_.current_ts.count(), false);
+			progress_.set_size(progress_size);
+			progress_.set_range(min_ts.count(), data_.end_ts.count());
+			progress_.render();
 		}
 		else
 		{

@@ -23,8 +23,8 @@ namespace vt::ui::windows
 		virtual void on_render() override;
 
 	private:
+		void show_player_video_ids(bool value);
 		void register_listeners();
-
-		std::pair<std::string, segment_id> first_selected_segment() const;
+		void render_attribute_instances(const tag& selected_tag);
 	};
 }

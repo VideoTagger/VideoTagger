@@ -14,6 +14,7 @@
 #include <events/timeline/segment_deselect_request_event.hpp>
 #include <events/timeline/segment_deselect_all_request_event.hpp>
 #include <events/timeline/segment_select_all_request_event.hpp>
+#include <events/timeline/segment_select_one_request_event.hpp>
 #include <events/timeline/begin_segment_drag_event.hpp>
 #include <events/timeline/update_segment_drag_event.hpp>
 #include <events/timeline/end_segment_drag_event.hpp>
@@ -370,14 +371,17 @@ namespace vt::widgets
 					{
 						if (!ImGui::IsKeyDown(ImGuiKey_ModCtrl))
 						{
-							ctx_.dispatch_event<segment_deselect_all_request_event>(event_source_, storage);
+							ctx_.dispatch_event<segment_select_one_request_event>(event_source_, storage, tag.name, current_segment_id);
+						}
+						else
+						{
+							ctx_.dispatch_event<segment_select_request_event>(event_source_, storage, tag.name, current_segment_id);
 						}
 
-						ctx_.dispatch_event<segment_select_request_event>(event_source_, storage, tag.name, current_segment_id);
 						is_selected = true;
 					}
 
-					if (part != segment_part::both and ctx_.session.more_than_one_segment_selected())
+					if (part != segment_part::both and ctx_.session.is_more_than_one_segment_selected())
 					{
 						event_deselect_segments_if(storage, [&tag, &current_segment_id](const std::string& unselect_tag, segment_id unselect_id)
 						{
@@ -603,9 +607,12 @@ namespace vt::widgets
 		ImRect left_grab_rect{ ImVec2{ timespan_rect.Min.x - grab_width, timespan_rect.Min.y }, ImVec2{ timespan_rect.Min.x, timespan_rect.Max.y } };
 		ImRect right_grab_rect{ ImVec2{ timespan_rect.Max.x, timespan_rect.Min.y }, ImVec2{ timespan_rect.Max.x + grab_width, timespan_rect.Max.y } };
 
-		is_hovered = enabled_ and ImGui::IsMouseHoveringRect(timespan_rect.Min, timespan_rect.Max);
-		is_left_grab_hovered = ImGui::IsMouseHoveringRect(left_grab_rect.Min, left_grab_rect.Max);
-		is_right_grab_hovered = ImGui::IsMouseHoveringRect(right_grab_rect.Min, right_grab_rect.Max);
+		if (ImGui::IsWindowHovered())
+		{
+			is_hovered = enabled_ and ImGui::IsMouseHoveringRect(timespan_rect.Min, timespan_rect.Max);
+			is_left_grab_hovered = ImGui::IsMouseHoveringRect(left_grab_rect.Min, left_grab_rect.Max);
+			is_right_grab_hovered = ImGui::IsMouseHoveringRect(right_grab_rect.Min, right_grab_rect.Max);
+		}
 
 		bool is_left_grab_enabled = enabled_ and is_left_grab_hovered;
 		bool is_right_grab_enabled = enabled_ and is_right_grab_hovered;
@@ -1128,7 +1135,7 @@ namespace vt::widgets
 			ctx_popup_->render();
 
 			const auto& segment_drag_data = ctx_.session.segment_drag_data();
-			if (ctx_.session.is_dragging_any_segment() and segment_drag_data.begin_drag_source == event_source_)
+			if (segment_drag_data.stage == segment_drag_stage::dragging and segment_drag_data.begin_drag_source == event_source_)
 			{
 				float normalized_mouse_x = math::normalize(ImGui::GetMousePos().x, cell_rect->Min.x, cell_rect->Max.x, 0.f, 1.f);
 				timestamp mouse_timestamp = to_timestamp(normalized_mouse_x);

@@ -7,8 +7,8 @@
 namespace vt::ui
 {
 	window::window(const std::string& id, const std::string& serialization_id, const std::string& display_name, ImGuiWindowFlags flags, bool should_register) :
-		id_{ id }, serialization_id_{ serialization_id }, display_name_{ display_name }, flags_{ flags }, is_open_{}, is_persistent_{ true }, is_registered_{ should_register },
-		is_visible_{}, is_hovered_ {}, is_focused_{}
+		id_{ id }, serialization_id_{ serialization_id }, display_name_{ display_name }, flags_{ flags }, is_open_{}, is_persistent_{ true }, is_hidden_{}, is_registered_{ should_register },
+		is_visible_{}, is_hovered_{}, is_focused_{}
 	{
 		if (is_registered_)
 		{
@@ -35,7 +35,7 @@ namespace vt::ui
 		pre_render();
 		bool last_open_state = is_open_;
 		pre_style();
-		is_visible_ = ImGui::Begin(name().c_str(), &is_open_, flags_);
+		is_visible_ = !is_hidden_ and ImGui::Begin(name().c_str(), &is_open_, flags_);
 		post_style();
 		if (is_visible_)
 		{
@@ -43,11 +43,19 @@ namespace vt::ui
 			{
 				on_display();
 			}
-			is_hovered_ = ImGui::IsWindowHovered();
-			is_focused_ = ImGui::IsWindowFocused();
+			is_hovered_ = ImGui::IsWindowHovered(ImGuiHoveredFlags_ChildWindows) or ImGui::IsWindowHovered();
+			is_focused_ = ImGui::IsWindowFocused(ImGuiFocusedFlags_ChildWindows) or ImGui::IsWindowFocused();
+
+			const auto pos = ImGui::GetWindowPos();
+			const auto size = ImGui::GetWindowSize();
+			window_rect_ = ImRect{ pos, ImVec2{ pos.x + size.x, pos.y + size.y } };
+			inner_rect_ = ImGui::GetCurrentWindow()->InnerRect;
 			on_render();
 		}
-		ImGui::End();
+		if (!is_hidden_)
+		{
+			ImGui::End();
+		}
 		post_render();
 
 		if (last_open_state and !is_open_)
@@ -81,6 +89,16 @@ namespace vt::ui
 		is_persistent_ = value;
 	}
 
+	void window::set_hidden(bool value)
+	{
+		is_hidden_ = value;
+	}
+
+    void window::focus()
+    {
+		ImGui::SetWindowFocus(name().c_str());
+	}
+
 	void window::open()
 	{
 		set_opened(true);
@@ -101,6 +119,11 @@ namespace vt::ui
 		return is_persistent_;
 	}
 
+    bool window::is_hidden() const
+    {
+        return is_hidden_;
+    }
+
 	bool window::is_visible() const
 	{
 		return is_visible_;
@@ -114,6 +137,24 @@ namespace vt::ui
 	bool window::is_focused() const
 	{
 		return is_focused_;
+	}
+
+	std::optional<ImRect> window::draw_rect() const
+	{
+		if (!is_visible_ or is_hidden_)
+		{
+			return std::nullopt;
+		}
+		return window_rect_;
+	}
+
+	std::optional<ImRect> window::inner_rect() const
+	{
+		if (!is_visible_ or is_hidden_)
+		{
+			return std::nullopt;
+		}
+		return inner_rect_;
 	}
 
 	void window::set_id(const std::string& id)

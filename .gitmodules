@@ -40,3 +40,6 @@
 [submodule "VideoTagger/vendor/FreeType"]
 	path = VideoTagger/vendor/FreeType
 	url = https://gitlab.freedesktop.org/freetype/freetype.git
+[submodule "VideoTagger/vendor/opencv"]
+	path = VideoTagger/vendor/opencv
+	url = https://github.com/opencv/opencv

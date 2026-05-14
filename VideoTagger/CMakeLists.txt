@@ -86,13 +86,14 @@ target_compile_definitions(${PROJECT_NAME} PRIVATE
 include(${CMAKE_SOURCE_DIR}/cmake/CppCommon.cmake)
 vt_setup_cpp_common(${PROJECT_NAME})
 
-set("NFD_BUILD_TESTS" "OFF")
-set("NFD_INSTALL" "OFF")
+set(NFD_BUILD_TESTS OFF)
+set(NFD_INSTALL OFF)
 add_subdirectory("${PROJECT_SOURCE_DIR}/vendor/nativefiledialog-extended")
 target_link_libraries(${PROJECT_NAME} PRIVATE nfd)
 
 #target_compile_definitions(${PROJECT_NAME} PRIVATE IMGUI_ENABLE_FREETYPE)
-set("SKIP_INSTALL_ALL" "ON")
+set(SKIP_INSTALL_ALL ON)
+set(FT_DISABLE_ZLIB TRUE CACHE BOOL "Disable FreeType zlib support" FORCE)
 add_subdirectory("${PROJECT_SOURCE_DIR}/vendor/FreeType")
 target_link_libraries(${PROJECT_NAME} PRIVATE freetype)
 target_include_directories(${PROJECT_NAME} PRIVATE ${FREETYPE_INCLUDE_DIRS})
@@ -104,7 +105,10 @@ if(TARGET SDL2::SDL2main)
 endif()
 target_link_libraries(${PROJECT_NAME} PRIVATE SDL2::SDL2)
 
-set("PYBIND11_FINDPYTHON" "ON")
+include(${CMAKE_SOURCE_DIR}/cmake/SetupOpenCV.cmake)
+vt_setup_opencv(${PROJECT_NAME})
+
+set(PYBIND11_FINDPYTHON ON)
 add_subdirectory("${PROJECT_SOURCE_DIR}/vendor/pybind11")
 target_link_libraries(${PROJECT_NAME} PRIVATE pybind11::embed)
 

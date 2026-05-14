@@ -43,6 +43,13 @@
 #include <events/event_storage.hpp>
 #include <tasks/task_manager.hpp>
 #include "session_storage.hpp"
+#include <attributes/attribute_registry.hpp>
+#include <attributes/shape_predictor_registry.hpp>
+#include <attributes/shapes/rectangle_shape.hpp>
+#include <attributes/shapes/line_shape.hpp>
+#include <attributes/shapes/points_shape.hpp>
+#include <attributes/shapes/polygon_shape.hpp>
+#include <attributes/shapes/circle_shape.hpp>
 
 namespace vt
 {
@@ -71,6 +78,15 @@ namespace vt
 		bool show_about_window = false;
 		bool show_tag_importer_window = false;
 	};
+
+	using shape_predictor_registries_type = std::tuple<
+		shape_predictor_registry<rectangle_shape>,
+		shape_predictor_registry<line_shape>,
+		shape_predictor_registry<points_shape>,
+		shape_predictor_registry<polygon_shape>,
+		shape_predictor_registry<circle_shape>
+	>;
+
 
 	///@brief Application context that holds all states and necessary data
 	struct app_context : public event_storage, ui::ui_registry
@@ -117,7 +133,9 @@ namespace vt
 		std::unordered_map<std::string, std::unique_ptr<service_account_manager>> account_managers;
 		std::unordered_map<std::string, std::unique_ptr<video_importer>> video_importers;
 		std::optional<video_id_t> last_focused_video;
-		tag_attribute_instance* selected_attribute{};
+
+		attribute_registry attr_registry;
+		shape_predictor_registries_type shape_predictor_registries;
 
 		session_storage session;
 
@@ -134,6 +152,9 @@ namespace vt
 		bool first_launch = true;
 		bool reset_layout{};
 		bool reset_player_docking{};
+
+		void init_attribute_registry();
+		void init_shape_predictor_registries();
 
 		void create_windows();
 		void create_popups();
@@ -175,13 +196,14 @@ namespace vt
 		std::vector<std::string> lang_names() const;
 
 		void run_script(const std::filesystem::path& script_path);
-		void set_selected_attribute(tag_attribute_instance* attribute);
 
 		ImFont* get_font(font_type type = font_type::normal) const;
-		std::optional<utils::vec2<uint32_t>> get_active_video_tex_size() const;
-		tag_attribute_instance* get_selected_attribute() const;
+		std::optional<utils::vec2<int>> get_active_video_tex_size() const;
 
 		static std::filesystem::path storage_path();
+
+		template<typename shape_type>
+		shape_predictor_registry<shape_type>& get_shape_predictor_registry();
 	};
 
 	///@brief Global application context instance
@@ -245,5 +267,11 @@ namespace vt
 	inline bool app_context::is_video_importer_registered() const
 	{
 		return video_importers.count(video_importer_type::static_importer_id) != 0;
+	}
+
+	template<typename shape_type>
+	inline shape_predictor_registry<shape_type>& app_context::get_shape_predictor_registry()
+	{
+		return std::get<shape_predictor_registry<shape_type>>(shape_predictor_registries);
 	}
 }

@@ -2,6 +2,7 @@
 #include <memory>
 #include <chrono>
 #include <functional>
+#include <ui/widgets/themed_slider.hpp>
 #include <ui/window.hpp>
 #include <ui/windows/video_window.hpp>
 
@@ -42,11 +43,13 @@ namespace vt::widgets
 		video_player(const video_player&) = delete;
 
 	private:
+		ui::themed_slider<int64_t> progress_;
 		video_player_data data_;
 		size_t dock_window_count_;
 		loop_mode loop_mode_;
 		float speed_;
 		bool is_playing_;
+		bool show_video_ids_;
 		bool autoplay_;
 
 		std::vector<std::unique_ptr<ui::windows::video_window>> video_windows_;
@@ -63,12 +66,13 @@ namespace vt::widgets
 		const video_player_data& data() const;
 
 		void set_loop_mode(loop_mode value);
+		void set_show_video_ids(bool value);
 		void set_playing(bool value);
 
 		bool is_playing() const;
 		bool should_autoplay() const;
 		loop_mode loop_mode() const;
-
+		bool show_video_ids() const;
 		std::vector<std::unique_ptr<ui::windows::video_window>>& video_windows();
 
 		[[nodiscard]] nlohmann::ordered_json serialize() const override;

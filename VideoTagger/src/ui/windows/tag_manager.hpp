@@ -19,7 +19,6 @@ namespace vt::ui::windows
 
 	private:
 		std::string filter_;
-		std::string tag_name_;
 		tag_storage::iterator color_ref_;
 
 		std::unique_ptr<delete_tag_popup> delete_tag_popup_;

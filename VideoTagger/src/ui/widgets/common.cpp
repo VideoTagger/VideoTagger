@@ -146,14 +146,37 @@ namespace vt::ui
     void begin_modal_style()
     {
 		const auto& style = ImGui::GetStyle();
-		ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 8.f);
+		begin_rounded_window_style();
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, style.WindowPadding * 2);
 		ImGui::SetNextWindowPos(ImGui::GetMainViewport()->GetCenter(), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
     }
 
 	void end_modal_style()
 	{
-		ImGui::PopStyleVar(2);
+		end_rounded_window_style();
+		ImGui::PopStyleVar();
+	}
+
+	void begin_rounded_window_style()
+	{
+		const auto& style = ImGui::GetStyle();
+		ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 8.f);
+	}
+
+	void end_rounded_window_style()
+	{
+		ImGui::PopStyleVar();
+	}
+
+	void begin_rounded_popup_style()
+	{
+		const auto& style = ImGui::GetStyle();
+		ImGui::PushStyleVar(ImGuiStyleVar_PopupRounding, 8.f);
+	}
+
+	void end_rounded_popup_style()
+	{
+		ImGui::PopStyleVar();
 	}
 
 	void label(const std::string& label)
@@ -251,6 +274,15 @@ namespace vt::ui
 		ImGui::PopStyleVar();
 		return result;
 	}
+
+    bool drag_handle(const ImVec2& size)
+    {
+		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4{});
+		ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4{});
+		bool result = icon_button(icons::drag_handle, size, ImGui::GetStyleColorVec4(ImGuiCol_TextDisabled));
+		ImGui::PopStyleColor(2);
+		return result;
+    }
 
 	bool icon_button(const std::string& label, const ImVec2& size, const ImVec4& color)
 	{
@@ -422,11 +454,27 @@ namespace vt::ui
 	bool checkbox(const std::string& label, bool& value)
 	{
 		auto& style = ImGui::GetStyle();
+		const auto& theme = ctx_.current_theme;
 
 		bool result{};
+		bool is_disabled = ui::is_item_disabled();
+		if (value)
+		{
+			ImGui::PushStyleColor(ImGuiCol_CheckMark, theme.get_float4(theme_color::text_inverted));
+			ImGui::PushStyleColor(ImGuiCol_FrameBg, is_disabled ? theme.get_float4(theme_color::secondary_light) : theme.get_float4(theme_color::accent_light));
+			ImGui::PushStyleColor(ImGuiCol_FrameBgHovered, theme.get_float4(theme_color::accent_medium));
+			ImGui::PushStyleColor(ImGuiCol_FrameBgActive, theme.get_float4(theme_color::accent_dark));
+		}
+
 		ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 3);
+		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2{ style.FramePadding.x, style.FramePadding.y } / 3.f);
+		bool last_value = value;
 		result = ImGui::Checkbox(label.c_str(), &value);
-		ImGui::PopStyleVar();
+		ImGui::PopStyleVar(2);
+		if (last_value)
+		{
+			ImGui::PopStyleColor(4);
+		}
 		return result;
 	}
 

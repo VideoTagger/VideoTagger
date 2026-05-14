@@ -2,6 +2,7 @@
 #include <vector>
 #include <utils/vec.hpp>
 #include "gizmo_event.hpp"
+#include <core/types.hpp>
 
 namespace vt
 {
@@ -9,15 +10,21 @@ namespace vt
 	struct gizmo_targets_event : public gizmo_event
 	{
 	public:
-		gizmo_targets_event(const std::vector<utils::vec2<uint32_t>*>& targets) : targets_{ targets } {}
+		gizmo_targets_event(video_id_t video_id, const std::vector<utils::vec2<int>*>& targets) : video_id_{ video_id }, targets_ { targets } {}
 
 	private:
-		std::vector<utils::vec2<uint32_t>*> targets_;
+		std::vector<utils::vec2<int>*> targets_;
+		video_id_t video_id_;
 
 	public:
-		[[nodiscard]] const std::vector<utils::vec2<uint32_t>*>& targets() const
+		[[nodiscard]] const std::vector<utils::vec2<int>*>& targets() const
 		{
 			return targets_;
+		}
+
+		video_id_t video_id() const
+		{
+			return video_id_;
 		}
 	};
 }

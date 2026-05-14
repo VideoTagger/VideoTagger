@@ -37,7 +37,6 @@ namespace vt::widgets::modal
 		}
 
 		tag_storage loaded_tags = json_tags["tags"];
-
 		for (auto& tag : loaded_tags)
 		{
 			if (ctx_.current_project->tags.contains(tag.name))
@@ -45,7 +44,7 @@ namespace vt::widgets::modal
 				continue;
 			}
 
-			imported_tags.push_back(imported_tag_data{ tag, true });
+			imported_tags.push_back(imported_tag_data{ std::move(tag), true });
 		}
 
 		return true;

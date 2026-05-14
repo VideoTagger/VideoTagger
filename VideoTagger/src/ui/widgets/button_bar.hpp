@@ -31,6 +31,32 @@ namespace vt::ui
 			cancel_button_ = id;
 		}
 
+		constexpr void set_default_button_first()
+		{
+			if (!buttons_.empty())
+			{
+				default_button_ = buttons_.front().first;
+			}
+		}
+
+		constexpr void set_default_button_last()
+		{
+			if (!buttons_.empty())
+			{
+				default_button_ = buttons_.back().first;
+			}
+		}
+
+		void add_button(const id_type& id, const std::string& label)
+		{
+			buttons_.emplace_back(id, label);
+		}
+
+		void add_button_front(const id_type& id, const std::string& label)
+		{
+			buttons_.insert(buttons_.begin(), { id, label });
+		}
+
 		constexpr void render(float available_width = 0.f, bool valid = true, const std::function<void(const id_type& id)>& callback = nullptr)
 		{
 			const auto& style = ImGui::GetStyle();
@@ -149,14 +175,14 @@ namespace vt::ui
 		constexpr static void render(const std::vector<std::pair<id_type, std::string>>& buttons, horizontal_alignment alignment = horizontal_alignment::right, float available_width = 0.f, bool valid = true, const std::function<void(const id_type& id)>& callback = nullptr)
 		{
 			button_bar bbar{ buttons, alignment };
-			bbar.set_default_button(buttons.front().first);
+			bbar.set_default_button_first();
 			bbar.render(available_width, valid, callback);
 		}
 
 		constexpr static void render(const std::vector<std::pair<id_type, std::string>>& buttons, bool valid = true, const std::function<void(const id_type& id)>& callback = nullptr)
 		{
 			button_bar bbar{ buttons };
-			bbar.set_default_button(buttons.front().first);
+			bbar.set_default_button_first();
 			bbar.render(0.f, valid, callback);
 		}
 

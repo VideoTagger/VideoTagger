@@ -3,6 +3,7 @@
 
 #include <widgets/time_input.hpp>
 #include <widgets/controls.hpp>
+#include <widgets/video_player.hpp>
 #include <tags/tag_timeline.hpp>
 #include <utils/time.hpp>
 #include <ui/icons.hpp>
@@ -60,10 +61,10 @@ namespace vt::ui::windows
 		bool modified_timestamp = false;
 		const auto& style = ImGui::GetStyle();
 
-		auto [first_active_tag, first_active_segment_id] = first_selected_segment();
+		auto [first_active_tag, first_active_segment_id] = *ctx_.session.any_selected_segment();
 		const auto& first_active_segment = segments.at(first_active_tag).at(first_active_segment_id);
 
-		bool more_than_one_segment_active = ctx_.session.more_than_one_segment_selected();
+		bool more_than_one_segment_active = ctx_.session.is_more_than_one_segment_selected();
 
 		tag_segment_type segment_type{};
 		if (more_than_one_segment_active)
@@ -274,16 +275,109 @@ namespace vt::ui::windows
 			ctx_.dispatch_event<end_segment_drag_event>(event_source, segments, ctx_.session.dragged_segments(), grab_part_, current_offset_);
 		}
 
-		if (!more_than_one_segment_active and ctx_.session.current_video_group_id() != invalid_video_group_id and ctx_.last_focused_video.has_value())
+		auto group_id = ctx_.session.current_video_group_id();
+		if (!more_than_one_segment_active and group_id != invalid_video_group_id)
 		{
 			auto& selected_tag = ctx_.current_project->tags.at(first_active_tag);
-			ImGui::BeginDisabled(selected_tag.attributes.empty());
-			auto& timeline = ctx_.get_current_segment_storage().at(first_active_tag);
-			selected_tag.draw_attribute_instances(timeline.at(first_active_segment_id), ctx_.last_focused_video.value(), ctx_.is_project_dirty);
-			ImGui::EndDisabled();
+			auto& timeline = segments.at(first_active_tag);
+			auto& segment_attribute_instances = timeline.segment_attribute_instances(first_active_segment_id);
+
+			auto collapsible_flags = ui::is_item_disabled() ? 0 : ImGuiTreeNodeFlags_DefaultOpen;
+			const auto& theme = ctx_.current_theme;
+
+			//if (ui::is_item_disabled())
+			//{
+			//	ImGui::SetNextItemOpen(false, ImGuiCond_Appearing);
+			//}
+			//TODO: ImGui::BeginDisabled if there are no attribute instances to show
+			//bool visible = widgets::begin_collapsible("##Attributes", "Attributes", collapsible_flags, icons::attribute);
+			//if (visible)
+			ImGui::SeparatorText("Attributes");
+			{
+				show_player_video_ids(is_focused() and !ctx_.displayed_videos.empty());
+
+				size_t vid_view_id{};
+				for (auto& video_data : ctx_.displayed_videos)
+				{
+					auto vid_id = video_data.id;
+					auto video_name = ctx_.current_project->videos.get(vid_id)->title();
+					
+					ImGui::BeginDisabled(selected_tag.attributes.empty());
+					if (ui::is_item_disabled())
+					{
+						ImGui::SetNextItemOpen(false, ImGuiCond_Appearing);
+					}
+					auto vid_id_attrs_id = fmt::format("##Attributes-{}", vid_id);
+					bool vid_id_visible = widgets::begin_collapsible(vid_id_attrs_id, video_name, collapsible_flags, icons::video, std::nullopt, nullptr, vid_view_id + 1);
+					ImGui::EndDisabled();
+					if (vid_id_visible)
+					{
+						auto table_flags = ImGuiTableFlags_BordersInnerV | ImGuiTableFlags_Resizable | ImGuiTableFlags_NoSavedSettings | ImGuiTableFlags_RowBg;
+						ImGui::PushStyleVar(ImGuiStyleVar_CellPadding, ImVec2{ style.CellPadding.x + style.ItemSpacing.x, style.CellPadding.y });
+						ImGui::PushStyleColor(ImGuiCol_TableRowBg, theme.get_float4(theme_color::background_tertiary));
+						ImGui::PushStyleColor(ImGuiCol_TableRowBgAlt, theme.get_float4(theme_color::background_tertiary));
+						
+						auto result = ImGui::BeginTable("##Card", 2, table_flags);
+						if (result)
+						{
+							ImGui::TableNextRow();
+							auto draw_list = ImGui::GetWindowDrawList();
+
+							for (auto& [attr_name, attr] : selected_tag.attributes)
+							{
+								auto attr_color = ctx_.attr_registry.get_attr_spec(attr->type_name())->color;
+
+								auto& vid_instances = segment_attribute_instances[vid_id];
+								auto it = std::find_if(vid_instances.begin(), vid_instances.end(), [&attr_name](const auto& instance)
+								{
+									if (instance == nullptr) return false;
+									return instance->attribute_impl()->name() == attr_name;
+								});
+
+								auto id = fmt::format("##{}-{}", attr_name, vid_id);
+
+								bool was_modified{};
+								if (it == vid_instances.end())
+								{
+									// No instance of this attribute for the current video, create a new temporary instance
+									auto instance = attr->instantiate();
+									ImGui::PushID(id.c_str());
+									was_modified = attr->render_instance_properties(instance);
+									ImGui::PopID();
+									if (was_modified)
+									{
+										vid_instances.push_back(std::move(instance));
+									}
+								}
+								else
+								{
+									auto& instance = *it;
+									ImGui::PushID(id.c_str());
+									was_modified = attr->render_instance_properties(instance);
+									ImGui::PopID();
+								}
+							}
+							ImGui::EndTable();
+						}
+						ImGui::PopStyleColor(2);
+						ImGui::PopStyleVar();
+						widgets::end_collapsible();
+					}
+					++vid_view_id;
+				}
+				//widgets::end_collapsible();
+			}
+			
+			//selected_tag.draw_attribute_instances(timeline.at(first_active_segment_id), ctx_.last_focused_video.value(), ctx_.is_project_dirty);
 		}
 
 		ImGui::EndChild();
+	}
+
+	void inspector::show_player_video_ids(bool value)
+	{
+		auto& player = ctx_.get_window<widgets::video_player>();
+		player.set_show_video_ids(value);
 	}
 
 	void inspector::register_listeners()
@@ -304,22 +398,5 @@ namespace vt::ui::windows
 			grab_part_ = segment_part::none;
 			current_offset_ = timestamp::zero();
 		});
-	}
-
-	std::pair<std::string, segment_id> inspector::first_selected_segment() const
-	{
-		std::string tag_name;
-		segment_id selected_segment_id = invalid_segment_id;
-		for (auto& [tag, seg] : ctx_.session.selected_segments())
-		{
-			if (!seg.empty())
-			{
-				tag_name = tag;
-				selected_segment_id = *seg.begin();
-				break;
-			}
-		}
-
-		return { tag_name, selected_segment_id };
 	}
 }
