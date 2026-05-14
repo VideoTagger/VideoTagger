@@ -114,7 +114,6 @@ namespace vt::ui
 			{
 				if (id == 0)
 				{
-					active_tool->on_done();
 					close();
 				}
 				else
