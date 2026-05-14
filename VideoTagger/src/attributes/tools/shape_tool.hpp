@@ -20,7 +20,10 @@ namespace vt
 	{
 	public:
 		shape_tool(const tag& tag, const std::string& attribute_name) :
-			data_{}, tag_{ &tag }, attribute_name_{ attribute_name } {}
+			data_{}, tag_{ &tag }, attribute_name_{ attribute_name }
+		{
+			set_property_column_count(1);
+		}
 
 	protected:
 		std::optional<video_id_t> active_video_;
@@ -126,6 +129,15 @@ namespace vt
 		virtual std::string display_name() const override
 		{
 			return attribute_name_;
+		}
+
+		virtual void render_properties()
+		{
+			ImGui::TableNextColumn();
+			if (ui::rounded_button("Done"))
+			{
+				on_done();
+			}
 		}
 	};
 }

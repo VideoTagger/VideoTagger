@@ -27,6 +27,20 @@ namespace vt::ui::windows
 	{
 		const auto& player = ctx_.get_window<widgets::video_player>();
 		bool is_player_visible = player.is_visible() and ctx_.session.is_any_video_group_active();
+
+		auto& toolbar = data();
+		auto* active_entry = toolbar.active_entry();
+		is_player_visible &= active_entry != nullptr;
+		if (is_player_visible)
+		{
+			auto* active_tool = active_entry->active_tool();
+			is_player_visible &= active_tool != nullptr;
+			if (is_player_visible)
+			{
+				is_player_visible &= active_tool->property_column_count() > 0;
+			}
+		}
+
 		set_hidden(!is_player_visible);
 		if (!is_player_visible)
 		{
@@ -77,6 +91,9 @@ namespace vt::ui::windows
 		const auto& style = ImGui::GetStyle();
 
 		auto& toolbar = data();
+		//active_entry and active_tool shouldn't be null since the window is hidden if they are (checked in pre_style function)
+		auto* active_entry = toolbar.active_entry();
+		auto* active_tool = active_entry->active_tool();
 		const auto source = get_event_source();
 
 		auto win_pos = ImGui::GetWindowPos();
@@ -95,14 +112,10 @@ namespace vt::ui::windows
 
 		ImGui::SameLine(0.f, 0.f);
 		ImGui::PushStyleVar(ImGuiStyleVar_CellPadding, ImVec2{});
-		if (ImGui::BeginTable("##ToolProperties", 2, ImGuiTableFlags_SizingFixedFit, ImVec2{ 0.f, ImGui::GetFrameHeight() }))
+		if (ImGui::BeginTable("##ToolProperties", static_cast<int>(active_tool->property_column_count()), ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_Resizable | ImGuiTableFlags_BordersInnerV, ImVec2{ 0.f, ImGui::GetFrameHeight() }))
 		{
 			ImGui::TableNextRow();
-			ImGui::TableNextColumn();
-
-			ui::icon_button(icons::settings);
-			ImGui::TableNextColumn();
-			ui::icon_button(icons::property);
+			active_tool->render_properties();
 			ImGui::EndTable();
 		}
 		ImGui::PopStyleVar();
