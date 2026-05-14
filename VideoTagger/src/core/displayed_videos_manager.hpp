@@ -33,6 +33,20 @@ namespace vt
 		using iterator = container::iterator;
 		using const_iterator = container::const_iterator;
 
+		displayed_videos_manager() = default;
+
+	private:
+		using frame_clock = std::chrono::steady_clock;
+
+		container videos_;
+
+		bool is_playing_{};
+		float speed_{ 1 };
+
+		std::chrono::nanoseconds frame_clock_base_timestamp_{};
+		frame_clock::time_point frame_clock_base_timepoint_;
+
+	public:
 		void update();
 
 		void set_playing(bool value);
@@ -76,16 +90,5 @@ namespace vt
 		iterator end();
 		const_iterator end() const;
 		const_iterator cend() const;
-
-	private:
-		using frame_clock = std::chrono::steady_clock;
-
-		container videos_;
-		
-		bool is_playing_{};
-		float speed_{1};
-
-		std::chrono::nanoseconds frame_clock_base_timestamp_{};
-		frame_clock::time_point frame_clock_base_timepoint_;
 	};
 }

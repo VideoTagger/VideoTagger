@@ -50,13 +50,14 @@ namespace vt
 
 	void rectangle_tool::on_done()
 	{
-		if (!active_video_.has_value())
+		if (!can_insert_region()) return;
+
+		auto& shape_data = data();
+		if (!active_video_.has_value() or !shape_data.has_value())
 		{
 			reset();
 			return;
 		}
-
-		auto& shape_data = data();
 
 		// Explicit type because without it minmax returns std::pair<const uint32_t&, const uint32_t&> which later breaks the assignment
 		std::pair<int, int> minmax_x = std::minmax(shape_data->start[0], shape_data->end[0]);

@@ -53,13 +53,14 @@ namespace vt
 
 	void circle_tool::on_done()
 	{
-		if (!active_video_.has_value())
+		if (!can_insert_region()) return;
+
+		auto& shape_data = data();
+		if (!active_video_.has_value() or !shape_data.has_value())
 		{
 			reset();
 			return;
 		}
-
-		auto& shape_data = this->data();
 
 		if (shape_data->radius != 0)
 		{

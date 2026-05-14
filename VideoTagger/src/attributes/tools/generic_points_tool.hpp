@@ -26,8 +26,9 @@ namespace vt
 				return math::scale_vec2(screen_pos, pos, pos + size, utils::vec2<int>{}, utils::vec2<int>{ static_cast<int>(tex_size.x), static_cast<int>(tex_size.y) }, false);
 			};
 
-			bool is_active_video = ImGui::IsWindowHovered() and (!this->active_video_.has_value() or *this->active_video_ == video_id);
-			bool insert_allowed = this->insert_allowed_cursor() and is_active_video;
+			bool is_hovered = ImGui::IsWindowHovered();
+			bool is_active_video =  this->active_video_.has_value() and *this->active_video_ == video_id;
+			bool insert_allowed = this->insert_allowed_cursor() and is_hovered;
 
 			if (ImGui::IsMouseClicked(ImGuiMouseButton_Left) and insert_allowed)
 			{
@@ -53,23 +54,20 @@ namespace vt
 				{
 					on_done();
 				}
-
-			}
-			if (ImGui::IsKeyPressed(ImGuiKey_Escape))
-			{
-				this->reset();
 			}
 		}
 
 		virtual void on_done() override
 		{
-			if (!this->active_video_.has_value())
+			if (!this->can_insert_region()) return;
+
+			auto& shape_data = this->data();
+			if (!this->active_video_.has_value() or !shape_data.has_value())
 			{
 				this->reset();
 				return;
 			}
 
-			auto& shape_data = this->data();
 
 			if (!shape_data->points.empty())
 			{
