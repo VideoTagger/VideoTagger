@@ -3,23 +3,41 @@
 
 namespace vt
 {
-    std::pair<tag_storage::iterator, bool> tag_storage::insert(const tag& tag)
+    std::pair<tag_storage::iterator, tag_validate_result> tag_storage::insert(tag&& tag)
     {
-		return tags_.try_emplace(tag.name, tag);
+		auto validate_result = validate_tag_name(tag.name);
+		if (validate_result != tag_validate_result::ok)
+		{
+			return { tags_.end(), validate_result };
+		}
+
+		auto [it, inserted] = tags_.try_emplace(tag.name, std::move(tag));
+		if (!inserted)
+		{
+			return { iterator(it), tag_validate_result::invalid };
+		}
+
+		return { iterator(it), tag_validate_result::ok };
     }
 
-    std::pair<tag_storage::iterator, bool> tag_storage::insert(const std::string& name, uint32_t color)
+    std::pair<tag_storage::iterator, tag_validate_result> tag_storage::insert(const std::string& name, uint32_t color)
 	{
-		if (name.empty())
+		auto validate_result = validate_tag_name(name);
+		if (validate_result != tag_validate_result::ok)
 		{
-			return { end(), false };
+			return { tags_.end(), validate_result };
 		}
 
 		auto [it, result] = tags_.try_emplace(name, name, color);
-		return { iterator(it), result };
+		if (!result)
+		{
+			return { iterator(it), tag_validate_result::invalid };
+		}
+
+		return { iterator(it), tag_validate_result::ok };
 	}
 
-	std::pair<tag_storage::iterator, bool> tag_storage::insert(const std::string& name)
+	std::pair<tag_storage::iterator, tag_validate_result> tag_storage::insert(const std::string& name)
 	{
 		return insert(name, default_tag_color);
 	}
@@ -107,11 +125,6 @@ namespace vt
 			return tag_validate_result::invalid_name;
 		}
 
-		if (contains(name))
-		{
-			return tag_validate_result::already_exists;
-		}
-
 		auto string_length = utf8nlen(name.c_str(), name.size());
 		if (string_length > max_tag_name_length)
 		{
@@ -126,6 +139,11 @@ namespace vt
 		if (name.find_first_of(forbidden_characters) != std::string::npos)
 		{
 			return tag_validate_result::invalid_name;
+		}
+
+		if (contains(name))
+		{
+			return tag_validate_result::already_exists;
 		}
 
 		return tag_validate_result::ok;

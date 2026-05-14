@@ -3,8 +3,7 @@
 #include "google_drive_video_importer.hpp"
 #include <core/app_context.hpp>
 #include <services/google/google_account_manager.hpp>
-#define CPPHTTPLIB_OPENSSL_SUPPORT
-#include <httplib.h>
+
 
 namespace vt
 {
@@ -22,7 +21,13 @@ namespace vt
 		}
 
 		httplib::Client client("https://www.googleapis.com");
-		client.set_bearer_token_auth(*account_manager.access_token());
+		auto access_token_result = account_manager.access_token();
+		if (access_token_result.status != get_access_token_status::success)
+		{
+			throw std::runtime_error("Failed to obtain access token");
+		}
+
+		client.set_bearer_token_auth(access_token_result.access_token);
 
 		auto get_result = client.Get(fmt::format("/drive/v3/files/{}/?fields=mimeType,videoMediaMetadata,name,sha256Checksum", file_id));
 		if (!get_result)
@@ -73,6 +78,8 @@ namespace vt
 		}
 		
 		file_id_ = json.at("file-id");
+
+		update_downloadable();
 	}
 
 	const std::string& google_drive_video_resource::file_id() const
@@ -80,33 +87,24 @@ namespace vt
 		return file_id_;
 	}
 
-	video_stream google_drive_video_resource::video() const
+	std::optional<video_resource_thumbnail> google_drive_video_resource::generate_thumbnail() const
 	{
-		video_stream result;
-		if (!result.open_file(file_path()))
+		if (playable())
 		{
-			debug::panic("Failed to open video from path {}", file_path());
+			return video_resource::generate_thumbnail();
 		}
 
-		return result;
-	}
-
-	std::optional<video_resource_thumbnail> google_drive_video_resource::generate_thumbnail()
-	{
 		//TODO: implement
 		debug::error("Google drive thumbnail download is not yet implemented");
 		return std::nullopt;
 	}
 
-	std::function<void()> google_drive_video_resource::on_refresh_task()
+	void google_drive_video_resource::refresh()
 	{
-		return []()
-		{
-			//TODO: update downloadable_
-		};
+		update_downloadable();
 	}
 
-	video_downloadable google_drive_video_resource::downloadable() const
+	video_downloadable_status google_drive_video_resource::downloadable() const
 	{
 		return downloadable_;
 	}
@@ -118,81 +116,113 @@ namespace vt
 		json["file-id"] = file_id_;
 	}
 
-	video_download_status google_drive_video_resource::on_download(std::shared_ptr<video_download_data> data)
+	void google_drive_video_resource::update_downloadable()
 	{
 		if (!ctx_.is_account_manager_registered<google_account_manager>())
 		{
-			debug::error("Google account manager not registered");
-			return video_download_status::failure;
+			downloadable_ = video_downloadable_status::not_available;
+			return;
 		}
 
 		auto& account_manager = ctx_.get_account_manager<google_account_manager>();
 		if (account_manager.login_status() != account_login_status::logged_in)
 		{
-			debug::error("Google account manager not logged in");
-			return video_download_status::failure;
+			downloadable_ = video_downloadable_status::authorization_error;
+			return;
+		}
+
+		auto access_token_result = account_manager.access_token();
+		if (access_token_result.status == get_access_token_status::refresh_failed_request_failed)
+		{
+			downloadable_ = video_downloadable_status::connection_error;
+			return;
+		}
+		else if (access_token_result.status != get_access_token_status::success)
+		{
+			downloadable_ = video_downloadable_status::not_available;
+			return;
 		}
 
 		httplib::Client client("https://www.googleapis.com");
-		client.set_bearer_token_auth(*account_manager.access_token());
+		client.set_bearer_token_auth(access_token_result.access_token);
 
-		auto get_size_result = client.Get(fmt::format("/drive/v3/files/{}/?fields=size", file_id_));
-		//TODO: check errors
-		if (!get_size_result)
+		auto get_result = client.Get(fmt::format("/drive/v3/files/{}", file_id_));
+		if (!get_result)
 		{
-			debug::error("GET {} failed: {}", fmt::format("/drive/v3/files/{}/?fields=size", file_id_), httplib::to_string(get_size_result.error()));
-			return video_download_status::failure;
+			downloadable_ = video_downloadable_status::connection_error;
+			return;
 		}
-		auto get_size_json = nlohmann::json::parse(get_size_result->body);
-		int64_t file_size = std::stoll(get_size_json.at("size").get<std::string>());
+
+		if (get_result->status != 200)
+		{
+			downloadable_ = video_downloadable_status::not_available;
+			return;
+		}
+
+		downloadable_ = video_downloadable_status::downloadable;
+	}
+
+	video_download_result google_drive_video_resource::on_download(const cancellation_token& token)
+	{
+		if (!ctx_.is_account_manager_registered<google_account_manager>())
+		{
+			return video_download_result{ video_download_status::failed };
+		}
+
+		auto& account_manager = ctx_.get_account_manager<google_account_manager>();
+		if (account_manager.login_status() != account_login_status::logged_in)
+		{
+			return video_download_result{ video_download_status::failed };
+		}
+
+		auto access_token_result = account_manager.access_token();
+		if (access_token_result.status != get_access_token_status::success)
+		{
+			return video_download_result{ video_download_status::failed };
+		}
+
+		httplib::Client client("https://www.googleapis.com");
+		client.set_bearer_token_auth(access_token_result.access_token);
 
 		std::filesystem::path file_path = ctx_.downloads_dir_filepath / file_id_;
 		std::filesystem::create_directories(ctx_.downloads_dir_filepath);
+
 		std::ofstream file(file_path, std::ios::binary);
 		if (!file.is_open())
 		{
 			debug::error("Failed to open file for download");
-			return video_download_status::failure;
+			return video_download_result{ video_download_status::failed };
 		}
 
-		static constexpr int64_t chunk_size = 1024 * 1024;
-		int64_t downloaded_size = 0;
-
-		std::string download_url = fmt::format("/drive/v3/files/{}/?alt=media", file_id_);
-
-		while (downloaded_size < file_size)
+		//TODO: consider downloading in chunks to avoid loading the whole file in memory.
+		auto get_result = client.Get(fmt::format("/drive/v3/files/{}/?alt=media", file_id_), [this, token](uint64_t current_size, uint64_t total_size)
 		{
-			if (data->cancel)
+			if (token.is_cancelled())
 			{
-				return video_download_status::failure;
+				return false;
 			}
+			set_download_progress(static_cast<float>(current_size) / total_size);
 
-			int64_t range_start = downloaded_size;
-			int64_t range_end = std::min(range_start + chunk_size - 1, file_size - 1);
+			return true;
+		});
 
-			auto current_progress = data->progress;
-
-			auto get_result = client.Get(download_url, { httplib::make_range_header({ { range_start, range_end } }) },
-				[&data, current_progress, file_size](uint64_t len, uint64_t total)
-				{
-					data->progress = current_progress + float(len) / file_size;
-					return !data->cancel;
-				}
-			);
-			if (get_result and (get_result->status == 200 or get_result->status == 206))
-			{
-				file.write(get_result->body.c_str(), get_result->body.size());
-				downloaded_size += get_result->body.size();
-			}
-			else
-			{
-				//TODO: retry if there was a connection problem
-				debug::error("Error during download: {}", get_result ? get_result->reason : httplib::to_string(get_result.error()));
-				return video_download_status::failure;
-			}
+		auto get_error = get_result.error();
+		if (get_error == httplib::Error::Canceled)
+		{
+			return video_download_result{ video_download_status::cancelled, file_path };
+		}
+		if (get_error == httplib::Error::Connection or get_error == httplib::Error::ConnectionTimeout)
+		{
+			 //TODO: retry if there was a connection problem
 		}
 
-		data->download_path = file_path;
-		return video_download_status::success;
+		if (!get_result or (get_result->status != 200 and get_result->status != 206))
+		{
+			debug::error("Error during download: {}", get_result ? get_result->reason : httplib::to_string(get_result.error()));
+			return video_download_result{ video_download_status::failed, file_path };
+		}
+
+		file.write(get_result->body.c_str(), get_result->body.size());
+		return video_download_result{ video_download_status::completed, file_path };
 	}
 }

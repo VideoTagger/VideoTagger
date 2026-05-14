@@ -1,0 +1,196 @@
+#pragma once
+#include <vector>
+#include <functional>
+#include <string>
+
+#include <ui/widgets/common.hpp>
+#include <ui/alignment.hpp>
+
+namespace vt::ui
+{
+	template<typename id_type, bool enter_support = true, bool cancel_support = true>
+	struct button_bar
+	{
+	public:
+		constexpr button_bar(const std::vector<std::pair<id_type, std::string>>& buttons, horizontal_alignment alignment = horizontal_alignment::right) : buttons_{ buttons }, alignment_{ alignment } {}
+
+	private:
+		horizontal_alignment alignment_;
+		std::optional<id_type> default_button_;
+		std::optional<id_type> cancel_button_;
+		std::vector<std::pair<id_type, std::string>> buttons_;
+
+	public:
+		constexpr void set_default_button(const std::optional<id_type>& id)
+		{
+			default_button_ = id;
+		}
+
+		constexpr void set_cancel_button(const std::optional<id_type>& id)
+		{
+			cancel_button_ = id;
+		}
+
+		constexpr void set_default_button_first()
+		{
+			if (!buttons_.empty())
+			{
+				default_button_ = buttons_.front().first;
+			}
+		}
+
+		constexpr void set_default_button_last()
+		{
+			if (!buttons_.empty())
+			{
+				default_button_ = buttons_.back().first;
+			}
+		}
+
+		void add_button(const id_type& id, const std::string& label)
+		{
+			buttons_.emplace_back(id, label);
+		}
+
+		void add_button_front(const id_type& id, const std::string& label)
+		{
+			buttons_.insert(buttons_.begin(), { id, label });
+		}
+
+		constexpr void render(float available_width = 0.f, bool valid = true, const std::function<void(const id_type& id)>& callback = nullptr)
+		{
+			const auto& style = ImGui::GetStyle();
+			size_t button_count = buttons_.size();
+			if (button_count == 0) return;
+
+			if (available_width == 0.f)
+			{
+				available_width = ImGui::GetContentRegionAvail().x;
+			}
+
+			auto cpos_x = ImGui::GetCursorPosX();
+			float spacing = style.ItemSpacing.x;
+			float total_width{};
+
+			for (const auto& [id, label] : buttons_)
+			{
+				total_width += ImGui::CalcTextSize(label.c_str()).x;
+			}
+
+			switch (alignment_)
+			{
+				case horizontal_alignment::center:
+				{
+					total_width += 2.f * spacing * (button_count - 1);
+					ImGui::SetCursorPosX(available_width / 2.f - total_width / 2.f);
+				}
+				break;
+				case horizontal_alignment::right:
+				{
+					total_width += 2.f * spacing * button_count;
+					ImGui::SetCursorPosX(available_width - total_width);
+				}
+				break;
+				default:
+				{
+					total_width += 2.f * spacing * button_count;
+				}
+				break;
+			}
+
+			for (size_t i = 0; i < button_count; ++i)
+			{
+				const auto& [id, label] = buttons_[i];
+				if (i != 0)
+				{
+					ImGui::SameLine();
+				}
+				if (default_button_.has_value() and id == default_button_.value())
+				{
+					ImGui::BeginDisabled(!valid);
+					if constexpr (enter_support)
+					{
+						ui::begin_bigger_frames();
+						bool result = ui::accent_button(label) and callback != nullptr or (valid and callback != nullptr and ImGui::IsWindowFocused() and ImGui::IsKeyPressed(ImGuiKey_Enter));
+						ui::end_bigger_frames();
+
+						if (result)
+						{
+							callback(id);
+						}
+					}
+					else
+					{
+						ui::begin_bigger_frames();
+						bool result = ui::accent_button(label) and callback != nullptr;
+						ui::end_bigger_frames();
+
+						if (result)
+						{
+							callback(id);
+						}
+					}
+					ImGui::EndDisabled();
+				}
+				else if (cancel_button_.has_value() and id == cancel_button_.value())
+				{
+					if constexpr (cancel_support)
+					{
+						ui::begin_bigger_frames();
+						bool result = ui::button(label) and callback != nullptr or (valid and callback != nullptr and ImGui::IsWindowFocused() and ImGui::IsKeyPressed(ImGuiKey_Escape));
+						ui::end_bigger_frames();
+
+						if (result)
+						{
+							callback(id);
+						}
+					}
+					else
+					{
+						ui::begin_bigger_frames();
+						bool result = ui::button(label) and callback != nullptr;
+						ui::end_bigger_frames();
+
+						if (result)
+						{
+							callback(id);
+						}
+					}
+				}
+				else
+				{
+					ui::begin_bigger_frames();
+					bool result = ui::button(label) and callback != nullptr;
+					ui::end_bigger_frames();
+
+					if (result)
+					{
+						callback(id);
+					}
+				}
+			}
+			ImGui::SetCursorPosX(cpos_x);
+		}
+
+		constexpr static void render(const std::vector<std::pair<id_type, std::string>>& buttons, horizontal_alignment alignment = horizontal_alignment::right, float available_width = 0.f, bool valid = true, const std::function<void(const id_type& id)>& callback = nullptr)
+		{
+			button_bar bbar{ buttons, alignment };
+			bbar.set_default_button_first();
+			bbar.render(available_width, valid, callback);
+		}
+
+		constexpr static void render(const std::vector<std::pair<id_type, std::string>>& buttons, bool valid = true, const std::function<void(const id_type& id)>& callback = nullptr)
+		{
+			button_bar bbar{ buttons };
+			bbar.set_default_button_first();
+			bbar.render(0.f, valid, callback);
+		}
+
+		constexpr static void render(const std::vector<std::pair<id_type, std::string>>& buttons, const std::function<void(const id_type& id)>& callback = nullptr, bool last_default = false)
+		{
+			button_bar bbar{ buttons };
+			bbar.set_default_button(last_default ? buttons.back().first : buttons.front().first);
+			bbar.render(0.f, true, callback);
+		}
+	};
+}

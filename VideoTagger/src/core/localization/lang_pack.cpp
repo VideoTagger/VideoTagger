@@ -1,7 +1,5 @@
 #include "pch.hpp"
 #include "lang_pack.hpp"
-#include <fmt/format.h>
-#include <utils/json.hpp>
 
 namespace vt
 {
@@ -98,15 +96,14 @@ namespace vt
 		utils::json::write_to_file(json, path);
     }
 
-	std::optional<lang_pack> lang_pack::load_from_file(const std::filesystem::path& path)
+	std::optional<lang_pack> lang_pack::load_from_json(const nlohmann::ordered_json& json, const std::string& filename)
 	{
-		auto json = utils::json::load_from_file(path);
 		if (!json.contains("@meta")) return std::nullopt;
 
 		auto json_info = json.at("@meta");
 		if (!json_info.contains("name")) return std::nullopt;
 
-		lang_pack lang(json_info.at("name"), path.stem().u8string(), {}, json_info.at("editable"));
+		lang_pack lang(json_info.at("name"), filename, {}, json_info.at("editable"));
 		for (const auto& [key, value] : json.items())
 		{
 			if (key == "@meta" or !value.is_string()) continue;
@@ -114,4 +111,45 @@ namespace vt
 		}
 		return lang;
 	}
+
+	std::optional<lang_pack> lang_pack::load_from_file(const std::filesystem::path& path)
+	{
+		auto json = utils::json::load_from_file(path);
+		return load_from_json(json, path.stem().u8string());
+	}
+
+	bool lang_pack::is_template(const std::string& id) const
+	{
+		return parse_template(id) != std::nullopt;
+	}
+
+    std::optional<lang_template> lang_pack::parse_template(const std::string& id) const
+    {
+		if (id.rfind(lang_template::prefix, 0) != 0) return std::nullopt;
+
+		auto remaining = id.substr(lang_template::prefix.size());
+		auto colon_pos = remaining.find(':');
+		if (colon_pos == std::string::npos) return std::nullopt;
+
+		auto param_count_str = remaining.substr(0, colon_pos);
+		size_t param_count{};
+		param_count = std::stoul(param_count_str);
+		if (errno == ERANGE) return std::nullopt;
+
+		colon_pos = remaining.find(':');
+		if (colon_pos == std::string::npos) return std::nullopt;
+		auto template_id = remaining.substr(colon_pos + 1);
+		return lang_template{ param_count, template_id };
+    }
+
+    bool lang_pack::try_parse_template(const std::string& id, lang_template& target) const
+    {
+		auto parsed = parse_template(id);
+		bool result = parsed.has_value();
+		if (result)
+		{
+			target = parsed.value();
+		}
+		return result;
+    }
 }

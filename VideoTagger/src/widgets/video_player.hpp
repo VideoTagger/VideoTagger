@@ -1,7 +1,10 @@
 #pragma once
+#include <memory>
 #include <chrono>
 #include <functional>
-#include <imgui_internal.h>
+#include <ui/widgets/themed_slider.hpp>
+#include <ui/window.hpp>
+#include <ui/windows/video_window.hpp>
 
 namespace vt
 {
@@ -33,18 +36,24 @@ namespace vt
 
 namespace vt::widgets
 {
-	class video_player
+	class video_player : public ui::window
 	{
 	public:
 		video_player();
+		video_player(const video_player&) = delete;
 
 	private:
+		ui::themed_slider<int64_t> progress_;
 		video_player_data data_;
 		size_t dock_window_count_;
-		float speed_;
-		bool is_visible_;
-		bool is_playing_;
 		loop_mode loop_mode_;
+		float speed_;
+		bool is_playing_;
+		bool show_video_ids_;
+		bool autoplay_;
+
+		std::vector<std::unique_ptr<ui::windows::video_window>> video_windows_;
+		std::optional<event_source> playback_suspend_source_;
 
 	public:
 		video_player_callbacks callbacks;
@@ -52,15 +61,25 @@ namespace vt::widgets
 	public:
 		void update_data(video_player_data data, bool is_playing);
 		void reset_data();
-		void render();
 		void dock_windows(size_t count);
+		bool prepare_video_windows(size_t count);
 		const video_player_data& data() const;
 
 		void set_loop_mode(loop_mode value);
+		void set_show_video_ids(bool value);
 		void set_playing(bool value);
 
-		bool is_visible() const;
 		bool is_playing() const;
+		bool should_autoplay() const;
 		loop_mode loop_mode() const;
+		bool show_video_ids() const;
+		std::vector<std::unique_ptr<ui::windows::video_window>>& video_windows();
+
+		[[nodiscard]] nlohmann::ordered_json serialize() const override;
+		void deserialize(const nlohmann::ordered_json& json) override;
+
+		virtual void pre_style() override;
+		virtual void post_style() override;
+		virtual void on_render() override;
 	};
 }

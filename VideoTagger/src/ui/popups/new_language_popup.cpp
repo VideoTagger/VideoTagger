@@ -3,58 +3,72 @@
 #include <core/app_context.hpp>
 #include <widgets/controls.hpp>
 #include <utils/string.hpp>
+#include <ui/widgets/common.hpp>
+#include <ui/widgets/button_bar.hpp>
 
 namespace vt::ui
 {
-	new_language_popup::new_language_popup(std::optional<bool*> open) : modal_popup{ "New Language", open },
-		name_input{ "##LanuguageName", "English", [](const std::string& input)
+	new_language_popup::new_language_popup(std::optional<bool*> open) : modal_popup{ "new-language", "New Language", open, ImGuiWindowFlags_NoTitleBar},
+	name_input{ "##LanuguageName", "English", [](const std::string& input) -> std::optional<std::string>
+	{
+		auto trimmed = utils::string::trim_whitespace(input);
+		if (trimmed.empty()) return ctx_.lang->get_template("field_cannot_be_empty", "Name");
+
+		bool valid = std::find_if(ctx_.lang_packs.begin(), ctx_.lang_packs.end(), [&](const auto& lang)
 		{
-			auto trimmed = utils::string::trim_whitespace(input);
-			return !trimmed.empty() and std::find_if(ctx_.lang_packs.begin(), ctx_.lang_packs.end(), [&](const auto& lang)
-			{
-				return lang->name() == trimmed;
-			}) == ctx_.lang_packs.end();
-		}},
-		filename_input{ "##LanguageFilename", "en_US", [](const std::string& input)
+			return lang->name() == trimmed;
+		}) == ctx_.lang_packs.end();
+		return valid ? std::nullopt : std::optional{ ctx_.lang->get_template("item_already_exists", ctx_.lang->get("language"), trimmed)};
+	}},
+	filename_input{ "##LanguageFilename", "en_US", [](const std::string& input) -> std::optional<std::string>
+	{
+		auto trimmed = utils::string::trim_whitespace(input);
+		if (trimmed.empty()) return ctx_.lang->get_template("field_cannot_be_empty", "Filename");
+
+		bool valid = std::find_if(ctx_.lang_packs.begin(), ctx_.lang_packs.end(), [&](const auto& lang)
 		{
-			auto trimmed = utils::string::trim_whitespace(input);
-			return !trimmed.empty() and std::find_if(ctx_.lang_packs.begin(), ctx_.lang_packs.end(), [&](const auto& lang)
-			{
-				return lang->filename() == trimmed;
-			}) == ctx_.lang_packs.end();
-		}} {}
+			return lang->filename() == trimmed;
+		}) == ctx_.lang_packs.end();
+		return valid ? std::nullopt : std::optional{ ctx_.lang->get_template("item_already_exists", ctx_.lang->get("filename"), trimmed)};
+	} } {}
+
+	void new_language_popup::on_display()
+	{
+		name_input.clear();
+		filename_input.clear();
+		name_input.focus();
+	}
 
 	void new_language_popup::on_render()
 	{
-		if (ImGui::IsWindowAppearing())
-		{
-			name_input.clear();
-			filename_input.clear();
-			name_input.focus();
-		}
-
-		name_input.render_with_label("Name");
-		filename_input.render_with_label("Filename");
+		name_input.render_with_label(ctx_.lang->get("name"));
+		filename_input.render_with_label(ctx_.lang->get("filename"));
 		close_on_escape();
 
-		widgets::vertical_item_spacer();
-
-		if (ImGui::Button(ctx_.lang->get("cancel").c_str()))
-		{
-			close();
-		}
-
-		ImGui::SameLine();
+		ui::vertical_item_spacer();
 
 		bool valid = name_input.is_valid() and filename_input.is_valid();
-		ImGui::BeginDisabled(!valid);
-		if (ImGui::Button(ctx_.lang->get("done").c_str()) or (valid and ImGui::IsWindowFocused() and ImGui::IsKeyPressed(ImGuiKey_Enter)))
+
+		std::vector<std::pair<int, std::string>> buttons
 		{
-			auto lang = std::make_shared<lang_pack>(name_input.trimmed_input(), filename_input.trimmed_input());
-			lang->save(ctx_.lang_dir_filepath);
-			ctx_.instert_lang_pack(lang);
-			close();
-		}
-		ImGui::EndDisabled();
+			{ 0, ctx_.lang->get("done") },
+			{ 1, ctx_.lang->get("cancel") },
+		};
+
+		ui::button_bar<int>::render(buttons, valid, [&](int id)
+		{
+			switch (id)
+			{
+				case 0:
+				{
+					auto lang = std::make_shared<lang_pack>(name_input.trimmed_input(), filename_input.trimmed_input());
+					lang->save(ctx_.lang_dir_filepath);
+					ctx_.insert_lang_pack(lang);
+					close();
+				}
+				break;
+				default: close(); break;
+			}
+		});
 	}
 }

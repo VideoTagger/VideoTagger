@@ -13,7 +13,6 @@ namespace vt
 		local_video_resource(const nlohmann::ordered_json& json);
 
 		bool playable() const override;
-		video_stream video() const override;
-		std::optional<video_resource_thumbnail> generate_thumbnail() override;
+		virtual void context_menu_items(ui::widget_list& items) override;
 	};
 }

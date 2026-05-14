@@ -1,10 +1,11 @@
 #pragma once
 #include <array>
+#include <vector>
 #include <cmath>
 #include <cstdint>
 #include <cstddef>
 #include <utils/json.hpp>
-#include <utils/lerp.hpp>
+#include <utils/math.hpp>
 
 namespace vt::utils
 {
@@ -55,17 +56,154 @@ namespace vt::utils
 			return data[index];
 		}
 
+		constexpr bool operator<(const vec& other) const
+		{
+			for (size_t i = 0; i < dims; ++i)
+			{
+				if (data[i] >= other.data[i]) return false;
+			}
+			return true;
+		}
+
+		constexpr bool operator<=(const vec& other) const
+		{
+			for (size_t i = 0; i < dims; ++i)
+			{
+				if (data[i] > other.data[i]) return false;
+			}
+			return true;
+		}
+
+		constexpr bool operator>(const vec& other) const
+		{
+			for (size_t i = 0; i < dims; ++i)
+			{
+				if (data[i] <= other.data[i]) return false;
+			}
+			return true;
+		}
+
+		constexpr bool operator>=(const vec& other) const
+		{
+			for (size_t i = 0; i < dims; ++i)
+			{
+				if (data[i] < other.data[i]) return false;
+			}
+			return true;
+		}
+
 		template<typename = std::enable_if_t<dims >= 2>>
 		static constexpr float distance(const vec& left, const vec& right)
 		{
 			return static_cast<float>(std::sqrt(std::pow((float)left[0] - right[0], 2.f) + std::pow((float)left[1] - right[1], 2.f)));
 		}
 
+		template<typename = std::enable_if_t<dims >= 2>>
+		static constexpr float distance(const vec& left, const std::vector<vec>& right)
+		{
+			auto mean_point = vec{};
+			for (const auto& point : right)
+			{
+				mean_point[0] += point[0];
+				mean_point[1] += point[1];
+			}
+			mean_point[0] /= right.size();
+			mean_point[1] /= right.size();
+
+			return distance(left, mean_point);
+		}
+
 		constexpr bool operator==(const vec& other) const
 		{
 			return data == other.data;
 		}
+
+		constexpr bool operator!=(const vec& other) const
+		{
+			return data != other.data;
+		}
+
+		static constexpr vec max();
+		static constexpr vec min();
 	};
+
+	template<typename type, size_t dims>
+	inline constexpr vec<type, dims> vec<type, dims>::max()
+	{
+		return vec<type, dims>{ std::numeric_limits<type>::max(), std::numeric_limits<type>::max() };
+	}
+	
+	template<typename type, size_t dims>
+	inline constexpr vec<type, dims> vec<type, dims>::min()
+	{
+		return vec<type, dims>{ std::numeric_limits<type>::min(), std::numeric_limits<type>::min() };
+	}
+
+	template<typename type, size_t dims>
+	inline constexpr vec<type, dims> operator+(const vec<type, dims>& left, const vec<type, dims>& right)
+	{
+		vec<type, dims> result;
+		for (size_t i = 0; i < dims; i++)
+		{
+			result[i] = left[i] + right[i];
+		}
+		return result;
+	}
+
+	template<typename type, size_t dims>
+	inline constexpr vec<type, dims> operator-(const vec<type, dims>& left, const vec<type, dims>& right)
+	{
+		vec<type, dims> result;
+		for (size_t i = 0; i < dims; i++)
+		{
+			result[i] = left[i] - right[i];
+		}
+		return result;
+	}
+
+	template<typename type, size_t dims>
+	inline constexpr vec<type, dims> operator*(const vec<type, dims>& left, const vec<type, dims>& right)
+	{
+		vec<type, dims> result;
+		for (size_t i = 0; i < dims; i++)
+		{
+			result[i] = left[i] * right[i];
+		}
+		return result;
+	}
+
+	template<typename type, size_t dims>
+	inline constexpr vec<type, dims> operator/(const vec<type, dims>& left, const vec<type, dims>& right)
+	{
+		vec<type, dims> result;
+		for (size_t i = 0; i < dims; i++)
+		{
+			result[i] = left[i] / right[i];
+		}
+		return result;
+	}
+
+	template<typename vec_type, size_t dims, typename value_type>
+	inline constexpr vec<vec_type, dims> operator*(const vec<vec_type, dims>& vector, value_type value)
+	{
+		vec<vec_type, dims> result;
+		for (size_t i = 0; i < dims; i++)
+		{
+			result[i] = vector[i] * value;
+		}
+		return result;
+	}
+
+	template<typename vec_type, size_t dims, typename value_type>
+	inline constexpr vec<vec_type, dims> operator/(const vec<vec_type, dims>& vector, value_type value)
+	{
+		vec<vec_type, dims> result;
+		for (size_t i = 0; i < dims; i++)
+		{
+			result[i] = vector[i] / value;
+		}
+		return result;
+	}
 
 	template<typename type>
 	using vec2 = vec<type, 2>;
@@ -92,10 +230,14 @@ namespace vt::utils
 		}
 	}
 
+}
+
+namespace vt::math
+{
 	template<typename type, size_t dims>
-	constexpr vec<type, dims> lerp(const vec<type, dims>& start, const vec<type, dims>& end, float alpha)
+	constexpr vt::utils::vec<type, dims> lerp(const vt::utils::vec<type, dims>& start, const vt::utils::vec<type, dims>& end, float alpha)
 	{
-		vec<type, dims> result;
+		vt::utils::vec<type, dims> result;
 		for (size_t i = 0; i < dims; ++i)
 		{
 			result[i] = lerp(start[i], end[i], alpha);
@@ -103,3 +245,4 @@ namespace vt::utils
 		return result;
 	}
 }
+

@@ -1,4 +1,5 @@
 #pragma once
+#include <pch.hpp>
 #include <optional>
 #include <memory>
 #include <filesystem>
@@ -16,23 +17,14 @@
 #include "theme.hpp"
 #include "localization/lang_pack.hpp"
 
+#include "font_type.hpp"
 #include "main_window.hpp"
+#include "app_settings.hpp"
 
-#include <video/video_stream.hpp>
 #include <widgets/project_selector.hpp>
-#include <widgets/video_timeline.hpp>
-#include <widgets/video_player.hpp>
 #include <widgets/color_picker.hpp>
-#include <widgets/video_browser.hpp>
-#include <widgets/video_group_browser.hpp>
-#include <widgets/video_group_queue.hpp>
-#include <widgets/theme_customizer.hpp>
-#include <widgets/shape_attributes.hpp>
-#include <widgets/console.hpp>
-#include <widgets/modal/options.hpp>
+#include <ui/popups/options_popup.hpp>
 #include <widgets/modal/tag_importer.hpp>
-#include <widgets/modal/script_progress.hpp>
-#include <widgets/localization_editor.hpp>
 #include "displayed_videos_manager.hpp"
 #include <utils/json.hpp>
 #include <utils/vec.hpp>
@@ -40,8 +32,24 @@
 #include <scripts/scripting_engine.hpp>
 #include <services/service_account_manager.hpp>
 #include <video/video_importer.hpp>
+#include <ui/popups/segments_move_conflict_popup.hpp>
+#include <ui/popups/segment_insert_conflict_popup.hpp>
+#include <ui/popups/segment_insert_popup.hpp>
+#include <ui/popups/tag_rename_failed_popup.hpp>
+#include <ui/popups/script_progress_popup.hpp>
+#include <ui/popups/messagebox_popup.hpp>
 
-#include <editor/registry.hpp>
+#include <ui/ui_registry.hpp>
+#include <events/event_storage.hpp>
+#include <tasks/task_manager.hpp>
+#include "session_storage.hpp"
+#include <attributes/attribute_registry.hpp>
+#include <attributes/shape_predictor_registry.hpp>
+#include <attributes/shapes/rectangle_shape.hpp>
+#include <attributes/shapes/line_shape.hpp>
+#include <attributes/shapes/points_shape.hpp>
+#include <attributes/shapes/polygon_shape.hpp>
+#include <attributes/shapes/circle_shape.hpp>
 
 namespace vt
 {
@@ -60,86 +68,78 @@ namespace vt
 		shutdown
 	};
 
-	struct app_settings
-	{
-		float thumbnail_size = 45.0f;
-		bool link_start_end_segment = true;
-		bool autoplay = true;
-		bool load_thumbnails = true;
-		bool clear_console_on_run = true;
-		bool enable_undocking = true;
-		bool enable_gizmo_scaling = false;
-	};
-
 	struct window_config
 	{
 		//serialized
 		window_state state = window_state::normal;
-		bool show_inspector_window = true;
-		bool show_shape_attributes_window = true;
-		bool show_tag_manager_window = true;
-		bool show_timeline_window = true;
-		bool show_video_player_window = true;
-		bool show_video_browser_window = true;
-		bool show_video_group_browser_window = true;
-		bool show_video_group_queue_window = true;
-		bool show_console_window = true;
 
 		//not serialized
 		bool show_options_window = false;
-		bool show_theme_customizer_window = false;
 		bool show_about_window = false;
 		bool show_tag_importer_window = false;
-		bool show_script_progress = false;
 	};
 
-	struct app_context
+	using shape_predictor_registries_type = std::tuple<
+		shape_predictor_registry<rectangle_shape>,
+		shape_predictor_registry<line_shape>,
+		shape_predictor_registry<points_shape>,
+		shape_predictor_registry<polygon_shape>,
+		shape_predictor_registry<circle_shape>
+	>;
+
+
+	///@brief Application context that holds all states and necessary data
+	struct app_context : public event_storage, ui::ui_registry
 	{
+		static constexpr auto valid_video_extensions = std::array{ "mp4", "mkv", "avi", "mov", "flv", "wmv", "webm", "m4v", "mpg", "mpeg", "3gp", "ogv", "vob", "mts", "m2ts", "mxf", "f4v", "divx", "rmvb", "asf", "swf" };
+		app_context();
+
+		task_manager tasks;
+
 		std::optional<project> current_project;
-		widgets::video_timeline video_timeline;
 		widgets::project_selector project_selector;
-		widgets::video_player player;
-		widgets::video_browser browser;
-		widgets::video_group_browser group_browser;
-		widgets::video_group_queue group_queue;
-		widgets::theme_customizer theme_customizer;
-		widgets::shape_attributes shape_attributes;
-		widgets::console console;
-		widgets::localization_editor localization_editor;
-		widgets::modal::options options;
-		widgets::modal::script_progress script_progress;
+		ui::options_popup options{ &win_cfg.show_options_window };
 		widgets::color_picker color_picker;
 		widgets::modal::tag_importer tag_importer;
+		ui::messagebox_popup messagebox;
 
-		static constexpr auto valid_video_extensions = std::array{ "mp4", "mkv", "avi", "mov", "flv", "wmv", "webm", "m4v", "mpg", "mpeg", "3gp", "ogv", "vob", "mts", "m2ts", "mxf", "f4v", "divx", "rmvb", "asf", "swf" };
+		//TODO: maybe add some popup manager
+		std::unique_ptr<ui::script_progress_popup> script_progress_popup;
+		std::unique_ptr<ui::segments_move_conflict_popup> segments_move_conflict_popup;
+		std::unique_ptr<ui::segment_insert_conflict_popup> segment_insert_conflict_popup;
+		std::unique_ptr<ui::segment_insert_popup> segment_insert_popup;
+		std::unique_ptr<ui::tag_rename_failed_popup> tag_rename_failed_popup;
 
+		std::filesystem::path assets_dir_filepath = std::filesystem::path("assets");
 		std::filesystem::path projects_list_filepath = storage_path() / std::filesystem::path("projects").replace_extension("json");
 		std::filesystem::path app_settings_filepath = storage_path() / std::filesystem::path("settings").replace_extension("json");
 		std::filesystem::path accounts_filepath = storage_path() / std::filesystem::path("accounts").replace_extension("json");
-		std::filesystem::path script_dir_filepath = std::filesystem::path("assets") / "scripts";
+		std::filesystem::path script_dir_filepath = assets_dir_filepath / "scripts";
 		std::filesystem::path lang_dir_filepath = storage_path() / "lang";
-		std::filesystem::path theme_dir_filepath = storage_path() / "themes";
+		std::filesystem::path theme_dir_filepath = assets_dir_filepath / "themes"; //storage_path() / "themes";
 		std::filesystem::path downloads_dir_filepath = storage_path() / "downloads";
 		std::filesystem::path cache_dir_filepath = storage_path() / std::filesystem::path("cache");
 		std::filesystem::path thumbnail_dir_filepath = cache_dir_filepath / "thumbnails";
-		registry registry;
+		std::filesystem::path python_dir_filepath = assets_dir_filepath / "python";
 		nlohmann::ordered_json settings;
 		window_config win_cfg;
-		std::unordered_map<std::string, ImFont*> fonts;
-		std::vector<std::filesystem::path> themes;
+		std::unordered_map<font_type, ImFont*> fonts;
+		theme current_theme;
 		utils::file_node scripts;
+		utils::file_node themes;
 		keybind_storage keybinds;
 		scripting_engine script_eng;
 		std::optional<script_handle> script_handle;
 		std::unordered_map<std::string, std::unique_ptr<service_account_manager>> account_managers;
 		std::unordered_map<std::string, std::unique_ptr<video_importer>> video_importers;
 		std::optional<video_id_t> last_focused_video;
-		tag_attribute_instance* selected_attribute{};
-		utils::vec2<uint32_t>* gizmo_target{};
+
+		attribute_registry attr_registry;
+		shape_predictor_registries_type shape_predictor_registries;
+
+		session_storage session;
 
 		displayed_videos_manager displayed_videos;
-
-		widgets::insert_segment_data_container insert_segment_data;
 
 		app_settings app_settings;
 		std::shared_ptr<lang_pack> lang = nullptr;
@@ -153,8 +153,17 @@ namespace vt
 		bool reset_layout{};
 		bool reset_player_docking{};
 
-		bool pause_player = false;
+		void init_attribute_registry();
+		void init_shape_predictor_registries();
 
+		void create_windows();
+		void create_popups();
+		void render_messagebox();
+
+		void change_theme(const theme& new_theme);
+		[[nodiscard]] nlohmann::ordered_json serialize_app_settings();
+		void deserialize_app_settings(const nlohmann::ordered_json& json);
+		
 		template<typename service_account_manager_type>
 		void register_account_manager();
 		void register_account_managers();
@@ -175,26 +184,29 @@ namespace vt
 		bool is_video_importer_registered() const;
 		bool is_video_importer_registered(const std::string& importer_id) const;
 
-		void register_handlers();
 		void update_current_video_group();
-		void reset_current_video_group();
 
 		segment_storage& get_current_segment_storage();
-	
-		void set_current_video_group_id(video_group_id_t id);
-		video_group_id_t current_video_group_id() const;
 
 		std::shared_ptr<lang_pack> load_lang_pack(const std::string& name = "en_US");
 		std::shared_ptr<lang_pack> load_or_create_lang_pack(const std::string& name, const std::string& filename);
-		void instert_lang_pack(std::shared_ptr<lang_pack> pack);
+		void insert_lang_pack(std::shared_ptr<lang_pack> pack);
+		void remove_lang_pack(const std::string& name);
 		void load_lang_packs(const std::string& desired_lang);
+		std::vector<std::string> lang_names() const;
+
+		void run_script(const std::filesystem::path& script_path);
+
+		ImFont* get_font(font_type type = font_type::normal) const;
+		std::optional<utils::vec2<int>> get_active_video_tex_size() const;
 
 		static std::filesystem::path storage_path();
 
-	private:
-		video_group_id_t current_video_group_id_{};
+		template<typename shape_type>
+		shape_predictor_registry<shape_type>& get_shape_predictor_registry();
 	};
 
+	///@brief Global application context instance
 	inline app_context ctx_;
 
 	template<typename service_account_manager_type>
@@ -255,5 +267,11 @@ namespace vt
 	inline bool app_context::is_video_importer_registered() const
 	{
 		return video_importers.count(video_importer_type::static_importer_id) != 0;
+	}
+
+	template<typename shape_type>
+	inline shape_predictor_registry<shape_type>& app_context::get_shape_predictor_registry()
+	{
+		return std::get<shape_predictor_registry<shape_type>>(shape_predictor_registries);
 	}
 }

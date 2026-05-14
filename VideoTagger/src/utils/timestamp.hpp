@@ -1,6 +1,7 @@
 #pragma once
 
 #include <chrono>
+#include "time.hpp"
 
 namespace vt
 {
@@ -71,6 +72,16 @@ namespace vt
 			return timestamp(0);
 		}
 
+		static constexpr timestamp min()
+		{
+			return timestamp(std::numeric_limits<int64_t>::min());
+		}
+
+		static constexpr timestamp max()
+		{
+			return timestamp(std::numeric_limits<int64_t>::max());
+		}
+
 		constexpr timestamp operator+(const timestamp& other) const
 		{
 			return timestamp(total_milliseconds + other.total_milliseconds);
@@ -90,6 +101,32 @@ namespace vt
 		constexpr timestamp& operator-=(const timestamp& other)
 		{
 			total_milliseconds -= other.total_milliseconds;
+			return *this;
+		}
+
+		template<typename number_type>
+		constexpr timestamp operator*(number_type scalar) const
+		{
+			return timestamp(total_milliseconds * scalar);
+		}
+
+		template<typename number_type>
+		constexpr timestamp& operator*=(number_type scalar)
+		{
+			total_milliseconds *= scalar;
+			return *this;
+		}
+
+		template<typename number_type>
+		constexpr timestamp operator/(number_type scalar) const
+		{
+			return timestamp(total_milliseconds / scalar);
+		}
+
+		template<typename number_type>
+		constexpr timestamp& operator/=(number_type scalar)
+		{
+			total_milliseconds /= scalar;
 			return *this;
 		}
 
@@ -123,4 +160,14 @@ namespace vt
 			return total_milliseconds >= rhs.total_milliseconds;
 		}
 	};
+
+	inline void to_json(nlohmann::ordered_json& json, const timestamp& ts)
+	{
+		json = utils::time::time_to_string(ts.total_milliseconds.count());
+	}
+
+	inline void from_json(const nlohmann::ordered_json& json, timestamp& ts)
+	{
+		ts.total_milliseconds = std::chrono::milliseconds(utils::time::parse_time_to_ms(json));
+	}
 }

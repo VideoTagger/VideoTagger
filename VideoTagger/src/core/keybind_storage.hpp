@@ -26,6 +26,8 @@ namespace vt
 	public:
 		std::pair<iterator, bool> insert(const std::string& name, const keybind& keybind);
 		size_t erase(const std::string& name);
+		iterator erase(iterator it);
+		iterator erase(const_iterator it);
 		std::pair<iterator, bool>  rename(const std::string& current_name, const std::string& new_name);
 		keybind& at(const std::string& name);
 		const keybind& at(const std::string& name) const;

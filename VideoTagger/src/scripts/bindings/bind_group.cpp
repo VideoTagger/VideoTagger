@@ -30,19 +30,21 @@ void vt::bindings::bind_group(pybind11::module_& module)
 	})
 	.def("add_timestamp", [](video_group& group, tag& t, timestamp start) -> std::optional<vt_tag_segment>
 	{
-		auto it = group.segments()[t.name].insert(start);
-		if (it.second)
+		auto& segments = group.segments()[t.name];
+		auto insert_result = segments.insert(start);
+		if (insert_result.inserted())
 		{
-			return vt_tag_segment{ (tag_segment&)(*it.first), t };
+			return vt_tag_segment{ (tag_segment&)(segments.at(insert_result.inserted_segment())), t };
 		}
 		return std::nullopt;
 	})
 	.def("add_segment", [](video_group& group, tag& t, timestamp start, timestamp end) -> std::optional<vt_tag_segment>
 	{
-		auto it = group.segments()[t.name].insert(start, end);
-		if (it.second)
+		auto& segments = group.segments()[t.name];
+		auto insert_result = segments.insert(start, end);
+		if (insert_result.inserted())
 		{
-			return vt_tag_segment{ (tag_segment&)(*it.first), t };
+			return vt_tag_segment{ (tag_segment&)(segments.at(insert_result.inserted_segment())), t };
 		}
 		return std::nullopt;
 	})
@@ -65,12 +67,12 @@ void vt::bindings::bind_group(pybind11::module_& module)
 	.def("add_group", [](video_group_playlist& p, const video_group& g) -> bool
 	{
 		auto& groups = ctx_.current_project->video_groups;
-		auto it = std::find_if(groups.begin(), groups.end(), [&g](const std::pair<video_group_id_t, video_group>& group)
-		{
-			return group.second.display_name == g.display_name;
-		});
-		if (it == groups.end()) return false;
-		p.insert(p.end(), it->first);
+		//auto it = std::find_if(groups.begin(), groups.end(), [&g](const std::pair<video_group_id_t, video_group>& group)
+		//{
+		//	return group.second.display_name == g.display_name;
+		//});
+		//if (it == groups.end()) return false;
+		//p.insert(p.end(), it->first);
 		return true;
 	})
 	.def("current_group", [](video_group_playlist& p) -> std::optional<video_group*>

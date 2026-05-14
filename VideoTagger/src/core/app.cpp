@@ -1,6 +1,6 @@
 #include "pch.hpp"
 #include "app.hpp"
-#include "app_window.hpp"
+#include <system/system_window.hpp>
 
 #include <utils/json.hpp>
 
@@ -13,10 +13,29 @@
 #include <utils/filesystem.hpp>
 #include <scripts/scripting_engine.hpp>
 #include <ImGuizmo.h>
+#include <events/system/system_color_scheme_changed_event.hpp>
+#include <updates/update_manager.hpp>
+#include <core/platform.hpp>
+#include <system/taskbar.hpp>
+
+#include <opencv2/core.hpp>
+#include <opencv2/core/utils/logger.hpp>
+
+#define NOMINMAX
+#ifndef WIN32_LEAN_AND_MEAN
+	#define WIN32_LEAN_AND_MEAN
+#endif
+#ifdef VT_OS_WINDOWS
+	#include <Windows.h>
+	#include <shobjidl.h>  // ITaskbarList3
+
+	#pragma comment(lib, "Ole32.lib")
+#endif
+
 
 namespace vt
 {
-	static void ffmpeg_callback(void* avcl, int level, const char* fmt, va_list va)
+	static void ffmpeg_log_callback(void* avcl, int level, const char* fmt, va_list va)
 	{
 		if (level == AV_LOG_QUIET) return;
 
@@ -35,18 +54,44 @@ namespace vt
 			}
 			if (level == AV_LOG_ERROR)
 			{
-				debug::log_source("FFmpeg", "Error", "{}", message);
+				debug::add_log("FFmpeg", "error", "{}", message);
 			}
 			else
 			{
-				debug::log_source("FFmpeg", "Panic!", "{}", message);
+				debug::add_log("FFmpeg", "panic!", "{}", message);
 			}
 		}
 	}
 
-	bool app::init(const app_window_config& main_config)
+	static int opencv_log_callback(int status, const char* func_name, const char* err_msg, const char* file_name, int line, void* userdata)
+	{
+		// Redirect this to your own logger. Example:
+		// my_logger::error("OpenCV Error [{}] in {}: {} ({}:{})", status, func_name, err_msg, file_name, line);
+
+		// Return 0 to suppress OpenCV's default handling
+		debug::error_src(fmt::format("OpenCV {}:{} {}", file_name, line, func_name), "{} (code: {})", err_msg, status);
+		return 0;
+	}
+
+	static void redirect_opencv_logs()
+	{
+		cv::redirectError(opencv_log_callback);
+		cv::utils::logging::setLogLevel(cv::utils::logging::LOG_LEVEL_SILENT);
+	}
+
+	bool app::init(const system_window_config& main_config)
 	{
 		debug::init();
+		update_manager::init();
+
+#ifdef VT_OS_WINDOWS
+		if (!SUCCEEDED(CoInitialize(NULL)))
+		{
+			debug::error("Failed to initialize Windows COM library");
+			return false;
+		}
+#endif
+		taskbar::init();
 
 		SDL_SetHint(SDL_HINT_WINDOWS_NO_CLOSE_ON_ALT_F4, "1");
 		SDL_SetHint(SDL_HINT_IME_SHOW_UI, "1");
@@ -88,7 +133,8 @@ namespace vt
 		SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
 		SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
 		
-		av_log_set_callback(ffmpeg_callback);
+		av_log_set_callback(ffmpeg_log_callback);
+		redirect_opencv_logs();
 
 		IMGUI_CHECKVERSION();
 		ImGui::CreateContext();
@@ -110,13 +156,19 @@ namespace vt
 		ctx_.main_window->set_current();
 		SDL_GL_SetSwapInterval(1); //VSync
 
-		ctx_.script_eng.init();
-		ctx_.register_handlers();
+		try
+		{
+			ctx_.script_eng.init();
+		}
+		catch (const std::exception& ex)
+		{
+			debug::error("Failed to initialize scripting engine with error: {}", ex.what());
+		}
 
 		auto storage_path = std::filesystem::absolute(app_context::storage_path()).u8string();
 		debug::log("Storage Path: \x1b]8;;file://{}\033\\{}\033]8;;\033\\", storage_path, storage_path);
 		audio::init();
-
+		ctx_.dispatch_event<system_color_scheme_changed_event>("system", theme::system_uses_dark_mode());
 		ctx_.state_ = app_state::initialized;
 		return true;
 	}
@@ -139,6 +191,7 @@ namespace vt
 			ImGuizmo::BeginFrame();
 
 			handle_events();
+			handle_tasks();
 			ctx_.main_window->render();
 		}
 #ifndef _DEBUG
@@ -159,15 +212,25 @@ namespace vt
 	void app::shutdown()
 	{
 		if (ctx_.state_ != app_state::shutdown) return;
+		update_manager::shutdown();
 
 		ImGui_ImplOpenGL3_Shutdown();
 		ImGui_ImplSDL2_Shutdown();
 		ImGui::DestroyContext();
 
+		taskbar::shutdown();
+#ifdef VT_OS_WINDOWS
+		CoUninitialize();
+#endif
 		audio::shutdown();
 		NFD::Quit();
 		SDL_Quit();
 		ctx_.state_ = app_state::uninitialized;
+	}
+
+	void app::handle_tasks()
+	{
+		ctx_.tasks.on_main().run_some(std::chrono::milliseconds{ 32 });
 	}
 
 	void app::handle_events()

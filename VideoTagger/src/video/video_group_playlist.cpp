@@ -210,6 +210,16 @@ namespace vt
 		return result;
 	}
 
+	video_group_playlist::iterator video_group_playlist::find(video_group_id_t group_id)
+	{
+		return std::find(groups_.begin(), groups_.end(), group_id);
+	}
+
+	video_group_playlist::const_iterator video_group_playlist::find(video_group_id_t group_id) const
+	{
+		return std::find(groups_.begin(), groups_.end(), group_id);
+	}
+
 	void video_group_playlist::clear()
 	{
 		groups_.clear();

@@ -4,7 +4,7 @@
 
 #include <video/video_stream.hpp>
 #include "app_context.hpp"
-#include "app_window.hpp"
+#include <system/system_window.hpp>
 
 namespace vt
 {
@@ -14,10 +14,11 @@ namespace vt
 		app() = default;
 
 	public:
-		bool init(const app_window_config& main_config);
+		bool init(const system_window_config& main_config);
 		bool run();
 		void shutdown();
 
+		void handle_tasks();
 		void handle_events();
 	};
 }

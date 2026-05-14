@@ -2,37 +2,46 @@
 #include "timeline_actions.hpp"
 #include <core/app_context.hpp>
 #include <widgets/controls.hpp>
+#include <ui/widgets/common.hpp>
+#include <utils/random.hpp>
+
+#include <events/timeline/segment_insert_request_event.hpp>
+#include <events/timeline/segment_insert_mark_start.hpp>
+#include <events/timeline/segment_insert_mark_end.hpp>
 
 namespace vt
 {
-	timestamp_action::timestamp_action() : keybind_action(action_name) {}
+	timeline_action::timeline_action(const std::string& name) : keybind_action(name) {}
 
-	void timestamp_action::invoke() const
+	const std::optional<std::string>& timeline_action::tag() const
 	{
-		if (!ctx_.current_project.has_value() or ctx_.current_video_group_id() == invalid_video_group_id) return;
-
-		auto& data = ctx_.insert_segment_data[tag_];
-		data.start = ctx_.video_timeline.current_timestamp();
-		data.end = ctx_.video_timeline.current_timestamp();
-		data.tag = tag_;
-		data.ready = true;
-		data.show_insert_popup = tag_.empty();
+		return tag_;
 	}
 
-	void timestamp_action::to_json(nlohmann::ordered_json& json) const
+	void timeline_action::set_tag(const std::string& tag_name)
+	{
+		tag_ = tag_name;
+	}
+
+	void timeline_action::set_tag(const std::optional<std::string>& tag_name)
+	{
+		tag_ = tag_name;
+	}
+
+	void timeline_action::to_json(nlohmann::ordered_json& json) const
 	{
 		auto& tag_name = json["tag-name"];
-		if (tag_.empty())
+		if (tag_.has_value())
 		{
-			tag_name = nullptr;
+			tag_name = *tag_;
 		}
 		else
 		{
-			tag_name = tag_;
+			tag_name = nullptr;
 		}
 	}
 
-	void timestamp_action::from_json(const nlohmann::ordered_json& json)
+	void timeline_action::from_json(const nlohmann::ordered_json& json)
 	{
 		if (json.contains("tag-name"))
 		{
@@ -42,6 +51,28 @@ namespace vt
 				tag_ = json.at("tag-name");
 			}
 		}
+	}
+
+	timestamp_action::timestamp_action() : timeline_action(action_name) {}
+
+	void timestamp_action::invoke() const
+	{
+		if (!ctx_.current_project.has_value() or ctx_.session.current_video_group_id() == invalid_video_group_id) return;
+
+		auto& segments = ctx_.get_current_segment_storage();
+		auto current_timestamp = ctx_.displayed_videos.current_timestamp_as_timestamp();
+
+		ctx_.dispatch_event<segment_insert_request_event>("keybind", segments, tag_, current_timestamp, !tag_.has_value(), false);
+	}
+
+	void timestamp_action::to_json(nlohmann::ordered_json& json) const
+	{
+		timeline_action::to_json(json);
+	}
+
+	void timestamp_action::from_json(const nlohmann::ordered_json& json)
+	{
+		timeline_action::from_json(json);
 	}
 
 	void timestamp_action::render_properties()
@@ -73,81 +104,59 @@ namespace vt
 			}
 			else
 			{
-				tag_.clear();
+				tag_ = std::nullopt;
 			}
 		}
 
 		ImGui::SameLine();
-		widgets::help_marker("Choosing \"Ask Later\" will display a window, where you will have to select the tag");
+		ui::help_marker("Choosing \"Ask Later\" will display a window, where you will have to select the tag");
 	}
 
-	segment_action::segment_action() : keybind_action(action_name), type_{ segment_action_type::auto_ } {}
+	segment_action::segment_action() : timeline_action(action_name), type_{ segment_action_type::auto_ } {}
 
 	void segment_action::invoke() const
 	{
-		if (!ctx_.current_project.has_value() or ctx_.current_video_group_id() == invalid_video_group_id) return;
+		if (!ctx_.current_project.has_value() or ctx_.session.current_video_group_id() == invalid_video_group_id) return;
 
-		auto& data = ctx_.insert_segment_data[tag_];
-		data.tag = tag_;
+		auto mark_it = ctx_.session.find_insert_segment_mark_by_tag(tag_);
+
 		auto type = type_;
 		if (type_ == segment_action_type::auto_)
 		{
-			if (data.start == std::nullopt)
-			{
-				type = segment_action_type::start;
-			}
-			else if (data.end == std::nullopt)
-			{
-				type = segment_action_type::end;
-			}
+			type = mark_it == ctx_.session.insert_segment_marks().end() ? segment_action_type::start : segment_action_type::end;
 		}
+
+		auto& segments = ctx_.get_current_segment_storage();
+		auto current_timestamp = ctx_.displayed_videos.current_timestamp_as_timestamp();
 
 		switch (type)
 		{
 			case segment_action_type::start:
 			{
-				data.start = ctx_.video_timeline.current_timestamp();
+				if (mark_it != ctx_.session.insert_segment_marks().end()) return;
+
+				ctx_.dispatch_event<segment_insert_mark_start>("keybind", utils::random::get_uuid(), segments, tag_, current_timestamp);
 			}
 			break;
 			case segment_action_type::end:
 			{
-				data.end = ctx_.video_timeline.current_timestamp();
+				if (mark_it == ctx_.session.insert_segment_marks().end()) return;
+
+				ctx_.dispatch_event<segment_insert_mark_end>("keybind", mark_it->mark_id, segments, current_timestamp, !tag_.has_value());
 			}
 			break;
-		}
-
-		if (data.start != std::nullopt and data.end != std::nullopt)
-		{
-			data.ready = true;
-			data.show_insert_popup = tag_.empty();
 		}
 	}
 
 	void segment_action::to_json(nlohmann::ordered_json& json) const
 	{
-		auto& tag_name = json["tag-name"];
-		if (tag_.empty())
-		{
-			tag_name = nullptr;
-		}
-		else
-		{
-			tag_name = tag_;
-		}
+		timeline_action::to_json(json);
 		json["type"] = type_;
 	}
 
 	void segment_action::from_json(const nlohmann::ordered_json& json)
 	{
-		if (json.contains("tag-name"))
-		{
-			const auto& tag_name = json.at("tag-name");
-			if (!tag_name.is_null())
-			{
-				tag_ = tag_name;
-			}
-		}
-
+		timeline_action::from_json(json);
 		if (json.contains("type"))
 		{
 			type_ = json.at("type");
@@ -182,12 +191,12 @@ namespace vt
 			}
 			else
 			{
-				tag_.clear();
+				tag_ = std::nullopt;
 			}
 		}
 
 		ImGui::SameLine();
-		widgets::help_marker("Choosing \"Ask Later\" will display a window, where you will have to select the tag");
+		ui::help_marker("Choosing \"Ask Later\" will display a window, where you will have to select the tag");
 
 		ImGui::TableNextColumn();
 		ImGui::Text("Type");
@@ -198,6 +207,6 @@ namespace vt
 		ImGui::Combo("##Type", selected_type, types, sizeof(types) / sizeof(types[0]));
 
 		ImGui::SameLine();
-		widgets::help_marker("Choosing \"Auto\" will automatically detect whether the segment should start or end");
+		ui::help_marker("Choosing \"Auto\" will automatically detect whether the segment should start or end");
 	}
 }

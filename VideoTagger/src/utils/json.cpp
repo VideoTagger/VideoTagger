@@ -5,13 +5,31 @@
 
 namespace vt::utils::json
 {
+	nlohmann::ordered_json from_string(std::string_view input)
+	{
+		return nlohmann::ordered_json::parse(input);
+	}
+
+	nlohmann::ordered_json from_string(const std::string& input)
+	{
+		return nlohmann::ordered_json::parse(input);
+	}
+
 	nlohmann::ordered_json load_from_file(const std::filesystem::path& filepath)
 	{
 		nlohmann::ordered_json result;
 		std::ifstream file(filepath);
 		if (file.is_open())
 		{
-			file >> result;
+			try
+			{
+				file >> result;
+			}
+			catch (std::exception ex)
+			{
+				debug::error(fmt::format("Couldn't load Json file: {}\nError:\n{}", filepath.string(), ex.what()));
+				return {};
+			}
 		}
 		else
 		{

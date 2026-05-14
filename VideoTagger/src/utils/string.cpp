@@ -3,7 +3,7 @@
 
 namespace vt::utils::string
 {
-	uint64_t levenshtein_dist(const std::string& left, const std::string& right)
+	size_t levenshtein_dist(const std::string& left, const std::string& right)
 	{
 		const auto size_a = left.size();
 		const auto size_b = right.size();
