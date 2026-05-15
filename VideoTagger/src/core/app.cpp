@@ -153,6 +153,12 @@ namespace vt
 		ImGui_ImplSDL2_InitForOpenGL(ctx_.main_window->window, ctx_.main_window->gl_ctx);
 		ImGui_ImplOpenGL3_Init(glsl_version);
 
+		if (!gladLoadGLLoader((GLADloadproc)SDL_GL_GetProcAddress))
+		{
+			debug::panic("Failed to initialize OpenGL context");
+		}
+
+		show_debug_info();
 		ctx_.main_window->set_current();
 		SDL_GL_SetSwapInterval(1); //VSync
 

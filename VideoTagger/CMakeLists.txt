@@ -53,6 +53,8 @@ file(GLOB vendor_files CONFIGURE_DEPENDS
 	"${PROJECT_SOURCE_DIR}/vendor/imgui_toggle/imgui_toggle.cpp"
 	"${PROJECT_SOURCE_DIR}/vendor/imgui_toggle/imgui_toggle_palette.cpp"
 	"${PROJECT_SOURCE_DIR}/vendor/imgui_toggle/imgui_toggle_renderer.cpp"
+	"${PROJECT_SOURCE_DIR}/vendor/glad/include/*.h"
+	"${PROJECT_SOURCE_DIR}/vendor/glad/src/*.c"
 )
 
 #message(STATUS "Source files found: ${source_files}")
@@ -67,6 +69,7 @@ file(GLOB_RECURSE no_pch_files
 	"${PROJECT_SOURCE_DIR}/vendor/ImGuizmo/*.cpp"
 	"${PROJECT_SOURCE_DIR}/vendor/ImGui/*.cpp"
 	"${PROJECT_SOURCE_DIR}/vendor/imgui_toggle/*.cpp"
+	"${PROJECT_SOURCE_DIR}/vendor/glad/src/*.c"
 )
 
 # Mark each file with the SKIP_PRECOMPILE_HEADERS property
@@ -136,6 +139,7 @@ target_include_directories(${PROJECT_NAME}
 	PRIVATE "${PROJECT_SOURCE_DIR}/vendor/imgui_toggle"
 	PRIVATE "${PROJECT_SOURCE_DIR}/vendor/stb"
 	PRIVATE "${PROJECT_SOURCE_DIR}/vendor/SDL2"
+	PRIVATE "${PROJECT_SOURCE_DIR}/vendor/glad/include"
 	PRIVATE "${EMBED_INCLUDE_DIR}"
 )
 
