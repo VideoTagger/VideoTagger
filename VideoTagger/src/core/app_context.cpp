@@ -33,6 +33,7 @@
 #include <attributes/shapes/line_shape.hpp>
 #include <attributes/shapes/points_shape.hpp>
 #include <attributes/shapes/polygon_shape.hpp>
+#include <attributes/shapes/mask_shape.hpp>
 
 #include <attributes/factory/dummy_shape_predictor_factory.hpp>
 #include <attributes/factory/linear_shape_predictor_factory.hpp>
@@ -41,6 +42,7 @@
 #include <attributes/tools/points_tool.hpp>
 #include <attributes/tools/line_tool.hpp>
 #include <attributes/tools/polygon_tool.hpp>
+#include <attributes/tools/mask_tool.hpp>
 
 namespace vt
 {
@@ -65,6 +67,7 @@ namespace vt
 		attr_registry.new_factory<shape_attribute_factory_ex<points_shape, points_tool>>("points", shape_color, icons::tool_points);
 		attr_registry.new_factory<shape_attribute_factory_ex<line_shape, line_tool>>("line", shape_color, icons::tool_line);
 		attr_registry.new_factory<shape_attribute_factory_ex<polygon_shape, polygon_tool>>("polygon", shape_color, icons::shape_polygon);
+		attr_registry.new_factory<shape_attribute_factory_ex<mask_shape, mask_tool>>("mask", shape_color, icons::tool_brush);
 	}
 
 	void app_context::init_shape_predictor_registries()

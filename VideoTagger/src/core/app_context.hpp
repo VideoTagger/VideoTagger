@@ -50,6 +50,7 @@
 #include <attributes/shapes/points_shape.hpp>
 #include <attributes/shapes/polygon_shape.hpp>
 #include <attributes/shapes/circle_shape.hpp>
+#include <attributes/shapes/mask_shape.hpp>
 
 namespace vt
 {
@@ -84,7 +85,8 @@ namespace vt
 		shape_predictor_registry<line_shape>,
 		shape_predictor_registry<points_shape>,
 		shape_predictor_registry<polygon_shape>,
-		shape_predictor_registry<circle_shape>
+		shape_predictor_registry<circle_shape>,
+		shape_predictor_registry<mask_shape>
 	>;
 
 

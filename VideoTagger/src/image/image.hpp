@@ -13,6 +13,7 @@ namespace vt
 	public:
 		using pixel_type = pixel_format;
 
+		image() = default;
 		image(int width, int height) : size_{ width, height }, data_{ std::make_unique<pixel_type[]>(width * height) } {}
 		image(const utils::vec2<int>& size) : size_{ size }, data_{ std::make_unique<pixel_type[]>(size[0] * size[1]) } {}
 		image(const image& other) : size_{ other.size_ }, data_{ std::make_unique<pixel_type[]>(other.size_[0] * other.size_[1]) }
@@ -65,12 +66,22 @@ namespace vt
 			return reinterpret_cast<const type*>(data_.get());
 		}
 
+		const pixel_type& at(const utils::vec2<int>& position) const
+		{
+			return at(position[0], position[1]);
+		}
+
 		pixel_type& at(const utils::vec2<int>& position)
 		{
 			return at(position[0], position[1]);
 		}
 
 		pixel_type& at(int x, int y)
+		{
+			return data_[y * size_[0] + x];
+		}
+
+		const pixel_type& at(int x, int y) const
 		{
 			return data_[y * size_[0] + x];
 		}
