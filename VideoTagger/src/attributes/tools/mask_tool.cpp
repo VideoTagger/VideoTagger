@@ -84,7 +84,8 @@ namespace vt
 
 		if (insert_allowed)
 		{
-			draw_brush_preview(mouse_pos);
+			auto zoom_factor = size.x / tex_size.x;
+			draw_brush_preview(mouse_pos, zoom_factor * brush_size_);
 		}
 	}
 
@@ -111,15 +112,20 @@ namespace vt
 	{
 		const auto& style = ImGui::GetStyle();
 		ImGui::TableNextColumn();
-		if (ui::icon_toggle_button(icons::shape_circle, brush_type_ == mask_tool_type::circle))
 		{
-			brush_type_ = mask_tool_type::circle;
+			ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2{});
+			if (ui::icon_toggle_button(icons::shape_circle, brush_type_ == mask_tool_type::circle))
+			{
+				brush_type_ = mask_tool_type::circle;
+			}
+			ImGui::SameLine();
+			if (ui::icon_toggle_button(icons::shape_rectangle, brush_type_ == mask_tool_type::square))
+			{
+				brush_type_ = mask_tool_type::square;
+			}
+			ImGui::PopStyleVar();
 		}
-		ImGui::SameLine();
-		if (ui::icon_toggle_button(icons::shape_rectangle, brush_type_ == mask_tool_type::square))
-		{
-			brush_type_ = mask_tool_type::square;
-		}
+		
 
 		ImGui::TableNextColumn();
 		ImGui::SetNextItemWidth(ImGui::CalcTextSize("100px").x + style.FramePadding.x * 2.f);
@@ -150,7 +156,7 @@ namespace vt
 		}
 	}
 
-	void mask_tool::draw_brush_preview(const ImVec2& center)
+	void mask_tool::draw_brush_preview(const ImVec2& center, float brush_size)
 	{
 		auto* draw_list = ImGui::GetWindowDrawList();
 		const auto& tag = get_tag();
@@ -159,14 +165,14 @@ namespace vt
 		{
 			case mask_tool_type::circle:
 			{
-				draw_list->AddCircle(center, brush_size_, tag.outline_color());
-				draw_list->AddCircleFilled(center, brush_size_, tag.fill_color());
+				draw_list->AddCircle(center, brush_size, tag.outline_color());
+				draw_list->AddCircleFilled(center, brush_size, tag.fill_color());
 				break;
 			}
 			case mask_tool_type::square:
 			{
-				draw_list->AddRect({ center.x - brush_size_, center.y - brush_size_ }, { center.x + brush_size_, center.y + brush_size_ }, tag.outline_color());
-				draw_list->AddRectFilled({ center.x - brush_size_, center.y - brush_size_ }, { center.x + brush_size_, center.y + brush_size_ }, tag.fill_color());
+				draw_list->AddRect({ center.x - brush_size, center.y - brush_size }, { center.x + brush_size, center.y + brush_size }, tag.outline_color());
+				draw_list->AddRectFilled({ center.x - brush_size, center.y - brush_size }, { center.x + brush_size, center.y + brush_size }, tag.fill_color());
 				break;
 			}
 			default: break;
