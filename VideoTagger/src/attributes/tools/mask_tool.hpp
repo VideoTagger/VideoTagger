@@ -26,5 +26,6 @@ namespace vt
 		virtual void render_properties() override;
 	private:
 		void apply_brush(const utils::vec2<int>& center, const utils::vec2<int>& tex_size, bool is_eraser = false);
+		void draw_brush_preview(const ImVec2& center);
 	};
 }

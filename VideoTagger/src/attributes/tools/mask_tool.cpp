@@ -70,7 +70,7 @@ namespace vt
 				apply_brush({ x, y }, tex_size_int);
 			}
 		}
-
+		
 		if (shape_data.has_value() and is_active_video)
 		{
 			const auto& tag = get_tag();
@@ -80,6 +80,11 @@ namespace vt
 			{
 				on_done();
 			}
+		}
+
+		if (insert_allowed)
+		{
+			draw_brush_preview(mouse_pos);
 		}
 	}
 
@@ -134,11 +139,34 @@ namespace vt
 			case mask_tool_type::circle:
 			{
 				cv::circle(mat, cv::Point(center[0], center[1]), brush_size_, color, cv::FILLED);
+			}
+			break;
+			case mask_tool_type::square:
+			{
+				cv::rectangle(mat, cv::Point(center[0] - brush_size_, center[1] - brush_size_), cv::Point(center[0] + brush_size_, center[1] + brush_size_), color, cv::FILLED);
+			}
+			break;
+			default: break;
+		}
+	}
+
+	void mask_tool::draw_brush_preview(const ImVec2& center)
+	{
+		auto* draw_list = ImGui::GetWindowDrawList();
+		const auto& tag = get_tag();
+
+		switch (brush_type_)
+		{
+			case mask_tool_type::circle:
+			{
+				draw_list->AddCircle(center, brush_size_, tag.outline_color());
+				draw_list->AddCircleFilled(center, brush_size_, tag.fill_color());
 				break;
 			}
 			case mask_tool_type::square:
 			{
-				cv::rectangle(mat, cv::Point(center[0] - brush_size_, center[1] - brush_size_), cv::Point(center[0] + brush_size_, center[1] + brush_size_), color, cv::FILLED);
+				draw_list->AddRect({ center.x - brush_size_, center.y - brush_size_ }, { center.x + brush_size_, center.y + brush_size_ }, tag.outline_color());
+				draw_list->AddRectFilled({ center.x - brush_size_, center.y - brush_size_ }, { center.x + brush_size_, center.y + brush_size_ }, tag.fill_color());
 				break;
 			}
 			default: break;
