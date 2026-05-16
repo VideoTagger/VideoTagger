@@ -111,8 +111,8 @@ namespace vt::ui::windows
 		}
 
 		ImGui::SameLine(0.f, 0.f);
-		ImGui::PushStyleVar(ImGuiStyleVar_CellPadding, ImVec2{});
-		if (ImGui::BeginTable("##ToolProperties", static_cast<int>(active_tool->property_column_count()), ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_Resizable | ImGuiTableFlags_BordersInnerV, ImVec2{ 0.f, ImGui::GetFrameHeight() }))
+		ImGui::PushStyleVar(ImGuiStyleVar_CellPadding, ImVec2{ style.ItemSpacing.x, 0.f});
+		if (ImGui::BeginTable("##ToolProperties", static_cast<int>(active_tool->property_column_count()), ImGuiTableFlags_BordersInnerV, ImVec2{ 0.f, ImGui::GetFrameHeight() })) //ImGuiTableFlags_SizingFixedFit //ImGuiTableFlags_Resizable
 		{
 			ImGui::TableNextRow();
 			active_tool->render_properties();

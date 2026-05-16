@@ -1,4 +1,4 @@
-#include "pch.hpp"
+#include <pch.hpp>
 #include "displayed_videos_manager.hpp"
 #include <core/app_context.hpp>
 #include <events/player/playback_reached_end_event.hpp>
@@ -6,8 +6,9 @@
 namespace vt
 {
 	displayed_video_data::displayed_video_data(video_id_t id, video_stream&& video, std::chrono::nanoseconds offset, int video_width, int video_height) :
-		id{ id }, video{ std::move(video) }, offset{ offset }, display_texture(video_width, video_height, GL_RGB), overlay_texture(video_width, video_height, GL_RGBA)
+		id{ id }, video{ std::move(video) }, offset{ offset }, display_texture{ video_width, video_height, GL_RGB }, overlay_texture{ video_width, video_height, GL_RGBA, nullptr, GL_NEAREST }
 	{
+
 	}
 
 	displayed_video_data::displayed_video_data(displayed_video_data&& other) noexcept :

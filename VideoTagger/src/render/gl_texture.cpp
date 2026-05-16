@@ -3,20 +3,20 @@
 
 namespace vt
 {
-	gl_texture::gl_texture(GLsizei width, GLsizei height, GLenum format, const void* pixels) : id_{}, width_{ width }, height_{ height }, format_{ format }
+	gl_texture::gl_texture(GLsizei width, GLsizei height, GLenum format, const void* pixels, GLint filtering) : id_{}, width_{ width }, height_{ height }, format_{ format }, filtering_{ filtering }
 	{
 		glGenTextures(1, &id_);
 		glBindTexture(GL_TEXTURE_2D, id_);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filtering);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filtering);
 		glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 		glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, pixels);
 		glBindTexture(GL_TEXTURE_2D, 0);
 	}
 
-	gl_texture::gl_texture(gl_texture&& other) noexcept : width_{ other.width_ }, height_{ other.height_ }, id_{ other.id_ }, format_{ other.format_ }
+	gl_texture::gl_texture(gl_texture&& other) noexcept : width_{ other.width_ }, height_{ other.height_ }, id_{ other.id_ }, format_{ other.format_ }, filtering_{ other.filtering_ }
 	{
 		other.id_ = 0;
 	}
