@@ -99,6 +99,13 @@ namespace vt
 		get_shape_predictor_registry<mask_shape>().new_factory<dummy_shape_predictor_factory<mask_shape>>("None");
 	}
 
+    void app_context::load_shaders()
+    {
+		debug::log("Loading shaders...");
+		shaders = std::make_unique<shader_storage>();
+		debug::log("Shaders loaded");
+	}
+
 	void app_context::create_windows()
 	{
 		create_window<widgets::theme_customizer>();

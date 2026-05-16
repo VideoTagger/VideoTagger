@@ -44,6 +44,8 @@ function(vt_embed_directory INPUT_DIR OUTPUT_DIR NAMESPACE OUT_VAR)
 endfunction()
 
 function(vt_embed_text_file SOURCE_FILE OUTPUT_FILE NAMESPACE OUT_FILES)
+	set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS "${SOURCE_FILE}")
+
 	file(READ "${SOURCE_FILE}" FILE_CONTENT)
 	get_filename_component(FILE_NAME "${OUTPUT_FILE}" NAME_WE)
 	string(REGEX REPLACE "[^a-zA-Z0-9_]" "_" SAFE_NAME "${FILE_NAME}")

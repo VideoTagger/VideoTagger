@@ -5,7 +5,7 @@
 #include <ui/window.hpp>
 #include <video/video_stream.hpp>
 #include <core/types.hpp>
-#include <core/gl_texture.hpp>
+#include <render/gl_texture.hpp>
 
 namespace vt::ui::windows
 {

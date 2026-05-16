@@ -3,7 +3,7 @@
 #include <vector>
 
 #include <video/video_pool.hpp>
-#include <core/gl_texture.hpp>
+#include <render/gl_texture.hpp>
 
 namespace vt
 {
@@ -22,6 +22,7 @@ namespace vt
 		std::chrono::nanoseconds offset{};
 
 		gl_texture display_texture;
+		gl_texture overlay_texture;
 
 		bool is_timestamp_in_range(std::chrono::nanoseconds timestamp) const;
 	};

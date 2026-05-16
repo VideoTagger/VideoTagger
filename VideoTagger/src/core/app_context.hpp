@@ -51,6 +51,7 @@
 #include <attributes/shapes/polygon_shape.hpp>
 #include <attributes/shapes/circle_shape.hpp>
 #include <attributes/shapes/mask_shape.hpp>
+#include <render/shader_storage.hpp>
 
 namespace vt
 {
@@ -131,6 +132,7 @@ namespace vt
 		attribute_registry attr_registry;
 		std::unordered_map<std::type_index, std::unique_ptr<impl::shape_predictor_registry>> shape_predictor_registries;
 
+		std::unique_ptr<shader_storage> shaders;
 		session_storage session;
 
 		displayed_videos_manager displayed_videos;
@@ -149,6 +151,8 @@ namespace vt
 
 		void init_attribute_registry();
 		void init_shape_predictor_registries();
+
+		void load_shaders();
 
 		void create_windows();
 		void create_popups();

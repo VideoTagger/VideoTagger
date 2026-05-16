@@ -26,7 +26,8 @@
 #include <unordered_map>
 
 #include <SDL.h>
-#include <SDL_opengl.h>
+//#include <SDL_opengl.h>
+#include <glad/glad.h>
 
 #define IMGUI_DEFINE_MATH_OPERATORS
 #define IMGUI_ENABLE_FREETYPE
@@ -34,6 +35,7 @@
 #include <imgui_internal.h>
 #include <imgui_stdlib.h>
 #include <backends/imgui_impl_sdl2.h>
+#define IMGUI_IMPL_OPENGL_LOADER_CUSTOM
 #include <backends/imgui_impl_opengl3.h>
 #include "imgui_freetype.h"
 

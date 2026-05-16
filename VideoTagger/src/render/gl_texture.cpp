@@ -21,28 +21,40 @@ namespace vt
 		other.id_ = 0;
 	}
 
-	gl_texture& gl_texture::operator=(gl_texture&& other) noexcept
-	{
-		if (id_ != 0)
-		{
-			glDeleteTextures(1, &id_);
-		}
-
-		width_ = other.width_;
-		height_ = other.height_;
-		id_ = other.id_;
-
-		other.id_ = 0;
-
-		return *this;
-	}
-
 	gl_texture::~gl_texture()
 	{
 		if (id_ != 0)
 		{
 			glDeleteTextures(1, &id_);
 		}
+	}
+
+	void gl_texture::set_pixels(void* pixels)
+	{
+		set_pixels(pixels, 0, 0, width_, height_, format_);
+	}
+
+    void gl_texture::set_pixels(void* pixels, GLsizei x, GLsizei y, GLsizei width, GLsizei height, GLenum format)
+    {
+        bind();
+        glTexSubImage2D(GL_TEXTURE_2D, 0, x, y, width, height, format, GL_UNSIGNED_BYTE, pixels);
+        unbind();
+    }
+
+	void gl_texture::clear()
+	{
+		std::vector<uint8_t> empty_data(width_ * height_ * (format_ == GL_RGBA ? 4 : 3), 0);
+		set_pixels(empty_data.data());
+	}
+
+	void gl_texture::bind()
+	{
+		glBindTexture(GL_TEXTURE_2D, id_);
+	}
+
+	void gl_texture::unbind()
+	{
+		glBindTexture(GL_TEXTURE_2D, 0);
 	}
 
 	GLuint gl_texture::id() const
@@ -65,10 +77,19 @@ namespace vt
 		return format_;
 	}
 
-	void gl_texture::set_pixels(void* pixels)
+	gl_texture& gl_texture::operator=(gl_texture&& other) noexcept
 	{
-		glBindTexture(GL_TEXTURE_2D, id_);
-		glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width_, height_, format_, GL_UNSIGNED_BYTE, pixels);
-		glBindTexture(GL_TEXTURE_2D, 0);
+		if (id_ != 0)
+		{
+			glDeleteTextures(1, &id_);
+		}
+
+		width_ = other.width_;
+		height_ = other.height_;
+		id_ = other.id_;
+
+		other.id_ = 0;
+
+		return *this;
 	}
 }

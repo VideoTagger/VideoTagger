@@ -23,6 +23,10 @@ vt_embed_text_file("${ASSETS_SOURCE_DIR}/lang/en_US.vtlang" "${EMBED_OUTPUT_DIR}
 #vt_embed_json("${ASSETS_SOURCE_DIR}/themes/light.vttheme" "${EMBED_OUTPUT_DIR}" "vt::embed" EMBED_GENERATED_FILES)
 vt_embed_directory(${EMBED_SOURCE_DIR} ${EMBED_OUTPUT_DIR} "vt::embed" EMBED_GENERATED_FILES)
 
+# Shaders
+vt_embed_text_file("${PROJECT_SOURCE_DIR}/shaders/mask_shader.vert" "${EMBED_OUTPUT_DIR}/mask_shader_vert.hpp" "vt::embed" EMBED_GENERATED_FILES)
+vt_embed_text_file("${PROJECT_SOURCE_DIR}/shaders/mask_shader.frag" "${EMBED_OUTPUT_DIR}/mask_shader_frag.hpp" "vt::embed" EMBED_GENERATED_FILES)
+
 # About & Licenses
 include(cmake/GenerateAbout.cmake)
 set(LICENSE_DIR "${PROJECT_SOURCE_DIR}/licenses")
@@ -53,6 +57,8 @@ file(GLOB vendor_files CONFIGURE_DEPENDS
 	"${PROJECT_SOURCE_DIR}/vendor/imgui_toggle/imgui_toggle.cpp"
 	"${PROJECT_SOURCE_DIR}/vendor/imgui_toggle/imgui_toggle_palette.cpp"
 	"${PROJECT_SOURCE_DIR}/vendor/imgui_toggle/imgui_toggle_renderer.cpp"
+	"${PROJECT_SOURCE_DIR}/vendor/glad/include/*.h"
+	"${PROJECT_SOURCE_DIR}/vendor/glad/src/*.c"
 )
 
 #message(STATUS "Source files found: ${source_files}")
@@ -67,6 +73,7 @@ file(GLOB_RECURSE no_pch_files
 	"${PROJECT_SOURCE_DIR}/vendor/ImGuizmo/*.cpp"
 	"${PROJECT_SOURCE_DIR}/vendor/ImGui/*.cpp"
 	"${PROJECT_SOURCE_DIR}/vendor/imgui_toggle/*.cpp"
+	"${PROJECT_SOURCE_DIR}/vendor/glad/src/*.c"
 )
 
 # Mark each file with the SKIP_PRECOMPILE_HEADERS property
@@ -136,6 +143,7 @@ target_include_directories(${PROJECT_NAME}
 	PRIVATE "${PROJECT_SOURCE_DIR}/vendor/imgui_toggle"
 	PRIVATE "${PROJECT_SOURCE_DIR}/vendor/stb"
 	PRIVATE "${PROJECT_SOURCE_DIR}/vendor/SDL2"
+	PRIVATE "${PROJECT_SOURCE_DIR}/vendor/glad/include"
 	PRIVATE "${EMBED_INCLUDE_DIR}"
 )
 
