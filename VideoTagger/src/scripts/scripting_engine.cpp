@@ -89,7 +89,7 @@ namespace vt
 		py::class_<widgets::video_player>(this_module, "Player")
 		.def_property_readonly("current_timestamp", [](const widgets::video_player& player) -> timestamp
 		{
-			return timestamp{ std::chrono::duration_cast<std::chrono::milliseconds>(player.data().current_ts).count() };
+			return timestamp{ player.data().current_ts };
 		})
 		.def("play", [](widgets::video_player& player)
 		{
@@ -103,7 +103,7 @@ namespace vt
 		})
 		.def("seek", [](widgets::video_player& player, timestamp ts)
 		{
-			player.callbacks.on_seek({ ts.total_milliseconds });
+			player.callbacks.on_seek({ ts.total_nanoseconds });
 		})
 		.def("set_playing", [](widgets::video_player& player, bool value)
 		{

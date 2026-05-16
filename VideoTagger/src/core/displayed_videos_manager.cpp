@@ -210,7 +210,7 @@ namespace vt
 
 	timestamp displayed_videos_manager::duration_as_timestamp() const
 	{
-		return timestamp(std::chrono::duration_cast<std::chrono::milliseconds>(duration()));
+		return timestamp{ duration() };
 	}
 
 	std::chrono::nanoseconds displayed_videos_manager::current_timestamp() const
@@ -227,7 +227,7 @@ namespace vt
 
 	timestamp displayed_videos_manager::current_timestamp_as_timestamp() const
 	{
-		return timestamp{ std::chrono::duration_cast<std::chrono::milliseconds>(current_timestamp()) };
+		return timestamp{ current_timestamp() };
 	}
 
 	size_t displayed_videos_manager::size() const

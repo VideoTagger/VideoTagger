@@ -361,7 +361,7 @@ namespace vt
 		{
 			if (event.user_customization() or !event.tag().has_value())
 			{
-				auto max_ts = timestamp(std::chrono::duration_cast<std::chrono::milliseconds>(ctx_.displayed_videos.duration()));
+				auto max_ts = ctx_.displayed_videos.duration_as_timestamp();
 
 				ctx_.segment_insert_popup = ui::new_popup<ui::segment_insert_popup>(event, ctx_.current_project->displayed_tags, timestamp::zero(), max_ts);
 				return;
@@ -2766,7 +2766,7 @@ namespace vt
 			if (ts != ctx_.displayed_videos.current_timestamp_as_timestamp())
 			{
 				auto& player = ctx_.get_window<widgets::video_player>();
-				ctx_.dispatch_event<seek_request_event>(event_source, player, ts.total_milliseconds);
+				ctx_.dispatch_event<seek_request_event>(event_source, player, ts.total_nanoseconds);
 			}
 		});
 		

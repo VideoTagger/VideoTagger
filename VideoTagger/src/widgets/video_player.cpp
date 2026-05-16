@@ -327,15 +327,15 @@ namespace vt::widgets
 
 			ImGui::SetNextItemWidth(time_size.x);
 			ImGui::PushStyleColor(ImGuiCol_FrameBg, { 0, 0, 0, 0 });
-			if (widgets::time_input("##TimeInput", &current_time, 1, 0, duration.total_milliseconds.count()))
+			if (widgets::time_input("##TimeInput", &current_time, 1, 0, duration.total_nanoseconds.count()))
 			{
-				ctx_.dispatch_event<seek_request_event>(get_event_source(), *this, current_time.total_milliseconds);
-				callbacks.on_seek(current_time.total_milliseconds);
+				ctx_.dispatch_event<seek_request_event>(get_event_source(), *this, current_time.total_nanoseconds);
+				callbacks.on_seek(current_time.total_nanoseconds);
 			}
 			ImGui::PopStyleColor();
 			ImGui::SameLine();
 
-			std::string video_duration = fmt::format("| {}", utils::time::time_to_string(duration.total_milliseconds.count()));
+			std::string video_duration = fmt::format("| {}", timestamp_to_string(duration, default_time_format));
 			ImGui::TextUnformatted(video_duration.c_str());
 		}
 

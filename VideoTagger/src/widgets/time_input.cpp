@@ -55,7 +55,12 @@ namespace vt::widgets
 			memcpy(&data_backup, p_data, data_type_size);
 
 			// Input text parsing
-			p_data->total_milliseconds = std::chrono::milliseconds(utils::time::parse_time_to_ms(data_buf));
+			auto ts_opt = parse_timestamp(data_buf);
+			if (ts_opt.has_value())
+			{
+				*p_data = *ts_opt;
+			}
+
 			/*
 			// Apply new value (or operations) then clamp
 			ImGui::DataTypeApplyFromText(data_buf, data_type, p_data, format);

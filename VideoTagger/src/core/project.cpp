@@ -181,7 +181,7 @@ namespace vt
 					{
 						json_video["sha256"] = vid_resource->sha256();
 					}
-					json_video["offset"] = timestamp{ std::chrono::duration_cast<std::chrono::milliseconds>(group_video_info.offset) };
+					json_video["offset"] = timestamp{ group_video_info.offset };
 					json_group_videos.push_back(json_video);
 				}
 			}
@@ -211,8 +211,8 @@ namespace vt
 						json_tag_segments = nlohmann::ordered_json::array();
 						for (auto [segment_id, segment] : tag_segments) //copy is intended
 						{
-							segment.start -= timestamp{ std::chrono::duration_cast<std::chrono::milliseconds>(group_video_info.offset) };
-							segment.end -= timestamp{ std::chrono::duration_cast<std::chrono::milliseconds>(group_video_info.offset) };
+							segment.start -= timestamp{ group_video_info.offset };
+							segment.end -= timestamp{ group_video_info.offset };
 
 							bool clipped_start = false;
 							bool clipped_end = false;
@@ -290,7 +290,7 @@ namespace vt
 				{
 					nlohmann::ordered_json group_video;
 					group_video["id"] = video.id;
-					group_video["offset"] = utils::time::time_to_string(video.offset.count());
+					group_video["offset"] = timestamp_to_string(timestamp{ video.offset }, full_time_format);
 					group_videos.push_back(group_video);
 				}
 
@@ -554,7 +554,11 @@ namespace vt
 
 						video_group::video_info vinfo;
 						vinfo.id = group_video["id"];
-						vinfo.offset = (decltype(vinfo.offset))utils::time::parse_time_to_ms(group_video["offset"]);
+						auto offset_opt = parse_timestamp(group_video["offset"]);
+						if (offset_opt.has_value())
+						{
+							vinfo.offset = offset_opt->total_nanoseconds;
+						}
 						vgroup.insert(vinfo);
 					}
 

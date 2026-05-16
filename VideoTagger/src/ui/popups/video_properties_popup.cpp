@@ -28,12 +28,12 @@ namespace vt::ui
 
 	void video_properties_popup::on_render()
 	{
-		timestamp ts(std::chrono::duration_cast<std::chrono::milliseconds>(offset_));
+		timestamp ts(offset_);
 		ImGui::AlignTextToFramePadding();
 		ImGui::TextUnformatted("Offset");
 		
 		widgets::time_input("##VideoOffsetInput", &ts);
-		offset_ = std::chrono::duration_cast<std::chrono::nanoseconds>(ts.total_milliseconds);
+		offset_ = ts.total_nanoseconds;
 
 		std::vector<std::pair<int, std::string>> buttons
 		{

@@ -11,9 +11,9 @@ namespace vt::utils
 		timestamp start{};
 		timestamp end{};
 
-		constexpr int64_t length() const
+		constexpr timestamp length() const
 		{
-			return (end - start).total_milliseconds.count();
+			return end - start;
 		}
 
 		constexpr bool contains(timestamp ts) const

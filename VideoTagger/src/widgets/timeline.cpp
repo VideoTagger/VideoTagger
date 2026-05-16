@@ -66,7 +66,7 @@ namespace vt::widgets
 		{
 			if (on_seek_ != nullptr)
 			{
-				on_seek_(timestamp{ ts });
+				on_seek_(timestamp{ std::chrono::nanoseconds{ ts } });
 			}
 		});
 		menu_popup_ = ui::new_popup<ui::timeline_menu_popup>(nullptr);
@@ -178,7 +178,7 @@ namespace vt::widgets
 				{
 					ImGui::PushFont(ctx_.get_font(font_type::h5));
 					const auto& style = ImGui::GetStyle();
-					auto time_text = utils::time::time_to_string(ts.total_milliseconds.count(), utils::time::no_ms_time_format);
+					auto time_text = timestamp_to_string(ts, no_ms_time_format);
 					auto text_size = ImGui::CalcTextSize(time_text.c_str());
 					const ImVec2 text_offset{ style.ItemSpacing.x / 2, -text_size.y / 1.5f };
 					ImVec2 text_pos{ start.x + text_offset.x, end.y + text_offset.y };
@@ -228,28 +228,27 @@ namespace vt::widgets
 		auto vis_span = visible_time_span();
 		auto span_length = vis_span.length();
 
-		auto span_length_ts = timestamp{ span_length };
-		if (span_length > 0)
+		if (span_length > timestamp::zero())
 		{
 			//TODO: This should propably be configurable by the user at some point, but for now this is good enough
 			int64_t tick_rate;
 			int64_t subtick_rate;
-			if (span_length_ts.minutes() >= 60) //hours
+			if (span_length.minutes() >= 60) //hours
 			{
 				tick_rate = 1000 * 60 * 10; //10 mins
 				subtick_rate = 1000 * 60; //1 min
 			}
-			else if (span_length_ts.minutes() > 0) // 1 minute
+			else if (span_length.minutes() > 0) // 1 minute
 			{
 				tick_rate = 1000 * 60; //1 min
 				subtick_rate = 1000 * 10; //10 secs
 			}
-			else if (span_length_ts.seconds() >= 15) //15 sec
+			else if (span_length.seconds() >= 15) //15 sec
 			{
 				tick_rate = 1000 * 5; //1 sec
 				subtick_rate = 500; //500 ms
 			}
-			else if (span_length_ts.seconds() > 0) //seconds
+			else if (span_length.seconds() > 0) //seconds
 			{
 				tick_rate = 1000; //1 sec
 				subtick_rate = 100; //100 ms
@@ -269,8 +268,8 @@ namespace vt::widgets
 					int64_t ms = static_cast<int64_t>(min_interval * i);
 					bool is_half_tick = (ms % (tick_rate / 2)) == 0;
 
-					timestamp actual_ts = timestamp{ ms };
-					ts += timestamp{ static_cast<int64_t>(min_interval) };
+					timestamp actual_ts = timestamp{ std::chrono::milliseconds{ ms } };
+					ts += timestamp{ std::chrono::milliseconds{ static_cast<int64_t>(min_interval) } };
 					//if (actual_ts < vis_span.start or actual_ts > vis_span.end) continue;
 					draw_time_interval(actual_ts, *rect, is_half_tick ? timeline_tick_type::half : timeline_tick_type::minor);
 				}
@@ -282,8 +281,8 @@ namespace vt::widgets
 				size_t i = 0;
 				for (timestamp ts = {}; ts < state_.max_ts; ++i)
 				{
-					timestamp actual_ts = timestamp{ static_cast<int64_t>(min_interval * i) };
-					ts += timestamp{ static_cast<int64_t>(min_interval) };
+					timestamp actual_ts = timestamp{ std::chrono::milliseconds{ static_cast<int64_t>(min_interval * i) } };
+					ts += timestamp{ std::chrono::milliseconds{ static_cast<int64_t>(min_interval) } };
 					//if (actual_ts < vis_span.start or actual_ts > vis_span.end) continue;
 					draw_time_interval(actual_ts, *rect, timeline_tick_type::major);
 				}
@@ -638,7 +637,7 @@ namespace vt::widgets
 		static constexpr float scrollbar_padding = 2.f;
 
 		auto [visible_min, visible_max] = visible_time_span();
-		auto visible_length = visible_max.total_milliseconds.count() - visible_min.total_milliseconds.count();
+		auto visible_length = visible_max.total_nanoseconds.count() - visible_min.total_nanoseconds.count();
 
 		auto cpos = ImGui::GetCursorPos();
 
@@ -781,10 +780,10 @@ namespace vt::widgets
 
 		ImGui::SetCursorPos(cpos);
 
-		int64_t view_ts = (view_ts_.start.total_milliseconds.count() + view_ts_.end.total_milliseconds.count()) / 2;
-		int64_t delta = view_ts - view_ts_.start.total_milliseconds.count();
-		int64_t scroll_min = state_.min_ts.total_milliseconds.count();
-		int64_t scroll_max = std::max(int64_t(state_.max_ts.total_milliseconds.count()) - visible_length / 2, (int64_t)0);
+		int64_t view_ts = (view_ts_.start.total_nanoseconds.count() + view_ts_.end.total_nanoseconds.count()) / 2;
+		int64_t delta = view_ts - view_ts_.start.total_nanoseconds.count();
+		int64_t scroll_min = state_.min_ts.total_nanoseconds.count();
+		int64_t scroll_max = std::max(int64_t(state_.max_ts.total_nanoseconds.count()) - visible_length / 2, (int64_t)0);
 
 		preview_scrollbar_.set_range(scroll_min, scroll_max);
 		//preview_scrollbar_.set_value(view_ts);
@@ -792,10 +791,10 @@ namespace vt::widgets
 		preview_scrollbar_.render_disabled(!(enabled_ and !is_dragging_span_left_grab_ and !is_dragging_span_right_grab_));
 		preview_scrollbar_.set_on_change_callback([this](int64_t old_value, int64_t new_value)
 		{
-			int64_t view_ts = (view_ts_.start.total_milliseconds.count() + view_ts_.end.total_milliseconds.count()) / 2;
+			int64_t view_ts = (view_ts_.start.total_nanoseconds.count() + view_ts_.end.total_nanoseconds.count()) / 2;
 			int64_t delta = new_value - old_value;
-			auto new_start = view_ts_.start + timestamp{ delta };
-			auto new_end = view_ts_.end + timestamp{ delta };
+			auto new_start = view_ts_.start + timestamp{ std::chrono::nanoseconds{ delta } };
+			auto new_end = view_ts_.end + timestamp{ std::chrono::nanoseconds{ delta } };
 
 			if (new_start > new_end)
 			{
@@ -811,34 +810,34 @@ namespace vt::widgets
 
 	timestamp timeline::to_timestamp_full_span(float pos) const
 	{
-		return timestamp(static_cast<int64_t>(math::lerp(static_cast<float>(state_.min_ts.total_milliseconds.count()), static_cast<float>(state_.max_ts.total_milliseconds.count()), pos)));
+		return timestamp(std::chrono::nanoseconds{ static_cast<int64_t>(math::lerp(static_cast<float>(state_.min_ts.total_nanoseconds.count()), static_cast<float>(state_.max_ts.total_nanoseconds.count()), pos)) });
 	}
 
 	timestamp timeline::to_timestamp(float pos) const
 	{
 		auto [start, end] = visible_time_span();
-		return timestamp(static_cast<int64_t>(math::lerp(static_cast<float>(start.total_milliseconds.count()), static_cast<float>(end.total_milliseconds.count()), pos)));
+		return timestamp(std::chrono::nanoseconds{ static_cast<int64_t>(math::lerp(static_cast<float>(start.total_nanoseconds.count()), static_cast<float>(end.total_nanoseconds.count()), pos)) });
 	}
 
 	float timeline::time_to_pos(timestamp time, timestamp min, timestamp max) const
 	{
-		return math::normalize(time.total_milliseconds.count(), min.total_milliseconds.count(), max.total_milliseconds.count(), 0.0f, 1.0f);
+		return math::normalize(time.total_nanoseconds.count(), min.total_nanoseconds.count(), max.total_nanoseconds.count(), 0.0f, 1.0f);
 	}
 
 	float timeline::to_timeline_pos(timestamp time) const
 	{
 		auto vis_span = visible_time_span();
 		auto visible_length = vis_span.length();
-		auto view_ts = (timestamp)(vis_span.start.total_milliseconds.count() + visible_length / 2);
-		return math::normalize((time - vis_span.start).total_milliseconds.count(), state_.min_ts.total_milliseconds.count(), state_.max_ts.total_milliseconds.count(), 0.0f, 1.0f);
+		auto view_ts = vis_span.start + visible_length / 2;
+		return math::normalize((time - vis_span.start).total_nanoseconds.count(), state_.min_ts.total_nanoseconds.count(), state_.max_ts.total_nanoseconds.count(), 0.0f, 1.0f);
 	}
 
 	float timeline::to_visible_timeline_pos(timestamp time) const
 	{
 		auto vis_span = visible_time_span();
 		auto visible_length = vis_span.length();
-		auto view_ts = (timestamp)(vis_span.start.total_milliseconds.count() + visible_length / 2);
-		return math::normalize((time - vis_span.start).total_milliseconds.count(), vis_span.start.total_milliseconds.count(), vis_span.end.total_milliseconds.count(), 0.0f, 1.0f);
+		auto view_ts = vis_span.start + visible_length / 2;
+		return math::normalize((time - vis_span.start).total_nanoseconds.count(), vis_span.start.total_nanoseconds.count(), vis_span.end.total_nanoseconds.count(), 0.0f, 1.0f);
 	}
 
 	int64_t timeline::interval_time() const
@@ -874,8 +873,8 @@ namespace vt::widgets
 	float timeline::span_as_scale() const
 	{
 		auto time_length = state_.time_length();
-		auto visible_length = visible_time_span().length();
-		return time_length / static_cast<float>(visible_length);
+		auto visible_length = visible_time_span().length().total_nanoseconds.count();
+		return time_length / static_cast<double>(visible_length);
 	}
 
 	timeline_state& timeline::state()
@@ -1000,8 +999,8 @@ namespace vt::widgets
 			//ImGui::TextUnformatted("00:00:00");
 
 			auto [start, end] = visible_time_span();
-			playback_scrollbar_.set_range(start.total_milliseconds.count(), end.total_milliseconds.count());
-			playback_scrollbar_.set_value(state_.current_ts.total_milliseconds.count());
+			playback_scrollbar_.set_range(start.total_nanoseconds.count(), end.total_nanoseconds.count());
+			playback_scrollbar_.set_value(state_.current_ts.total_nanoseconds.count());
 			playback_scrollbar_.set_size(cell_rect->GetSize());
 			playback_scrollbar_.render_disabled(!enabled_);
 			
@@ -1030,7 +1029,7 @@ namespace vt::widgets
 					auto mouse_pos_x = ImGui::GetMousePos().x;
 					float normalized_mouse_x = math::normalize(mouse_pos_x, cell_rect->Min.x, cell_rect->Max.x, 0.f, 1.f);
 					timestamp mouse_timestamp = to_timestamp(normalized_mouse_x);
-					auto ts_str = utils::time::time_to_string(mouse_timestamp.total_milliseconds.count());
+					auto ts_str = timestamp_to_string(mouse_timestamp, full_time_format);
 					ui::tooltip(ts_str);
 
 					if (!playback_scrollbar_.is_dragged())
@@ -1265,7 +1264,7 @@ namespace vt::widgets
 
 	int64_t timeline_state::time_length() const
 	{
-		return (max_ts - min_ts).total_milliseconds.count();
+		return (max_ts - min_ts).total_nanoseconds.count();
 	}
 
 	void timeline_state::set_current_timestamp(timestamp ts)

@@ -87,13 +87,13 @@ namespace vt::widgets
 		ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2{ 0, ImGui::GetStyle().ItemSpacing.y });
 		if (ImGui::Button(cstr))
 		{
-			timestamp = vt::timestamp(min_timestamp);
+			timestamp = vt::timestamp(std::chrono::nanoseconds{ min_timestamp });
 			result = true;
 		}
 		ImGui::SameLine();
 		if (fill_area) ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x);
 		auto time_input_id = "##TimestampCtrlInput" + name;
-		result |= widgets::time_input(time_input_id.c_str(), &timestamp, 1.0f, min_timestamp, max_timestamp, utils::time::default_time_format, ImGuiSliderFlags_AlwaysClamp);
+		result |= widgets::time_input(time_input_id.c_str(), &timestamp, 1.0f, min_timestamp, max_timestamp, default_time_format, ImGuiSliderFlags_AlwaysClamp);
 		if (was_activated != nullptr) *was_activated = ImGui::IsItemActivated();
 		if (was_released != nullptr) *was_released = ImGui::IsItemDeactivated();
 		if (fill_area) ImGui::PopItemWidth();
@@ -103,12 +103,12 @@ namespace vt::widgets
 		{
 			if (ImGui::MenuItem("Set Min"))
 			{
-				timestamp = vt::timestamp(min_timestamp);
+				timestamp = vt::timestamp(std::chrono::nanoseconds{ min_timestamp });
 				result = true;
 			}
 			if (ImGui::MenuItem("Set Max"))
 			{
-				timestamp = vt::timestamp(max_timestamp);
+				timestamp = vt::timestamp(std::chrono::nanoseconds{ max_timestamp });
 				result = true;
 			}
 			ImGui::EndPopup();
