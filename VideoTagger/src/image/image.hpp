@@ -20,7 +20,7 @@ namespace vt
 		{
 			std::copy(other.data_.get(), other.data_.get() + (size_[0] * size_[1]), data_.get());
 		}
-		image(image&&) = default;
+		image(image&& other) : size_{ other.size_ }, data_{ std::move(other.data_) } {}
 
 	private:
 		std::unique_ptr<pixel_type[]> data_;
@@ -112,6 +112,14 @@ namespace vt
 			return *this;
 		}
 
-		image& operator=(image&&) = default;
+		image& operator=(image&& other)
+		{
+			if (this != &other)
+			{
+				size_ = other.size_;
+				data_ = std::move(other.data_);
+			}
+			return *this;
+		}
 	};
 }
