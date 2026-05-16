@@ -5,7 +5,7 @@
 #include <future>
 #include <vector>
 #include <nlohmann/json.hpp>
-#include <core/gl_texture.hpp>
+#include <render/gl_texture.hpp>
 #include "video_stream.hpp"
 #include <utils/hash.hpp>
 #include <imgui.h>

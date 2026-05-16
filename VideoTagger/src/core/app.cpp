@@ -21,6 +21,14 @@
 #include <opencv2/core.hpp>
 #include <opencv2/core/utils/logger.hpp>
 
+extern "C"
+{
+	#include <libavutil/ffversion.h>
+}
+
+#include <openssl/opensslv.h>
+#include <pybind11/pybind11.h>
+
 #define NOMINMAX
 #ifndef WIN32_LEAN_AND_MEAN
 	#define WIN32_LEAN_AND_MEAN
@@ -79,6 +87,23 @@ namespace vt
 		cv::utils::logging::setLogLevel(cv::utils::logging::LOG_LEVEL_SILENT);
 	}
 
+	static void show_debug_info()
+	{
+		SDL_version compiled{};
+		SDL_version linked{};
+		SDL_VERSION(&compiled);
+		SDL_GetVersion(&linked);
+		debug::log("VideoTagger Version: {}", VT_VERSION);
+		debug::log("SDL Version (Header):  {}.{}.{}", compiled.major, compiled.minor, compiled.patch);
+		debug::log("SDL Version (Linked):  {}.{}.{}", linked.major, linked.minor, linked.patch);
+		debug::log("OpenGL Version: {}", (const char*)glGetString(GL_VERSION));
+		debug::log("ImGui Version: {}", IMGUI_VERSION);
+		debug::log("FFmpeg Version: {}", FFMPEG_VERSION);
+		debug::log("OpenSSL Version: {}", OPENSSL_FULL_VERSION_STR);
+		debug::log("Python Version: {}", PY_VERSION);
+		debug::log("pybind11 Version: {}.{}.{}", PYBIND11_VERSION_MAJOR, PYBIND11_VERSION_MINOR, PYBIND11_VERSION_PATCH);
+	}
+
 	bool app::init(const system_window_config& main_config)
 	{
 		debug::init();
@@ -132,7 +157,7 @@ namespace vt
 		SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
 		SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
 		SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
-		
+				
 		av_log_set_callback(ffmpeg_log_callback);
 		redirect_opencv_logs();
 
@@ -150,16 +175,21 @@ namespace vt
 		ctx_.register_video_importers();
 
 		ctx_.main_window = std::make_unique<main_window>(main_config);
-		ImGui_ImplSDL2_InitForOpenGL(ctx_.main_window->window, ctx_.main_window->gl_ctx);
-		ImGui_ImplOpenGL3_Init(glsl_version);
+		ctx_.main_window->set_current();
 
-		if (!gladLoadGLLoader((GLADloadproc)SDL_GL_GetProcAddress))
+		if (!gladLoadGL())
 		{
 			debug::panic("Failed to initialize OpenGL context");
 		}
+		//if (!gladLoadGLLoader((GLADloadproc)SDL_GL_GetProcAddress))
+		//{
+		//	debug::panic("Failed to initialize OpenGL context");
+		//}
+		ImGui_ImplSDL2_InitForOpenGL(ctx_.main_window->window, ctx_.main_window->gl_ctx);
+		ImGui_ImplOpenGL3_Init(glsl_version);
 
 		show_debug_info();
-		ctx_.main_window->set_current();
+		ctx_.load_shaders();
 		SDL_GL_SetSwapInterval(1); //VSync
 
 		try

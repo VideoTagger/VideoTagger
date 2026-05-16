@@ -11,9 +11,11 @@ namespace vt
 	{
 	public:
 		mask_shape() = default;
+		mask_shape(int width, int height);
 		mask_shape(const image<image_pixel_format::gray8>& mask);
 
 	public:
+		//TODO: This should be compressed when not in use (should probably use std::variant<image, compressed_image>)
 		image<image_pixel_format::gray8> mask_;
 		utils::vec2<int> pos_;
 

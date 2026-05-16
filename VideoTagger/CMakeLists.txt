@@ -23,6 +23,10 @@ vt_embed_text_file("${ASSETS_SOURCE_DIR}/lang/en_US.vtlang" "${EMBED_OUTPUT_DIR}
 #vt_embed_json("${ASSETS_SOURCE_DIR}/themes/light.vttheme" "${EMBED_OUTPUT_DIR}" "vt::embed" EMBED_GENERATED_FILES)
 vt_embed_directory(${EMBED_SOURCE_DIR} ${EMBED_OUTPUT_DIR} "vt::embed" EMBED_GENERATED_FILES)
 
+# Shaders
+vt_embed_text_file("${PROJECT_SOURCE_DIR}/shaders/mask_shader.vert" "${EMBED_OUTPUT_DIR}/mask_shader_vert.hpp" "vt::embed" EMBED_GENERATED_FILES)
+vt_embed_text_file("${PROJECT_SOURCE_DIR}/shaders/mask_shader.frag" "${EMBED_OUTPUT_DIR}/mask_shader_frag.hpp" "vt::embed" EMBED_GENERATED_FILES)
+
 # About & Licenses
 include(cmake/GenerateAbout.cmake)
 set(LICENSE_DIR "${PROJECT_SOURCE_DIR}/licenses")

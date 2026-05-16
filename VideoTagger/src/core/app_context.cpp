@@ -86,6 +86,13 @@ namespace vt
 		}, shape_predictor_registries);
 	}
 
+    void app_context::load_shaders()
+    {
+		debug::log("Loading shaders...");
+		shaders = std::make_unique<shader_storage>();
+		debug::log("Shaders loaded");
+	}
+
 	void app_context::create_windows()
 	{
 		create_window<widgets::theme_customizer>();

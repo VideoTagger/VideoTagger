@@ -186,30 +186,11 @@ namespace vt
 		});
 	}
 
-	static void show_debug_info()
-	{
-		SDL_version compiled{};
-		SDL_version linked{};
-		SDL_VERSION(&compiled);
-		SDL_GetVersion(&linked);
-		debug::log("VideoTagger Version: {}", VT_VERSION);
-		debug::log("SDL Version (Header):  {}.{}.{}", compiled.major, compiled.minor, compiled.patch);
-		debug::log("SDL Version (Linked):  {}.{}.{}", linked.major, linked.minor, linked.patch);
-		debug::log("OpenGL Version: {}", (const char*)glGetString(GL_VERSION));
-		debug::log("ImGui Version: {}", IMGUI_VERSION);
-		debug::log("FFmpeg Version: {}", FFMPEG_VERSION);
-		debug::log("OpenSSL Version: {}", OPENSSL_FULL_VERSION_STR);
-		debug::log("Python Version: {}", PY_VERSION);
-		debug::log("pybind11 Version: {}.{}.{}", PYBIND11_VERSION_MAJOR, PYBIND11_VERSION_MINOR, PYBIND11_VERSION_PATCH);
-	}
-
 	main_window::main_window(const system_window_config& cfg) : system_window{ cfg }, event_source_{ "main_window" }
 	{
 		register_listeners();
 		register_video_resource_listeners();
 		register_attribute_listeners();
-
-		show_debug_info();
 
 		init_options();
 		load_settings();
@@ -2877,7 +2858,7 @@ namespace vt
 						for (const auto& tag_name : ctx_.current_project->displayed_tags)
 						{
 							auto& tag = ctx_.current_project->tags.at(tag_name);
-							auto& segments = segment_storage.at(tag_name);
+							auto& segments = segment_storage[tag_name];
 
 							auto segment_it = segments.find(current_ts);
 							if (segment_it == segments.end()) continue;

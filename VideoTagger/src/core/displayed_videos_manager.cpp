@@ -6,12 +6,12 @@
 namespace vt
 {
 	displayed_video_data::displayed_video_data(video_id_t id, video_stream&& video, std::chrono::nanoseconds offset, int video_width, int video_height) :
-		id{ id }, video{ std::move(video) }, offset{ offset }, display_texture(video_width, video_height, GL_RGB)
+		id{ id }, video{ std::move(video) }, offset{ offset }, display_texture(video_width, video_height, GL_RGB), overlay_texture(video_width, video_height, GL_RGBA)
 	{
 	}
 
 	displayed_video_data::displayed_video_data(displayed_video_data&& other) noexcept :
-		id{ other.id }, video{ std::move(other.video) }, offset{ other.offset }, display_texture{ std::move(other.display_texture) }
+		id{ other.id }, video{ std::move(other.video) }, offset{ other.offset }, display_texture{ std::move(other.display_texture) }, overlay_texture{ std::move(other.overlay_texture) }
 	{
 		other.id = {};
 		other.offset = {};
@@ -27,6 +27,7 @@ namespace vt
 		video = std::move(other.video);
 		offset = other.offset;
 		display_texture = std::move(other.display_texture);
+		overlay_texture = std::move(other.overlay_texture);
 
 		other.id = {};
 		other.offset = {};
@@ -54,6 +55,7 @@ namespace vt
 		{
 			video_data.video.buffer_frame();
 			video_data.video.update_frame(video_data.display_texture, current_ts - video_data.offset);
+			video_data.overlay_texture.clear();
 		}
 
 		auto group_duration = duration();
@@ -100,6 +102,7 @@ namespace vt
 
 			video_data.video.seek(clamped_video_ts);
 			video_data.video.update_frame(video_data.display_texture, clamped_video_ts, false, true);
+			video_data.overlay_texture.clear();
 		});
 
 		auto group_duration = duration();

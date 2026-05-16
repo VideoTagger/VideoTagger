@@ -4,7 +4,7 @@
 #include <chrono>
 #include <deque>
 #include <optional>
-#include <core/gl_texture.hpp>
+#include <render/gl_texture.hpp>
 #include <image/image.hpp>
 
 #include "video_decoder.hpp"
