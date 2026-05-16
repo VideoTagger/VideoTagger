@@ -36,8 +36,8 @@ namespace vt::ui
 
 		tag_combo_.render_with_label(ctx_.lang->get("tag"));
 
-		auto min_ts = min_timestamp_.total_milliseconds.count();
-		auto max_ts = max_timestamp_.total_milliseconds.count();
+		auto min_ts = min_timestamp_.total_nanoseconds.count();
+		auto max_ts = max_timestamp_.total_nanoseconds.count();
 
 		if (insert_request_event_data_.segment_type() == tag_segment_type::timestamp)
 		{
@@ -47,7 +47,7 @@ namespace vt::ui
 		else
 		{
 			widgets::timestamp_control(ctx_.lang->get("segment.start"), start_, min_ts, max_ts, nullptr, nullptr);
-			widgets::timestamp_control(ctx_.lang->get("segment.end"), end_, (start_.total_milliseconds + tag_segment::min_segment_size).count(), max_ts, nullptr, nullptr);
+			widgets::timestamp_control(ctx_.lang->get("segment.end"), end_, (start_.total_nanoseconds + tag_segment::min_segment_size).count(), max_ts, nullptr, nullptr);
 		}
 
 		if (start_ > end_)

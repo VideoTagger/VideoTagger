@@ -174,7 +174,7 @@ namespace vt
 		void set(timestamp ts);
 
 		///@return Duration of the segment in nanoseconds.
-		std::chrono::milliseconds duration() const;
+		std::chrono::nanoseconds duration() const;
 
 		///@return Type of the segment.
 		tag_segment_type type() const;

@@ -11,7 +11,7 @@ void vt::bindings::bind_group(pybind11::module_& module)
 	.def_readonly("id", &video_group::video_info::id)
 	.def_property_readonly("offset", [](const video_group::video_info& vi) -> timestamp
 	{
-		return timestamp{ std::chrono::duration_cast<std::chrono::milliseconds>(vi.offset).count() };
+		return timestamp{ vi.offset };
 	});
 
 	py::class_<video_group>(module, "VideoGroup")
@@ -26,7 +26,7 @@ void vt::bindings::bind_group(pybind11::module_& module)
 	})
 	.def("add_video", [](video_group& group, const vt_video& vid, timestamp offset)
 	{
-		group.insert(video_group::video_info{ vid.id, std::chrono::nanoseconds(offset.total_milliseconds) });
+		group.insert(video_group::video_info{ vid.id, offset.total_nanoseconds });
 	})
 	.def("add_timestamp", [](video_group& group, tag& t, timestamp start) -> std::optional<vt_tag_segment>
 	{

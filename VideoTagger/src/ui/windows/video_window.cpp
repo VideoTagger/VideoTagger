@@ -211,8 +211,8 @@ namespace vt::ui::windows
 			const auto& current_frame = video_->current_frame();
 			auto video_ts = current_frame.has_value() ? current_frame->timestamp() : std::chrono::nanoseconds{};
 			auto duration_ts = video_->duration();
-			timestamp current_time{ std::chrono::duration_cast<std::chrono::milliseconds>(video_ts) };
-			timestamp duration{ std::chrono::duration_cast<std::chrono::milliseconds>(duration_ts) };
+			timestamp current_time{ video_ts };
+			timestamp duration{ duration_ts };
 			decltype(video_ts) min_ts{};
 
 			if (show_controls)

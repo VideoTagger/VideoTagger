@@ -46,7 +46,7 @@ namespace vt
 
 		static std::optional<shape_type> stateless_predict(const shape_type& start_shape, timestamp start_ts, const shape_type& end_shape, timestamp end_ts, timestamp current_ts)
 		{
-			return math::shape_lerp<shape_type>(start_shape, end_shape, static_cast<float>((current_ts - start_ts).total_milliseconds.count()) / (end_ts - start_ts).total_milliseconds.count());
+			return math::shape_lerp<shape_type>(start_shape, end_shape, static_cast<float>((current_ts - start_ts).total_nanoseconds.count()) / (end_ts - start_ts).total_nanoseconds.count());
 		}
 
 		virtual std::optional<shape_type> stateless_predict(const std::vector<shape_type>& shape_instances, const std::vector<timestamp>& timestamps, timestamp current_ts)

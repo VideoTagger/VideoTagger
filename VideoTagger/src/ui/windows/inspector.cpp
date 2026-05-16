@@ -106,11 +106,11 @@ namespace vt::ui::windows
 				case tag_segment_type::timestamp:
 				{
 					auto min_timestamp = timestamp::zero();
-					auto max_timestamp = timestamp(std::chrono::duration_cast<std::chrono::milliseconds>(ctx_.displayed_videos.duration()));
+					auto max_timestamp = timestamp{ ctx_.displayed_videos.duration() };
 
 					modified_timestamp = widgets::timestamp_control
 					(
-						"Point", segment_start, min_timestamp.total_milliseconds.count(), max_timestamp.total_milliseconds.count(), &started_editing, &finished_editing
+						"Point", segment_start, min_timestamp.total_nanoseconds.count(), max_timestamp.total_nanoseconds.count(), &started_editing, &finished_editing
 					);
 					segment_end = segment_start;
 					if (started_editing)
@@ -127,8 +127,8 @@ namespace vt::ui::windows
 					auto min_timestamp = timestamp::zero();
 					auto max_timestamp = timestamp(std::chrono::duration_cast<std::chrono::milliseconds>(ctx_.displayed_videos.duration()));
 					
-					timestamp start_max = link_segment_parts ? max_timestamp - (segment_end - segment_start) : std::max(timestamp::zero(), segment_end - timestamp{1});
-					timestamp end_min = link_segment_parts ? min_timestamp + (segment_end - segment_start) : segment_start + timestamp{ 1 };
+					timestamp start_max = link_segment_parts ? max_timestamp - (segment_end - segment_start) : std::max(timestamp::zero(), segment_end - timestamp{ std::chrono::nanoseconds{ 1 } });
+					timestamp end_min = link_segment_parts ? min_timestamp + (segment_end - segment_start) : segment_start + timestamp{ std::chrono::nanoseconds{ 1 } };
 
 					bool start_activated = false;
 					bool start_released = false;
@@ -148,7 +148,7 @@ namespace vt::ui::windows
 						//ImGui::Columns(2, nullptr, false);
 						modified_start = widgets::timestamp_control
 						(
-							"Start", segment_start, min_timestamp.total_milliseconds.count(), start_max.total_milliseconds.count(), &start_activated, &start_released
+							"Start", segment_start, min_timestamp.total_nanoseconds.count(), start_max.total_nanoseconds.count(), &start_activated, &start_released
 						);
 
 						ImGui::SameLine();
@@ -158,7 +158,7 @@ namespace vt::ui::windows
 						//ImGui::NextColumn();
 						modified_end = widgets::timestamp_control
 						(
-							"End", segment_end, end_min.total_milliseconds.count(), max_timestamp.total_milliseconds.count(), &end_activated, &end_released
+							"End", segment_end, end_min.total_nanoseconds.count(), max_timestamp.total_nanoseconds.count(), &end_activated, &end_released
 						);
 						ImGui::SameLine();
 						auto end_pos = ImGui::GetCursorScreenPos() + y_offset;
@@ -218,7 +218,7 @@ namespace vt::ui::windows
 
 					if (segment_start < timestamp::zero())
 					{
-						timestamp move_value = timestamp(std::abs(segment_start.total_milliseconds.count()));
+						timestamp move_value = timestamp(std::chrono::abs(segment_start.total_nanoseconds));
 						segment_start += move_value;
 						segment_end += move_value;
 					}

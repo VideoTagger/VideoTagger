@@ -116,16 +116,16 @@ namespace vt::ui
 				auto keyframe_icon = is_current_keyframe ? icons::keyframe_current : icons::keyframe;
 
 				bool erased = false;
-				auto collapsible_label = fmt::format("##Keyframe{}{}", region_data.region_id, ts.total_milliseconds.count());
+				auto collapsible_label = fmt::format("##Keyframe{}{}", region_data.region_id, ts.total_nanoseconds.count());
 				auto icon_color = is_current_keyframe ? std::optional{ ImGui::ColorConvertU32ToFloat4(selection_color) } : std::optional<ImVec4>{};
-				bool is_collapsible_open = widgets::begin_collapsible(collapsible_label, utils::time::time_to_string(ts.total_milliseconds.count()), 0, keyframe_icon, icon_color, [&]()
+				bool is_collapsible_open = widgets::begin_collapsible(collapsible_label, timestamp_to_string(ts, default_time_format), 0, keyframe_icon, icon_color, [&]()
 				{
-					auto popup_label = fmt::format("KeyframeCtx{}{}", region_data.region_id, ts.total_milliseconds.count());
+					auto popup_label = fmt::format("KeyframeCtx{}{}", region_data.region_id, ts.total_nanoseconds.count());
 					if (ImGui::BeginPopupContextItem(popup_label.c_str()))
 					{
 						if (ImGui::MenuItem(fmt::format("{} Go To", icons::goto_keyframe).c_str()))
 						{
-							ctx_.dispatch_event<seek_request_event>(source, ctx_.get_window<widgets::video_player>(), ts.total_milliseconds);
+							ctx_.dispatch_event<seek_request_event>(source, ctx_.get_window<widgets::video_player>(), ts.total_nanoseconds);
 						}
 						if (ImGui::MenuItem(fmt::format("{} Delete", icons::delete_).c_str()))
 						{

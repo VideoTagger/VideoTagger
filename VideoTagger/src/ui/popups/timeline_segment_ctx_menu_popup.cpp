@@ -121,14 +121,14 @@ namespace vt::ui
 				if (ImGui::MenuItem(seek_start_name.c_str()))
 				{
 					const auto& segment = segment_storage_->at(active_tag_).at(active_segment_);
-					ctx_.dispatch_event<seek_request_event>(event_source_, player, segment.start.total_milliseconds);
+					ctx_.dispatch_event<seek_request_event>(event_source_, player, segment.start.total_nanoseconds);
 				}
 
 				auto seek_end_name = fmt::format("{} {}", icons::line_end_circle, ctx_.lang->get("popup.timeline_segment_context_menu.seek.end"));
 				if (ImGui::MenuItem(seek_end_name.c_str()))
 				{
 					const auto& segment = segment_storage_->at(active_tag_).at(active_segment_);
-					ctx_.dispatch_event<seek_request_event>(event_source_, player, segment.end.total_milliseconds);
+					ctx_.dispatch_event<seek_request_event>(event_source_, player, segment.end.total_nanoseconds);
 				}
 
 				ui::end_menu();
@@ -157,7 +157,7 @@ namespace vt::ui
 			if (ImGui::MenuItem(seek_timestamp_name.c_str()))
 			{
 				const auto& segment = segment_storage_->at(active_tag_).at(active_segment_);
-				ctx_.dispatch_event<seek_request_event>(event_source_, player, segment.start.total_milliseconds);
+				ctx_.dispatch_event<seek_request_event>(event_source_, player, segment.start.total_nanoseconds);
 			}
 		}
 	}

@@ -70,9 +70,9 @@ namespace vt
 		end = ts;
 	}
 
-	std::chrono::milliseconds tag_segment::duration() const
+	std::chrono::nanoseconds tag_segment::duration() const
 	{
-		return (end - start).total_milliseconds;
+		return (end - start).total_nanoseconds;
 	}
 
 	tag_segment_type tag_segment::type() const
