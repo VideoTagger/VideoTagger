@@ -144,7 +144,7 @@ namespace vt
 			glDisable(GL_CULL_FACE);
 			glDisable(GL_DEPTH_TEST);
 			glDisable(GL_STENCIL_TEST);
-			glDisable(GL_SCISSOR_TEST);
+			glEnable(GL_SCISSOR_TEST);
 
 			ImRect quad{ data->min, data->max };
 			// 6 vertices, each: pos.x, pos.y, u, v
