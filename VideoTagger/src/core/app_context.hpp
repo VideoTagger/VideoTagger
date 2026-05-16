@@ -80,14 +80,6 @@ namespace vt
 		bool show_tag_importer_window = false;
 	};
 
-	using shape_predictor_registries_type = std::tuple<
-		shape_predictor_registry<rectangle_shape>,
-		shape_predictor_registry<line_shape>,
-		shape_predictor_registry<points_shape>,
-		shape_predictor_registry<polygon_shape>,
-		shape_predictor_registry<circle_shape>,
-		shape_predictor_registry<mask_shape>
-	>;
 
 
 	///@brief Application context that holds all states and necessary data
@@ -137,7 +129,7 @@ namespace vt
 		std::optional<video_id_t> last_focused_video;
 
 		attribute_registry attr_registry;
-		shape_predictor_registries_type shape_predictor_registries;
+		std::unordered_map<std::type_index, std::unique_ptr<impl::shape_predictor_registry>> shape_predictor_registries;
 
 		session_storage session;
 
@@ -274,6 +266,12 @@ namespace vt
 	template<typename shape_type>
 	inline shape_predictor_registry<shape_type>& app_context::get_shape_predictor_registry()
 	{
-		return std::get<shape_predictor_registry<shape_type>>(shape_predictor_registries);
+		auto& ptr = shape_predictor_registries[typeid(shape_predictor_registry<shape_type>)];
+		if (ptr == nullptr)
+		{
+			ptr = std::make_unique<shape_predictor_registry<shape_type>>();
+		}
+
+		return dynamic_cast<shape_predictor_registry<shape_type>&>(*ptr);
 	}
 }

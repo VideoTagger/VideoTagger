@@ -72,18 +72,31 @@ namespace vt
 
 	void app_context::init_shape_predictor_registries()
 	{
-		std::apply([](auto&&... registry)
+		std::tuple<
+			rectangle_shape,
+			line_shape,
+			points_shape,
+			polygon_shape,
+			circle_shape
+		> registry_types;
+
+		std::apply([this](auto&&... registry)
 		{
-			auto register_interpolators = [](auto& reg)
+			auto register_interpolators = [this](auto& shape)
 			{
-				using shape_type = typename std::remove_reference_t<decltype(reg)>::shape_type;
+				using shape_type = typename std::remove_reference_t<decltype(shape)>;
+
+				auto& reg = get_shape_predictor_registry<shape_type>();
+
 				reg.new_factory<dummy_shape_predictor_factory<shape_type>>("None");
 				reg.new_factory<linear_shape_predictor_factory<shape_type>>("Linear");
 			};
 
 			(register_interpolators(registry), ...);
 
-		}, shape_predictor_registries);
+		}, registry_types);
+
+		get_shape_predictor_registry<mask_shape>().new_factory<dummy_shape_predictor_factory<mask_shape>>("None");
 	}
 
 	void app_context::create_windows()
