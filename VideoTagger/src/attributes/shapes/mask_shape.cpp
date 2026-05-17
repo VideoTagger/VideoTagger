@@ -100,11 +100,13 @@ namespace vt
 			mask_shape obj{};
 		};
 
-		mask_draw_data* data = new mask_draw_data;
-
 		auto* draw_list = ImGui::GetWindowDrawList();
-		//TODO: Actually get the correct video instead of just the first one
-		auto& vid = *ctx_.displayed_videos.begin();
+		if (!video_id.has_value()) return;
+		auto vid_it = ctx_.displayed_videos.find(*video_id);
+		if (vid_it == ctx_.displayed_videos.end()) return;
+
+		mask_draw_data* data = new mask_draw_data;
+		auto& vid = *vid_it;
 		data->texture = &vid.overlay_texture;
 		data->draw_rect = draw_rect;
 		data->fill_color = fill_color;
@@ -115,7 +117,11 @@ namespace vt
 		{
 			auto* data = static_cast<mask_draw_data*>(cmd->UserCallbackData);
 			auto& mask_shader = ctx_.shaders->mask_shader;
-			if (!mask_shader.is_valid()) return;
+			if (!mask_shader.is_valid())
+			{
+				delete data;
+				return;
+			}
 
 			auto* draw_data = ImGui::GetDrawData();
 

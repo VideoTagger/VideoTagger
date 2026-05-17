@@ -39,14 +39,20 @@ namespace vt
 		auto mpos = to_texture_space(mouse_pos, pos, size, tex_size);
 		if (ImGui::IsMouseClicked(ImGuiMouseButton_Left) and insert_allowed)
 		{
-			if (!shape_data.has_value())
+			bool was_created = false;
+			if (!shape_data.has_value() or !is_active_video)
 			{
 				shape_data = mask_shape{ tex_size_int[0], tex_size_int[1] };
+				was_created = true;
 			}
 
 			apply_brush(mpos, tex_size_int, is_eraser_);
-			shape_data->recalculate_bounding_box();
+			if (was_created)
+			{
+				shape_data->recalculate_bounding_box();
+			}
 			active_video_ = video_id;
+			is_active_video = active_video_.has_value() and *active_video_ == video_id;
 		}
 		else if (ImGui::IsMouseDragging(ImGuiMouseButton_Left) and insert_allowed and shape_data.has_value())
 		{
@@ -76,7 +82,7 @@ namespace vt
 		{
 			const auto& tag = get_tag();
 			ImRect draw_rect{ pos, pos + size };
-			shape_data->render(utils::vec2<int>({ static_cast<int>(tex_size.x), static_cast<int>(tex_size.y) }), draw_rect, tag.fill_color(), tag.outline_color(), std::nullopt, false);
+			shape_data->render(utils::vec2<int>({ static_cast<int>(tex_size.x), static_cast<int>(tex_size.y) }), draw_rect, tag.fill_color(), tag.outline_color(), std::nullopt, false, video_id);
 
 			if (ImGui::IsKeyPressed(ImGuiKey_Enter) and insert_allowed)
 			{
@@ -151,7 +157,7 @@ namespace vt
 		auto mat = image_to_cvmat(mask_data->mask);
 		bool update_bb = false;
 
-		utils::vec4<int> brush_area{ center - brush_size_ / 2, center + brush_size_ / 2 };
+		utils::vec4<int> brush_area{ center - brush_size_, center + brush_size_ };
 
 		switch (brush_type_)
 		{
