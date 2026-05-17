@@ -103,9 +103,9 @@ namespace vt
 
 		constexpr bool empty() const
 		{
-			for (int y = 0; y < size_[0]; ++y)
+			for (int y = 0; y < size_[1]; ++y)
 			{
-				for (int x = 0; x < size_[1]; ++x)
+				for (int x = 0; x < size_[0]; ++x)
 				{
 					if (at(x, y) != pixel_type{}) return false;
 				}
