@@ -255,7 +255,7 @@ namespace vt
 
 				utils::vec2<int> shape_space{ static_cast<int>(tex_size.x), static_cast<int>(tex_size.y) };
 				ImRect draw_rect{ pos, pos + size };
-				shape_opt->render(shape_space, draw_rect, attribute_tag.fill_color(), outline_color, render_point_size, show_bbox);
+				shape_opt->render(shape_space, draw_rect, attribute_tag.fill_color(), outline_color, render_point_size, show_bbox, video_id);
 
 				if (window_hovered and select_tool_active)
 				{					
