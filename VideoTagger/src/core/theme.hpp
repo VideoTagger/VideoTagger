@@ -4,6 +4,7 @@
 #include <string>
 #include <stack>
 #include <unordered_map>
+#include <optional>
 #include <imgui.h>
 #include <utils/json.hpp>
 
@@ -20,6 +21,9 @@ namespace vt
 		secondary_dark,
 		selection_normal,
 		selection_disabled,
+		gizmo_point,
+		gizmo_point_outline,
+		tool_preview_outline,
 		playhead_normal,
 		playhead_disabled,
 		axis_x,
@@ -111,6 +115,11 @@ namespace vt
 		uint32_t get_rgba(const std::string& name) const;
 		ImVec4 get_float4(theme_color name) const;
 		ImVec4 get_float4(const std::string& name) const;
+
+		std::optional<uint32_t> get_rgba_opt(theme_color name) const;
+		std::optional<uint32_t> get_rgba_opt(const std::string& name) const;
+		std::optional<ImVec4> get_float4_opt(theme_color name) const;
+		std::optional<ImVec4> get_float4_opt(const std::string& name) const;
 
 		void save(const std::filesystem::path& filepath) const;
 		static theme load_from_json(const nlohmann::ordered_json& json);

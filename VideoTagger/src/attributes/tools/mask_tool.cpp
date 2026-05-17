@@ -172,19 +172,20 @@ namespace vt
 	{
 		auto* draw_list = ImGui::GetWindowDrawList();
 		const auto& tag = get_tag();
+		auto outline_color = ctx_.current_theme.get_rgba(theme_color::tool_preview_outline);
 
 		switch (brush_type_)
 		{
 			case mask_tool_type::circle:
 			{
-				draw_list->AddCircle(center, brush_size, tag.outline_color());
-				draw_list->AddCircleFilled(center, brush_size, tag.fill_color());
+				draw_list->AddCircle(center, brush_size, outline_color);
+				//draw_list->AddCircleFilled(center, brush_size, tag.fill_color());
 				break;
 			}
 			case mask_tool_type::square:
 			{
-				draw_list->AddRect({ center.x - brush_size, center.y - brush_size }, { center.x + brush_size, center.y + brush_size }, tag.outline_color());
-				draw_list->AddRectFilled({ center.x - brush_size, center.y - brush_size }, { center.x + brush_size, center.y + brush_size }, tag.fill_color());
+				draw_list->AddRect({ center.x - brush_size, center.y - brush_size }, { center.x + brush_size, center.y + brush_size }, outline_color);
+				//draw_list->AddRectFilled({ center.x - brush_size, center.y - brush_size }, { center.x + brush_size, center.y + brush_size }, tag.fill_color());
 				break;
 			}
 			default: break;
