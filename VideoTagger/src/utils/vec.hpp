@@ -24,8 +24,15 @@ namespace vt::utils
 		constexpr vec(const data_container& data) : data{ data } {}
 		constexpr vec(data_container&& data) : data{ std::move(data) } {}
 
-		template<typename = std::enable_if_t<dims == 4>>
-		constexpr vec(const vec<type, 2>& pos_min, const vec<type, 2>& pos_max) : data{ pos_min[0], pos_min[1], pos_max[0], pos_max[1] } {}
+		template<typename = std::enable_if_t<(dims >= 4 and dims % 2 == 0)>>
+		constexpr vec(const vec<type, dims / 2>& pos_min, const vec<type, dims / 2>& pos_max)
+		{
+			for (size_t i = 0; i < dims / 2; ++i)
+			{
+				this->data[i] = pos_min[i];
+				this->data[i + dims / 2] = pos_max[i];
+			}
+		}
 
 		data_container data{};
 
