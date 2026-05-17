@@ -9,10 +9,10 @@
 
 namespace vt
 {
-	mask_tool::mask_tool(const tag& tag, const std::string& attribute_name) : shape_tool<mask_shape>{ tag, attribute_name }, brush_size_{ 5 }, brush_type_{ mask_tool_type::circle }
+	mask_tool::mask_tool(const tag& tag, const std::string& attribute_name) : shape_tool<mask_shape>{ tag, attribute_name }, brush_size_{ 5 }, brush_type_{ mask_tool_type::circle }, is_eraser_{}
 	{
 		auto col_count = shape_tool<mask_shape>::property_column_count();
-		set_property_column_count(col_count + 2);
+		set_property_column_count(col_count + 3);
 	}
 
 	void mask_tool::render_overlay(video_id_t video_id, ImVec2 pos, ImVec2 size, ImVec2 tex_size)
@@ -44,7 +44,7 @@ namespace vt
 				shape_data = mask_shape{ tex_size_int[0], tex_size_int[1] };
 			}
 
-			apply_brush(mpos, tex_size_int);
+			apply_brush(mpos, tex_size_int, is_eraser_);
 			shape_data->recalculate_bounding_box();
 			active_video_ = video_id;
 		}
@@ -68,7 +68,7 @@ namespace vt
 				auto x = math::lerp(prev_pt.x, current_pt.x, t);
 				auto y = math::lerp(prev_pt.y, current_pt.y, t);
 
-				apply_brush({ x, y }, tex_size_int);
+				apply_brush({ x, y }, tex_size_int, is_eraser_);
 			}
 		}
 		
@@ -113,6 +113,13 @@ namespace vt
 	void mask_tool::render_properties()
 	{
 		const auto& style = ImGui::GetStyle();
+		ImGui::TableNextColumn();
+		if (ui::icon_button(is_eraser_ ? icons::tool_eraser : icons::tool_brush))
+		{
+			is_eraser_ = !is_eraser_;
+		}
+		ui::tooltip("Toggle Brush/Eraser");
+
 		ImGui::TableNextColumn();
 		{
 			ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2{});
