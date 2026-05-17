@@ -45,6 +45,7 @@ namespace vt
 			}
 
 			apply_brush(mpos, tex_size_int);
+			shape_data->recalculate_bounding_box();
 			active_video_ = video_id;
 		}
 		else if (ImGui::IsMouseDragging(ImGuiMouseButton_Left) and insert_allowed and shape_data.has_value())
@@ -74,7 +75,8 @@ namespace vt
 		if (shape_data.has_value() and is_active_video)
 		{
 			const auto& tag = get_tag();
-			shape_data->render(utils::vec2<int>({ static_cast<int>(tex_size.x), static_cast<int>(tex_size.y) }), pos, pos + size, tag.fill_color(), tag.outline_color(), std::nullopt);
+			ImRect draw_rect{ pos, pos + size };
+			shape_data->render(utils::vec2<int>({ static_cast<int>(tex_size.x), static_cast<int>(tex_size.y) }), draw_rect, tag.fill_color(), tag.outline_color(), std::nullopt, false);
 
 			if (ImGui::IsKeyPressed(ImGuiKey_Enter) and insert_allowed)
 			{
@@ -101,7 +103,7 @@ namespace vt
 		}
 
 		//TODO: Check if mask is not empty
-		if (true)
+		if (!shape_data->mask.empty())
 		{
 			insert_region(*active_video_);
 		}
@@ -138,21 +140,31 @@ namespace vt
 	void mask_tool::apply_brush(const utils::vec2<int>& center, const utils::vec2<int>& tex_size, bool is_eraser)
 	{
 		auto color = is_eraser ? cv::Scalar(0) : cv::Scalar(255);
-		auto mat = image_to_cvmat(data()->mask_);
+		auto& mask_data = data();
+		auto mat = image_to_cvmat(mask_data->mask);
+		bool update_bb = false;
+
+		auto brush_area = utils::vec4<int>::from(center - brush_size_ / 2, center + brush_size_ / 2);
 
 		switch (brush_type_)
 		{
 			case mask_tool_type::circle:
 			{
 				cv::circle(mat, cv::Point(center[0], center[1]), brush_size_, color, cv::FILLED);
+				update_bb = true;
 			}
 			break;
 			case mask_tool_type::square:
 			{
 				cv::rectangle(mat, cv::Point(center[0] - brush_size_, center[1] - brush_size_), cv::Point(center[0] + brush_size_, center[1] + brush_size_), color, cv::FILLED);
+				update_bb = true;
 			}
 			break;
 			default: break;
+		}
+		if (update_bb)
+		{
+			mask_data->recalculate_bounding_box(brush_area, !is_eraser);
 		}
 	}
 

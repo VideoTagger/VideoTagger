@@ -39,7 +39,8 @@ namespace vt
 				shape_data->end = mouse_pos;
 
 				const auto& tag = get_tag();
-				shape_data->render(utils::vec2<int>({ static_cast<int>(tex_size.x), static_cast<int>(tex_size.y) }), pos, pos + size, tag.fill_color(), tag.outline_color(), std::nullopt);
+				ImRect draw_rect{ pos, pos + size };
+				shape_data->render(utils::vec2<int>({ static_cast<int>(tex_size.x), static_cast<int>(tex_size.y) }), draw_rect, tag.fill_color(), tag.outline_color(), std::nullopt, false);
 			}
 			else if (ImGui::IsMouseReleased(ImGuiMouseButton_Left))
 			{

@@ -58,26 +58,30 @@ namespace vt
 		return result;
 	}
 
-	void points_shape::render_shape(utils::vec2<int> shape_space, ImVec2 draw_min, ImVec2 draw_max, uint32_t fill_color, uint32_t outline_color)
+	void points_shape::render_shape(utils::vec2<int> shape_space, ImRect draw_rect, uint32_t fill_color, uint32_t outline_color)
 	{
-		render_points(3.f, shape_space, draw_min, draw_max, fill_color, outline_color);
+		render_points(3.f, shape_space, draw_rect, fill_color, outline_color);
 	}
 
-	void points_shape::render_points(float radius, utils::vec2<int> shape_space, ImVec2 draw_min, ImVec2 draw_max, uint32_t fill_color, uint32_t outline_color)
+	void points_shape::render_points(float radius, utils::vec2<int> shape_space, ImRect draw_rect, uint32_t fill_color, uint32_t outline_color)
 	{
 		auto draw_list = ImGui::GetWindowDrawList();
 		for (auto& point : points)
 		{
-			auto scaled_point = math::scale_vec2(point, utils::vec2<int>{}, shape_space, draw_min, draw_max, false);
+			auto scaled_point = math::scale_vec2(point, utils::vec2<int>{}, shape_space, draw_rect.Min, draw_rect.Max, false);
 
 			draw_list->AddCircleFilled(scaled_point, radius, fill_color);
 			draw_list->AddCircle(scaled_point, radius, outline_color);
 		}
 	}
 
-	void points_shape::render(utils::vec2<int> shape_space, ImVec2 draw_min, ImVec2 draw_max, uint32_t fill_color, uint32_t outline_color, std::optional<float> point_radius)
+	void points_shape::render(utils::vec2<int> shape_space, ImRect draw_rect, uint32_t fill_color, uint32_t outline_color, std::optional<float> point_radius, bool draw_bounding_box)
 	{
-		render_points(point_radius.value_or(3.f), shape_space, draw_min, draw_max, fill_color, outline_color);
+		if (draw_bounding_box)
+		{
+			render_bounding_box(shape_space, draw_rect, fill_color, outline_color);
+		}
+		render_points(point_radius.value_or(3.f), shape_space, draw_rect, fill_color, outline_color);
 	}
 
 	bool points_shape::render_data(event_source source, video_id_t video_id, utils::vec2<int> shape_space)

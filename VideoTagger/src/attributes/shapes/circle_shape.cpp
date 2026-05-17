@@ -35,21 +35,21 @@ namespace vt
 		return { &pos };
 	}
 
-	void circle_shape::render_shape(utils::vec2<int> shape_space, ImVec2 draw_min, ImVec2 draw_max, uint32_t fill_color, uint32_t outline_color)
+	void circle_shape::render_shape(utils::vec2<int> shape_space, ImRect draw_rect, uint32_t fill_color, uint32_t outline_color)
 	{
 		auto draw_list = ImGui::GetWindowDrawList();
-		auto scaled_pos = math::scale_vec2(pos, utils::vec2<int>{}, shape_space, draw_min, draw_max, false);
+		auto scaled_pos = math::scale_vec2(pos, utils::vec2<int>{}, shape_space, draw_rect.Min, draw_rect.Max, false);
 		int singed_radius = static_cast<int>(radius);
-		auto scaled_radius = math::scale_vec2(utils::vec2<int>{ singed_radius, singed_radius }, utils::vec2<int>{}, shape_space, ImVec2{}, draw_max - draw_min, false);
+		auto scaled_radius = math::scale_vec2(utils::vec2<int>{ singed_radius, singed_radius }, utils::vec2<int>{}, shape_space, ImVec2{}, draw_rect.Max - draw_rect.Min, false);
 
 		draw_list->AddEllipseFilled(scaled_pos, scaled_radius, fill_color);
 		draw_list->AddEllipse(scaled_pos, scaled_radius, outline_color);
 	}
 
-	void circle_shape::render_points(float radius, utils::vec2<int> shape_space, ImVec2 draw_min, ImVec2 draw_max, uint32_t fill_color, uint32_t outline_color)
+	void circle_shape::render_points(float radius, utils::vec2<int> shape_space, ImRect draw_rect, uint32_t fill_color, uint32_t outline_color)
 	{
 		auto draw_list = ImGui::GetWindowDrawList();
-		auto scaled_pos = math::scale_vec2(pos, utils::vec2<int>{}, shape_space, draw_min, draw_max, false);
+		auto scaled_pos = math::scale_vec2(pos, utils::vec2<int>{}, shape_space, draw_rect.Min, draw_rect.Max, false);
 
 		draw_list->AddCircleFilled(scaled_pos, radius, fill_color);
 	}
