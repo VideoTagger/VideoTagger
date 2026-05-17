@@ -48,6 +48,7 @@ namespace vt
 		{
 			return std::make_unique<shape_attribute_instance<shape_type>>(this);
 		}
+
 	private:
 		void register_event_listeners()
 		{

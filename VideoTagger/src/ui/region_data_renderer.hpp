@@ -11,9 +11,13 @@
 
 #include <events/player/seek_request_event.hpp>
 
+#include <events/attributes/region_delete_request_event.hpp>
+
 #include <events/attributes/region_keyframe_delete_request_event.hpp>
 #include <events/attributes/region_keyframe_insert_request_event.hpp>
 #include <events/attributes/region_set_interpolator_request_event.hpp>
+
+#include <ui/widgets/menu_item.hpp>
 
 namespace vt::ui
 {
@@ -174,7 +178,13 @@ namespace vt::ui
 				{
 					auto item_id = fmt::format("Region {}", region_id);
 					bool selected = ctx_.session.is_region_selected(instance, region_id);
-					if (ImGui::TreeNodeEx(item_id.c_str(), ImGuiTreeNodeFlags_Bullet | ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen | ImGuiTreeNodeFlags_SpanFullWidth))
+					auto flags = ImGuiTreeNodeFlags_Bullet | ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen | ImGuiTreeNodeFlags_SpanFullWidth;
+					if (selected)
+					{
+						flags |= ImGuiTreeNodeFlags_Selected;
+					}
+
+					if (ImGui::TreeNodeEx(item_id.c_str(), flags))
 					{
 						if (ImGui::IsItemClicked())
 						{
@@ -193,6 +203,18 @@ namespace vt::ui
 			//}
 
 			return result;
+		}
+
+		virtual void context_menu_items(ui::widget_list& items, event_source source, const std::string& tag_name, segment_id segment, video_id_t video_id, class vt::impl::attribute_instance& attribute_instance, region_id_t region_id) override
+		{
+			if (regions_->find(region_id) == regions_->end()) return;
+
+			bool supports_tracking = ctx_.get_shape_predictor_registry<shape_type>().has_any_tracker();
+
+			items.add<menu_generic_button>(icons::delete_, ctx_.lang->get("generic.delete"), [&]()
+			{
+				ctx_.dispatch_event<region_delete_request_event>(source, tag_name, segment, video_id, attribute_instance, region_id);
+			});
 		}
 	};
 }

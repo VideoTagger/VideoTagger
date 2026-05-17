@@ -6,7 +6,7 @@
 #include <attributes/impl/shape.hpp>
 #include <utils/timestamp.hpp>
 #include <utils/iterator_range.hpp>
-#include <attributes/impl/interpolated_shape_predictor.hpp>
+#include <attributes/impl/shape_interpolator.hpp>
 #include <attributes/predictors/dummy_shape_predictor.hpp>
 #include <core/app_context.hpp>
 #include <utils/timestamp_span.hpp>
@@ -26,7 +26,7 @@ namespace vt
 
 	private:
 		std::map<timestamp, shape_type> keyframes_;
-		std::unique_ptr<impl::interpolated_shape_predictor<shape_type>> interpolator_;
+		std::unique_ptr<impl::shape_interpolator<shape_type>> interpolator_;
 
 		mutable std::vector<timestamp> interpolation_keyframe_timestamps_;
 		mutable std::vector<shape_type> interpolation_keyframe_shapes_;
@@ -327,7 +327,7 @@ namespace vt
 		 * 
 		 * @param interpolator Instance of the interpolator to use. If nullptr, sets the interpolation method to dummy_shape_predictor
 		 */
-		void set_interpolator(std::unique_ptr<impl::interpolated_shape_predictor<shape_type>>&& interpolator)
+		void set_interpolator(std::unique_ptr<impl::shape_interpolator<shape_type>>&& interpolator)
 		{
 			if (interpolator == nullptr)
 			{
@@ -357,12 +357,12 @@ namespace vt
 			return { start_ts, end_ts };
 		}
 
-		impl::interpolated_shape_predictor<shape_type>& interpolator()
+		impl::shape_interpolator<shape_type>& interpolator()
 		{
 			return *interpolator_;
 		}
 
-		const impl::interpolated_shape_predictor<shape_type>& interpolator() const
+		const impl::shape_interpolator<shape_type>& interpolator() const
 		{
 			return *interpolator_;
 		}

@@ -37,6 +37,9 @@ namespace vt::ui::windows
 
 		void on_zoom(float zoom_factor, ImVec2 video_screen_pos, ImVec2 zoom_center);
 
+		void reset_offset();
+		void reset_zoom();
+
 		virtual void pre_style() override;
 		virtual void post_style() override;
 

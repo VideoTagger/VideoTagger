@@ -120,5 +120,7 @@
 	"validation.generic.valid": "Valid",
 	"validation.generic.empty": "Cannot be empty",
 	"validation.generic.already_exists": "Already exists",
-	"validation.generic.invalid": "Invalid"
+	"validation.generic.invalid": "Invalid",
+	"popup.video_context_menu.reset_view": "Reset view",
+	"generic.delete": "Delete"
 }

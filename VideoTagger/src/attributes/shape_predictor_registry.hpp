@@ -1,8 +1,10 @@
 #pragma once
 #include <attributes/factory/shape_predictor_factory.hpp>
-#include <attributes/factory/interpolated_shape_predictor_factory.hpp>
+#include <attributes/factory/shape_interpolator_factory.hpp>
+#include <attributes/factory/shape_tracker_factory.hpp>
 #include <attributes/impl/shape_predictor.hpp>
-#include <attributes/impl/interpolated_shape_predictor.hpp>
+#include <attributes/impl/shape_interpolator.hpp>
+#include <attributes/impl/shape_tracker.hpp>
 #include <attributes/impl/shape_predictor_registry.hpp>
 
 #include <core/debug.hpp>
@@ -34,13 +36,23 @@ namespace vt
 
 			predictor_names_.push_back(name);
 
-			if constexpr (std::is_base_of_v<interpolated_shape_predictor_factory<shape_t>, predictor_factory_type>)
+			if constexpr (std::is_base_of_v<shape_interpolator_factory<shape_t>, predictor_factory_type>)
 			{
 				interpolator_names_.push_back(name);
 
 				if (!default_interpolator_name_.has_value())
 				{
 					default_interpolator_name_ = name;
+				}
+			}
+
+			if constexpr (std::is_base_of_v<shape_tracker_factory<shape_t>, predictor_factory_type>)
+			{
+				tracker_names_.push_back(name);
+
+				if (!default_tracker_name_.has_value())
+				{
+					default_tracker_name_ = name;
 				}
 			}
 
@@ -59,23 +71,42 @@ namespace vt
 			return factory->new_shape_predictor();
 		}
 
-		std::unique_ptr<impl::interpolated_shape_predictor<shape_t>> new_interpolator(const std::string& name)
+		std::unique_ptr<impl::shape_interpolator<shape_t>> new_interpolator(const std::string& name)
 		{
 			auto* factory = get_interpolator_factory(name);
 			if (factory == nullptr)
 			{
-				debug::error("No predictor factory registered with name '{}'", name);
+				debug::error("No interpolator factory registered with name '{}'", name);
 				return nullptr;
 			}
 
 			return factory->new_shape_interpolator();
 		}
 
-		std::unique_ptr<impl::interpolated_shape_predictor<shape_t>> new_default_interpolator()
+		std::unique_ptr<impl::shape_interpolator<shape_t>> new_default_interpolator()
 		{
 			if (!default_interpolator_name_.has_value()) return nullptr;
 
 			return new_interpolator(*default_interpolator_name_);
+		}
+
+		std::unique_ptr<impl::shape_tracker<shape_t>> new_tracker(const std::string& name)
+		{
+			auto* factory = get_tracker_factory(name);
+			if (factory == nullptr)
+			{
+				debug::error("No tracker factory registered with name '{}'", name);
+				return nullptr;
+			}
+
+			return factory->new_shape_tracker();
+		}
+
+		std::unique_ptr<impl::shape_tracker<shape_t>> new_default_tracker()
+		{
+			if (!default_tracker_name_.has_value()) return nullptr;
+
+			return new_tracker(*default_tracker_name_);
 		}
 
 		shape_predictor_factory<shape_t>* get_factory(const std::string& name) const
@@ -88,7 +119,7 @@ namespace vt
 			return it->second.get();
 		}
 
-		interpolated_shape_predictor_factory<shape_t>* get_interpolator_factory(const std::string& name) const
+		shape_interpolator_factory<shape_t>* get_interpolator_factory(const std::string& name) const
 		{
 			auto it = registry_.find(name);
 			if (it == registry_.end())
@@ -96,7 +127,7 @@ namespace vt
 				return nullptr;
 			}
 
-			auto* interpolator_factory = dynamic_cast<interpolated_shape_predictor_factory<shape_t>*>(it->second.get());
+			auto* interpolator_factory = dynamic_cast<shape_interpolator_factory<shape_t>*>(it->second.get());
 			if (interpolator_factory == nullptr)
 			{
 				debug::error("Predictor with name '{}' is not an interpolator", name);
@@ -104,6 +135,24 @@ namespace vt
 			}
 
 			return interpolator_factory;
+		}
+
+		shape_tracker_factory<shape_t>* get_tracker_factory(const std::string& name) const
+		{
+			auto it = registry_.find(name);
+			if (it == registry_.end())
+			{
+				return nullptr;
+			}
+
+			auto* tracker_factory = dynamic_cast<shape_tracker_factory<shape_t>*>(it->second.get());
+			if (tracker_factory == nullptr)
+			{
+				debug::error("Predictor with name '{}' is not a tracker", name);
+				return nullptr;
+			}
+
+			return tracker_factory;
 		}
 	};
 }

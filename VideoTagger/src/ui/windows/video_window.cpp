@@ -59,6 +59,16 @@ namespace vt::ui::windows
 		scale_ = new_scale;
 	}
 
+	void video_window::reset_offset()
+	{
+		offset_ = {};
+	}
+
+	void video_window::reset_zoom()
+	{
+		scale_ = 1.f;
+	}
+
 	void video_window::pre_style()
 	{
 		if (video_->is_open())

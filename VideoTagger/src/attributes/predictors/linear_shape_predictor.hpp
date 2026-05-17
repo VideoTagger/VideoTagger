@@ -1,6 +1,6 @@
 #pragma once
 #include <array>
-#include <attributes/impl/interpolated_shape_predictor.hpp>
+#include <attributes/impl/shape_interpolator.hpp>
 #include "dummy_shape_predictor.hpp"
 #include <utils/math.hpp>
 #include <attributes/impl/shape.hpp>
@@ -9,13 +9,13 @@ namespace vt
 {
 	/// @brief Shape predictor using linear interpolation
 	template<typename shape_type, typename = std::enable_if_t<std::is_base_of_v<impl::shape, shape_type>>>
-	class linear_shape_predictor : public impl::interpolated_shape_predictor<shape_type>
+	class linear_shape_predictor : public impl::shape_interpolator<shape_type>
 	{
 	public:
-		linear_shape_predictor(const std::string& name) : impl::interpolated_shape_predictor<shape_type>{ name } {}
+		linear_shape_predictor(const std::string& name) : impl::shape_interpolator<shape_type>{ name } {}
 
 	private:
-		std::array<impl::interpolated_shape_predictor_data<shape_type>, 2> data_;
+		std::array<impl::shape_interpolator_data<shape_type>, 2> data_;
 		uint8_t data_size_{};
 
 	public:

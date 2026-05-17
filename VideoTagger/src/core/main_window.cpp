@@ -11,6 +11,7 @@
 #include <widgets/console.hpp>
 #include <widgets/project_selector.hpp>
 #include <widgets/theme_customizer.hpp>
+#include <ui/widgets/menu_item.hpp>
 #include <ui/windows/inspector.hpp>
 #include <ui/windows/region_list.hpp>
 #include <ui/windows/video_window.hpp>
@@ -148,6 +149,8 @@ extern "C"
 #include <events/attributes/attribute_rename_request_event.hpp>
 #include <events/attributes/attribute_renamed_event.hpp>
 #include <events/attributes/attribute_instance_deleted_event.hpp>
+
+#include <ui/impl/region_data_renderer.hpp>
 
 
 namespace vt
@@ -3025,6 +3028,54 @@ namespace vt
 								utils::vec2<int> offset{ static_cast<int>(point_pos.x - start_pos.x), static_cast<int>(point_pos.y - start_pos.y) };
 								ctx_.dispatch_event<gizmo_move_targets_event>(source, video_id, ctx_.session.gizmo_targets(), offset);
 							}
+						}
+					});
+
+					vid_win->with_overlay([&vid_win, source = vid_win->get_event_source()](video_id_t video_id, ImVec2 pos, ImVec2 size, ImVec2 tex_size)
+					{
+						std::string popup_id = fmt::format("##VideoContext{}", video_id);
+						if (ImGui::BeginPopupContextWindow(popup_id.c_str()))
+						{
+							static std::optional<selected_region_data> region_data;
+
+							if (ImGui::IsWindowAppearing())
+							{
+								region_data = std::nullopt;
+								if (ctx_.session.is_any_region_hovered())
+								{
+									region_data = ctx_.session.hovered_regions().front();
+								}
+							}
+
+							ui::widget_list context_items;
+							if (region_data.has_value())
+							{
+								auto& data_renderer = dynamic_cast<ui::impl::region_data_renderer&>(*region_data->attribute_instance);
+
+								data_renderer.context_menu_items(context_items, source, region_data->tag_name, region_data->segment,
+									region_data->video_id, *region_data->attribute_instance, region_data->region_id);
+							}
+							else
+							{
+								//context_items.add<ui::menu_generic_button>(icons::reset, ctx_.lang->get("popup.video_context_menu.reset_offset"), [&vid_win]()
+								//{
+								//	vid_win->reset_offset();
+								//});
+
+								//context_items.add<ui::menu_generic_button>(icons::reset, ctx_.lang->get("popup.video_context_menu.reset_zoom"), [&vid_win]()
+								//{
+								//	vid_win->reset_zoom();
+								//});
+
+								context_items.add<ui::menu_generic_button>(icons::reset, ctx_.lang->get("popup.video_context_menu.reset_view"), [&vid_win]()
+								{
+									vid_win->reset_offset();
+									vid_win->reset_zoom();
+								});
+							}
+
+							context_items.render();
+							ImGui::EndPopup();
 						}
 					});
 

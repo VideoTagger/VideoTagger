@@ -3,7 +3,7 @@
 #include <unordered_map>
 
 #include <attributes/region_data.hpp>
-#include <attributes/impl/attribute_ref.hpp>
+#include <attributes/impl/shape_attribute_instance.hpp>
 #include <attributes/impl/shape.hpp>
 #include <core/app_context.hpp>
 #include <utils/random.hpp>
@@ -34,11 +34,11 @@ namespace vt
 	class shape_attribute;
 
 	template<typename shape_type, typename = std::enable_if_t<std::is_base_of_v<impl::shape, shape_type>>>
-	class shape_attribute_instance : public impl::attribute_ref<shape_attribute<shape_type>>, public ui::region_data_renderer<shape_type>
+	class shape_attribute_instance : public impl::shape_attribute_instance, public ui::region_data_renderer<shape_type>
 	{
 	public:
 		shape_attribute_instance(shape_attribute<shape_type>* ref) :
-			impl::attribute_ref<shape_attribute<shape_type>>{ ref }, ui::region_data_renderer<shape_type>{ regions_ }, event_source_{ "shape_attribute_instance" }
+			impl::shape_attribute_instance{ ref }, ui::region_data_renderer<shape_type>{ regions_ }, event_source_{ "shape_attribute_instance" }
 		{
 			region_insert_request_handle_ = ctx_.add_event_listener<region_insert_request_event<shape_type>>([this](const region_insert_request_event<shape_type>& event)
 			{
@@ -175,9 +175,26 @@ namespace vt
 			return regions_.erase(id) != 0;
 		}
 
-		bool region_exists(region_id_t id) const
+		virtual bool region_exists(region_id_t id) const override
 		{
 			return regions_.find(id) != regions_.end();
+		}
+
+		virtual std::vector<timestamp> keyframe_timestamps(region_id_t region_id) const override
+		{
+			std::vector<timestamp> result;
+
+			auto it = regions_.find(region_id);
+			if (it == regions_.end()) return result;
+
+			auto& region = it->second;
+			result.reserve(region.size());
+			for (auto& [ts, _] : region)
+			{
+				result.push_back(ts);
+			}
+
+			return result;
 		}
 
 		[[nodiscard]] virtual nlohmann::ordered_json serialize() const override
@@ -245,7 +262,6 @@ namespace vt
 						ctx_.dispatch_event<region_hover_started_event>(event_source_, attribute_tag.name, segment, video_id, *this, region_id);
 					}
 
-					
 					//TODO: add event for hovering points (like above for regions) and move this to main_window
 					auto keyframe_it = region.find_keyframe(ts);
 					if (keyframe_it != region.end())

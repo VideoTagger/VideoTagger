@@ -4,12 +4,10 @@
 #include <optional>
 #include <utils/timestamp.hpp>
 #include <attributes/impl/shape.hpp>
+#include <image/image.hpp>
 
 namespace vt::impl
 {
-	//TODO: replace with some type that can store an image
-	class placeholder_image_type {};
-
 	template<typename shape_type, typename = std::enable_if_t<std::is_base_of_v<impl::shape, shape_type>>>
 	class shape_predictor
 	{
@@ -50,7 +48,7 @@ namespace vt::impl
 		 * @param images Images associated with the shape instances
 		 * @return Whether the predictor was intialized successfully
 		 */
-		virtual bool on_init(const std::vector<shape_type>& shape_instances, const std::vector<timestamp>& timestamps, const std::vector<placeholder_image_type> images) = 0;
+		virtual bool on_init(const std::vector<shape_type>& shape_instances, const std::vector<timestamp>& timestamps, const std::vector<image<image_pixel_format::rgb8>>& images) = 0;
 
 		/**
 		 * @brief Initialize the predictor
@@ -64,7 +62,7 @@ namespace vt::impl
 		 * @param images Images associated with the shape instances
 		 * @return Whether the predictor was intialized successfully
 		 */
-		bool init(const std::vector<shape_type>& shape_instances, const std::vector<timestamp>& timestamps, const std::vector<placeholder_image_type> images)
+		bool init(const std::vector<shape_type>& shape_instances, const std::vector<timestamp>& timestamps, const std::vector<image<image_pixel_format::rgb8>>& images)
 		{
 			initialized_ = on_init(shape_instances, timestamps, images);
 			return initialized_;
@@ -81,7 +79,7 @@ namespace vt::impl
 		 * @param current_image Image from which to make the prediction
 		 * @return If successful a shape instance, empty otherwise (e.g. when not all required parameters were passed)
 		 */
-		virtual std::optional<shape_type> on_predict(std::optional<timestamp> current_ts, const placeholder_image_type* current_image) = 0;
+		virtual std::optional<shape_type> on_predict(std::optional<timestamp> current_ts, const image<image_pixel_format::rgb8>* current_image) = 0;
 
 		/**
 		 * @brief Predict the shape instance at the given moment
@@ -92,7 +90,7 @@ namespace vt::impl
 		 * @param current_image Image from which to make the prediction
 		 * @return If successful a shape instance, empty otherwise (e.g. when not all required parameters were passed or the predictor wasn't initialized)
 		 */
-		std::optional<shape_type> predict(std::optional<timestamp> current_ts, const placeholder_image_type* current_image)
+		std::optional<shape_type> predict(std::optional<timestamp> current_ts, const image<image_pixel_format::rgb8>* current_image)
 		{
 			if (!is_initialized())
 			{
@@ -143,7 +141,7 @@ namespace vt::impl
 		 * @return If successful a shape instance, empty otherwise (e.g. when not all required parameters were passed)
 		 */
 		virtual std::optional<shape_type> stateless_predict(const std::vector<shape_type>& shape_instances, const std::vector<timestamp>& timestamps,
-			const std::vector<placeholder_image_type> images, std::optional<timestamp> current_ts, const placeholder_image_type* current_image)
+			const std::vector<image<image_pixel_format::rgb8>>& images, std::optional<timestamp> current_ts, const image<image_pixel_format::rgb8>* current_image)
 		{
 			return std::nullopt;
 		}

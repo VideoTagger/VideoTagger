@@ -1,15 +1,15 @@
 #pragma once
-#include <attributes/impl/interpolated_shape_predictor.hpp>
+#include <attributes/impl/shape_interpolator.hpp>
 #include <attributes/impl/shape.hpp>
 
 namespace vt
 {
 	/// @brief Shape predictor always returning the shape it was initialized with
 	template<typename shape_type, typename = std::enable_if_t<std::is_base_of_v<impl::shape, shape_type>>>
-	class dummy_shape_predictor : public impl::interpolated_shape_predictor<shape_type>
+	class dummy_shape_predictor : public impl::shape_interpolator<shape_type>
 	{
 	public:
-		dummy_shape_predictor(const std::string& name) : impl::interpolated_shape_predictor<shape_type>{ name } {}
+		dummy_shape_predictor(const std::string& name) : impl::shape_interpolator<shape_type>{ name } {}
 
 	private:
 		shape_type shape_;
