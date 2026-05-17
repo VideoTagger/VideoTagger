@@ -29,7 +29,7 @@ namespace vt
 			auto bb_size = size();
 			auto start = area.pos_min().min(bounding_box_.pos_min());
 			auto end = area.pos_max().max(bounding_box_.pos_max());
-			bounding_box_ = utils::vec4<int>::from(start, end);
+			bounding_box_ = utils::vec4<int>{ start, end };
 		}
 		else
 		{

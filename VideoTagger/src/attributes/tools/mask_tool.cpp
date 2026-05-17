@@ -144,7 +144,7 @@ namespace vt
 		auto mat = image_to_cvmat(mask_data->mask);
 		bool update_bb = false;
 
-		auto brush_area = utils::vec4<int>::from(center - brush_size_ / 2, center + brush_size_ / 2);
+		utils::vec4<int> brush_area{ center - brush_size_ / 2, center + brush_size_ / 2 };
 
 		switch (brush_type_)
 		{
