@@ -58,12 +58,12 @@ namespace vt
 		return result;
 	}
 
-	void points_shape::render_shape(utils::vec2<int> shape_space, ImRect draw_rect, uint32_t fill_color, uint32_t outline_color)
+	void points_shape::render_shape(utils::vec2<int> shape_space, ImRect draw_rect, uint32_t fill_color, uint32_t outline_color, std::optional<video_id_t> video_id)
 	{
-		render_points(3.f, shape_space, draw_rect, fill_color, outline_color);
+		render_points(3.f, shape_space, draw_rect, fill_color, outline_color, video_id);
 	}
 
-	void points_shape::render_points(float radius, utils::vec2<int> shape_space, ImRect draw_rect, uint32_t fill_color, uint32_t outline_color)
+	void points_shape::render_points(float radius, utils::vec2<int> shape_space, ImRect draw_rect, uint32_t fill_color, uint32_t outline_color, std::optional<video_id_t> video_id)
 	{
 		auto draw_list = ImGui::GetWindowDrawList();
 		for (auto& point : points)
@@ -75,13 +75,13 @@ namespace vt
 		}
 	}
 
-	void points_shape::render(utils::vec2<int> shape_space, ImRect draw_rect, uint32_t fill_color, uint32_t outline_color, std::optional<float> point_radius, bool draw_bounding_box)
+	void points_shape::render(utils::vec2<int> shape_space, ImRect draw_rect, uint32_t fill_color, uint32_t outline_color, std::optional<float> point_radius, bool draw_bounding_box, std::optional<video_id_t> video_id)
 	{
 		if (draw_bounding_box)
 		{
-			render_bounding_box(shape_space, draw_rect, fill_color, outline_color);
+			render_bounding_box(shape_space, draw_rect, fill_color, outline_color, video_id);
 		}
-		render_points(point_radius.value_or(3.f), shape_space, draw_rect, fill_color, outline_color);
+		render_points(point_radius.value_or(3.f), shape_space, draw_rect, fill_color, outline_color, video_id);
 	}
 
 	bool points_shape::render_data(event_source source, video_id_t video_id, utils::vec2<int> shape_space)

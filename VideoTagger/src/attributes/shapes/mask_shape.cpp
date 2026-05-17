@@ -90,7 +90,7 @@ namespace vt
 		return {};
 	}
 
-	void mask_shape::render_shape(utils::vec2<int> shape_space, ImRect draw_rect, uint32_t fill_color, uint32_t outline_color)
+	void mask_shape::render_shape(utils::vec2<int> shape_space, ImRect draw_rect, uint32_t fill_color, uint32_t outline_color, std::optional<video_id_t> video_id)
 	{
 		struct mask_draw_data
 		{
@@ -225,7 +225,7 @@ namespace vt
 		draw_list->PopClipRect();
 	}
 
-	void mask_shape::render_bounding_box(utils::vec2<int> shape_space, ImRect draw_rect, uint32_t fill_color, uint32_t outline_color)
+	void mask_shape::render_bounding_box(utils::vec2<int> shape_space, ImRect draw_rect, uint32_t fill_color, uint32_t outline_color, std::optional<video_id_t> video_id)
 	{
 		auto* draw_list = ImGui::GetWindowDrawList();
 		auto bb = bounding_box();
