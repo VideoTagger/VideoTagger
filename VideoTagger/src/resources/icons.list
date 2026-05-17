@@ -109,5 +109,6 @@ line_end_circle:f81b # line_end_circle
 tool_arrow:f82f # arrow_selector_tool
 tool_move:e925 # pan_tool
 tool_brush:e3ae # brush
+tool_eraser:e6d0 # ink_eraser
 tool_points:e3ea # grain
 tool_line:ebbb # polyline
