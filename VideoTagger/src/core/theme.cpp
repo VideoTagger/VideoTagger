@@ -26,6 +26,9 @@ namespace vt
 		{ theme_color::selection_disabled, "selection.disabled" },
 		{ theme_color::playhead_normal, "playhead.normal" },
 		{ theme_color::playhead_disabled, "playhead.disabled" },
+		{ theme_color::gizmo_point, "gizmo.point" },
+		{ theme_color::gizmo_point_outline, "gizmo.point.outline" },
+		{ theme_color::tool_preview_outline, "tool.preview.outline" },
 		{ theme_color::axis_x, "axis.x" },
 		{ theme_color::axis_y, "axis.y" },
 		{ theme_color::axis_z, "axis.z" },
@@ -202,6 +205,34 @@ namespace vt
 	ImVec4 theme::get_float4(const std::string& name) const
 	{
 		return ImGui::ColorConvertU32ToFloat4(get_rgba(name));
+	}
+
+	std::optional<uint32_t> theme::get_rgba_opt(theme_color name) const
+	{
+		auto it = colors_.find(name);
+		if (it != colors_.end()) return it->second;
+		return std::nullopt;
+	}
+
+	std::optional<uint32_t> theme::get_rgba_opt(const std::string& name) const
+	{
+		auto opt_col = to_theme_color(name);
+		if (!opt_col.has_value()) return std::nullopt;
+		return get_rgba_opt(opt_col.value());
+	}
+
+	std::optional<ImVec4> theme::get_float4_opt(theme_color name) const
+	{
+		auto opt_rgba = get_rgba_opt(name);
+		if (!opt_rgba.has_value()) return std::nullopt;
+		return ImGui::ColorConvertU32ToFloat4(opt_rgba.value());
+	}
+
+	std::optional<ImVec4> theme::get_float4_opt(const std::string& name) const
+	{
+		auto opt_col = to_theme_color(name);
+		if (!opt_col.has_value()) return std::nullopt;
+		return get_float4_opt(opt_col.value());
 	}
 
 	void theme::save(const std::filesystem::path& filepath) const

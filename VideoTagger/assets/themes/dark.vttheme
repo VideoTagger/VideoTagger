@@ -62,6 +62,9 @@
 		"tab.focused.hover": "#242424ff",
 		"tab.focused.active": "#333333ff",
 		"tab.unfocused.normal": "#0a0a0a85",
-		"tab.unfocused.active": "#2424245c"
+		"tab.unfocused.active": "#2424245c",
+		"gizmo.point": "#ffffffff",
+		"gizmo.point.outline": "#ccccccff",
+		"tool.preview.outline": "#1f1f1fff"
 	}
 }

@@ -1,4 +1,5 @@
 #include "shape.hpp"
+#include <core/app_context.hpp>
 
 namespace vt::impl
 {
@@ -11,7 +12,7 @@ namespace vt::impl
 		}
 		if (point_radius.has_value())
 		{
-			render_points(*point_radius, shape_space, draw_rect, 0xFFFFFFFF, 0xFFCCCCCC, video_id);
+			render_points(*point_radius, shape_space, draw_rect, ctx_.current_theme.get_rgba(theme_color::gizmo_point), ctx_.current_theme.get_rgba(theme_color::gizmo_point_outline), video_id);
 			//render_points(*point_radius, shape_space, draw_rect, outline_color, outline_color);
 		}
 	}

@@ -87,7 +87,7 @@ namespace vt::widgets
 			static auto draw_option = [&](const std::string& label, std::string info, theme_color col_id)
 			{
 				std::string color_label = "##" + label + info;
-				auto color = temp_theme.get_float4(col_id);
+				auto color = temp_theme.get_float4_opt(col_id).value_or({});
 				ImGui::TableNextRow();
 				ImGui::TableNextColumn();
 
@@ -110,7 +110,7 @@ namespace vt::widgets
 				static auto draw_accent = [&](const std::string& label, std::string info, theme_color col_id)
 				{
 					std::string color_label = "##" + label + info;
-					auto color = temp_theme.get_float4(col_id);
+					auto color = temp_theme.get_float4_opt(col_id).value_or({});
 					ImGui::TableNextRow();
 					ImGui::TableNextColumn();
 
@@ -135,7 +135,7 @@ namespace vt::widgets
 					ctx_.current_theme.push_color(theme_color::secondary_light, color);
 					ctx_.current_theme.push_color(theme_color::secondary_medium, color);
 					ctx_.current_theme.push_color(theme_color::secondary_dark, color);
-					ImGui::PushStyleColor(ImGuiCol_TextDisabled, temp_theme.get_float4(theme_color::text_inverted));
+					ImGui::PushStyleColor(ImGuiCol_TextDisabled, temp_theme.get_float4_opt(theme_color::text_inverted).value_or({}));
 					ui::accent_button("Button");
 					ImGui::PopStyleColor(4);
 					ImGui::EndDisabled();
@@ -148,7 +148,7 @@ namespace vt::widgets
 					ctx_.current_theme.pop_color(6);
 				};
 
-				ImGui::PushStyleColor(ImGuiCol_TableRowBg, temp_theme.get_float4(theme_color::background_secondary));
+				ImGui::PushStyleColor(ImGuiCol_TableRowBg, temp_theme.get_float4_opt(theme_color::background_secondary).value_or({}));
 				if (ImGui::BeginTable("##BaseColors", 2, table_flags))
 				{
 					draw_accent("Accent", "Light", theme_color::accent_light);
@@ -164,7 +164,7 @@ namespace vt::widgets
 			if (ui::collapsing_header(fmt::format("{} Windows, Frames and Popups", icons::windows)))
 			{
 				ImGui::Indent(indent_size);
-				ImGui::PushStyleColor(ImGuiCol_TableRowBg, temp_theme.get_float4(theme_color::background_secondary));
+				ImGui::PushStyleColor(ImGuiCol_TableRowBg, temp_theme.get_float4_opt(theme_color::background_secondary).value_or({}));
 				if (ImGui::BeginTable("##Background", 2, table_flags))
 				{
 					draw_option("Background", "Window", theme_color::background_window);
@@ -194,7 +194,7 @@ namespace vt::widgets
 				static auto draw_text = [&](const std::string& label, std::string info, theme_color col_id)
 				{
 					std::string color_label = "##" + label + info;
-					auto color = temp_theme.get_float4(col_id);
+					auto color = temp_theme.get_float4_opt(col_id).value_or({});
 					ImGui::TableNextRow();
 					ImGui::TableNextColumn();
 					if (ui::color_edit4(color_label.c_str(), color, color_flags))
@@ -210,7 +210,7 @@ namespace vt::widgets
 					ImGui::TableNextColumn(); ImGui::TextColored(color, "Text");
 				};
 
-				ImGui::PushStyleColor(ImGuiCol_TableRowBg, temp_theme.get_float4(theme_color::background_secondary));
+				ImGui::PushStyleColor(ImGuiCol_TableRowBg, temp_theme.get_float4_opt(theme_color::background_secondary).value_or({}));
 				if (ImGui::BeginTable("##Background", 2, table_flags))
 				{
 					draw_text("Text", "", theme_color::text_normal);
@@ -227,7 +227,7 @@ namespace vt::widgets
 				static auto draw_button = [&](const std::string& label, std::string info, theme_color col_id)
 				{
 					std::string color_label = "##" + label + info;
-					auto color = temp_theme.get_float4(col_id);
+					auto color = temp_theme.get_float4_opt(col_id).value_or({});
 					ImGui::TableNextRow();
 					ImGui::TableNextColumn();
 					if (ui::color_edit4(color_label.c_str(), color, color_flags))
@@ -250,7 +250,7 @@ namespace vt::widgets
 				static auto draw_checkbox = [&](const std::string& label, std::string info, theme_color col_id)
 				{
 					std::string color_label = "##" + label + info;
-					auto color = temp_theme.get_float4(col_id);
+					auto color = temp_theme.get_float4_opt(col_id).value_or({});
 					ImGui::TableNextRow();
 					ImGui::TableNextColumn();
 					if (ui::color_edit4(color_label.c_str(), color, color_flags))
@@ -258,8 +258,8 @@ namespace vt::widgets
 						temp_theme.set_color(col_id, color);
 					}
 					ImGui::PushStyleColor(ImGuiCol_CheckMark, color);
-					ImGui::PushStyleColor(ImGuiCol_FrameBgHovered, temp_theme.get_float4(theme_color::frame_background_normal));
-					ImGui::PushStyleColor(ImGuiCol_FrameBgActive, temp_theme.get_float4(theme_color::frame_background_normal));
+					ImGui::PushStyleColor(ImGuiCol_FrameBgHovered, temp_theme.get_float4_opt(theme_color::frame_background_normal).value_or({}));
+					ImGui::PushStyleColor(ImGuiCol_FrameBgActive, temp_theme.get_float4_opt(theme_color::frame_background_normal).value_or({}));
 					ImGui::SameLine(); ImGui::TextUnformatted(label.c_str());
 					if (!info.empty())
 					{
@@ -272,7 +272,7 @@ namespace vt::widgets
 					ImGui::PopStyleColor(3);
 				};
 
-				ImGui::PushStyleColor(ImGuiCol_TableRowBg, temp_theme.get_float4(theme_color::background_secondary));
+				ImGui::PushStyleColor(ImGuiCol_TableRowBg, temp_theme.get_float4_opt(theme_color::background_secondary).value_or({}));
 				if (ImGui::BeginTable("##Background", 2, table_flags))
 				{
 					draw_button("Button", "", theme_color::button_normal);
@@ -292,7 +292,7 @@ namespace vt::widgets
 				static auto draw_tab = [&](const std::string& label, std::string info, theme_color col_id)
 				{
 					std::string color_label = "##" + label + info;
-					auto color = temp_theme.get_float4(col_id);
+					auto color = temp_theme.get_float4_opt(col_id).value_or({});
 					ImGui::TableNextRow();
 					ImGui::TableNextColumn();
 					if (ui::color_edit4(color_label.c_str(), color, color_flags))
@@ -321,7 +321,7 @@ namespace vt::widgets
 					}
 				};
 
-				ImGui::PushStyleColor(ImGuiCol_TableRowBg, temp_theme.get_float4(theme_color::background_secondary));
+				ImGui::PushStyleColor(ImGuiCol_TableRowBg, temp_theme.get_float4_opt(theme_color::background_secondary).value_or({}));
 				if (ImGui::BeginTable("##Background", 2, table_flags))
 				{
 					draw_tab("Tab Focused", "", theme_color::tab_focused_normal);
@@ -342,7 +342,7 @@ namespace vt::widgets
 				static auto draw_header = [&](const std::string& label, std::string info, theme_color col_id)
 				{
 					std::string color_label = "##" + label + info;
-					auto color = temp_theme.get_float4(col_id);
+					auto color = temp_theme.get_float4_opt(col_id).value_or({});
 					ImGui::TableNextRow();
 					ImGui::TableNextColumn();
 					if (ui::color_edit4(color_label.c_str(), color, color_flags))
@@ -367,7 +367,7 @@ namespace vt::widgets
 				static auto draw_separator = [&](const std::string& label, std::string info, theme_color col_id)
 				{
 					std::string color_label = "##" + label + info;
-					auto color = temp_theme.get_float4(col_id);
+					auto color = temp_theme.get_float4_opt(col_id).value_or({});
 					ImGui::TableNextRow();
 					ImGui::TableNextColumn();
 					if (ui::color_edit4(color_label.c_str(), color, color_flags))
@@ -387,7 +387,7 @@ namespace vt::widgets
 					ImGui::PopStyleColor(3);
 				};
 
-				ImGui::PushStyleColor(ImGuiCol_TableRowBg, temp_theme.get_float4(theme_color::background_secondary));
+				ImGui::PushStyleColor(ImGuiCol_TableRowBg, temp_theme.get_float4_opt(theme_color::background_secondary).value_or({}));
 				if (ImGui::BeginTable("##Background", 2, table_flags))
 				{
 					draw_option("Scrollbar", "Background", theme_color::scrollbar_background);
@@ -412,9 +412,13 @@ namespace vt::widgets
 			if (ui::collapsing_header("Viewport"))
 			{
 				ImGui::Indent(indent_size);
-				ImGui::PushStyleColor(ImGuiCol_TableRowBg, temp_theme.get_float4(theme_color::background_secondary));
+				ImGui::PushStyleColor(ImGuiCol_TableRowBg, temp_theme.get_float4_opt(theme_color::background_secondary).value_or({}));
 				if (ImGui::BeginTable("##Background", 2, table_flags))
 				{
+					draw_option("Gizmo Point", "", theme_color::gizmo_point);
+					draw_option("Gizmo Point", "Outline", theme_color::gizmo_point_outline);
+					draw_option("Tool Preview", "Outline", theme_color::tool_preview_outline);
+
 					draw_option("Axis", "X", theme_color::axis_x);
 					draw_option("Axis", "Y", theme_color::axis_y);
 					draw_option("Axis", "Z", theme_color::axis_z);
@@ -428,7 +432,7 @@ namespace vt::widgets
 			if (ui::collapsing_header("UI Common"))
 			{
 				ImGui::Indent(indent_size);
-				ImGui::PushStyleColor(ImGuiCol_TableRowBg, temp_theme.get_float4(theme_color::background_secondary));
+				ImGui::PushStyleColor(ImGuiCol_TableRowBg, temp_theme.get_float4_opt(theme_color::background_secondary).value_or({}));
 				if (ImGui::BeginTable("##Background", 2, table_flags))
 				{
 					draw_option("Icon", "Thumbnail", theme_color::icon_thumbnail);
@@ -447,7 +451,7 @@ namespace vt::widgets
 			if (ui::collapsing_header(fmt::format("{} Timeline", icons::timeline)))
 			{
 				ImGui::Indent(indent_size);
-				ImGui::PushStyleColor(ImGuiCol_TableRowBg, temp_theme.get_float4(theme_color::background_secondary));
+				ImGui::PushStyleColor(ImGuiCol_TableRowBg, temp_theme.get_float4_opt(theme_color::background_secondary).value_or({}));
 				if (ImGui::BeginTable("##Background", 2, table_flags))
 				{
 					draw_option("Playhead", "", theme_color::playhead_normal);
@@ -462,15 +466,15 @@ namespace vt::widgets
 			if (ui::collapsing_header(fmt::format("{} Console", icons::terminal)))
 			{
 				ImGui::Indent(indent_size);
-				ImGui::PushStyleColor(ImGuiCol_TableRowBg, temp_theme.get_float4(theme_color::background_secondary));
+				ImGui::PushStyleColor(ImGuiCol_TableRowBg, temp_theme.get_float4_opt(theme_color::background_secondary).value_or({}));
 				if (ImGui::BeginTable("##Background", 2, table_flags))
 				{
 					draw_option("Console Log", "Info", theme_color::console_info);
-					ImGui::TextColored(temp_theme.get_float4(theme_color::console_info), "%s", icons::info);
+					ImGui::TextColored(temp_theme.get_float4_opt(theme_color::console_info).value_or({}), "%s", icons::info);
 					draw_option("Console Log", "Warning", theme_color::console_warning);
-					ImGui::TextColored(temp_theme.get_float4(theme_color::console_warning), "%s", icons::warning);
+					ImGui::TextColored(temp_theme.get_float4_opt(theme_color::console_warning).value_or({}), "%s", icons::warning);
 					draw_option("Console Log", "Error", theme_color::console_error);
-					ImGui::TextColored(temp_theme.get_float4(theme_color::console_error), "%s", icons::error);
+					ImGui::TextColored(temp_theme.get_float4_opt(theme_color::console_error).value_or({}), "%s", icons::error);
 
 					ImGui::EndTable();
 				}
