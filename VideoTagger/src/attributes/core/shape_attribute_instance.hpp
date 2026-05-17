@@ -231,14 +231,14 @@ namespace vt
 				is_hovered = window_hovered and select_tool_active and shape_opt->contains(video_mouse_pos);
 
 				bool show_points = is_selected or (is_keyframe and (window_hovered or is_hovered));
-				bool shouw_bbox = show_points;
+				bool show_bbox = show_points;
 
 				auto outline_color = is_selected ? ctx_.current_theme.get_rgba(theme_color::selection_normal) : attribute_tag.outline_color();
 				auto render_point_size = show_points ? std::optional<float>{ point_size } : std::optional<float>{};
 
 				utils::vec2<int> shape_space{ static_cast<int>(tex_size.x), static_cast<int>(tex_size.y) };
 				ImRect draw_rect{ pos, pos + size };
-				shape_opt->render(shape_space, draw_rect, attribute_tag.fill_color(), outline_color, render_point_size, shouw_bbox);
+				shape_opt->render(shape_space, draw_rect, attribute_tag.fill_color(), outline_color, render_point_size, show_bbox);
 
 				if (window_hovered and select_tool_active)
 				{					
