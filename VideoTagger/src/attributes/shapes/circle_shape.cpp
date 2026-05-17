@@ -35,7 +35,7 @@ namespace vt
 		return { &pos };
 	}
 
-	void circle_shape::render_shape(utils::vec2<int> shape_space, ImRect draw_rect, uint32_t fill_color, uint32_t outline_color)
+	void circle_shape::render_shape(utils::vec2<int> shape_space, ImRect draw_rect, uint32_t fill_color, uint32_t outline_color, std::optional<video_id_t> video_id)
 	{
 		auto draw_list = ImGui::GetWindowDrawList();
 		auto scaled_pos = math::scale_vec2(pos, utils::vec2<int>{}, shape_space, draw_rect.Min, draw_rect.Max, false);
@@ -46,7 +46,7 @@ namespace vt
 		draw_list->AddEllipse(scaled_pos, scaled_radius, outline_color);
 	}
 
-	void circle_shape::render_points(float radius, utils::vec2<int> shape_space, ImRect draw_rect, uint32_t fill_color, uint32_t outline_color)
+	void circle_shape::render_points(float radius, utils::vec2<int> shape_space, ImRect draw_rect, uint32_t fill_color, uint32_t outline_color, std::optional<video_id_t> video_id)
 	{
 		auto draw_list = ImGui::GetWindowDrawList();
 		auto scaled_pos = math::scale_vec2(pos, utils::vec2<int>{}, shape_space, draw_rect.Min, draw_rect.Max, false);

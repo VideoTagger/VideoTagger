@@ -17,7 +17,7 @@ namespace vt
 		return utils::intersection::is_in_polygon(ImVec2(point[0], point[1]), ps);
 	}
 
-	void polygon_shape::render_shape(utils::vec2<int> shape_space, ImRect draw_rect, uint32_t fill_color, uint32_t outline_color)
+	void polygon_shape::render_shape(utils::vec2<int> shape_space, ImRect draw_rect, uint32_t fill_color, uint32_t outline_color, std::optional<video_id_t> video_id)
 	{
 		auto draw_list = ImGui::GetWindowDrawList();
 
@@ -38,8 +38,8 @@ namespace vt
 		draw_list->AddPolyline(ps.data(), ps.size(), outline_color, ImDrawFlags_Closed, 1.f);
 	}
 
-	void polygon_shape::render(utils::vec2<int> shape_space, ImRect draw_rect, uint32_t fill_color, uint32_t outline_color, std::optional<float> point_radius, bool draw_bounding_box)
+	void polygon_shape::render(utils::vec2<int> shape_space, ImRect draw_rect, uint32_t fill_color, uint32_t outline_color, std::optional<float> point_radius, bool draw_bounding_box, std::optional<video_id_t> video_id)
 	{
-		shape::render(shape_space, draw_rect, fill_color, outline_color, point_radius, draw_bounding_box);
+		shape::render(shape_space, draw_rect, fill_color, outline_color, point_radius, draw_bounding_box, video_id);
 	}
 }
