@@ -92,6 +92,44 @@ namespace vt::utils
 			return true;
 		}
 
+		template<typename = std::enable_if_t<dims == 4>>
+		constexpr vec<type, 2> pos_min() const
+		{
+			return vec<type, 2>{ data[0], data[1] };
+		}
+
+		template<typename = std::enable_if_t<dims == 4>>
+		constexpr vec<type, 2> pos_max() const
+		{
+			return vec<type, 2>{ data[2], data[3] };
+		}
+
+		template<typename = std::enable_if_t<dims == 4>>
+		constexpr vec<type, 2> size() const
+		{
+			return pos_max() - pos_min();
+		}
+
+		constexpr vec min(const vec& other) const
+		{
+			vec result;
+			for (size_t i = 0; i < dims; ++i)
+			{
+				result[i] = std::min(data[i], other.data[i]);
+			}
+			return result;
+		}
+
+		constexpr vec max(const vec& other) const
+		{
+			vec result;
+			for (size_t i = 0; i < dims; ++i)
+			{
+				result[i] = std::max(data[i], other.data[i]);
+			}
+			return result;
+		}
+
 		template<typename = std::enable_if_t<dims >= 2>>
 		static constexpr float distance(const vec& left, const vec& right)
 		{
@@ -111,6 +149,44 @@ namespace vt::utils
 			mean_point[1] /= right.size();
 
 			return distance(left, mean_point);
+		}
+
+		static constexpr vec min(const vec& left, const vec& right)
+		{
+			vec result;
+			for (size_t i = 0; i < dims; ++i)
+			{
+				result[i] = std::min(left[i], right[i]);
+			}
+			return result;
+		}
+
+		static constexpr vec max(const vec& left, const vec& right)
+		{
+			vec result;
+			for (size_t i = 0; i < dims; ++i)
+			{
+				result[i] = std::max(left[i], right[i]);
+			}
+			return result;
+		}
+
+		template<typename = std::enable_if_t<dims == 4>>
+		static constexpr bool is_inside(const vec& left, const vec& right)
+		{
+			return left[0] >= right[0] and left[1] >= right[1] and left[0] <= right[2] and left[1] <= right[3];
+		}
+
+		template<typename = std::enable_if_t<dims == 4>>
+		static constexpr bool is_overlapping(const vec& left, const vec& right)
+		{
+			return left[0] < right[2] and left[2] > right[0] and left[1] < right[3] and left[3] > right[1];
+		}
+
+		template<typename = std::enable_if_t<dims == 4>>
+		static constexpr vec from(const vec<type, 2>& pos_min, const vec<type, 2>& pos_max)
+		{
+			return vec{ pos_min[0], pos_min[1], pos_max[0], pos_max[1] };
 		}
 
 		constexpr bool operator==(const vec& other) const
@@ -151,12 +227,34 @@ namespace vt::utils
 	}
 
 	template<typename type, size_t dims>
+	inline constexpr vec<type, dims> operator+(const vec<type, dims>& left, const type& right)
+	{
+		vec<type, dims> result;
+		for (size_t i = 0; i < dims; i++)
+		{
+			result[i] = left[i] + right;
+		}
+		return result;
+	}
+
+	template<typename type, size_t dims>
 	inline constexpr vec<type, dims> operator-(const vec<type, dims>& left, const vec<type, dims>& right)
 	{
 		vec<type, dims> result;
 		for (size_t i = 0; i < dims; i++)
 		{
 			result[i] = left[i] - right[i];
+		}
+		return result;
+	}
+
+	template<typename type, size_t dims>
+	inline constexpr vec<type, dims> operator-(const vec<type, dims>& left, const type& right)
+	{
+		vec<type, dims> result;
+		for (size_t i = 0; i < dims; i++)
+		{
+			result[i] = left[i] - right;
 		}
 		return result;
 	}
@@ -173,6 +271,17 @@ namespace vt::utils
 	}
 
 	template<typename type, size_t dims>
+	inline constexpr vec<type, dims> operator*(const vec<type, dims>& left, const type& right)
+	{
+		vec<type, dims> result;
+		for (size_t i = 0; i < dims; i++)
+		{
+			result[i] = left[i] * right;
+		}
+		return result;
+	}
+
+	template<typename type, size_t dims>
 	inline constexpr vec<type, dims> operator/(const vec<type, dims>& left, const vec<type, dims>& right)
 	{
 		vec<type, dims> result;
@@ -183,24 +292,13 @@ namespace vt::utils
 		return result;
 	}
 
-	template<typename vec_type, size_t dims, typename value_type>
-	inline constexpr vec<vec_type, dims> operator*(const vec<vec_type, dims>& vector, value_type value)
+	template<typename type, size_t dims>
+	inline constexpr vec<type, dims> operator/(const vec<type, dims>& left, const type& right)
 	{
-		vec<vec_type, dims> result;
+		vec<type, dims> result;
 		for (size_t i = 0; i < dims; i++)
 		{
-			result[i] = vector[i] * value;
-		}
-		return result;
-	}
-
-	template<typename vec_type, size_t dims, typename value_type>
-	inline constexpr vec<vec_type, dims> operator/(const vec<vec_type, dims>& vector, value_type value)
-	{
-		vec<vec_type, dims> result;
-		for (size_t i = 0; i < dims; i++)
-		{
-			result[i] = vector[i] / value;
+			result[i] = left[i] / right;
 		}
 		return result;
 	}
