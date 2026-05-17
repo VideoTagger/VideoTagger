@@ -1,7 +1,9 @@
 #pragma once
 #include <opencv2/core.hpp>
+#include <opencv2/imgproc.hpp>
 #include <image/image_pixel_format.hpp>
 #include <image/image.hpp>
+#include <utils/vec.hpp>
 
 namespace vt
 {
@@ -44,5 +46,13 @@ namespace vt
 	inline const cv::Mat image_data_to_cvmat_view(const pixel_format* data, int width, int height)
 	{
 		return cv::Mat(height, width, pixel_format_traits<pixel_format>::cv_type, const_cast<pixel_format*>(data));
+	}
+
+	inline utils::vec4<int> find_bounding_box(const image<image_pixel_format::gray8>& image)
+	{
+		cv::Mat img = image_to_cvmat_view(image);
+
+		cv::Rect bbox = cv::boundingRect(img);
+		return { bbox.x, bbox.y, bbox.x + bbox.width, bbox.y + bbox.height };
 	}
 }

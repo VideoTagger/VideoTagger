@@ -30,10 +30,11 @@ namespace vt
 			bool is_active_video =  this->active_video_.has_value() and *this->active_video_ == video_id;
 			bool insert_allowed = this->insert_allowed_cursor() and is_hovered;
 
+			ImRect draw_rect{ pos, pos + size };
 			if (ImGui::IsMouseClicked(ImGuiMouseButton_Left) and insert_allowed)
 			{
 				auto mouse_pos = ImGui::GetMousePos();
-				//if (utils::intersection::is_in_rect(mouse_pos, ImRect{ pos, pos + size }))
+				//if (utils::intersection::is_in_rect(mouse_pos, draw_rect))
 				//{
 					if (!shape_data.has_value())
 					{
@@ -48,7 +49,8 @@ namespace vt
 			if (shape_data.has_value() and is_active_video)
 			{
 				const auto& tag = this->get_tag();
-				shape_data->render(utils::vec2<int>({ static_cast<int>(tex_size.x), static_cast<int>(tex_size.y) }), pos, pos + size, tag.fill_color(), tag.outline_color(), 3.f);
+				
+				shape_data->render(utils::vec2<int>({ static_cast<int>(tex_size.x), static_cast<int>(tex_size.y) }), draw_rect, tag.fill_color(), tag.outline_color(), 3.f, false);
 
 				if (ImGui::IsKeyPressed(ImGuiKey_Enter) and insert_allowed)
 				{

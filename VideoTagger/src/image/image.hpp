@@ -101,6 +101,18 @@ namespace vt
 			return size_[1];
 		}
 
+		constexpr bool empty() const
+		{
+			for (int y = 0; y < size_[0]; ++y)
+			{
+				for (int x = 0; x < size_[1]; ++x)
+				{
+					if (at(x, y) != pixel_type{}) return false;
+				}
+			}
+			return true;
+		}
+
 		image& operator=(const image& other)
 		{
 			if (this != &other)

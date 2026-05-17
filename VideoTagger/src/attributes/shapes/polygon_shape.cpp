@@ -17,14 +17,14 @@ namespace vt
 		return utils::intersection::is_in_polygon(ImVec2(point[0], point[1]), ps);
 	}
 
-	void polygon_shape::render_shape(utils::vec2<int> shape_space, ImVec2 draw_min, ImVec2 draw_max, uint32_t fill_color, uint32_t outline_color)
+	void polygon_shape::render_shape(utils::vec2<int> shape_space, ImRect draw_rect, uint32_t fill_color, uint32_t outline_color)
 	{
 		auto draw_list = ImGui::GetWindowDrawList();
 
 		std::vector<ImVec2> ps(points.size());
 		for (size_t i = 0; i < ps.size(); ++i)
 		{
-			ps[i] = math::scale_vec2(points[i], utils::vec2<int>{}, shape_space, draw_min, draw_max, false);
+			ps[i] = math::scale_vec2(points[i], utils::vec2<int>{}, shape_space, draw_rect.Min, draw_rect.Max, false);
 		}
 
 		if (utils::intersection::is_convex_polygon(ps))
@@ -38,8 +38,8 @@ namespace vt
 		draw_list->AddPolyline(ps.data(), ps.size(), outline_color, ImDrawFlags_Closed, 1.f);
 	}
 
-	void polygon_shape::render(utils::vec2<int> shape_space, ImVec2 draw_min, ImVec2 draw_max, uint32_t fill_color, uint32_t outline_color, std::optional<float> point_radius)
+	void polygon_shape::render(utils::vec2<int> shape_space, ImRect draw_rect, uint32_t fill_color, uint32_t outline_color, std::optional<float> point_radius, bool draw_bounding_box)
 	{
-		shape::render(shape_space, draw_min, draw_max, fill_color, outline_color, point_radius);
+		shape::render(shape_space, draw_rect, fill_color, outline_color, point_radius, draw_bounding_box);
 	}
 }

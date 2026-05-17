@@ -8,6 +8,16 @@ namespace vt
 		struct gray
 		{
 			type value{};
+
+			constexpr bool operator==(const gray& other) const
+			{
+				return value == other.value;
+			}
+
+			constexpr bool operator!=(const gray& other) const
+			{
+				return !(*this == other);
+			}
 		};
 
 		template<typename type>
@@ -16,6 +26,16 @@ namespace vt
 			type r{};
 			type g{};
 			type b{};
+
+			constexpr bool operator==(const rgb& other) const
+			{
+				return r == other.r and g == other.g and b == other.b;
+			}
+
+			constexpr bool operator!=(const rgb& other) const
+			{
+				return !(*this == other);
+			}
 		};
 
 		template<typename type>
@@ -24,6 +44,16 @@ namespace vt
 			type b{};
 			type g{};
 			type r{};
+
+			constexpr bool operator==(const bgr& other) const
+			{
+				return r == other.r and g == other.g and b == other.b;
+			}
+
+			constexpr bool operator!=(const bgr& other) const
+			{
+				return !(*this == other);
+			}
 		};
 
 		template<typename type>
@@ -33,6 +63,16 @@ namespace vt
 			type g{};
 			type b{};
 			type a{};
+
+			constexpr bool operator==(const rgba& other) const
+			{
+				return r == other.r and g == other.g and b == other.b and a == other.a;
+			}
+
+			constexpr bool operator!=(const rgba& other) const
+			{
+				return !(*this == other);
+			}
 		};
 
 		template<typename type>
@@ -42,6 +82,16 @@ namespace vt
 			type g{};
 			type r{};
 			type a{};
+
+			constexpr bool operator==(const bgra& other) const
+			{
+				return r == other.r and g == other.g and b == other.b and a == other.a;
+			}
+
+			constexpr bool operator!=(const bgra& other) const
+			{
+				return !(*this == other);
+			}
 		};
 
 		using gray8 = gray<uint8_t>;

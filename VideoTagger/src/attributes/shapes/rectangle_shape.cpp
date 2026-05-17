@@ -45,21 +45,21 @@ namespace vt
 		return { &start, &end };
 	}
 
-	void rectangle_shape::render_shape(utils::vec2<int> shape_space, ImVec2 draw_min, ImVec2 draw_max, uint32_t fill_color, uint32_t outline_color)
+	void rectangle_shape::render_shape(utils::vec2<int> shape_space, ImRect draw_rect, uint32_t fill_color, uint32_t outline_color)
 	{
 		auto draw_list = ImGui::GetWindowDrawList();
-		auto scaled_start = math::scale_vec2(start, utils::vec2<int>{}, shape_space, draw_min, draw_max, false);
-		auto scaled_end = math::scale_vec2(end, utils::vec2<int>{}, shape_space, draw_min, draw_max, false);
+		auto scaled_start = math::scale_vec2(start, utils::vec2<int>{}, shape_space, draw_rect.Min, draw_rect.Max, false);
+		auto scaled_end = math::scale_vec2(end, utils::vec2<int>{}, shape_space, draw_rect.Min, draw_rect.Max, false);
 
 		draw_list->AddRectFilled(scaled_start, scaled_end, fill_color);
 		draw_list->AddRect(scaled_start, scaled_end, outline_color);
 	}
 
-	void rectangle_shape::render_points(float radius, utils::vec2<int> shape_space, ImVec2 draw_min, ImVec2 draw_max, uint32_t fill_color, uint32_t outline_color)
+	void rectangle_shape::render_points(float radius, utils::vec2<int> shape_space, ImRect draw_rect, uint32_t fill_color, uint32_t outline_color)
 	{
 		auto draw_list = ImGui::GetWindowDrawList();
-		ImVec2 scaled_start = math::scale_vec2(start, utils::vec2<int>{}, shape_space, draw_min, draw_max, false);
-		ImVec2 scaled_end = math::scale_vec2(end, utils::vec2<int>{}, shape_space, draw_min, draw_max, false);
+		ImVec2 scaled_start = math::scale_vec2(start, utils::vec2<int>{}, shape_space, draw_rect.Min, draw_rect.Max, false);
+		ImVec2 scaled_end = math::scale_vec2(end, utils::vec2<int>{}, shape_space, draw_rect.Min, draw_rect.Max, false);
 
 		for (auto& p : { scaled_start, scaled_end })
 		{

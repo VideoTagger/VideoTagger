@@ -3,27 +3,66 @@
 #include <core/app_context.hpp>
 
 #include <backends/imgui_impl_opengl3.h>
+#include <image/image_opencv.hpp>
 
 namespace vt
 {
-	mask_shape::mask_shape(int width, int height) : mask_{ width, height }
+	mask_shape::mask_shape(int width, int height) : mask{ width, height }, bounding_box_{ 0, 0, width, height }
 	{
 
 	}
 
-	mask_shape::mask_shape(const image<image_pixel_format::gray8>& mask) : mask_{ mask }
+	mask_shape::mask_shape(const image<image_pixel_format::gray8>& mask) : mask{ mask }, bounding_box_{ 0, 0, mask.width(), mask.height() }
 	{
 
+	}
+
+	void mask_shape::recalculate_bounding_box()
+	{
+		bounding_box_ = find_bounding_box(mask);
+	}
+
+	void mask_shape::recalculate_bounding_box(const utils::vec4<int>& area, bool area_added)
+	{
+		if (area_added)
+		{
+			auto bb_size = size();
+			auto start = area.pos_min().min(bounding_box_.pos_min());
+			auto end = area.pos_max().max(bounding_box_.pos_max());
+			bounding_box_ = utils::vec4<int>{ start, end };
+		}
+		else
+		{
+			//TODO: There probably is a more efficient way to do this than just recalculating the entire bounding box
+			recalculate_bounding_box();
+		}
+	}
+
+	const utils::vec4<int>& mask_shape::bounding_box() const
+	{
+		return bounding_box_;
+	}
+
+	utils::vec2<int> mask_shape::pos_min() const
+	{
+		return { bounding_box_[0], bounding_box_[1] };
+	}
+
+	utils::vec2<int> mask_shape::pos_max() const
+	{
+		return { bounding_box_[2], bounding_box_[3] };
+	}
+
+	utils::vec2<int> mask_shape::size() const
+	{
+		auto min = pos_min();
+		auto max = pos_max();
+		return { max[0] - min[0], max[1] - min[1] };
 	}
 
 	bool mask_shape::operator==(const mask_shape& other) const
 	{
 		return this == &other;
-	}
-
-	utils::vec4<int> mask_shape::bounding_box() const
-	{
-		return { pos_[0], pos_[1], pos_[0] + mask_.width(), pos_[1] + mask_.height() };
 	}
 
 	void mask_shape::set_target(event_source source, video_id_t video_id)
@@ -34,11 +73,11 @@ namespace vt
 	bool mask_shape::contains(utils::vec2<int> point) const
 	{
 		auto bb = bounding_box();
-		if (point[0] < bb[0] or  point[0] > bb[2] or point[1] < bb[1] or point[1] > bb[3])
+		if (point[0] < bb[0] or point[0] > bb[2] or point[1] < bb[1] or point[1] > bb[3])
 		{
 			return false;
 		}
-		return mask_.at(point).value > 0;
+		return mask.at(point).value > 0;
 	}
 
 	utils::vec2<int>* mask_shape::closest_point(utils::vec2<int> point, float max_distance)
@@ -51,13 +90,12 @@ namespace vt
 		return {};
 	}
 
-	void mask_shape::render_shape(utils::vec2<int> shape_space, ImVec2 draw_min, ImVec2 draw_max, uint32_t fill_color, uint32_t outline_color)
+	void mask_shape::render_shape(utils::vec2<int> shape_space, ImRect draw_rect, uint32_t fill_color, uint32_t outline_color)
 	{
 		struct mask_draw_data
 		{
 			gl_texture* texture{};
-			ImVec2 min;
-			ImVec2 max;
+			ImRect draw_rect{};
 			uint32_t fill_color{};
 			mask_shape obj{};
 		};
@@ -68,12 +106,11 @@ namespace vt
 		//TODO: Actually get the correct video instead of just the first one
 		auto& vid = *ctx_.displayed_videos.begin();
 		data->texture = &vid.overlay_texture;
-		data->min = draw_min;
-		data->max = draw_max;
+		data->draw_rect = draw_rect;
 		data->fill_color = fill_color;
 		data->obj = *this;
 
-		draw_list->PushClipRect(draw_min, draw_max);
+		draw_list->PushClipRect(draw_rect.Min, draw_rect.Max);
 		draw_list->AddCallback([](const ImDrawList* parent_list, const ImDrawCmd* cmd)
 		{
 			auto* data = static_cast<mask_draw_data*>(cmd->UserCallbackData);
@@ -88,7 +125,8 @@ namespace vt
 			float B = draw_data->DisplayPos.y + draw_data->DisplaySize.y;
 
 			data->texture->clear();
-			data->texture->set_pixels(data->obj.mask_.data(), data->obj.pos_[0], data->obj.pos_[1], data->obj.mask_.width(), data->obj.mask_.height(), GL_RED);
+			utils::vec2<int> offset;
+			data->texture->set_pixels(data->obj.mask.data(), offset[0], offset[1], data->obj.mask.width(), data->obj.mask.height(), GL_RED);
 
 			const float ortho_projection[4][4] =
 			{
@@ -144,9 +182,9 @@ namespace vt
 			glDisable(GL_CULL_FACE);
 			glDisable(GL_DEPTH_TEST);
 			glDisable(GL_STENCIL_TEST);
-			glDisable(GL_SCISSOR_TEST);
+			glEnable(GL_SCISSOR_TEST);
 
-			ImRect quad{ data->min, data->max };
+			ImRect quad = data->draw_rect;
 			// 6 vertices, each: pos.x, pos.y, u, v
 			float verts[6 * 4]
 			{
@@ -187,10 +225,24 @@ namespace vt
 		draw_list->PopClipRect();
 	}
 
+	void mask_shape::render_bounding_box(utils::vec2<int> shape_space, ImRect draw_rect, uint32_t fill_color, uint32_t outline_color)
+	{
+		auto* draw_list = ImGui::GetWindowDrawList();
+		auto bb = bounding_box();
+		auto start = pos_min();
+		auto end = pos_max();
+
+		ImVec2 scaled_start = math::scale_vec2(start, utils::vec2<int>{}, shape_space, draw_rect.Min, draw_rect.Max, false);
+		ImVec2 scaled_end = math::scale_vec2(end, utils::vec2<int>{}, shape_space, draw_rect.Min, draw_rect.Max, false);
+
+		draw_list->AddRect(scaled_start, scaled_end, outline_color);
+	}
+
 	[[nodiscard]] nlohmann::ordered_json mask_shape::serialize() const
 	{
 		nlohmann::ordered_json json;
-		json["position"] = pos_;
+		json["position"] = pos_min();
+		//TODO: Compress and serialize mask
 		return json;
 	}
 
@@ -201,6 +253,9 @@ namespace vt
 			debug::error("Invalid JSON: missing 'position' field");
 			return;
 		}
-		pos_ = json["position"].get<utils::vec2<int>>();
+		auto pos = json["position"].get<utils::vec2<int>>();
+		bounding_box_[0] = pos[0];
+		bounding_box_[1] = pos[1];
+		//TODO: Deserialize compressed mask
 	}
 }

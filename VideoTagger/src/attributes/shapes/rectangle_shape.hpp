@@ -25,8 +25,8 @@ namespace vt
 
 		virtual std::vector<utils::vec2<int>*> get_all_points() override;
 
-		virtual void render_shape(utils::vec2<int> shape_space, ImVec2 draw_min, ImVec2 draw_max, uint32_t fill_color, uint32_t outline_color) override;
-		virtual void render_points(float radius, utils::vec2<int> shape_space, ImVec2 draw_min, ImVec2 draw_max, uint32_t fill_color, uint32_t outline_color) override;
+		virtual void render_shape(utils::vec2<int> shape_space, ImRect draw_rect, uint32_t fill_color, uint32_t outline_color) override;
+		virtual void render_points(float radius, utils::vec2<int> shape_space, ImRect draw_rect, uint32_t fill_color, uint32_t outline_color) override;
 
 		virtual bool render_data(event_source source, video_id_t video_id, utils::vec2<int> shape_space) override;
 

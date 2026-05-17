@@ -42,7 +42,8 @@ namespace vt
 				shape_data->radius = math::scale_value(circle_screen_radius, 0.f, size.x, static_cast<uint32_t>(0), static_cast<uint32_t>(tex_size.x), false);
 
 				const auto& tag = get_tag();
-				shape_data->render(utils::vec2<int>({ static_cast<int>(tex_size.x), static_cast<int>(tex_size.y) }), pos, pos + size, tag.fill_color(), tag.outline_color(), std::nullopt);
+				ImRect draw_rect{ pos, pos + size };
+				shape_data->render(utils::vec2<int>({ static_cast<int>(tex_size.x), static_cast<int>(tex_size.y) }), draw_rect, tag.fill_color(), tag.outline_color(), std::nullopt, false);
 			}
 			else if (ImGui::IsMouseReleased(ImGuiMouseButton_Left))
 			{

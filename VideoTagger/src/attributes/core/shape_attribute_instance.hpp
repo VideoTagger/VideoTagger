@@ -243,25 +243,28 @@ namespace vt
 				bool is_selected = ctx_.session.is_region_selected(this, region_id);
 				bool is_hovered = false;
 				bool is_keyframe = region.is_keyframe(ts);
-				bool show_points = is_selected or (is_keyframe and window_hovered);
+
+				auto video_mouse_pos = math::scale_vec2(ImGui::GetMousePos(), pos, pos + size, utils::vec2<int>{}, utils::vec2<int>{ static_cast<int>(tex_size.x), static_cast<int>(tex_size.y) }, false);
+				is_hovered = window_hovered and select_tool_active and shape_opt->contains(video_mouse_pos);
+
+				bool show_points = is_selected or (is_keyframe and (window_hovered or is_hovered));
+				bool show_bbox = show_points;
 
 				auto outline_color = is_selected ? ctx_.current_theme.get_rgba(theme_color::selection_normal) : attribute_tag.outline_color();
 				auto render_point_size = show_points ? std::optional<float>{ point_size } : std::optional<float>{};
 
 				utils::vec2<int> shape_space{ static_cast<int>(tex_size.x), static_cast<int>(tex_size.y) };
-				shape_opt->render(shape_space, pos, pos + size, attribute_tag.fill_color(), outline_color, render_point_size);
+				ImRect draw_rect{ pos, pos + size };
+				shape_opt->render(shape_space, draw_rect, attribute_tag.fill_color(), outline_color, render_point_size, show_bbox);
 
 				if (window_hovered and select_tool_active)
-				{
-					auto video_mouse_pos = math::scale_vec2(ImGui::GetMousePos(), pos, pos + size, utils::vec2<int>{}, utils::vec2<int>{ static_cast<int>(tex_size.x), static_cast<int>(tex_size.y) }, false);
-					is_hovered = shape_opt->contains(video_mouse_pos);
-					
+				{					
 					if (is_hovered)
 					{
 						// session checks if region was already hovered, no need to check that here
 						ctx_.dispatch_event<region_hover_started_event>(event_source_, attribute_tag.name, segment, video_id, *this, region_id);
 					}
-
+					
 					//TODO: add event for hovering points (like above for regions) and move this to main_window
 					auto keyframe_it = region.find_keyframe(ts);
 					if (keyframe_it != region.end())
