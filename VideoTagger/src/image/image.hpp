@@ -12,7 +12,7 @@ namespace vt
 	{
 	public:
 		using pixel_type = pixel_format;
-
+		
 		image() = default;
 		image(int width, int height) : size_{ width, height }, data_{ std::make_unique<pixel_type[]>(width * height) } {}
 		image(const utils::vec2<int>& size) : size_{ size }, data_{ std::make_unique<pixel_type[]>(size[0] * size[1]) } {}
@@ -35,6 +35,19 @@ namespace vt
 		void set_data(std::unique_ptr<pixel_type[]>&& data)
 		{
 			data_ = std::move(data);
+		}
+
+		void allocate(int width, int height)
+		{
+			return allocate({ width, height });
+		}
+
+		void allocate(const utils::vec2<int>& size)
+		{
+			if (size == size_) return;
+
+			size_ = size;
+			data_ = std::make_unique<pixel_type[]>(size_[0] * size_[1]);
 		}
 
 		template<typename target_pixel_type, typename pixel_converter_type, typename = std::enable_if_t<std::is_invocable_r_v<target_pixel_type, pixel_converter_type, pixel_type>>>

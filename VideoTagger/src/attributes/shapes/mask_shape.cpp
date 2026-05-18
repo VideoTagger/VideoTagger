@@ -1,6 +1,7 @@
 #include "mask_shape.hpp"
 #include <core/debug.hpp>
 #include <core/app_context.hpp>
+#include <codec/rle_mask.hpp>
 
 #include <backends/imgui_impl_opengl3.h>
 #include <image/image_opencv.hpp>
@@ -246,9 +247,11 @@ namespace vt
 
 	[[nodiscard]] nlohmann::ordered_json mask_shape::serialize() const
 	{
+		auto encoded_mask = codec::rle_mask::encode(mask.data<uint8_t>(), mask.size());
+
 		nlohmann::ordered_json json;
 		json["position"] = pos_min();
-		//TODO: Compress and serialize mask
+		json["mask"] = encoded_mask.serialize();
 		return json;
 	}
 
@@ -262,6 +265,16 @@ namespace vt
 		auto pos = json["position"].get<utils::vec2<int>>();
 		bounding_box_[0] = pos[0];
 		bounding_box_[1] = pos[1];
-		//TODO: Deserialize compressed mask
+		
+		if (!json.contains("mask"))
+		{
+			debug::error("Invalid JSON: missing 'mask' field");
+			return;
+		}
+		auto encoded_mask = json["mask"].get<codec::rle_mask>();
+		auto decoded_mask = codec::rle_mask::decode(encoded_mask);
+		mask.allocate(encoded_mask.size);
+		mask.set_data(reinterpret_cast<image_pixel_format::gray8*>(decoded_mask.data()));
+		recalculate_bounding_box();
 	}
 }
