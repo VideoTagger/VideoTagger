@@ -1,9 +1,9 @@
 #include "pch.hpp"
 #include "base64.hpp"
 
-namespace vt::utils::base64
+namespace vt::codec::base64
 {
-	std::string encode(const std::vector<uint8_t>& data, base64_table table, bool remove_padding)
+	std::string encode(const std::vector<uint8_t>& data, encode_table table, bool remove_padding)
 	{
 		static constexpr const char* encode_tables[] =
 		{
