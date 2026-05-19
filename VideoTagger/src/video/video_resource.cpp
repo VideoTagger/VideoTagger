@@ -262,7 +262,6 @@ namespace vt
 		}
 
 		//TODO: calculate size differently (so that every thumbnail has approximately the same same)
-		gl_texture result(thumbnail_width, thumbnail_height, GL_RGB);
 		video_resource_thumbnail thumbnail;
 		thumbnail.width = thumbnail_width;
 		thumbnail.height = thumbnail_height;
