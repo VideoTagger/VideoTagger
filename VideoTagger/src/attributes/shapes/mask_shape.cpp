@@ -8,10 +8,9 @@
 
 namespace vt
 {
-	mask_shape::mask_shape(int width, int height) : mask{ width, height }, bounding_box_{ 0, 0, width, height }
-	{
+	mask_shape::mask_shape(int width, int height) : mask{ width, height }, bounding_box_{ 0, 0, width, height } {}
 
-	}
+	mask_shape::mask_shape(const utils::vec2<int>& size) : mask{ size }, bounding_box_{ 0, 0, size[0], size[1] } {}
 
 	mask_shape::mask_shape(const image<image_pixel_format::gray8>& mask) : mask{ mask }, bounding_box_{ 0, 0, mask.width(), mask.height() }
 	{

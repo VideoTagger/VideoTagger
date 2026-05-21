@@ -19,7 +19,7 @@ namespace vt
 		{
 			shape_tool<shape_type>::render_overlay(video_id, pos, size, tex_size);
 
-			auto& shape_data = this->data();
+			auto shape_data = this->data();
 
 			static auto to_texture_space = [](const ImVec2& screen_pos, ImVec2 pos, ImVec2 size, ImVec2 tex_size) -> utils::vec2<int>
 			{
@@ -36,9 +36,11 @@ namespace vt
 				auto mouse_pos = ImGui::GetMousePos();
 				//if (utils::intersection::is_in_rect(mouse_pos, draw_rect))
 				//{
-					if (!shape_data.has_value())
+					if (shape_data == nullptr)
 					{
-						shape_data.emplace();
+						auto ptr = std::make_shared<shape_type>();
+						this->set_data(ptr);
+						shape_data = ptr;
 					}
 
 					shape_data->points.push_back(to_texture_space(mouse_pos, pos, size, tex_size));
@@ -46,7 +48,7 @@ namespace vt
 				//}
 			}
 
-			if (shape_data.has_value() and is_active_video)
+			if (shape_data != nullptr and is_active_video)
 			{
 				const auto& tag = this->get_tag();
 				
@@ -63,8 +65,8 @@ namespace vt
 		{
 			if (!this->can_insert_region()) return;
 
-			auto& shape_data = this->data();
-			if (!this->active_video_.has_value() or !shape_data.has_value())
+			auto shape_data = this->data();
+			if (!this->active_video_.has_value() or shape_data == nullptr)
 			{
 				this->reset();
 				return;

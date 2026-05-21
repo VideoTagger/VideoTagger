@@ -13,6 +13,11 @@ namespace vt
 		return start == other.start and end == other.end;
 	}
 
+	utils::vec4<int> rectangle_shape::as_vec4() const
+	{
+		return { start, end };
+	}
+
 	void rectangle_shape::set_target(event_source source, video_id_t video_id)
 	{
 		std::vector<utils::vec2<int>*> targets{ { &start,  &end } };

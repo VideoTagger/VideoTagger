@@ -20,7 +20,7 @@ namespace vt
 		{
 			std::copy(other.data_.get(), other.data_.get() + (size_[0] * size_[1]), data_.get());
 		}
-		image(image&& other) : size_{ other.size_ }, data_{ std::move(other.data_) } {}
+		image(image&& other) noexcept : size_{ other.size_ }, data_{ std::move(other.data_) } {}
 
 	private:
 		std::unique_ptr<pixel_type[]> data_;
@@ -48,6 +48,11 @@ namespace vt
 
 			size_ = size;
 			data_ = std::make_unique<pixel_type[]>(size_[0] * size_[1]);
+		}
+
+		void clear(pixel_type color = {})
+		{
+			std::fill(data_.get(), data_.get() + (size_[0] * size_[1]), color);
 		}
 
 		template<typename target_pixel_type, typename pixel_converter_type, typename = std::enable_if_t<std::is_invocable_r_v<target_pixel_type, pixel_converter_type, pixel_type>>>

@@ -11,21 +11,23 @@ namespace vt
 	{
 		shape_tool<rectangle_shape>::render_overlay(video_id, pos, size, tex_size);
 
-		auto& shape_data = data();
+		auto shape_data = data();
 
 		static auto to_texture_space = [](const ImVec2& screen_pos, ImVec2 pos, ImVec2 size, ImVec2 tex_size) -> utils::vec2<int>
 		{
 			return math::scale_vec2(screen_pos, pos, pos + size, utils::vec2<int>{}, utils::vec2<int>{ static_cast<int>(tex_size.x), static_cast<int>(tex_size.y) }, false);
 		};
 
-		if (!shape_data.has_value())
+		if (shape_data == nullptr)
 		{
 			if (!ImGui::IsWindowHovered() or !insert_allowed_cursor()) return;
 
 			if (ImGui::IsMouseClicked(ImGuiMouseButton_Left))
 			{
 				auto click_pos = to_texture_space(ImGui::GetMousePos(), pos, size, tex_size);
-				shape_data.emplace(click_pos, click_pos);
+				auto ptr = std::make_shared<rectangle_shape>(click_pos, click_pos);
+				set_data(ptr);
+				shape_data = ptr;
 				active_video_ = video_id;
 			}
 		}
@@ -53,19 +55,18 @@ namespace vt
 	{
 		if (!can_insert_region()) return;
 
-		auto& shape_data = data();
-		if (!active_video_.has_value() or !shape_data.has_value())
+		auto shape_data = data();
+		if (!active_video_.has_value() or shape_data == nullptr)
 		{
 			reset();
 			return;
 		}
 
-		// Explicit type because without it minmax returns std::pair<const uint32_t&, const uint32_t&> which later breaks the assignment
-		std::pair<int, int> minmax_x = std::minmax(shape_data->start[0], shape_data->end[0]);
-		std::pair<int, int> minmax_y = std::minmax(shape_data->start[1], shape_data->end[1]);
+		auto[min_x, max_x] = std::minmax<int>(shape_data->start[0], shape_data->end[0]);
+		auto[min_y, max_y] = std::minmax<int>(shape_data->start[1], shape_data->end[1]);
 
-		shape_data->start = { minmax_x.first, minmax_y.first };
-		shape_data->end = { minmax_x.second, minmax_y.second };
+		shape_data->start = { min_x, min_y };
+		shape_data->end = { max_x, max_y };
 
 		if (shape_data->start != shape_data->end)
 		{

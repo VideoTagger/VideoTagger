@@ -52,6 +52,8 @@
 #include <attributes/shapes/circle_shape.hpp>
 #include <attributes/shapes/mask_shape.hpp>
 #include <render/shader_storage.hpp>
+#include <ui/toolbar/toolbar_tool_extension_registry.hpp>
+#include <attributes/tools/extensions/impl/wand_tool_extension.hpp>
 
 namespace vt
 {
@@ -80,8 +82,6 @@ namespace vt
 		bool show_about_window = false;
 		bool show_tag_importer_window = false;
 	};
-
-
 
 	///@brief Application context that holds all states and necessary data
 	struct app_context : public event_storage, ui::ui_registry
@@ -130,6 +130,7 @@ namespace vt
 		std::optional<video_id_t> last_focused_video;
 
 		attribute_registry attr_registry;
+		ui::toolbar_tool_extension_registry<ui::impl::wand_tool_extension> wand_extensions;
 		std::unordered_map<std::type_index, std::unique_ptr<impl::shape_predictor_registry>> shape_predictor_registries;
 
 		std::unique_ptr<shader_storage> shaders;
@@ -150,6 +151,7 @@ namespace vt
 		bool reset_player_docking{};
 
 		void init_attribute_registry();
+		void init_tool_extension_registry();
 		void init_shape_predictor_registries();
 
 		void load_shaders();

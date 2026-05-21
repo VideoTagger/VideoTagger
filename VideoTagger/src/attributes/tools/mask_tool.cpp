@@ -19,7 +19,7 @@ namespace vt
 	{
 		shape_tool<mask_shape>::render_overlay(video_id, pos, size, tex_size);
 
-		auto& shape_data = data();
+		auto shape_data = data();
 
 		//TODO: Move this somewhere outside
 		static auto to_texture_space = [](const ImVec2& screen_pos, ImVec2 pos, ImVec2 size, ImVec2 tex_size) -> utils::vec2<int>
@@ -40,9 +40,11 @@ namespace vt
 		if (ImGui::IsMouseClicked(ImGuiMouseButton_Left) and insert_allowed)
 		{
 			bool was_created = false;
-			if (!shape_data.has_value() or !is_active_video)
+			if (shape_data == nullptr or !is_active_video)
 			{
-				shape_data = mask_shape{ tex_size_int[0], tex_size_int[1] };
+				auto ptr = std::make_shared<mask_shape>(tex_size_int[0], tex_size_int[1]);
+				set_data(ptr);
+				shape_data = ptr;
 				was_created = true;
 			}
 
@@ -54,7 +56,7 @@ namespace vt
 			active_video_ = video_id;
 			is_active_video = active_video_.has_value() and *active_video_ == video_id;
 		}
-		else if (ImGui::IsMouseDragging(ImGuiMouseButton_Left) and insert_allowed and shape_data.has_value())
+		else if (ImGui::IsMouseDragging(ImGuiMouseButton_Left) and insert_allowed and shape_data != nullptr)
 		{
 			auto prev_mouse_pos = mouse_pos - io.MouseDelta;
 			auto prev_mpos = to_texture_space(prev_mouse_pos, pos, size, tex_size);
@@ -78,7 +80,7 @@ namespace vt
 			}
 		}
 		
-		if (shape_data.has_value() and is_active_video)
+		if (shape_data != nullptr and is_active_video)
 		{
 			const auto& tag = get_tag();
 			ImRect draw_rect{ pos, pos + size };
@@ -101,8 +103,8 @@ namespace vt
 	{
 		if (!can_insert_region()) return;
 
-		auto& shape_data = data();
-		if (!active_video_.has_value() or !shape_data.has_value())
+		auto shape_data = data();
+		if (!active_video_.has_value() or shape_data == nullptr)
 		{
 			reset();
 			return;
@@ -162,7 +164,7 @@ namespace vt
 	void mask_tool::apply_brush(const utils::vec2<int>& center, const utils::vec2<int>& tex_size, bool is_eraser)
 	{
 		auto color = is_eraser ? cv::Scalar(0) : cv::Scalar(255);
-		auto& mask_data = data();
+		auto mask_data = data();
 		auto mat = image_to_cvmat(mask_data->mask);
 		bool update_bb = false;
 

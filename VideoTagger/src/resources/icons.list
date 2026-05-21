@@ -113,3 +113,8 @@ tool_eraser:e6d0 # ink_eraser
 tool_points:e3ea # grain
 tool_line:ebbb # polyline
 tool_wand:f31f # wand_shine
+tool_rect_selector:e1e6 # activity_zone
+tool_point_selector:f70c # point_scan
+tool_mask:e421 # texture
+tool_mask_add:f57c # texture_add
+tool_mask_remove:f57b # texture_minus
