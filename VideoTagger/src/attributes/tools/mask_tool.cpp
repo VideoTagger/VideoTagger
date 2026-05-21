@@ -120,11 +120,21 @@ namespace vt
 	{
 		const auto& style = ImGui::GetStyle();
 		ImGui::TableNextColumn();
-		if (ui::icon_button(is_eraser_ ? icons::tool_eraser : icons::tool_brush))
 		{
-			is_eraser_ = !is_eraser_;
+			ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2{});
+			if (ui::icon_toggle_button(icons::tool_brush, !is_eraser_))
+			{
+				is_eraser_ = false;
+			}
+			ui::tooltip("Brush");
+			ImGui::SameLine();
+			if (ui::icon_toggle_button(icons::tool_eraser, is_eraser_))
+			{
+				is_eraser_ = true;
+			}
+			ui::tooltip("Eraser");
+			ImGui::PopStyleVar();
 		}
-		ui::tooltip("Toggle Brush/Eraser");
 
 		ImGui::TableNextColumn();
 		{
@@ -140,7 +150,6 @@ namespace vt
 			}
 			ImGui::PopStyleVar();
 		}
-		
 
 		ImGui::TableNextColumn();
 		ImGui::SetNextItemWidth(ImGui::CalcTextSize("100px").x + style.FramePadding.x * 2.f);
