@@ -1029,7 +1029,7 @@ namespace vt::widgets
 					auto mouse_pos_x = ImGui::GetMousePos().x;
 					float normalized_mouse_x = math::normalize(mouse_pos_x, cell_rect->Min.x, cell_rect->Max.x, 0.f, 1.f);
 					timestamp mouse_timestamp = to_timestamp(normalized_mouse_x);
-					auto ts_str = timestamp_to_string(mouse_timestamp, full_time_format);
+					auto ts_str = timestamp_to_string(mouse_timestamp, default_time_format);
 					ui::tooltip(ts_str);
 
 					if (!playback_scrollbar_.is_dragged())

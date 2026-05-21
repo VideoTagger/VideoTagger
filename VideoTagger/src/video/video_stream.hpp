@@ -51,20 +51,42 @@ namespace vt
 		bool buffer_frame(bool skip_disposable = false, std::optional<std::chrono::nanoseconds> target_timestamp = std::nullopt);
 
 		/**
+		 * @brief Advance the current frame by the specified number of frames.
+		 * 
+		 * @param count The number of frames to advance.
+		 * @return The number of frames actually advanced, which may be less than count if the end of the video is reached or there was an error.
+		 */
+		size_t advance_frame(size_t count = 1);
+
+		/**
 		 * @brief Seek to the frame with the specified timestamp or the closest frame before it.
 		 * 
 		 * The frame buffer will be cleared if the timestamp is not within the range (current_frame->timestamp(); current_frame->timestamp() + seek_threshold]
 		 * or current_frame has no value.
-		 * current_frame has no value after calling this function so either update_current_frame or update_frame must be called to set it.
+		 * current_frame has no value after calling this function.
 		 * 
 		 * @param target_timestamp The timestamp to seek to.
 		 */
 		void seek(std::chrono::nanoseconds target_timestamp);
 
 		/**
+		 * @brief Update the current frame to the frame with the specified timestamp and update the image with it if it's necessary.
+		 *
+		 * The image will only be updated if the current frame changes.
+		 *
+		 * @param image The image to update with the current frame.
+		 * @param target_timestamp The timestamp of the frame to update to.
+		 * @param force_update If true, the image will be updated even if the current frame does not change.
+		 * @param skip_disposable If true, disposable frames (non-reference frames) will be skipped. If the frame at target_timestamp is disposable it won't be skipped.
+		 *
+		 * @return true if the current frame was updated, false otherwise.
+		 */
+		bool update_frame(image<image_pixel_format::rgb8>& image, std::chrono::nanoseconds target_timestamp, bool force_update = false, bool skip_disposable = false);
+
+		/**
 		 * @brief Update the current frame to the frame with the specified timestamp and update the texture with it if it's necessary.
 		 * 
-		 * The texture will only be updated if the current frame changes or skip_disposable is true.
+		 * The texture will only be updated if the current frame changes.
 		 * 
 		 * @param texture The texture to update with the current frame.
 		 * @param target_timestamp The timestamp of the frame to update to.
@@ -78,7 +100,7 @@ namespace vt
 		/**
 		 * @brief Update the current frame to the frame with the specified timestamp and update the given pixel array with it if it's necessary.
 		 *
-		 * The pixels will only be updated if the current frame changes or skip_disposable is true.
+		 * The pixels will only be updated if the current frame changes.
 		 *
 		 * @param pixels The pixel array to update with the current frame. If the array doesn't match the required size it will be resized.
 		 * @param width The width of the image.
@@ -131,6 +153,7 @@ namespace vt
 		bool update_from_current_frame(std::vector<uint8_t>& pixels, int width, int height);
 
 		[[nodiscard]] bool is_open() const;
+		[[nodiscard]] bool eof() const;
 
 		[[nodiscard]] int width() const;
 		[[nodiscard]] int height() const;

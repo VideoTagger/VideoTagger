@@ -107,12 +107,12 @@ namespace vt
 
 	std::chrono::nanoseconds video_frame::timestamp() const
 	{
-		return std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::duration<double>(frame_->pts * av_q2d(frame_->time_base)));
+		return std::chrono::nanoseconds{ av_rescale_q(frame_->pts, frame_->time_base, AVRational{ 1, 1'000'000'000 }) };
 	}
 
 	std::chrono::nanoseconds video_frame::duration() const
 	{
-		return std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::duration<double>(frame_->duration * av_q2d(frame_->time_base)));
+		return std::chrono::nanoseconds{ av_rescale_q(frame_->duration, frame_->time_base, AVRational{ 1, 1'000'000'000 }) };
 	}
 
 	std::chrono::nanoseconds video_frame::next_timestamp() const
@@ -204,12 +204,12 @@ namespace vt
 
 	std::chrono::nanoseconds packet_wrapper::timestamp() const
 	{
-		return std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::duration<double>(packet_->pts * av_q2d(packet_->time_base)));
+		return std::chrono::nanoseconds{ av_rescale_q(packet_->pts, packet_->time_base, AVRational{ 1, 1'000'000'000 }) };
 	}
 
 	std::chrono::nanoseconds packet_wrapper::duration() const
 	{
-		return std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::duration<double>(packet_->duration * av_q2d(packet_->time_base)));
+		return std::chrono::nanoseconds{ av_rescale_q(packet_->duration, packet_->time_base, AVRational{ 1, 1'000'000'000 }) };
 	}
 
 	std::chrono::nanoseconds packet_wrapper::next_timestamp() const
@@ -734,8 +734,7 @@ namespace vt
 	void video_decoder::seek_keyframe(std::chrono::nanoseconds timestamp)
 	{
 		auto video_stream_index = stream_indices_[static_cast<size_t>(stream_type::video)];
-		auto timestamp_seconds = std::chrono::duration_cast<std::chrono::duration<double>>(timestamp);
-		int64_t seek_timestamp = static_cast<int64_t>(timestamp_seconds.count() / av_q2d(format_context_->streams[video_stream_index]->time_base));
+		int64_t seek_timestamp = av_rescale_q(timestamp.count(), AVRational{ 1, 1'000'000'000 }, format_context_->streams[video_stream_index]->time_base);
 
 		eof_ = false;
 
@@ -814,7 +813,7 @@ namespace vt
 
 	std::chrono::nanoseconds video_decoder::duration() const
 	{
-		return std::chrono::nanoseconds(static_cast<int64_t>(format_context_->duration / static_cast<double>((AV_TIME_BASE)) * 1'000'000'000));
+		return std::chrono::nanoseconds{ av_rescale_q(format_context_->duration, AVRational{ 1, AV_TIME_BASE }, AVRational{ 1, 1'000'000'000 }) };
 	}
 
 	std::chrono::nanoseconds video_decoder::frame_number_to_timestamp(size_t frame) const

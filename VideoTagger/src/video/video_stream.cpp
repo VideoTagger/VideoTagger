@@ -87,6 +87,27 @@ namespace vt
 		return false;
 	}
 
+	size_t video_stream::advance_frame(size_t count)
+	{
+		if (count == 0) return 0;
+
+		size_t result = 0;
+		while (result < count)
+		{
+			if (frame_buffer_.empty())
+			{
+				if (!buffer_frame()) return result;
+			}
+
+			current_frame_ = std::move(frame_buffer_.front());
+			frame_buffer_.pop_front();
+
+			result++;
+		}
+
+		return result;
+	}
+
 	void video_stream::seek(std::chrono::nanoseconds target_timestamp)
 	{
 		auto current_ts = current_frame_.has_value() ? current_frame_->timestamp() : std::chrono::nanoseconds::zero();
@@ -109,6 +130,16 @@ namespace vt
 		}
 
 		current_frame_.reset();
+	}
+
+	bool video_stream::update_frame(image<image_pixel_format::rgb8>& image, std::chrono::nanoseconds target_timestamp, bool force_update, bool skip_disposable)
+	{
+		if (!update_current_frame(target_timestamp, skip_disposable) and !force_update)
+		{
+			return false;
+		}
+
+		return update_from_current_frame(image);
 	}
 
 	bool video_stream::update_frame(gl_texture& texture, std::chrono::nanoseconds target_timestamp, bool force_update, bool skip_disposable)
@@ -134,6 +165,11 @@ namespace vt
 	bool video_stream::is_open() const
 	{
 		return decoder_.is_open();
+	}
+
+	bool video_stream::eof() const
+	{
+		return decoder_.eof();
 	}
 
 	int video_stream::width() const
