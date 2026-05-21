@@ -82,5 +82,5 @@ namespace vt::impl
 				debug::error("Attribute type mismatch during deserialization. Expected '{}', got '{}'", type_name(), json["type"].get<std::string>());
 			}
 		}
-	};
+	}
 }

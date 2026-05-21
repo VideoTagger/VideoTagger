@@ -14,7 +14,9 @@ namespace vt
 	public:
 		virtual std::unique_ptr<impl::attribute> new_attribute(const std::string& name) override
 		{
-			return std::make_unique<simple_attribute<attribute_type>>(this, name);
+			auto ptr = std::make_unique<simple_attribute<attribute_type>>(this, name);
+			ptr->on_init();
+			return ptr;
 		}
 	};
 }

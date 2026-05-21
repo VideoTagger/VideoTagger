@@ -34,6 +34,7 @@ namespace vt::impl
 
 		virtual bool render_instance_properties(std::unique_ptr<impl::attribute_instance>& instance) { return false; };
 
+		virtual void on_init() {}
 		virtual std::unique_ptr<impl::attribute_instance> instantiate() = 0;
 
 
