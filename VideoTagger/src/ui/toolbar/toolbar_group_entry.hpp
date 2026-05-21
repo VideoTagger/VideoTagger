@@ -23,7 +23,7 @@ namespace vt::ui
 		toolbar_tool_specification spec_;
 		toolbar_group* group_;
 		toolbar_tool* active_tool_;
-		size_t sort_index_;
+		int64_t sort_index_;
 
 	public:
 		void add_tool(event_source source, const toolbar_tool& tool);
@@ -31,7 +31,7 @@ namespace vt::ui
 
 		void clear(event_source source);
 
-		void set_sort_index(size_t index);
+		void set_sort_index(int64_t index);
 		void set_active_tool(toolbar_tool& tool);
 
 		toolbar_tool* active_tool();

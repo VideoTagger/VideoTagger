@@ -37,7 +37,7 @@ namespace vt::ui
 		tools_.clear();
 	}
 
-	void toolbar_group_entry::set_sort_index(size_t index)
+	void toolbar_group_entry::set_sort_index(int64_t index)
 	{
 		sort_index_ = index;
 	}

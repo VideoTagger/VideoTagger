@@ -5,7 +5,7 @@
 
 namespace vt
 {
-	class mask_attribute_factory : public shape_attribute_factory_mt<mask_shape, mask_tool, wand_tool>
+	class mask_attribute_factory : public shape_attribute_factory_mt<mask_shape, wand_tool, mask_tool>
 	{
 	public:
 		mask_attribute_factory(const std::string& name, const std::string& icon);

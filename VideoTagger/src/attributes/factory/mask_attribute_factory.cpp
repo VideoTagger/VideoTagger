@@ -6,11 +6,11 @@
 namespace vt
 {
 	mask_attribute_factory::mask_attribute_factory(const std::string& name, const std::string& icon) :
-		shape_attribute_factory_mt<mask_shape, mask_tool, wand_tool>{ name, icon }
+		shape_attribute_factory_mt<mask_shape, wand_tool, mask_tool>{ name, icon }
 	{
 		std::array<ui::toolbar_tool_specification, shape_attribute_factory_mt::tool_count()> tool_specs;
-		tool_specs[0] = ui::toolbar_tool_specification(this->name(), this->icon(), utils::string::to_titlecase(this->name()));
-		tool_specs[1] = ui::toolbar_tool_specification("wand", icons::tool_wand, utils::string::to_titlecase("wand"));
+		tool_specs[0] = ui::toolbar_tool_specification("wand", icons::tool_wand, utils::string::to_titlecase("wand"));
+		tool_specs[1] = ui::toolbar_tool_specification(this->name(), this->icon(), utils::string::to_titlecase(this->name()));
 		set_tool_specifications(tool_specs);
 	}
 

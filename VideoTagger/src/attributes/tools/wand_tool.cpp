@@ -6,7 +6,7 @@ namespace vt
 
 	void wand_tool::render_overlay(video_id_t video_id, ImVec2 pos, ImVec2 size, ImVec2 tex_size)
 	{
-
+		shape_tool<mask_shape>::render_overlay(video_id, pos, size, tex_size);
 	}
 
 	void wand_tool::on_done()

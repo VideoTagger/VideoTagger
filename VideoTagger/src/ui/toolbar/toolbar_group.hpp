@@ -24,8 +24,8 @@ namespace vt::ui
 		tool_container entries_;
 
 	public:
-		void add_tool(event_source source, const toolbar_tool_specification& tool_spec, const toolbar_tool& tool = {}, size_t sort_index = 0);
-		void add_tool(event_source source, const toolbar_tool_specification& tool_spec, std::unique_ptr<toolbar_tool>&& tool, size_t sort_index = 0);
+		toolbar_group_entry& add_tool(event_source source, const toolbar_tool_specification& tool_spec, const toolbar_tool& tool = {}, size_t sort_index = 0);
+		toolbar_group_entry& add_tool(event_source source, const toolbar_tool_specification& tool_spec, std::unique_ptr<toolbar_tool>&& tool, size_t sort_index = 0);
 		bool remove_tool(event_source source, const std::string& tool_id);
 		void remove_non_persistent(event_source source);
 

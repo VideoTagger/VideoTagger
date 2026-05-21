@@ -23,9 +23,12 @@ namespace vt
 			auto& tool_group = ctx_.session.toolbar.group("shapes");
 
 			auto tools = shape_factory->new_tools(tag_data, name());
+			int64_t sort_index = tool_group.size();
 			for (size_t i = 0; i < tools.size(); ++i)
 			{
-				tool_group.add_tool(event.source(), shape_factory->tool_specification(i), std::move(tools[i]));
+				tool_group
+					.add_tool(event.source(), shape_factory->tool_specification(i), std::move(tools[i]))
+					.set_sort_index(-sort_index--);
 			}
 		});
 	}
