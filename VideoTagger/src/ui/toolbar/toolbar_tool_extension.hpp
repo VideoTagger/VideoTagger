@@ -9,22 +9,16 @@ namespace vt::ui
 	{
 	public:
 		toolbar_tool_extension() = default;
-		toolbar_tool_extension(const toolbar_tool_extension& other) : is_busy_{}, property_columns_{ other.property_columns_ } {}
-		toolbar_tool_extension(toolbar_tool_extension&& other) noexcept : is_busy_{}, property_columns_{ other.property_columns_ } {}
+		toolbar_tool_extension(const toolbar_tool_extension& other) : is_busy_{} {}
+		toolbar_tool_extension(toolbar_tool_extension&& other) noexcept : is_busy_{} {}
 
 	private:
 		std::atomic<bool> is_busy_{};
-		uint32_t property_columns_ = 0;
 
 	public:
-		constexpr void set_property_column_count(uint32_t count)
+		virtual uint32_t property_column_count() const
 		{
-			property_columns_ = count;
-		}
-
-		constexpr uint32_t property_column_count() const
-		{
-			return property_columns_;
+			return 0;
 		}
 
 		void set_busy(bool value)
@@ -40,14 +34,12 @@ namespace vt::ui
 		toolbar_tool_extension& operator=(const toolbar_tool_extension& other)
 		{
 			is_busy_ = false;
-			property_columns_ = other.property_columns_;
 			return *this;
 		}
 
 		toolbar_tool_extension& operator=(toolbar_tool_extension&& other) noexcept
 		{
 			is_busy_ = false;
-			property_columns_ = std::move(other.property_columns_);
 			return *this;
 		}
 

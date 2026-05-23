@@ -90,14 +90,22 @@ namespace vt
 		return {};
 	}
 
-	void mask_shape::render_shape(utils::vec2<int> shape_space, ImRect draw_rect, uint32_t fill_color, uint32_t outline_color, std::optional<video_id_t> video_id)
+	void mask_shape::render_shape_ex(utils::vec2<int> shape_space, ImRect draw_rect, uint32_t fill_color, uint32_t outline_color, std::optional<video_id_t> video_id, bool is_diff, float pattern_scale)
 	{
+		enum class mask_display_mode
+		{
+			normal = 0,
+			diff = 1,
+		};
+
 		struct mask_draw_data
 		{
 			gl_texture* texture{};
 			ImRect draw_rect{};
 			uint32_t fill_color{};
 			mask_shape obj{};
+			mask_display_mode display_mode{ mask_display_mode::normal };
+			float pattern_scale{ 1.0f };
 		};
 
 		auto* draw_list = ImGui::GetWindowDrawList();
@@ -111,6 +119,8 @@ namespace vt
 		data->draw_rect = draw_rect;
 		data->fill_color = fill_color;
 		data->obj = *this;
+		data->display_mode = is_diff ? mask_display_mode::diff : mask_display_mode::normal;
+		data->pattern_scale = pattern_scale;
 
 		draw_list->PushClipRect(draw_rect.Min, draw_rect.Max);
 		draw_list->AddCallback([](const ImDrawList* parent_list, const ImDrawCmd* cmd)
@@ -143,6 +153,9 @@ namespace vt
 			};
 
 			mask_shader.bind();
+			mask_shader.set_uniform<int>("u_mask_display_mode", static_cast<int>(data->display_mode));
+			mask_shader.set_uniform<float>("u_pattern_scale", data->pattern_scale);
+
 			GLint current_prog = 0;
 			glGetIntegerv(GL_CURRENT_PROGRAM, &current_prog);
 			if (current_prog == 0 or current_prog != mask_shader.id())
@@ -161,7 +174,7 @@ namespace vt
 				glBindVertexArray(quad_vao);
 				glBindBuffer(GL_ARRAY_BUFFER, quad_vbo);
 				glBufferData(GL_ARRAY_BUFFER, 6 * 4 * sizeof(float), nullptr, GL_DYNAMIC_DRAW);
-								int pos_loc = ctx_.shaders->mask_shader.get_attribute_location("Position");
+				int pos_loc = ctx_.shaders->mask_shader.get_attribute_location("Position");
 				int uv_loc = ctx_.shaders->mask_shader.get_attribute_location("UV");
 				glEnableVertexAttribArray(pos_loc);
 				glVertexAttribPointer(pos_loc, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
@@ -229,6 +242,11 @@ namespace vt
 
 		draw_list->AddCallback(ImDrawCallback_ResetRenderState, nullptr);
 		draw_list->PopClipRect();
+	}
+
+	void mask_shape::render_shape(utils::vec2<int> shape_space, ImRect draw_rect, uint32_t fill_color, uint32_t outline_color, std::optional<video_id_t> video_id)
+	{
+		render_shape_ex(shape_space, draw_rect, fill_color, outline_color, video_id);
 	}
 
 	void mask_shape::render_bounding_box(utils::vec2<int> shape_space, ImRect draw_rect, uint32_t fill_color, uint32_t outline_color, std::optional<video_id_t> video_id)

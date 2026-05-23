@@ -9,10 +9,13 @@
 
 namespace vt
 {
-	mask_tool::mask_tool(const tag& tag, const std::string& attribute_name) : shape_tool<mask_shape>{ tag, attribute_name }, brush_size_{ 5 }, brush_type_{ mask_tool_type::circle }, is_eraser_{}
+	mask_tool::mask_tool(const tag& tag, const std::string& attribute_name) : shape_tool<mask_shape>{ tag, attribute_name } {}
+
+	uint32_t mask_tool::property_column_count() const
 	{
 		auto col_count = shape_tool<mask_shape>::property_column_count();
-		set_property_column_count(col_count + 3);
+		col_count += brush_tool::property_column_count();
+		return col_count;
 	}
 
 	void mask_tool::render_overlay(video_id_t video_id, ImVec2 pos, ImVec2 size, ImVec2 tex_size)
@@ -37,46 +40,28 @@ namespace vt
 
 		auto mouse_pos = ImGui::GetMousePos();
 		auto mpos = to_texture_space(mouse_pos, pos, size, tex_size);
-		if (ImGui::IsMouseClicked(ImGuiMouseButton_Left) and insert_allowed)
+		if (insert_allowed)
 		{
 			bool was_created = false;
-			if (shape_data == nullptr or !is_active_video)
+			if (ImGui::IsMouseClicked(ImGuiMouseButton_Left))
 			{
-				auto ptr = std::make_shared<mask_shape>(tex_size_int[0], tex_size_int[1]);
-				set_data(ptr);
-				shape_data = ptr;
-				was_created = true;
+				if (shape_data == nullptr or !is_active_video)
+				{
+					auto ptr = std::make_shared<mask_shape>(tex_size_int[0], tex_size_int[1]);
+					set_data(ptr);
+					shape_data = ptr;
+					was_created = true;
+				}
+
+				active_video_ = video_id;
+				is_active_video = active_video_.has_value() and *active_video_ == video_id;
 			}
 
-			apply_brush(mpos, tex_size_int, is_eraser_);
+			handle_drawing(shape_data, video_id, pos, size, tex_size, is_eraser() ? 0 : 255);
+
 			if (was_created)
 			{
 				shape_data->recalculate_bounding_box();
-			}
-			active_video_ = video_id;
-			is_active_video = active_video_.has_value() and *active_video_ == video_id;
-		}
-		else if (ImGui::IsMouseDragging(ImGuiMouseButton_Left) and insert_allowed and shape_data != nullptr)
-		{
-			auto prev_mouse_pos = mouse_pos - io.MouseDelta;
-			auto prev_mpos = to_texture_space(prev_mouse_pos, pos, size, tex_size);
-
-			cv::Point current_pt(mpos[0], mpos[1]);
-			cv::Point prev_pt(prev_mpos[0], prev_mpos[1]);
-
-			double distance = cv::norm(current_pt - prev_pt);
-
-			// Determine how many stamps to place (e.g., one per pixel of movement)
-			int steps = std::max(1, static_cast<int>(distance));
-
-			// Interpolate and stamp the brush along the path
-			for (int i = 0; i <= steps; ++i)
-			{
-				double t = static_cast<double>(i) / steps;
-				auto x = math::lerp(prev_pt.x, current_pt.x, t);
-				auto y = math::lerp(prev_pt.y, current_pt.y, t);
-
-				apply_brush({ x, y }, tex_size_int, is_eraser_);
 			}
 		}
 		
@@ -95,7 +80,7 @@ namespace vt
 		if (insert_allowed)
 		{
 			auto zoom_factor = size.x / tex_size.x;
-			draw_brush_preview(mouse_pos, zoom_factor * brush_size_);
+			draw_brush_preview(mouse_pos, zoom_factor * brush_size());
 		}
 	}
 
@@ -120,76 +105,8 @@ namespace vt
 
 	void mask_tool::render_properties()
 	{
-		const auto& style = ImGui::GetStyle();
-		ImGui::TableNextColumn();
-		{
-			ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2{});
-			if (ui::icon_toggle_button(icons::tool_brush, !is_eraser_))
-			{
-				is_eraser_ = false;
-			}
-			ui::tooltip("Brush");
-			ImGui::SameLine();
-			if (ui::icon_toggle_button(icons::tool_eraser, is_eraser_))
-			{
-				is_eraser_ = true;
-			}
-			ui::tooltip("Eraser");
-			ImGui::PopStyleVar();
-		}
-
-		ImGui::TableNextColumn();
-		{
-			ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2{});
-			if (ui::icon_toggle_button(icons::shape_circle, brush_type_ == mask_tool_type::circle))
-			{
-				brush_type_ = mask_tool_type::circle;
-			}
-			ImGui::SameLine();
-			if (ui::icon_toggle_button(icons::shape_rectangle, brush_type_ == mask_tool_type::square))
-			{
-				brush_type_ = mask_tool_type::square;
-			}
-			ImGui::PopStyleVar();
-		}
-
-		ImGui::TableNextColumn();
-		ImGui::SetNextItemWidth(ImGui::CalcTextSize("100px").x + style.FramePadding.x * 2.f);
-		ImGui::DragInt("##Brush Size", &brush_size_, 1, 1, 100, "%dpx", ImGuiSliderFlags_AlwaysClamp);
-		ui::tooltip("Brush size");
-
+		brush_tool::render_properties();
 		shape_tool<mask_shape>::render_properties();
-	}
-
-	void mask_tool::apply_brush(const utils::vec2<int>& center, const utils::vec2<int>& tex_size, bool is_eraser)
-	{
-		auto color = is_eraser ? cv::Scalar(0) : cv::Scalar(255);
-		auto mask_data = data();
-		auto mat = image_to_cvmat(mask_data->mask);
-		bool update_bb = false;
-
-		utils::vec4<int> brush_area{ center - brush_size_, center + brush_size_ };
-
-		switch (brush_type_)
-		{
-			case mask_tool_type::circle:
-			{
-				cv::circle(mat, cv::Point(center[0], center[1]), brush_size_, color, cv::FILLED);
-				update_bb = true;
-			}
-			break;
-			case mask_tool_type::square:
-			{
-				cv::rectangle(mat, cv::Point(center[0] - brush_size_, center[1] - brush_size_), cv::Point(center[0] + brush_size_, center[1] + brush_size_), color, cv::FILLED);
-				update_bb = true;
-			}
-			break;
-			default: break;
-		}
-		if (update_bb)
-		{
-			mask_data->recalculate_bounding_box(brush_area, !is_eraser);
-		}
 	}
 
 	void mask_tool::draw_brush_preview(const ImVec2& center, float brush_size)
@@ -198,15 +115,15 @@ namespace vt
 		const auto& tag = get_tag();
 		auto outline_color = ctx_.current_theme.get_rgba(theme_color::tool_preview_outline);
 
-		switch (brush_type_)
+		switch (get_brush_type())
 		{
-			case mask_tool_type::circle:
+			case brush_type::circle:
 			{
 				draw_list->AddCircle(center, brush_size, outline_color);
 				//draw_list->AddCircleFilled(center, brush_size, tag.fill_color());
 				break;
 			}
-			case mask_tool_type::square:
+			case brush_type::square:
 			{
 				draw_list->AddRect({ center.x - brush_size, center.y - brush_size }, { center.x + brush_size, center.y + brush_size }, outline_color);
 				//draw_list->AddRectFilled({ center.x - brush_size, center.y - brush_size }, { center.x + brush_size, center.y + brush_size }, tag.fill_color());

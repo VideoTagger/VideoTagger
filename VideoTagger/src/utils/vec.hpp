@@ -384,6 +384,9 @@ namespace vt::utils
 	using vec2 = vec<type, 2>;
 
 	template<typename type>
+	using vec3 = vec<type, 3>;
+
+	template<typename type>
 	using vec4 = vec<type, 4>;
 
 	template<typename type, size_t dims>

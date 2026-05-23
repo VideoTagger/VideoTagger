@@ -19,6 +19,11 @@ namespace vt::ui::impl
 			return active_extension_;
 		}
 
+		const std::shared_ptr<type> active_extension() const
+		{
+			return active_extension_;
+		}
+
 		constexpr bool has_active_extension() const
 		{
 			return active_extension_ != nullptr;

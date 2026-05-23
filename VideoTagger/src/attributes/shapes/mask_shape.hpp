@@ -44,6 +44,7 @@ namespace vt
 
 		virtual std::vector<utils::vec2<int>*> get_all_points() override;
 
+		void render_shape_ex(utils::vec2<int> shape_space, ImRect draw_rect, uint32_t fill_color, uint32_t outline_color, std::optional<video_id_t> video_id = std::nullopt, bool is_diff = false, float pattern_scale = 1.0);
 		virtual void render_shape(utils::vec2<int> shape_space, ImRect draw_rect, uint32_t fill_color, uint32_t outline_color, std::optional<video_id_t> video_id = std::nullopt) override;
 		virtual void render_bounding_box(utils::vec2<int> shape_space, ImRect draw_rect, uint32_t fill_color, uint32_t outline_color, std::optional<video_id_t> video_id = std::nullopt) override;
 

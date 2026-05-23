@@ -22,10 +22,7 @@ namespace vt
 	{
 	public:
 		shape_tool(const tag& tag, const std::string& attribute_name) :
-			tag_{ &tag }, attribute_name_{ attribute_name }
-		{
-			set_property_column_count(1);
-		}
+			tag_{ &tag }, attribute_name_{ attribute_name } {}
 
 	protected:
 		std::optional<video_id_t> active_video_;
@@ -124,6 +121,11 @@ namespace vt
 		virtual std::string display_name() const override
 		{
 			return attribute_name_;
+		}
+
+		virtual uint32_t property_column_count() const override
+		{
+			return toolbar_tool::property_column_count() + 1;
 		}
 
 		virtual void render_properties()

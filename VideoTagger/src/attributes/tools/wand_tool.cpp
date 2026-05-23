@@ -23,7 +23,8 @@ namespace vt
 
 		if (shape_data != nullptr and is_video_active)
 		{
-			shape_data->render(utils::vec2<int>({ static_cast<int>(tex_size.x), static_cast<int>(tex_size.y) }), ImRect{ pos, pos + size }, tag.fill_color(), tag.outline_color(), std::nullopt, false, video_id);
+			auto zoom_factor = 1.f / std::min(tex_size.x / size.x, tex_size.y / size.y);
+			shape_data->render_shape_ex(utils::vec2<int>({ static_cast<int>(tex_size.x), static_cast<int>(tex_size.y) }), ImRect{ pos, pos + size }, tag.fill_color(), tag.outline_color(), video_id, true, zoom_factor);
 		}
 
 		bool can_insert = insert_allowed_cursor();
@@ -86,17 +87,23 @@ namespace vt
 		reset();
 	}
 
+	uint32_t wand_tool::property_column_count() const
+	{
+		auto col_count = shape_tool<mask_shape>::property_column_count();
+		auto ext = active_extension();
+		if (ext != nullptr)
+		{
+			col_count += ext->property_column_count();
+		}
+		return col_count;
+	}
+
 	void wand_tool::render_properties()
 	{
 		auto ext = active_extension();
 		if (ext != nullptr)
 		{
-			set_property_column_count(ext->property_column_count() + 1);
 			ext->render_properties();
-		}
-		else
-		{
-			set_property_column_count(shape_tool<mask_shape>::property_column_count());
 		}
 		shape_tool<mask_shape>::render_properties();
 	}
@@ -104,8 +111,6 @@ namespace vt
 	void wand_tool::on_switch_extension(std::shared_ptr<ui::impl::wand_tool_extension> new_extension)
 	{
 		if (new_extension == nullptr) return;
-
-		set_property_column_count(new_extension->property_column_count());
 	}
 }
 
