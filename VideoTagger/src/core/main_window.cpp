@@ -1314,13 +1314,21 @@ namespace vt
 
 	void main_window::on_delete()
 	{
-		auto& timeline = ctx_.get_window<widgets::timeline>();
-		segment_id_map selected_segments = ctx_.session.selected_segments();
-		for (const auto& [tag, segments] : selected_segments)
+		if (ctx_.session.is_any_region_selected())
 		{
-			for (auto& id : segments)
+			const auto& selected_region = *ctx_.session.selected_region();
+			ctx_.dispatch_event<region_delete_request_event>(event_source_, selected_region.tag_name, selected_region.segment, selected_region.video_id,
+				*selected_region.attribute_instance, selected_region.region_id);
+		}
+		else
+		{
+			segment_id_map selected_segments = ctx_.session.selected_segments();
+			for (const auto& [tag, segments] : selected_segments)
 			{
-				ctx_.dispatch_event<segment_delete_request_event>(event_source_, ctx_.get_current_segment_storage(), tag, id);
+				for (auto& id : segments)
+				{
+					ctx_.dispatch_event<segment_delete_request_event>(event_source_, ctx_.get_current_segment_storage(), tag, id);
+				}
 			}
 		}
 	}
