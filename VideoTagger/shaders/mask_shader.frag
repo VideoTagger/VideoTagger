@@ -27,17 +27,17 @@ vec4 render_pattern(vec2 uv, vec4 tex, float gray, vec4 fill)
 	vec4 fg_line = vec4(0.0, 1.0, 0.0, fill.a);
 	vec4 bg_line = vec4(1.0, 0.0, 0.0, fill.a);
 
-	if (col_u8 == 3) // GC_PR_FGD
+	if (col_u8 == 1) // GC_FGD
 	{
-		return is_stripe ? fg_line : base;
+		return is_stripe ? Frag_Color : base;
 	}
-	else if (col_u8 == 2) // GC_PR_BGD
+	if (col_u8 == 2) // GC_PR_BGD
 	{
 		return is_stripe ? bg_line : base;
 	}
-	else if (col_u8 == 1) // GC_FGD
+	if (col_u8 == 3) // GC_PR_FGD
 	{
-		return is_stripe ? Frag_Color : base;
+		return is_stripe ? fg_line : base;
 	}
 	return base;
 }
