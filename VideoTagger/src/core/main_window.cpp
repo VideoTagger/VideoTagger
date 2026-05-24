@@ -1300,10 +1300,10 @@ namespace vt
 	
 	void main_window::on_show_in_explorer()
 	{
-		auto path = std::filesystem::absolute(ctx_.current_project->path.parent_path()).u8string();
+		auto path = std::filesystem::absolute(ctx_.current_project->path).u8string();
 		if (!path.empty())
 		{
-			utils::filesystem::open_in_explorer(path);
+			utils::filesystem::open_file_in_explorer(path);
 		}
 	}
 
