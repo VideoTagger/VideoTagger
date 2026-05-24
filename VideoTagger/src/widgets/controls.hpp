@@ -13,7 +13,7 @@ namespace vt::widgets
 	extern void end_button_dropdown();
 
 	//TODO: min/max timestamp should be of type timestamp
-	extern bool timestamp_control(const std::string& name, timestamp& timestamp, uint64_t min_timestamp, uint64_t max_timestamp, bool* was_activated, bool* was_released, bool fill_area = true);
+	extern bool timestamp_control(const std::string& name, timestamp& timestamp, int64_t min_timestamp, int64_t max_timestamp, bool* was_activated, bool* was_released, bool fill_area = true);
 	extern bool frame_dragger(int64_t& frame, bool& is_dragging);
 	
 	extern bool search_bar(const char* label, const char* hint, std::string& buffer, float width = 0.0f, bool enable_button = true, ImGuiInputTextFlags flags = ImGuiInputTextFlags_AutoSelectAll | ImGuiInputTextFlags_EscapeClearsAll | ImGuiInputTextFlags_EnterReturnsTrue);

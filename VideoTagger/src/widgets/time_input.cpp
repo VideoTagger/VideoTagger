@@ -80,10 +80,10 @@ namespace vt::widgets
 		return value_changed;
 	}
 
-	bool time_input(const char* label, timestamp* v, float v_speed, uint64_t p_min, uint64_t p_max, const char* format, ImGuiSliderFlags flags)
+	bool time_input(const char* label, timestamp* v, float v_speed, int64_t p_min, int64_t p_max, const char* format, ImGuiSliderFlags flags)
 	{
 		ImGuiDataType data_type = ImGuiDataType_U64;
-		uint64_t* p_data = reinterpret_cast<uint64_t*>(v);
+		int64_t* p_data = reinterpret_cast<int64_t*>(v);
 
 		ImGuiWindow* window = ImGui::GetCurrentWindow();
 		if (window->SkipItems)

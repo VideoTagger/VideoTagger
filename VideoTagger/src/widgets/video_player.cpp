@@ -327,7 +327,7 @@ namespace vt::widgets
 
 			ImGui::SetNextItemWidth(time_size.x);
 			ImGui::PushStyleColor(ImGuiCol_FrameBg, { 0, 0, 0, 0 });
-			if (widgets::time_input("##TimeInput", &current_time, 1, 0, duration.total_nanoseconds.count()))
+			if (widgets::time_input("##TimeInput", &current_time, 1'000'000, 0, duration.total_nanoseconds.count()))
 			{
 				ctx_.dispatch_event<seek_request_event>(get_event_source(), *this, current_time.total_nanoseconds);
 				callbacks.on_seek(current_time.total_nanoseconds);

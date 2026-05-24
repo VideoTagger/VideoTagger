@@ -8,5 +8,5 @@
 
 namespace vt::widgets
 {
-	extern bool time_input(const char* label, timestamp* v, float v_speed = 1.0f, uint64_t p_min = 0, uint64_t p_max = std::numeric_limits<uint64_t>::max(), const char* format = default_time_format, ImGuiSliderFlags flags = ImGuiSliderFlags_AlwaysClamp);   // If v_min >= v_max we have no bound
+	extern bool time_input(const char* label, timestamp* v, float v_speed = 1'000'000, int64_t p_min = 0, int64_t p_max = std::numeric_limits<int64_t>::max(), const char* format = default_time_format, ImGuiSliderFlags flags = ImGuiSliderFlags_AlwaysClamp);   // If v_min >= v_max we have no bound
 }

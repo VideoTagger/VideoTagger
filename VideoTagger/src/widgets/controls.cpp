@@ -80,7 +80,7 @@ namespace vt::widgets
 		ImGui::EndPopup();
 	}
 	
-	bool timestamp_control(const std::string& name, timestamp& timestamp, uint64_t min_timestamp, uint64_t max_timestamp, bool* was_activated, bool* was_released, bool fill_area)
+	bool timestamp_control(const std::string& name, timestamp& timestamp, int64_t min_timestamp, int64_t max_timestamp, bool* was_activated, bool* was_released, bool fill_area)
 	{
 		bool result = false;
 		auto cstr = name.c_str();
@@ -93,7 +93,7 @@ namespace vt::widgets
 		ImGui::SameLine();
 		if (fill_area) ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x);
 		auto time_input_id = "##TimestampCtrlInput" + name;
-		result |= widgets::time_input(time_input_id.c_str(), &timestamp, 1.0f, min_timestamp, max_timestamp, default_time_format, ImGuiSliderFlags_AlwaysClamp);
+		result |= widgets::time_input(time_input_id.c_str(), &timestamp, 1'000'000, min_timestamp, max_timestamp, default_time_format, ImGuiSliderFlags_AlwaysClamp);
 		if (was_activated != nullptr) *was_activated = ImGui::IsItemActivated();
 		if (was_released != nullptr) *was_released = ImGui::IsItemDeactivated();
 		if (fill_area) ImGui::PopItemWidth();
