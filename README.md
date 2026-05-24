@@ -99,6 +99,7 @@ uv run ./scripts/vpk_package.py
 - [FreeType](https://gitlab.freedesktop.org/freetype/freetype)
 - [OpenCV](https://github.com/opencv/opencv)
 - [glad](https://github.com/Dav1dde/glad)
+- [onnxruntime](https://github.com/microsoft/onnxruntime)
 
 ## License
 This software is licensed under the [MIT License](/LICENSE).
