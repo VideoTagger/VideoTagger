@@ -1,7 +1,7 @@
 #include "onnx.hpp"
 #include <core/debug.hpp>
 
-namespace vt
+namespace vt::utils
 {
 	static void onnx_rt_log_callback(void* user_param, OrtLoggingLevel severity, const char* category, const char* log_id, const char* code_location, const char* message)
 	{
@@ -10,20 +10,20 @@ namespace vt
 			case ORT_LOGGING_LEVEL_VERBOSE: [[fallthrough]];
 			case ORT_LOGGING_LEVEL_INFO:
 			{
-				debug::log_src(fmt::format("ONNX Runtime {} {} {}", category, log_id, code_location), "{}", message);
+				debug::log_src(fmt::format("{}:{}", category, code_location), "{}", message);
 			}
 			break;
 
 			case ORT_LOGGING_LEVEL_WARNING:
 			{
-				debug::warn_src(fmt::format("ONNX Runtime {} {} {}", category, log_id, code_location), "{}", message);
+				debug::warn_src(fmt::format("{}:{}", category, code_location), "{}", message);
 			}
 			break;
 
 			case ORT_LOGGING_LEVEL_ERROR: [[fallthrough]];
 			case ORT_LOGGING_LEVEL_FATAL:
 			{
-				debug::error_src(fmt::format("ONNX Runtime {} {} {}", category, log_id, code_location), "{}", message);
+				debug::error_src(fmt::format("{}:{}", category, code_location), "{}", message);
 			}
 			break;
 		}
