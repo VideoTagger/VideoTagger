@@ -789,6 +789,28 @@ namespace vt
 
 			ctx_.reset_player_docking = true;
 			player.focus();
+
+			player.prepare_video_windows(ctx_.displayed_videos.size());
+			auto& vid_wins = player.video_windows();
+
+			uint64_t vid_id{};
+			for (auto& video_data : ctx_.displayed_videos)
+			{
+				auto video_ptr = ctx_.current_project->videos.get(video_data.id);
+				if (video_ptr == nullptr) continue;
+
+				auto video_name = video_ptr->title();
+
+				auto& vid_win = vid_wins[vid_id];
+				vid_win->set_active(true);
+
+				vid_win->set_display_name(video_name);
+				vid_win->set_video(video_data.video, video_data.id);
+				vid_win->set_texture(video_data.display_texture);
+
+				++vid_id;
+			}
+
 		}, event_listener_priority::highest);
 
 		ctx_.add_event_listener<playback_reached_end_event>([&player, this](const playback_reached_end_event& event)
@@ -2849,7 +2871,7 @@ namespace vt
 			//	ctx_.dispatch_event<gizmo_set_targets_event>(event_source_);
 			//}
 
-			bool reconfigure = player.prepare_video_windows(ctx_.displayed_videos.size());
+			//bool reconfigure = player.prepare_video_windows(ctx_.displayed_videos.size());
 			auto& vid_wins = player.video_windows();
 
 
@@ -2881,12 +2903,12 @@ namespace vt
 				auto& vid_win = vid_wins[vid_id];
 				vid_win->set_active(timestamp_in_range);
 				
-				if (reconfigure)
-				{
-					vid_win->set_display_name(video_name);
-					vid_win->set_video(video_data.video, video_data.id);
-					vid_win->set_texture(video_data.display_texture);
-				}
+				//if (reconfigure)
+				//{
+				//	vid_win->set_display_name(video_name);
+				//	vid_win->set_video(video_data.video, video_data.id);
+				//	vid_win->set_texture(video_data.display_texture);
+				//}
 
 				if (true)
 				{

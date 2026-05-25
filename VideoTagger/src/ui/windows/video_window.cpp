@@ -71,14 +71,12 @@ namespace vt::ui::windows
 
 	void video_window::pre_style()
 	{
-		if (video_->is_open())
+		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2{});
+
+		if (video_ != nullptr and video_->is_open())
 		{
 			ImGui::SetNextWindowSize({ static_cast<float>(video_->width()), static_cast<float>(video_->height()) }, ImGuiCond_FirstUseEver);
 		}
-
-		const auto& style = ImGui::GetStyle();
-
-		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2{});
 	}
 
 	void video_window::post_style()
