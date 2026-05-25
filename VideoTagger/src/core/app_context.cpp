@@ -35,8 +35,8 @@
 #include <attributes/shapes/polygon_shape.hpp>
 #include <attributes/shapes/mask_shape.hpp>
 
-#include <attributes/factory/dummy_shape_predictor_factory.hpp>
-#include <attributes/factory/linear_shape_predictor_factory.hpp>
+#include <attributes/factory/interpolator_factories.hpp>
+#include <attributes/factory/tracker_factories.hpp>
 #include <attributes/tools/rectangle_tool.hpp>
 #include <attributes/tools/circle_tool.hpp>
 #include <attributes/tools/points_tool.hpp>
@@ -88,15 +88,24 @@ namespace vt
 
 				auto& reg = get_shape_predictor_registry<shape_type>();
 
-				reg.new_factory<dummy_shape_predictor_factory<shape_type>>("None");
-				reg.new_factory<linear_shape_predictor_factory<shape_type>>("Linear");
+				reg.new_factory<dummy_shape_interpolator_factory<shape_type>>("None");
+				reg.new_factory<linear_shape_interpolator_factory<shape_type>>("Linear");
 			};
 
 			(register_interpolators(registry), ...);
 
 		}, registry_types);
 
-		get_shape_predictor_registry<mask_shape>().new_factory<dummy_shape_predictor_factory<mask_shape>>("None");
+		auto& mask_registry = get_shape_predictor_registry<mask_shape>();
+		mask_registry.new_factory<dummy_shape_interpolator_factory<mask_shape>>("None");
+
+		auto& rectangle_registry = get_shape_predictor_registry<rectangle_shape>();
+		rectangle_registry.new_factory<mil_rectangle_tracker_factory>("MIL");
+
+		//TODO: register only if required dependencies are available
+		//rectangle_registry.new_factory<vit_rectangle_tracker_factory>("Vit");
+		//rectangle_registry.new_factory<goturn_rectangle_tracker_factory>("GOTURN");
+		//rectangle_registry.new_factory<da_siam_rpn_rectangle_tracker_factory>("DaSiamRPN");
 	}
 
     void app_context::load_shaders()

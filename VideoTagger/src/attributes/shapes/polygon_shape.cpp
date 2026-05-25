@@ -6,7 +6,7 @@ namespace vt
 {
 	polygon_shape::polygon_shape(const std::vector<utils::vec2<int>>& vertices) : points_shape{ vertices } {}
 
-	bool polygon_shape::contains(utils::vec2<int> point) const
+	bool polygon_shape::contains(utils::vec2<int> point, float added_radius) const
 	{
 		std::vector<ImVec2> ps(points.size());
 		for (size_t i = 0; i < ps.size(); ++i)

@@ -94,7 +94,10 @@ namespace vt
 				instance_it = video_attr_instances.end() - 1;
 			}
 
-			ctx_.dispatch_event<region_insert_request_event<shape_type>>("shape_tool", tag_->name, *selected_segment_opt, video_id, *(instance_it->get()),
+			auto* attr_instance = dynamic_cast<impl::shape_attribute_instance*>(instance_it->get());
+			if (attr_instance == nullptr) return false;
+
+			ctx_.dispatch_event<region_insert_request_event<shape_type>>("shape_tool", tag_->name, *selected_segment_opt, video_id, attr_instance,
 				ctx_.displayed_videos.current_timestamp_as_timestamp(), *data_);
 
 			return true;

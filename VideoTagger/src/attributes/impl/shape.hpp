@@ -21,7 +21,7 @@ namespace vt::impl
 
 		virtual std::vector<utils::vec2<int>*> get_all_points() = 0;
 
-		virtual bool contains(utils::vec2<int> point) const = 0;
+		virtual bool contains(utils::vec2<int> point, float added_radius = 0.f) const = 0;
 
 		virtual void render_shape(utils::vec2<int> shape_space, ImRect draw_rect, uint32_t fill_color, uint32_t outline_color, std::optional<video_id_t> video_id = std::nullopt) = 0;
 		virtual void render_bounding_box(utils::vec2<int> shape_space, ImRect draw_rect, uint32_t fill_color, uint32_t outline_color, std::optional<video_id_t> video_id = std::nullopt) {}

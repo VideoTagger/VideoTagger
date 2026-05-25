@@ -38,6 +38,8 @@
 #include <ui/popups/tag_rename_failed_popup.hpp>
 #include <ui/popups/script_progress_popup.hpp>
 #include <ui/popups/messagebox_popup.hpp>
+#include <ui/popups/track_region_popup.hpp>
+#include <ui/popups/progress_popup.hpp>
 
 #include <ui/ui_registry.hpp>
 #include <events/event_storage.hpp>
@@ -104,6 +106,8 @@ namespace vt
 		std::unique_ptr<ui::segment_insert_conflict_popup> segment_insert_conflict_popup;
 		std::unique_ptr<ui::segment_insert_popup> segment_insert_popup;
 		std::unique_ptr<ui::tag_rename_failed_popup> tag_rename_failed_popup;
+		std::unique_ptr<ui::track_region_popup> track_region_popup;
+		std::unique_ptr<ui::progress_popup> global_progress_popup;
 
 		std::filesystem::path assets_dir_filepath = std::filesystem::path("assets");
 		std::filesystem::path projects_list_filepath = storage_path() / std::filesystem::path("projects").replace_extension("json");

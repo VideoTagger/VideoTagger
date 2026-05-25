@@ -32,6 +32,11 @@ namespace vt::impl
 			return it - predictor_names_.begin();
 		}
 
+		bool is_predictor_registered(const std::string& name) const
+		{
+			return std::find(predictor_names_.begin(), predictor_names_.end(), name) != predictor_names_.end();
+		}
+
 		const std::vector<std::string>& interpolator_names() const
 		{
 			return interpolator_names_;
@@ -42,6 +47,11 @@ namespace vt::impl
 			auto it = std::find(interpolator_names_.begin(), interpolator_names_.end(), name);
 			if (it == interpolator_names_.end()) return std::nullopt;
 			return it - interpolator_names_.begin();
+		}
+
+		bool is_interpolator_registered(const std::string& name) const
+		{
+			return std::find(interpolator_names_.begin(), interpolator_names_.end(), name) != interpolator_names_.end();
 		}
 
 		const std::optional<std::string>& default_interpolator_name() const
@@ -72,6 +82,11 @@ namespace vt::impl
 			auto it = std::find(tracker_names_.begin(), tracker_names_.end(), name);
 			if (it == tracker_names_.end()) return std::nullopt;
 			return it - tracker_names_.begin();
+		}
+
+		bool is_tracker_registered(const std::string& name) const
+		{
+			return std::find(tracker_names_.begin(), tracker_names_.end(), name) != tracker_names_.end();
 		}
 
 		const std::optional<std::string>& default_tracker_name() const

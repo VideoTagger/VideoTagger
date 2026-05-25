@@ -10,13 +10,18 @@
 #include <events/event_source.hpp>
 #include <utils/vec.hpp>
 #include <tasks/session_task_manager.hpp>
-#include <attributes/impl/attribute_instance.hpp>
 #include <ui/toolbar/toolbar_group.hpp>
 #include <ui/toolbar/toolbar_session_data.hpp>
 #include <core/types.hpp>
 
 namespace vt
 {
+	namespace impl
+	{
+		class attribute_instance;
+		class shape_attribute_instance;
+	}
+
 	struct insert_segment_mark_data
 	{
 		std::optional<std::string> tag;
@@ -39,24 +44,13 @@ namespace vt
 		event_source begin_drag_source{};
 	};
 
-	struct selected_region_data
+	struct tracked_region_data
 	{
-		std::string tag_name;
-		segment_id segment;
-		video_id_t video_id;
-		std::string attribute_name;
-		impl::attribute_instance* attribute_instance{};
-		region_id_t region_id{};
+		tracked_region_data(region_info region_data, std::shared_ptr<float> progress, cancellable_task<void>&& task);
 
-		constexpr bool operator==(const selected_region_data& other) const
-		{
-			return attribute_instance == other.attribute_instance and region_id == other.region_id;
-		}
-
-		constexpr bool operator!=(const selected_region_data& other) const
-		{
-			return !(*this == other);
-		}
+		region_info region_data;
+		std::shared_ptr<float> progress;
+		cancellable_task<void> task;
 	};
 
 	struct gizmo_data
@@ -78,11 +72,12 @@ namespace vt
 		video_group_id_t current_video_group_id_{ invalid_video_group_id };
 		std::vector<insert_segment_mark_data> insert_segment_marks_;
 
-		std::optional<selected_region_data> selected_region_;
+		std::optional<region_info> selected_region_;
+		std::optional<tracked_region_data> tracked_region_;
 
 		gizmo_data gizmo_data_;
 
-		std::vector<selected_region_data> hovered_regions_;
+		std::vector<region_info> hovered_regions_;
 
 		event_source event_source_{ "session" };
 
@@ -101,13 +96,17 @@ namespace vt
 		bool is_any_video_group_active() const;
 		const std::vector<insert_segment_mark_data>& insert_segment_marks() const;
 
-		const std::optional<selected_region_data>& selected_region() const;
+		const std::optional<region_info>& selected_region() const;
 		bool is_region_selected(impl::attribute_instance* attribute_instance, region_id_t region_id) const;
 		bool is_any_region_selected() const;
 
-		const std::vector<selected_region_data>& hovered_regions() const;
+		const std::vector<region_info>& hovered_regions() const;
 		bool is_region_hovered(impl::attribute_instance* attribute_instance, region_id_t region_id) const;
 		bool is_any_region_hovered() const;
+
+		const std::optional<tracked_region_data>& tracked_region() const;
+		bool is_region_tracked(impl::attribute_instance* attribute_instance, region_id_t region_id) const;
+		bool is_any_region_tracked() const;
 
 		bool is_segment_selected(const std::string& tag, segment_id id) const;
 		bool is_one_segment_selected() const;

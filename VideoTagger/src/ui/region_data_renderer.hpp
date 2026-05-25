@@ -26,20 +26,17 @@ namespace vt::ui
 	{
 	public:
 		region_data_renderer(region_data_container<shape_type>& regions) :
-			regions_{ &regions }, interpolator_combo_{ "##InterpolatorCombo", ctx_.get_shape_predictor_registry<shape_type>().predictor_names(), 0 } {}
+			regions_{ &regions }, interpolator_combo_{ "##InterpolatorCombo", ctx_.get_shape_predictor_registry<shape_type>().interpolator_names(), 0 } {}
 
 	private:
 		region_data_container<shape_type>* regions_{};
 		ui::combo<std::string> interpolator_combo_;
 
 	public:
-		virtual void render_region_attributes(event_source source, utils::vec2<int> shape_space, timestamp current_ts, const selected_region_data& region_data) override
+		virtual void render_region_attributes(event_source source, utils::vec2<int> shape_space, timestamp current_ts, const region_info& region_data) override
 		{
 			auto region_it = regions_->find(region_data.region_id);
-			if (region_it == regions_->end())
-			{
-				return;
-			}
+			if (region_it == regions_->end()) return;
 
 			auto selection_color = ctx_.current_theme.get_rgba(theme_color::selection_normal);
 
@@ -73,7 +70,7 @@ namespace vt::ui
 					if (interpolator_combo_.render())
 					{
 						ctx_.dispatch_event<region_set_interpolator_request_event>(source, region_data.tag_name, region_data.segment, region_data.video_id,
-							*region_data.attribute_instance, region_data.region_id, interpolator_combo_.selected_item());
+							region_data.attribute_instance, region_data.region_id, interpolator_combo_.selected_item());
 					}
 					
 					ImGui::EndTable();
@@ -107,7 +104,7 @@ namespace vt::ui
 
 				auto shape = *region.get_shape_at(keyframe_ts);
 				ctx_.dispatch_event<region_keyframe_insert_request_event<shape_type>>(source, region_data.tag_name, region_data.segment, region_data.video_id,
-					*region_data.attribute_instance, region_data.region_id, current_ts, shape);
+					region_data.attribute_instance, region_data.region_id, current_ts, shape);
 			}
 
 			ImGui::SameLine();
@@ -152,22 +149,17 @@ namespace vt::ui
 			if (erased_keyframe.has_value())
 			{
 				ctx_.dispatch_event<region_keyframe_delete_request_event>(source, region_data.tag_name, region_data.segment, region_data.video_id,
-					*region_data.attribute_instance, region_data.region_id, *erased_keyframe);
+					region_data.attribute_instance, region_data.region_id, *erased_keyframe);
 			}
 		}
 
-		virtual bool render_region_list(event_source source, const std::string& attribute_name, uint32_t attribute_color, class vt::impl::attribute_instance* instance, std::optional<region_id_t>& selected_region) override
+		virtual bool render_region_list(event_source source, const std::string& attribute_name, uint32_t attribute_color, class vt::impl::shape_attribute_instance* instance, std::optional<region_id_t>& selected_region) override
 		{
 			bool result = false;
 			if (regions_->empty()) return result;
 
 			ImGui::SeparatorText(attribute_name.c_str());
 			auto attr_id = fmt::format("##{}", attribute_name);
-
-			//bool attr_visible = widgets::begin_collapsible(attr_id, attribute_name, 0, icons::attribute, ImGui::ColorConvertU32ToFloat4(attribute_color));
-
-			//if (attr_visible)
-			//{
 
 			size_t list_item_count = std::min(regions_->size(), size_t{ 5 });
 
@@ -192,29 +184,33 @@ namespace vt::ui
 							result = true;
 						}
 					}
-					//if (ImGui::Selectable(item_id.c_str(), selected, ImGuiSelectableFlags_SpanAllColumns))
-					{
-						
-					}
 				}
 			}
 			ImGui::EndChild();
-			//	widgets::end_collapsible();
-			//}
 
 			return result;
 		}
 
-		virtual void context_menu_items(ui::widget_list& items, event_source source, const std::string& tag_name, segment_id segment, video_id_t video_id, class vt::impl::attribute_instance& attribute_instance, region_id_t region_id) override
+		virtual void context_menu_items(ui::widget_list& items, event_source source, const std::string& tag_name, segment_id segment, video_id_t video_id, class vt::impl::shape_attribute_instance* attribute_instance, region_id_t region_id) override
 		{
 			if (regions_->find(region_id) == regions_->end()) return;
 
-			bool supports_tracking = ctx_.get_shape_predictor_registry<shape_type>().has_any_tracker();
 
 			items.add<menu_generic_button>(icons::delete_, ctx_.lang->get("generic.delete"), [&]()
 			{
 				ctx_.dispatch_event<region_delete_request_event>(source, tag_name, segment, video_id, attribute_instance, region_id);
 			});
+
+			auto& predictor_registry = ctx_.get_shape_predictor_registry<shape_type>();
+			bool supports_tracking = predictor_registry.has_any_tracker();
+			if (supports_tracking)
+			{
+				items.add<menu_generic_button>(icons::fast_fwd, ctx_.lang->get("popup.region_context_menu.track"), [&]()
+				{
+						ctx_.track_region_popup = std::make_unique<track_region_popup>(tag_name, segment, video_id, *attribute_instance,
+							ctx_.displayed_videos.current_timestamp_as_timestamp(), region_id, predictor_registry.tracker_names());
+				}, !ctx_.displayed_videos.is_playing());
+			}
 		}
 	};
 }

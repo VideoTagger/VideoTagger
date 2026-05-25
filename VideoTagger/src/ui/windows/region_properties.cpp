@@ -9,7 +9,7 @@
 
 namespace vt::ui::windows
 {
-	region_properties::region_properties() : ui::window{ "Region Properties", "region-properties", "Region Properties", ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse }
+	region_properties::region_properties() : ui::window{ "Region Properties", "region-properties", "Region Properties", ImGuiWindowFlags_NoCollapse }
 	{
 		set_icon(icons::shape);
 	}
@@ -34,63 +34,5 @@ namespace vt::ui::windows
 		auto current_ts = ctx_.displayed_videos.current_timestamp_as_timestamp();
 
 		region_renderer.render_region_attributes(get_event_source(), video_size, current_ts, selected_region);
-
-		/*auto selected_attr_inst = ctx_.get_selected_attribute();
-		auto active_vid_size = ctx_.get_active_video_tex_size();
-		auto current_ts = ctx_.displayed_videos.current_timestamp_as_timestamp();
-
-		std::string selected_tag;
-		segment_id selected_segment_id = invalid_segment_id;
-
-		const auto& storage = ctx_.get_current_segment_storage();
-		{
-			bool found = false;
-			for (const auto& [tag, segments] : ctx_.session.selected_segments())
-			{
-				if (found) break;
-
-				const auto& timeline = storage.at(tag);
-				for (auto& segment_id : segments)
-				{
-					const auto& segment = timeline.at(segment_id);
-					if (segment.start <= current_ts and current_ts <= segment.end)
-					{
-						selected_tag = tag;
-						selected_segment_id = segment_id;
-						found = true;
-						break;
-					}
-				}
-			}
-		}
-
-		auto ev_src = get_event_source();
-		if (active_vid_size.has_value() and selected_attr_inst != nullptr and selected_attr_inst->has<shape>() and selected_segment_id != invalid_segment_id)
-		{
-			auto& selected_seg = storage.at(selected_tag).at(selected_segment_id);
-			bool is_timestamp = selected_seg.start == selected_seg.end;
-			auto& shape = selected_attr_inst->get<vt::shape>();
-			if (shape.has_data())
-			{
-				ui::card([&]()
-				{
-					bool modifiable = true;
-					shape.draw_data(active_vid_size.value(), selected_seg.start, selected_seg.end, current_ts, is_timestamp, modifiable, ctx_.is_project_dirty, [ev_src](timestamp target_ts)
-					{
-						auto& player = ctx_.get_window<widgets::video_player>();
-						ctx_.dispatch_event<seek_request_event>(ev_src, player, target_ts.total_milliseconds);
-					});
-				});
-			}
-			else
-			{
-				ui::centered_text("Select a proper shape to display its properties...", ImGui::GetContentRegionMax());
-			}
-		}
-		else
-		{
-			ctx_.dispatch_event<gizmo_set_targets_event>(ev_src);
-			ui::centered_text("Select a shape attribute in the inspector to display its properties...", ImGui::GetContentRegionMax());
-		}*/
 	}
 }

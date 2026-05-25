@@ -70,7 +70,7 @@ namespace vt
 							new_state->set_status(task_status::cancelled);
 						}
 					});
-					return cancellable_task<result_type>{ token, new_state };
+					return cancellable_task<result_type>{ *token, new_state };
 				}
 				else
 				{
@@ -194,7 +194,7 @@ namespace vt
 							}
 						}, priority });
 					});
-					return cancellable_task<result_type>{ token, new_state };
+					return cancellable_task<result_type>{ *token, new_state };
 				}
 				else
 				{

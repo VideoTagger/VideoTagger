@@ -6,8 +6,10 @@ namespace vt
 {
 	line_shape::line_shape(const std::vector<utils::vec2<int>>& points) : points_shape{ points } {}
 
-	bool line_shape::contains(utils::vec2<int> point) const
+	bool line_shape::contains(utils::vec2<int> point, float added_radius) const
 	{
+		if (points_shape::contains(point, added_radius)) return true;
+
 		auto p = ImVec2(point[0], point[1]);
 
 		for (size_t i =	1; i < points.size(); ++i)

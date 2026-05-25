@@ -1,7 +1,7 @@
 #pragma once
 #include <array>
 #include <attributes/impl/shape_interpolator.hpp>
-#include "dummy_shape_predictor.hpp"
+#include "dummy_shape_interpolator.hpp"
 #include <utils/math.hpp>
 #include <attributes/impl/shape.hpp>
 
@@ -9,10 +9,10 @@ namespace vt
 {
 	/// @brief Shape predictor using linear interpolation
 	template<typename shape_type, typename = std::enable_if_t<std::is_base_of_v<impl::shape, shape_type>>>
-	class linear_shape_predictor : public impl::shape_interpolator<shape_type>
+	class linear_shape_interpolator : public impl::shape_interpolator<shape_type>
 	{
 	public:
-		linear_shape_predictor(const std::string& name) : impl::shape_interpolator<shape_type>{ name } {}
+		linear_shape_interpolator(const std::string& name) : impl::shape_interpolator<shape_type>{ name } {}
 
 	private:
 		std::array<impl::shape_interpolator_data<shape_type>, 2> data_;
@@ -53,14 +53,14 @@ namespace vt
 		{
 			if (shape_instances.empty()) return std::nullopt;
 
-			if (shape_instances.size() == 1) return dummy_shape_predictor<shape_type>::stateless_predict(shape_instances[0]);
+			if (shape_instances.size() == 1) return dummy_shape_interpolator<shape_type>::stateless_predict(shape_instances[0]);
 
 			return stateless_predict(shape_instances[0], timestamps[0], shape_instances[1], timestamps[1], current_ts);
 		}
 
 		virtual std::optional<shape_type> on_predict(timestamp current_ts) override
 		{
-			if (data_size_ == 1) return dummy_shape_predictor<shape_type>::stateless_predict(data_[0].shape);
+			if (data_size_ == 1) return dummy_shape_interpolator<shape_type>::stateless_predict(data_[0].shape);
 
 			return stateless_predict(data_[0].shape, data_[0].ts, data_[1].shape, data_[1].ts, current_ts);
 		}

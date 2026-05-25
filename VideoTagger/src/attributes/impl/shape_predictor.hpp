@@ -36,21 +36,6 @@ namespace vt::impl
 		virtual size_t data_point_count() const = 0;
 
 		/**
-		 * @brief Function called during predictor initialization
-		 * 
-		 * Don't call this directly; call init instead.
-		 * Required arguments must have the same number of elements and should have at least data_point_count() of them.
-		 * Depending on the actual predictor type providing fewer arguments may fail or lead to lower prediction accuracy.
-		 * Which parameters are required depends on the actual predictor type used.
-		 *
-		 * @param shape_instance Instances of the shape to predict
-		 * @param timestamps Timestamps of the shape instances
-		 * @param images Images associated with the shape instances
-		 * @return Whether the predictor was intialized successfully
-		 */
-		virtual bool on_init(const std::vector<shape_type>& shape_instances, const std::vector<timestamp>& timestamps, const std::vector<image<image_pixel_format::rgb8>>& images) = 0;
-
-		/**
 		 * @brief Initialize the predictor
 		 * 
 		 * Required arguments should have at least data_point_count() elements. Depending on the actual predictor type
@@ -69,19 +54,6 @@ namespace vt::impl
 		}
 
 		/**
-		 * @brief Function called during prediction
-		 *
-		 * When implementing this function assume that the predictor is initialized.
-		 * Don't call this directly; call predict instead.
-		 * Which parameters are required depends on the actual predictor type used.
-		 *
-		 * @param current_ts Timestamp at which to make the prediction
-		 * @param current_image Image from which to make the prediction
-		 * @return If successful a shape instance, empty otherwise (e.g. when not all required parameters were passed)
-		 */
-		virtual std::optional<shape_type> on_predict(std::optional<timestamp> current_ts, const image<image_pixel_format::rgb8>* current_image) = 0;
-
-		/**
 		 * @brief Predict the shape instance at the given moment
 		 * 
 		 * Which parameters are required depends on the actual predictor type used.
@@ -92,20 +64,10 @@ namespace vt::impl
 		 */
 		std::optional<shape_type> predict(std::optional<timestamp> current_ts, const image<image_pixel_format::rgb8>* current_image)
 		{
-			if (!is_initialized())
-			{
-				return std::nullopt;
-			}
+			if (!is_initialized()) return std::nullopt;
 
 			return on_predict(current_ts, current_image);
 		}
-
-		/**
-		 * @brief Function called during reset
-		 * 
-		 * Don't call this directly; call reset instead.
-		 */
-		virtual void on_reset() {}
 
 		/**
 		 * @brief Reset the predictor state
@@ -145,5 +107,46 @@ namespace vt::impl
 		{
 			return std::nullopt;
 		}
+
+	protected:
+		void set_initialized()
+		{
+			initialized_ = true;
+		}
+
+		/**
+		 * @brief Function called during predictor initialization
+		 * 
+		 * Don't call this directly; call init instead.
+		 * Required arguments must have the same number of elements and should have at least data_point_count() of them.
+		 * Depending on the actual predictor type providing fewer arguments may fail or lead to lower prediction accuracy.
+		 * Which parameters are required depends on the actual predictor type used.
+		 *
+		 * @param shape_instance Instances of the shape to predict
+		 * @param timestamps Timestamps of the shape instances
+		 * @param images Images associated with the shape instances
+		 * @return Whether the predictor was intialized successfully
+		 */
+		virtual bool on_init(const std::vector<shape_type>& shape_instances, const std::vector<timestamp>& timestamps, const std::vector<image<image_pixel_format::rgb8>>& images) = 0;
+
+		/**
+		 * @brief Function called during reset
+		 *
+		 * Don't call this directly; call reset instead.
+		 */
+		virtual void on_reset() {}
+
+		/**
+		 * @brief Function called during prediction
+		 *
+		 * When implementing this function assume that the predictor is initialized.
+		 * Don't call this directly; call predict instead.
+		 * Which parameters are required depends on the actual predictor type used.
+		 *
+		 * @param current_ts Timestamp at which to make the prediction
+		 * @param current_image Image from which to make the prediction
+		 * @return If successful a shape instance, empty otherwise (e.g. when not all required parameters were passed)
+		 */
+		virtual std::optional<shape_type> on_predict(std::optional<timestamp> current_ts, const image<image_pixel_format::rgb8>* current_image) = 0;
 	};
 }

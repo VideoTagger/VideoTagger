@@ -19,7 +19,7 @@ namespace vt
 		ctx_.dispatch_event<gizmo_set_targets_event>(source, video_id, targets);
 	}
 
-	bool circle_shape::contains(utils::vec2<int> point) const
+	bool circle_shape::contains(utils::vec2<int> point, float added_radius) const
 	{
 		return utils::intersection::is_in_circle(ImVec2(point[0], point[1]), ImVec2(pos[0], pos[1]), radius);
 	}

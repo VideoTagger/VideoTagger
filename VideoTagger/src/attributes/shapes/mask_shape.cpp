@@ -71,7 +71,7 @@ namespace vt
 
 	}
 
-	bool mask_shape::contains(utils::vec2<int> point) const
+	bool mask_shape::contains(utils::vec2<int> point, float added_radius) const
 	{
 		auto bb = bounding_box();
 		if (point[0] < bb[0] or point[0] > bb[2] or point[1] < bb[1] or point[1] > bb[3])

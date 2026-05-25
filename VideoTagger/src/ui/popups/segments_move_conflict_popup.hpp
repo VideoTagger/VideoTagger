@@ -16,8 +16,6 @@ namespace vt::ui
 		event_source event_source_;
 		segment_id_map conflicting_segments_;
 		segments_move_request_event move_request_event_data_;
-		bool accepted_{ false };
-		bool paused_player_{ false };
 
 	public:
 		virtual void on_display() override;

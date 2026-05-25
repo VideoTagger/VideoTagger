@@ -7,7 +7,7 @@
 #include <utils/timestamp.hpp>
 #include <utils/iterator_range.hpp>
 #include <attributes/impl/shape_interpolator.hpp>
-#include <attributes/predictors/dummy_shape_predictor.hpp>
+#include <attributes/predictors/dummy_shape_interpolator.hpp>
 #include <core/app_context.hpp>
 #include <utils/timestamp_span.hpp>
 
@@ -21,7 +21,7 @@ namespace vt
 		using const_iterator = typename std::map<timestamp, shape_type>::const_iterator;
 
 		region_data() :
-			interpolator_{ std::make_unique<dummy_shape_predictor<shape_type>>("dummy")}, interpolation_keyframe_timestamps_(interpolator_->data_point_count()),
+			interpolator_{ std::make_unique<dummy_shape_interpolator<shape_type>>("dummy")}, interpolation_keyframe_timestamps_(interpolator_->data_point_count()),
 			interpolation_keyframe_shapes_(interpolator_->data_point_count()) {}
 
 	private:
@@ -39,10 +39,10 @@ namespace vt
 		 * @param shape Keyframe shape
 		 * @return Reference to the inserted shape
 		 */
-		shape_type& insert_keyframe(timestamp ts, const shape_type& shape)
+		shape_type& insert_keyframe(timestamp ts, shape_type shape)
 		{
 			auto& value = keyframes_[ts];
-			value = shape;
+			value = std::move(shape);
 			return value;
 		}
 
@@ -195,36 +195,6 @@ namespace vt
 		{
 			auto it = keyframes_.lower_bound(ts);
 			if (it == begin()) return end();
-
-			return --it;
-		}
-
-		/**
-		 * @brief Find the closest keyframe to the timestamp
-		 * @param ts Keyframe timestamp to search for
-		 * @return const_iterator to the found element. If there are no keyframes, returns end()
-		 */
-		const_iterator closest_keyframe(timestamp ts) const
-		{
-			if (keyframes_.empty()) return end();
-
-			auto it = next_or_current_keyframe(ts);
-			if (it != end() and it->first == ts) return it;
-
-			return --it;
-		}
-
-		/**
-		 * @brief Find the closest keyframe to the timestamp
-		 * @param ts Keyframe timestamp to search for
-		 * @return const_iterator to the found element. If there are no keyframes, returns end()
-		 */
-		iterator closest_keyframe(timestamp ts)
-		{
-			if (keyframes_.empty()) return end();
-
-			auto it = next_or_current_keyframe(ts);
-			if (it != end() and it->first == ts) return it;
 
 			return --it;
 		}

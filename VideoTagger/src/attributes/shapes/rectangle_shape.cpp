@@ -19,7 +19,7 @@ namespace vt
 		ctx_.dispatch_event<gizmo_set_targets_event>(source, video_id, targets);
 	}
 
-	bool rectangle_shape::contains(utils::vec2<int> point) const
+	bool rectangle_shape::contains(utils::vec2<int> point, float added_radius) const
 	{
 		return utils::intersection::is_in_rect(ImVec2(point[0], point[1]), ImRect{ ImVec2(start[0], start[1]), { ImVec2(end[0], end[1]) }});
 	}
@@ -142,5 +142,15 @@ namespace vt
 
 		start = points[0];
 		end = points[1];
+	}
+
+	int rectangle_shape::width() const
+	{
+		return std::abs(end[0] - start[0]);
+	}
+
+	int rectangle_shape::height() const
+	{
+		return std::abs(end[1] - start[1]);
 	}
 }

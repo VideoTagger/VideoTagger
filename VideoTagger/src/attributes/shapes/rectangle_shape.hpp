@@ -20,7 +20,7 @@ namespace vt
 
 		virtual void set_target(event_source source, video_id_t video_id) override;
 
-		virtual bool contains(utils::vec2<int> point) const override;
+		virtual bool contains(utils::vec2<int> point, float added_radius = 0.f) const override;
 		virtual utils::vec2<int>* closest_point(utils::vec2<int> point, float max_distance = std::numeric_limits<float>::infinity()) override;
 
 		virtual std::vector<utils::vec2<int>*> get_all_points() override;
@@ -32,6 +32,9 @@ namespace vt
 
 		[[nodiscard]] virtual nlohmann::ordered_json serialize() const override;
 		virtual void deserialize(const nlohmann::ordered_json& json) override;
+
+		int width() const;
+		int height() const;
 	};
 }
 

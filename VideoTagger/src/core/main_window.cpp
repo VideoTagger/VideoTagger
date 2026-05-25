@@ -140,8 +140,11 @@ extern "C"
 #include <events/video_resource/video_download_finished_event.hpp>
 #include <events/video_resource/video_open_in_explorer_request_event.hpp>
 #include <events/video_resource/video_locate_request_event.hpp>
+
+#include <events/attributes/region_track_cancel_request_event.hpp>
 #include <events/attributes/region_select_request_event.hpp>
 #include <events/attributes/region_deselect_request_event.hpp>
+#include <events/attributes/region_delete_request_event.hpp>
 #include <events/attributes/attribute_add_request_event.hpp>
 #include <events/attributes/attribute_added_event.hpp>
 #include <events/attributes/attribute_delete_request_event.hpp>
@@ -345,9 +348,17 @@ namespace vt
 			auto it = storage.find(event.tag());
 			if (it != storage.end())
 			{
-				it->second.erase_attribute_instances(event.id(), [&event_source, &event](video_id_t, impl::attribute_instance* instance)
+				it->second.erase_attribute_instances(event.id(), [&event_source, &event](video_id_t video_id, impl::attribute_instance* instance)
 				{
-					ctx_.dispatch_event<attribute_instance_deleted_event>(event_source, event.tag(), instance->attribute_name(), instance);
+					if (auto* shape_attr_instance = dynamic_cast<impl::shape_attribute_instance*>(instance))
+					{
+						for (auto& id : shape_attr_instance->region_ids())
+						{
+							ctx_.dispatch_event<region_track_cancel_request_event>(event_source, event.tag(), event.id(), video_id, shape_attr_instance, id);
+						}
+					}
+
+					ctx_.dispatch_event<attribute_instance_deleted_event>(event_source, event.tag(), event.id(), video_id, instance);
 				});
 
 				deleted = it->second.erase(event.id());
@@ -1148,9 +1159,9 @@ namespace vt
 				auto segments_it = storage.find(event.tag_name());
 				if (segments_it == storage.end()) continue;
 
-				segments_it->second.erase_attribute_instances(event.attribute_name(), [this, &event](segment_id, video_id_t, impl::attribute_instance* instance)
+				segments_it->second.erase_attribute_instances(event.attribute_name(), [this, &event](segment_id segment_id, video_id_t video_id, impl::attribute_instance* instance)
 				{
-					ctx_.dispatch_event<attribute_instance_deleted_event>(event_source_, event.tag_name(), event.attribute_name(), instance);
+					ctx_.dispatch_event<attribute_instance_deleted_event>(event_source_, event.tag_name(), segment_id, video_id, instance);
 				});
 			}
 
@@ -1317,8 +1328,11 @@ namespace vt
 		if (ctx_.session.is_any_region_selected())
 		{
 			const auto& selected_region = *ctx_.session.selected_region();
-			ctx_.dispatch_event<region_delete_request_event>(event_source_, selected_region.tag_name, selected_region.segment, selected_region.video_id,
-				*selected_region.attribute_instance, selected_region.region_id);
+			ctx_.dispatch_event<region_delete_request_event>
+			(
+				event_source_, selected_region.tag_name, selected_region.segment, selected_region.video_id,
+				selected_region.attribute_instance, selected_region.region_id
+			);
 		}
 		else
 		{
@@ -2749,6 +2763,24 @@ namespace vt
 			}
 		}
 
+		if (ctx_.track_region_popup != nullptr)
+		{
+			ctx_.track_region_popup->open_and_render(!ctx_.track_region_popup->is_open());
+			if (!ctx_.track_region_popup->is_open())
+			{
+				ctx_.track_region_popup.reset();
+			}
+		}
+
+		if (ctx_.global_progress_popup != nullptr)
+		{
+			ctx_.global_progress_popup->open_and_render(!ctx_.global_progress_popup->is_open());
+			if (!ctx_.global_progress_popup->is_open())
+			{
+				ctx_.global_progress_popup.reset();
+			}
+		}
+
 		if (ctx_.is_video_importer_registered<google_drive_video_importer>())
 		{
 			auto& importer = ctx_.get_video_importer<google_drive_video_importer>();
@@ -2907,7 +2939,7 @@ namespace vt
 								if (!hovered_regions.empty())
 								{
 									auto& region_data = hovered_regions.front();
-									ctx_.dispatch_event<region_select_request_event>(source, region_data.tag_name, region_data.segment, region_data.video_id, *region_data.attribute_instance, region_data.region_id);
+									ctx_.dispatch_event<region_select_request_event>(source, region_data.tag_name, region_data.segment, region_data.video_id, region_data.attribute_instance, region_data.region_id);
 								}
 								else if (ctx_.session.is_any_region_selected())
 								{
@@ -2964,6 +2996,8 @@ namespace vt
 					
 					vid_win->with_overlay([source = vid_win->get_event_source(), has_target, &point_pos, &start_pos](video_id_t video_id, ImVec2 pos, ImVec2 size, ImVec2 tex_size)
 					{
+						if (!has_target) return;
+
 						bool select_tool_active = ctx_.session.toolbar.is_tool_active("select");
 						if (!select_tool_active or ctx_.session.gizmo_video_id() != video_id) return;
 
@@ -2974,68 +3008,66 @@ namespace vt
 							return (float)value * viewport_diagonal / tex_diagonal;
 						};
 
-						if (has_target)
+						
+						float left = 0.0f;
+						float right = tex_size.x;
+						float bottom = tex_size.y;
+						float top = 0.f;
+						float near_z = -1.0f;
+						float far_z = 1.0f;
+
+						auto wpos = ImGui::GetWindowPos();
+						auto wsize = ImGui::GetWindowSize();
+
+						float translation[3]{ point_pos.x, point_pos.y, 0.0f };
+						float rotation[3]{};
+						float scale[3] = { 1.f, 1.f, 1.f };
+
+						float target[3]
 						{
-							float left = 0.0f;
-							float right = tex_size.x;
-							float bottom = tex_size.y;
-							float top = 0.f;
-							float near_z = -1.0f;
-							float far_z = 1.0f;
+							utils::matrix::front[0], //translation[0] + utils::matrix::front[0],
+							utils::matrix::front[1], //translation[1] + utils::matrix::front[1],
+							utils::matrix::front[2], //translation[2] + utils::matrix::front[2]
+						};
 
-							auto wpos = ImGui::GetWindowPos();
-							auto wsize = ImGui::GetWindowSize();
+						float cam_distance = 0.f;
+						float cam_angle[2]{};
+						float eye[3]
+						{
+							std::cos(cam_angle[1]) * std::cos(cam_angle[0]) * cam_distance,
+							std::sin(cam_angle[0]) * cam_distance,
+							std::sin(cam_angle[1]) * std::cos(cam_angle[0]) * cam_distance
+						};
+						utils::matrix view_mat = (utils::matrix::look_at(eye, target));
 
-							float translation[3]{ point_pos.x, point_pos.y, 0.0f };
-							float rotation[3]{};
-							float scale[3] = { 1.f, 1.f, 1.f };
+						utils::matrix proj_mat = utils::matrix::ortho(left, right, bottom, top, near_z, far_z);
+						ImGuizmo::SetRect(pos.x, pos.y, size.x, size.y);
 
-							float target[3]
-							{
-								utils::matrix::front[0], //translation[0] + utils::matrix::front[0],
-								utils::matrix::front[1], //translation[1] + utils::matrix::front[1],
-								utils::matrix::front[2], //translation[2] + utils::matrix::front[2]
-							};
+						utils::matrix mod{};
+						auto& gizmo_style = ImGuizmo::GetStyle();
 
-							float cam_distance = 0.f;
-							float cam_angle[2]{};
-							float eye[3]
-							{
-								std::cos(cam_angle[1]) * std::cos(cam_angle[0]) * cam_distance,
-								std::sin(cam_angle[0]) * cam_distance,
-								std::sin(cam_angle[1]) * std::cos(cam_angle[0]) * cam_distance
-							};
-							utils::matrix view_mat = (utils::matrix::look_at(eye, target));
+						gizmo_style.CenterCircleSize = ctx_.app_settings.scale_gizmos ? from_pixels(5) : 5.f;
+						gizmo_style.ScaleLineCircleSize = gizmo_style.CenterCircleSize;
+						gizmo_style.TranslationLineThickness = 2.f * gizmo_style.CenterCircleSize / 3.f;
+						gizmo_style.TranslationLineArrowSize = 1.5f * gizmo_style.TranslationLineThickness;
+						ImGuizmo::SetOrthographic(true);
+						ImGuizmo::SetDrawlist();
 
-							utils::matrix proj_mat = utils::matrix::ortho(left, right, bottom, top, near_z, far_z);
-							ImGuizmo::SetRect(pos.x, pos.y, size.x, size.y);
+						float snap[3]{ 1.00f, 1.00f, 1.00f };
+						ImVec2 obj_size{ 5, 100.f };
+						float bounds[] = { -obj_size.y / 2, -obj_size.x / 2, 0.f, obj_size.y / 2, obj_size.x / 2, 0.f };
+						ImGuizmo::RecomposeMatrixFromComponents(translation, rotation, scale, mod.data);
+						if (ImGuizmo::Manipulate(view_mat.data, proj_mat.data, ImGuizmo::OPERATION::TRANSLATE_X | ImGuizmo::OPERATION::TRANSLATE_Y/* | ImGuizmo::OPERATION::BOUNDS*/, ImGuizmo::MODE::LOCAL, mod.data, nullptr, snap, nullptr/*bounds*/))
+						{
+							ImGuizmo::DecomposeMatrixToComponents(mod.data, translation, rotation, scale);
+							//point_pos.x = std::clamp(translation[0], 0.0f, tex_size.x);
+							//point_pos.y = std::clamp(translation[1], 0.0f, tex_size.y);
 
-							utils::matrix mod{};
-							auto& gizmo_style = ImGuizmo::GetStyle();
+							point_pos.x = translation[0];
+							point_pos.y = translation[1];
 
-							gizmo_style.CenterCircleSize = ctx_.app_settings.scale_gizmos ? from_pixels(5) : 5.f;
-							gizmo_style.ScaleLineCircleSize = gizmo_style.CenterCircleSize;
-							gizmo_style.TranslationLineThickness = 2.f * gizmo_style.CenterCircleSize / 3.f;
-							gizmo_style.TranslationLineArrowSize = 1.5f * gizmo_style.TranslationLineThickness;
-							ImGuizmo::SetOrthographic(true);
-							ImGuizmo::SetDrawlist();
-
-							float snap[3]{ 1.00f, 1.00f, 1.00f };
-							ImVec2 obj_size{ 5, 100.f };
-							float bounds[] = { -obj_size.y / 2, -obj_size.x / 2, 0.f, obj_size.y / 2, obj_size.x / 2, 0.f };
-							ImGuizmo::RecomposeMatrixFromComponents(translation, rotation, scale, mod.data);
-							if (ImGuizmo::Manipulate(view_mat.data, proj_mat.data, ImGuizmo::OPERATION::TRANSLATE_X | ImGuizmo::OPERATION::TRANSLATE_Y/* | ImGuizmo::OPERATION::BOUNDS*/, ImGuizmo::MODE::LOCAL, mod.data, nullptr, snap, nullptr/*bounds*/))
-							{
-								ImGuizmo::DecomposeMatrixToComponents(mod.data, translation, rotation, scale);
-								//point_pos.x = std::clamp(translation[0], 0.0f, tex_size.x);
-								//point_pos.y = std::clamp(translation[1], 0.0f, tex_size.y);
-
-								point_pos.x = translation[0];
-								point_pos.y = translation[1];
-
-								utils::vec2<int> offset{ static_cast<int>(point_pos.x - start_pos.x), static_cast<int>(point_pos.y - start_pos.y) };
-								ctx_.dispatch_event<gizmo_move_targets_event>(source, video_id, ctx_.session.gizmo_targets(), offset);
-							}
+							utils::vec2<int> offset{ static_cast<int>(point_pos.x - start_pos.x), static_cast<int>(point_pos.y - start_pos.y) };
+							ctx_.dispatch_event<gizmo_move_targets_event>(source, video_id, ctx_.session.gizmo_targets(), offset);
 						}
 					});
 
@@ -3044,7 +3076,7 @@ namespace vt
 						std::string popup_id = fmt::format("##VideoContext{}", video_id);
 						if (ImGui::BeginPopupContextWindow(popup_id.c_str()))
 						{
-							static std::optional<selected_region_data> region_data;
+							static std::optional<region_info> region_data;
 
 							if (ImGui::IsWindowAppearing())
 							{
@@ -3052,6 +3084,8 @@ namespace vt
 								if (ctx_.session.is_any_region_hovered())
 								{
 									region_data = ctx_.session.hovered_regions().front();
+									ctx_.dispatch_event<region_select_request_event>(source, region_data->tag_name, region_data->segment, region_data->video_id,
+										region_data->attribute_instance, region_data->region_id);
 								}
 							}
 
@@ -3061,7 +3095,7 @@ namespace vt
 								auto& data_renderer = dynamic_cast<ui::impl::region_data_renderer&>(*region_data->attribute_instance);
 
 								data_renderer.context_menu_items(context_items, source, region_data->tag_name, region_data->segment,
-									region_data->video_id, *region_data->attribute_instance, region_data->region_id);
+									region_data->video_id, region_data->attribute_instance, region_data->region_id);
 							}
 							else
 							{

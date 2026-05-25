@@ -26,16 +26,28 @@ namespace vt::impl
 			return on_init(shape_instances, timestamps);
 		}
 
+		bool init(const std::vector<shape_type>& shape_instances, const std::vector<timestamp>& timestamps)
+		{
+			if (!on_init(shape_instances, timestamps)) return false;
+
+			this->set_initialized();
+			return false;
+		}
+
 		virtual std::optional<shape_type> on_predict(timestamp current_ts) = 0;
 
 		virtual std::optional<shape_type> on_predict(std::optional<timestamp> current_ts, const image<image_pixel_format::rgb8>* current_image) override final
 		{
-			if (!current_ts.has_value())
-			{
-				return std::nullopt;
-			}
+			if (!current_ts.has_value()) return std::nullopt;
 
 			return on_predict(*current_ts);
+		}
+
+		std::optional<shape_type> predict(timestamp current_ts)
+		{
+			if (!this->is_initialized()) return std::nullopt;
+
+			return on_predict(current_ts);
 		}
 
 		virtual std::optional<shape_type> stateless_predict(const std::vector<shape_type>& shape_instances, const std::vector<timestamp>& timestamps, timestamp current_ts) = 0;

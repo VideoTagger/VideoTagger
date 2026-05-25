@@ -11,8 +11,8 @@ function(vt_setup_opencv TARGET_NAME)
         set(WITH_OPENCL OFF CACHE INTERNAL "Disable OpenCL")
         set(WITH_FFMPEG OFF CACHE INTERNAL "Disable FFmpeg")
         set(OPENCV_DNN_OPENCL OFF CACHE INTERNAL "Disable OpenCL in DNN module")
-        set(BUILD_PROTOBUF OFF CACHE INTERNAL "Disable Protobuf")
-        set(WITH_PROTOBUF OFF CACHE INTERNAL "Disable Protobuf")
+        set(BUILD_PROTOBUF ON CACHE INTERNAL "Enable Protobuf")
+        set(WITH_PROTOBUF ON CACHE INTERNAL "Enable Protobuf")
         set(BUILD_JAVA OFF CACHE INTERNAL "Disable Java bindings")
         set(BUILD_opencv_java OFF CACHE INTERNAL "Disable Java bindings")
         set(BUILD_opencv_python2 OFF CACHE INTERNAL "Disable Python 2 bindings")
@@ -50,6 +50,7 @@ function(vt_setup_opencv TARGET_NAME)
         target_link_libraries(${TARGET_NAME} PRIVATE
             opencv_core
             opencv_imgproc
+			opencv_video
         )
 
 		# For testing

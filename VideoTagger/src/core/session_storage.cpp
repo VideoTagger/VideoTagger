@@ -36,6 +36,10 @@
 #include <events/attributes/region_hover_started_event.hpp>
 #include <events/attributes/region_hover_ended_event.hpp>
 #include <events/attributes/region_deleted_event.hpp>
+#include <events/attributes/region_track_cancel_request_event.hpp>
+#include <events/attributes/region_track_started_event.hpp>
+#include <events/attributes/region_track_ended_event.hpp>
+#include <events/attributes/region_track_request_event.hpp>
 #include <events/attributes/attribute_deleted_event.hpp>
 #include <events/attributes/attribute_renamed_event.hpp>
 #include <events/attributes/attribute_instance_deleted_event.hpp>
@@ -314,6 +318,14 @@ namespace vt
 				}
 			}
 
+			if (tracked_region_.has_value())
+			{
+				if (tracked_region_->region_data.tag_name == event.tag_name())
+				{
+					tracked_region_->region_data.tag_name = event.new_name();
+				}
+			}
+
 			for (auto& region : hovered_regions_)
 			{
 				if (region.tag_name == event.tag_name())
@@ -355,8 +367,8 @@ namespace vt
 
 		ctx_.add_event_listener<gizmo_set_targets_event>([this](const gizmo_set_targets_event& event)
 		{
-			gizmo_data_.video_id = event.video_id();
 			gizmo_data_.targets = event.targets();
+			gizmo_data_.video_id = gizmo_data_.targets.empty() ? video_id_t{} : event.video_id();
 		});
 	}
 
@@ -364,11 +376,11 @@ namespace vt
 	{
 		ctx_.add_event_listener<region_select_request_event>([this](const region_select_request_event& event)
 		{
-			selected_region_data region_data{ event.tag_name(), event.segment(), event.video_id(), event.attribute_instance().attribute_name(), &event.attribute_instance(), event.region_id()};
+			region_info region_data{ event.tag_name(), event.segment(), event.video_id(), event.attribute_instance()->attribute_name(), event.attribute_instance(), event.region_id()};
 
 			if (selected_region_.has_value())
 			{
-				bool is_already_selected = selected_region_->attribute_instance == &event.attribute_instance() and selected_region_->region_id == event.region_id();
+				bool is_already_selected = selected_region_->attribute_instance == event.attribute_instance() and selected_region_->region_id == event.region_id();
 				if (is_already_selected) return;
 
 				if (*selected_region_ == region_data)
@@ -392,7 +404,7 @@ namespace vt
 			if (!selected_region_.has_value()) return;
 
 			ctx_.dispatch_event<region_deselected_event>(event.source(), selected_region_->tag_name, selected_region_->segment, selected_region_->video_id,
-				*selected_region_->attribute_instance, selected_region_->region_id);
+				selected_region_->attribute_instance, selected_region_->region_id);
 			selected_region_.reset();
 			gizmo_data_.targets.clear();
 			gizmo_data_.video_id = 0;
@@ -400,27 +412,117 @@ namespace vt
 
 		ctx_.add_event_listener<region_hover_started_event>([this](const region_hover_started_event& event)
 		{
-			if (is_region_hovered(&event.attribute_instance(), event.region_id())) return;
+			if (is_region_hovered(event.attribute_instance(), event.region_id())) return;
 
-			hovered_regions_.push_back({ event.tag_name(), event.segment(), event.video_id(), event.attribute_instance().attribute_name(), &event.attribute_instance(), event.region_id()});
+			hovered_regions_.push_back({ event.tag_name(), event.segment(), event.video_id(), event.attribute_instance()->attribute_name(), event.attribute_instance(), event.region_id()});
 		});
 
 		ctx_.add_event_listener<region_hover_ended_event>([this](const region_hover_ended_event& event)
 		{
-			remove_hovered_region(&event.attribute_instance(), event.region_id());
+			remove_hovered_region(event.attribute_instance(), event.region_id());
 		});
 
 		ctx_.add_event_listener<region_deleted_event>([this](const region_deleted_event& event)
 		{
 			if (selected_region_.has_value())
 			{
-				if (selected_region_->attribute_instance == &event.attribute_instance() and selected_region_->region_id == event.region_id())
+				if (selected_region_->attribute_instance == event.attribute_instance() and selected_region_->region_id == event.region_id())
 				{
 					ctx_.dispatch_event<region_deselect_request_event>(event.source());
 				}
 			}
 
-			remove_hovered_region(&event.attribute_instance(), event.region_id());
+			remove_hovered_region(event.attribute_instance(), event.region_id());
+		});
+
+		ctx_.add_event_listener<region_track_request_event>([this](const region_track_request_event& event)
+		{
+			if (ctx_.session.is_region_tracked(event.attribute_instance(), event.region_id())) return;
+
+			auto progress = std::make_shared<float>(0.f);
+			cancellation_token token;
+
+			region_info region_data
+			{
+				event.tag_name(),
+				event.segment(),
+				event.video_id(),
+				event.attribute_instance()->attribute_name(),
+				event.attribute_instance(),
+				event.region_id()
+			};
+
+			std::shared_ptr<impl::region_tracker> region_tracker = event.attribute_instance()->new_region_tracker();
+
+			auto task = ctx_.tasks.run([region_tracker, region_data, tracker = event.tracker(), video_id = event.video_id(),
+				timespan = event.track_span(), replace_keyframes = event.replace_keyframes(), progress](cancellation_token& cancel_token) mutable
+			{
+				auto video = ctx_.current_project->videos.get(video_id);
+				if (video == nullptr) return;
+
+				auto stream = video->video();
+				if (!stream.is_open()) return;
+
+				auto current_ts = timespan.start;
+
+				image<image_pixel_format::rgb8> image(stream.width(), stream.height());
+				if (!stream.update_frame(image, current_ts.total_nanoseconds, true)) return;
+				current_ts = timestamp{ stream.current_frame()->timestamp() };
+
+				if (!region_tracker->init(region_data, tracker, timespan, image, replace_keyframes)) return;
+
+				do
+				{
+					if (cancel_token.is_cancelled()) break;
+
+					*progress = region_tracker->progress();
+
+					current_ts = timestamp{ stream.current_frame()->next_timestamp() };
+					if (!stream.update_frame(image, current_ts.total_nanoseconds, true)) break;
+					current_ts = timestamp{ stream.current_frame()->timestamp() };
+
+				} while (!stream.eof() and !region_tracker->update(current_ts, image));
+
+			}, token);
+
+			task.then(ctx_.tasks.on_main(), [region_tracker, source = event.source(), region_data](cancellation_token& cancel_token)
+			{
+				region_tracker->finalize(true);
+
+				ctx_.dispatch_event<region_track_ended_event>(source, region_data.tag_name, region_data.segment, region_data.video_id, region_data.attribute_instance, region_data.region_id);
+			}, token);
+
+			tracked_region_.emplace(region_data, progress, std::move(task));
+			
+			ctx_.dispatch_event<region_track_started_event>(event.source(), region_data.tag_name, region_data.segment, region_data.video_id, region_data.attribute_instance, region_data.region_id);
+
+			ctx_.global_progress_popup = std::make_unique<ui::progress_popup>
+			(
+				"Tracking", progress,
+				[](const std::optional<float>& progress)
+				{
+					return *progress >= 1.f or !ctx_.session.is_any_region_tracked();
+				},
+				[source = event.source(), region_data = region_data]()
+				{
+					ctx_.dispatch_event<region_track_cancel_request_event>(source, region_data.tag_name, region_data.segment, region_data.video_id, region_data.attribute_instance, region_data.region_id);
+				}
+			);
+		});
+
+		ctx_.add_event_listener<region_track_ended_event>([this](const region_track_ended_event& event)
+		{
+			tracked_region_.reset();
+		});
+
+		ctx_.add_event_listener<region_track_cancel_request_event>([this](const region_track_cancel_request_event& event)
+		{
+			if (!tracked_region_.has_value()) return;
+
+			auto& task = tracked_region_->task;
+			task.token().cancel();
+
+			tracked_region_.reset();
 		});
 
 		ctx_.add_event_listener<attribute_deleted_event>([this](const attribute_deleted_event& event)
@@ -432,6 +534,8 @@ namespace vt
 					selected_region_.reset();
 				}
 			}
+
+			tracked_region_.reset();
 
 			for (auto it = hovered_regions_.begin(); it != hovered_regions_.end();)
 			{
@@ -455,6 +559,14 @@ namespace vt
 				}
 			}
 
+			if (tracked_region_.has_value())
+			{
+				if (tracked_region_->region_data.attribute_name == event.attribute_name())
+				{
+					tracked_region_->region_data.attribute_name = event.attribute_name();
+				}
+			}
+
 			for (auto& region_data : hovered_regions_)
 			{
 				if (region_data.attribute_name != event.attribute_name()) continue;
@@ -472,6 +584,8 @@ namespace vt
 					ctx_.dispatch_event<region_deselect_request_event>(event.source());
 				}
 			}
+
+			tracked_region_.reset();
 
 			for (auto it = hovered_regions_.begin(); it != hovered_regions_.end();)
 			{
@@ -515,7 +629,7 @@ namespace vt
 		return insert_segment_marks_;
 	}
 
-	const std::optional<selected_region_data>& session_storage::selected_region() const
+	const std::optional<region_info>& session_storage::selected_region() const
 	{
 		return selected_region_;
 	}
@@ -532,14 +646,14 @@ namespace vt
 		return selected_region_.has_value();
 	}
 
-	const std::vector<selected_region_data>& session_storage::hovered_regions() const
+	const std::vector<region_info>& session_storage::hovered_regions() const
 	{
 		return hovered_regions_;
 	}
 
 	bool session_storage::is_region_hovered(impl::attribute_instance* attribute_instance, region_id_t region_id) const
 	{
-		auto it = std::find_if(hovered_regions_.begin(), hovered_regions_.end(), [attribute_instance, region_id](const selected_region_data& region_data)
+		auto it = std::find_if(hovered_regions_.begin(), hovered_regions_.end(), [attribute_instance, region_id](const region_info& region_data)
 		{
 			return region_data.attribute_instance == attribute_instance and region_data.region_id == region_id;
 		});
@@ -549,6 +663,21 @@ namespace vt
 	bool session_storage::is_any_region_hovered() const
 	{
 		return !hovered_regions_.empty();
+	}
+
+	const std::optional<tracked_region_data>& session_storage::tracked_region() const
+	{
+		return tracked_region_;
+	}
+
+	bool session_storage::is_region_tracked(impl::attribute_instance* attribute_instance, region_id_t region_id) const
+	{
+		return tracked_region_.has_value() and (tracked_region_->region_data.attribute_instance == attribute_instance and tracked_region_->region_data.region_id == region_id);
+	}
+
+	bool session_storage::is_any_region_tracked() const
+	{
+		return tracked_region_.has_value();
 	}
 
 	bool session_storage::is_segment_selected(const std::string& tag, segment_id id) const
@@ -682,6 +811,7 @@ namespace vt
 		current_video_group_id_ = invalid_video_group_id;
 		insert_segment_marks_.clear();
 		selected_region_.reset();
+		tracked_region_.reset();
 		hovered_regions_.clear();
 		
 		gizmo_data_.video_id = 0;
@@ -692,7 +822,7 @@ namespace vt
 
 	bool session_storage::remove_hovered_region(impl::attribute_instance* attribute_instance, region_id_t region_id)
 	{
-		auto it = std::find_if(hovered_regions_.begin(), hovered_regions_.end(), [attribute_instance, region_id](const selected_region_data& region_data)
+		auto it = std::find_if(hovered_regions_.begin(), hovered_regions_.end(), [attribute_instance, region_id](const region_info& region_data)
 		{
 			return region_data.attribute_instance == attribute_instance and region_data.region_id == region_id;
 		});
@@ -701,4 +831,7 @@ namespace vt
 		hovered_regions_.erase(it);
 		return true;
 	}
+
+	tracked_region_data::tracked_region_data(region_info region_data, std::shared_ptr<float> progress, cancellable_task<void>&& task) :
+		region_data{ std::move(region_data) }, progress{ std::move(progress) }, task{ std::move(task) } {}
 }

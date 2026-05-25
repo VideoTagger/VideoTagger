@@ -42,9 +42,9 @@ namespace vt::ui
 			{
 			case 0:
 			{
-				accepted_ = true;
 				close();
-				ctx_.dispatch_event<segments_move_request_event>(
+				ctx_.dispatch_event<segments_move_request_event>
+				(
 					event_source_, move_request_event_data_.storage(), move_request_event_data_.segments(),
 					move_request_event_data_.move_part(), move_request_event_data_.move_offset(), true
 				);
@@ -57,14 +57,6 @@ namespace vt::ui
 
 	void segments_move_conflict_popup::on_close()
 	{
-		if (!accepted_)
-		{
-			ctx_.dispatch_event<segments_moved_event>(
-				event_source_, move_request_event_data_.storage(), move_request_event_data_.segments(),
-				move_request_event_data_.move_part(), move_request_event_data_.move_offset(), false
-			);
-		}
-
 		ctx_.dispatch_event<playback_resume_request_event>(event_source_, ctx_.get_window<widgets::video_player>());
 	}
 }

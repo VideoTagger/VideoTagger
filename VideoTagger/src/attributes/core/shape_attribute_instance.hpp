@@ -5,6 +5,7 @@
 #include <attributes/region_data.hpp>
 #include <attributes/impl/shape_attribute_instance.hpp>
 #include <attributes/impl/shape.hpp>
+#include <attributes/impl/region_tracker.hpp>
 #include <core/app_context.hpp>
 #include <utils/random.hpp>
 #include <utils/math.hpp>
@@ -14,6 +15,7 @@
 #include <imgui.h>
 #include <ImGuizmo.h>
 
+#include <events/attributes/region_select_request_event.hpp>
 #include <events/attributes/region_hover_started_event.hpp>
 #include <events/attributes/region_hover_ended_event.hpp>
 #include <events/attributes/region_insert_request_event.hpp>
@@ -25,6 +27,7 @@
 #include <events/attributes/region_keyframe_delete_request_event.hpp>
 #include <events/attributes/region_keyframe_deleted_event.hpp>
 #include <events/attributes/region_set_interpolator_request_event.hpp>
+#include <events/attributes/region_track_cancel_request_event.hpp>
 
 #include <events/gizmo/gizmo_set_targets_event.hpp>
 
@@ -42,39 +45,41 @@ namespace vt
 		{
 			region_insert_request_handle_ = ctx_.add_event_listener<region_insert_request_event<shape_type>>([this](const region_insert_request_event<shape_type>& event)
 			{
-				if (&event.attribute_instance() != this) return;
+				if (event.attribute_instance() != this) return;
 
 				auto region_id = insert_region(event.timestamp(), event.shape());
-				ctx_.dispatch_event<region_inserted_event>(event_source_, event.tag_name(), event.segment(), event.video_id(), *this, region_id);
+				ctx_.dispatch_event<region_inserted_event>(event_source_, event.tag_name(), event.segment(), event.video_id(), this, region_id);
 				ctx_.is_project_dirty = true;
 			});
 
 			region_delete_request_handle_ = ctx_.add_event_listener<region_delete_request_event>([this](const region_delete_request_event& event)
 			{
-				if (&event.attribute_instance() != this) return;
+				if (event.attribute_instance() != this) return;
+
+				ctx_.dispatch_event<region_track_cancel_request_event>(event_source_, event.tag_name(), event.segment(), event.video_id(), this, event.region_id());
 
 				if (!regions_.erase(event.region_id())) return;
 
-				ctx_.dispatch_event<region_deleted_event>(event_source_, event.tag_name(), event.segment(), event.video_id(), *this, event.region_id());
+				ctx_.dispatch_event<region_deleted_event>(event_source_, event.tag_name(), event.segment(), event.video_id(), this, event.region_id());
 				ctx_.is_project_dirty = true;
 			});
 
 			region_keyframe_insert_request_handle_ = ctx_.add_event_listener<region_keyframe_insert_request_event<shape_type>>([this](const region_keyframe_insert_request_event<shape_type>& event)
 			{
-				if (&event.attribute_instance() != this) return;
+				if (event.attribute_instance() != this) return;
 
 				auto it = regions_.find(event.region_id());
 				if (it == regions_.end()) return;
 
 				it->second.insert_keyframe(event.timestamp(), event.shape());
 
-				ctx_.dispatch_event<region_keyframe_inserted_event>(event_source_, event.tag_name(), event.segment(), event.video_id(), *this, event.region_id(), event.timestamp());
+				ctx_.dispatch_event<region_keyframe_inserted_event>(event_source_, event.tag_name(), event.segment(), event.video_id(), this, event.region_id(), event.timestamp());
 				ctx_.is_project_dirty = true;
 			});
 
 			region_keyframe_delete_request_handle_ = ctx_.add_event_listener<region_keyframe_delete_request_event>([this](const region_keyframe_delete_request_event& event)
 			{
-				if (&event.attribute_instance() != this) return;
+				if (event.attribute_instance() != this) return;
 
 				auto it = regions_.find(event.region_id());
 				if (it == regions_.end()) return;
@@ -82,18 +87,18 @@ namespace vt
 				auto& region = it->second;
 				if (!region.erase_keyframe(event.timestamp())) return;
 
-				ctx_.dispatch_event<region_keyframe_deleted_event>(event_source_, event.tag_name(), event.segment(), event.video_id(), *this, event.region_id(), event.timestamp());
+				ctx_.dispatch_event<region_keyframe_deleted_event>(event_source_, event.tag_name(), event.segment(), event.video_id(), this, event.region_id(), event.timestamp());
 				ctx_.is_project_dirty = true;
 
 				if (!region.empty()) return;
 				regions_.erase(it);
 
-				ctx_.dispatch_event<region_deleted_event>(event_source_, event.tag_name(), event.segment(), event.video_id(), *this, event.region_id());
+				ctx_.dispatch_event<region_deleted_event>(event_source_, event.tag_name(), event.segment(), event.video_id(), this, event.region_id());
 			});
 
 			region_set_interpolator_request_handle_ = ctx_.add_event_listener<region_set_interpolator_request_event>([this](const region_set_interpolator_request_event& event)
 			{
-				if (&event.attribute_instance() != this) return;
+				if (event.attribute_instance() != this) return;
 
 				auto it = regions_.find(event.region_id());
 				if (it == regions_.end()) return;
@@ -180,6 +185,17 @@ namespace vt
 			return regions_.find(id) != regions_.end();
 		}
 
+		virtual std::vector<region_id_t> region_ids() const override
+		{
+			std::vector<region_id_t> result;
+			result.reserve(regions_.size());
+			for (auto& [id, _] : regions_)
+			{
+				result.push_back(id);
+			}
+			return result;
+		}
+
 		virtual std::vector<timestamp> keyframe_timestamps(region_id_t region_id) const override
 		{
 			std::vector<timestamp> result;
@@ -195,6 +211,38 @@ namespace vt
 			}
 
 			return result;
+		}
+
+		virtual std::optional<timestamp> first_keyframe_timestamp(region_id_t region_id) const override
+		{
+			auto it = regions_.find(region_id);
+			if (it == regions_.end()) return std::nullopt;
+
+			auto& region = it->second;
+			return region.begin()->first;
+		}
+
+		virtual std::optional<timestamp> last_keyframe_timestamp(region_id_t region_id) const override
+		{
+			auto it = regions_.find(region_id);
+			if (it == regions_.end()) return std::nullopt;
+
+			auto& region = it->second;
+			return (--region.end())->first;
+		}
+
+		virtual bool is_keyframe(region_id_t region_id, timestamp ts) const override
+		{
+			auto it = regions_.find(region_id);
+			if (it == regions_.end()) return false;
+
+			auto& region = it->second;
+			return region.is_keyframe(ts);
+		}
+
+		virtual const type_info& shape_type_info() const override
+		{
+			return typeid(shape_type);
 		}
 
 		[[nodiscard]] virtual nlohmann::ordered_json serialize() const override
@@ -245,7 +293,15 @@ namespace vt
 				bool is_keyframe = region.is_keyframe(ts);
 
 				auto video_mouse_pos = math::scale_vec2(ImGui::GetMousePos(), pos, pos + size, utils::vec2<int>{}, utils::vec2<int>{ static_cast<int>(tex_size.x), static_cast<int>(tex_size.y) }, false);
-				is_hovered = window_hovered and select_tool_active and shape_opt->contains(video_mouse_pos);
+
+				if constexpr (std::is_same_v<shape_type, points_shape> or std::is_same_v<shape_type, line_shape>)
+				{
+					is_hovered = window_hovered and select_tool_active and shape_opt->contains(video_mouse_pos, point_size);
+				}
+				else
+				{
+					is_hovered = window_hovered and select_tool_active and shape_opt->contains(video_mouse_pos);
+				}
 
 				bool show_points = is_selected or (is_keyframe and (window_hovered or is_hovered));
 				bool show_bbox = show_points;
@@ -262,7 +318,7 @@ namespace vt
 					if (is_hovered)
 					{
 						// session checks if region was already hovered, no need to check that here
-						ctx_.dispatch_event<region_hover_started_event>(event_source_, attribute_tag.name, segment, video_id, *this, region_id);
+						ctx_.dispatch_event<region_hover_started_event>(event_source_, attribute_tag.name, segment, video_id, this, region_id);
 					}
 					
 					//TODO: add event for hovering points (like above for regions) and move this to main_window
@@ -288,6 +344,11 @@ namespace vt
 								targets = shape.get_all_points();
 							}
 
+							//if (!targets.empty())
+							//{
+							//	ctx_.dispatch_event<region_select_request_event>(event_source_, attribute_tag.name, video_id, segment, *this, region_id);
+							//}
+
 							if (ctx_.session.has_gizmo_targets() or !targets.empty())
 							{
 								ctx_.dispatch_event<gizmo_set_targets_event>(event_source_, video_id, targets);
@@ -298,9 +359,105 @@ namespace vt
 
 				if (!is_hovered)
 				{
-					ctx_.dispatch_event<region_hover_ended_event>(event_source_, attribute_tag.name, video_id, segment, *this, region_id);
+					ctx_.dispatch_event<region_hover_ended_event>(event_source_, attribute_tag.name, video_id, segment, this, region_id);
 				}
 			}
 		}
+
+		virtual std::unique_ptr<impl::region_tracker> new_region_tracker() override;
 	};
+
+	template<typename shape_type>
+	class region_tracker : public impl::region_tracker
+	{
+	public:
+		region_tracker() = default;
+
+	private:
+		std::map<timestamp, shape_type> keyframes_;
+		std::vector<std::pair<timestamp, shape_type>> tracked_shapes_;
+		std::unique_ptr<impl::shape_tracker<shape_type>> tracker_;
+
+	public:
+		virtual bool on_init(const image<image_pixel_format::rgb8>& image) override
+		{
+			auto& predictor_registry = ctx_.get_shape_predictor_registry<shape_type>();
+			if (!predictor_registry.is_tracker_registered(tracker_name())) return false;
+
+			const auto& region_data = this->region_data();
+			auto* attr_instance = dynamic_cast<shape_attribute_instance<shape_type>*>(region_data.attribute_instance);
+			if (attr_instance == nullptr) return false;
+
+			if (!attr_instance->region_exists(region_data.region_id)) return false;
+			auto& region = attr_instance->get_region(region_data.region_id);
+
+			auto kf_it = region.find_keyframe(track_timespan().start);
+			if (kf_it == region.end()) return false;
+
+			tracker_ = predictor_registry.new_tracker(tracker_name());
+			if (tracker_ == nullptr) return false;
+
+			tracker_->init(kf_it->second, image);
+
+			tracked_shapes_.clear();
+			
+			for (auto it = kf_it; it != region.end() and it->first <= track_timespan().end; it++)
+			{
+				keyframes_.insert(*it);
+			}
+
+			return true;
+		}
+
+		virtual bool on_update(timestamp current_ts, const image<image_pixel_format::rgb8>& image) override
+		{
+			//TODO: maybe should reinitialize with the keyframe shape
+			if (!replace_keyframes() and keyframes_.find(current_ts) != keyframes_.end()) return false;
+
+			auto shape_opt = tracker_->predict(image);
+			if (!shape_opt.has_value()) return false;
+
+			tracked_shapes_.push_back(std::make_pair(current_ts, std::move(*shape_opt)));
+
+			return false;
+		}
+
+		virtual void on_finalize(bool should_insert) override
+		{
+			if (tracked_shapes_.empty()) return;
+
+			//TODO: could check if intance wasn't deleted
+
+			if (should_insert)
+			{
+				const auto& region_data = this->region_data();
+				auto* attr_instance = dynamic_cast<shape_attribute_instance<shape_type>*>(region_data.attribute_instance);
+				if (attr_instance == nullptr) return;
+
+				if (!attr_instance->region_exists(region_data.region_id)) return;
+				auto& region = attr_instance->get_region(region_data.region_id);
+
+				region.insert_keyframe(tracked_shapes_[0].first, std::move(tracked_shapes_[0].second));
+				for (size_t shape_i = 1; shape_i < tracked_shapes_.size(); shape_i++)
+				{
+					auto& previous_shape = tracked_shapes_[shape_i - 1].second;
+					auto& [ts, current_shape] = tracked_shapes_[shape_i];
+					if (previous_shape == current_shape) continue;
+
+					region.insert_keyframe(ts, std::move(current_shape));
+				}
+				ctx_.is_project_dirty = true;
+			}
+
+			tracked_shapes_.clear();
+			keyframes_.clear();
+			tracker_.reset();
+		}
+	};
+
+	template<typename shape_type, typename dummy>
+	inline std::unique_ptr<impl::region_tracker> shape_attribute_instance<shape_type, dummy>::new_region_tracker()
+	{
+		return std::make_unique<region_tracker<shape_type>>();
+	}
 }

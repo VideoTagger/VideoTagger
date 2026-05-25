@@ -23,11 +23,13 @@ namespace vt
 		ctx_.dispatch_event<gizmo_set_targets_event>(source, video_id, targets);
 	}
 
-	bool points_shape::contains(utils::vec2<int> point) const
+	bool points_shape::contains(utils::vec2<int> point, float added_radius) const
 	{
 		for (auto& p : points)
 		{
-			if (p == point) return true;
+			float distance = utils::vec2<int>::distance(p, point);
+
+			if (p == point or distance <= added_radius) return true;
 		}
 		return false;
 	}
@@ -70,8 +72,7 @@ namespace vt
 		{
 			auto scaled_point = math::scale_vec2(point, utils::vec2<int>{}, shape_space, draw_rect.Min, draw_rect.Max, false);
 
-			draw_list->AddCircleFilled(scaled_point, radius, fill_color);
-			draw_list->AddCircle(scaled_point, radius, outline_color);
+			draw_list->AddCircleFilled(scaled_point, radius, outline_color);
 		}
 	}
 
