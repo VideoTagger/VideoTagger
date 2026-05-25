@@ -465,6 +465,18 @@ namespace vt
 
 				auto current_ts = timespan.start;
 
+				//TODO: special case for stateless predictors
+				//bool is_stateless = false;
+				//{
+				//	auto it = ctx_.shape_predictor_registries.find(region_data.attribute_instance->shape_type_info());
+				//	if (it == ctx_.shape_predictor_registries.end())
+				//	{
+				//		return;
+				//	}
+
+				//	
+				//}
+
 				image<image_pixel_format::rgb8> image(stream.width(), stream.height());
 				if (!stream.update_frame(image, current_ts.total_nanoseconds, true)) return;
 				current_ts = timestamp{ stream.current_frame()->timestamp() };

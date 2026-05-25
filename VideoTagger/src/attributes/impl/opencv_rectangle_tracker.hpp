@@ -32,5 +32,10 @@ namespace vt::impl
 
 			return std::optional<rectangle_shape>{ std::in_place, start, end };
 		}
+
+		virtual void on_reset() override
+		{
+			tracker_.reset();
+		}
 	};
 }

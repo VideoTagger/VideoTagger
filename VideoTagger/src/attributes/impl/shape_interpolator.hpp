@@ -21,7 +21,7 @@ namespace vt::impl
 	public:
 		virtual bool on_init(const std::vector<shape_type>& shape_instances, const std::vector<timestamp>& timestamps) = 0;
 
-		virtual bool on_init(const std::vector<shape_type>& shape_instances, const std::vector<timestamp>& timestamps, const std::vector<image<image_pixel_format::rgb8>>& images) override final
+		virtual bool on_init(const std::vector<shape_type>& shape_instances, const std::vector<timestamp>& timestamps, const std::vector<image<image_pixel_format::rgb8>*>& images) override final
 		{
 			return on_init(shape_instances, timestamps);
 		}
@@ -53,7 +53,7 @@ namespace vt::impl
 		virtual std::optional<shape_type> stateless_predict(const std::vector<shape_type>& shape_instances, const std::vector<timestamp>& timestamps, timestamp current_ts) = 0;
 
 		virtual std::optional<shape_type> stateless_predict(const std::vector<shape_type>& shape_instances, const std::vector<timestamp>& timestamps,
-			const std::vector<image<image_pixel_format::rgb8>>& images, std::optional<timestamp> current_ts, const image<image_pixel_format::rgb8>* current_image) override final
+			const std::vector<image<image_pixel_format::rgb8>*>& images, std::optional<timestamp> current_ts, const image<image_pixel_format::rgb8>* current_image) override final
 		{
 			if (!current_ts.has_value()) return std::nullopt;
 

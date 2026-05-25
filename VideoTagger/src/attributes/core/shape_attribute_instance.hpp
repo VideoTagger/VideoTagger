@@ -411,7 +411,7 @@ namespace vt
 
 		virtual bool on_update(timestamp current_ts, const image<image_pixel_format::rgb8>& image) override
 		{
-			//TODO: maybe should reinitialize with the keyframe shape
+			//TODO: maybe should reinitialize with the keyframe shape, maybe only when the predicted shape is too different from the keyframe shape
 			if (!replace_keyframes() and keyframes_.find(current_ts) != keyframes_.end()) return false;
 
 			auto shape_opt = tracker_->predict(image);
@@ -442,7 +442,11 @@ namespace vt
 				{
 					auto& previous_shape = tracked_shapes_[shape_i - 1].second;
 					auto& [ts, current_shape] = tracked_shapes_[shape_i];
-					if (previous_shape == current_shape) continue;
+					if (previous_shape == current_shape)
+					{
+						region.erase_keyframe(ts);
+						continue;
+					}
 
 					region.insert_keyframe(ts, std::move(current_shape));
 				}

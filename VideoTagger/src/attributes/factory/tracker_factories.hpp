@@ -4,6 +4,7 @@
 #include <attributes/predictors/dasiam_rpn_rectangle_tracker.hpp>
 #include <attributes/predictors/goturn_rectangle_tracker.hpp>
 #include <attributes/predictors/vit_rectangle_tracker.hpp>
+#include <attributes/predictors/pyr_lk_points_tracker.hpp>
 
 namespace vt
 {
@@ -68,6 +69,22 @@ namespace vt
 		virtual std::unique_ptr<impl::shape_tracker<rectangle_shape>> new_shape_tracker() override
 		{
 			return std::make_unique<vit_rectangle_tracker>(this->name(), tracker_params_);
+		}
+	};
+
+	class pyr_lk_points_tracker_factory : public shape_tracker_factory<points_shape>
+	{
+	public:
+		pyr_lk_points_tracker_factory(const std::string& name) :
+			shape_tracker_factory<points_shape>{ name } {}
+
+	private:
+		
+
+	private:
+		virtual std::unique_ptr<impl::shape_tracker<points_shape>> new_shape_tracker() override
+		{
+			return std::make_unique<pyr_lk_points_tracker>(this->name());
 		}
 	};
 }

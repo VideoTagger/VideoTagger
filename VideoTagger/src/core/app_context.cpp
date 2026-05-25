@@ -115,6 +115,9 @@ namespace vt
 		//rectangle_registry.new_factory<vit_rectangle_tracker_factory>("Vit");
 		//rectangle_registry.new_factory<goturn_rectangle_tracker_factory>("GOTURN");
 		//rectangle_registry.new_factory<da_siam_rpn_rectangle_tracker_factory>("DaSiamRPN");
+
+		auto& points_registry = get_shape_predictor_registry<points_shape>();
+		points_registry.new_factory<pyr_lk_points_tracker_factory>("PyrLK");
 	}
 
     void app_context::load_shaders()

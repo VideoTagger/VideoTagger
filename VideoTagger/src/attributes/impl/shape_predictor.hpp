@@ -47,7 +47,7 @@ namespace vt::impl
 		 * @param images Images associated with the shape instances
 		 * @return Whether the predictor was intialized successfully
 		 */
-		bool init(const std::vector<shape_type>& shape_instances, const std::vector<timestamp>& timestamps, const std::vector<image<image_pixel_format::rgb8>>& images)
+		bool init(const std::vector<shape_type>& shape_instances, const std::vector<timestamp>& timestamps, const std::vector<image<image_pixel_format::rgb8>*>& images)
 		{
 			initialized_ = on_init(shape_instances, timestamps, images);
 			return initialized_;
@@ -103,7 +103,7 @@ namespace vt::impl
 		 * @return If successful a shape instance, empty otherwise (e.g. when not all required parameters were passed)
 		 */
 		virtual std::optional<shape_type> stateless_predict(const std::vector<shape_type>& shape_instances, const std::vector<timestamp>& timestamps,
-			const std::vector<image<image_pixel_format::rgb8>>& images, std::optional<timestamp> current_ts, const image<image_pixel_format::rgb8>* current_image)
+			const std::vector<image<image_pixel_format::rgb8>*>& images, std::optional<timestamp> current_ts, const image<image_pixel_format::rgb8>* current_image)
 		{
 			return std::nullopt;
 		}
@@ -127,7 +127,7 @@ namespace vt::impl
 		 * @param images Images associated with the shape instances
 		 * @return Whether the predictor was intialized successfully
 		 */
-		virtual bool on_init(const std::vector<shape_type>& shape_instances, const std::vector<timestamp>& timestamps, const std::vector<image<image_pixel_format::rgb8>>& images) = 0;
+		virtual bool on_init(const std::vector<shape_type>& shape_instances, const std::vector<timestamp>& timestamps, const std::vector<image<image_pixel_format::rgb8>*>& images) = 0;
 
 		/**
 		 * @brief Function called during reset
