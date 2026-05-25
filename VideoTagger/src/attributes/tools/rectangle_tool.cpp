@@ -62,11 +62,12 @@ namespace vt
 			return;
 		}
 
-		auto[min_x, max_x] = std::minmax<int>(shape_data->start[0], shape_data->end[0]);
-		auto[min_y, max_y] = std::minmax<int>(shape_data->start[1], shape_data->end[1]);
+		// Explicit type because without it minmax returns std::pair<const int&, const int&> which later breaks the assignment
+		std::pair<int, int> minmax_x = std::minmax(shape_data->start[0], shape_data->end[0]);
+		std::pair<int, int> minmax_y = std::minmax(shape_data->start[1], shape_data->end[1]);
 
-		shape_data->start = { min_x, min_y };
-		shape_data->end = { max_x, max_y };
+		shape_data->start = { minmax_x.first, minmax_y.first };
+		shape_data->end = { minmax_x.second, minmax_y.second };
 
 		if (shape_data->start != shape_data->end)
 		{
