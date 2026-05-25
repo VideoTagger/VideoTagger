@@ -1,6 +1,7 @@
 #pragma once
 #include <imgui.h>
 #include <optional>
+#include <memory>
 #include <type_traits>
 #include <ui/toolbar/toolbar_tool.hpp>
 #include <tags/tag.hpp>
@@ -10,40 +11,27 @@
 #include <ui/windows/toolbar.hpp>
 #include <attributes/core/shape_attribute.hpp>
 #include <attributes/core/shape_attribute_instance.hpp>
+#include <attributes/impl/with_shape_data.hpp>
 
 #include <events/attributes/region_insert_request_event.hpp>
 
 namespace vt
 {
 	template<typename shape_type, typename = std::enable_if_t<std::is_base_of_v<impl::shape, shape_type>>>
-	class shape_tool : public ui::toolbar_tool, public impl::resettable
+	class shape_tool : public ui::toolbar_tool, public impl::resettable, public impl::with_shape_data<shape_type>
 	{
 	public:
 		shape_tool(const tag& tag, const std::string& attribute_name) :
-			data_{}, tag_{ &tag }, attribute_name_{ attribute_name }
-		{
-			set_property_column_count(1);
-		}
+			tag_{ &tag }, attribute_name_{ attribute_name } {}
 
 	protected:
 		std::optional<video_id_t> active_video_;
 
 	private:
-		std::optional<shape_type> data_;
 		std::string attribute_name_;
 		const tag* tag_;
 
 	public:
-		std::optional<shape_type>& data()
-		{
-			return data_;
-		}
-
-		const std::optional<shape_type>& data() const
-		{
-			return data_;
-		}
-
 		const std::string& attribute_name()
 		{
 			return attribute_name_;
@@ -56,7 +44,7 @@ namespace vt
 
 		virtual void reset() override
 		{
-			data_.reset();
+			this->set_data(nullptr);
 			active_video_.reset();
 		}
 
@@ -98,7 +86,7 @@ namespace vt
 			if (attr_instance == nullptr) return false;
 
 			ctx_.dispatch_event<region_insert_request_event<shape_type>>("shape_tool", tag_->name, *selected_segment_opt, video_id, attr_instance,
-				ctx_.displayed_videos.current_timestamp_as_timestamp(), *data_);
+				ctx_.displayed_videos.current_timestamp_as_timestamp(), *this->data());
 
 			return true;
 		}
@@ -122,9 +110,13 @@ namespace vt
 		bool insert_allowed_cursor()
 		{
 			bool result = can_insert_region();
-			if (!result and ImGui::IsWindowHovered())
+			bool is_hovered = ImGui::IsWindowHovered();
+			if (is_hovered)
 			{
-				ImGui::SetMouseCursor(ImGuiMouseCursor_NotAllowed);
+				if (!result or is_busy())
+				{
+					ImGui::SetMouseCursor(ImGuiMouseCursor_NotAllowed);
+				}
 			}
 			return result;
 		}
@@ -132,6 +124,11 @@ namespace vt
 		virtual std::string display_name() const override
 		{
 			return attribute_name_;
+		}
+
+		virtual uint32_t property_column_count() const override
+		{
+			return toolbar_tool::property_column_count() + 1;
 		}
 
 		virtual void render_properties()

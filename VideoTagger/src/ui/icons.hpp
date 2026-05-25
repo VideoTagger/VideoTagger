@@ -119,9 +119,15 @@ namespace vt::icons
 	inline constexpr auto tool_eraser = "\xee\x9b\x90";
 	inline constexpr auto tool_points = "\xee\x8f\xaa";
 	inline constexpr auto tool_line = "\xee\xae\xbb";
+	inline constexpr auto tool_wand = "\xef\x8c\x9f";
+	inline constexpr auto tool_rect_selector = "\xee\x87\xa6";
+	inline constexpr auto tool_point_selector = "\xef\x9c\x8c";
+	inline constexpr auto tool_mask = "\xee\x90\xa1";
+	inline constexpr auto tool_mask_add = "\xef\x95\xbc";
+	inline constexpr auto tool_mask_remove = "\xef\x95\xbb";
 
 	inline std::vector<std::string> all
 	({
-		dots_hor, play, autoplay, play_queue, pause, repeat, repeat_one, retry, shuffle, skip_next, skip_prev, fast_back, fast_fwd, save, save_as, import_, import_export, exit, close, back, visibility_on, visibility_off, add, delete_, reset, folder, folder_code, file, label, tags, add_tag, expand_less, expand_more, toggle_less, toggle_more, link, link_off, pin, pin_off, edit, help, video_group, video, search, terminal, download, upload, download_off, arrow_up, refresh, local_storage, google_drive_add, home, license, translate, property, attribute, object, timeline, browser, experiment, palette, colors, queue, database, bullet, chevron_left, chevron_right, chevron_left_right, shape, shape_none, shape_circle, shape_rectangle, shape_polygon, interpolate, align_horizontal_left, align_horizontal_right, align_horizontal_center, align_vertical_bottom, align_vertical_top, align_vertical_center, align_center, info, warning, error, exclamation, delete_on_run, keyframe, keyframe_current, add_keyframe, goto_keyframe, new_region, set_target, text, windows, settings, dark_mode, light_mode, stretch_start, stretch_end, fit_area, fit_width, open_window, move_item, drag_handle, line_start_circle, line_end_circle, tool_arrow, tool_move, tool_brush, tool_eraser, tool_points, tool_line
+		dots_hor, play, autoplay, play_queue, pause, repeat, repeat_one, retry, shuffle, skip_next, skip_prev, fast_back, fast_fwd, save, save_as, import_, import_export, exit, close, back, visibility_on, visibility_off, add, delete_, reset, folder, folder_code, file, label, tags, add_tag, expand_less, expand_more, toggle_less, toggle_more, link, link_off, pin, pin_off, edit, help, video_group, video, search, terminal, download, upload, download_off, arrow_up, refresh, local_storage, google_drive_add, home, license, translate, property, attribute, object, timeline, browser, experiment, palette, colors, queue, database, bullet, chevron_left, chevron_right, chevron_left_right, shape, shape_none, shape_circle, shape_rectangle, shape_polygon, interpolate, align_horizontal_left, align_horizontal_right, align_horizontal_center, align_vertical_bottom, align_vertical_top, align_vertical_center, align_center, info, warning, error, exclamation, delete_on_run, keyframe, keyframe_current, add_keyframe, goto_keyframe, new_region, set_target, text, windows, settings, dark_mode, light_mode, stretch_start, stretch_end, fit_area, fit_width, open_window, move_item, drag_handle, line_start_circle, line_end_circle, tool_arrow, tool_move, tool_brush, tool_eraser, tool_points, tool_line, tool_wand, tool_rect_selector, tool_point_selector, tool_mask, tool_mask_add, tool_mask_remove
 	});
 }

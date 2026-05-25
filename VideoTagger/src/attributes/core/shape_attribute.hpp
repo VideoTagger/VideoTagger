@@ -19,10 +19,7 @@ namespace vt
 	class shape_attribute : public impl::attribute, public impl::attribute_property_renderer
 	{
 	public:
-		shape_attribute(impl::attribute_factory* factory, const std::string& name) : attribute{ factory, name }, tool_register_handle_{}
-		{
-			register_event_listeners();
-		}
+		shape_attribute(impl::attribute_factory* factory, const std::string& name) : attribute{ factory, name }, tool_register_handle_{} {}
 
 		virtual ~shape_attribute()
 		{
@@ -30,7 +27,7 @@ namespace vt
 			dispatcher.remove_event_listener(tool_register_handle_);
 		}
 
-	private:
+	protected:
 		event_listener_handle tool_register_handle_;
 
 	public:
@@ -49,8 +46,13 @@ namespace vt
 			return std::make_unique<shape_attribute_instance<shape_type>>(this);
 		}
 
-	private:
-		void register_event_listeners()
+		virtual void on_init() override
+		{
+			register_event_listeners();
+		}
+
+	protected:
+		virtual void register_event_listeners()
 		{
 			tool_register_handle_ = ctx_.add_event_listener<toolbar_register_request_event>([this](const toolbar_register_request_event& event)
 			{

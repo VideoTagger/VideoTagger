@@ -43,6 +43,8 @@
 #include <attributes/tools/line_tool.hpp>
 #include <attributes/tools/polygon_tool.hpp>
 #include <attributes/tools/mask_tool.hpp>
+#include <attributes/factory/mask_attribute_factory.hpp>
+#include <attributes/tools/extensions/wand_graph_cut_extension.hpp>
 
 namespace vt
 {
@@ -50,6 +52,7 @@ namespace vt
 	{
 		create_windows();
 		create_popups();
+		init_tool_extension_registry();
 		init_attribute_registry();
 		init_shape_predictor_registries();
 	}
@@ -67,7 +70,13 @@ namespace vt
 		attr_registry.new_factory<shape_attribute_factory_ex<points_shape, points_tool>>("points", shape_color, icons::tool_points);
 		attr_registry.new_factory<shape_attribute_factory_ex<line_shape, line_tool>>("line", shape_color, icons::tool_line);
 		attr_registry.new_factory<shape_attribute_factory_ex<polygon_shape, polygon_tool>>("polygon", shape_color, icons::shape_polygon);
-		attr_registry.new_factory<shape_attribute_factory_ex<mask_shape, mask_tool>>("mask", shape_color, icons::tool_brush);
+
+		attr_registry.new_factory<mask_attribute_factory>("mask", shape_color, icons::tool_brush);
+	}
+
+	void app_context::init_tool_extension_registry()
+	{
+		wand_extensions.register_extension<ui::wand_graph_cut_extension>("Graph Cut");
 	}
 
 	void app_context::init_shape_predictor_registries()

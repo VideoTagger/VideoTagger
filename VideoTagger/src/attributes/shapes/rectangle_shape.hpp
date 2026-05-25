@@ -18,6 +18,8 @@ namespace vt
 	public:
 		bool operator==(const rectangle_shape& other) const;
 
+		utils::vec4<int> as_vec4() const;
+
 		virtual void set_target(event_source source, video_id_t video_id) override;
 
 		virtual bool contains(utils::vec2<int> point, float added_radius = 0.f) const override;

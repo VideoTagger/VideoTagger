@@ -4,7 +4,7 @@
 
 namespace vt::ui
 {
-	void toolbar_group::add_tool(event_source source, const toolbar_tool_specification& tool_spec, const toolbar_tool& tool, size_t sort_index)
+	toolbar_group_entry& toolbar_group::add_tool(event_source source, const toolbar_tool_specification& tool_spec, const toolbar_tool& tool, size_t sort_index)
 	{
 		auto it = find(tool_spec.id);
 		if (it == entries_.end())
@@ -14,9 +14,10 @@ namespace vt::ui
 		auto& entry = it->second;
 		entry.set_sort_index(sort_index);
 		entry.add_tool(source, tool);
+		return entry;
 	}
 
-	void toolbar_group::add_tool(event_source source, const toolbar_tool_specification& tool_spec, std::unique_ptr<toolbar_tool>&& tool, size_t sort_index)
+	toolbar_group_entry& toolbar_group::add_tool(event_source source, const toolbar_tool_specification& tool_spec, std::unique_ptr<toolbar_tool>&& tool, size_t sort_index)
 	{
 		auto ptr = tool.get();
 		auto it = find(tool_spec.id);
@@ -27,6 +28,7 @@ namespace vt::ui
 		auto& entry = it->second;
 		entry.set_sort_index(sort_index);
 		entry.add_tool(source, std::move(tool));
+		return entry;
 	}
 
 	bool toolbar_group::remove_tool(event_source source, const std::string& tool_id)
