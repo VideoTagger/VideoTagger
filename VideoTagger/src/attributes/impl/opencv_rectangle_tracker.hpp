@@ -1,6 +1,7 @@
 #pragma once
 #include <attributes/impl/shape_tracker.hpp>
 #include <opencv2/video/tracking.hpp>
+#include <opencv2/tracking.hpp>
 #include <attributes/shapes/rectangle_shape.hpp>
 #include <image/image_opencv.hpp>
 

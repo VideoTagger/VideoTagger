@@ -109,12 +109,14 @@ namespace vt
 		mask_registry.new_factory<dummy_shape_interpolator_factory<mask_shape>>("None");
 
 		auto& rectangle_registry = get_shape_predictor_registry<rectangle_shape>();
-		rectangle_registry.new_factory<mil_rectangle_tracker_factory>("MIL");
+		rectangle_registry.new_factory<rectangle_tracker_factory<mil_rectangle_tracker>>("MIL");
+		rectangle_registry.new_factory<rectangle_tracker_factory<csrt_rectangle_tracker>>("CSRT");
+		rectangle_registry.new_factory<rectangle_tracker_factory<kcf_rectangle_tracker>>("KCF");
 
 		//TODO: register only if required dependencies are available
-		//rectangle_registry.new_factory<vit_rectangle_tracker_factory>("Vit");
-		//rectangle_registry.new_factory<goturn_rectangle_tracker_factory>("GOTURN");
-		//rectangle_registry.new_factory<da_siam_rpn_rectangle_tracker_factory>("DaSiamRPN");
+		//rectangle_registry.new_factory<rectangle_tracker_factory<vit_rectangle_tracker>>("Vit");
+		//rectangle_registry.new_factory<rectangle_tracker_factory<goturn_rectangle_tracker>>("GOTURN");
+		//rectangle_registry.new_factory<rectangle_tracker_factory<da_siam_rpn_rectangle_tracker>>("DaSiamRPN");
 
 		auto& points_registry = get_shape_predictor_registry<points_shape>();
 		points_registry.new_factory<pyr_lk_points_tracker_factory>("PyrLK");
