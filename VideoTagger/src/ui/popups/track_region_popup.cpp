@@ -32,6 +32,8 @@ namespace vt::ui
 		trackers_combo_.render_with_label("Tracking algorithm");
 
 		widgets::timestamp_control("Target timestamp", target_ts_, current_ts_.total_nanoseconds.count(), max_ts_.total_nanoseconds.count(), nullptr, nullptr);
+		bool timestamp_edited = ImGui::IsItemEdited();
+
 
 		ui::checkbox("Replace existing keyframes", replace_keyframes_);
 
@@ -40,7 +42,7 @@ namespace vt::ui
 			{ 0, ctx_.lang->get("confirm") },
 			{ 1, ctx_.lang->get("cancel") },
 		};
-		ui::button_bar<int>::render(buttons, [&](int id)
+		ui::button_bar<int>::render(buttons, !timestamp_edited, [&](int id)
 		{
 			switch (id)
 			{
