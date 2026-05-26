@@ -27,6 +27,8 @@ function(vt_setup_opencv TARGET_NAME)
         set(INSTALL_PYTHON_EXAMPLES OFF CACHE INTERNAL "")
         set(OPENCV_GENERATE_SETUPVARS OFF CACHE INTERNAL "")
 
+		set(OPENCV_EXTRA_MODULES_PATH "${PROJECT_SOURCE_DIR}/vendor/opencv_contrib/modules" CACHE INTERNAL "Path to OpenCV extra modules")
+
         add_subdirectory("${PROJECT_SOURCE_DIR}/vendor/opencv" "${CMAKE_BINARY_DIR}/opencv_build" EXCLUDE_FROM_ALL)
 
         if(DEFINED CV_CORE_INCLUDES)
@@ -36,6 +38,7 @@ function(vt_setup_opencv TARGET_NAME)
         file(GLOB opencv_includes CONFIGURE_DEPENDS
             "${PROJECT_BINARY_DIR}/vendor/opencv/include"
             "${PROJECT_SOURCE_DIR}/vendor/opencv/modules/**/include"
+			"${PROJECT_SOURCE_DIR}/vendor/opencv_contrib/modules/**/include"
         )
 
         message(STATUS "OpenCV include directories: ${opencv_includes}")
@@ -51,13 +54,14 @@ function(vt_setup_opencv TARGET_NAME)
             opencv_core
             opencv_imgproc
 			opencv_video
+			opencv_tracking
         )
 
-		# For testing
-		target_link_libraries(${TARGET_NAME} PRIVATE opencv_highgui)
     else()
         find_package(OpenCV REQUIRED)
         target_include_directories(${TARGET_NAME} PRIVATE ${OpenCV_INCLUDE_DIRS})
         target_link_libraries(${TARGET_NAME} PRIVATE ${OpenCV_LIBS})
     endif()
+	# For testing
+	target_link_libraries(${TARGET_NAME} PRIVATE opencv_highgui)
 endfunction()

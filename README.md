@@ -98,6 +98,7 @@ uv run ./scripts/vpk_package.py
 - [OpenSSL](https://github.com/openssl/openssl)
 - [FreeType](https://gitlab.freedesktop.org/freetype/freetype)
 - [OpenCV](https://github.com/opencv/opencv)
+- [OpenCV Extra](https://github.com/opencv/opencv_contrib)
 - [glad](https://github.com/Dav1dde/glad)
 
 ## License

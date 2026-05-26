@@ -43,3 +43,6 @@
 [submodule "VideoTagger/vendor/opencv"]
 	path = VideoTagger/vendor/opencv
 	url = https://github.com/opencv/opencv
+[submodule "VideoTagger/vendor/opencv_contrib"]
+	path = VideoTagger/vendor/opencv_contrib
+	url = https://github.com/opencv/opencv_contrib.git
