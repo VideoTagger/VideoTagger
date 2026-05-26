@@ -38,7 +38,12 @@ namespace vt
 
 			const auto& name = instance->attribute_name();
 
-			return render_property(name, type_name(), typed_inst->regions());
+			auto* shape_factory = dynamic_cast<shape_attribute_factory<shape_type>*>(factory());
+			bool result = render_property(name, type_name(), typed_inst->regions());
+			const auto& spec = shape_factory->tool_specification();
+			ImGui::TextDisabled("%s", spec.icon.c_str());
+			ui::tooltip(spec.tooltip.c_str());
+			return result;
 		}
 
 		virtual std::unique_ptr<impl::attribute_instance> instantiate() override
