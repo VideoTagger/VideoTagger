@@ -112,12 +112,28 @@ namespace vt::ui
 
 	void wand_sam2_extension::render_overlay(video_id_t video_id, ImVec2 pos, ImVec2 size, ImVec2 tex_size)
 	{
+		if (is_busy()) return;
+
+		bool is_hovered = ImGui::IsWindowHovered();
+		bool is_focused = ImGui::IsWindowFocused();
+		auto tex_size_vec = utils::vec2<int>{ static_cast<int>(tex_size.x), static_cast<int>(tex_size.y) };
+
 		switch (mode_)
 		{
 			case wand_sam2_mode::rectangle:
 			{
 				handle_rect_selection(video_id, ImRect(pos, pos + size), { static_cast<int>(tex_size.x), static_cast<int>(tex_size.y) });
 				break;
+			}
+			case wand_sam2_mode::mask:
+			{
+				auto shape_data = data();
+				if (shape_data != nullptr and is_focused)
+				{
+					handle_drawing(shape_data, video_id, pos, size, tex_size, is_eraser() ? 0 : 255);
+				}
+				auto zoom_factor = size.x / tex_size.x;
+				draw_brush_preview(ImGui::GetMousePos(), zoom_factor * brush_size());
 			}
 		}
 	}
