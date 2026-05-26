@@ -7,7 +7,7 @@
 
 namespace vt::ui
 {
-	wand_graph_cut_extension::wand_graph_cut_extension() : mode_{ wand_graph_cut_mode::rectangle }, is_fg_brush_{ true } {}
+	wand_graph_cut_extension::wand_graph_cut_extension(const std::string& name) : impl::wand_tool_extension{ name }, mode_{ wand_graph_cut_mode::rectangle }, is_fg_brush_{ true } {}
 
 	bool wand_graph_cut_extension::is_rect_mode() const
 	{
@@ -29,9 +29,10 @@ namespace vt::ui
 		{
 			case wand_graph_cut_mode::rectangle:
 			{
-				if (rect_data_ == nullptr or rect_data_->start == rect_data_->end) return;
+				auto& rect_data = rect_select_data();
+				if (rect_data == nullptr or rect_data->start == rect_data->end) return;
 
-				ctx_.tasks.run([this, &vid_data, start = rect_data_->start.max({ 0, 0 }), end = rect_data_->end.min(tex_size)]()
+				ctx_.tasks.run([this, &vid_data, start = rect_data->start.max({ 0, 0 }), end = rect_data->end.min(tex_size)]()
 				{
 					set_busy(true);
 
@@ -78,7 +79,7 @@ namespace vt::ui
 				})
 				.then(ctx_.tasks.on_main(), [this]()
 				{
-					rect_data_.reset();
+					rect_select_tool::reset();
 				});
 			}
 			break;
@@ -160,7 +161,7 @@ namespace vt::ui
 	void wand_graph_cut_extension::reset()
 	{
 		mode_ = wand_graph_cut_mode::rectangle;
-		rect_data_.reset();
+		rect_select_tool::reset();
 	}
 
 	uint32_t wand_graph_cut_extension::property_column_count() const
@@ -190,26 +191,7 @@ namespace vt::ui
 		{
 			case wand_graph_cut_mode::rectangle:
 			{
-				if (rect_data_ == nullptr and is_hovered and ImGui::IsMouseClicked(ImGuiMouseButton_Left))
-				{
-					auto click_pos = to_texture_space(ImGui::GetMousePos(), pos, size, tex_size);
-					rect_data_ = std::make_unique<rectangle_shape>(click_pos, click_pos);
-				}
-				else if (rect_data_ != nullptr and is_focused)
-				{
-					if (ImGui::IsMouseDragging(ImGuiMouseButton_Left))
-					{
-						auto mouse_pos = to_texture_space(ImGui::GetMousePos(), pos, size, tex_size);
-						rect_data_->end = mouse_pos;
-
-						ImRect draw_rect{ pos, pos + size };
-						rect_data_->render(utils::vec2<int>({ static_cast<int>(tex_size.x), static_cast<int>(tex_size.y) }), draw_rect, 0, IM_COL32(0, 0xFF, 0, 0xFF), std::nullopt, false);
-					}
-					else if (ImGui::IsMouseReleased(ImGuiMouseButton_Left))
-					{
-						generate_mask(video_id, tex_size_vec);
-					}
-				}
+				handle_rect_selection(video_id, ImRect(pos, pos + size), { static_cast<int>(tex_size.x), static_cast<int>(tex_size.y) });
 			}
 			break;
 			case wand_graph_cut_mode::mask:
@@ -249,11 +231,13 @@ namespace vt::ui
 			{
 				mode_ = wand_graph_cut_mode::rectangle;
 			}
+			ui::tooltip("Rectangle");
 			ImGui::SameLine();
 			if (ui::icon_toggle_button(icons::tool_mask, is_mask_mode()))
 			{
 				mode_ = wand_graph_cut_mode::mask;
 			}
+			ui::tooltip("Mask");
 			ImGui::PopStyleVar();
 		}
 		if (is_mask_mode())
@@ -261,5 +245,10 @@ namespace vt::ui
 			brush_tool::render_properties();
 		}
 		wand_tool_extension::render_properties();
+	}
+
+	void wand_graph_cut_extension::on_finish_selection(video_id_t video_id, const rectangle_shape& rect, const utils::vec2<int>& tex_size)
+	{
+		generate_mask(video_id, tex_size);
 	}
 }

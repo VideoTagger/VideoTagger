@@ -100,6 +100,7 @@ uv run ./scripts/vpk_package.py
 - [OpenCV](https://github.com/opencv/opencv)
 - [OpenCV Extra](https://github.com/opencv/opencv_contrib)
 - [glad](https://github.com/Dav1dde/glad)
+- [onnxruntime](https://github.com/microsoft/onnxruntime)
 
 ## License
 This software is licensed under the [MIT License](/LICENSE).

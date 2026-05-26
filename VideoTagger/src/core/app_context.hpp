@@ -117,6 +117,7 @@ namespace vt
 		std::filesystem::path lang_dir_filepath = storage_path() / "lang";
 		std::filesystem::path theme_dir_filepath = assets_dir_filepath / "themes"; //storage_path() / "themes";
 		std::filesystem::path downloads_dir_filepath = storage_path() / "downloads";
+		std::filesystem::path models_dir_filepath = storage_path() / "models";
 		std::filesystem::path cache_dir_filepath = storage_path() / std::filesystem::path("cache");
 		std::filesystem::path thumbnail_dir_filepath = cache_dir_filepath / "thumbnails";
 		std::filesystem::path python_dir_filepath = assets_dir_filepath / "python";

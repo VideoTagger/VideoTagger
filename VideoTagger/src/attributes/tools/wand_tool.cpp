@@ -3,7 +3,7 @@
 
 namespace vt
 {
-	wand_tool::wand_tool(const tag& tag, const std::string& attribute_name) : shape_tool<mask_shape>{ tag, attribute_name } {}
+	wand_tool::wand_tool(const tag& tag, const std::string& attribute_name) : shape_tool<mask_shape>{ tag, attribute_name }, extension_combo_{ "##ExtensionCombo", {} } {}
 
 	void wand_tool::on_activate()
 	{
@@ -11,10 +11,23 @@ namespace vt
 		if (ext == nullptr) return;
 		ext->set_data(this->data());
 		switch_extension(ext);
+
+		extension_combo_.set_callback([this](const std::pair<size_t, const std::string&>& item)
+		{
+			auto it = std::find_if(ctx_.wand_extensions.begin(), ctx_.wand_extensions.end(), [&item](const auto& pair)
+			{
+				return pair.second->name() == item.second;
+			});
+			if (it != ctx_.wand_extensions.end())
+			{
+				switch_extension(it->second);
+			}
+		});
 	}
 
 	void wand_tool::render_overlay(video_id_t video_id, ImVec2 pos, ImVec2 size, ImVec2 tex_size)
 	{
+		set_has_body(!ctx_.wand_extensions.empty());
 		shape_tool<mask_shape>::render_overlay(video_id, pos, size, tex_size);
 
 		auto shape_data = data();
@@ -108,9 +121,39 @@ namespace vt
 		shape_tool<mask_shape>::render_properties();
 	}
 
+	void wand_tool::render_popup_body(ui::widget_list& widgets, ui::button_bar<int>& button_bar)
+	{
+		widgets.add_raw([this]()
+		{
+			auto extensions = extension_names();
+			extension_combo_.set_items(extensions);
+			if (active_extension() != nullptr)
+			{
+				auto it = std::find(extensions.begin(), extensions.end(), active_extension()->name());
+				if (it != extensions.end())
+				{
+					extension_combo_.set_selected(it - extensions.begin());
+				}
+			}
+			return extension_combo_.render_with_label("Method");
+		});
+	}
+
 	void wand_tool::on_switch_extension(std::shared_ptr<ui::impl::wand_tool_extension> new_extension)
 	{
 		if (new_extension == nullptr) return;
+
+		new_extension->set_data(data());
+	}
+
+	std::vector<std::string> wand_tool::extension_names() const
+	{
+		std::vector<std::string> result;
+		for (const auto& [id, ext] : ctx_.wand_extensions)
+		{
+			result.push_back(ext->name());
+		}
+		return result;
 	}
 }
 

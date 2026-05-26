@@ -38,6 +38,11 @@ namespace vt::ui
 			}
 		}
 
+		void set_callback(const std::function<void(const std::pair<size_t, const value_type&>& item)>& callback)
+		{
+			callback_ = callback;
+		}
+
 		constexpr void set_selected(size_t selected)
 		{
 			selected_ = std::clamp(selected, (size_t)0, items_.size() - 1);

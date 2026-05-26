@@ -128,6 +128,9 @@ vt_setup_python_embed_package("${PROJECT_SOURCE_DIR}/assets/python" ${Python3_VE
 include(${CMAKE_SOURCE_DIR}/cmake/SetupVelopack.cmake)
 vt_add_velopack(${PROJECT_NAME} "0.0.1298")
 
+include(${CMAKE_SOURCE_DIR}/cmake/SetupOnnxRuntime.cmake)
+vt_setup_onnx_runtime(${PROJECT_NAME} "1.26.0")
+
 target_include_directories(${PROJECT_NAME}
 	PRIVATE "${PROJECT_SOURCE_DIR}/src"
 	PRIVATE "${PROJECT_SOURCE_DIR}/vendor/ImGui"
