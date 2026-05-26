@@ -61,21 +61,22 @@ namespace vt::ui
 		{
 			{ 0, ctx_.lang->get("cancel") },
 		};
-
-		ui::button_bar<int>::render(buttons, [&](int id)
+		ui::button_bar<int> button_bar{ buttons };
+		button_bar.set_cancel_button(0);
+		button_bar.render(0.f, true, [&](int id)
 		{
 			switch (id)
 			{
-				case 0:
+			case 0:
+			{
+				if (on_cancel_ != nullptr)
 				{
-					if (on_cancel_ != nullptr)
-					{
-						on_cancel_();
-					}
-					close();
+					on_cancel_();
 				}
-				break;
-				default: close(); break;
+				close();
+			}
+			break;
+			default: close(); break;
 			}
 		});
 	}
