@@ -45,6 +45,7 @@
 #include <attributes/tools/mask_tool.hpp>
 #include <attributes/factory/mask_attribute_factory.hpp>
 #include <attributes/tools/extensions/wand_graph_cut_extension.hpp>
+#include <attributes/tools/extensions/wand_sam2_extension.hpp>
 
 namespace vt
 {
@@ -76,7 +77,8 @@ namespace vt
 
 	void app_context::init_tool_extension_registry()
 	{
-		wand_extensions.register_extension<ui::wand_graph_cut_extension>("Graph Cut");
+		wand_extensions.register_extension<ui::wand_graph_cut_extension>("graph-cut", "Graph Cut");
+		wand_extensions.register_extension<ui::wand_sam2_extension>("sam2", "SAM 2");
 	}
 
 	void app_context::init_shape_predictor_registries()
