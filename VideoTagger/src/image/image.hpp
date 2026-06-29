@@ -61,7 +61,7 @@ namespace vt
 			image<target_pixel_type> result(size_);
 
 			const auto* src = data_.get();
-			auto* out = result.data<target_pixel_type>();
+			auto* out = result.template data<target_pixel_type>();
 
 			auto total_pixels = size_[0] * size_[1];
 

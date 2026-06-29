@@ -6,6 +6,7 @@
 #include <cstddef>
 #include <utils/json.hpp>
 #include <utils/math.hpp>
+#include <type_traits>
 
 namespace vt::utils
 {
@@ -24,7 +25,7 @@ namespace vt::utils
 		constexpr vec(const data_container& data) : data{ data } {}
 		constexpr vec(data_container&& data) : data{ std::move(data) } {}
 
-		template<typename = std::enable_if_t<(dims >= 4 and dims % 2 == 0)>>
+		template<bool condition = (dims >= 4 and dims % 2 == 0), typename = std::enable_if_t<condition>>
 		constexpr vec(const vec<type, dims / 2>& pos_min, const vec<type, dims / 2>& pos_max)
 		{
 			for (size_t i = 0; i < dims / 2; ++i)
@@ -46,61 +47,61 @@ namespace vt::utils
 			return this->data[index];
 		}
 
-		template<typename = std::enable_if_t<dims >= 1>>
+		template<bool condition = (dims >= 1), typename = std::enable_if_t<condition>>
 		constexpr type& x()
 		{
 			return at(0);
 		}
 
-		template<typename = std::enable_if_t<dims >= 1>>
+		template<bool condition = (dims >= 1), typename = std::enable_if_t<condition>>
 		constexpr const type& x() const
 		{
 			return at(0);
 		}
 
-		template<typename = std::enable_if_t<dims >= 1>>
+		template<bool condition = (dims >= 1), typename = std::enable_if_t<condition>>
 		constexpr type& y()
 		{
 			return at(1);
 		}
 
-		template<typename = std::enable_if_t<dims >= 1>>
+		template<bool condition = (dims >= 1), typename = std::enable_if_t<condition>>
 		constexpr const type& y() const
 		{
 			return at(1);
 		}
 
-		template<typename = std::enable_if_t<dims == 3>>
+		template<bool condition = (dims == 3), typename = std::enable_if_t<condition>>
 		constexpr type& z()
 		{
 			return at(2);
 		}
 
-		template<typename = std::enable_if_t<dims == 3>>
+		template<bool condition = (dims == 3), typename = std::enable_if_t<condition>>
 		constexpr const type& z() const
 		{
 			return at(2);
 		}
 
-		template<typename = std::enable_if_t<(dims > 3)>>
+		template<bool condition = (dims > 3), typename = std::enable_if_t<condition>>
 		constexpr type& w()
 		{
 			return at(2);
 		}
 
-		template<typename = std::enable_if_t<(dims > 3)>>
+		template<bool condition = (dims > 3), typename = std::enable_if_t<condition>>
 		constexpr const type& w() const
 		{
 			return at(2);
 		}
 
-		template<typename = std::enable_if_t<(dims > 3)>>
+		template<bool condition = (dims > 3), typename = std::enable_if_t<condition>>
 		constexpr type& h()
 		{
 			return at(3);
 		}
 
-		template<typename = std::enable_if_t<(dims > 3)>>
+		template<bool condition = (dims > 3), typename = std::enable_if_t<condition>>
 		constexpr const type& h() const
 		{
 			return at(3);
@@ -172,19 +173,19 @@ namespace vt::utils
 			return true;
 		}
 
-		template<typename = std::enable_if_t<dims == 4>>
+		template<bool condition = (dims == 4), typename = std::enable_if_t<condition>>
 		constexpr vec<type, 2> pos_min() const
 		{
 			return vec<type, 2>{ this->data[0], this->data[1] };
 		}
 
-		template<typename = std::enable_if_t<dims == 4>>
+		template<bool condition = (dims == 4), typename = std::enable_if_t<condition>>
 		constexpr vec<type, 2> pos_max() const
 		{
 			return vec<type, 2>{ this->data[2], this->data[3] };
 		}
 
-		template<typename = std::enable_if_t<dims == 4>>
+		template<bool condition = (dims == 4), typename = std::enable_if_t<condition>>
 		constexpr vec<type, 2> size() const
 		{
 			return pos_max() - pos_min();
@@ -210,13 +211,13 @@ namespace vt::utils
 			return result;
 		}
 
-		template<typename = std::enable_if_t<dims >= 2>>
+		template<bool condition = (dims >= 2), typename = std::enable_if_t<condition>>
 		static constexpr float distance(const vec& left, const vec& right)
 		{
 			return static_cast<float>(std::sqrt(std::pow((float)left[0] - right[0], 2.f) + std::pow((float)left[1] - right[1], 2.f)));
 		}
 
-		template<typename = std::enable_if_t<dims >= 2>>
+		template<bool condition = (dims >= 2), typename = std::enable_if_t<condition>>
 		static constexpr float distance(const vec& left, const std::vector<vec>& right)
 		{
 			auto mean_point = vec{};
@@ -251,13 +252,13 @@ namespace vt::utils
 			return result;
 		}
 
-		template<typename = std::enable_if_t<dims == 4>>
+		template<bool condition = (dims == 4), typename = std::enable_if_t<condition>>
 		static constexpr bool is_inside(const vec& left, const vec& right)
 		{
 			return left[0] >= right[0] and left[1] >= right[1] and left[0] <= right[2] and left[1] <= right[3];
 		}
 
-		template<typename = std::enable_if_t<dims == 4>>
+		template<bool condition = (dims == 4), typename = std::enable_if_t<condition>>
 		static constexpr bool is_overlapping(const vec& left, const vec& right)
 		{
 			return left[0] < right[2] and left[2] > right[0] and left[1] < right[3] and left[3] > right[1];

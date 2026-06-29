@@ -240,7 +240,7 @@ namespace vt
 			return region.is_keyframe(ts);
 		}
 
-		virtual const type_info& shape_type_info() const override
+		virtual const std::type_info& shape_type_info() const override
 		{
 			return typeid(shape_type);
 		}

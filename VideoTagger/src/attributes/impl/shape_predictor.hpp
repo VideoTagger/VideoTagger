@@ -5,6 +5,7 @@
 #include <utils/timestamp.hpp>
 #include <attributes/impl/shape.hpp>
 #include <image/image.hpp>
+#include <type_traits>
 
 namespace vt::impl
 {

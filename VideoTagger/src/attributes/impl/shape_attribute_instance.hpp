@@ -22,7 +22,7 @@ namespace vt::impl
 		virtual std::optional<timestamp> last_keyframe_timestamp(region_id_t region_id) const = 0;
 		virtual bool is_keyframe(region_id_t region_id, timestamp ts) const = 0;
 
-		virtual const type_info& shape_type_info() const = 0;
+		virtual const std::type_info& shape_type_info() const = 0;
 
 		virtual std::unique_ptr<impl::region_tracker> new_region_tracker() = 0;
 	};

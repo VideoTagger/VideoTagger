@@ -27,13 +27,13 @@ namespace vt
 	template<typename pixel_format>
 	inline cv::Mat image_to_cvmat(image<pixel_format>& image)
 	{
-		return cv::Mat(image.height(), image.width(), pixel_format_traits<pixel_format>::cv_type, image.data<pixel_format>());
+		return cv::Mat(image.height(), image.width(), pixel_format_traits<pixel_format>::cv_type, image.template data<pixel_format>());
 	}
 
 	template<typename pixel_format>
 	inline const cv::Mat image_to_cvmat_view(const image<pixel_format>& image)
 	{
-		return cv::Mat(image.height(), image.width(), pixel_format_traits<pixel_format>::cv_type, const_cast<pixel_format*>(image.data<pixel_format>()));
+		return cv::Mat(image.height(), image.width(), pixel_format_traits<pixel_format>::cv_type, const_cast<pixel_format*>(image.template data<pixel_format>()));
 	}
 
 	template<typename pixel_format>
