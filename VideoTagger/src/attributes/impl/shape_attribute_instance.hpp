@@ -5,6 +5,7 @@
 #include <optional>
 #include <tasks/cancellation_token.hpp>
 #include <attributes/impl/region_tracker.hpp>
+#include <typeinfo>
 
 namespace vt::impl
 {

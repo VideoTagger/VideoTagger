@@ -234,7 +234,7 @@ namespace vt
 			{
 				multiplier *= 60;
 			}
-			for (int8_t i = 0; i < std::min(base_10_segments, int8_t{ segment_max - 1 - current_segment }); i++)
+			for (int8_t i = 0; i < std::min(base_10_segments, static_cast<int8_t>(segment_max - 1 - current_segment)); i++)
 			{
 				multiplier *= 1000;
 			}
@@ -252,7 +252,7 @@ namespace vt
 
 	inline void from_json(const nlohmann::ordered_json& json, timestamp& ts)
 	{
-		auto ts_opt = parse_timestamp(json);
+		auto ts_opt = parse_timestamp(std::string_view{ json.get<std::string>() });
 		if (!ts_opt.has_value()) return;
 
 		ts = *ts_opt;
