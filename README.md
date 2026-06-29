@@ -46,7 +46,7 @@ uv run ./scripts/setup.py
 # On Windows it might be necessary to activate the developer command prompt first, you can do it by running:
 /path/to/vcvars64.bat
 
-cmake --build --target install --preset=<BUILD_PRESET>
+cmake --preset=<BUILD_PRESET> && cmake --build --target install --preset=<BUILD_PRESET>
 ```
 
 Replace `<BUILD_PRESET>` with one of the presets:
