@@ -8,19 +8,19 @@
 
 namespace vt::ui
 {
-	enum class wand_graph_cut_mode : uint8_t
+	enum class wand_grabcut_mode : uint8_t
 	{
 		rectangle,
 		mask,
 	};
 
-	struct wand_graph_cut_extension : public impl::wand_tool_extension, public vt::impl::resettable, public vt::impl::brush_tool, vt::impl::rect_select_tool
+	struct wand_grabcut_extension : public impl::wand_tool_extension, public vt::impl::resettable, public vt::impl::brush_tool, vt::impl::rect_select_tool
 	{
 	public:
-		wand_graph_cut_extension(const std::string& name);
+		wand_grabcut_extension(const std::string& name);
 
 	private:
-		wand_graph_cut_mode mode_;
+		wand_grabcut_mode mode_;
 		bool is_fg_brush_;
 
 	public:

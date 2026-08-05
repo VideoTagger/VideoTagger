@@ -1,4 +1,4 @@
-#include "wand_graph_cut_extension.hpp"
+#include "wand_grabcut_extension.hpp"
 #include <ui/icons.hpp>
 #include <ui/widgets/common.hpp>
 #include <core/app_context.hpp>
@@ -7,19 +7,19 @@
 
 namespace vt::ui
 {
-	wand_graph_cut_extension::wand_graph_cut_extension(const std::string& name) : impl::wand_tool_extension{ name }, mode_{ wand_graph_cut_mode::rectangle }, is_fg_brush_{ true } {}
+	wand_grabcut_extension::wand_grabcut_extension(const std::string& name) : impl::wand_tool_extension{ name }, mode_{ wand_grabcut_mode::rectangle }, is_fg_brush_{ true } {}
 
-	bool wand_graph_cut_extension::is_rect_mode() const
+	bool wand_grabcut_extension::is_rect_mode() const
 	{
-		return mode_ == wand_graph_cut_mode::rectangle;
+		return mode_ == wand_grabcut_mode::rectangle;
 	}
 
-	bool wand_graph_cut_extension::is_mask_mode() const
+	bool wand_grabcut_extension::is_mask_mode() const
 	{
-		return mode_ == wand_graph_cut_mode::mask;
+		return mode_ == wand_grabcut_mode::mask;
 	}
 
-	void wand_graph_cut_extension::generate_mask(video_id_t video_id, const utils::vec2<int>& tex_size)
+	void wand_grabcut_extension::generate_mask(video_id_t video_id, const utils::vec2<int>& tex_size)
 	{
 		auto vid_it = ctx_.displayed_videos.find(video_id);
 		if (vid_it == ctx_.displayed_videos.end()) return;
@@ -27,7 +27,7 @@ namespace vt::ui
 		
 		switch (mode_)
 		{
-			case wand_graph_cut_mode::rectangle:
+			case wand_grabcut_mode::rectangle:
 			{
 				auto& rect_data = rect_select_data();
 				if (rect_data == nullptr or rect_data->start == rect_data->end) return;
@@ -83,7 +83,7 @@ namespace vt::ui
 				});
 			}
 			break;
-			case wand_graph_cut_mode::mask:
+			case wand_grabcut_mode::mask:
 			{
 				ctx_.tasks.run([this, &vid_data]()
 				{
@@ -158,13 +158,13 @@ namespace vt::ui
 		//reset();
 	}
 
-	void wand_graph_cut_extension::reset()
+	void wand_grabcut_extension::reset()
 	{
-		mode_ = wand_graph_cut_mode::rectangle;
+		mode_ = wand_grabcut_mode::rectangle;
 		rect_select_tool::reset();
 	}
 
-	uint32_t wand_graph_cut_extension::property_column_count() const
+	uint32_t wand_grabcut_extension::property_column_count() const
 	{
 		auto col_count = 1;
 		if (is_mask_mode())
@@ -174,7 +174,7 @@ namespace vt::ui
 		return col_count;
 	}
 
-	void wand_graph_cut_extension::render_overlay(video_id_t video_id, ImVec2 pos, ImVec2 size, ImVec2 tex_size)
+	void wand_grabcut_extension::render_overlay(video_id_t video_id, ImVec2 pos, ImVec2 size, ImVec2 tex_size)
 	{
 		static auto to_texture_space = [](const ImVec2& screen_pos, ImVec2 pos, ImVec2 size, ImVec2 tex_size) -> utils::vec2<int>
 		{
@@ -189,12 +189,12 @@ namespace vt::ui
 
 		switch (mode_)
 		{
-			case wand_graph_cut_mode::rectangle:
+			case wand_grabcut_mode::rectangle:
 			{
 				handle_rect_selection(video_id, ImRect(pos, pos + size), { static_cast<int>(tex_size.x), static_cast<int>(tex_size.y) });
 			}
 			break;
-			case wand_graph_cut_mode::mask:
+			case wand_grabcut_mode::mask:
 			{
 				auto shape_data = data();
 				if (shape_data != nullptr and is_focused)
@@ -222,20 +222,20 @@ namespace vt::ui
 		}
 	}
 
-	void wand_graph_cut_extension::render_properties()
+	void wand_grabcut_extension::render_properties()
 	{
 		ImGui::TableNextColumn();
 		{
 			ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2{});
 			if (ui::icon_toggle_button(icons::tool_rect_selector, is_rect_mode()))
 			{
-				mode_ = wand_graph_cut_mode::rectangle;
+				mode_ = wand_grabcut_mode::rectangle;
 			}
 			ui::tooltip("Rectangle");
 			ImGui::SameLine();
 			if (ui::icon_toggle_button(icons::tool_mask, is_mask_mode()))
 			{
-				mode_ = wand_graph_cut_mode::mask;
+				mode_ = wand_grabcut_mode::mask;
 			}
 			ui::tooltip("Mask");
 			ImGui::PopStyleVar();
@@ -247,7 +247,7 @@ namespace vt::ui
 		wand_tool_extension::render_properties();
 	}
 
-	void wand_graph_cut_extension::on_finish_selection(video_id_t video_id, const rectangle_shape& rect, const utils::vec2<int>& tex_size)
+	void wand_grabcut_extension::on_finish_selection(video_id_t video_id, const rectangle_shape& rect, const utils::vec2<int>& tex_size)
 	{
 		generate_mask(video_id, tex_size);
 	}
