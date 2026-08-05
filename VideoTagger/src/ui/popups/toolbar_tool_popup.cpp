@@ -3,6 +3,7 @@
 #include <ui/widgets/widget_list.hpp>
 #include <ui/widgets/button_bar.hpp>
 #include <core/app_context.hpp>
+#include <events/toolbar/toolbar_tool_change_request.hpp>
 
 namespace vt::ui
 {
@@ -19,6 +20,29 @@ namespace vt::ui
 		ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings
 	}, active_entry_{}, popup_entries_{ "##ToolbarPopupEntries", {} }
 	{}
+
+	void toolbar_tool_popup::reset_entries()
+	{
+		if (active_entry_ == nullptr) return;
+
+		auto& tools = active_entry_->tools();
+		std::vector<toolbar_popup_entry> popup_entries;
+		popup_entries.reserve(tools.size());
+
+		size_t selected_idx{};
+		size_t i{};
+		for (auto& tool : tools)
+		{
+			if (active_entry_->active_tool() == tool.get())
+			{
+				selected_idx = i;
+			}
+			popup_entries.push_back({ tool->display_name(), tool.get() });
+			++i;
+		}
+		popup_entries_.set_items(popup_entries);
+		popup_entries_.set_selected(selected_idx);
+	}
 
 	void toolbar_tool_popup::set_active_entry(toolbar_group_entry* entry)
 	{
@@ -48,25 +72,7 @@ namespace vt::ui
 
 	void toolbar_tool_popup::on_display()
 	{
-		if (active_entry_ == nullptr) return;
-
-		auto& tools = active_entry_->tools();
-		std::vector<toolbar_popup_entry> popup_entries;
-		popup_entries.reserve(tools.size());
-
-		size_t selected_idx{};
-		size_t i{};
-		for (auto& tool : tools)
-		{
-			if (active_entry_->active_tool() == tool.get())
-			{
-				selected_idx = i;
-			}
-			popup_entries.push_back({ tool->display_name(), tool.get() });
-			++i;
-		}
-		popup_entries_.set_items(popup_entries);
-		popup_entries_.set_selected(selected_idx);
+		reset_entries();
 	}
 
 	void toolbar_tool_popup::on_render()
@@ -79,13 +85,21 @@ namespace vt::ui
 	{
 		if (active_entry_ == nullptr) return;
 
+		bool reset = false;
 		ImGui::BeginDisabled(popup_entries_.item_count() <= 1);
 		if (popup_entries_.render_with_label("Context"))
 		{
 			const auto& selected_item = popup_entries_.selected_item();
 			active_entry_->set_active_tool(*selected_item.tool);
+			ctx_.dispatch_event<toolbar_tool_change_request_event>("toolbar_tool_popup", active_entry_->group(), *active_entry_, *selected_item.tool);
+			active_entry_->on_switch_context();
+			reset = true;
 		}
 		ImGui::EndDisabled();
+		if (reset)
+		{
+			reset_entries();
+		}
 	}
 
 	void toolbar_tool_popup::render_body()

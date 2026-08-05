@@ -24,6 +24,7 @@ namespace vt::ui
 		toolbar_group* group_;
 		toolbar_tool* active_tool_;
 		int64_t sort_index_;
+		bool should_always_display_body_;
 
 	public:
 		void add_tool(event_source source, const toolbar_tool& tool);
@@ -33,6 +34,7 @@ namespace vt::ui
 
 		void set_sort_index(int64_t index);
 		void set_active_tool(toolbar_tool& tool);
+		void set_should_always_display_body(bool value);
 
 		toolbar_tool* active_tool();
 		const toolbar_tool* active_tool() const;
@@ -57,8 +59,10 @@ namespace vt::ui
 		bool empty() const;
 		bool has_id(const std::string& tool_id) const;
 		bool has_any_tool_body() const;
+		bool should_always_display_body() const;
 
 		void on_activate();
+		void on_switch_context();
 		void on_deactivate();
 		void on_done();
 		void on_button_click(int id);

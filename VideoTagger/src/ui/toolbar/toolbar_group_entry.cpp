@@ -6,7 +6,7 @@
 
 namespace vt::ui
 {
-	toolbar_group_entry::toolbar_group_entry(toolbar_group& group, const toolbar_tool_specification& spec) : group_{ &group }, spec_{ spec }, active_tool_{}, sort_index_{} {}
+	toolbar_group_entry::toolbar_group_entry(toolbar_group& group, const toolbar_tool_specification& spec) : group_{ &group }, spec_{ spec }, active_tool_{}, sort_index_{}, should_always_display_body_{} {}
 
 	void toolbar_group_entry::add_tool(event_source source, const toolbar_tool& tool)
 	{
@@ -45,6 +45,11 @@ namespace vt::ui
 	void toolbar_group_entry::set_active_tool(toolbar_tool& tool)
 	{
 		active_tool_ = &tool;
+	}
+
+	void toolbar_group_entry::set_should_always_display_body(bool value)
+	{
+		should_always_display_body_ = value;
 	}
 
 	toolbar_tool* toolbar_group_entry::active_tool()
@@ -149,11 +154,24 @@ namespace vt::ui
 		return false;
 	}
 
+	bool toolbar_group_entry::should_always_display_body() const
+	{
+		return should_always_display_body_;
+	}
+
 	void toolbar_group_entry::on_activate()
 	{
 		if (active_tool_ != nullptr)
 		{
 			active_tool_->on_activate();
+		}
+	}
+
+	void toolbar_group_entry::on_switch_context()
+	{
+		if (active_tool_ != nullptr)
+		{
+			active_tool_->on_switch_context();
 		}
 	}
 

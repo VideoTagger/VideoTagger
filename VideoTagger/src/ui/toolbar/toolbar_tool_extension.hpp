@@ -45,6 +45,8 @@ namespace vt::ui
 
 		///@brief Called when the tool is activated
 		virtual void on_activate() {}
+		///@brief Called when the tool's context has changed
+		virtual void on_switch_context() {}
 		///@brief Called when the tool is deactivated
 		virtual void on_deativate() {}
 

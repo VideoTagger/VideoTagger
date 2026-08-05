@@ -7,10 +7,18 @@ namespace vt
 
 	void wand_tool::on_activate()
 	{
+		on_switch_context();
+	}
+
+	void wand_tool::on_switch_context()
+	{
 		auto ext = ctx_.wand_extensions.first();
 		if (ext == nullptr) return;
 		ext->set_data(this->data());
 		switch_extension(ext);
+
+		auto extensions = extension_names();
+		extension_combo_.set_items(extensions);
 
 		extension_combo_.set_callback([this](const std::pair<size_t, const std::string&>& item)
 		{
@@ -126,7 +134,6 @@ namespace vt
 		widgets.add_raw([this]()
 		{
 			auto extensions = extension_names();
-			extension_combo_.set_items(extensions);
 			if (active_extension() != nullptr)
 			{
 				auto it = std::find(extensions.begin(), extensions.end(), active_extension()->name());

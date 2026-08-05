@@ -149,8 +149,9 @@ namespace vt::ui::windows
 
 				const auto& spec = entry->specification();
 				bool is_selected = toolbar.is_tool_active(spec.id);
-				bool should_show_popup = (entry->tool_count() > 1) or entry->has_any_tool_body();
-				
+				bool always_show = entry->should_always_display_body();
+				bool should_show_popup = always_show or entry->tool_count() > 1 or entry->has_any_tool_body();
+
 				bool was_toggled = false;
 				if (ui::icon_toggle_button(spec.icon, is_selected)) // and !is_selected
 				{
@@ -163,7 +164,7 @@ namespace vt::ui::windows
 				ui::tooltip(spec.tooltip);
 				render_separator = true;
 
-				if (is_selected and should_show_popup)
+				if ((is_selected or should_be_selected) and should_show_popup)
 				{
 					auto window = ImGui::GetCurrentWindow();
 					auto window_rect = window->Rect();

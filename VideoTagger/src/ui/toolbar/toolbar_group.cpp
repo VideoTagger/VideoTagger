@@ -28,6 +28,7 @@ namespace vt::ui
 		auto& entry = it->second;
 		entry.set_sort_index(sort_index);
 		entry.add_tool(source, std::move(tool));
+		entry.set_should_always_display_body(tool_spec.should_always_display_body);
 		return entry;
 	}
 

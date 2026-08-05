@@ -9,7 +9,9 @@ namespace vt
 		shape_attribute_factory_mt<mask_shape, wand_tool, mask_tool>{ name, icon }
 	{
 		std::array<ui::toolbar_tool_specification, shape_attribute_factory_mt::tool_count()> tool_specs;
-		tool_specs[0] = ui::toolbar_tool_specification("wand", icons::tool_wand, utils::string::to_titlecase("wand"));
+		ui::toolbar_tool_specification wand_spec{ "wand", icons::tool_wand, utils::string::to_titlecase("wand") };
+		wand_spec.should_always_display_body = true;
+		tool_specs[0] = wand_spec;
 		tool_specs[1] = ui::toolbar_tool_specification(this->name(), this->icon(), utils::string::to_titlecase(this->name()));
 		set_tool_specifications(tool_specs);
 	}

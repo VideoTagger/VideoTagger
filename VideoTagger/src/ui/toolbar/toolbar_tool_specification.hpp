@@ -14,5 +14,6 @@ namespace vt::ui
 		std::string tooltip;
 		///@brief If true, the tool won't be deleted during the tool re-registration phase.
 		bool is_persistent = false;
+		bool should_always_display_body = false;
 	};
 }

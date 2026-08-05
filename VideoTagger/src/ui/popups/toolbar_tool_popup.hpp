@@ -26,6 +26,8 @@ namespace vt::ui
 		ImVec2 pos_;
 
 	public:
+		void reset_entries();
+
 		void set_active_entry(toolbar_group_entry* entry);
 		void set_position(ImVec2 pos);
 
