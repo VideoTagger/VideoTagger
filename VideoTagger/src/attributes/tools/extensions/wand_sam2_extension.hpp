@@ -1,5 +1,7 @@
 #pragma once
 #include <memory>
+#include <optional>
+#include <utils/vec.hpp>
 #include <impl/resettable.hpp>
 #include <attributes/tools/impl/brush_tool.hpp>
 #include <attributes/shapes/rectangle_shape.hpp>
@@ -28,7 +30,7 @@ namespace vt::ui
 		bool is_points_mode() const;
 		bool is_mask_mode() const;
 
-		void generate_mask(video_id_t video_id, const utils::vec2<int>& tex_size);
+		void generate_mask(video_id_t video_id, const utils::vec2<int>& tex_size, const std::optional<utils::vec4<float>>& rect = std::nullopt);
 
 		virtual void reset() override;
 

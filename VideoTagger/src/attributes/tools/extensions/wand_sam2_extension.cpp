@@ -28,7 +28,7 @@ namespace vt::ui
 		return mode_ == wand_sam2_mode::mask;
 	}
 
-	void wand_sam2_extension::generate_mask(video_id_t video_id, const utils::vec2<int>& tex_size)
+	void wand_sam2_extension::generate_mask(video_id_t video_id, const utils::vec2<int>& tex_size, const std::optional<utils::vec4<float>>& rect)
 	{
 		auto vid_it = ctx_.displayed_videos.find(video_id);
 		if (vid_it == ctx_.displayed_videos.end()) return;
@@ -41,7 +41,7 @@ namespace vt::ui
 				auto& rect_data = rect_select_data();
 				if (rect_data == nullptr or rect_data->start == rect_data->end) return;
 
-				ctx_.tasks.run([this, &vid_data, start = rect_data->start.max({ 0, 0 }), end = rect_data->end.min(tex_size)]()
+				ctx_.tasks.run([this, rect = rect, &vid_data, start = rect_data->start.max({ 0, 0 }), end = rect_data->end.min(tex_size)]()
 				{
 					set_busy(true);
 
@@ -59,7 +59,10 @@ namespace vt::ui
 
 							auto res = encoder.encode(img);
 
-							auto dec_res = decoder.decode(res);
+							sam2_decoder_prompt prompt;
+							prompt.rect = rect;
+							auto dec_res = decoder.decode(res, prompt);
+
 							cv::Mat result_mask = dec_res.masks[0];
 								
 							auto mask_data = data();
@@ -171,7 +174,24 @@ namespace vt::ui
 
 	void wand_sam2_extension::on_finish_selection(video_id_t video_id, const rectangle_shape& rect, const utils::vec2<int>& tex_size)
 	{
-		generate_mask(video_id, tex_size);
+		bool has_rect = rect.start != rect.end;
+		std::optional<utils::vec4<float>> vec_rect;
+		if (has_rect)
+		{
+			auto start_x = std::clamp(std::min(rect.start.x(), rect.end.x()), 0, tex_size.x());
+			auto start_y = std::clamp(std::min(rect.start.y(), rect.end.y()), 0, tex_size.y());
+			auto end_x = std::clamp(std::max(rect.start.x(), rect.end.x()), 0, tex_size.x());
+			auto end_y = std::clamp(std::max(rect.start.y(), rect.end.y()), 0, tex_size.y());
+			
+			vec_rect =
+			{
+				static_cast<float>(start_x),
+				static_cast<float>(start_y),
+				static_cast<float>(end_x),
+				static_cast<float>(end_y)
+			};
+		}
+		generate_mask(video_id, tex_size, vec_rect);
 	}
 
 }

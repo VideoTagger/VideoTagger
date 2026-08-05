@@ -24,6 +24,12 @@ namespace vt
 	struct sam2_decoder_prompt
 	{
 		std::vector<sam2_decoder_prompt_point> points;
+		std::optional<utils::vec4<float>> rect;
+
+		constexpr bool has_rect() const
+		{
+			return rect.has_value();
+		}
 	};
 
 	class sam2_image_decoder : public onnx_model

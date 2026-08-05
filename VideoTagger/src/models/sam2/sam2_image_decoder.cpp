@@ -32,21 +32,59 @@ namespace vt
 		{
 			throw std::runtime_error("Invalid original image size in encoder result");
 		}
+		
+		bool has_rect = prompt.has_rect();
 		size_t point_count = prompt.points.size();
+		if (has_rect)
+		{
+			point_count += 2;
+		}
+
 		size_t tensor_point_count = point_count == 0 ? 1 : point_count;
 		std::vector<float> input_point_coords(1 * tensor_point_count * 2, 0.0f); // Shape (1, tensor_point_count, 2)
 		std::vector<float> input_point_labels(1 * tensor_point_count, -1.0f); // Padded with -1
 
-		for (size_t i = 0; i < point_count; ++i)
+		size_t offset_idx = 0;
+
+		auto scale = std::min(static_cast<float>(encoder_input_size_.x()) / img_size.x(), static_cast<float>(encoder_input_size_.y()) / img_size.y());
+		if (encoder_input_size_.x() >= img_size.x() and encoder_input_size_.y() >= img_size.y())
+		{
+			scale = 1.0f;
+		}
+
+		for (size_t i = 0; i < prompt.points.size(); ++i)
 		{
 			// Coordinate normalization
-			float nx = (prompt.points[i].point.x() / static_cast<float>(img_size.x())) * static_cast<float>(encoder_input_size_.x());
-			float ny = (prompt.points[i].point.y() / static_cast<float>(img_size.y())) * static_cast<float>(encoder_input_size_.y());
+			float nx = prompt.points[i].point.x() * scale;
+			float ny = prompt.points[i].point.y() * scale;
 
-			input_point_coords[0 * (tensor_point_count * 2) + i * 2 + 0] = nx;
-			input_point_coords[0 * (tensor_point_count * 2) + i * 2 + 1] = ny;
+			input_point_coords[0 * (tensor_point_count * 2) + offset_idx * 2 + 0] = nx;
+			input_point_coords[0 * (tensor_point_count * 2) + offset_idx * 2 + 1] = ny;
+			input_point_labels[0 * tensor_point_count + offset_idx] = static_cast<float>(prompt.points[i].label);
 
-			input_point_labels[0 * tensor_point_count + i] = static_cast<float>(prompt.points[i].label);
+			offset_idx++;
+		}
+
+		if (has_rect)
+		{
+			auto rect = prompt.rect.value();
+			auto tl = rect.pos_min();
+			auto br = rect.pos_max();
+			// Top-Left Point (Label 2)
+			float tlx = tl.x() * scale;
+			float tly = tl.y() * scale;
+			input_point_coords[0 * (tensor_point_count * 2) + offset_idx * 2 + 0] = tlx;
+			input_point_coords[0 * (tensor_point_count * 2) + offset_idx * 2 + 1] = tly;
+			input_point_labels[0 * tensor_point_count + offset_idx] = 2.0f;
+			offset_idx++;
+
+			// Bottom-Right Point (Label 3)
+			float brx = br.x() * scale;
+			float bry = br.y() * scale;
+			input_point_coords[0 * (tensor_point_count * 2) + offset_idx * 2 + 0] = brx;
+			input_point_coords[0 * (tensor_point_count * 2) + offset_idx * 2 + 1] = bry;
+			input_point_labels[0 * tensor_point_count + offset_idx] = 3.0f;
+			offset_idx++;
 		}
 
 		// Mask input: zeros with shape (label_count, 1, H/scale, W/scale)
