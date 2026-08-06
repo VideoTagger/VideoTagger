@@ -121,6 +121,8 @@ namespace vt::ui
 		ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 1.f);
 		ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 3.f);
 
+		static constexpr auto icon = icons::exclamation;
+		auto icon_size = ImGui::CalcTextSize(icon);
 		bool is_empty = input_.empty();
 		bool push_password_font = is_password() and !is_empty;
 		if (push_password_font)
@@ -129,11 +131,11 @@ namespace vt::ui
 		}
 		if (width_ > 0.f)
 		{
-			ImGui::PushItemWidth(width_);
+			ImGui::PushItemWidth(width_ - icon_size.x);
 		}
 		if (width_ < 0.f)
 		{
-			ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x);
+			ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x - icon_size.x);
 		}
 		if (!hint_.empty())
 		{
@@ -152,8 +154,6 @@ namespace vt::ui
 			ImGui::PopFont();
 		}
 
-		static constexpr auto icon = icons::exclamation;
-		auto icon_size = ImGui::CalcTextSize(icon);
 		if (!valid and validator_ != nullptr)
 		{
 			ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2{});
