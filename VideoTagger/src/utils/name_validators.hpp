@@ -29,8 +29,19 @@ namespace vt::utils
 	{
 		if (name.empty()) return name_validation_result::empty;
 
+		if (utils::string::has_trailing_whitespace(name)) return name_validation_result::invalid;
+
 		auto it = other_names.find(name);
 		if (it != other_names.end()) return name_validation_result::already_exists;
+
+		return name_validation_result::ok;
+	}
+
+	inline name_validation_result basic_name_validate(const std::string& name)
+	{
+		if (name.empty()) return name_validation_result::empty;
+
+		if (utils::string::has_trailing_whitespace(name)) return name_validation_result::invalid;
 
 		return name_validation_result::ok;
 	}

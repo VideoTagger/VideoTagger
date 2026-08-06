@@ -57,6 +57,14 @@ namespace vt::utils::string
 	std::string trim_whitespace(const std::string& input);
 
 	/**
+	 * @brief Checks if a string has leading or trailing whitespace
+	 * @param[in] input Source string
+	 * 
+	 * @return true if the string has leading or trailing whitespace, false otherwise
+	 */
+	bool has_trailing_whitespace(const std::string& input);
+
+	/**
 	 * @brief Splits the `input` string into a vector of strings based on a character delimiter
 	 * @param[in] input Source string
 	 * @param[in] delimiter Character used to split the string

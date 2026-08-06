@@ -112,6 +112,13 @@ namespace vt::utils::string
 		return result;
 	}
 
+	bool has_trailing_whitespace(const std::string& input)
+	{
+		if (input.empty()) return false;
+
+		return std::isspace(static_cast<unsigned char>(input.front())) or std::isspace(static_cast<unsigned char>(input.back()));
+	}
+
 	std::vector<std::string> split(const std::string& input, char delimiter)
 	{
 		std::vector<std::string> result;
