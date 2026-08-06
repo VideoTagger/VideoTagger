@@ -17,6 +17,8 @@ namespace vt
 
 	}
 
+	mask_shape::mask_shape(const mask_shape& other) : mask{ other.mask }, bounding_box_{ other.bounding_box_ } {}
+
 	void mask_shape::recalculate_bounding_box()
 	{
 		bounding_box_ = find_bounding_box(mask);

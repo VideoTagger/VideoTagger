@@ -9,6 +9,9 @@
 #include <events/timeline/segment_selected_event.hpp>
 #include <events/timeline/segment_deselected_event.hpp>
 #include <events/toolbar/toolbar_tool_change_request.hpp>
+#include <events/attributes/region_edit_request_event.hpp>
+#include <events/toolbar/toolbar_tool_changed_event.hpp>
+#include <attributes/tools/mask_tool.hpp>
 
 namespace vt::ui::windows
 {
@@ -53,6 +56,54 @@ namespace vt::ui::windows
 			auto& tb_data = data();
 			auto source = get_event_source();
 			tb_data.remove_non_persistent(source);
+		});
+
+		//This handles mask editing
+		ctx_.add_event_listener<region_edit_request_event>([this](const region_edit_request_event& event)
+		{
+			auto& tb_data = data();
+			auto& groups = tb_data.groups();
+			auto git = groups.find("shapes");
+			if (git == groups.end()) return;
+
+			auto& group = git->second;
+			auto it = group.find("mask");
+			if (it != group.end())
+			{
+				auto& entry = it->second;
+				if (!entry.empty())
+				{
+					auto& tool = *entry.front();
+					auto* mask_instance = dynamic_cast<shape_attribute_instance<mask_shape>*>(event.attribute_instance());
+					auto* mtool = dynamic_cast<mask_tool*>(&tool);
+					auto& region = mask_instance->get_region(event.region_id());
+					auto it = region.find_keyframe(event.keyframe());
+					if (it != region.end())
+					{
+						ctx_.dispatch_event<toolbar_tool_change_request_event>(get_event_source(), group, entry, tool);
+
+						auto& [timestamp, shape] = *it;
+						auto new_mask = std::make_shared<mask_shape>(shape);
+						mtool->set_data(new_mask);
+						mtool->set_target(&shape);
+						mtool->set_active_video(event.video_id());
+					}
+				}
+			}
+		});
+
+		ctx_.add_event_listener<toolbar_tool_changed_event>([this](const toolbar_tool_changed_event& event)
+		{
+			auto& groups = ctx_.session.toolbar.groups();
+			auto it = std::find_if(groups.begin(), groups.end(), [&event](const auto& pair)
+			{
+				return &pair.second == &event.group();
+			});
+			if (it != groups.end())
+			{
+				const auto& name = it->first;
+				ctx_.session.set_edit_mode(name == "shapes");
+			}
 		});
 	}
 

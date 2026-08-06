@@ -45,7 +45,7 @@ namespace vt
 		if (shape_data != nullptr and is_video_active)
 		{
 			auto zoom_factor = 1.f / std::min(tex_size.x / size.x, tex_size.y / size.y);
-			shape_data->render_shape_ex(utils::vec2<int>({ static_cast<int>(tex_size.x), static_cast<int>(tex_size.y) }), ImRect{ pos, pos + size }, tag.fill_color(), tag.outline_color(), video_id, true, zoom_factor);
+			shape_data->render_shape_ex(utils::vec2<int>({ static_cast<int>(tex_size.x), static_cast<int>(tex_size.y) }), ImRect{ pos, pos + size }, tag.fill_color(true), tag.outline_color(true), video_id, true, zoom_factor);
 		}
 
 		bool can_insert = insert_allowed_cursor();

@@ -47,7 +47,7 @@
 namespace vt
 {
 	session_storage::session_storage() :
-		tasks{ ctx_.tasks }
+		tasks{ ctx_.tasks }, is_edit_mode_{}
 	{
 		register_timeline_listeners();
 		register_gizmo_listeners();
@@ -791,6 +791,16 @@ namespace vt
 		return result;
 	}
 
+	void session_storage::set_edit_mode(bool value)
+	{
+		is_edit_mode_ = value;
+	}
+
+	bool session_storage::is_edit_mode() const
+	{
+		return is_edit_mode_;
+	}
+
 	std::vector<insert_segment_mark_data>::iterator session_storage::find_insert_segment_mark_by_tag(const std::string& tag)
 	{
 		return std::find_if(insert_segment_marks_.begin(), insert_segment_marks_.end(), [&](const auto& mark)
@@ -830,6 +840,7 @@ namespace vt
 		gizmo_data_.targets.clear();
 		toolbar.reset();
 		tasks.clear();
+		is_edit_mode_ = false;
 	}
 
 	bool session_storage::remove_hovered_region(impl::attribute_instance* attribute_instance, region_id_t region_id)

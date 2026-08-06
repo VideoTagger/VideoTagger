@@ -22,8 +22,8 @@ namespace vt
 		tag(const tag&) = delete;
 		tag(tag&&) = default;
 
-		uint32_t fill_color() const;
-		uint32_t outline_color() const;
+		uint32_t fill_color(bool ignore_edit_mode = false) const;
+		uint32_t outline_color(bool ignore_edit_mode = false) const;
 
 		tag& operator=(const tag&) = delete;
 		tag& operator=(tag&&) = default;

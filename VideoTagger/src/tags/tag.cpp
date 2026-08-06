@@ -367,17 +367,17 @@ namespace vt
 	//	return visible;
 	//}
 
-uint32_t tag::fill_color() const
-{
-	return (color & ~0xFF000000) | 0x80000000;
-}
+	uint32_t tag::fill_color(bool ignore_edit_mode) const
+	{
+		return (color & ~0xFF000000) | (!ignore_edit_mode and ctx_.session.is_edit_mode() ? 0x40000000 : 0x80000000);
+	}
 
-uint32_t tag::outline_color() const
-{
-	return color;
-}
+	uint32_t tag::outline_color(bool ignore_edit_mode) const
+	{
+		return (color & ~0xFF000000) | (!ignore_edit_mode and ctx_.session.is_edit_mode() ? 0x60000000 : 0xA0000000);
+	}
 
-nlohmann::ordered_json tag::serialize() const
+	nlohmann::ordered_json tag::serialize() const
 	{
 		nlohmann::ordered_json json;
 		json["name"] = name;

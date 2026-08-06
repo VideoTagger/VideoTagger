@@ -48,6 +48,21 @@ namespace vt::ui
 		width_ = width;
 	}
 
+	bool text_input::is_hovered() const
+	{
+		return state_ == widget_state::hovered;
+	}
+
+	bool text_input::is_active() const
+	{
+		return state_ == widget_state::active;
+	}
+
+	widget_state text_input::state() const
+    {
+		return state_;
+    }
+
 	void text_input::focus() const
 	{
 		ImGui::SetKeyboardFocusHere();

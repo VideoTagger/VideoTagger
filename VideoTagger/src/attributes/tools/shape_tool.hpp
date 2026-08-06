@@ -62,6 +62,11 @@ namespace vt
 			}
 		}
 
+		void set_active_video(video_id_t video_id)
+		{
+			active_video_ = video_id;
+		}
+
 		bool insert_region(video_id_t video_id)
 		{
 			auto selected_segment_opt = ctx_.session.any_selected_segment(tag_->name);

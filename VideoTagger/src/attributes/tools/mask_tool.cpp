@@ -4,12 +4,15 @@
 #include <utils/vec.hpp>
 #include <core/app_context.hpp>
 #include <utils/math.hpp>
-#include <image/image_opencv.hpp>
-#include <opencv2/imgproc.hpp>
 
 namespace vt
 {
-	mask_tool::mask_tool(const tag& tag, const std::string& attribute_name) : shape_tool<mask_shape>{ tag, attribute_name } {}
+	mask_tool::mask_tool(const tag& tag, const std::string& attribute_name) : shape_tool<mask_shape>{ tag, attribute_name }, target_{} {}
+
+	void mask_tool::set_target(mask_shape* target)
+	{
+		target_ = target;
+	}
 
 	uint32_t mask_tool::property_column_count() const
 	{
@@ -51,9 +54,10 @@ namespace vt
 					set_data(ptr);
 					shape_data = ptr;
 					was_created = true;
+					target_ = nullptr;
 				}
 
-				active_video_ = video_id;
+				set_active_video(video_id);
 				is_active_video = active_video_.has_value() and *active_video_ == video_id;
 			}
 
@@ -69,7 +73,7 @@ namespace vt
 		{
 			const auto& tag = get_tag();
 			ImRect draw_rect{ pos, pos + size };
-			shape_data->render(utils::vec2<int>({ static_cast<int>(tex_size.x), static_cast<int>(tex_size.y) }), draw_rect, tag.fill_color(), tag.outline_color(), std::nullopt, false, video_id);
+			shape_data->render(utils::vec2<int>({ static_cast<int>(tex_size.x), static_cast<int>(tex_size.y) }), draw_rect, tag.fill_color(true), tag.outline_color(true), std::nullopt, false, video_id);
 
 			if (ImGui::IsKeyPressed(ImGuiKey_Enter) and insert_allowed)
 			{
@@ -95,8 +99,21 @@ namespace vt
 			return;
 		}
 
-		//TODO: Check if mask is not empty
-		if (!shape_data->mask.empty())
+		bool is_empty = shape_data->mask.empty();
+		if (is_edit_mode())
+		{
+			if (is_empty)
+			{
+				//TODO: Remove the region??
+			}
+			else
+			{
+				*target_ = *shape_data;
+			}
+			target_->recalculate_bounding_box();
+			target_ = nullptr;
+		}
+		else if (!is_empty)
 		{
 			insert_region(*active_video_);
 		}
@@ -131,5 +148,10 @@ namespace vt
 			}
 			default: break;
 		}
+	}
+
+	bool mask_tool::is_edit_mode() const
+	{
+		return target_ != nullptr;
 	}
 }

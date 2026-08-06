@@ -42,7 +42,7 @@ namespace vt
 
 				const auto& tag = get_tag();
 				ImRect draw_rect{ pos, pos + size };
-				shape_data->render(utils::vec2<int>({ static_cast<int>(tex_size.x), static_cast<int>(tex_size.y) }), draw_rect, tag.fill_color(), tag.outline_color(), std::nullopt, false);
+				shape_data->render(utils::vec2<int>({ static_cast<int>(tex_size.x), static_cast<int>(tex_size.y) }), draw_rect, tag.fill_color(true), tag.outline_color(true), std::nullopt, false);
 			}
 			else if (ImGui::IsMouseReleased(ImGuiMouseButton_Left))
 			{
