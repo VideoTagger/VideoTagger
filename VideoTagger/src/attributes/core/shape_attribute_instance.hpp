@@ -28,6 +28,7 @@
 #include <events/attributes/region_keyframe_deleted_event.hpp>
 #include <events/attributes/region_set_interpolator_request_event.hpp>
 #include <events/attributes/region_track_cancel_request_event.hpp>
+#include <events/attributes/region_rename_request_event.hpp>
 
 #include <events/gizmo/gizmo_set_targets_event.hpp>
 
@@ -47,7 +48,7 @@ namespace vt
 			{
 				if (event.attribute_instance() != this) return;
 
-				auto region_id = insert_region(event.timestamp(), event.shape());
+				auto region_id = insert_region(event.region_name(), event.timestamp(), event.shape());
 				ctx_.dispatch_event<region_inserted_event>(event_source_, event.tag_name(), event.segment(), event.video_id(), this, region_id);
 				ctx_.is_project_dirty = true;
 			});
@@ -110,6 +111,18 @@ namespace vt
 				region.set_interpolator(predictor_registry.new_interpolator(event.interpolator_name()));
 				ctx_.is_project_dirty = true;
 			});
+
+			region_rename_request_handle_ = ctx_.add_event_listener<region_rename_request_event>([this](const region_rename_request_event& event)
+			{
+				if (event.attribute_instance() != this) return;
+
+				auto it = regions_.find(event.region_id());
+				if (it == regions_.end()) return;
+
+				auto& region = it->second;
+				region.set_name(event.new_name());
+				ctx_.is_project_dirty = true;
+			});
 		}
 
 		~shape_attribute_instance()
@@ -119,6 +132,7 @@ namespace vt
 			ctx_.get_event_dispatcher<region_keyframe_insert_request_event<shape_type>>().remove_event_listener(region_keyframe_insert_request_handle_);
 			ctx_.get_event_dispatcher<region_keyframe_delete_request_event>().remove_event_listener(region_keyframe_delete_request_handle_);
 			ctx_.get_event_dispatcher<region_set_interpolator_request_event>().remove_event_listener(region_set_interpolator_request_handle_);
+			ctx_.get_event_dispatcher<region_rename_request_event>().remove_event_listener(region_rename_request_handle_);
 		}
 
 	private:
@@ -130,6 +144,7 @@ namespace vt
 		event_listener_handle region_keyframe_insert_request_handle_;
 		event_listener_handle region_keyframe_delete_request_handle_;
 		event_listener_handle region_set_interpolator_request_handle_;
+		event_listener_handle region_rename_request_handle_;
 
 	public:
 		const std::unordered_map<region_id_t, region_data<shape_type>>& regions() const
@@ -152,17 +167,17 @@ namespace vt
 			return regions_.at(id);
 		}
 
-		region_id_t insert_region()
+		region_id_t insert_region(std::optional<std::string> region_name)
 		{
 			region_id_t id = utils::random::get_mono<region_id_t>();
-			regions_.try_emplace(id);
+			regions_.try_emplace(id, region_name.value_or(fmt::format("Region #{}", id)));
 			return id;
 		}
 
-		region_id_t insert_region(timestamp ts, const shape_type& shape)
+		region_id_t insert_region(std::optional<std::string> region_name, timestamp ts, const shape_type& shape)
 		{
 			region_id_t id = utils::random::get_mono<region_id_t>();
-			region_data<shape_type> region;
+			region_data<shape_type> region(region_name.value_or(fmt::format("Region #{}", id)));
 			region.insert_keyframe(ts, shape);
 			regions_.try_emplace(id, std::move(region));
 			return id;
@@ -183,6 +198,11 @@ namespace vt
 		virtual bool region_exists(region_id_t id) const override
 		{
 			return regions_.find(id) != regions_.end();
+		}
+
+		virtual const std::string& region_name(region_id_t region_id) const override
+		{
+			return regions_.at(region_id).name();
 		}
 
 		virtual std::vector<region_id_t> region_ids() const override

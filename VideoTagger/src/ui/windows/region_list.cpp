@@ -81,7 +81,7 @@ namespace vt::ui::windows
 				auto attr_color = ctx_.attr_registry.get_attr_spec(attr_type_name)->color;
 
 				std::optional<region_id_t> selected_region;
-				if (region_data_renderer->render_region_list(get_event_source(), attr_name, attr_color, instance, selected_region))
+				if (region_data_renderer->render_region_list(get_event_source(), tag_name, segment_id, vid_id, attr_name, attr_color, instance, selected_region))
 				{
 					ctx_.dispatch_event<region_select_request_event>(get_event_source(), tag_name, segment_id, vid_id, instance, *selected_region);
 				}

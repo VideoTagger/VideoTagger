@@ -6,18 +6,21 @@
 #include <ui/impl/region_data_renderer.hpp>
 #include <core/app_context.hpp>
 
+#include <ui/widgets/menu_item.hpp>
+#include <ui/widgets/text_input.hpp>
 #include <ui/widgets/combo.hpp>
 #include <widgets/time_input.hpp>
 
 #include <events/player/seek_request_event.hpp>
 
+#include <events/attributes/region_rename_request_event.hpp>
 #include <events/attributes/region_delete_request_event.hpp>
 
 #include <events/attributes/region_keyframe_delete_request_event.hpp>
 #include <events/attributes/region_keyframe_insert_request_event.hpp>
 #include <events/attributes/region_set_interpolator_request_event.hpp>
 
-#include <ui/widgets/menu_item.hpp>
+#include <utils/name_validators.hpp>
 
 namespace vt::ui
 {
@@ -26,11 +29,13 @@ namespace vt::ui
 	{
 	public:
 		region_data_renderer(region_data_container<shape_type>& regions) :
-			regions_{ &regions }, interpolator_combo_{ "##InterpolatorCombo", ctx_.get_shape_predictor_registry<shape_type>().interpolator_names(), 0 } {}
+			regions_{ &regions }, interpolator_combo_{ "##InterpolatorCombo", ctx_.get_shape_predictor_registry<shape_type>().interpolator_names(), 0 }
+		{}
 
 	private:
 		region_data_container<shape_type>* regions_{};
 		ui::combo<std::string> interpolator_combo_;
+		//std::optional<region_id_t> edited_region_id_;
 
 	public:
 		virtual void render_region_attributes(event_source source, utils::vec2<int> shape_space, timestamp current_ts, const region_info& region_data) override
@@ -56,6 +61,35 @@ namespace vt::ui
 				if (result)
 				{
 					ImGui::TableNextRow();
+					ImGui::TableNextColumn();
+					ImGui::SameLine();
+					ImGui::AlignTextToFramePadding();
+					ImGui::TextUnformatted("Name");
+
+					ImGui::TableNextColumn();
+
+					ui::text_input input("##RegionNameInput", region.name(), "Region Name...", [](const std::string& text) -> std::optional<std::string>
+					{
+						auto validation_result = utils::basic_name_validate(text);
+						if (validation_result == utils::name_validation_result::ok) return std::nullopt;
+
+						return { utils::name_validation_result_to_string(validation_result, *ctx_.lang) };
+					});
+					input.set_flags(ImGuiInputTextFlags_AutoSelectAll | ImGuiInputTextFlags_EnterReturnsTrue);
+					input.set_width(-1);
+
+					if (input.render())
+					{
+						if (input.is_valid())
+						{
+							ctx_.dispatch_event<region_rename_request_event>(source, region_data.tag_name, region_data.segment, region_data.video_id,
+								region_data.attribute_instance, region_data.region_id, input.input());
+						}
+						else
+						{
+							input.set_input(region.name());
+						}
+					}
 
 					ImGui::TableNextColumn();
 					ImGui::SameLine();
@@ -153,7 +187,7 @@ namespace vt::ui
 			}
 		}
 
-		virtual bool render_region_list(event_source source, const std::string& attribute_name, uint32_t attribute_color, class vt::impl::shape_attribute_instance* instance, std::optional<region_id_t>& selected_region) override
+		virtual bool render_region_list(event_source source, const std::string& tag_name, segment_id segment, video_id_t video_id, const std::string& attribute_name, uint32_t attribute_color, class vt::impl::shape_attribute_instance* instance, std::optional<region_id_t>& selected_region) override
 		{
 			bool result = false;
 			if (regions_->empty()) return result;
@@ -163,12 +197,52 @@ namespace vt::ui
 
 			size_t list_item_count = std::min(regions_->size(), size_t{ 5 });
 
-			auto avail_size = ImGui::GetContentRegionAvail();
-			if (ImGui::BeginChild(attr_id.c_str(), { avail_size.x, ImGui::GetTextLineHeightWithSpacing() * list_item_count }))
+			//if (ImGui::BeginTable(attr_id.c_str(), 1, ImGuiTableFlags_BordersOuter, { ImGui::GetContentRegionAvail().x - ui::table_border_size(),  ImGui::GetTextLineHeightWithSpacing() * list_item_count }))
+			//{
+			//	//ImGui::TableSetupColumn("Name");
+
+			//	for (auto& [region_id, region] : *regions_)
+			//	{
+			//		ImGui::TableNextRow();
+			//		ImGui::TableNextColumn();
+			//		bool row_hovered = widgets::table_hovered_row_style();
+
+			//		std::string input_id = fmt::format("##RegionNameInput{}", region_id);
+			//		ui::text_input input(input_id, region.name(), "Region Name...", [](const std::string& text) -> std::optional<std::string>
+			//		{
+			//			auto validation_result = utils::basic_name_validate(text);
+			//			if (validation_result == utils::name_validation_result::ok) return std::nullopt;
+
+			//			return { utils::name_validation_result_to_string(validation_result, *ctx_.lang) };
+			//		});
+			//		input.set_flags(ImGuiInputTextFlags_AutoSelectAll | ImGuiInputTextFlags_EnterReturnsTrue);
+
+			//		if (input.render_disabled())
+			//		{
+			//			if (input.is_valid())
+			//			{
+			//				ctx_.dispatch_event<region_rename_request_event>(source, tag_name, segment, video_id, instance, region_id, input.input());
+			//			}
+			//			else
+			//			{
+			//				input.set_input(region.name());
+			//			}
+			//		}
+
+			//		if (ImGui::IsItemClicked())
+			//		{
+			//			selected_region = region_id;
+			//			result = true;
+			//		}
+			//	}
+			//	ImGui::EndTable();
+			//}
+
+			if (ImGui::BeginChild(attr_id.c_str(), { ImGui::GetContentRegionAvail().x, ImGui::GetTextLineHeightWithSpacing() * list_item_count }))
 			{
 				for (auto& [region_id, region] : *regions_)
 				{
-					auto item_id = fmt::format("Region {}", region_id);
+					auto item_id = fmt::format("{} ##{}", region.name(), region_id);
 					bool selected = ctx_.session.is_region_selected(instance, region_id);
 					auto flags = ImGuiTreeNodeFlags_Bullet | ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen | ImGuiTreeNodeFlags_SpanFullWidth;
 					if (selected)

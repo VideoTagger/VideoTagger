@@ -21,12 +21,16 @@ namespace vt
 		using const_iterator = typename std::map<timestamp, shape_type>::const_iterator;
 
 		region_data() :
-			interpolator_{ std::make_unique<dummy_shape_interpolator<shape_type>>("dummy")}, interpolation_keyframe_timestamps_(interpolator_->data_point_count()),
+			region_data{fmt::format("Region #{}", utils::random::get_mono<region_id_t>())} {}
+
+		region_data(const std::string& name) :
+			interpolator_{ std::make_unique<dummy_shape_interpolator<shape_type>>("dummy") }, name_{ name }, interpolation_keyframe_timestamps_(interpolator_->data_point_count()),
 			interpolation_keyframe_shapes_(interpolator_->data_point_count()) {}
 
 	private:
 		std::map<timestamp, shape_type> keyframes_;
 		std::unique_ptr<impl::shape_interpolator<shape_type>> interpolator_;
+		std::string name_;
 
 		mutable std::vector<timestamp> interpolation_keyframe_timestamps_;
 		mutable std::vector<shape_type> interpolation_keyframe_shapes_;
@@ -197,6 +201,16 @@ namespace vt
 			if (it == begin()) return end();
 
 			return --it;
+		}
+
+		void set_name(const std::string& name)
+		{
+			name_ = utils::string::trim_whitespace(name);
+		}
+
+		const std::string& name() const
+		{
+			return name_;
 		}
 
 		/// @return Whether the timestamp is within the bound of this shape i.e. is within
@@ -391,6 +405,7 @@ namespace vt
 		{
 			nlohmann::ordered_json json;
 
+			json["name"] = name_;
 			if (interpolator_->name() != "dummy")
 			{
 				json["interpolator"] = interpolator_->name();
@@ -412,6 +427,11 @@ namespace vt
 		virtual void deserialize(const nlohmann::ordered_json& json) override
 		{
 			if (!json.contains("keyframes")) return;
+
+			if (json.contains("name"))
+			{
+				name_ = json["name"];
+			}
 
 			if (json.contains("interpolator"))
 			{

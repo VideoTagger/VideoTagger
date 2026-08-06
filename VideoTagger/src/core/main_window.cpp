@@ -2951,9 +2951,10 @@ namespace vt
 							if (!hovered_regions.empty())
 							{
 								auto& region_data = hovered_regions.front();
+								const auto& region_name = region_data.attribute_instance->region_name(region_data.region_id);
 
 								ImGui::SetMouseCursor(ImGuiMouseCursor_Hand);
-								ui::tooltip(fmt::format("Tag: {}\nAttribute: {}", region_data.tag_name, region_data.attribute_instance->attribute_name()));
+								ui::tooltip(fmt::format("Name: {}\nTag: {}\nAttribute: {}", region_name, region_data.tag_name, region_data.attribute_instance->attribute_name()));
 							}
 
 							if (ImGui::IsMouseClicked(ImGuiMouseButton_Left))

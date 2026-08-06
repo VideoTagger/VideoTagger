@@ -16,6 +16,8 @@ namespace vt::impl
 
 		virtual bool region_exists(region_id_t id) const = 0;
 		
+		virtual const std::string& region_name(region_id_t region_id) const = 0;
+
 		virtual std::vector<region_id_t> region_ids() const = 0;
 		virtual std::vector<timestamp> keyframe_timestamps(region_id_t region_id) const = 0;
 		virtual std::optional<timestamp> first_keyframe_timestamp(region_id_t region_id) const = 0;
