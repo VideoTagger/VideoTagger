@@ -50,7 +50,16 @@ namespace vt::ui
 				);
 			}
 			break;
-			default: close(); break;
+			default:
+			{
+				close();
+				ctx_.dispatch_event<segments_moved_event>
+				(
+					event_source_, move_request_event_data_.storage(), move_request_event_data_.segments(),
+					move_request_event_data_.move_part(), move_request_event_data_.move_offset(), false
+				);
+				break;
+			}
 			}
 		}, true);
 	}
