@@ -76,6 +76,7 @@ namespace vt
 		std::optional<tracked_region_data> tracked_region_;
 
 		gizmo_data gizmo_data_;
+		bool is_edit_mode_;
 
 		std::vector<region_info> hovered_regions_;
 
@@ -123,6 +124,9 @@ namespace vt
 		const std::vector<utils::vec2<int>*>& gizmo_targets() const;
 		bool has_gizmo_targets() const;
 		utils::vec2<int> mean_gizmo_target() const;
+
+		void set_edit_mode(bool value);
+		bool is_edit_mode() const;
 
 		std::vector<insert_segment_mark_data>::iterator find_insert_segment_mark_by_tag(const std::string& tag);
 		std::vector<insert_segment_mark_data>::iterator find_insert_segment_mark_by_tag(const std::optional<std::string>& tag);

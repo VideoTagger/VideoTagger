@@ -4,8 +4,6 @@
 #include <utils/vec.hpp>
 #include <core/app_context.hpp>
 #include <utils/math.hpp>
-#include <image/image_opencv.hpp>
-#include <opencv2/imgproc.hpp>
 
 namespace vt
 {
@@ -56,9 +54,10 @@ namespace vt
 					set_data(ptr);
 					shape_data = ptr;
 					was_created = true;
+					target_ = nullptr;
 				}
 
-				active_video_ = video_id;
+				set_active_video(video_id);
 				is_active_video = active_video_.has_value() and *active_video_ == video_id;
 			}
 
@@ -74,7 +73,7 @@ namespace vt
 		{
 			const auto& tag = get_tag();
 			ImRect draw_rect{ pos, pos + size };
-			shape_data->render(utils::vec2<int>({ static_cast<int>(tex_size.x), static_cast<int>(tex_size.y) }), draw_rect, tag.fill_color(), tag.outline_color(), std::nullopt, false, video_id);
+			shape_data->render(utils::vec2<int>({ static_cast<int>(tex_size.x), static_cast<int>(tex_size.y) }), draw_rect, tag.fill_color(true), tag.outline_color(true), std::nullopt, false, video_id);
 
 			if (ImGui::IsKeyPressed(ImGuiKey_Enter) and insert_allowed)
 			{
@@ -109,7 +108,7 @@ namespace vt
 			}
 			else
 			{
-				target_->mask = shape_data->mask;
+				*target_ = *shape_data;
 			}
 			target_->recalculate_bounding_box();
 			target_ = nullptr;
