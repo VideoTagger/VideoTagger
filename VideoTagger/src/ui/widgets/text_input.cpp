@@ -48,6 +48,11 @@ namespace vt::ui
 		width_ = width;
 	}
 
+    widget_state text_input::state() const
+    {
+		return state_;
+    }
+
 	void text_input::focus() const
 	{
 		ImGui::SetKeyboardFocusHere();

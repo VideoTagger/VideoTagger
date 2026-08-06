@@ -30,6 +30,8 @@ namespace vt::ui
 		void set_is_password(bool value);
 		void set_width(float width = 0.f);
 
+		widget_state state() const;
+
 		void focus() const;
 		void clear();
 		virtual bool render() override;
