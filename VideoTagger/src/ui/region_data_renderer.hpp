@@ -102,7 +102,7 @@ namespace vt::ui
 					size_t interpolator_index = predictor_registry.interpolator_index(region.interpolator_name()).value_or(0);
 					interpolator_combo_.set_selected(interpolator_index);
 
-					if (interpolator_combo_.render())
+					if (interpolator_combo_.render_disabled(interpolator_combo_.item_count() <= 1))
 					{
 						ctx_.dispatch_event<region_set_interpolator_request_event>(source, region_data.tag_name, region_data.segment, region_data.video_id,
 							region_data.attribute_instance, region_data.region_id, interpolator_combo_.selected_item());
