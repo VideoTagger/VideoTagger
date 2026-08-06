@@ -12,6 +12,7 @@
 #include <events/player/seek_request_event.hpp>
 
 #include <events/attributes/region_delete_request_event.hpp>
+#include <events/attributes/region_edit_request_event.hpp>
 
 #include <events/attributes/region_keyframe_delete_request_event.hpp>
 #include <events/attributes/region_keyframe_insert_request_event.hpp>
@@ -200,6 +201,14 @@ namespace vt::ui
 			{
 				ctx_.dispatch_event<region_delete_request_event>(source, tag_name, segment, video_id, attribute_instance, region_id);
 			});
+
+			if constexpr (std::is_same_v<shape_type, mask_shape>)
+			{
+				items.add<menu_generic_button>(icons::edit, ctx_.lang->get("generic.edit"), [&]()
+				{
+					ctx_.dispatch_event<region_edit_request_event>(source, tag_name, segment, video_id, attribute_instance, region_id, ctx_.displayed_videos.current_timestamp_as_timestamp());
+				});
+			}
 
 			auto& predictor_registry = ctx_.get_shape_predictor_registry<shape_type>();
 			bool supports_tracking = predictor_registry.has_any_tracker();

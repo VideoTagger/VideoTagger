@@ -9,7 +9,12 @@
 
 namespace vt
 {
-	mask_tool::mask_tool(const tag& tag, const std::string& attribute_name) : shape_tool<mask_shape>{ tag, attribute_name } {}
+	mask_tool::mask_tool(const tag& tag, const std::string& attribute_name) : shape_tool<mask_shape>{ tag, attribute_name }, target_{} {}
+
+	void mask_tool::set_target(mask_shape* target)
+	{
+		target_ = target;
+	}
 
 	uint32_t mask_tool::property_column_count() const
 	{
@@ -95,8 +100,21 @@ namespace vt
 			return;
 		}
 
-		//TODO: Check if mask is not empty
-		if (!shape_data->mask.empty())
+		bool is_empty = shape_data->mask.empty();
+		if (is_edit_mode())
+		{
+			if (is_empty)
+			{
+				//TODO: Remove the region??
+			}
+			else
+			{
+				target_->mask = shape_data->mask;
+			}
+			target_->recalculate_bounding_box();
+			target_ = nullptr;
+		}
+		else if (!is_empty)
 		{
 			insert_region(*active_video_);
 		}
@@ -131,5 +149,10 @@ namespace vt
 			}
 			default: break;
 		}
+	}
+
+	bool mask_tool::is_edit_mode() const
+	{
+		return target_ != nullptr;
 	}
 }

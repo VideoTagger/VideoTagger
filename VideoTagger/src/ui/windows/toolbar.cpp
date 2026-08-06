@@ -9,6 +9,8 @@
 #include <events/timeline/segment_selected_event.hpp>
 #include <events/timeline/segment_deselected_event.hpp>
 #include <events/toolbar/toolbar_tool_change_request.hpp>
+#include <events/attributes/region_edit_request_event.hpp>
+#include <attributes/tools/mask_tool.hpp>
 
 namespace vt::ui::windows
 {
@@ -53,6 +55,40 @@ namespace vt::ui::windows
 			auto& tb_data = data();
 			auto source = get_event_source();
 			tb_data.remove_non_persistent(source);
+		});
+
+		ctx_.add_event_listener<region_edit_request_event>([this](const region_edit_request_event& event)
+		{
+			auto& tb_data = data();
+			auto& groups = tb_data.groups();
+
+			auto git = groups.find("shapes");
+			if (git == groups.end()) return;
+
+			auto& group = git->second;
+			auto it = group.find("mask");
+			if (it != group.end())
+			{
+				auto& entry = it->second;
+				if (!entry.empty())
+				{
+					auto& tool = *entry.front();
+					auto* mask_instance = dynamic_cast<shape_attribute_instance<mask_shape>*>(event.attribute_instance());
+					auto* mtool = dynamic_cast<mask_tool*>(&tool);
+					auto& region = mask_instance->get_region(event.region_id());
+					auto it = region.find_keyframe(event.keyframe());
+					if (it != region.end())
+					{
+						auto& [timestamp, shape] = *it;
+						auto new_mask = std::make_shared<mask_shape>(shape);
+						new_mask->mask = shape.mask;
+						new_mask->recalculate_bounding_box();
+						mtool->set_data(new_mask);
+						mtool->set_target(&shape);
+						ctx_.dispatch_event<toolbar_tool_change_request_event>(get_event_source(), group, entry, tool);
+					}
+				}
+			}
 		});
 	}
 
