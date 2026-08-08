@@ -233,8 +233,7 @@ namespace vt::utils
 		auto content_receiver_callback = [&file](const char* data, size_t data_length)
 		{
 			return false;
-		}
-		file.write(get_result->body.c_str(), get_result->body.size());
-		return true;
+		};
+		return client.Get(url_path, content_receiver_callback, download_progress_callback);
 	}
 }
