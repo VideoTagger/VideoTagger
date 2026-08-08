@@ -183,6 +183,30 @@ namespace vt::ui
 			else if (ImGui::IsItemHovered())
 			{
 				state_ = widget_state::hovered;
+
+				float wheel = ImGui::GetIO().MouseWheel;
+				if (wheel != 0.0f and item_count > 1)
+				{
+					size_t old_selected = selected_;
+
+					if (wheel > 0.0f and selected_ > 0)
+					{
+						--selected_;
+					}
+					else if (wheel < 0.0f and selected_ < item_count - 1)
+					{
+						++selected_;
+					}
+
+					if (selected_ != old_selected)
+					{
+						result = true;
+						if (callback_ != nullptr)
+						{
+							callback_({ selected_, items_.at(selected_) });
+						}
+					}
+				}
 			}
 			else
 			{
