@@ -1,11 +1,5 @@
 #pragma once
 #include <attributes/factory/shape_tracker_factory.hpp>
-#include <attributes/predictors/mil_rectangle_tracker.hpp>
-#include <attributes/predictors/csrt_rectangle_tracker.hpp>
-#include <attributes/predictors/kcf_rectangle_tracker.hpp>
-#include <attributes/predictors/dasiam_rpn_rectangle_tracker.hpp>
-#include <attributes/predictors/goturn_rectangle_tracker.hpp>
-#include <attributes/predictors/vit_rectangle_tracker.hpp>
 #include <attributes/predictors/pyr_lk_points_tracker.hpp>
 
 namespace vt
