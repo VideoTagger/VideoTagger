@@ -46,3 +46,6 @@
 [submodule "VideoTagger/vendor/opencv_contrib"]
 	path = VideoTagger/vendor/opencv_contrib
 	url = https://github.com/opencv/opencv_contrib.git
+[submodule "VideoTagger/vendor/uriparser"]
+	path = VideoTagger/vendor/uriparser
+	url = https://github.com/uriparser/uriparser.git

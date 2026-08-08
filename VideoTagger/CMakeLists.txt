@@ -131,6 +131,16 @@ vt_add_velopack(${PROJECT_NAME} "0.0.1298")
 include(${CMAKE_SOURCE_DIR}/cmake/SetupOnnxRuntime.cmake)
 vt_setup_onnx_runtime(${PROJECT_NAME} "1.26.0")
 
+set(URIPARSER_BUILD_DOCS OFF)
+set(URIPARSER_BUILD_TOOLS OFF)
+set(URIPARSER_BUILD_WCHAR_T OFF)
+set(URIPARSER_ENABLE_INSTALL OFF)
+set(URIPARSER_MSVC_STATIC_CRT OFF)
+set(URIPARSER_SHARED_LIBS OFF)
+
+add_subdirectory("${PROJECT_SOURCE_DIR}/vendor/uriparser")
+target_link_libraries(${PROJECT_NAME} PRIVATE uriparser::uriparser)
+
 target_include_directories(${PROJECT_NAME}
 	PRIVATE "${PROJECT_SOURCE_DIR}/src"
 	PRIVATE "${PROJECT_SOURCE_DIR}/vendor/ImGui"
