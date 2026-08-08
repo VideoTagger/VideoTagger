@@ -1,10 +1,6 @@
-#include "google_importer_popup.hpp"
-#include "google_importer_popup.hpp"
-
 #include <pch.hpp>
 
-#define CPPHTTPLIB_OPENSSL_SUPPORT
-#include <httplib.h>
+#include "google_importer_popup.hpp"
 
 #include <core/app_context.hpp>
 #include <services/google/google_account_manager.hpp>

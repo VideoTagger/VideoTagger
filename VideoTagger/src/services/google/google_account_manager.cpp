@@ -7,9 +7,6 @@
 #include <core/app_context.hpp>
 #include <widgets/console.hpp>
 
-#define CPPHTTPLIB_OPENSSL_SUPPORT
-#include <httplib.h>
-
 namespace vt
 {
 	std::string google_account_info::user_name() const

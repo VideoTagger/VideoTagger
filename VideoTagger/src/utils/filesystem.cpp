@@ -201,10 +201,9 @@ namespace vt::utils
 		std::string url_path = parsed_url->relative_path();
 
 		httplib::Client client(url_host);
-		if (headers.has_value())
-		{
-			client.set_default_headers(headers.value());
-		}
+		client.set_follow_location(true);
+		client.set_keep_alive(true);
+		client.set_default_headers(headers.value_or(httplib::Headers{}));
 
 		auto parent_path = destination.parent_path();
 		if (!parent_path.empty())
@@ -218,29 +217,25 @@ namespace vt::utils
 			return false;
 		}
 
-		//TODO: consider downloading in chunks to avoid loading the whole file in memory.
-		auto get_result = client.Get(url_path, [&cancel_token, &callback](uint64_t current_size, uint64_t total_size)
+		auto download_progress_callback = [&cancel_token, &callback](uint64_t current_size, uint64_t total_size)
 		{
-
 			if (callback != nullptr)
 			{
 				callback(current_size, total_size, cancel_token);
 			}
-
 			if (cancel_token.has_value() and cancel_token->is_cancelled())
 			{
 				return false;
 			}
-
 			return true;
-		});
+		};
 
-		if (!get_result)
+		auto content_receiver_callback = [&file](const char* data, size_t data_length)
 		{
-			return false;
-		}
+			file.write(data, data_length);
+			return true;
+		};
 
-		file.write(get_result->body.c_str(), get_result->body.size());
-		return true;
+		return client.Get(url_path, content_receiver_callback, download_progress_callback);
 	}
 }

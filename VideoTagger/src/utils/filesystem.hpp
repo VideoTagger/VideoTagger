@@ -2,9 +2,12 @@
 #include <vector>
 #include <filesystem>
 #include <string>
-#include <tasks/cancellation_token.hpp>
-#include <httplib.h>
 #include <functional>
+
+#define CPPHTTPLIB_OPENSSL_SUPPORT
+#include <httplib.h>
+
+#include <tasks/cancellation_token.hpp>
 
 namespace vt::utils
 {

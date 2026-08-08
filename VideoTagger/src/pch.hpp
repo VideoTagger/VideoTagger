@@ -45,6 +45,9 @@
 #include <nfd.hpp>
 #include <utf8.h>
 
+#define CPPHTTPLIB_OPENSSL_SUPPORT
+#include <httplib.h>
+
 #include <pybind11/embed.h>
 #include <pybind11/stl.h>
 #include <pybind11/operators.h>
