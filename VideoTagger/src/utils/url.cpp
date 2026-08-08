@@ -3,10 +3,7 @@
 
 namespace vt::utils
 {
-	url::url() : uri_{}
-	{
-		std::memset(&uri_, 0, sizeof(UriUriA));
-	}
+	url::url() : uri_{} {}
 
 	url::url(const url& other) : url()
 	{
@@ -16,7 +13,10 @@ namespace vt::utils
 		}
 	}
 
-	url::url(url&& other) noexcept : uri_{ std::exchange(other.uri_, UriUriA{}) } {}
+	url::url(url&& other) noexcept : uri_{ std::move(other.uri_) }
+	{
+		other.uri_ = {};
+	}
 
 	url::~url()
 	{
@@ -101,6 +101,7 @@ namespace vt::utils
 		if (this != &other)
 		{
 			uriFreeUriMembersA(&uri_);
+			std::memset(&uri_, 0, sizeof(UriUriA));
 			if (uriCopyUriA(&uri_, &other.uri_) != URI_SUCCESS)
 			{
 				throw std::runtime_error("Failed to copy URL");
@@ -114,24 +115,24 @@ namespace vt::utils
 		if (this != &other)
 		{
 			uriFreeUriMembersA(&uri_);
-			uri_ = std::exchange(other.uri_, UriUriA{});
+			uri_ = std::move(other.uri_);
+			other.uri_ = {};
 		}
 		return *this;
 	}
 
 	std::optional<url> url::from_string(const std::string& url_str)
 	{
-		std::string buffer(url_str);
 		const char* error_pos = nullptr;
 
 		url result;
-		if (uriParseSingleUriA(&result.uri_, buffer.c_str(), &error_pos) != URI_SUCCESS)
+		if (uriParseSingleUriA(&result.uri_, url_str.c_str(), &error_pos) != URI_SUCCESS)
 		{
 			uriFreeUriMembersA(&result.uri_);
 			return std::nullopt;
 		}
 
-		return std::optional<url>(result);
+		return result;
 	}
 
 	std::string url::extract_uri_range(const UriTextRangeA& range)
