@@ -70,6 +70,7 @@ namespace vt::widgets
 		void set_playing(bool value);
 
 		bool is_playing() const;
+		bool can_seek_and_play() const;
 		bool should_autoplay() const;
 		loop_mode loop_mode() const;
 		bool show_video_ids() const;

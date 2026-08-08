@@ -168,6 +168,11 @@ namespace vt::widgets
 		return is_playing_;
 	}
 
+	bool video_player::can_seek_and_play() const
+	{
+		return !ctx_.session.is_edit_mode();
+	}
+
     bool video_player::should_autoplay() const
     {
         return autoplay_;
@@ -292,7 +297,7 @@ namespace vt::widgets
 			progress_.set_value(data_.current_ts.count(), false);
 			progress_.set_size(progress_size);
 			progress_.set_range(min_ts.count(), data_.end_ts.count());
-			progress_.render();
+			progress_.render_disabled(!can_seek_and_play());
 		}
 		else
 		{
@@ -304,6 +309,7 @@ namespace vt::widgets
 		{
 			int64_t frame{};
 			static bool is_frame_dragging = false;
+			ImGui::BeginDisabled(!can_seek_and_play());
 			if (callbacks.on_seek != nullptr and frame_dragger(frame, is_frame_dragging))
 			{
 				if (callbacks.on_set_playing != nullptr)
@@ -337,6 +343,7 @@ namespace vt::widgets
 
 			std::string video_duration = fmt::format("| {}", timestamp_to_string(duration, default_time_format));
 			ImGui::TextUnformatted(video_duration.c_str());
+			ImGui::EndDisabled();
 		}
 
 		ImGui::NextColumn();
@@ -346,6 +353,7 @@ namespace vt::widgets
 			auto button_pos_x = avail_size.x / 2 - (button_size + imgui_style.ItemSpacing.x) * 5.f / 2;
 
 			ImGui::SetCursorPosX(cursor_pos.x + button_pos_x);
+			ImGui::BeginDisabled(!can_seek_and_play());
 			if (ui::icon_button(icons::skip_prev, { button_size, button_size }))
 			{
 				ctx_.dispatch_event<skip_previous_request_event>(get_event_source(), *this);
@@ -374,6 +382,7 @@ namespace vt::widgets
 				ctx_.dispatch_event<skip_next_request_event>(get_event_source(), *this);
 				std::invoke(callbacks.on_skip, 1, loop_mode_, is_playing_);
 			}
+			ImGui::EndDisabled();
 		}
 
 		ImGui::NextColumn();
