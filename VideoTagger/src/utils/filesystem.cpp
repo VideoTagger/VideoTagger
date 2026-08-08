@@ -2,6 +2,8 @@
 #include "string.hpp"
 #include "filesystem.hpp"
 #include <core/platform.hpp>
+#include <utils/url.hpp>
+
 
 #ifdef VT_OS_WINDOWS
 	#ifndef WIN32_LEAN_AND_MEAN
@@ -184,5 +186,61 @@ namespace vt::utils
 		}
 
 		return parent_it == parent_abs.end();
+	}
+
+	bool filesystem::download_file(const std::string& url, const std::filesystem::path& destination, std::optional<httplib::Headers> headers,
+		std::optional<cancellation_token> cancel_token, std::function<void(uint64_t current_size, uint64_t total_size, std::optional<cancellation_token> cancel_token)> callback)
+	{
+		auto parsed_url = vt::utils::url::from_string(url);
+		if (!parsed_url.has_value())
+		{
+			return false;
+		}
+
+		std::string url_host = parsed_url->origin();
+		std::string url_path = parsed_url->relative_path();
+
+		httplib::Client client(url_host);
+		if (headers.has_value())
+		{
+			client.set_default_headers(headers.value());
+		}
+
+		auto parent_path = destination.parent_path();
+		if (!parent_path.empty())
+		{
+			std::filesystem::create_directories(destination.parent_path());
+		}
+
+		std::ofstream file(destination, std::ios::binary);
+		if (!file.is_open())
+		{
+			return false;
+		}
+
+		//TODO: consider downloading in chunks to avoid loading the whole file in memory.
+		auto get_result = client.Get(url_path, [&cancel_token, &callback](uint64_t current_size, uint64_t total_size)
+		{
+
+			if (callback != nullptr)
+			{
+				callback(current_size, total_size, cancel_token);
+			}
+
+			if (cancel_token.has_value() and cancel_token->is_cancelled())
+			{
+				return false;
+			}
+
+			return true;
+		});
+
+		if (!get_result)
+		{
+			return false;
+		}
+
+		file.write(get_result->body.c_str(), get_result->body.size());
+		return true;
 	}
 }

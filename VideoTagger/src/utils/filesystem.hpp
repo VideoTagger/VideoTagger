@@ -2,6 +2,9 @@
 #include <vector>
 #include <filesystem>
 #include <string>
+#include <tasks/cancellation_token.hpp>
+#include <httplib.h>
+#include <functional>
 
 namespace vt::utils
 {
@@ -60,5 +63,8 @@ namespace vt::utils
 		static std::filesystem::path get_storage_path(const std::string& organization, const std::string& app_name);
 
 		static bool is_subdirectory(const std::filesystem::path& parent, const std::filesystem::path& child);
+
+		static bool download_file(const std::string& url, const std::filesystem::path& destination, std::optional<httplib::Headers> headers,
+			std::optional<cancellation_token> cancel_token, std::function<void(uint64_t current_size, uint64_t total_size, std::optional<cancellation_token> cancel_token)> callback);
 	};
 }
