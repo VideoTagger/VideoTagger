@@ -232,7 +232,8 @@ namespace vt::utils
 
 		auto content_receiver_callback = [&file](const char* data, size_t data_length)
 		{
-			return false;
+			file.write(data, data_length);
+			return true;
 		};
 		return client.Get(url_path, content_receiver_callback, download_progress_callback);
 	}
