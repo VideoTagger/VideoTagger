@@ -189,7 +189,7 @@ namespace vt::utils
 	}
 
 	bool filesystem::download_file(const std::string& url, const std::filesystem::path& destination, std::optional<httplib::Headers> headers,
-		std::optional<cancellation_token> cancel_token, std::function<void(uint64_t current_size, uint64_t total_size, std::optional<cancellation_token> cancel_token)> callback)
+		std::optional<cancellation_token> cancel_token, const std::function<void(uint64_t current_size, uint64_t total_size, std::optional<cancellation_token> cancel_token)>& callback)
 	{
 		auto parsed_url = vt::utils::url::from_string(url);
 		if (!parsed_url.has_value())
@@ -208,7 +208,7 @@ namespace vt::utils
 		auto parent_path = destination.parent_path();
 		if (!parent_path.empty())
 		{
-			std::filesystem::create_directories(destination.parent_path());
+			std::filesystem::create_directories(parent_path);
 		}
 
 		std::ofstream file(destination, std::ios::binary);
@@ -232,10 +232,9 @@ namespace vt::utils
 
 		auto content_receiver_callback = [&file](const char* data, size_t data_length)
 		{
-			file.write(data, data_length);
-			return true;
-		};
-
-		return client.Get(url_path, content_receiver_callback, download_progress_callback);
+			return false;
+		}
+		file.write(get_result->body.c_str(), get_result->body.size());
+		return true;
 	}
 }
