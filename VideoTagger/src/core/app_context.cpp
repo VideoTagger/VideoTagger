@@ -52,6 +52,7 @@
 #include <attributes/factory/mask_attribute_factory.hpp>
 #include <attributes/tools/extensions/wand_grabcut_extension.hpp>
 #include <attributes/tools/extensions/wand_sam2_extension.hpp>
+#include <models/sam2/sam2_model.hpp>
 
 namespace vt
 {
@@ -62,6 +63,8 @@ namespace vt
 		init_tool_extension_registry();
 		init_attribute_registry();
 		init_shape_predictor_registries();
+		init_onnx_runtime();
+		init_model_registry();
 	}
 
 	void app_context::init_attribute_registry()
@@ -141,6 +144,20 @@ namespace vt
 
 		auto& points_registry = get_shape_predictor_registry<points_shape>();
 		points_registry.new_factory<pyr_lk_points_tracker_factory>("PyrLK");
+	}
+
+	void app_context::init_model_registry()
+	{
+		debug::log("Initializing model registry...");
+		model_registry.register_model<sam2_model>(sam2_model_variant::hiera_small);
+		debug::log("Finished initializing model registry");
+	}
+
+	void app_context::init_onnx_runtime()
+	{
+		debug::log("Initializing ONNX Runtime...");
+		onnx_env = utils::onnx_create_env();
+		debug::log("Finished initializing ONNX Runtime");
 	}
 
     void app_context::load_shaders()

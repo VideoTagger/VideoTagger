@@ -3,7 +3,7 @@
 #include <ui/icons.hpp>
 #include <core/app_context.hpp>
 #include <models/sam2/sam2_model.hpp>
-#include <utils/onnx.hpp>
+#include <models/model_load_guard.hpp>
 #include <opencv2/highgui.hpp>
 
 namespace vt::ui
@@ -49,36 +49,43 @@ namespace vt::ui
 					image<image_pixel_format::rgb8> img({ stream.width(), stream.height() });
 					if (stream.update_from_current_frame(img))
 					{
-						//TODO: This should only be created once
-						auto env = utils::onnx_create_env();
 						try
 						{
-							//TODO: This should not be hardcoded, and encoder/decoder should be a part of sam2_model class
-							sam2_image_encoder encoder{ env, ctx_.models_dir_filepath / "sam2_hiera_large.encoder.onnx" };
-							sam2_image_decoder decoder{ env, ctx_.models_dir_filepath / "sam2_hiera_large.decoder.onnx", encoder.input_size() };
+							auto sam = ctx_.model_registry.get_model<sam2_model>();
+							if (sam == nullptr or !sam->load_if_needed())
+							{
+								throw std::runtime_error("Failed to load model");
+							}
+							auto load_guard = model_load_guard{ sam };
 
-							auto res = encoder.encode(img);
+							auto encoder = sam->encoder();
+							if (encoder == nullptr) throw std::runtime_error("Encoder is null");
+							auto decoder = sam->decoder();
+							if (decoder == nullptr) throw std::runtime_error("Decoder is null");
+
+							auto res = encoder->encode(img);
 
 							sam2_decoder_prompt prompt;
 							prompt.rect = rect;
-							auto dec_res = decoder.decode(res, prompt);
+							auto dec_res = decoder->decode(res, prompt);
 
 							cv::Mat result_mask = dec_res.masks[0];
+							load_guard.release();
 								
 							auto mask_data = data();
 							if (mask_data == nullptr)
 							{
-								debug::error("Mask data is null, while generating sam2 mask");
+								debug::error("Mask data is null, while generating mask");
 							}
 							else
 							{
 								mask_data->mask.allocate(result_mask.cols, result_mask.rows);
 								auto cv_mask_data = image_to_cvmat(mask_data->mask);
 								result_mask.copyTo(cv_mask_data);
-								ctx_.tasks.run_on_main([this, result_mask]()
-								{
-									cv::imshow("SAM2 Mask", result_mask);
-								});
+								//ctx_.tasks.run_on_main([this, result_mask]()
+								//{
+								//	cv::imshow("SAM2 Mask", result_mask);
+								//});
 							}
 						}
 						catch (const std::exception& e)

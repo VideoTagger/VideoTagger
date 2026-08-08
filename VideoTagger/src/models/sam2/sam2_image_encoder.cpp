@@ -49,7 +49,6 @@ namespace vt
 		{
 			outputs_cstr.push_back(s.c_str());
 		}
-
 		Ort::RunOptions run_opts{};
 		auto output_tensors = session_.Run
 		(

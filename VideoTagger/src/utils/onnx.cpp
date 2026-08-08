@@ -43,9 +43,9 @@ namespace vt::utils
 			"VideoTagger",
 			&raw_env
 		);
+		Ort::ThrowOnError(api->DisableTelemetryEvents(raw_env));
 
 		Ort::Env env(raw_env);
-		Ort::ThrowOnError(api->DisableTelemetryEvents(raw_env));
 		return env;
 	}
 }
