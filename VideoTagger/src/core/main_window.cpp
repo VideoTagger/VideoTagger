@@ -1958,7 +1958,7 @@ namespace vt
 		{
 			//ctx_.settings["load-thumbnails"] = ctx_.app_settings.load_thumbnails;
 		})
-		.add_button("Clear Thumbnails Cache", "Clears the thumbnails cache", "Clear", []()
+		.add_button("Clear Thumbnails Cache", "Clears cached thumbnails used by the UI", "Clear", []()
 		{
 			std::filesystem::remove_all(ctx_.cache_dir_filepath);
 			std::filesystem::create_directories(ctx_.cache_dir_filepath);
