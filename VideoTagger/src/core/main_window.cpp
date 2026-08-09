@@ -648,7 +648,7 @@ namespace vt
 		{
 			if (&event.player() != &player) return;
 
-			if (event.is_playing() == ctx_.displayed_videos.is_playing()) return;
+			if (event.is_playing() == ctx_.displayed_videos.is_playing() or ctx_.session.is_edit_mode()) return;
 
 			ctx_.displayed_videos.set_playing(event.is_playing());
 			ctx_.dispatch_event<playback_changed_event>(event.source(), player, event.is_playing());
@@ -657,6 +657,8 @@ namespace vt
 		ctx_.add_event_listener<seek_request_event>([&player, this](const seek_request_event& event)
 		{
 			if (&event.player() != &player) return;
+
+			if (ctx_.session.is_edit_mode()) return;
 
 			ctx_.displayed_videos.seek(event.timestamp());
 			ctx_.dispatch_event<seek_event>(event.source(), player, event.timestamp());
