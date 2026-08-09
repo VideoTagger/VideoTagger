@@ -40,11 +40,17 @@ namespace vt
 		auto download_path = install_dir;
 		download_path.replace_extension(".zip");
 		debug::log("Downloading SAM2 model: '{}' from URL: '{}' to path: '{}'...", name(), url, download_path.u8string());
-		//TODO: Unzip the model.zip file after downloading and remove it/keep it as a cache
 		bool result = utils::filesystem::download_file(url, download_path);
 		if (!result)
 		{
 			debug::error("Download of SAM2 model: '{}' failed", name());
+			return false;
+		}
+
+		auto unzip_result = vt::utils::filesystem::unzip(download_path, install_dir, true);
+		if (!unzip_result.has_value())
+		{
+			debug::error("Unpacking of SAM2 model: '{}' failed", name());
 			return false;
 		}
 

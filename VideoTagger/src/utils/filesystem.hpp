@@ -69,5 +69,7 @@ namespace vt::utils
 
 		static bool download_file(const std::string& url, const std::filesystem::path& destination, std::optional<httplib::Headers> headers = std::nullopt,
 			std::optional<cancellation_token> cancel_token = std::nullopt, const std::function<void(uint64_t current_size, uint64_t total_size, std::optional<cancellation_token> cancel_token)>& callback = nullptr);
+
+		static std::optional<std::vector<std::filesystem::path>> unzip(const std::filesystem::path& zip_file, const std::filesystem::path& destination, bool overwrite = false);
 	};
 }

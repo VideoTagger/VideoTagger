@@ -1,6 +1,9 @@
-#include "pch.hpp"
-#include "string.hpp"
 #include "filesystem.hpp"
+#include "pch.hpp"
+
+#include <Zipper/Unzipper.hpp>
+
+#include "string.hpp"
 #include <core/platform.hpp>
 #include <utils/url.hpp>
 
@@ -236,5 +239,36 @@ namespace vt::utils
 			return true;
 		};
 		return client.Get(url_path, content_receiver_callback, download_progress_callback);
+	}
+
+	std::optional<std::vector<std::filesystem::path>> filesystem::unzip(const std::filesystem::path& zip_file, const std::filesystem::path& destination, bool overwrite)
+	{
+		std::optional<std::vector<std::filesystem::path>> result;
+
+		zipper::Unzipper unzipper;
+		if (!unzipper.open(zip_file.u8string()))
+		{
+			return result;
+		}
+
+		result = std::vector<std::filesystem::path>{};
+		bool all_failed = true;
+		for (auto& entry : unzipper.entries())
+		{
+			if (!unzipper.extract(entry.name, destination.u8string(), overwrite ? zipper::Unzipper::OverwriteMode::Overwrite : zipper::Unzipper::OverwriteMode::DoNotOverwrite))
+			{
+				continue;
+			}
+
+			all_failed = false;
+			result->emplace_back(destination / entry.name);
+		}
+
+		if (all_failed)
+		{
+			result = std::nullopt;
+		}
+
+		return result;
 	}
 }
