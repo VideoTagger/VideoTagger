@@ -49,3 +49,6 @@
 [submodule "VideoTagger/vendor/uriparser"]
 	path = VideoTagger/vendor/uriparser
 	url = https://github.com/uriparser/uriparser.git
+[submodule "VideoTagger/vendor/zipper"]
+	path = VideoTagger/vendor/zipper
+	url = https://github.com/VideoTagger/zipper

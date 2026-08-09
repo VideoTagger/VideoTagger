@@ -18,7 +18,9 @@ function(vt_setup_opencv TARGET_NAME)
         set(BUILD_opencv_python2 OFF CACHE INTERNAL "Disable Python 2 bindings")
         set(BUILD_opencv_python3 OFF CACHE INTERNAL "Disable Python 3 bindings")
         set(BUILD_opencv_python_bindings_generator OFF CACHE INTERNAL "Disable Python bindings generator")
-        set(BUILD_ZLIB ON CACHE INTERNAL "Enable ZLib")
+        set(BUILD_ZLIB OFF CACHE INTERNAL "Enable zlib")
+		set(WITH_ZLIB_NG ON CACHE INTERNAL "Enable zlib-ng")
+		
 
 		set(HAVE_OPENGL ON CACHE INTERNAL "Enable OpenGL support")
 

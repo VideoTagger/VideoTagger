@@ -115,6 +115,10 @@ target_link_libraries(${PROJECT_NAME} PRIVATE SDL2::SDL2)
 include(${CMAKE_SOURCE_DIR}/cmake/SetupOpenCV.cmake)
 vt_setup_opencv(${PROJECT_NAME})
 
+set(ZIPPER_BUILD_ZLIB OFF)
+add_subdirectory("${PROJECT_SOURCE_DIR}/vendor/zipper")
+target_link_libraries(${PROJECT_NAME} PRIVATE zipper)
+
 set(PYBIND11_FINDPYTHON ON)
 add_subdirectory("${PROJECT_SOURCE_DIR}/vendor/pybind11")
 target_link_libraries(${PROJECT_NAME} PRIVATE pybind11::embed)
