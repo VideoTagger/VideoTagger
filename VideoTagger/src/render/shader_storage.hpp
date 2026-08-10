@@ -12,6 +12,7 @@ namespace vt
 
 	public:
 		gl_shader mask_shader;
+		gl_shader mask_preview_shader;
 
 	public:
 		shader_storage& operator=(shader_storage&&) = default;

@@ -26,6 +26,7 @@ vt_embed_directory(${EMBED_SOURCE_DIR} ${EMBED_OUTPUT_DIR} "vt::embed" EMBED_GEN
 # Shaders
 vt_embed_text_file("${PROJECT_SOURCE_DIR}/shaders/mask_shader.vert" "${EMBED_OUTPUT_DIR}/mask_shader_vert.hpp" "vt::embed" EMBED_GENERATED_FILES)
 vt_embed_text_file("${PROJECT_SOURCE_DIR}/shaders/mask_shader.frag" "${EMBED_OUTPUT_DIR}/mask_shader_frag.hpp" "vt::embed" EMBED_GENERATED_FILES)
+vt_embed_text_file("${PROJECT_SOURCE_DIR}/shaders/mask_preview_shader.frag" "${EMBED_OUTPUT_DIR}/mask_preview_shader_frag.hpp" "vt::embed" EMBED_GENERATED_FILES)
 
 # About & Licenses
 include(cmake/GenerateAbout.cmake)
