@@ -172,6 +172,8 @@ namespace vt
 			auto& main_player = ctx_.get_window<widgets::video_player>();
 			if (&event.player() != &main_player) return;
 
+			if (ctx_.session.is_edit_mode()) return;
+
 			auto new_group_id = event.new_group_id();
 			auto current_group_id = current_video_group_id_;
 
