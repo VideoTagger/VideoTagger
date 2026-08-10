@@ -31,6 +31,7 @@
 #include <events/player/video_group_changed_event.hpp>
 
 #include <core/debug.hpp>
+#include <core/platform.hpp>
 
 namespace vt::widgets
 {
@@ -907,7 +908,9 @@ namespace vt::widgets
 
 		auto win_pos = ImGui::GetWindowPos();
 
+#ifdef VT_DEBUG
 		ui::toggle("Enabled", enabled_);
+#endif
 
 		/*
 		ImGui::SameLine();
