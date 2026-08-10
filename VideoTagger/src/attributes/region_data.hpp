@@ -2,12 +2,13 @@
 #include <type_traits>
 #include <map>
 #include <optional>
+#include <vector>
 #include <impl/serializable.hpp>
 #include <attributes/impl/shape.hpp>
 #include <utils/timestamp.hpp>
 #include <utils/iterator_range.hpp>
 #include <attributes/impl/shape_interpolator.hpp>
-#include <attributes/predictors/dummy_shape_interpolator.hpp>
+#include <attributes/interpolators/static_shape_interpolator.hpp>
 #include <core/app_context.hpp>
 #include <utils/timestamp_span.hpp>
 
@@ -24,16 +25,14 @@ namespace vt
 			region_data{fmt::format("Region #{}", utils::random::get_mono<region_id_t>())} {}
 
 		region_data(const std::string& name) :
-			interpolator_{ std::make_unique<dummy_shape_interpolator<shape_type>>("dummy") }, name_{ name }, interpolation_keyframe_timestamps_(interpolator_->data_point_count()),
-			interpolation_keyframe_shapes_(interpolator_->data_point_count()) {}
+			interpolator_{ std::make_unique<static_shape_interpolator<shape_type>>("None") }, name_{ name }, interpolation_keyframe_data_(interpolator_->data_point_count()) {}
 
 	private:
 		std::map<timestamp, shape_type> keyframes_;
 		std::unique_ptr<impl::shape_interpolator<shape_type>> interpolator_;
 		std::string name_;
 
-		mutable std::vector<timestamp> interpolation_keyframe_timestamps_;
-		mutable std::vector<shape_type> interpolation_keyframe_shapes_;
+		mutable std::vector<shape_interpolator_data<shape_type>> interpolation_keyframe_data_;
 		mutable std::vector<const_iterator> interpolation_keyframe_its;
 
 	public:
@@ -71,12 +70,14 @@ namespace vt
 		 */
 		iterator erase_keyframe(const_iterator it)
 		{
-			auto timestamp_it = std::find(interpolation_keyframe_timestamps_.begin(), interpolation_keyframe_timestamps_.end(), it->first);
-			if (timestamp_it != interpolation_keyframe_timestamps_.end())
+			auto data_it = std::find_if(interpolation_keyframe_data_.begin(), interpolation_keyframe_data_.end(), [&it](const shape_interpolator_data<shape_type>& element)
 			{
-				auto index = timestamp_it - interpolation_keyframe_timestamps_.begin();
-				interpolation_keyframe_timestamps_.erase(timestamp_it);
-				interpolation_keyframe_shapes_.erase(interpolation_keyframe_shapes_.begin() + index);
+				return it->first == element.ts;
+			});
+
+			if (data_it != interpolation_keyframe_data_.end())
+			{
+				interpolation_keyframe_data_.erase(data_it);
 			}
 
 			return keyframes_.erase(it);
@@ -263,23 +264,19 @@ namespace vt
 				return false;
 			}
 
-			size_t data_point_count = interpolation_keyframe_timestamps_.size();
+			size_t data_point_count = interpolation_keyframe_data_.size();
 			
 			gather_keyframes(interpolation_keyframe_its, data_point_count, ts);
 
-			if (interpolation_keyframe_timestamps_.size() != interpolation_keyframe_its.size())
+			if (interpolation_keyframe_data_.size() != interpolation_keyframe_its.size())
 			{
-				interpolation_keyframe_timestamps_.resize(interpolation_keyframe_its.size());
-			}
-			if (interpolation_keyframe_shapes_.size() != interpolation_keyframe_its.size())
-			{
-				interpolation_keyframe_shapes_.resize(interpolation_keyframe_its.size());
+				interpolation_keyframe_data_.resize(interpolation_keyframe_its.size());
 			}
 
 			for (size_t i = 0; i < interpolation_keyframe_its.size(); ++i)
 			{
-				interpolation_keyframe_timestamps_[i] = interpolation_keyframe_its[i]->first;
-				interpolation_keyframe_shapes_[i] = interpolation_keyframe_its[i]->second;
+				interpolation_keyframe_data_[i].ts = interpolation_keyframe_its[i]->first;
+				interpolation_keyframe_data_[i].shape = interpolation_keyframe_its[i]->second;
 			}
 
 			return true;
@@ -303,19 +300,19 @@ namespace vt
 
 			if (!update_interpolation_keyframes_(ts)) return std::nullopt;
 		
-			return interpolator_->stateless_predict(interpolation_keyframe_shapes_, interpolation_keyframe_timestamps_, ts);
+			return interpolator_->interpolate(interpolation_keyframe_data_, ts);
 		}
 
 		/**
 		 * @brief Set the interpolation method used when getting a shape inbetween keyframes
 		 * 
-		 * @param interpolator Instance of the interpolator to use. If nullptr, sets the interpolation method to dummy_shape_predictor
+		 * @param interpolator Instance of the interpolator to use. If nullptr, sets the interpolation method to static_shape_interpolator
 		 */
 		void set_interpolator(std::unique_ptr<impl::shape_interpolator<shape_type>>&& interpolator)
 		{
 			if (interpolator == nullptr)
 			{
-				auto& registry = ctx_.get_shape_predictor_registry<shape_type>();
+				auto& registry = ctx_.get_shape_interpolator_registry<shape_type>();
 				interpolator_ = registry.new_default_interpolator();
 				if (interpolator_ == nullptr)
 				{
@@ -327,8 +324,7 @@ namespace vt
 				interpolator_ = std::move(interpolator);
 			}
 
-			interpolation_keyframe_timestamps_.resize(interpolator_->data_point_count());
-			interpolation_keyframe_shapes_.resize(interpolator_->data_point_count());
+			interpolation_keyframe_data_.resize(interpolator_->data_point_count());
 		}
 
 		utils::timestamp_span keyframes_timespan() const
@@ -436,7 +432,7 @@ namespace vt
 			if (json.contains("interpolator"))
 			{
 				std::string interpolator_name = json["interpolator"];
-				auto& registry = ctx_.get_shape_predictor_registry<shape_type>();
+				auto& registry = ctx_.get_shape_interpolator_registry<shape_type>();
 				auto interpolator = registry.new_interpolator(interpolator_name);
 				if (interpolator == nullptr)
 				{

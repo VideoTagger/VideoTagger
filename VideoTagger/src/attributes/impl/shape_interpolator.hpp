@@ -1,8 +1,11 @@
 #pragma once
-#include "shape_predictor.hpp"
+#include <vector>
+#include <string>
+#include <optional>
 #include <attributes/impl/shape.hpp>
+#include <utils/timestamp.hpp>
 
-namespace vt::impl
+namespace vt
 {
 	template<typename shape_type, typename = std::enable_if_t<std::is_base_of_v<impl::shape, shape_type>>>
 	struct shape_interpolator_data
@@ -10,59 +13,41 @@ namespace vt::impl
 		shape_type shape;
 		timestamp ts;
 	};
+}
 
+namespace vt::impl
+{
+	/**
+	 * @brief Base class for shape interpolator
+	 * 
+	 * @tparam shape_type Type of shape to interpolate
+	 */
 	template<typename shape_type, typename = std::enable_if_t<std::is_base_of_v<impl::shape, shape_type>>>
-	class shape_interpolator : public shape_predictor<shape_type>
+	class shape_interpolator
 	{
 	public:
-		shape_interpolator(const std::string& name) : shape_predictor<shape_type>{ name } {}
+		shape_interpolator(const std::string& name) : name_{ name } {}
 		virtual ~shape_interpolator() = default;
 
+	private:
+		std::string name_;
+
 	public:
-		virtual bool on_init(const std::vector<shape_type>& shape_instances, const std::vector<timestamp>& timestamps) = 0;
-
-		virtual bool on_init(const std::vector<shape_type>& shape_instances, const std::vector<timestamp>& timestamps, const std::vector<image<image_pixel_format::rgb8>*>& images) override final
+		/// @return The name of the tracker
+		const std::string& name() const
 		{
-			return on_init(shape_instances, timestamps);
+			return name_;
 		}
 
-		bool init(const std::vector<shape_type>& shape_instances, const std::vector<timestamp>& timestamps)
-		{
-			if (!on_init(shape_instances, timestamps)) return false;
+		/// @return How many data points the interpolator requires to provide the best accuracy.
+		virtual size_t data_point_count() const = 0;
 
-			this->set_initialized();
-			return false;
-		}
-
-		virtual std::optional<shape_type> on_predict(timestamp current_ts) = 0;
-
-		virtual std::optional<shape_type> on_predict(std::optional<timestamp> current_ts, const image<image_pixel_format::rgb8>* current_image) override final
-		{
-			if (!current_ts.has_value()) return std::nullopt;
-
-			return on_predict(*current_ts);
-		}
-
-		std::optional<shape_type> predict(timestamp current_ts)
-		{
-			if (!this->is_initialized()) return std::nullopt;
-
-			return on_predict(current_ts);
-		}
-
-		virtual std::optional<shape_type> stateless_predict(const std::vector<shape_type>& shape_instances, const std::vector<timestamp>& timestamps, timestamp current_ts) = 0;
-
-		virtual std::optional<shape_type> stateless_predict(const std::vector<shape_type>& shape_instances, const std::vector<timestamp>& timestamps,
-			const std::vector<image<image_pixel_format::rgb8>*>& images, std::optional<timestamp> current_ts, const image<image_pixel_format::rgb8>* current_image) override final
-		{
-			if (!current_ts.has_value()) return std::nullopt;
-
-			return stateless_predict(shape_instances, timestamps, *current_ts);
-		}
-
-		virtual bool is_stateless() override final
-		{
-			return true;
-		}
+		/**
+		 * @brief Interpolate the shape instance at the given moment
+		 * 
+		 * @param interpolation_data Data points to use for interpolation
+		 * @param current_ts Timestamp at which to make the interpolation
+		 */
+		virtual std::optional<shape_type> interpolate(const std::vector<shape_interpolator_data<shape_type>>& interpolation_data, timestamp current_ts) = 0;
 	};
 }

@@ -37,11 +37,6 @@ namespace vt::impl
 			return result;
 		}
 
-		virtual bool is_stateless() override
-		{
-			return true;
-		}
-
 		virtual void on_reset() override
 		{
 			tracker_.reset();
@@ -75,14 +70,6 @@ namespace vt::impl
 			if (result.points.empty()) return std::nullopt;
 
 			return result;
-		}
-
-		virtual std::optional<points_shape> stateless_predict(const std::vector<points_shape>& shape_instances, const std::vector<timestamp>& timestamps,
-			const std::vector<image<image_pixel_format::rgb8>*>& images, std::optional<timestamp> current_ts, const image<image_pixel_format::rgb8>* current_image)
-		{
-			if (shape_instances.empty() or images.empty() or current_image == nullptr) return std::nullopt;
-
-			return stateless_predict(shape_instances[0], *images[0], *current_image);
 		}
 	};
 }

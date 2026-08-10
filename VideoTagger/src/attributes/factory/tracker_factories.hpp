@@ -1,6 +1,6 @@
 #pragma once
 #include <attributes/factory/shape_tracker_factory.hpp>
-#include <attributes/predictors/pyr_lk_points_tracker.hpp>
+#include <attributes/trackers/pyr_lk_points_tracker.hpp>
 
 namespace vt
 {
