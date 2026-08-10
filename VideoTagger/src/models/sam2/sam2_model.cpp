@@ -33,6 +33,8 @@ namespace vt
 
 	bool sam2_model::download()
 	{
+		static constexpr auto license_url = "https://raw.githubusercontent.com/facebookresearch/sam2/refs/heads/main/LICENSE";
+
 		auto url = download_url();
 		if (url.empty()) return false;
 
@@ -53,6 +55,9 @@ namespace vt
 			debug::error("Unpacking of SAM2 model: '{}' failed", name());
 			return false;
 		}
+
+		//The result of the download is purposefully ignored, since it it not critical for the functionality of the model
+		utils::filesystem::download_file(license_url, install_dir / "LICENSE.txt");
 
 		debug::log("Finished downloading SAM2 model: '{}'", name());
 		return verify_installation();
