@@ -107,8 +107,8 @@ namespace vt
 				auto& region = it->second;
 				if (region.interpolator_name() == event.interpolator_name()) return;
 
-				auto& predictor_registry = ctx_.get_shape_predictor_registry<shape_type>();
-				region.set_interpolator(predictor_registry.new_interpolator(event.interpolator_name()));
+				auto& interpolator_registry = ctx_.get_shape_interpolator_registry<shape_type>();
+				region.set_interpolator(interpolator_registry.new_interpolator(event.interpolator_name()));
 				ctx_.is_project_dirty = true;
 			});
 
@@ -401,8 +401,8 @@ namespace vt
 	public:
 		virtual bool on_init(const image<image_pixel_format::rgb8>& image) override
 		{
-			auto& predictor_registry = ctx_.get_shape_predictor_registry<shape_type>();
-			if (!predictor_registry.is_tracker_registered(tracker_name())) return false;
+			auto& tracker_registry = ctx_.get_shape_tracker_registry<shape_type>();
+			if (!tracker_registry.is_tracker_registered(tracker_name())) return false;
 
 			const auto& region_data = this->region_data();
 			auto* attr_instance = dynamic_cast<shape_attribute_instance<shape_type>*>(region_data.attribute_instance);
@@ -414,7 +414,7 @@ namespace vt
 			auto kf_it = region.find_keyframe(track_timespan().start);
 			if (kf_it == region.end()) return false;
 
-			tracker_ = predictor_registry.new_tracker(tracker_name());
+			tracker_ = tracker_registry.new_tracker(tracker_name());
 			if (tracker_ == nullptr) return false;
 
 			tracker_->init(kf_it->second, image);

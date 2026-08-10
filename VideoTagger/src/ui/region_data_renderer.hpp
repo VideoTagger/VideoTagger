@@ -30,7 +30,7 @@ namespace vt::ui
 	{
 	public:
 		region_data_renderer(region_data_container<shape_type>& regions) :
-			regions_{ &regions }, interpolator_combo_{ "##InterpolatorCombo", ctx_.get_shape_predictor_registry<shape_type>().interpolator_names(), 0 }
+			regions_{ &regions }, interpolator_combo_{ "##InterpolatorCombo", ctx_.get_shape_interpolator_registry<shape_type>().interpolator_names(), 0 }
 		{}
 
 	private:
@@ -98,8 +98,8 @@ namespace vt::ui
 					ImGui::TextUnformatted("Interpolation");
 
 					ImGui::TableNextColumn();
-					auto& predictor_registry = ctx_.get_shape_predictor_registry<shape_type>();
-					size_t interpolator_index = predictor_registry.interpolator_index(region.interpolator_name()).value_or(0);
+					auto& interpolator_registry = ctx_.get_shape_interpolator_registry<shape_type>();
+					size_t interpolator_index = interpolator_registry.interpolator_index(region.interpolator_name()).value_or(0);
 					interpolator_combo_.set_selected(interpolator_index);
 
 					if (interpolator_combo_.render_disabled(interpolator_combo_.item_count() <= 1))
@@ -284,14 +284,14 @@ namespace vt::ui
 				});
 			}
 
-			auto& predictor_registry = ctx_.get_shape_predictor_registry<shape_type>();
-			bool supports_tracking = predictor_registry.has_any_tracker();
+			auto& tracker_registry = ctx_.get_shape_tracker_registry<shape_type>();
+			bool supports_tracking = !tracker_registry.empty();
 			if (supports_tracking)
 			{
 				items.add<menu_generic_button>(icons::fast_fwd, ctx_.lang->get("popup.region_context_menu.track"), [&]()
 				{
 						ctx_.track_region_popup = std::make_unique<track_region_popup>(tag_name, segment, video_id, *attribute_instance,
-							ctx_.displayed_videos.current_timestamp_as_timestamp(), region_id, predictor_registry.tracker_names());
+							ctx_.displayed_videos.current_timestamp_as_timestamp(), region_id, tracker_registry.tracker_names());
 				}, !ctx_.displayed_videos.is_playing());
 			}
 		}

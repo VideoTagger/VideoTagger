@@ -16,7 +16,7 @@ namespace vt::impl
 	private:
 		cv::Ptr<cv::Tracker> tracker_;
 
-	public:
+	protected:
 		virtual bool on_init(const rectangle_shape& shape, const image<image_pixel_format::rgb8>& image) override
 		{
 			tracker_->init(image_to_cvmat_view(image), cv::Rect{ shape.start.x(), shape.start.y(), shape.width(), shape.height() });

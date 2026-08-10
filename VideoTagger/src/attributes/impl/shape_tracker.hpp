@@ -1,58 +1,80 @@
 #pragma once
-#include "shape_predictor.hpp"
+#include <string>
+#include <optional>
 #include <attributes/impl/shape.hpp>
+#include <image/image.hpp>
 
 namespace vt::impl
 {
 	template<typename shape_type, typename = std::enable_if_t<std::is_base_of_v<impl::shape, shape_type>>>
-	class shape_tracker : public shape_predictor<shape_type>
+	class shape_tracker
 	{
 	public:
-		shape_tracker(const std::string& name) : shape_predictor<shape_type>{ name } {}
+		shape_tracker(const std::string& name) : name_{ name } {}
 		virtual ~shape_tracker() = default;
 
+	private:
+		std::string name_;
+		bool initialized_{};
+
 	public:
-		virtual size_t data_point_count() const override
+		/// @return The name of the tracker
+		const std::string& name() const
 		{
-			return 1;
+			return name_;
 		}
 
-		virtual bool on_init(const shape_type& shape, const image<image_pixel_format::rgb8>& image) = 0;
-
-		virtual bool on_init(const std::vector<shape_type>& shape_instances, const std::vector<timestamp>& timestamps, const std::vector<image<image_pixel_format::rgb8>*>& images) override
+		/// @return Whether the tracker was successfully initialized
+		bool is_initialized() const
 		{
-			if (shape_instances.empty() or images.empty()) return false;
-
-			return on_init(shape_instances[0], *images[0]);
+			return initialized_;
 		}
 
+		/**
+		 * @brief Initialize the tracker
+		 *
+		 * @param shape The shape to predict
+		 * @param image Image associated with the shape
+		 * @return Whether the tracker was intialized successfully
+		 */
 		bool init(const shape_type& shape, const image<image_pixel_format::rgb8>& image)
 		{
-			if (!on_init(shape, image)) return false;
+			if (initialized_)
+			{
+				reset();
+			}
 
-			this->set_initialized();
-			return false;
+			initialized_ = on_init(shape, image);
+			return initialized_;
 		}
 
-		virtual std::optional<shape_type> on_predict(const image<image_pixel_format::rgb8>& current_image) = 0;
-
-		virtual std::optional<shape_type> on_predict(std::optional<timestamp> current_ts, const image<image_pixel_format::rgb8>* current_image) override
-		{
-			if (current_image == nullptr) return std::nullopt;
-
-			return on_predict(*current_image);
-		}
-
+		/**
+		 * @brief Predict the next shape
+		 *
+		 * @param current_image Image from which to make the prediction
+		 * @return If successful a shape instance, empty otherwise. If the tracker wasn't initialized, empty is returned.
+		 */
 		std::optional<shape_type> predict(const image<image_pixel_format::rgb8>& current_image)
 		{
-			if (!this->is_initialized()) return std::nullopt;
+			if (!initialized_) return std::nullopt;
 
 			return on_predict(current_image);
 		}
 
-		virtual bool is_stateless() override
+		/**
+		 * @brief Reset the tracker state
+		 *
+		 * After a call to this function, the tracker will be in an uninitialized state.
+		 */
+		void reset()
 		{
-			return false;
+			on_reset();
+			initialized_ = false;
 		}
+
+	protected:
+		virtual bool on_init(const shape_type& shape, const image<image_pixel_format::rgb8>& image) = 0;
+		virtual std::optional<shape_type> on_predict(const image<image_pixel_format::rgb8>& current_image) = 0;
+		virtual void on_reset() {}
 	};
 }

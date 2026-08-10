@@ -46,7 +46,8 @@
 #include <tasks/task_manager.hpp>
 #include "session_storage.hpp"
 #include <attributes/attribute_registry.hpp>
-#include <attributes/shape_predictor_registry.hpp>
+#include <attributes/shape_interpolator_registry.hpp>
+#include <attributes/shape_tracker_registry.hpp>
 #include <attributes/shapes/rectangle_shape.hpp>
 #include <attributes/shapes/line_shape.hpp>
 #include <attributes/shapes/points_shape.hpp>
@@ -139,7 +140,9 @@ namespace vt
 		attribute_registry attr_registry;
 		model_registry model_registry;
 		ui::toolbar_tool_extension_registry<ui::impl::wand_tool_extension> wand_extensions;
-		std::unordered_map<std::type_index, std::unique_ptr<impl::shape_predictor_registry>> shape_predictor_registries;
+		
+		std::unordered_map<std::type_index, std::unique_ptr<impl::shape_tracker_registry>> shape_tracker_registries;
+		std::unordered_map<std::type_index, std::unique_ptr<impl::shape_interpolator_registry>> shape_interpolator_registries;
 
 		std::unique_ptr<shader_storage> shaders;
 		session_storage session;
@@ -214,7 +217,9 @@ namespace vt
 		static std::filesystem::path storage_path();
 
 		template<typename shape_type>
-		shape_predictor_registry<shape_type>& get_shape_predictor_registry();
+		shape_tracker_registry<shape_type>& get_shape_tracker_registry();
+		template<typename shape_type>
+		shape_interpolator_registry<shape_type>& get_shape_interpolator_registry();
 	};
 
 	///@brief Global application context instance
@@ -281,14 +286,26 @@ namespace vt
 	}
 
 	template<typename shape_type>
-	inline shape_predictor_registry<shape_type>& app_context::get_shape_predictor_registry()
+	inline shape_tracker_registry<shape_type>& app_context::get_shape_tracker_registry()
 	{
-		auto& ptr = shape_predictor_registries[typeid(shape_predictor_registry<shape_type>)];
+		auto& ptr = shape_tracker_registries[typeid(shape_tracker_registry<shape_type>)];
 		if (ptr == nullptr)
 		{
-			ptr = std::make_unique<shape_predictor_registry<shape_type>>();
+			ptr = std::make_unique<shape_tracker_registry<shape_type>>();
 		}
 
-		return dynamic_cast<shape_predictor_registry<shape_type>&>(*ptr);
+		return dynamic_cast<shape_tracker_registry<shape_type>&>(*ptr);
+	}
+
+	template<typename shape_type>
+	inline shape_interpolator_registry<shape_type>& app_context::get_shape_interpolator_registry()
+	{
+		auto& ptr = shape_interpolator_registries[typeid(shape_interpolator_registry<shape_type>)];
+		if (ptr == nullptr)
+		{
+			ptr = std::make_unique<shape_interpolator_registry<shape_type>>();
+		}
+
+		return dynamic_cast<shape_interpolator_registry<shape_type>&>(*ptr);
 	}
 }

@@ -37,12 +37,12 @@
 
 #include <attributes/factory/interpolator_factories.hpp>
 #include <attributes/factory/tracker_factories.hpp>
-#include <attributes/predictors/mil_rectangle_tracker.hpp>
-#include <attributes/predictors/csrt_rectangle_tracker.hpp>
-#include <attributes/predictors/kcf_rectangle_tracker.hpp>
-#include <attributes/predictors/da_siam_rpn_rectangle_tracker.hpp>
-#include <attributes/predictors/goturn_rectangle_tracker.hpp>
-#include <attributes/predictors/vit_rectangle_tracker.hpp>
+#include <attributes/trackers/mil_rectangle_tracker.hpp>
+#include <attributes/trackers/csrt_rectangle_tracker.hpp>
+#include <attributes/trackers/kcf_rectangle_tracker.hpp>
+#include <attributes/trackers/da_siam_rpn_rectangle_tracker.hpp>
+#include <attributes/trackers/goturn_rectangle_tracker.hpp>
+#include <attributes/trackers/vit_rectangle_tracker.hpp>
 #include <attributes/tools/rectangle_tool.hpp>
 #include <attributes/tools/circle_tool.hpp>
 #include <attributes/tools/points_tool.hpp>
@@ -106,9 +106,9 @@ namespace vt
 			{
 				using shape_type = typename std::remove_reference_t<decltype(shape)>;
 
-				auto& reg = get_shape_predictor_registry<shape_type>();
+				auto& reg = get_shape_interpolator_registry<shape_type>();
 
-				reg.new_factory<dummy_shape_interpolator_factory<shape_type>>("None");
+				reg.new_factory<static_shape_interpolator_factory<shape_type>>("None");
 				reg.new_factory<linear_shape_interpolator_factory<shape_type>>("Linear");
 			};
 
@@ -116,34 +116,34 @@ namespace vt
 
 		}, registry_types);
 
-		auto& mask_registry = get_shape_predictor_registry<mask_shape>();
-		mask_registry.new_factory<dummy_shape_interpolator_factory<mask_shape>>("None");
+		auto& mask_interpolator_registry = get_shape_interpolator_registry<mask_shape>();
+		mask_interpolator_registry.new_factory<static_shape_interpolator_factory<mask_shape>>("None");
 
-		auto& rectangle_registry = get_shape_predictor_registry<rectangle_shape>();
-		rectangle_registry.new_factory<rectangle_tracker_factory<mil_rectangle_tracker>>("MIL");
-		rectangle_registry.new_factory<rectangle_tracker_factory<csrt_rectangle_tracker>>("CSRT");
-		rectangle_registry.new_factory<rectangle_tracker_factory<kcf_rectangle_tracker>>("KCF");
+		auto& rectangle_tracker_registry = get_shape_tracker_registry<rectangle_shape>();
+		rectangle_tracker_registry.new_factory<rectangle_tracker_factory<mil_rectangle_tracker>>("MIL");
+		rectangle_tracker_registry.new_factory<rectangle_tracker_factory<csrt_rectangle_tracker>>("CSRT");
+		rectangle_tracker_registry.new_factory<rectangle_tracker_factory<kcf_rectangle_tracker>>("KCF");
 		
 		vit_rectangle_tracker::params vit_params;
 		vit_params.net = (ctx_.models_dir_filepath / "vitTracker.onnx").u8string();
-		rectangle_registry.new_factory<rectangle_tracker_factory<vit_rectangle_tracker>>("Vit", vit_params);
+		rectangle_tracker_registry.new_factory<rectangle_tracker_factory<vit_rectangle_tracker>>("Vit", vit_params);
 		
 		goturn_rectangle_tracker::params goturn_params;
 		goturn_params.model_txt = (ctx_.models_dir_filepath / "goturn.prototxt").u8string();
 		goturn_params.model_bin = (ctx_.models_dir_filepath / "goturn.caffemodel").u8string();
-		rectangle_registry.new_factory<rectangle_tracker_factory<goturn_rectangle_tracker>>("GOTURN", goturn_params);
+		rectangle_tracker_registry.new_factory<rectangle_tracker_factory<goturn_rectangle_tracker>>("GOTURN", goturn_params);
 
 		da_siam_rpn_rectangle_tracker::params da_siam_rpn_params;
 		da_siam_rpn_params.model = (ctx_.models_dir_filepath / "object_tracking_dasiamrpn_model_2021nov.onnx").u8string();
 		da_siam_rpn_params.kernel_cls1 = (ctx_.models_dir_filepath / "object_tracking_dasiamrpn_kernel_cls1_2021nov.onnx").u8string();
 		da_siam_rpn_params.kernel_r1 = (ctx_.models_dir_filepath / "object_tracking_dasiamrpn_kernel_r1_2021nov.onnx").u8string();
-		rectangle_registry.new_factory<rectangle_tracker_factory<da_siam_rpn_rectangle_tracker>>("DaSiamRPN", da_siam_rpn_params);
+		rectangle_tracker_registry.new_factory<rectangle_tracker_factory<da_siam_rpn_rectangle_tracker>>("DaSiamRPN", da_siam_rpn_params);
 
 		//TODO: register only if required dependencies are available
 		//rectangle_registry.new_factory<rectangle_tracker_factory<da_siam_rpn_rectangle_tracker>>("DaSiamRPN");
 
-		auto& points_registry = get_shape_predictor_registry<points_shape>();
-		points_registry.new_factory<pyr_lk_points_tracker_factory>("PyrLK");
+		auto& points_tracker_registry = get_shape_tracker_registry<points_shape>();
+		points_tracker_registry.new_factory<pyr_lk_points_tracker_factory>("PyrLK");
 	}
 
 	void app_context::init_model_registry()
