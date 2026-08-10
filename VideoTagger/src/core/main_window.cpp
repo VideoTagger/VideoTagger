@@ -1960,10 +1960,23 @@ namespace vt
 		{
 			//ctx_.settings["load-thumbnails"] = ctx_.app_settings.load_thumbnails;
 		})
-		.add_button("Clear Thumbnails Cache", "Clears cached thumbnails used by the UI", "Clear", []()
+		.add_button_cond("Clear Thumbnails Cache", "Clears cached thumbnails used by the UI", "Clear", []()
 		{
+			//TODO: This probably should be an event and open a messagebox to confirm the action
 			std::filesystem::remove_all(ctx_.cache_dir_filepath);
 			std::filesystem::create_directories(ctx_.cache_dir_filepath);
+		}, [this]()
+		{
+			return !ctx_.cache_dir_filepath.empty() and !std::filesystem::is_empty(ctx_.cache_dir_filepath);
+		})
+		.add_button_cond("Clear Models Directory", "Clears all downloaded models", "Clear", []()
+		{
+			//TODO: This probably should be an event and open a messagebox to confirm the action
+			std::filesystem::remove_all(ctx_.models_dir_filepath);
+			std::filesystem::create_directories(ctx_.models_dir_filepath);
+		}, [this]()
+		{
+			return !ctx_.models_dir_filepath.empty() and !std::filesystem::is_empty(ctx_.models_dir_filepath);
 		})
 		.add_label_spacer("UI")
 		.add_toggle("Scale Gizmos", "Scales gizmos size based on viewport size", ctx_.app_settings.scale_gizmos, [&](bool value)

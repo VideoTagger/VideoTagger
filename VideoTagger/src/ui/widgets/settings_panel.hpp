@@ -10,6 +10,7 @@ namespace vt::ui
 
 		settings_panel& add_toggle(const std::string& label, const std::string& description, bool& value, const std::function<void(bool value)>& on_toggle = nullptr);
 		settings_panel& add_button(const std::string& label, const std::string& description, const std::string& button_label, const std::function<void()>& on_click = nullptr);
+		settings_panel& add_button_cond(const std::string& label, const std::string& description, const std::string& button_label, const std::function<void()>& on_click = nullptr, const std::function<bool()>& condition = nullptr);
 		settings_panel& add_label_spacer(const std::string& label);
 
 		template<typename widget_type, typename... arguments>
