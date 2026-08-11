@@ -154,6 +154,7 @@ namespace vt::ui
 					//rect_data_.reset();
 				});
 			}
+			break;
 		}
 		//reset();
 	}
@@ -219,6 +220,7 @@ namespace vt::ui
 				auto zoom_factor = size.x / tex_size.x;
 				draw_brush_preview(ImGui::GetMousePos(), zoom_factor * brush_size());
 			}
+			break;
 		}
 	}
 
