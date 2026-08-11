@@ -105,6 +105,11 @@ namespace vt
 			insert_region(*active_video_);
 		}
 
+		auto ext = active_extension();
+		if (ext != nullptr)
+		{
+			ext->on_done();
+		}
 		reset();
 	}
 

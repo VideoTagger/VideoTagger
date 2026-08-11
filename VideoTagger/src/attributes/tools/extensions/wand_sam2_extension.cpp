@@ -40,8 +40,9 @@ namespace vt::ui
 		bool is_hovered = ImGui::IsWindowHovered();
 		bool is_focused = ImGui::IsWindowFocused();
 
-		bool is_positive = !io.KeyAlt;
-		bool is_mouse_clicked = ImGui::IsMouseClicked(ImGuiMouseButton_Left);
+		bool is_mouse_left_clicked = ImGui::IsMouseClicked(ImGuiMouseButton_Left);
+		bool is_mouse_right_clicked = ImGui::IsMouseClicked(ImGuiMouseButton_Right);
+		bool is_mouse_clicked = is_mouse_left_clicked or is_mouse_right_clicked;
 		bool is_ctrl_held = io.KeyCtrl;
 		auto mouse_pos = to_texture_space(ImGui::GetMousePos(), draw_rect, tex_size);
 
@@ -67,7 +68,7 @@ namespace vt::ui
 			else
 			{
 				needs_update = true;
-				(is_positive ? foreground_points_ : background_points_).points.push_back(mouse_pos);
+				(is_mouse_left_clicked ? foreground_points_ : background_points_).points.push_back(mouse_pos);
 			}
 
 			if (needs_update)
@@ -348,7 +349,8 @@ namespace vt::ui
 
 	void wand_sam2_extension::on_done()
 	{
-
+		foreground_points_.points.clear();
+		background_points_.points.clear();
 	}
 
 	void wand_sam2_extension::on_finish_selection(video_id_t video_id, const rectangle_shape& rect, const utils::vec2<int>& tex_size)
