@@ -115,7 +115,7 @@ namespace vt
 		auto vid_it = ctx_.displayed_videos.find(*video_id);
 		if (vid_it == ctx_.displayed_videos.end()) return;
 
-		mask_draw_data* data = new mask_draw_data;
+		auto* data = new mask_draw_data;
 		auto& vid = *vid_it;
 		data->texture = &vid.overlay_texture;
 		data->draw_rect = draw_rect;
@@ -262,6 +262,181 @@ namespace vt
 		ImVec2 scaled_end = math::scale_vec2(end, utils::vec2<int>{}, shape_space, draw_rect.Min, draw_rect.Max, false);
 
 		draw_list->AddRect(scaled_start, scaled_end, outline_color);
+	}
+
+	bool mask_shape::render_data(event_source source, video_id_t video_id, utils::vec2<int> shape_space)
+	{
+		bool edited = false;
+
+		struct mask_preview_draw_data
+		{
+			gl_texture* texture{};
+			ImRect draw_rect{};
+			uint32_t fill_color{};
+			mask_shape obj{};
+		};
+
+		const auto& theme = ctx_.current_theme;
+
+		auto* draw_list = ImGui::GetWindowDrawList();
+		auto vid_it = ctx_.displayed_videos.find(video_id);
+		if (vid_it == ctx_.displayed_videos.end()) return false;
+		float scale = 1.0f;
+		ImVec2 pos;
+		ImVec2 rect_size{ static_cast<float>(shape_space.x()), static_cast<float>(shape_space.y()) };
+		ImRect draw_rect;
+		
+		auto table_flags = ImGuiTableFlags_BordersInnerV | ImGuiTableFlags_Resizable | ImGuiTableFlags_NoSavedSettings | ImGuiTableFlags_RowBg;
+		ImGui::PushStyleColor(ImGuiCol_TableRowBg, theme.get_float4(theme_color::background_tertiary));
+		ImGui::PushStyleColor(ImGuiCol_TableRowBgAlt, theme.get_float4(theme_color::background_tertiary));
+
+		auto result = ImGui::BeginTable("##Card", 2, table_flags);
+		if (result)
+		{
+			ImGui::TableNextRow();
+			ImGui::TableNextColumn();
+			ImGui::SameLine();
+			ImGui::AlignTextToFramePadding();
+			ImGui::TextUnformatted("Preview");
+
+			ImGui::TableNextColumn();
+			pos = pos = ImGui::GetCursorScreenPos();
+			scale = ImGui::GetContentRegionAvail().x / (float)shape_space.x();
+			rect_size *= scale;
+			draw_rect = { pos, pos + rect_size };
+			ImGui::Dummy(draw_rect.GetSize());
+			draw_list->AddRectFilled(draw_rect.Min, draw_rect.Max, theme.get_rgba(theme_color::background_secondary));
+
+			ImGui::EndTable();
+		}
+		ImGui::PopStyleColor(2);
+
+		if (!result) return false;
+
+		auto* data = new mask_preview_draw_data;
+
+		auto& vid = *vid_it;
+		data->texture = &vid.overlay_texture;
+		data->draw_rect = draw_rect;
+		data->fill_color = theme.get_rgba(theme_color::text_normal);
+		data->obj = *this;
+
+		draw_list->PushClipRect(draw_rect.Min, draw_rect.Max);
+		draw_list->AddCallback([](const ImDrawList* parent_list, const ImDrawCmd* cmd)
+		{
+			auto* data = static_cast<mask_preview_draw_data*>(cmd->UserCallbackData);
+			auto& mask_shader = ctx_.shaders->mask_preview_shader;
+			if (!mask_shader.is_valid())
+			{
+				delete data;
+				return;
+			}
+
+			auto* draw_data = ImGui::GetDrawData();
+
+			float L = draw_data->DisplayPos.x;
+			float R = draw_data->DisplayPos.x + draw_data->DisplaySize.x;
+			float T = draw_data->DisplayPos.y;
+			float B = draw_data->DisplayPos.y + draw_data->DisplaySize.y;
+
+			data->texture->clear();
+			utils::vec2<int> offset;
+			data->texture->set_pixels(data->obj.mask.data(), offset[0], offset[1], data->obj.mask.width(), data->obj.mask.height(), GL_RED);
+
+			const float ortho_projection[4][4] =
+			{
+				{ 2.0f / (R - L),   0.0f,         0.0f,   0.0f },
+				{ 0.0f,         2.0f / (T - B),   0.0f,   0.0f },
+				{ 0.0f,         0.0f,        -1.0f,   0.0f },
+				{ (R + L) / (L - R),  (T + B) / (B - T),  0.0f,   1.0f },
+			};
+
+			mask_shader.bind();
+
+			GLint current_prog = 0;
+			glGetIntegerv(GL_CURRENT_PROGRAM, &current_prog);
+			if (current_prog == 0 or current_prog != mask_shader.id())
+			{
+				debug::error("Shader wasn't bound correctly! Expected {}, got {}", mask_shader.id(), current_prog);
+			}
+
+			static GLuint quad_vao = 0;
+			static GLuint quad_vbo = 0;
+
+			if (quad_vao == 0)
+			{
+				glGenVertexArrays(1, &quad_vao);
+				glGenBuffers(1, &quad_vbo);
+
+				glBindVertexArray(quad_vao);
+				glBindBuffer(GL_ARRAY_BUFFER, quad_vbo);
+				glBufferData(GL_ARRAY_BUFFER, 6 * 4 * sizeof(float), nullptr, GL_DYNAMIC_DRAW);
+				int pos_loc = ctx_.shaders->mask_shader.get_attribute_location("Position");
+				int uv_loc = ctx_.shaders->mask_shader.get_attribute_location("UV");
+				glEnableVertexAttribArray(pos_loc);
+				glVertexAttribPointer(pos_loc, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
+				glEnableVertexAttribArray(uv_loc);
+				glVertexAttribPointer(uv_loc, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
+
+				glBindBuffer(GL_ARRAY_BUFFER, 0);
+				glBindVertexArray(0);
+			}
+
+			auto proj_loc = mask_shader.get_uniform_location("ProjMtx");
+			if (proj_loc >= 0) glUniformMatrix4fv(proj_loc, 1, GL_FALSE, &ortho_projection[0][0]);
+			auto tex_loc = mask_shader.get_uniform_location("Texture");
+			if (tex_loc >= 0)
+			{
+				glActiveTexture(GL_TEXTURE0);
+				glBindTexture(GL_TEXTURE_2D, data->texture->id());
+				glUniform1i(tex_loc, 0);
+			}
+
+			glEnable(GL_BLEND);
+			glBlendEquation(GL_FUNC_ADD);
+			glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+			glDisable(GL_CULL_FACE);
+			glDisable(GL_DEPTH_TEST);
+			glDisable(GL_STENCIL_TEST);
+			glEnable(GL_SCISSOR_TEST);
+
+			ImRect quad = data->draw_rect;
+			// 6 vertices, each: pos.x, pos.y, u, v
+			float verts[6 * 4]
+			{
+				quad.GetBL().x, quad.GetBL().y, 0.0f, 1.0f, // BL
+				quad.GetBR().x, quad.GetBR().y, 1.0f, 1.0f, // BR
+				quad.GetTR().x, quad.GetTR().y, 1.0f, 0.0f, // TR
+
+				quad.GetBL().x, quad.GetBL().y, 0.0f, 1.0f, // BL
+				quad.GetTR().x, quad.GetTR().y, 1.0f, 0.0f, // TR
+				quad.GetTL().x, quad.GetTL().y, 0.0f, 0.0f  // TL
+			};
+
+			glBindVertexArray(quad_vao);
+			glBindBuffer(GL_ARRAY_BUFFER, quad_vbo);
+			glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(verts), verts);
+
+			auto col = ImGui::ColorConvertU32ToFloat4(data->fill_color);
+			auto col_loc = mask_shader.get_attribute_location("Color");
+			if (col_loc >= 0)
+			{
+				glVertexAttrib4f(col_loc, col.x, col.y, col.z, col.w);
+			}
+
+			glDrawArrays(GL_TRIANGLES, 0, 6);
+
+			// cleanup
+			glBindBuffer(GL_ARRAY_BUFFER, 0);
+			glBindVertexArray(0);
+			mask_shader.unbind();
+			delete data;
+
+		}, data);
+
+		draw_list->AddCallback(ImDrawCallback_ResetRenderState, nullptr);
+		draw_list->PopClipRect();
+		return edited;
 	}
 
 	[[nodiscard]] nlohmann::ordered_json mask_shape::serialize() const
