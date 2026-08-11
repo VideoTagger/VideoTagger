@@ -3,6 +3,7 @@
 #include "google_drive_video_importer.hpp"
 #include <core/app_context.hpp>
 #include <services/google/google_account_manager.hpp>
+#include <utils/filesystem.hpp>
 
 
 namespace vt
@@ -181,50 +182,31 @@ namespace vt
 			return video_download_result{ video_download_status::failed };
 		}
 
-		//TODO: Use vt::utils::filesystem::download_file
-
-		httplib::Client client("https://www.googleapis.com");
-		client.set_bearer_token_auth(access_token_result.access_token);
-
 		std::filesystem::path file_path = ctx_.downloads_dir_filepath / file_id_;
 		std::filesystem::create_directories(ctx_.downloads_dir_filepath);
 
-		std::ofstream file(file_path, std::ios::binary);
-		if (!file.is_open())
+		auto headers = httplib::Headers
 		{
-			debug::error("Failed to open file for download");
-			return video_download_result{ video_download_status::failed };
-		}
+			{ "Authorization", fmt::format("Bearer {}", access_token_result.access_token) }
+		};
 
-		//TODO: consider downloading in chunks to avoid loading the whole file in memory.
-		auto get_result = client.Get(fmt::format("/drive/v3/files/{}/?alt=media", file_id_), [this, token](uint64_t current_size, uint64_t total_size)
+		auto progess_callback = [this, token](uint64_t current_size, uint64_t total_size, std::optional<cancellation_token> cancel_token)
+		{
+			set_download_progress(static_cast<float>(current_size) / total_size);
+		};
+
+		auto download_url = fmt::format("https://www.googleapis.com/drive/v3/files/{}/?alt=media", file_id_);
+
+		if (!utils::filesystem::download_file(download_url, file_path, headers, token, progess_callback))
 		{
 			if (token.is_cancelled())
 			{
-				return false;
+				return video_download_result{ video_download_status::cancelled, file_path };
 			}
-			set_download_progress(static_cast<float>(current_size) / total_size);
 
-			return true;
-		});
-
-		auto get_error = get_result.error();
-		if (get_error == httplib::Error::Canceled)
-		{
-			return video_download_result{ video_download_status::cancelled, file_path };
-		}
-		if (get_error == httplib::Error::Connection or get_error == httplib::Error::ConnectionTimeout)
-		{
-			 //TODO: retry if there was a connection problem
-		}
-
-		if (!get_result or (get_result->status != 200 and get_result->status != 206))
-		{
-			debug::error("Error during download: {}", get_result ? get_result->reason : httplib::to_string(get_result.error()));
 			return video_download_result{ video_download_status::failed, file_path };
 		}
 
-		file.write(get_result->body.c_str(), get_result->body.size());
 		return video_download_result{ video_download_status::completed, file_path };
 	}
 }

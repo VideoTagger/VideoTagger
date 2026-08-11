@@ -118,6 +118,7 @@
 	"popup.video_resource_context_menu.delete": "Remove",
 	"popup.video_resource_context_menu.refresh": "Refresh",
 	"popup.video_resource_context_menu.download": "Download",
+	"popup.video_resource_context_menu.cancel_download": "Cancel download",
 	"tooltip.video_resource.not_downloadable": "Video not downloadable",
 	"validation.generic.empty": "Cannot be empty",
 	"validation.generic.already_exists": "Already exists",
