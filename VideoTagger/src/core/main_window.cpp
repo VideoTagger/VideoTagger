@@ -3111,6 +3111,11 @@ namespace vt
 
 					vid_win->with_overlay([&vid_win, source = vid_win->get_event_source()](video_id_t video_id, ImVec2 pos, ImVec2 size, ImVec2 tex_size)
 					{
+						bool select_tool_active = ctx_.session.toolbar.is_tool_active("select");
+						bool move_tool_active = ctx_.session.toolbar.is_tool_active("move");
+
+						if (!select_tool_active and !move_tool_active) return;
+
 						std::string popup_id = fmt::format("##VideoContext{}", video_id);
 						if (ImGui::BeginPopupContextWindow(popup_id.c_str()))
 						{
@@ -3118,17 +3123,20 @@ namespace vt
 
 							if (ImGui::IsWindowAppearing())
 							{
-								region_data = std::nullopt;
-								if (ctx_.session.is_any_region_hovered())
+								if (select_tool_active)
 								{
-									region_data = ctx_.session.hovered_regions().front();
-									ctx_.dispatch_event<region_select_request_event>(source, region_data->tag_name, region_data->segment, region_data->video_id,
-										region_data->attribute_instance, region_data->region_id);
+									region_data = std::nullopt;
+									if (ctx_.session.is_any_region_hovered())
+									{
+										region_data = ctx_.session.hovered_regions().front();
+										ctx_.dispatch_event<region_select_request_event>(source, region_data->tag_name, region_data->segment, region_data->video_id,
+											region_data->attribute_instance, region_data->region_id);
+									}
 								}
 							}
 
 							ui::widget_list context_items;
-							if (region_data.has_value())
+							if (select_tool_active and region_data.has_value())
 							{
 								auto& data_renderer = dynamic_cast<ui::impl::region_data_renderer&>(*region_data->attribute_instance);
 
