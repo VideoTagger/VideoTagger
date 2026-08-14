@@ -27,7 +27,7 @@
 #include <events/attributes/region_keyframe_delete_request_event.hpp>
 #include <events/attributes/region_keyframe_deleted_event.hpp>
 #include <events/attributes/region_set_interpolator_request_event.hpp>
-#include <events/attributes/region_track_cancel_request_event.hpp>
+#include <events/attributes/regions_track_cancel_request_event.hpp>
 #include <events/attributes/region_rename_request_event.hpp>
 
 #include <events/gizmo/gizmo_set_targets_event.hpp>
@@ -57,7 +57,7 @@ namespace vt
 			{
 				if (event.attribute_instance() != this) return;
 
-				ctx_.dispatch_event<region_track_cancel_request_event>(event_source_, event.tag_name(), event.segment(), event.video_id(), this, event.region_id());
+				ctx_.dispatch_event<regions_track_cancel_request_event>(event_source_);
 
 				if (!regions_.erase(event.region_id())) return;
 
@@ -417,7 +417,7 @@ namespace vt
 			tracker_ = tracker_registry.new_tracker(tracker_name());
 			if (tracker_ == nullptr) return false;
 
-			tracker_->init(kf_it->second, image);
+			if (!tracker_->init(kf_it->second, image)) return false;
 
 			tracked_shapes_.clear();
 			

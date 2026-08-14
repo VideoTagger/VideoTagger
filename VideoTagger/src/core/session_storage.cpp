@@ -36,10 +36,10 @@
 #include <events/attributes/region_hover_started_event.hpp>
 #include <events/attributes/region_hover_ended_event.hpp>
 #include <events/attributes/region_deleted_event.hpp>
-#include <events/attributes/region_track_cancel_request_event.hpp>
-#include <events/attributes/region_track_started_event.hpp>
-#include <events/attributes/region_track_ended_event.hpp>
-#include <events/attributes/region_track_request_event.hpp>
+#include <events/attributes/regions_track_cancel_request_event.hpp>
+#include <events/attributes/regions_track_started_event.hpp>
+#include <events/attributes/regions_track_ended_event.hpp>
+#include <events/attributes/regions_track_request_event.hpp>
 #include <events/attributes/attribute_deleted_event.hpp>
 #include <events/attributes/attribute_renamed_event.hpp>
 #include <events/attributes/attribute_instance_deleted_event.hpp>
@@ -320,11 +320,14 @@ namespace vt
 				}
 			}
 
-			if (tracked_region_.has_value())
+			if (tracked_regions_.has_value())
 			{
-				if (tracked_region_->region_data.tag_name == event.tag_name())
+				for (auto& region_data : tracked_regions_->region_data)
 				{
-					tracked_region_->region_data.tag_name = event.new_name();
+					if (region_data.tag_name == event.tag_name())
+					{
+						region_data.tag_name = event.new_name();
+					}
 				}
 			}
 
@@ -437,106 +440,171 @@ namespace vt
 			remove_hovered_region(event.attribute_instance(), event.region_id());
 		});
 
-		ctx_.add_event_listener<region_track_request_event>([this](const region_track_request_event& event)
+		ctx_.add_event_listener<regions_track_request_event>([this](const regions_track_request_event& event)
 		{
-			if (ctx_.session.is_region_tracked(event.attribute_instance(), event.region_id())) return;
+			struct track_data
+			{
+				region_info region;
+				std::shared_ptr<impl::region_tracker> tracker;
+				bool stopped = false;
+			};
 
 			auto progress = std::make_shared<float>(0.f);
 			cancellation_token token;
-
-			region_info region_data
+			
+			std::map<video_id_t, std::vector<track_data>> data_by_video;
+			for (auto& region_data : event.regions())
 			{
-				event.tag_name(),
-				event.segment(),
-				event.video_id(),
-				event.attribute_instance()->attribute_name(),
-				event.attribute_instance(),
-				event.region_id()
-			};
+				auto& data = data_by_video[region_data.video_id];
+				data.emplace_back(track_data{ region_data, region_data.attribute_instance->new_region_tracker() });
+			}
 
-			std::shared_ptr<impl::region_tracker> region_tracker = event.attribute_instance()->new_region_tracker();
+			tracked_regions_.emplace();
+			tracked_regions_->region_data = event.regions();
+			tracked_regions_->progress = progress;
 
-			auto task = ctx_.tasks.run([region_tracker, region_data, tracker = event.tracker(), video_id = event.video_id(),
-				timespan = event.track_span(), replace_keyframes = event.replace_keyframes(), progress](cancellation_token& cancel_token) mutable
+			for (auto& [video_id, data] : data_by_video)
 			{
-				auto video = ctx_.current_project->videos.get(video_id);
-				if (video == nullptr) return;
-
-				auto stream = video->video();
-				if (!stream.is_open()) return;
-
-				auto current_ts = timespan.start;
-
-				//TODO: special case for stateless predictors
-				//bool is_stateless = false;
-				//{
-				//	auto it = ctx_.shape_predictor_registries.find(region_data.attribute_instance->shape_type_info());
-				//	if (it == ctx_.shape_predictor_registries.end())
-				//	{
-				//		return;
-				//	}
-
-				//	
-				//}
-
-				image<image_pixel_format::rgb8> image(stream.width(), stream.height());
-				if (!stream.update_frame(image, current_ts.total_nanoseconds, true)) return;
-				current_ts = timestamp{ stream.current_frame()->timestamp() };
-
-				if (!region_tracker->init(region_data, tracker, timespan, image, replace_keyframes)) return;
-
-				do
+				auto task = ctx_.tasks.run([data, tracker_name = event.tracker(), video_id,
+					timespan = event.track_span(), replace_keyframes = event.replace_keyframes(), progress](cancellation_token& cancel_token) mutable
 				{
-					if (cancel_token.is_cancelled()) break;
+					auto video = ctx_.current_project->videos.get(video_id);
+					if (video == nullptr) return;
 
-					*progress = region_tracker->progress();
+					auto stream = video->video();
+					if (!stream.is_open()) return;
 
-					current_ts = timestamp{ stream.current_frame()->next_timestamp() };
-					if (!stream.update_frame(image, current_ts.total_nanoseconds, true)) break;
+					auto current_ts = timespan.start;
+
+					image<image_pixel_format::rgb8> image(stream.width(), stream.height());
+					if (!stream.update_frame(image, current_ts.total_nanoseconds, true)) return;
 					current_ts = timestamp{ stream.current_frame()->timestamp() };
 
-				} while (!stream.eof() and !region_tracker->update(current_ts, image));
+					bool all_trackers_stopped = true;
+					for (auto& region_data : data)
+					{
+						if (!region_data.tracker->init(region_data.region, tracker_name, timespan, image, replace_keyframes))
+						{
+							region_data.stopped = true;
+						}
+						else
+						{
+							all_trackers_stopped = false;
+						}
+					}
 
-			}, token);
+					if (all_trackers_stopped) return;
 
-			task.then(ctx_.tasks.on_main(), [region_tracker, source = event.source(), region_data](cancellation_token& cancel_token)
-			{
-				region_tracker->finalize(true);
+					do
+					{
+						all_trackers_stopped = true;
 
-				ctx_.dispatch_event<region_track_ended_event>(source, region_data.tag_name, region_data.segment, region_data.video_id, region_data.attribute_instance, region_data.region_id);
-			}, token);
+						if (cancel_token.is_cancelled()) break;
 
-			tracked_region_.emplace(region_data, progress, std::move(task));
+						//*progress = region_tracker->progress();
+
+						current_ts = timestamp{ stream.current_frame()->next_timestamp() };
+						if (!stream.update_frame(image, current_ts.total_nanoseconds, true)) break;
+						current_ts = timestamp{ stream.current_frame()->timestamp() };
+
+						for (auto& region_data : data)
+						{
+							if (region_data.tracker->update(current_ts, image))
+							{
+								region_data.stopped = true;
+							}
+							else
+							{
+								all_trackers_stopped = false;
+							}
+						}
+
+					} while (!stream.eof() and !all_trackers_stopped);
+
+				}, token);
+
+				task.then(ctx_.tasks.on_main(), [data, source = event.source()](cancellation_token& cancel_token)
+				{
+					std::vector<region_info> regions;
+					for (auto& region_data : data)
+					{
+						region_data.tracker->finalize(true);
+						regions.push_back(region_data.region);
+					}
+
+					ctx_.dispatch_event<regions_track_ended_event>(source, regions);
+				}, token);
+
+				tracked_regions_->tasks.emplace_back(std::move(task));
+			}
+
 			
-			ctx_.dispatch_event<region_track_started_event>(event.source(), region_data.tag_name, region_data.segment, region_data.video_id, region_data.attribute_instance, region_data.region_id);
+			ctx_.dispatch_event<regions_track_started_event>(event.source(), event.regions());
 
 			ctx_.global_progress_popup = std::make_unique<ui::progress_popup>
 			(
-				"Tracking", progress,
+				"Tracking",
+				[data_by_video](ui::progress_popup&)
+				{
+					size_t count{};
+					float progress{};
+
+					for (auto& [_, data] : data_by_video)
+					{
+						for (auto& tracker : data)
+						{
+							progress += tracker.stopped ? 1.f : tracker.tracker->progress();
+						}
+
+						count += data.size() + 1;
+					}
+
+					return progress / count;
+				},
 				[](const std::optional<float>& progress)
 				{
 					return *progress >= 1.f or !ctx_.session.is_any_region_tracked();
 				},
-				[source = event.source(), region_data = region_data]()
+				[source = event.source()]()
 				{
-					ctx_.dispatch_event<region_track_cancel_request_event>(source, region_data.tag_name, region_data.segment, region_data.video_id, region_data.attribute_instance, region_data.region_id);
+					ctx_.dispatch_event<regions_track_cancel_request_event>(source);
 				}
 			);
 		});
 
-		ctx_.add_event_listener<region_track_ended_event>([this](const region_track_ended_event& event)
+		ctx_.add_event_listener<regions_track_ended_event>([this](const regions_track_ended_event& event)
 		{
-			tracked_region_.reset();
+			if (!tracked_regions_.has_value()) return;
+
+			for (auto& region : event.regions())
+			{
+				auto it = std::find_if(tracked_regions_->region_data.begin(), tracked_regions_->region_data.end(), [id = region.region_id](const region_info& region)
+				{
+					return id == region.region_id;
+				});
+
+				if (it != tracked_regions_->region_data.end())
+				{
+					tracked_regions_->region_data.erase(it);
+				}
+			}
+
+			if (tracked_regions_->region_data.empty())
+			{
+				tracked_regions_.reset();
+			}
 		});
 
-		ctx_.add_event_listener<region_track_cancel_request_event>([this](const region_track_cancel_request_event& event)
+		ctx_.add_event_listener<regions_track_cancel_request_event>([this](const regions_track_cancel_request_event& event)
 		{
-			if (!tracked_region_.has_value()) return;
+			if (!tracked_regions_.has_value()) return;
 
-			auto& task = tracked_region_->task;
-			task.token().cancel();
+			for (auto& task : tracked_regions_->tasks)
+			{
+				task.token().cancel();
+			}
 
-			tracked_region_.reset();
+			tracked_regions_.reset();
 		});
 
 		ctx_.add_event_listener<attribute_deleted_event>([this](const attribute_deleted_event& event)
@@ -549,7 +617,7 @@ namespace vt
 				}
 			}
 
-			tracked_region_.reset();
+			tracked_regions_.reset();
 
 			for (auto it = hovered_regions_.begin(); it != hovered_regions_.end();)
 			{
@@ -573,11 +641,14 @@ namespace vt
 				}
 			}
 
-			if (tracked_region_.has_value())
+			if (tracked_regions_.has_value())
 			{
-				if (tracked_region_->region_data.attribute_name == event.attribute_name())
+				for (auto& region_data : tracked_regions_->region_data)
 				{
-					tracked_region_->region_data.attribute_name = event.attribute_name();
+					if (region_data.attribute_name == event.attribute_name())
+					{
+						region_data.attribute_name = event.attribute_name();
+					}
 				}
 			}
 
@@ -599,7 +670,7 @@ namespace vt
 				}
 			}
 
-			tracked_region_.reset();
+			tracked_regions_.reset();
 
 			for (auto it = hovered_regions_.begin(); it != hovered_regions_.end();)
 			{
@@ -679,19 +750,26 @@ namespace vt
 		return !hovered_regions_.empty();
 	}
 
-	const std::optional<tracked_region_data>& session_storage::tracked_region() const
+	const std::optional<tracked_regions_data>& session_storage::tracked_regions() const
 	{
-		return tracked_region_;
+		return tracked_regions_;
 	}
 
 	bool session_storage::is_region_tracked(impl::attribute_instance* attribute_instance, region_id_t region_id) const
 	{
-		return tracked_region_.has_value() and (tracked_region_->region_data.attribute_instance == attribute_instance and tracked_region_->region_data.region_id == region_id);
+		if (!tracked_regions_.has_value()) return false;
+
+		for (auto& region_data : tracked_regions_->region_data)
+		{
+			if (region_data.attribute_instance == attribute_instance and region_data.region_id == region_id) return true;
+		}
+
+		return false;
 	}
 
 	bool session_storage::is_any_region_tracked() const
 	{
-		return tracked_region_.has_value();
+		return tracked_regions_.has_value();
 	}
 
 	bool session_storage::is_segment_selected(const std::string& tag, segment_id id) const
@@ -835,7 +913,7 @@ namespace vt
 		current_video_group_id_ = invalid_video_group_id;
 		insert_segment_marks_.clear();
 		selected_region_.reset();
-		tracked_region_.reset();
+		tracked_regions_.reset();
 		hovered_regions_.clear();
 		
 		gizmo_data_.video_id = 0;
@@ -856,7 +934,4 @@ namespace vt
 		hovered_regions_.erase(it);
 		return true;
 	}
-
-	tracked_region_data::tracked_region_data(region_info region_data, std::shared_ptr<float> progress, cancellable_task<void>&& task) :
-		region_data{ std::move(region_data) }, progress{ std::move(progress) }, task{ std::move(task) } {}
 }

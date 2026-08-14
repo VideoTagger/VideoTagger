@@ -141,7 +141,7 @@ extern "C"
 #include <events/video_resource/video_open_in_explorer_request_event.hpp>
 #include <events/video_resource/video_locate_request_event.hpp>
 
-#include <events/attributes/region_track_cancel_request_event.hpp>
+#include <events/attributes/regions_track_cancel_request_event.hpp>
 #include <events/attributes/region_select_request_event.hpp>
 #include <events/attributes/region_deselect_request_event.hpp>
 #include <events/attributes/region_delete_request_event.hpp>
@@ -354,7 +354,7 @@ namespace vt
 					{
 						for (auto& id : shape_attr_instance->region_ids())
 						{
-							ctx_.dispatch_event<region_track_cancel_request_event>(event_source, event.tag(), event.id(), video_id, shape_attr_instance, id);
+							ctx_.dispatch_event<regions_track_cancel_request_event>(event_source);
 						}
 					}
 

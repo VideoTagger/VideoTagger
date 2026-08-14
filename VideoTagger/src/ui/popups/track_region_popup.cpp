@@ -4,7 +4,7 @@
 #include <events/player/playback_suspend_request_event.hpp>
 #include <events/player/playback_resume_request_event.hpp>
 
-#include <events/attributes/region_track_request_event.hpp>
+#include <events/attributes/regions_track_request_event.hpp>
 
 #include <widgets/controls.hpp>
 
@@ -48,7 +48,17 @@ namespace vt::ui
 			{
 			case 0:
 			{
-				ctx_.dispatch_event<region_track_request_event>(event_source_, active_tag_, active_segment_, video_id_, attr_instance_, region_id_,
+				region_info region
+				{
+					active_tag_,
+					active_segment_,
+					video_id_,
+					attr_instance_->attribute_name(),
+					attr_instance_,
+					region_id_
+				};
+
+				ctx_.dispatch_event<regions_track_request_event>(event_source_, std::vector{ region },
 					utils::timestamp_span{ current_ts_, target_ts_ }, trackers_combo_.selected_item(), replace_keyframes_);
 				close();
 				break;

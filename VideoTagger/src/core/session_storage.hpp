@@ -44,13 +44,11 @@ namespace vt
 		event_source begin_drag_source{};
 	};
 
-	struct tracked_region_data
+	struct tracked_regions_data
 	{
-		tracked_region_data(region_info region_data, std::shared_ptr<float> progress, cancellable_task<void>&& task);
-
-		region_info region_data;
+		std::vector<region_info> region_data;
+		std::vector<cancellable_task<void>> tasks;
 		std::shared_ptr<float> progress;
-		cancellable_task<void> task;
 	};
 
 	struct gizmo_data
@@ -73,7 +71,7 @@ namespace vt
 		std::vector<insert_segment_mark_data> insert_segment_marks_;
 
 		std::optional<region_info> selected_region_;
-		std::optional<tracked_region_data> tracked_region_;
+		std::optional<tracked_regions_data> tracked_regions_;
 
 		gizmo_data gizmo_data_;
 		bool is_edit_mode_;
@@ -105,7 +103,7 @@ namespace vt
 		bool is_region_hovered(impl::attribute_instance* attribute_instance, region_id_t region_id) const;
 		bool is_any_region_hovered() const;
 
-		const std::optional<tracked_region_data>& tracked_region() const;
+		const std::optional<tracked_regions_data>& tracked_regions() const;
 		bool is_region_tracked(impl::attribute_instance* attribute_instance, region_id_t region_id) const;
 		bool is_any_region_tracked() const;
 
