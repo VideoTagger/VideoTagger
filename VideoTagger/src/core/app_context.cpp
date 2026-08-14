@@ -53,7 +53,9 @@
 #include <attributes/tools/extensions/wand_grabcut_extension.hpp>
 #include <attributes/tools/extensions/wand_watershed_extension.hpp>
 #include <attributes/tools/extensions/wand_sam2_extension.hpp>
+#include <attributes/tools/extensions/wand_sam3_extension.hpp>
 #include <models/sam2/sam2_model.hpp>
+#include <models/sam3/sam3_model.hpp>
 
 namespace vt
 {
@@ -90,6 +92,7 @@ namespace vt
 		wand_extensions.register_extension<ui::wand_grabcut_extension>("grabcut", "GrabCut");
 		wand_extensions.register_extension<ui::wand_watershed_extension>("watershed", "Watershed");
 		wand_extensions.register_extension<ui::wand_sam2_extension>("sam2", "SAM 2");
+		wand_extensions.register_extension<ui::wand_sam3_extension>("sam3", "SAM 3");
 	}
 
 	void app_context::init_shape_predictor_registries()
@@ -152,6 +155,7 @@ namespace vt
 	{
 		debug::log("Initializing model registry...");
 		model_registry.register_model<sam2_model>(sam2_model_variant::hiera_small);
+		model_registry.register_model<sam3_model>(sam3_model_variant::vit_h);
 		debug::log("Finished initializing model registry");
 	}
 

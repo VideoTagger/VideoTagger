@@ -42,6 +42,11 @@ namespace vt
 		return session_.GetInputTypeInfo(index);
 	}
 
+	bool onnx_model::has_input(const std::string& name) const
+	{
+		return std::find(input_names_.begin(), input_names_.end(), name) != input_names_.end();
+	}
+
 	size_t onnx_model::input_count() const
 	{
 		return input_names_.size();
