@@ -344,6 +344,9 @@ namespace vt
 		cancellable_task(cancellation_token&& token) : token_{ std::move(token) } {}
 		explicit cancellable_task(cancellation_token token, std::shared_ptr<task_state<type>> state) : token_{ token }, task<type>{ state } {}
 
+		cancellable_task& operator=(const cancellable_task&) = delete;
+		cancellable_task& operator=(cancellable_task&&) = default;
+
 	private:
 		cancellation_token token_;
 
