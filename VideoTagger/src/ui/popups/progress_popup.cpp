@@ -6,10 +6,20 @@
 
 namespace vt::ui
 {
-	progress_popup::progress_popup(const std::string& description, std::shared_ptr<float> progress, std::function<bool(const std::optional<float>& progress)> should_close, std::function<void()> on_cancel, std::optional<bool*> open) :
+	progress_popup::progress_popup(const std::string& description, std::function<std::optional<float>(progress_popup&)> progress_callback, std::function<bool(const std::optional<float>& progress)> should_close, std::function<void()> on_cancel, std::optional<bool*> open) :
 		modal_popup{ "progress", open, ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoResize },
-		description_{ description }, progress_{ progress }, should_close_{ should_close }, on_cancel_{ on_cancel }
-	{}
+		description_{ description }, progress_callback_{ progress_callback }, should_close_{ should_close }, on_cancel_{ on_cancel }
+	{
+		if (progress_callback_ != nullptr)
+		{
+			progress_value_ = 0.f;
+		}
+	}
+
+	void progress_popup::set_description(const std::string& description)
+	{
+		description_ = description;
+	}
 
 	void progress_popup::pre_style()
 	{
@@ -18,7 +28,12 @@ namespace vt::ui
 
 	void progress_popup::on_render()
 	{
-		if (should_close_(progress_ == nullptr ? std::nullopt : std::optional{ *progress_ }))
+		if (progress_callback_ != nullptr)
+		{
+			progress_value_ = progress_callback_(*this);
+		}
+
+		if (should_close_(progress_value_))
 		{
 			close();
 			return;
@@ -44,11 +59,11 @@ namespace vt::ui
 			std::string suffix = std::string(dot_count_, '.') + std::string(max_dots - dot_count_, ' ');
 
 			ImGui::Text("%s%s", description_.c_str(), suffix.c_str());
-			if (progress_ != nullptr)
+			if (progress_value_.has_value())
 			{
-				ImGui::ProgressBar(*progress_, ImVec2{ width, ImGui::GetTextLineHeight() / 3.f }, "");
+				ImGui::ProgressBar(*progress_value_, ImVec2{ width, ImGui::GetTextLineHeight() / 3.f }, "");
 				taskbar.set_state(taskbar_state::normal);
-				taskbar.set_value(*progress_, 1.0f, 0.f);
+				taskbar.set_value(*progress_value_, 1.0f, 0.f);
 			}
 			else
 			{
