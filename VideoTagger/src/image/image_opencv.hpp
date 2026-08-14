@@ -17,6 +17,8 @@ namespace vt
 	template<> struct pixel_format_traits<image_pixel_format::gray32f> { static constexpr int cv_type = CV_32FC1; };
 	template<> struct pixel_format_traits<image_pixel_format::rgb8> { static constexpr int cv_type = CV_8UC3; };
 	template<> struct pixel_format_traits<image_pixel_format::bgr8> { static constexpr int cv_type = CV_8UC3; };
+	template<> struct pixel_format_traits<image_pixel_format::hsv8> { static constexpr int cv_type = CV_8UC3; };
+	template<> struct pixel_format_traits<image_pixel_format::hsv32f> { static constexpr int cv_type = CV_32FC3; };
 	template<> struct pixel_format_traits<image_pixel_format::rgba8> { static constexpr int cv_type = CV_8UC4; };
 	template<> struct pixel_format_traits<image_pixel_format::bgra8> { static constexpr int cv_type = CV_8UC4; };
 	template<> struct pixel_format_traits<image_pixel_format::rgb32f> { static constexpr int cv_type = CV_32FC3; };

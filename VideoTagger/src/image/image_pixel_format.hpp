@@ -94,6 +94,24 @@ namespace vt
 			}
 		};
 
+		template<typename type>
+		struct hsv
+		{
+			type h{};
+			type s{};
+			type v{};
+
+			constexpr bool operator==(const hsv& other) const
+			{
+				return h == other.h and s == other.s and v == other.v;
+			}
+
+			constexpr bool operator!=(const hsv& other) const
+			{
+				return !(*this == other);
+			}
+		};
+
 		using gray8 = gray<uint8_t>;
 		using gray32f = gray<float>;
 		using rgb8 = rgb<uint8_t>;
@@ -104,5 +122,7 @@ namespace vt
 		using bgr32f = bgr<float>;
 		using rgba32f = rgba<float>;
 		using bgra32f = bgra<float>;
+		using hsv8 = hsv<uint8_t>;
+		using hsv32f = hsv<float>;
 	};
 }
