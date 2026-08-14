@@ -5,6 +5,8 @@
 #include <attributes/shapes/rectangle_shape.hpp>
 #include <image/image_opencv.hpp>
 
+#include <image/image_convert.hpp>
+
 namespace vt::impl
 {
 	class opencv_rectangle_tracker : public shape_tracker<rectangle_shape>
@@ -19,7 +21,12 @@ namespace vt::impl
 	protected:
 		virtual bool on_init(const rectangle_shape& shape, const image<image_pixel_format::rgb8>& image) override
 		{
-			tracker_->init(image_to_cvmat_view(image), cv::Rect{ shape.start.x(), shape.start.y(), shape.width(), shape.height() });
+			auto x = std::clamp(shape.start.x(), 0, image.width() - 1);
+			auto y = std::clamp(shape.start.y(), 0, image.height() - 1);
+			auto width = std::clamp(shape.width(), 1, image.width() - x);
+			auto height = std::clamp(shape.height(), 1, image.height() - y);
+
+			tracker_->init(image_to_cvmat_view(image), cv::Rect{ x, y, width, height });
 			return true;
 		}
 

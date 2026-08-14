@@ -20,6 +20,7 @@ namespace vt::impl
 		float progress_{};
 
 	public:
+		/// @retrun True if initialized successfully, false otherwise
 		bool init(region_info region_data, const std::string& tracker_name, utils::timestamp_span track_timespan, const image<image_pixel_format::rgb8>& image, bool replace_keyframes)
 		{
 			region_data_ = std::move(region_data);
@@ -31,6 +32,7 @@ namespace vt::impl
 			return on_init(image);
 		}
 
+		/// @return True if tracking has finished, false otherwise
 		bool update(timestamp current_ts, const image<image_pixel_format::rgb8>& image)
 		{
 			bool done = true;
