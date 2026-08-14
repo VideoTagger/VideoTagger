@@ -280,9 +280,16 @@ namespace vt::ui
 		wand_tool_extension::render_properties();
 	}
 
+	void wand_sam3_extension::on_deactivate()
+	{
+		reset();
+	}
+
 	void wand_sam3_extension::on_done()
 	{
+		rect_select_tool::reset();
 		points_tool::reset();
+		set_data(nullptr);
 	}
 
 	void wand_sam3_extension::on_finish_selection(video_id_t video_id, const rectangle_shape& rect, const utils::vec2<int>& tex_size)

@@ -30,11 +30,14 @@ namespace vt::ui
 		void generate_mask(video_id_t video_id, const utils::vec2<int>& tex_size);
 
 		virtual void reset() override;
+		virtual void on_done() override;
 
 		virtual uint32_t property_column_count() const override;
 
 		virtual void render_overlay(video_id_t video_id, ImVec2 pos, ImVec2 size, ImVec2 tex_size) override;
 		virtual void render_properties() override;
+
+		virtual void on_deactivate() override;
 
 		void on_finish_selection(video_id_t video_id, const rectangle_shape& rect, const utils::vec2<int>& tex_size);
 	};

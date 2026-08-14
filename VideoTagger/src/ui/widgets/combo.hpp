@@ -34,7 +34,7 @@ namespace vt::ui
 			items_ = items;
 			if (selected_ >= items_.size())
 			{
-				selected_ = 0;
+				set_selected(0);
 			}
 		}
 
@@ -45,7 +45,15 @@ namespace vt::ui
 
 		constexpr void set_selected(size_t selected)
 		{
-			selected_ = std::clamp(selected, (size_t)0, items_.size() - 1);
+			auto new_selected = std::clamp(selected, (size_t)0, items_.size() - 1);
+			if (new_selected != selected_)
+			{
+				selected_ = new_selected;
+				if (callback_ != nullptr)
+				{
+					callback_({ selected_, items_.at(selected_) });
+				}
+			}
 		}
 
 		///@brief Sets the available width for the combo box. When width > 0.f, the combo box will use all of the available content region width. (default: 0.f)

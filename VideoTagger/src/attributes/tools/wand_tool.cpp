@@ -10,16 +10,20 @@ namespace vt
 		on_switch_context();
 	}
 
+	void wand_tool::on_deactivate()
+	{
+		auto ext = active_extension();
+		if (ext != nullptr)
+		{
+			ext->set_data(nullptr);
+			ext->on_deactivate();
+		}
+		set_data(nullptr);
+	}
+
 	void wand_tool::on_switch_context()
 	{
-		auto ext = ctx_.wand_extensions.first();
-		if (ext == nullptr) return;
-		ext->set_data(this->data());
-		switch_extension(ext);
-
 		auto extensions = extension_names();
-		extension_combo_.set_items(extensions);
-
 		extension_combo_.set_callback([this](const std::pair<size_t, const std::string&>& item)
 		{
 			auto it = std::find_if(ctx_.wand_extensions.begin(), ctx_.wand_extensions.end(), [&item](const auto& pair)
@@ -28,9 +32,11 @@ namespace vt
 			});
 			if (it != ctx_.wand_extensions.end())
 			{
-				switch_extension(it->second);
+				auto& ext = it->second;
+				switch_extension(ext);
 			}
 		});
+		extension_combo_.set_items(extensions);
 	}
 
 	void wand_tool::render_overlay(video_id_t video_id, ImVec2 pos, ImVec2 size, ImVec2 tex_size)
@@ -165,6 +171,7 @@ namespace vt
 		{
 			result.push_back(ext->name());
 		}
+		std::sort(result.begin(), result.end());
 		return result;
 	}
 }

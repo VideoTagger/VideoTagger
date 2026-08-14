@@ -275,8 +275,14 @@ namespace vt::ui
 		wand_tool_extension::render_properties();
 	}
 
+	void wand_sam2_extension::on_deactivate()
+	{
+		reset();
+	}
+
 	void wand_sam2_extension::on_done()
 	{
+		rect_select_tool::reset();
 		points_tool::reset();
 	}
 

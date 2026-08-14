@@ -179,7 +179,7 @@ namespace vt::ui
 	{
 		if (active_tool_ != nullptr)
 		{
-			active_tool_->on_deativate();
+			active_tool_->on_deactivate();
 		}
 	}
 
