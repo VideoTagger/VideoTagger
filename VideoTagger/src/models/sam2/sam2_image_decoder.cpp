@@ -3,9 +3,8 @@
 
 namespace vt
 {
-	sam2_image_decoder::sam2_image_decoder(Ort::Env& env, const std::filesystem::path& model_path) : onnx_model{ env, model_path }, encoder_input_size_{0,0}, scale_factor_{ 4 }
+	sam2_image_decoder::sam2_image_decoder(Ort::Env& env, const std::filesystem::path& model_path) : onnx_model{ env, model_path }, encoder_input_size_{ 0, 0 }, scale_factor_{ 4 }
 	{
-		Ort::AllocatorWithDefaultOptions allocator;
 		if (session_.GetInputCount() > 0)
 		{
 			auto type_info = session_.GetInputTypeInfo(0);
@@ -28,7 +27,7 @@ namespace vt
 	{
 		sam2_decoder_result result;
 		const auto& img_size = encoder_result.original_size;
-		if (img_size.x() == 0 or img_size.y() == 0)
+		if (img_size.x() <= 0 or img_size.y() <= 0)
 		{
 			throw std::runtime_error("Invalid original image size in encoder result");
 		}

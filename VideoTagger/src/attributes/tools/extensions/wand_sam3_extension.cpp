@@ -1,32 +1,32 @@
 #include "pch.hpp"
-#include "wand_sam2_extension.hpp"
+#include "wand_sam3_extension.hpp"
 #include <ui/widgets/common.hpp>
 #include <ui/icons.hpp>
 #include <core/app_context.hpp>
-#include <models/sam2/sam2_model.hpp>
+#include <models/sam3/sam3_model.hpp>
 #include <models/model_load_guard.hpp>
 #include <opencv2/highgui.hpp>
 
 namespace vt::ui
 {
-	wand_sam2_extension::wand_sam2_extension(const std::string& name) : impl::wand_tool_extension{ name }, points_tool{ true }, mode_{ wand_sam2_mode::rectangle }, is_fg_point_{ true } {}
+	wand_sam3_extension::wand_sam3_extension(const std::string& name) : impl::wand_tool_extension{ name }, points_tool{ true }, mode_{ wand_sam3_mode::rectangle }, is_fg_point_{ true } {}
 
-	bool wand_sam2_extension::is_rect_mode() const
+	bool wand_sam3_extension::is_rect_mode() const
 	{
-		return mode_ == wand_sam2_mode::rectangle;
+		return mode_ == wand_sam3_mode::rectangle;
 	}
 
-	bool wand_sam2_extension::is_points_mode() const
+	bool wand_sam3_extension::is_points_mode() const
 	{
-		return mode_ == wand_sam2_mode::points;
+		return mode_ == wand_sam3_mode::points;
 	}
 
-	bool wand_sam2_extension::is_mask_mode() const
+	bool wand_sam3_extension::is_mask_mode() const
 	{
-		return mode_ == wand_sam2_mode::mask;
+		return mode_ == wand_sam3_mode::mask;
 	}
 
-	void wand_sam2_extension::generate_mask(video_id_t video_id, const utils::vec2<int>& tex_size, const std::optional<utils::vec4<float>>& rect)
+	void wand_sam3_extension::generate_mask(video_id_t video_id, const utils::vec2<int>& tex_size, const std::optional<utils::vec4<float>>& rect)
 	{
 		auto vid_it = ctx_.displayed_videos.find(video_id);
 		if (vid_it == ctx_.displayed_videos.end()) return;
@@ -34,7 +34,7 @@ namespace vt::ui
 
 		switch (mode_)
 		{
-			case wand_sam2_mode::rectangle:
+			case wand_sam3_mode::rectangle:
 			{
 				auto& rect_data = rect_select_data();
 				if (rect_data == nullptr or rect_data->start == rect_data->end) return;
@@ -49,7 +49,7 @@ namespace vt::ui
 					{
 						try
 						{
-							auto sam = ctx_.model_registry.get_model<sam2_model>();
+							auto sam = ctx_.model_registry.get_model<sam3_model>();
 							if (sam == nullptr or !sam->load_if_needed())
 							{
 								throw std::runtime_error("Failed to load model");
@@ -63,13 +63,13 @@ namespace vt::ui
 
 							auto res = encoder->encode(img);
 
-							sam2_decoder_prompt prompt;
+							sam3_decoder_prompt prompt;
 							prompt.rect = rect;
 							auto dec_res = decoder->decode(res, prompt);
 
 							cv::Mat result_mask = dec_res.masks[0];
 							load_guard.release();
-								
+
 							auto mask_data = data();
 							if (mask_data == nullptr)
 							{
@@ -82,13 +82,13 @@ namespace vt::ui
 								result_mask.copyTo(cv_mask_data);
 								//ctx_.tasks.run_on_main([this, result_mask]()
 								//{
-								//	cv::imshow("SAM2 Mask", result_mask);
+								//	cv::imshow("SAM Mask", result_mask);
 								//});
 							}
 						}
 						catch (const std::exception& e)
 						{
-							debug::error("SAM2 encoder/decoder error: {}", e.what());
+							debug::error("SAM encoder/decoder error: {}", e.what());
 						}
 					}
 					set_busy(false);
@@ -99,7 +99,7 @@ namespace vt::ui
 				});
 			}
 			break;
-			case wand_sam2_mode::points:
+			case wand_sam3_mode::points:
 			{
 				auto& foreground_points = points_tool::fg_points();
 				auto& background_points = points_tool::bg_points();
@@ -115,7 +115,7 @@ namespace vt::ui
 					return;
 				}
 
-				ctx_.tasks.run([this, rect = rect, &vid_data, &foreground_points, &background_points]()
+				ctx_.tasks.run([this, &vid_data, &foreground_points, &background_points]()
 				{
 					set_busy(true);
 
@@ -125,7 +125,7 @@ namespace vt::ui
 					{
 						try
 						{
-							auto sam = ctx_.model_registry.get_model<sam2_model>();
+							auto sam = ctx_.model_registry.get_model<sam3_model>();
 							if (sam == nullptr or !sam->load_if_needed())
 							{
 								throw std::runtime_error("Failed to load model");
@@ -139,22 +139,27 @@ namespace vt::ui
 
 							auto res = encoder->encode(img);
 
-							sam2_decoder_prompt prompt;
+							sam3_decoder_prompt prompt;
 							for (auto& point : foreground_points.points)
 							{
-								sam2_decoder_prompt_point prompt_point;
-								prompt_point.label = sam2_label::foreground;
+								sam3_decoder_prompt_point prompt_point;
+								prompt_point.label = sam3_label::foreground;
 								prompt_point.point = { static_cast<float>(point.x()), static_cast<float>(point.y()) };
 								prompt.points.push_back(prompt_point);
 							}
 							for (auto& point : background_points.points)
 							{
-								sam2_decoder_prompt_point prompt_point;
-								prompt_point.label = sam2_label::background;
+								sam3_decoder_prompt_point prompt_point;
+								prompt_point.label = sam3_label::background;
 								prompt_point.point = { static_cast<float>(point.x()), static_cast<float>(point.y()) };
 								prompt.points.push_back(prompt_point);
 							}
 							auto dec_res = decoder->decode(res, prompt);
+							if (dec_res.masks.empty())
+							{
+								set_busy(false);
+								return;
+							}
 
 							cv::Mat result_mask = dec_res.masks[0];
 							load_guard.release();
@@ -171,36 +176,36 @@ namespace vt::ui
 								result_mask.copyTo(cv_mask_data);
 								//ctx_.tasks.run_on_main([this, result_mask]()
 								//{
-								//	cv::imshow("SAM2 Mask", result_mask);
+								//	cv::imshow("SAM Mask", result_mask);
 								//});
 							}
 						}
 						catch (const std::exception& e)
 						{
-							debug::error("SAM2 encoder/decoder error: {}", e.what());
+							debug::error("SAM3 encoder/decoder error: {}", e.what());
 						}
 					}
 					set_busy(false);
 				})
-				/*.then(ctx_.tasks.on_main(), [this]()
-				{
-					points_tool::reset();
-				})*/;
+					/*.then(ctx_.tasks.on_main(), [this]()
+					{
+						points_tool::reset();
+					})*/;
 			}
 			break;
 		}
 	}
 
-	void wand_sam2_extension::reset()
+	void wand_sam3_extension::reset()
 	{
-		mode_ = wand_sam2_mode::rectangle;
+		mode_ = wand_sam3_mode::rectangle;
 		rect_select_tool::reset();
 		points_tool::reset();
 		is_fg_point_ = true;
 		set_data(nullptr);
 	}
 
-	uint32_t wand_sam2_extension::property_column_count() const
+	uint32_t wand_sam3_extension::property_column_count() const
 	{
 		auto col_count = 1;
 		if (is_mask_mode())
@@ -210,7 +215,7 @@ namespace vt::ui
 		return col_count;
 	}
 
-	void wand_sam2_extension::render_overlay(video_id_t video_id, ImVec2 pos, ImVec2 size, ImVec2 tex_size)
+	void wand_sam3_extension::render_overlay(video_id_t video_id, ImVec2 pos, ImVec2 size, ImVec2 tex_size)
 	{
 		if (is_busy()) return;
 
@@ -220,17 +225,17 @@ namespace vt::ui
 
 		switch (mode_)
 		{
-			case wand_sam2_mode::rectangle:
+			case wand_sam3_mode::rectangle:
 			{
 				handle_rect_selection(video_id, ImRect(pos, pos + size), { static_cast<int>(tex_size.x), static_cast<int>(tex_size.y) });
 			}
 			break;
-			case wand_sam2_mode::points:
+			case wand_sam3_mode::points:
 			{
 				points_tool::handle_point_selection(video_id, ImRect(pos, pos + size), { static_cast<int>(tex_size.x), static_cast<int>(tex_size.y) });
 			}
 			break;
-			case wand_sam2_mode::mask:
+			case wand_sam3_mode::mask:
 			{
 				auto shape_data = data();
 				if (shape_data != nullptr and is_focused)
@@ -244,26 +249,26 @@ namespace vt::ui
 		}
 	}
 
-	void wand_sam2_extension::render_properties()
+	void wand_sam3_extension::render_properties()
 	{
 		ImGui::TableNextColumn();
 		{
 			ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2{});
 			if (ui::icon_toggle_button(icons::tool_rect_selector, is_rect_mode()))
 			{
-				mode_ = wand_sam2_mode::rectangle;
+				mode_ = wand_sam3_mode::rectangle;
 			}
 			ui::tooltip("Rectangle");
 			ImGui::SameLine();
 			if (ui::icon_toggle_button(icons::tool_points, is_points_mode()))
 			{
-				mode_ = wand_sam2_mode::points;
+				mode_ = wand_sam3_mode::points;
 			}
 			ui::tooltip("Points");
 			ImGui::SameLine();
 			if (ui::icon_toggle_button(icons::tool_mask, is_mask_mode()))
 			{
-				mode_ = wand_sam2_mode::mask;
+				mode_ = wand_sam3_mode::mask;
 			}
 			ui::tooltip("Mask");
 			ImGui::PopStyleVar();
@@ -275,18 +280,19 @@ namespace vt::ui
 		wand_tool_extension::render_properties();
 	}
 
-	void wand_sam2_extension::on_deactivate()
+	void wand_sam3_extension::on_deactivate()
 	{
 		reset();
 	}
 
-	void wand_sam2_extension::on_done()
+	void wand_sam3_extension::on_done()
 	{
 		rect_select_tool::reset();
 		points_tool::reset();
+		set_data(nullptr);
 	}
 
-	void wand_sam2_extension::on_finish_selection(video_id_t video_id, const rectangle_shape& rect, const utils::vec2<int>& tex_size)
+	void wand_sam3_extension::on_finish_selection(video_id_t video_id, const rectangle_shape& rect, const utils::vec2<int>& tex_size)
 	{
 		bool has_rect = rect.start != rect.end;
 		std::optional<utils::vec4<float>> vec_rect;
@@ -296,7 +302,7 @@ namespace vt::ui
 			auto start_y = std::clamp(std::min(rect.start.y(), rect.end.y()), 0, tex_size.y());
 			auto end_x = std::clamp(std::max(rect.start.x(), rect.end.x()), 0, tex_size.x());
 			auto end_y = std::clamp(std::max(rect.start.y(), rect.end.y()), 0, tex_size.y());
-			
+
 			vec_rect =
 			{
 				static_cast<float>(start_x),
@@ -308,7 +314,7 @@ namespace vt::ui
 		generate_mask(video_id, tex_size, vec_rect);
 	}
 
-	void wand_sam2_extension::on_finish_point_selection(video_id_t video_id, const utils::vec2<int>& tex_size)
+	void wand_sam3_extension::on_finish_point_selection(video_id_t video_id, const utils::vec2<int>& tex_size)
 	{
 		generate_mask(video_id, tex_size);
 	}

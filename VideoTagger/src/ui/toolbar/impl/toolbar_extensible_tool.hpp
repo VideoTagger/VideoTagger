@@ -33,7 +33,7 @@ namespace vt::ui::impl
 		{
 			if (active_extension_ != nullptr)
 			{
-				active_extension_->on_deativate();
+				active_extension_->on_deactivate();
 			}
 			active_extension_ = new_extension;
 			on_switch_extension(new_extension);

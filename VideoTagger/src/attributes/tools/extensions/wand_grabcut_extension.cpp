@@ -163,6 +163,12 @@ namespace vt::ui
 	{
 		mode_ = wand_grabcut_mode::rectangle;
 		rect_select_tool::reset();
+		set_data(nullptr);
+	}
+
+	void wand_grabcut_extension::on_done()
+	{
+		rect_select_tool::reset();
 	}
 
 	uint32_t wand_grabcut_extension::property_column_count() const
@@ -247,6 +253,11 @@ namespace vt::ui
 			brush_tool::render_properties();
 		}
 		wand_tool_extension::render_properties();
+	}
+
+	void wand_grabcut_extension::on_deactivate()
+	{
+		reset();
 	}
 
 	void wand_grabcut_extension::on_finish_selection(video_id_t video_id, const rectangle_shape& rect, const utils::vec2<int>& tex_size)

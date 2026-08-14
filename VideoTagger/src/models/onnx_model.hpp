@@ -21,6 +21,7 @@ namespace vt
 
 	public:
 		Ort::TypeInfo get_input_type_info(const std::string& name) const;
+		bool has_input(const std::string& name) const;
 
 		size_t input_count() const;
 		size_t output_count() const;

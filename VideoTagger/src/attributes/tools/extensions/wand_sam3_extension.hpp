@@ -12,20 +12,20 @@
 
 namespace vt::ui
 {
-	enum class wand_sam2_mode : uint8_t
+	enum class wand_sam3_mode : uint8_t
 	{
 		rectangle,
 		points,
 		mask,
 	};
 
-	struct wand_sam2_extension : public impl::wand_tool_extension, public vt::impl::resettable, public vt::impl::brush_tool, public vt::impl::rect_select_tool, public vt::impl::points_tool
+	struct wand_sam3_extension : public impl::wand_tool_extension, public vt::impl::resettable, public vt::impl::brush_tool, public vt::impl::rect_select_tool, public vt::impl::points_tool
 	{
 	public:
-		wand_sam2_extension(const std::string& name);
+		wand_sam3_extension(const std::string& name);
 
 	private:
-		wand_sam2_mode mode_;
+		wand_sam3_mode mode_;
 		bool is_fg_point_;
 
 	public:

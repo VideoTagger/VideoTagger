@@ -17,6 +17,7 @@ namespace vt
 
 	public:
 		virtual void on_activate() override;
+		virtual void on_deactivate() override;
 		virtual void on_switch_context() override;
 
 		virtual void render_overlay(video_id_t video_id, ImVec2 pos, ImVec2 size, ImVec2 tex_size) override;

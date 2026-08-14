@@ -141,6 +141,7 @@ namespace vt::ui
 	{
 		mode_ = wand_watershed_mode::points;
 		points_tool::reset();
+		set_data(nullptr);
 	}
 
 	void wand_watershed_extension::on_done()

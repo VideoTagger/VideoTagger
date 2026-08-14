@@ -1,4 +1,5 @@
 #pragma once
+#include <vector>
 #include <opencv2/core.hpp>
 
 #include <utils/vec.hpp>
@@ -14,11 +15,16 @@ namespace vt
 		std::vector<float> scores;
 	};
 
+	enum class sam2_label : int
+	{
+		background = 0,
+		foreground = 1
+	};
+
 	struct sam2_decoder_prompt_point
 	{
 		utils::vec2<float> point;
-		// 1 for foreground, 0 for background
-		int label;
+		sam2_label label;
 	};
 
 	struct sam2_decoder_prompt
