@@ -473,7 +473,7 @@ namespace vt::widgets
 
 			if (!ctx_.session.is_dragging_any_segment() and is_hovered)
 			{
-				if (ImGui::IsMouseClicked(ImGuiMouseButton_Right))
+				if (enabled_ and ImGui::IsMouseClicked(ImGuiMouseButton_Right))
 				{
 					open_segment_ctx_menu_ = true;
 					segment_ctx_popup_->set_segment_storage(&storage);
@@ -1099,7 +1099,7 @@ namespace vt::widgets
 
 				if (!open_segment_ctx_menu_ and is_cell_hovered)
 				{
-					if (!is_hovering_any_segment() and ImGui::IsMouseClicked(ImGuiMouseButton_Right))
+					if (enabled_ and !is_hovering_any_segment() and ImGui::IsMouseClicked(ImGuiMouseButton_Right))
 					{
 						float normalized_mouse_x = math::normalize(ImGui::GetMousePos().x, cell_rect->Min.x, cell_rect->Max.x, 0.f, 1.f);
 						timestamp mouse_timestamp = to_timestamp(normalized_mouse_x);
