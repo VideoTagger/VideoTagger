@@ -290,8 +290,12 @@ namespace vt::ui
 			{
 				items.add<menu_generic_button>(icons::fast_fwd, ctx_.lang->get("popup.region_context_menu.track"), [&]()
 				{
-						ctx_.track_region_popup = std::make_unique<track_region_popup>(tag_name, segment, video_id, *attribute_instance,
-							ctx_.displayed_videos.current_timestamp_as_timestamp(), region_id, tracker_registry.tracker_names());
+					ctx_.track_region_popup = std::make_unique<track_region_popup>
+					(
+						typeid(shape_type),
+						ctx_.displayed_videos.current_timestamp_as_timestamp(),
+						ui::track_which_regions::selected
+					);
 				}, !ctx_.displayed_videos.is_playing());
 			}
 		}

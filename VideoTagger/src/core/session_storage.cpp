@@ -483,7 +483,21 @@ namespace vt
 					bool all_trackers_stopped = true;
 					for (auto& region_data : data)
 					{
-						if (!region_data.tracker->init(region_data.region, tracker_name, timespan, image, replace_keyframes))
+						auto segment = ctx_.find_segment(region_data.region.tag_name, region_data.region.segment);
+						if (segment == nullptr)
+						{
+							region_data.stopped = true;
+							continue;
+						}
+
+						auto clamped_timespan = utils::timestamp_span{ std::clamp(timespan.start, segment->start, segment->end), std::clamp(timespan.end, segment->start, segment->end) };
+						if (clamped_timespan.start >= clamped_timespan.end)
+						{
+							region_data.stopped = true;
+							continue;
+						}
+
+						if (!region_data.tracker->init(region_data.region, tracker_name, clamped_timespan, image, replace_keyframes))
 						{
 							region_data.stopped = true;
 						}
@@ -509,6 +523,8 @@ namespace vt
 
 						for (auto& region_data : data)
 						{
+							if (region_data.stopped) continue;
+
 							if (region_data.tracker->update(current_ts, image))
 							{
 								region_data.stopped = true;
@@ -556,7 +572,7 @@ namespace vt
 							progress += tracker.stopped ? 1.f : tracker.tracker->progress();
 						}
 
-						count += data.size() + 1;
+						count += data.size();
 					}
 
 					return progress / count;

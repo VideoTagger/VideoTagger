@@ -307,6 +307,29 @@ namespace vt
 		return current_project->video_groups.at(session.current_video_group_id()).segments();
 	}
 
+	const tag_segment* app_context::find_segment(const std::string& tag_name, segment_id id)
+	{
+		if (!current_project.has_value())
+		{
+			return nullptr;
+		}
+
+		auto& current_segment_storage = get_current_segment_storage();
+		auto timeline_it = current_segment_storage.find(tag_name);
+		if (timeline_it == current_segment_storage.end())
+		{
+			return nullptr;
+		}
+
+		auto& timeline = timeline_it->second;
+		if (!timeline.is_id_valid(id))
+		{
+			return nullptr;
+		}
+
+		return &timeline.at(id);
+	}
+
 	std::shared_ptr<lang_pack> app_context::load_lang_pack(const std::string& name)
 	{
 		auto path = lang_dir_filepath / (name + "." + lang_pack::extension);

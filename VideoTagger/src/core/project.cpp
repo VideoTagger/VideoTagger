@@ -450,6 +450,17 @@ namespace vt
 		{
 			return displayed_tags.end();
 		}
+
+		return it;
+	}
+
+	std::vector<std::string>::const_iterator project::find_displayed_tag(const std::string& tag_name) const
+	{
+		auto it = std::lower_bound(displayed_tags.begin(), displayed_tags.end(), tag_name);
+		if (it == displayed_tags.end() or *it != tag_name)
+		{
+			return displayed_tags.end();
+		}
 		
 		return it;
 	}

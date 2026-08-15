@@ -1,6 +1,7 @@
 #pragma once
 #include <string>
 #include <vector>
+#include <cstdint>
 
 #include <ui/popup.hpp>
 
@@ -12,28 +13,38 @@
 
 namespace vt::ui
 {
+	enum class track_which_regions : uint8_t
+	{
+		all_visible,
+		selected,
+		custom
+	};
+
 	struct track_region_popup : public modal_popup
 	{
 	public:
-		track_region_popup(const std::string& active_tag, segment_id active_segment, video_id_t video_id, vt::impl::shape_attribute_instance& attr_instance,
-			timestamp current_ts, region_id_t region_id, const std::vector<std::string>& trackers);
+		track_region_popup(const std::vector<region_info>& initial_regions, timestamp current_ts);
+		track_region_popup(const std::type_info& shape_type_info, timestamp current_ts, track_which_regions which_regions);
 
 	private:
-		std::string active_tag_;
-		segment_id active_segment_{};
-		video_id_t video_id_;
-		vt::impl::shape_attribute_instance* attr_instance_{};
-		region_id_t region_id_;
+		const std::type_info* shape_type_info_{};
+		std::vector<region_info> tracked_regions_;
 		combo<std::string> trackers_combo_;
+		combo<std::string> which_regions_combo_;
 		timestamp current_ts_;
 		timestamp max_ts_;
 		timestamp target_ts_;
 		bool replace_keyframes_{ false };
 		event_source event_source_;
+		track_which_regions which_regions_{};
 
 	public:
 		virtual void on_display() override;
 		virtual void on_render() override;
 		virtual void on_close() override;
+
+	private:
+		void update_max_timestamp();
+		void update_region_list(track_which_regions which_regions);
 	};
 }

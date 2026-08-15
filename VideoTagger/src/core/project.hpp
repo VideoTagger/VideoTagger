@@ -69,6 +69,7 @@ namespace vt
 		bool add_displayed_tag(const std::string& tag_name);
 		bool remove_displayed_tag(const std::string& tag_name);
 		std::vector<std::string>::iterator find_displayed_tag(const std::string& tag_name);
+		std::vector<std::string>::const_iterator find_displayed_tag(const std::string& tag_name) const;
 
 		static project load_from_file(const std::filesystem::path& filepath);
 	};

@@ -201,6 +201,7 @@ namespace vt
 		void update_current_video_group();
 
 		segment_storage& get_current_segment_storage();
+		const tag_segment* find_segment(const std::string& tag_name, segment_id id);
 
 		std::shared_ptr<lang_pack> load_lang_pack(const std::string& name = "en_US");
 		std::shared_ptr<lang_pack> load_or_create_lang_pack(const std::string& name, const std::string& filename);
@@ -288,7 +289,7 @@ namespace vt
 	template<typename shape_type>
 	inline shape_tracker_registry<shape_type>& app_context::get_shape_tracker_registry()
 	{
-		auto& ptr = shape_tracker_registries[typeid(shape_tracker_registry<shape_type>)];
+		auto& ptr = shape_tracker_registries[typeid(shape_type)];
 		if (ptr == nullptr)
 		{
 			ptr = std::make_unique<shape_tracker_registry<shape_type>>();
