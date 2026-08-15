@@ -324,10 +324,10 @@ namespace vt::ui
 			data.title = "Model download required";
 			data.buttons =
 			{
-				{ 0, ctx_.lang->get("yes")},
+				{ 0, ctx_.lang->get("generic.yes")},
 				{ 1, ctx_.lang->get("cancel") },
 			};
-			data.message = "This action requires downloading Segment Anything 2 model files (~[X] MB/GB). Would you like to proceed with the download?";
+			data.message = "This action requires downloading SAM 2 model files (~X MB/GB).\nWould you like to proceed with the download?";
 			data.cancel_button_id = 1;
 			data.default_button_id = 0;
 			data.callback = [this, sam](int button_id)

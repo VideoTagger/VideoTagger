@@ -55,6 +55,11 @@ namespace vt::impl
 		return ctx_.models_dir_filepath / name_;
 	}
 
+	std::filesystem::path model::model_download_path() const
+	{
+		return ctx_.downloads_dir_filepath / "models" / name_;
+	}
+
 	void model::on_register() {}
 	void model::on_unregister() {}
 	

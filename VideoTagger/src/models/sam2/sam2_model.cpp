@@ -41,19 +41,19 @@ namespace vt
 		auto url = download_url();
 		if (url.empty()) return;
 
-		auto install_dir = model_installation_path();
-		auto download_path = install_dir;
+		auto download_path = model_download_path();
 		download_path.replace_extension(".zip");
 
 		debug::log("Downloading SAM2 model: '{}' from URL: '{}' to path: '{}'...", name(), url, download_path.u8string());
 		auto& entry = ctx_.downloads.submit_entry(name(), url, download_path, [this, callback](download_entry& entry)
 		{
+			auto install_dir = model_installation_path();
 			auto status = entry.status();
 			if (status == download_entry_status::completed)
 			{
 				debug::log("Download of SAM2 model: '{}' completed", name());
 				debug::log("Unpacking SAM2 model: '{}'", name());
-				auto unzip_result = vt::utils::filesystem::unzip(entry.destination(), model_installation_path(), true);
+				auto unzip_result = vt::utils::filesystem::unzip(entry.destination(), install_dir, true);
 				if (!unzip_result.has_value())
 				{
 					debug::error("Unpacking of SAM2 model: '{}' failed", name());
@@ -61,7 +61,7 @@ namespace vt
 				}
 				std::filesystem::remove(entry.destination());
 				//The result of the download is purposefully ignored, since it it not critical for the functionality of the model
-				utils::filesystem::download_file(license_url, model_installation_path() / "LICENSE.txt");
+				utils::filesystem::download_file(license_url, install_dir / "LICENSE.txt");
 			}
 			else if (status == download_entry_status::failed)
 			{

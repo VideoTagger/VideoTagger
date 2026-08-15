@@ -32,6 +32,7 @@ namespace vt::impl
 		const std::string& name() const;
 
 		std::filesystem::path model_installation_path() const;
+		std::filesystem::path model_download_path() const;
 
 		virtual void on_register();
 		virtual void on_unregister();
