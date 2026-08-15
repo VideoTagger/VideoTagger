@@ -86,9 +86,30 @@ namespace vt
 				if (it == regions_.end()) return;
 
 				auto& region = it->second;
-				if (!region.erase_keyframe(event.timestamp())) return;
+				auto keyframe_it = region.find_keyframe(event.timestamp());
 
-				ctx_.dispatch_event<region_keyframe_deleted_event>(event_source_, event.tag_name(), event.segment(), event.video_id(), this, event.region_id(), event.timestamp());
+				if (event.delete_following())
+				{
+					if (keyframe_it == region.end()) keyframe_it = region.next_or_current_keyframe(event.timestamp());
+
+					if (keyframe_it == region.end()) return;
+
+					do
+					{
+						auto ts = keyframe_it->first;
+						keyframe_it = region.erase_keyframe(keyframe_it);
+						ctx_.dispatch_event<region_keyframe_deleted_event>(event_source_, event.tag_name(), event.segment(), event.video_id(), this, event.region_id(), ts);
+					} while (keyframe_it != region.end());
+				}
+				else
+				{
+					if (keyframe_it == region.end()) return;
+
+					auto ts = keyframe_it->first;
+					region.erase_keyframe(keyframe_it);
+					ctx_.dispatch_event<region_keyframe_deleted_event>(event_source_, event.tag_name(), event.segment(), event.video_id(), this, event.region_id(), ts);
+				}
+
 				ctx_.is_project_dirty = true;
 
 				if (!region.empty()) return;

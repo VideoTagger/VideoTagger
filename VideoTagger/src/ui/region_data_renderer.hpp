@@ -145,6 +145,7 @@ namespace vt::ui
 			ImGui::SameLine();
 			ImGui::SeparatorText("Keyframes");
 			std::optional<timestamp> erased_keyframe;
+			bool delete_following_keyframes = false;
 			for (auto it = region.begin(); it != region.end(); ++it)
 			{
 				auto& [ts, shape] = *it;
@@ -167,6 +168,11 @@ namespace vt::ui
 						{
 							erased_keyframe = ts;
 						}
+						if (ImGui::MenuItem(fmt::format("{} Delete This and Following", icons::delete_).c_str()))
+						{
+							erased_keyframe = ts;
+							delete_following_keyframes = true;
+						}
 						ImGui::EndPopup();
 					}
 				});
@@ -184,7 +190,7 @@ namespace vt::ui
 			if (erased_keyframe.has_value())
 			{
 				ctx_.dispatch_event<region_keyframe_delete_request_event>(source, region_data.tag_name, region_data.segment, region_data.video_id,
-					region_data.attribute_instance, region_data.region_id, *erased_keyframe);
+					region_data.attribute_instance, region_data.region_id, *erased_keyframe, delete_following_keyframes);
 			}
 		}
 
