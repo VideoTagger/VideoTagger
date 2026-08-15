@@ -182,8 +182,8 @@ namespace vt
 			return video_download_result{ video_download_status::failed };
 		}
 
-		std::filesystem::path file_path = ctx_.downloads_dir_filepath / file_id_;
-		std::filesystem::create_directories(ctx_.downloads_dir_filepath);
+		std::filesystem::path file_path = ctx_.google_downloads_dir_filepath / file_id_;
+		std::filesystem::create_directories(ctx_.google_downloads_dir_filepath);
 
 		auto headers = httplib::Headers
 		{
