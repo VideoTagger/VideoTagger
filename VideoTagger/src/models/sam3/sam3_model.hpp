@@ -31,12 +31,13 @@ namespace vt
 		sam3_language_encoder* language_encoder();
 		sam3_decoder* decoder();
 
-		virtual bool download() override;
+		virtual void download(bool wait_for_download, const std::function<void()>& callback = nullptr) override;
 		virtual void remove() override;
 
 		virtual bool load() override;
 		virtual void unload() override;
 	private:
 		std::string download_url() const;
+		void setup_paths();
 	};
 }

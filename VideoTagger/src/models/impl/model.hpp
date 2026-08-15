@@ -2,6 +2,7 @@
 #include <string>
 #include <optional>
 #include <filesystem>
+#include <functional>
 #include <unordered_map>
 #include <impl/resettable.hpp>
 
@@ -26,6 +27,8 @@ namespace vt::impl
 		std::optional<std::filesystem::path> path_of(const std::string& key) const;
 
 		bool is_loaded() const;
+		bool is_downloaded() const;
+		bool is_ready() const;
 		const std::string& name() const;
 
 		std::filesystem::path model_installation_path() const;
@@ -33,7 +36,7 @@ namespace vt::impl
 		virtual void on_register();
 		virtual void on_unregister();
 
-		virtual bool download() = 0;
+		virtual void download(bool wait_for_download, const std::function<void()>& callback = nullptr) = 0;
 		virtual void remove() = 0;
 
 		///@returns true if the model is loaded successfully, false otherwise.
@@ -46,8 +49,10 @@ namespace vt::impl
 		* 
 		* @returns true if the model is installed properly, false otherwise.
 		*/
-		virtual bool verify_installation();
+		virtual bool verify_installation() const;
 
 		virtual void reset() override;
+	protected:
+		void set_is_loaded(bool value);
 	};
 }

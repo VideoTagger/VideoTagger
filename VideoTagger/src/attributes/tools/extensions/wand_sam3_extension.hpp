@@ -27,6 +27,7 @@ namespace vt::ui
 	private:
 		wand_sam3_mode mode_;
 		bool is_fg_point_;
+		bool is_being_downloaded_;
 
 	public:
 		bool is_rect_mode() const;
@@ -47,5 +48,8 @@ namespace vt::ui
 		virtual void on_done() override;
 		void on_finish_selection(video_id_t video_id, const rectangle_shape& rect, const utils::vec2<int>& tex_size) override;
 		virtual void on_finish_point_selection(video_id_t video_id, const utils::vec2<int>& tex_size) override;
+
+		virtual void prepare_for_use() override;
+		virtual bool is_ready() override;
 	};
 }

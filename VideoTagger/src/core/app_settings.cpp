@@ -19,6 +19,7 @@ namespace vt
 		json["scale-gizmos"] = scale_gizmos;
 		json["hardware-acceleration"] = hardware_acceleration;
 		json["snap-to-frame"] = snap_to_frame;
+		json["auto-download"] = auto_download;
 		return json;
 	}
 
@@ -55,6 +56,10 @@ namespace vt
 		if (json.contains("snap-to-frame") and json["snap-to-frame"].is_boolean())
 		{
 			snap_to_frame = json["snap-to-frame"].get<bool>();
+		}
+		if (json.contains("auto-download") and json["auto-download"].is_boolean())
+		{
+			auto_download = json["auto-download"].get<bool>();
 		}
 	}
 }

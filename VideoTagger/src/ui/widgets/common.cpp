@@ -467,8 +467,9 @@ namespace vt::ui
 		}
 
 		ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 3);
-		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2{ style.FramePadding.x, style.FramePadding.y } / 3.f);
+		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, style.FramePadding / 3.f);
 		bool last_value = value;
+		
 		result = ImGui::Checkbox(label.c_str(), &value);
 		ImGui::PopStyleVar(2);
 		if (last_value)

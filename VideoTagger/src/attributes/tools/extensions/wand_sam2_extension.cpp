@@ -6,10 +6,11 @@
 #include <models/sam2/sam2_model.hpp>
 #include <models/model_load_guard.hpp>
 #include <opencv2/highgui.hpp>
+#include <system/messagebox.hpp>
 
 namespace vt::ui
 {
-	wand_sam2_extension::wand_sam2_extension(const std::string& name) : impl::wand_tool_extension{ name }, points_tool{ true }, mode_{ wand_sam2_mode::rectangle }, is_fg_point_{ true } {}
+	wand_sam2_extension::wand_sam2_extension(const std::string& name) : impl::wand_tool_extension{ name }, points_tool{ true }, mode_{ wand_sam2_mode::rectangle }, is_fg_point_{ true }, is_being_downloaded_{} {}
 
 	bool wand_sam2_extension::is_rect_mode() const
 	{
@@ -313,4 +314,44 @@ namespace vt::ui
 		generate_mask(video_id, tex_size);
 	}
 
+	void wand_sam2_extension::prepare_for_use()
+	{
+		auto sam = ctx_.model_registry.get_model<sam2_model>();
+		if (sam != nullptr and !sam->is_downloaded() and !is_being_downloaded_)
+		{
+			messagebox_data data{};
+			data.icon = messagebox_icon::info;
+			data.title = "Model download required";
+			data.buttons =
+			{
+				{ 0, ctx_.lang->get("yes")},
+				{ 1, ctx_.lang->get("cancel") },
+			};
+			data.message = "This action requires downloading Segment Anything 2 model files (~[X] MB/GB). Would you like to proceed with the download?";
+			data.cancel_button_id = 1;
+			data.default_button_id = 0;
+			data.callback = [this, sam](int button_id)
+			{
+				switch (button_id)
+				{
+					case 0:
+					{
+						is_being_downloaded_ = true;
+						sam->download(false, [this]()
+						{
+							is_being_downloaded_ = false;
+						});
+					}
+					break;
+				}
+			};
+			messagebox::show(data);
+		}
+	}
+
+	bool wand_sam2_extension::is_ready()
+	{
+		auto sam = ctx_.model_registry.get_model<sam2_model>();
+		return sam != nullptr and sam->is_downloaded();
+	}
 }

@@ -35,6 +35,16 @@ namespace vt::impl
 		return is_loaded_;
 	}
 
+	bool model::is_downloaded() const
+	{
+		return verify_installation();
+	}
+
+    bool model::is_ready() const
+    {
+        return is_downloaded() and is_loaded();
+    }
+
 	const std::string& model::name() const
 	{
 		return name_;
@@ -50,6 +60,11 @@ namespace vt::impl
 	
 	bool model::load_if_needed()
 	{
+		if (!is_downloaded())
+		{
+			return false;
+		}
+
 		if (!is_loaded_)
 		{
 			return load();
@@ -64,7 +79,7 @@ namespace vt::impl
 
 	void model::unload() {}
 
-	bool model::verify_installation()
+	bool model::verify_installation() const
 	{
 		bool result = false;
 		for (const auto& [name, path] : paths_)
@@ -87,6 +102,11 @@ namespace vt::impl
 		{
 			unload();
 		}
+	}
+
+	void model::set_is_loaded(bool value)
+	{
+		is_loaded_ = value;
 	}
 }
 

@@ -8,4 +8,14 @@ namespace vt::ui::impl
 	{
 		return name_;
 	}
+
+	void wand_tool_extension::prepare_for_use()
+	{
+
+	}
+
+	bool wand_tool_extension::is_ready()
+	{
+		return true;
+	}
 }

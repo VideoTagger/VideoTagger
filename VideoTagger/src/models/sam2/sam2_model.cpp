@@ -14,6 +14,7 @@ namespace vt
 			case sam2_model_variant::hiera_large: set_name("sam2_hiera_large"); break;
 			default: set_name("sam2_unknown"); break;
 		}
+		setup_paths();
 	}
 	
 	sam2_model_variant sam2_model::variant() const
@@ -31,36 +32,54 @@ namespace vt
 		return decoder_.get();
 	}
 
-	bool sam2_model::download()
+	void sam2_model::download(bool wait_for_download, const std::function<void()>& callback)
 	{
+		if (verify_installation()) return;
+
 		static constexpr auto license_url = "https://raw.githubusercontent.com/facebookresearch/sam2/refs/heads/main/LICENSE";
 
 		auto url = download_url();
-		if (url.empty()) return false;
+		if (url.empty()) return;
 
 		auto install_dir = model_installation_path();
 		auto download_path = install_dir;
 		download_path.replace_extension(".zip");
+
 		debug::log("Downloading SAM2 model: '{}' from URL: '{}' to path: '{}'...", name(), url, download_path.u8string());
-		bool result = utils::filesystem::download_file(url, download_path);
-		if (!result)
+		auto& entry = ctx_.downloads.submit_entry(name(), url, download_path, [this, callback](download_entry& entry)
 		{
-			debug::error("Download of SAM2 model: '{}' failed", name());
-			return false;
-		}
+			auto status = entry.status();
+			if (status == download_entry_status::completed)
+			{
+				debug::log("Download of SAM2 model: '{}' completed", name());
+				debug::log("Unpacking SAM2 model: '{}'", name());
+				auto unzip_result = vt::utils::filesystem::unzip(entry.destination(), model_installation_path(), true);
+				if (!unzip_result.has_value())
+				{
+					debug::error("Unpacking of SAM2 model: '{}' failed", name());
+					return;
+				}
+				std::filesystem::remove(entry.destination());
+				//The result of the download is purposefully ignored, since it it not critical for the functionality of the model
+				utils::filesystem::download_file(license_url, model_installation_path() / "LICENSE.txt");
+			}
+			else if (status == download_entry_status::failed)
+			{
+				debug::error("Download of SAM2 model: '{}' failed", name());
+			}
+			debug::log("Finished downloading SAM2 model: '{}'", name());
+			if (callback != nullptr)
+			{
+				callback();
+			}
+		});
 
-		auto unzip_result = vt::utils::filesystem::unzip(download_path, install_dir, true);
-		if (!unzip_result.has_value())
+		if (wait_for_download)
 		{
-			debug::error("Unpacking of SAM2 model: '{}' failed", name());
-			return false;
+			debug::log("Waiting for download of SAM2 model: '{}' to complete...", name());
+			entry.wait_for_completion();
+			debug::log("Download of SAM2 model: '{}' completed", name());
 		}
-
-		//The result of the download is purposefully ignored, since it it not critical for the functionality of the model
-		utils::filesystem::download_file(license_url, install_dir / "LICENSE.txt");
-
-		debug::log("Finished downloading SAM2 model: '{}'", name());
-		return verify_installation();
 	}
 
 	void sam2_model::remove()
@@ -75,18 +94,11 @@ namespace vt
 
 	bool sam2_model::load()
 	{
-		auto install_dir = model_installation_path();
-		set_path_of("config", install_dir / "config.yaml");
-		set_path_of("encoder", install_dir / (name() + ".encoder.onnx"));
-		set_path_of("decoder", install_dir / (name() + ".decoder.onnx"));
+		setup_paths();
 
 		if (!verify_installation())
 		{
-			//TODO: This should probably be done by an event/user - it is temporarily here for testing purposes
-			if (!download())
-			{
-				return false;
-			}
+			return false;
 		}
 
 		debug::log("Loading SAM2 model: '{}'...", name());
@@ -94,7 +106,7 @@ namespace vt
 		encoder_ = std::make_unique<sam2_image_encoder>(env, path_of("encoder").value());
 		decoder_ = std::make_unique<sam2_image_decoder>(env, path_of("decoder").value(), encoder_->input_size());
 		debug::log("Finished loading SAM2 model: '{}'", name());
-		is_loaded_ = true;
+		set_is_loaded(true);
 		return true;
 	}
 
@@ -103,7 +115,7 @@ namespace vt
 		debug::log("Unloading SAM2 model: '{}'", name());
 		encoder_.reset();
 		decoder_.reset();
-		is_loaded_ = false;
+		set_is_loaded(false);
 	}
 
 	std::string sam2_model::download_url() const
@@ -116,5 +128,13 @@ namespace vt
 			case sam2_model_variant::hiera_large: return "https://huggingface.co/vietanhdev/segment-anything-2-onnx-models/resolve/main/sam2_hiera_large.zip";
 			default: return "";
 		}
+	}
+
+	void sam2_model::setup_paths()
+	{
+		auto install_dir = model_installation_path();
+		set_path_of("config", install_dir / "config.yaml");
+		set_path_of("encoder", install_dir / (name() + ".encoder.onnx"));
+		set_path_of("decoder", install_dir / (name() + ".decoder.onnx"));
 	}
 }

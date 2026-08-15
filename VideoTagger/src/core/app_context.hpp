@@ -59,6 +59,7 @@
 #include <attributes/tools/extensions/impl/wand_tool_extension.hpp>
 #include <models/model_registry.hpp>
 #include <utils/onnx.hpp>
+#include <services/download/download_manager.hpp>
 
 namespace vt
 {
@@ -95,6 +96,7 @@ namespace vt
 		app_context();
 
 		task_manager tasks;
+		download_manager downloads;
 
 		std::optional<project> current_project;
 		widgets::project_selector project_selector;
