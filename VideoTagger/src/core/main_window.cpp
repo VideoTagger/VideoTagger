@@ -1956,6 +1956,7 @@ namespace vt
 		})
 		.add_toggle("Snap to Frame", "Specifies whether to snap the current time to the current frame timestamp", ctx_.app_settings.snap_to_frame)
 		.add_toggle("Hardware Acceleration", "Specifies whether to use hardware acceleration for video decoding and processing. Takes effect only for newly opened videos", ctx_.app_settings.hardware_acceleration)
+		.add_toggle("Auto download", "Specifies whether to automatically download files or wait for user input", ctx_.app_settings.auto_download)
 		.add_toggle("Load Thumbnails", "Specifies whether to load thumbnails when opening a project", ctx_.app_settings.load_thumbnails, [&](bool value)
 		{
 			//ctx_.settings["load-thumbnails"] = ctx_.app_settings.load_thumbnails;
@@ -2594,6 +2595,159 @@ namespace vt
 					});
 				}
 				ui::end_menu();
+			}
+
+			if (!ctx_.downloads.empty())
+			{
+				auto download_stats = ctx_.downloads.stats();
+
+				const auto& style = ImGui::GetStyle();
+				const auto& theme = ctx_.current_theme;
+				ImVec2 progress_size{ 100.f, ImGui::GetTextLineHeight() / 3.f };
+				std::string progress_description = fmt::format("{} {} of {}", icons::download, download_stats.completed_downloads, download_stats.total_downloads);
+				auto label = progress_description + "###download_menu";
+
+				ImGui::SameLine(ImGui::GetContentRegionMax().x - ImGui::CalcTextSize(progress_description.c_str()).x - (ImGui::CalcTextSize("000.0%").x + style.ItemSpacing.x) - progress_size.x - style.FramePadding.x * 4.0f - style.WindowPadding.x);
+				
+				//ImGui::PushStyleColor(ImGuiCol_Text, style.Colors[ImGuiCol_TextDisabled]);
+				bool menu_open = ui::begin_main_menu(label);
+				//ImGui::PopStyleColor();
+
+				if (menu_open)
+				{
+					if (ui::rounded_button(fmt::format("{} Download All", icons::download)))
+					{
+						for (auto& entry : ctx_.downloads)
+						{
+							entry.download();
+						}
+					}
+					ImGui::SameLine();
+					if (ui::rounded_button(fmt::format("{} Remove All", icons::exit)))
+					{
+						ctx_.downloads.clear();
+					}
+
+					ui::checkbox("Download automatically", ctx_.app_settings.auto_download);
+					ui::vertical_item_spacer();
+
+					if (ImGui::BeginTable("##DownloadsTable", 3, ImGuiTableFlags_SizingStretchProp | ImGuiTableFlags_BordersInnerH))
+					{
+						ImGui::TableSetupScrollFreeze(0, 1);
+						ImGui::TableSetupColumn("##Buttons", ImGuiTableColumnFlags_WidthFixed | ImGuiTableColumnFlags_NoReorder | ImGuiTableColumnFlags_NoSort | ImGuiTableColumnFlags_NoHeaderLabel);
+						ImGui::TableSetupColumn("Name", ImGuiTableColumnFlags_NoReorder);
+						ImGui::TableSetupColumn("Progress", ImGuiTableColumnFlags_NoReorder);
+
+						//Header row
+						{
+							ImGui::TableNextRow();
+							ImGui::TableNextColumn();
+							ImGui::TableNextColumn();
+							ImGui::TextDisabled("%s", "Name");
+							ImGui::TableNextColumn();
+							ImGui::TextDisabled("%s", "Progress");
+						}
+
+						for (auto it = ctx_.downloads.begin(); it != ctx_.downloads.end();)
+						{
+							auto& entry = *it;
+							ImGui::PushID(&entry);
+							bool remove = false;
+							ImGui::TableNextRow();
+							ImGui::TableNextColumn();
+
+							auto status = entry.status();
+							switch (status)
+							{
+								case download_entry_status::not_started:
+								{
+									if (ui::icon_button(icons::download))
+									{
+										entry.download();
+									}
+								}
+								break;
+								case download_entry_status::in_progress:
+								{
+									if (ui::icon_button(icons::exit))
+									{
+										entry.cancel();
+										remove = true;
+									}
+								}
+								break;
+								case download_entry_status::cancelled: [[fallthrough]];
+								case download_entry_status::failed: [[fallthrough]];
+								case download_entry_status::completed:
+								{
+									if (ui::icon_button(icons::delete_))
+									{
+										remove = true;
+									}
+								}
+								break;
+							}
+
+							bool has_failed = status == download_entry_status::failed;
+
+							ImGui::TableNextColumn();
+							ImGui::AlignTextToFramePadding();
+							ImGui::BeginDisabled(status != download_entry_status::in_progress);
+							ImGui::TextUnformatted(entry.name().c_str());
+							ImGui::EndDisabled();
+
+							ImGui::TableNextColumn();
+							float progress = has_failed ? 1.0f : entry.download_progress();
+
+							const float row_height = ImGui::GetTextLineHeightWithSpacing();
+							const float base_y = ImGui::GetCursorPosY() + style.FramePadding.y;
+							const float centered_offset = (row_height - progress_size.y) * 0.5f;
+							auto cpos_y = ImGui::GetCursorPosY();
+							ImGui::SetCursorPosY(base_y + (centered_offset > 0.0f ? centered_offset : 0.0f));
+
+							ImGui::PushStyleColor(ImGuiCol_PlotHistogram, theme.get_float4(has_failed ? theme_color::common_error : theme_color::accent_light));
+							ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 3.0f);
+							ImGui::ProgressBar(progress, progress_size, "");
+							ImGui::SameLine();
+							ImGui::SetCursorPosY(cpos_y);
+							ImGui::AlignTextToFramePadding();
+							auto progress_text = has_failed ? "Failed" : fmt::format("{:.1f}%", progress * 100.f);
+							ImGui::TextDisabled("%s", progress_text.c_str());
+							ImGui::PopStyleVar();
+							ImGui::PopStyleColor();
+
+							ImGui::PopID();
+							if (!remove)
+							{
+								++it;
+							}
+							else
+							{
+								it = ctx_.downloads.erase(it);
+							}
+						}
+						ImGui::EndTable();
+					}					
+					ui::end_menu();
+				}
+				float progress = download_stats.download_progress();
+				
+				const float row_height = ImGui::GetTextLineHeightWithSpacing();
+				const float base_y = ImGui::GetCursorPosY() + style.FramePadding.y;
+				const float centered_offset = (row_height - progress_size.y) * 0.5f;
+				ImGui::SetCursorPosY(base_y + (centered_offset > 0.0f ? centered_offset : 0.0f));
+
+				ImGui::PushStyleColor(ImGuiCol_PlotHistogram, theme.get_float4(theme_color::accent_light));
+				ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 3.0f);
+				
+				ImGui::ProgressBar(progress, progress_size, "");
+				ImGui::SameLine();
+				ImGui::AlignTextToFramePadding();
+				auto progress_text = fmt::format("{:.1f}%", progress * 100.f);
+				ImGui::TextDisabled("%s", progress_text.c_str());
+
+				ImGui::PopStyleVar();
+				ImGui::PopStyleColor();
 			}
 			ImGui::EndMainMenuBar();
 		}

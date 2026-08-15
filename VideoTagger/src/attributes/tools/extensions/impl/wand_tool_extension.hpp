@@ -16,5 +16,8 @@ namespace vt::ui::impl
 
 	public:
 		const std::string& name() const;
+
+		virtual void prepare_for_use();
+		virtual bool is_ready();
 	};
 }

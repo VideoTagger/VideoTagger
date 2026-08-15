@@ -22,6 +22,8 @@ namespace vt
 	{
 	public:
 		task_state() = default;
+		task_state(const task_state&) = delete;
+		task_state(task_state&&) = default;
 
 	private:
 		mutable std::mutex mutex_;
@@ -111,6 +113,9 @@ namespace vt
 			std::scoped_lock lock(mutex_);
 			return status_ == task_status::completed;
 		}
+
+		task_state& operator=(const task_state&) = delete;
+		task_state& operator=(task_state&&) = default;
 	};
 
 	template<>

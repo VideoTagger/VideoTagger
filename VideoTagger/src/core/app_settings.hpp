@@ -17,6 +17,7 @@ namespace vt
 		bool scale_gizmos = false;
 		bool hardware_acceleration = true;
 		bool snap_to_frame = true;
+		bool auto_download = true;
 
 		[[nodiscard]] virtual nlohmann::ordered_json serialize() const override;
 		virtual void deserialize(const nlohmann::ordered_json& json) override;

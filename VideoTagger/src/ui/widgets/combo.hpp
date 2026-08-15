@@ -18,11 +18,11 @@ namespace vt::ui
 	struct combo : public widget, impl::resettable
 	{
 	public:
-		constexpr combo(const std::string& id, const std::vector<value_type>& items, size_t selected = (size_t)(-1), const std::function<void(const std::pair<size_t, const value_type&>& item)>& callback = nullptr) : id_{ id }, items_{ items }, selected_{ selected }, callback_{ callback }, state_{ widget_state::normal }, available_width_{} {}
+		constexpr combo(const std::string& id, const std::vector<value_type>& items, size_t selected = (size_t)(-1), const std::function<void(const std::pair<size_t, const value_type&>& last_item, const std::pair<size_t, const value_type&>& item)>& callback = nullptr) : id_{ id }, items_{ items }, selected_{ selected }, callback_{ callback }, state_{ widget_state::normal }, available_width_{} {}
 
 	private:
 		std::vector<value_type> items_;
-		std::function<void(const std::pair<size_t, const value_type&>& item)> callback_;
+		std::function<void(const std::pair<size_t, const value_type&>& last_item, const std::pair<size_t, const value_type&>& item)> callback_;
 		std::string id_;
 		float available_width_;
 		size_t selected_;
@@ -38,7 +38,7 @@ namespace vt::ui
 			}
 		}
 
-		void set_callback(const std::function<void(const std::pair<size_t, const value_type&>& item)>& callback)
+		void set_callback(const std::function<void(const std::pair<size_t, const value_type&>& last_item, const std::pair<size_t, const value_type&>& item)>& callback)
 		{
 			callback_ = callback;
 		}
@@ -48,10 +48,15 @@ namespace vt::ui
 			auto new_selected = std::clamp(selected, (size_t)0, items_.size() - 1);
 			if (new_selected != selected_)
 			{
+				auto last_selected = selected_;
+				if (last_selected >= items_.size())
+				{
+					last_selected = 0;
+				}
 				selected_ = new_selected;
 				if (callback_ != nullptr)
 				{
-					callback_({ selected_, items_.at(selected_) });
+					callback_({ last_selected, items_.at(last_selected) }, { selected_, items_.at(selected_) });
 				}
 			}
 		}
@@ -105,11 +110,7 @@ namespace vt::ui
 			size_t item_count = items_.size();
 			if (selected_ >= item_count)
 			{
-				selected_ = 0;
-				if (callback_ != nullptr)
-				{
-					callback_({ selected_, items_.at(selected_) });
-				}
+				set_selected(0);
 			}
 
 			std::stringstream ss;
@@ -159,12 +160,8 @@ namespace vt::ui
 					ImGui::SameLine();
 					if (ImGui::Selectable(label.c_str(), selected, ImGuiSelectableFlags_AllowOverlap | ImGuiSelectableFlags_SpanAllColumns | ImGuiSelectableFlags_SpanAvailWidth))
 					{
-						selected_ = i;
+						set_selected(i);
 						result = true;
-						if (callback_ != nullptr)
-						{
-							callback_({ selected_, items_.at(selected_) });
-						}
 					}
 
 					auto post_cpos = ImGui::GetCursorPos();
@@ -196,23 +193,21 @@ namespace vt::ui
 				if (wheel != 0.0f and item_count > 1)
 				{
 					size_t old_selected = selected_;
+					size_t new_selected = selected_;
 
 					if (wheel > 0.0f and selected_ > 0)
 					{
-						--selected_;
+						--new_selected;
 					}
-					else if (wheel < 0.0f and selected_ < item_count - 1)
+					else if (wheel < 0.0f and new_selected < item_count - 1)
 					{
-						++selected_;
+						++new_selected;
 					}
 
-					if (selected_ != old_selected)
+					if (new_selected != old_selected)
 					{
 						result = true;
-						if (callback_ != nullptr)
-						{
-							callback_({ selected_, items_.at(selected_) });
-						}
+						set_selected(new_selected);
 					}
 				}
 			}
@@ -233,7 +228,7 @@ namespace vt::ui
 			return result;
 		}
 
-		constexpr static void render(const std::string& id, const std::vector<value_type>& items, size_t selected = (size_t)(-1), const std::function<void(const std::pair<size_t, const value_type&>& item)>& callback = nullptr)
+		constexpr static void render(const std::string& id, const std::vector<value_type>& items, size_t selected = (size_t)(-1), const std::function<void(const std::pair<size_t, const value_type&>& last_item, const std::pair<size_t, const value_type&>& item)>& callback = nullptr)
 		{
 			combo cmb{ id, items, selected, callback };
 			cmb.render();

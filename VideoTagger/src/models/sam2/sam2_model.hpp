@@ -31,12 +31,13 @@ namespace vt
 		sam2_image_encoder* encoder();
 		sam2_image_decoder* decoder();
 
-		virtual bool download() override;
+		virtual void download(bool wait_for_download, const std::function<void()>& callback = nullptr) override;
 		virtual void remove() override;
 
 		virtual bool load() override;
 		virtual void unload() override;
 	private:
 		std::string download_url() const;
+		void setup_paths();
 	};
 }

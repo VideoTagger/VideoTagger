@@ -24,7 +24,7 @@ namespace vt
 	void wand_tool::on_switch_context()
 	{
 		auto extensions = extension_names();
-		extension_combo_.set_callback([this](const std::pair<size_t, const std::string&>& item)
+		extension_combo_.set_callback([this](const std::pair<size_t, const std::string&>& last_item, const std::pair<size_t, const std::string&>& item)
 		{
 			auto it = std::find_if(ctx_.wand_extensions.begin(), ctx_.wand_extensions.end(), [&item](const auto& pair)
 			{
@@ -33,6 +33,13 @@ namespace vt
 			if (it != ctx_.wand_extensions.end())
 			{
 				auto& ext = it->second;
+				//TODO: This should probably send an event which opens a modal popup, that shows the user that the extension needs to be prepared/downloaded
+				if (!ext->is_ready())
+				{
+					ext->prepare_for_use();
+					extension_combo_.set_selected(last_item.first);
+					return;
+				}
 				switch_extension(ext);
 			}
 		});
