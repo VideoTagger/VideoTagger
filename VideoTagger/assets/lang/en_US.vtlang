@@ -124,5 +124,6 @@
 	"validation.generic.already_exists": "Already exists",
 	"validation.generic.invalid": "Invalid",
 	"popup.video_context_menu.reset_view": "Reset view",
-	"generic.delete": "Delete"
+	"generic.delete": "Delete",
+	"generic.yes": "Yes"
 }
