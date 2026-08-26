@@ -92,6 +92,7 @@ namespace vt
 		wand_extensions.register_extension<ui::wand_grabcut_extension>("grabcut", "GrabCut");
 		wand_extensions.register_extension<ui::wand_watershed_extension>("watershed", "Watershed");
 		wand_extensions.register_extension<ui::wand_sam2_extension>("sam2", "SAM 2");
+		wand_extensions.register_extension<ui::wand_sam2_1_extension>("sam2.1", "SAM 2.1");
 		wand_extensions.register_extension<ui::wand_sam3_extension>("sam3", "SAM 3");
 	}
 
@@ -155,6 +156,7 @@ namespace vt
 	{
 		debug::log("Initializing model registry...");
 		model_registry.register_model<sam2_model>(sam2_model_variant::hiera_small);
+		model_registry.register_model<sam2_1_model>(sam2_model_variant::hiera_small);
 		model_registry.register_model<sam3_model>(sam3_model_variant::vit_h);
 		debug::log("Finished initializing model registry");
 	}

@@ -137,4 +137,29 @@ namespace vt
 		set_path_of("encoder", install_dir / (name() + ".encoder.onnx"));
 		set_path_of("decoder", install_dir / (name() + ".decoder.onnx"));
 	}
+	
+	sam2_1_model::sam2_1_model(sam2_model_variant variant) : sam2_model{ variant }
+	{
+		switch (variant_)
+		{
+			case sam2_model_variant::hiera_tiny: set_name("sam2.1_hiera_tiny"); break;
+			case sam2_model_variant::hiera_small: set_name("sam2.1_hiera_small"); break;
+			case sam2_model_variant::hiera_base_plus: set_name("sam2.1_hiera_base_plus"); break;
+			case sam2_model_variant::hiera_large: set_name("sam2.1_hiera_large"); break;
+			default: set_name("sam2.1_unknown"); break;
+		}
+		setup_paths();
+	}
+	
+	std::string sam2_1_model::download_url() const
+	{
+		switch (variant_)
+		{
+			case sam2_model_variant::hiera_tiny: return "https://huggingface.co/vietanhdev/segment-anything-2.1-onnx-models/resolve/main/sam2.1_hiera_tiny_20260221.zip";
+			case sam2_model_variant::hiera_small: return "https://huggingface.co/vietanhdev/segment-anything-2.1-onnx-models/resolve/main/sam2.1_hiera_small_20260221.zip";
+			case sam2_model_variant::hiera_base_plus: return "https://huggingface.co/vietanhdev/segment-anything-2.1-onnx-models/resolve/main/sam2.1_hiera_base_plus_20260221.zip";
+			case sam2_model_variant::hiera_large: return "https://huggingface.co/vietanhdev/segment-anything-2.1-onnx-models/resolve/main/sam2.1_hiera_large_20260221.zip";
+			default: return "";
+		}
+	}
 }

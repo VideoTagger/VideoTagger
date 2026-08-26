@@ -21,7 +21,7 @@ namespace vt
 	public:
 		sam2_model(sam2_model_variant variant);
 
-	private:
+	protected:
 		sam2_model_variant variant_;
 		std::unique_ptr<sam2_image_encoder> encoder_;
 		std::unique_ptr<sam2_image_decoder> decoder_;
@@ -36,8 +36,17 @@ namespace vt
 
 		virtual bool load() override;
 		virtual void unload() override;
-	private:
-		std::string download_url() const;
-		void setup_paths();
+	protected:
+		virtual std::string download_url() const;
+		virtual void setup_paths();
+	};
+
+	class sam2_1_model : public sam2_model
+	{
+	public:
+		sam2_1_model(sam2_model_variant variant);
+
+	protected:
+		virtual std::string download_url() const override;
 	};
 }

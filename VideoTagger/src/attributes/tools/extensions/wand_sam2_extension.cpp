@@ -3,7 +3,6 @@
 #include <ui/widgets/common.hpp>
 #include <ui/icons.hpp>
 #include <core/app_context.hpp>
-#include <models/sam2/sam2_model.hpp>
 #include <models/model_load_guard.hpp>
 #include <opencv2/highgui.hpp>
 #include <system/messagebox.hpp>
@@ -50,7 +49,7 @@ namespace vt::ui
 					{
 						try
 						{
-							auto sam = ctx_.model_registry.get_model<sam2_model>();
+							auto sam = get_model();
 							if (sam == nullptr or !sam->load_if_needed())
 							{
 								throw std::runtime_error("Failed to load model");
@@ -126,7 +125,7 @@ namespace vt::ui
 					{
 						try
 						{
-							auto sam = ctx_.model_registry.get_model<sam2_model>();
+							auto sam = get_model();
 							if (sam == nullptr or !sam->load_if_needed())
 							{
 								throw std::runtime_error("Failed to load model");
@@ -316,7 +315,7 @@ namespace vt::ui
 
 	void wand_sam2_extension::prepare_for_use()
 	{
-		auto sam = ctx_.model_registry.get_model<sam2_model>();
+		auto sam = get_model();
 		if (sam != nullptr and !sam->is_downloaded() and !is_being_downloaded_)
 		{
 			messagebox_data data{};
@@ -327,7 +326,7 @@ namespace vt::ui
 				{ 0, ctx_.lang->get("generic.yes")},
 				{ 1, ctx_.lang->get("cancel") },
 			};
-			data.message = "This action requires downloading SAM 2 model files (~X MB/GB).\nWould you like to proceed with the download?";
+			data.message = fmt::format("This action requires downloading {} ({}) model files.\nWould you like to proceed with the download?", name(), sam->name()); // (~X MB/GB)
 			data.cancel_button_id = 1;
 			data.default_button_id = 0;
 			data.callback = [this, sam](int button_id)
@@ -351,7 +350,20 @@ namespace vt::ui
 
 	bool wand_sam2_extension::is_ready()
 	{
-		auto sam = ctx_.model_registry.get_model<sam2_model>();
+		auto sam = get_model();
 		return sam != nullptr and sam->is_downloaded();
+	}
+
+	std::shared_ptr<sam2_model> wand_sam2_extension::get_model()
+	{
+		return ctx_.model_registry.get_model<sam2_model>();
+	}
+	
+	wand_sam2_1_extension::wand_sam2_1_extension(const std::string& name) : wand_sam2_extension{ name } {}
+
+	std::shared_ptr<sam2_model> wand_sam2_1_extension::get_model()
+	{
+		auto ptr = ctx_.model_registry.get_model<sam2_1_model>();
+		return std::reinterpret_pointer_cast<sam2_model>(ptr);
 	}
 }

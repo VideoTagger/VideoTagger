@@ -9,6 +9,7 @@
 #include <attributes/tools/extensions/impl/wand_tool_extension.hpp>
 #include <attributes/tools/impl/rect_select_tool.hpp>
 #include <attributes/shapes/points_shape.hpp>
+#include <models/sam2/sam2_model.hpp>
 
 namespace vt::ui
 {
@@ -51,5 +52,14 @@ namespace vt::ui
 
 		virtual void prepare_for_use() override;
 		virtual bool is_ready() override;
+
+		virtual std::shared_ptr<sam2_model> get_model();
+	};
+
+	struct wand_sam2_1_extension : public wand_sam2_extension
+	{
+		wand_sam2_1_extension(const std::string& name);
+
+		virtual std::shared_ptr<sam2_model> get_model() override;
 	};
 }

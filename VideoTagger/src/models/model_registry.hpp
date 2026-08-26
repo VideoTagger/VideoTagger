@@ -3,6 +3,7 @@
 #include <type_traits>
 #include <typeinfo>
 
+#include <core/debug.hpp>
 #include <models/impl/model.hpp>
 
 namespace vt
@@ -23,6 +24,7 @@ namespace vt
 			auto& ref = models_[typeid(type).hash_code()];
 			ref = std::make_shared<type>(args...);
 			ref->on_register();
+			debug::log("Registered model: '{}'", ref->name());
 			return std::reinterpret_pointer_cast<type>(ref);
 		}
 
