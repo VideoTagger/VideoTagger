@@ -115,7 +115,7 @@ namespace vt
 		auto vid_it = ctx_.displayed_videos.find(*video_id);
 		if (vid_it == ctx_.displayed_videos.end()) return;
 
-		static mask_draw_data temp_data;
+		static mask_draw_data temp_data{};
 		auto& vid = *vid_it;
 		temp_data.texture = &vid.overlay_texture;
 		temp_data.draw_rect = draw_rect;
