@@ -162,6 +162,13 @@ namespace vt::ui
 								return;
 							}
 
+							if (dec_res.masks.empty())
+							{
+								set_busy(false);
+								debug::error("SAM 3 decoder returned no masks");
+								return;
+							}
+
 							cv::Mat result_mask = dec_res.masks[0];
 							load_guard.release();
 

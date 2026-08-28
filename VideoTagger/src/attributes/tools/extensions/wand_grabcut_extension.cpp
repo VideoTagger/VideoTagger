@@ -144,7 +144,6 @@ namespace vt::ui
 							return;
 						}
 						cv::Mat result_mask = (mask == cv::GC_FGD) | (mask == cv::GC_PR_FGD);
-						cv::Mat result_mask = (mask == cv::GC_FGD) | (mask == cv::GC_PR_FGD);
 
 						//cv::Mat foreground(cv_img.size(), CV_8UC3, cv::Scalar(0, 0, 0));
 						//cv_img.copyTo(foreground, result_mask);

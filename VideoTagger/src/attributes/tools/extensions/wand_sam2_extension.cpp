@@ -156,6 +156,13 @@ namespace vt::ui
 							}
 							auto dec_res = decoder->decode(res, prompt);
 
+							if (dec_res.masks.empty())
+							{
+								set_busy(false);
+								debug::error("SAM 2 decoder returned no masks");
+								return;
+							}
+
 							cv::Mat result_mask = dec_res.masks[0];
 							load_guard.release();
 
