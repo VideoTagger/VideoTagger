@@ -52,7 +52,16 @@ namespace vt::ui
 						cv::Mat model_bg;
 
 						int iterations = 1;
-						cv::grabCut(cv_img, mask, cv_rect, model_bg, model_fg, iterations, cv::GC_INIT_WITH_RECT);
+						try
+						{
+							cv::grabCut(cv_img, mask, cv_rect, model_bg, model_fg, iterations, cv::GC_INIT_WITH_RECT);
+						}
+						catch (const cv::Exception& e)
+						{
+							debug::error("Failed to perform GrabCut: {}", e.what());
+							set_busy(false);
+							return;
+						}
 						cv::Mat result_mask = (mask == cv::GC_FGD) | (mask == cv::GC_PR_FGD);
 
 						//cv::Mat foreground(cv_img.size(), CV_8UC3, cv::Scalar(0, 0, 0));
@@ -124,7 +133,17 @@ namespace vt::ui
 						cv::Mat model_bg;
 
 						int iterations = 1;
-						cv::grabCut(cv_img, mask, cv_rect, model_bg, model_fg, iterations, cv::GC_INIT_WITH_MASK);
+						try
+						{
+							cv::grabCut(cv_img, mask, cv_rect, model_bg, model_fg, iterations, cv::GC_INIT_WITH_MASK);
+						}
+						catch (const cv::Exception& e)
+						{
+							debug::error("Failed to perform GrabCut: {}", e.what());
+							set_busy(false);
+							return;
+						}
+						cv::Mat result_mask = (mask == cv::GC_FGD) | (mask == cv::GC_PR_FGD);
 						cv::Mat result_mask = (mask == cv::GC_FGD) | (mask == cv::GC_PR_FGD);
 
 						//cv::Mat foreground(cv_img.size(), CV_8UC3, cv::Scalar(0, 0, 0));
