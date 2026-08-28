@@ -115,14 +115,14 @@ namespace vt
 		auto vid_it = ctx_.displayed_videos.find(*video_id);
 		if (vid_it == ctx_.displayed_videos.end()) return;
 
-		auto* data = new mask_draw_data;
+		static mask_draw_data temp_data;
 		auto& vid = *vid_it;
-		data->texture = &vid.overlay_texture;
-		data->draw_rect = draw_rect;
-		data->fill_color = fill_color;
-		data->obj = *this;
-		data->display_mode = is_diff ? mask_display_mode::diff : mask_display_mode::normal;
-		data->pattern_scale = pattern_scale;
+		temp_data.texture = &vid.overlay_texture;
+		temp_data.draw_rect = draw_rect;
+		temp_data.fill_color = fill_color;
+		temp_data.obj = *this;
+		temp_data.display_mode = is_diff ? mask_display_mode::diff : mask_display_mode::normal;
+		temp_data.pattern_scale = pattern_scale;
 
 		draw_list->PushClipRect(draw_rect.Min, draw_rect.Max);
 		draw_list->AddCallback([](const ImDrawList* parent_list, const ImDrawCmd* cmd)
@@ -131,7 +131,7 @@ namespace vt
 			auto& mask_shader = ctx_.shaders->mask_shader;
 			if (!mask_shader.is_valid())
 			{
-				delete data;
+				*data = {};
 				return;
 			}
 
@@ -235,12 +235,12 @@ namespace vt
 			glBindBuffer(GL_ARRAY_BUFFER, 0);
 			glBindVertexArray(0);
 			mask_shader.unbind();
-			delete data;
+			*data = {};
 
 			//glBindFramebuffer(GL_FRAMEBUFFER, 0);
 			//glViewport(0, 0, (GLsizei)draw_data->DisplaySize.x, (GLsizei)draw_data->DisplaySize.y);
 
-		}, data);
+		}, &temp_data);
 
 		draw_list->AddCallback(ImDrawCallback_ResetRenderState, nullptr);
 		draw_list->PopClipRect();
@@ -313,13 +313,13 @@ namespace vt
 
 		if (!result) return false;
 
-		auto* data = new mask_preview_draw_data;
+		static mask_preview_draw_data temp_data{};
 
 		auto& vid = *vid_it;
-		data->texture = &vid.overlay_texture;
-		data->draw_rect = draw_rect;
-		data->fill_color = theme.get_rgba(theme_color::text_normal);
-		data->obj = *this;
+		temp_data.texture = &vid.overlay_texture;
+		temp_data.draw_rect = draw_rect;
+		temp_data.fill_color = theme.get_rgba(theme_color::text_normal);
+		temp_data.obj = *this;
 
 		draw_list->PushClipRect(draw_rect.Min, draw_rect.Max);
 		draw_list->AddCallback([](const ImDrawList* parent_list, const ImDrawCmd* cmd)
@@ -328,7 +328,7 @@ namespace vt
 			auto& mask_shader = ctx_.shaders->mask_preview_shader;
 			if (!mask_shader.is_valid())
 			{
-				delete data;
+				*data = {};
 				return;
 			}
 
@@ -430,9 +430,9 @@ namespace vt
 			glBindBuffer(GL_ARRAY_BUFFER, 0);
 			glBindVertexArray(0);
 			mask_shader.unbind();
-			delete data;
+			*data = {};
 
-		}, data);
+		}, &temp_data);
 
 		draw_list->AddCallback(ImDrawCallback_ResetRenderState, nullptr);
 		draw_list->PopClipRect();
