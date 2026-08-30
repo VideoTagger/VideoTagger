@@ -46,7 +46,7 @@ namespace vt::impl
 			return true;
 		}
 
-		bool ampty() const
+		bool empty() const
 		{
 			return interpolator_names_.empty();
 		}
