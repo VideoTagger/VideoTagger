@@ -13,6 +13,7 @@
 #include <ui/toolbar/toolbar_group.hpp>
 #include <ui/toolbar/toolbar_session_data.hpp>
 #include <core/types.hpp>
+#include <core/mask_temp_data.hpp>
 
 namespace vt
 {
@@ -87,6 +88,7 @@ namespace vt
 	public:
 		session_task_manager tasks;
 		ui::toolbar_session_data toolbar;
+		mask_temp_data mask_temp_data;
 		
 		const segment_id_map& selected_segments() const;
 		const segment_id_map& dragged_segments() const;
@@ -125,6 +127,8 @@ namespace vt
 
 		void set_edit_mode(bool value);
 		bool is_edit_mode() const;
+
+		void reset_mask_temp_data();
 
 		std::vector<insert_segment_mark_data>::iterator find_insert_segment_mark_by_tag(const std::string& tag);
 		std::vector<insert_segment_mark_data>::iterator find_insert_segment_mark_by_tag(const std::optional<std::string>& tag);
