@@ -897,6 +897,11 @@ namespace vt
 		return is_edit_mode_;
 	}
 
+	void session_storage::reset_mask_temp_data()
+	{
+		mask_temp_data.reset();
+	}
+
 	std::vector<insert_segment_mark_data>::iterator session_storage::find_insert_segment_mark_by_tag(const std::string& tag)
 	{
 		return std::find_if(insert_segment_marks_.begin(), insert_segment_marks_.end(), [&](const auto& mark)
@@ -932,6 +937,7 @@ namespace vt
 		tracked_regions_.reset();
 		hovered_regions_.clear();
 		
+		mask_temp_data.reset();
 		gizmo_data_.video_id = 0;
 		gizmo_data_.targets.clear();
 		toolbar.reset();

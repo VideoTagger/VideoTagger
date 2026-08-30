@@ -229,6 +229,7 @@ namespace vt
 			handle_events();
 			handle_tasks();
 			ctx_.main_window->render();
+			ctx_.session.reset_mask_temp_data();
 		}
 #ifndef _DEBUG
 		}

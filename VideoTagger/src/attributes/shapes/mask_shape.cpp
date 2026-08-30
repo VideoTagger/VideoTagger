@@ -94,28 +94,12 @@ namespace vt
 
 	void mask_shape::render_shape_ex(utils::vec2<int> shape_space, ImRect draw_rect, uint32_t fill_color, uint32_t outline_color, std::optional<video_id_t> video_id, bool is_diff, float pattern_scale)
 	{
-		enum class mask_display_mode
-		{
-			normal = 0,
-			diff = 1,
-		};
-
-		struct mask_draw_data
-		{
-			gl_texture* texture{};
-			ImRect draw_rect{};
-			uint32_t fill_color{};
-			mask_shape obj{};
-			mask_display_mode display_mode{ mask_display_mode::normal };
-			float pattern_scale{ 1.0f };
-		};
-
 		auto* draw_list = ImGui::GetWindowDrawList();
 		if (!video_id.has_value()) return;
 		auto vid_it = ctx_.displayed_videos.find(*video_id);
 		if (vid_it == ctx_.displayed_videos.end()) return;
-
-		static mask_draw_data temp_data{};
+		
+		mask_draw_data temp_data{};
 		auto& vid = *vid_it;
 		temp_data.texture = &vid.overlay_texture;
 		temp_data.draw_rect = draw_rect;
@@ -124,6 +108,8 @@ namespace vt
 		temp_data.display_mode = is_diff ? mask_display_mode::diff : mask_display_mode::normal;
 		temp_data.pattern_scale = pattern_scale;
 
+		auto temp_data_ptr = ctx_.session.mask_temp_data.add(temp_data);
+
 		draw_list->PushClipRect(draw_rect.Min, draw_rect.Max);
 		draw_list->AddCallback([](const ImDrawList* parent_list, const ImDrawCmd* cmd)
 		{
@@ -131,7 +117,7 @@ namespace vt
 			auto& mask_shader = ctx_.shaders->mask_shader;
 			if (!mask_shader.is_valid())
 			{
-				*data = {};
+				ctx_.session.mask_temp_data.remove(data);
 				return;
 			}
 
@@ -235,12 +221,12 @@ namespace vt
 			glBindBuffer(GL_ARRAY_BUFFER, 0);
 			glBindVertexArray(0);
 			mask_shader.unbind();
-			*data = {};
+			ctx_.session.mask_temp_data.remove(data);
 
 			//glBindFramebuffer(GL_FRAMEBUFFER, 0);
 			//glViewport(0, 0, (GLsizei)draw_data->DisplaySize.x, (GLsizei)draw_data->DisplaySize.y);
 
-		}, &temp_data);
+		}, temp_data_ptr);
 
 		draw_list->AddCallback(ImDrawCallback_ResetRenderState, nullptr);
 		draw_list->PopClipRect();
@@ -267,14 +253,6 @@ namespace vt
 	bool mask_shape::render_data(event_source source, video_id_t video_id, utils::vec2<int> shape_space)
 	{
 		bool edited = false;
-
-		struct mask_preview_draw_data
-		{
-			gl_texture* texture{};
-			ImRect draw_rect{};
-			uint32_t fill_color{};
-			mask_shape obj{};
-		};
 
 		const auto& theme = ctx_.current_theme;
 
@@ -313,22 +291,23 @@ namespace vt
 
 		if (!result) return false;
 
-		static mask_preview_draw_data temp_data{};
-
+		mask_draw_data temp_data{};
 		auto& vid = *vid_it;
 		temp_data.texture = &vid.overlay_texture;
 		temp_data.draw_rect = draw_rect;
 		temp_data.fill_color = theme.get_rgba(theme_color::text_normal);
 		temp_data.obj = *this;
 
+		auto* temp_data_ptr = ctx_.session.mask_temp_data.add(temp_data);
+
 		draw_list->PushClipRect(draw_rect.Min, draw_rect.Max);
 		draw_list->AddCallback([](const ImDrawList* parent_list, const ImDrawCmd* cmd)
 		{
-			auto* data = static_cast<mask_preview_draw_data*>(cmd->UserCallbackData);
+			auto* data = static_cast<mask_draw_data*>(cmd->UserCallbackData);
 			auto& mask_shader = ctx_.shaders->mask_preview_shader;
 			if (!mask_shader.is_valid())
 			{
-				*data = {};
+				ctx_.session.mask_temp_data.remove(data);
 				return;
 			}
 
@@ -430,9 +409,9 @@ namespace vt
 			glBindBuffer(GL_ARRAY_BUFFER, 0);
 			glBindVertexArray(0);
 			mask_shader.unbind();
-			*data = {};
+			ctx_.session.mask_temp_data.remove(data);
 
-		}, &temp_data);
+		}, temp_data_ptr);
 
 		draw_list->AddCallback(ImDrawCallback_ResetRenderState, nullptr);
 		draw_list->PopClipRect();
