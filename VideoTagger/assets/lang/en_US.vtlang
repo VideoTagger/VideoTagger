@@ -125,5 +125,6 @@
 	"validation.generic.invalid": "Invalid",
 	"popup.video_context_menu.reset_view": "Reset view",
 	"generic.delete": "Delete",
+	"generic.edit": "Edit",
 	"generic.yes": "Yes"
 }
