@@ -274,8 +274,10 @@ namespace vt::ui
 
 		virtual void context_menu_items(ui::widget_list& items, event_source source, const std::string& tag_name, segment_id segment, video_id_t video_id, class vt::impl::shape_attribute_instance* attribute_instance, region_id_t region_id) override
 		{
-			if (regions_->find(region_id) == regions_->end()) return;
+			auto region_it = regions_->find(region_id);
+			if (region_it == regions_->end()) return;
 
+			auto& [_, current_region] = *region_it;
 
 			items.add<menu_generic_button>(icons::delete_, ctx_.lang->get("generic.delete"), [&]()
 			{
@@ -290,9 +292,12 @@ namespace vt::ui
 				});
 			}
 
+			auto current_ts = ctx_.displayed_videos.current_timestamp_as_timestamp();
+			bool is_keyframe = current_region.is_keyframe(current_ts);
+
 			auto& tracker_registry = ctx_.get_shape_tracker_registry<shape_type>();
 			bool supports_tracking = !tracker_registry.empty();
-			if (supports_tracking)
+			if (supports_tracking and is_keyframe)
 			{
 				items.add<menu_generic_button>(icons::fast_fwd, ctx_.lang->get("popup.region_context_menu.track"), [&]()
 				{
