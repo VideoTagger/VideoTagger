@@ -37,12 +37,6 @@ namespace vt::impl
 			return result;
 		}
 
-		virtual void on_reset() override
-		{
-			tracker_.reset();
-			prev_image_.reset();
-		}
-
 		std::optional<points_shape> stateless_predict(const points_shape& points, const image<image_pixel_format::rgb8>& prev_image, const image<image_pixel_format::rgb8>& current_image)
 		{
 			if (points.points.empty()) return std::nullopt;
