@@ -331,7 +331,7 @@ namespace vt::ui
 			data.buttons =
 			{
 				{ 0, ctx_.lang->get("generic.yes")},
-				{ 1, ctx_.lang->get("cancel") },
+				{ 1, ctx_.lang->get("generic.cancel") },
 			};
 			data.message = fmt::format("This action requires downloading {} ({}) model files.\nWould you like to proceed with the download?", name(), sam->name()); // (~X MB/GB)
 			data.cancel_button_id = 1;

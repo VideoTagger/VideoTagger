@@ -112,7 +112,7 @@ namespace vt::ui
 		ui::widget_list list;
 		std::vector<std::pair<int, std::string>> buttons
 		{
-			{ 0, ctx_.lang->get("done") },
+			{ 0, ctx_.lang->get("generic.done") },
 		};
 		ui::button_bar<int> button_bar(buttons);
 		if (active_tool->has_body())

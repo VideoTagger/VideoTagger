@@ -23,7 +23,6 @@
 	"project.add_existing": "Add Existing Project",
 	"menu_bar.help.about": "About",
 	"project.configuration": "Project Configuration",
-	"remove": "Remove",
 	"popup.video_resource_context_menu.delete_downloaded_file": "Delete downloaded file",
 	"popup.video_resource_context_menu.open_in_explorer": "Open in explorer",
 	"invalid_data": "Invalid data",
@@ -66,7 +65,6 @@
 	"project.settings": "Project Settings",
 	"add_keybind": "Add Keybind",
 	"redock_videos": "Redock Videos",
-	"done": "Done",
 	"filename": "Filename",
 	"popup.timeline_segment_context_menu.delete_this": "Delete this",
 	"popup.timeline_context_menu.begin_segment_at_playhead": "Begin segment at playhead",
@@ -114,7 +112,6 @@
 	"updates.update_available.message": "There's a newer version of this software, do you wish to update?",
 	"updates.update_available.title": "Updates available",
 	"updates.update": "Update",
-	"locate": "Locate",
 	"popup.video_resource_context_menu.delete": "Remove",
 	"popup.video_resource_context_menu.refresh": "Refresh",
 	"popup.video_resource_context_menu.download": "Download",
@@ -128,5 +125,8 @@
 	"generic.edit": "Edit",
 	"generic.yes": "Yes",
 	"generic.confirm": "Confirm",
-	"generic.cancel": "Cancel"
+	"generic.cancel": "Cancel",
+	"generic.remove": "Remove",
+	"generic.done": "Done",
+	"generic.locate": "Locate"
 }

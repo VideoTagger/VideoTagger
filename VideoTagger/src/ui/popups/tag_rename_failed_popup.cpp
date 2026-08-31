@@ -34,7 +34,7 @@ namespace vt::ui
 
 		std::vector<std::pair<int, std::string>> buttons
 		{
-			{ 0, ctx_.lang->get("confirm") },
+			{ 0, ctx_.lang->get("generic.confirm") },
 		};
 		ui::button_bar<int>::render(buttons, [&](int id)
 		{
