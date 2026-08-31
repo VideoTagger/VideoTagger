@@ -60,6 +60,7 @@
 #include <models/model_registry.hpp>
 #include <utils/onnx.hpp>
 #include <services/download/download_manager.hpp>
+#include <ui/popups/trackers_benchmark_popup.hpp>
 
 namespace vt
 {
@@ -113,6 +114,7 @@ namespace vt
 		std::unique_ptr<ui::tag_rename_failed_popup> tag_rename_failed_popup;
 		std::unique_ptr<ui::track_region_popup> track_region_popup;
 		std::unique_ptr<ui::progress_popup> global_progress_popup;
+		std::unique_ptr<ui::trackers_benchmark_popup> trackers_benchmark_popup;
 
 		std::filesystem::path assets_dir_filepath = std::filesystem::path("assets");
 		std::filesystem::path projects_list_filepath = storage_path() / std::filesystem::path("projects").replace_extension("json");

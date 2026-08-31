@@ -2972,6 +2972,15 @@ namespace vt
 			}
 		}
 
+		if (ctx_.trackers_benchmark_popup != nullptr)
+		{
+			ctx_.trackers_benchmark_popup->open_and_render(!ctx_.trackers_benchmark_popup->is_open());
+			if (!ctx_.trackers_benchmark_popup->is_open())
+			{
+				ctx_.trackers_benchmark_popup.reset();
+			}
+		}
+
 		if (ctx_.is_video_importer_registered<google_drive_video_importer>())
 		{
 			auto& importer = ctx_.get_video_importer<google_drive_video_importer>();

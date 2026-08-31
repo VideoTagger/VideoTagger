@@ -115,6 +115,15 @@ namespace vt::ui::windows
 
 		widget_list_.add_raw([&]()
 		{
+			if (ui::button("Benchmark Trackers"))
+			{
+				ctx_.trackers_benchmark_popup = std::make_unique<ui::trackers_benchmark_popup>();
+			}
+			return true;
+		});
+
+		widget_list_.add_raw([&]()
+		{
 			static bool is_selected = false;
 			ui::tile test_tile{ "Steamboat Willie 2", "Google Drive", ImVec2{ 67.5f, 100 }};
 			
