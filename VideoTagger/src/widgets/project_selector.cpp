@@ -85,7 +85,7 @@ namespace vt::widgets
 			}
 			ImGui::Checkbox(ctx_.lang->get("derive_filename_from_proj_name").c_str(), &path_from_name);
 
-			auto button_size = ImGui::CalcTextSize(ctx_.lang->get("cancel").c_str()) + style.ItemInnerSpacing * 2;
+			auto button_size = ImGui::CalcTextSize(ctx_.lang->get("generic.cancel").c_str()) + style.ItemInnerSpacing * 2;
 			button_size *= 1.15f;
 
 			ImGui::SetCursorPosY(win_size.y - style.WindowPadding.y - button_size.y);
@@ -106,7 +106,7 @@ namespace vt::widgets
 			if (!valid) ImGui::EndDisabled();
 
 			ImGui::SameLine();
-			if (ImGui::Button(ctx_.lang->get("cancel").c_str(), button_size))
+			if (ImGui::Button(ctx_.lang->get("generic.cancel").c_str(), button_size))
 			{
 				ImGui::CloseCurrentPopup();
 			}			
@@ -242,8 +242,8 @@ namespace vt::widgets
 					messagebox_data data{};
 					data.icon = messagebox_icon::warning;
 					data.buttons = {
-						{ 0, ctx_.lang->get("cancel") },
-						{ 1, ctx_.lang->get("delete") }
+						{ 0, ctx_.lang->get("generic.cancel") },
+						{ 1, ctx_.lang->get("generic.delete") }
 					};
 					data.cancel_button_id = 0;
 					data.default_button_id = 1;

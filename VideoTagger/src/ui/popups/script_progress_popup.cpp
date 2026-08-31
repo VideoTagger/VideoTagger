@@ -74,7 +74,7 @@ namespace vt::ui
 
 		std::vector<std::pair<int, std::string>> buttons
 		{
-			{ 0, ctx_.lang->get("cancel") },
+			{ 0, ctx_.lang->get("generic.cancel") },
 		};
 
 		ui::button_bar<int>::render(buttons, [&](int id)

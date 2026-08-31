@@ -37,6 +37,19 @@ namespace vt
 			data_ = std::move(data);
 		}
 
+		void set_data(const typename pixel_type::value_type* data)
+		{
+			for (int i = 0; i < size_[0] * size_[1]; ++i)
+			{
+				data_[i] = pixel_type
+				{ 
+					data[i * pixel_type::component_count()],
+					data[i * pixel_type::component_count() + 1],
+					data[i * pixel_type::component_count() + 2]
+				};
+			}
+		}
+
 		void allocate(int width, int height)
 		{
 			return allocate({ width, height });

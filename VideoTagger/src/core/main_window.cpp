@@ -250,9 +250,9 @@ namespace vt
 				data.title = "VideoTagger";
 				data.buttons =
 				{
-					{ 0, ctx_.lang->get("cancel") },
-					{ 1, ctx_.lang->get("remove") },
-					{ 2, ctx_.lang->get("locate") },
+					{ 0, ctx_.lang->get("generic.cancel") },
+					{ 1, ctx_.lang->get("generic.remove") },
+					{ 2, ctx_.lang->get("generic.locate") },
 				};
 				data.message = "This project no longer exists";
 				data.cancel_button_id = 0;
@@ -2584,7 +2584,7 @@ namespace vt
 							data.buttons =
 							{
 								{ 0, ctx_.lang->get("updates.update") },
-								{ 1, ctx_.lang->get("cancel") }
+								{ 1, ctx_.lang->get("generic.cancel") }
 							};
 							messagebox::show(data);
 						}

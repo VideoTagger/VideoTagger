@@ -39,11 +39,6 @@ namespace vt::impl
 		 */
 		bool init(const shape_type& shape, const image<image_pixel_format::rgb8>& image)
 		{
-			if (initialized_)
-			{
-				reset();
-			}
-
 			initialized_ = on_init(shape, image);
 			return initialized_;
 		}
@@ -61,20 +56,8 @@ namespace vt::impl
 			return on_predict(current_image);
 		}
 
-		/**
-		 * @brief Reset the tracker state
-		 *
-		 * After a call to this function, the tracker will be in an uninitialized state.
-		 */
-		void reset()
-		{
-			on_reset();
-			initialized_ = false;
-		}
-
 	protected:
 		virtual bool on_init(const shape_type& shape, const image<image_pixel_format::rgb8>& image) = 0;
 		virtual std::optional<shape_type> on_predict(const image<image_pixel_format::rgb8>& current_image) = 0;
-		virtual void on_reset() {}
 	};
 }

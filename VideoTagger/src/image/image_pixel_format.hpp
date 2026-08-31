@@ -7,6 +7,8 @@ namespace vt
 		template<typename type>
 		struct gray
 		{
+			using value_type = type;
+
 			type value{};
 
 			constexpr bool operator==(const gray& other) const
@@ -18,11 +20,18 @@ namespace vt
 			{
 				return !(*this == other);
 			}
+
+			static constexpr uint32_t component_count()
+			{
+				return 1;
+			}
 		};
 
 		template<typename type>
 		struct rgb
 		{
+			using value_type = type;
+
 			type r{};
 			type g{};
 			type b{};
@@ -36,11 +45,18 @@ namespace vt
 			{
 				return !(*this == other);
 			}
+
+			static constexpr uint32_t component_count()
+			{
+				return 3;
+			}
 		};
 
 		template<typename type>
 		struct bgr
 		{
+			using value_type = type;
+
 			type b{};
 			type g{};
 			type r{};
@@ -54,11 +70,18 @@ namespace vt
 			{
 				return !(*this == other);
 			}
+
+			static constexpr uint32_t component_count()
+			{
+				return 3;
+			}
 		};
 
 		template<typename type>
 		struct rgba
 		{
+			using value_type = type;
+
 			type r{};
 			type g{};
 			type b{};
@@ -73,11 +96,18 @@ namespace vt
 			{
 				return !(*this == other);
 			}
+
+			static constexpr uint32_t component_count()
+			{
+				return 4;
+			}
 		};
 
 		template<typename type>
 		struct bgra
 		{
+			using value_type = type;
+
 			type b{};
 			type g{};
 			type r{};
@@ -92,11 +122,18 @@ namespace vt
 			{
 				return !(*this == other);
 			}
+
+			static constexpr uint32_t component_count()
+			{
+				return 4;
+			}
 		};
 
 		template<typename type>
 		struct hsv
 		{
+			using value_type = type;
+
 			type h{};
 			type s{};
 			type v{};
@@ -109,6 +146,11 @@ namespace vt
 			constexpr bool operator!=(const hsv& other) const
 			{
 				return !(*this == other);
+			}
+
+			static constexpr uint32_t component_count()
+			{
+				return 3;
 			}
 		};
 

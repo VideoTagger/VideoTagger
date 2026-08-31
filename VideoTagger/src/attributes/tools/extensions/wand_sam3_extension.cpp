@@ -338,7 +338,7 @@ namespace vt::ui
 			data.buttons =
 			{
 				{ 0, ctx_.lang->get("generic.yes")},
-				{ 1, ctx_.lang->get("cancel") },
+				{ 1, ctx_.lang->get("generic.cancel") },
 			};
 			data.message = "This action requires downloading SAM 3 model files (~X MB/GB).\nWould you like to proceed with the download?";
 			data.cancel_button_id = 1;
