@@ -23,9 +23,9 @@
 #include <embeds/en_US_lang.hpp>
 #include <core/platform.hpp>
 
-#ifdef VT_DEBUG
+//#ifdef VT_DEBUG
 	#include <ui/windows/sandbox.hpp>
-#endif
+//#endif
 #include <attributes/factory/simple_attribute_factory.hpp>
 #include <attributes/factory/shape_attribute_factory.hpp>
 #include <attributes/shapes/rectangle_shape.hpp>
@@ -219,10 +219,10 @@ namespace vt
 		auto& tool_properties = create_window<ui::windows::tool_properties>();
 		tool_properties.set_opened(true);
 
-#ifdef VT_DEBUG
+//#ifdef VT_DEBUG
 		auto& sandbox = create_window<ui::windows::sandbox>();
 		sandbox.set_opened(true);
-#endif
+//#endif
 	}
 
 	void app_context::create_popups()

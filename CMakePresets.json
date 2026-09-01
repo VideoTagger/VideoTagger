@@ -78,7 +78,7 @@
 				"strategy": "external"
 			},
 			"cacheVariables": {
-				"CMAKE_BUILD_TYPE": "Release"
+				"CMAKE_BUILD_TYPE": "RelWithDebInfo"
 			}
 		},
 		{
@@ -113,7 +113,7 @@
 			"binaryDir": "${sourceDir}/build/cmake/${hostSystemName}-x86_64/Release/",
 			"installDir": "${sourceDir}/build/cmake/install/${hostSystemName}-x86_64/Release/",
 			"cacheVariables": {
-				"CMAKE_BUILD_TYPE": "Release"
+				"CMAKE_BUILD_TYPE": "RelWithDebInfo"
 			}
 		},
 		{
@@ -144,7 +144,7 @@
 			"binaryDir": "${sourceDir}/build/cmake/${hostSystemName}-x86_64/Release/",
 			"installDir": "${sourceDir}/build/cmake/install/${hostSystemName}-x86_64/Release/",
 			"cacheVariables": {
-				"CMAKE_BUILD_TYPE": "Release"
+				"CMAKE_BUILD_TYPE": "RelWithDebInfo"
 			}
 		},
 		{

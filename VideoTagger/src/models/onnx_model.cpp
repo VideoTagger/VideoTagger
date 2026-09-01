@@ -7,6 +7,8 @@ namespace vt
 			[]() -> Ort::SessionOptions
 			{
 				Ort::SessionOptions options{};
+				options.SetIntraOpNumThreads(0);
+				//options.SetExecutionMode(ExecutionMode::ORT_PARALLEL);
 				options.DisableMemPattern();
 				options.DisableCpuMemArena();
 				options.SetGraphOptimizationLevel(GraphOptimizationLevel::ORT_ENABLE_ALL);
