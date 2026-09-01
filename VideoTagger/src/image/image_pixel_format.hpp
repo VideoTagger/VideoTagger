@@ -21,6 +21,13 @@ namespace vt
 				return !(*this == other);
 			}
 
+			constexpr type& get_component(uint32_t index)
+			{
+				if (index != 0) throw std::out_of_range("Index out of range");
+				
+				return value;
+			}
+
 			static constexpr uint32_t component_count()
 			{
 				return 1;
@@ -46,6 +53,17 @@ namespace vt
 				return !(*this == other);
 			}
 
+			constexpr type& get_component(uint32_t index)
+			{
+				switch (index)
+				{
+					case 0: return r;
+					case 1: return g;
+					case 2: return b;
+					default: throw std::out_of_range("Index out of range");
+				}
+			}
+
 			static constexpr uint32_t component_count()
 			{
 				return 3;
@@ -69,6 +87,17 @@ namespace vt
 			constexpr bool operator!=(const bgr& other) const
 			{
 				return !(*this == other);
+			}
+
+			constexpr type& get_component(uint32_t index)
+			{
+				switch (index)
+				{
+				case 0: return b;
+				case 1: return g;
+				case 2: return r;
+				default: throw std::out_of_range("Index out of range");
+				}
 			}
 
 			static constexpr uint32_t component_count()
@@ -97,6 +126,18 @@ namespace vt
 				return !(*this == other);
 			}
 
+			constexpr type& get_component(uint32_t index)
+			{
+				switch (index)
+				{
+				case 0: return r;
+				case 1: return g;
+				case 2: return b;
+				case 3: return a;
+				default: throw std::out_of_range("Index out of range");
+				}
+			}
+
 			static constexpr uint32_t component_count()
 			{
 				return 4;
@@ -123,6 +164,18 @@ namespace vt
 				return !(*this == other);
 			}
 
+			constexpr type& get_component(uint32_t index)
+			{
+				switch (index)
+				{
+				case 0: return b;
+				case 1: return g;
+				case 2: return r;
+				case 3: return a;
+				default: throw std::out_of_range("Index out of range");
+				}
+			}
+
 			static constexpr uint32_t component_count()
 			{
 				return 4;
@@ -146,6 +199,17 @@ namespace vt
 			constexpr bool operator!=(const hsv& other) const
 			{
 				return !(*this == other);
+			}
+
+			constexpr type& get_component(uint32_t index)
+			{
+				switch (index)
+				{
+				case 0: return h;
+				case 1: return s;
+				case 2: return v;
+				default: throw std::out_of_range("Index out of range");
+				}
 			}
 
 			static constexpr uint32_t component_count()

@@ -41,12 +41,10 @@ namespace vt
 		{
 			for (int i = 0; i < size_[0] * size_[1]; ++i)
 			{
-				data_[i] = pixel_type
-				{ 
-					data[i * pixel_type::component_count()],
-					data[i * pixel_type::component_count() + 1],
-					data[i * pixel_type::component_count() + 2]
-				};
+				for (int j = 0; j < pixel_type::component_count(); ++j)
+				{
+					data_[i].get_component(j) = data[i * pixel_type::component_count() + j];
+				}
 			}
 		}
 
