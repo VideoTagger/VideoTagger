@@ -89,6 +89,14 @@ namespace vt::ui::windows
 			}
 			return true;
 		});
+		widget_list_.add_raw([&]()
+		{
+			if (ui::button("Test Segmentation"))
+			{
+				segmentation_benchmark_.benchmark(segmentation_dataset::davis2017);
+			}
+			return true;
+		});
 
 		widget_list_.add_raw([&]()
 		{
@@ -116,8 +124,8 @@ namespace vt::ui::windows
 		widget_list_.add_raw([&]()
 		{
 			static bool is_selected = false;
-			ui::tile test_tile{ "Steamboat Willie 2", "Google Drive", ImVec2{ 67.5f, 100 }};
-			
+			ui::tile test_tile{ "Steamboat Willie 2", "Google Drive", ImVec2{ 67.5f, 100 } };
+
 			auto image = utils::thumbnail::font_texture();
 			auto glyph = utils::thumbnail::find_glyph(utils::thumbnail::video_icon);
 			test_tile.set_double_clickable(true);
