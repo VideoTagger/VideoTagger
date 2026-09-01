@@ -155,8 +155,8 @@ namespace vt
 	void app_context::init_model_registry()
 	{
 		debug::log("Initializing model registry...");
-		model_registry.register_model<sam2_model>(sam2_model_variant::hiera_small);
-		model_registry.register_model<sam2_1_model>(sam2_model_variant::hiera_small);
+		model_registry.register_model<sam2_model>(sam2_model_variant::default_variant);
+		model_registry.register_model<sam2_1_model>(sam2_model_variant::default_variant);
 		model_registry.register_model<sam3_model>(sam3_model_variant::vit_h);
 		debug::log("Finished initializing model registry");
 	}

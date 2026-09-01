@@ -14,6 +14,8 @@ namespace vt
 		hiera_small,
 		hiera_base_plus,
 		hiera_large,
+
+		default_variant = hiera_small,
 	};
 
 	class sam2_model : public impl::model
@@ -27,6 +29,8 @@ namespace vt
 		std::unique_ptr<sam2_image_decoder> decoder_;
 
 	public:
+		virtual void set_variant(sam2_model_variant variant);
+
 		sam2_model_variant variant() const;
 		sam2_image_encoder* encoder();
 		sam2_image_decoder* decoder();
@@ -46,6 +50,8 @@ namespace vt
 	public:
 		sam2_1_model(sam2_model_variant variant);
 
+	public:
+		virtual void set_variant(sam2_model_variant variant) override;
 	protected:
 		virtual std::string download_url() const override;
 	};
