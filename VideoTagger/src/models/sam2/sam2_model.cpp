@@ -174,4 +174,31 @@ namespace vt
 			default: return "";
 		}
 	}
+
+    std::vector<sam2_model_variant> sam2_model_variants()
+    {
+		return {
+			sam2_model_variant::hiera_tiny,
+			sam2_model_variant::hiera_small,
+			sam2_model_variant::hiera_base_plus,
+			sam2_model_variant::hiera_large
+		};
+    }
+
+    std::string sam2_model_variant_to_displayname(sam2_model_variant variant)
+	{
+		switch (variant)
+		{
+			case sam2_model_variant::hiera_tiny: return "Tiny";
+			case sam2_model_variant::hiera_small: return "Small";
+			case sam2_model_variant::hiera_base_plus: return "Base+";
+			case sam2_model_variant::hiera_large: return "Large";
+			default: return "Unknown";
+		}
+	}
+
+	std::ostream& operator<<(std::ostream& os, sam2_model_variant variant)
+	{
+		return os << sam2_model_variant_to_displayname(variant);
+	}
 }
