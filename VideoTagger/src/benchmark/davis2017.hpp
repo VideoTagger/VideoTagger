@@ -13,6 +13,9 @@ namespace vt
 	{
 		std::filesystem::path images_dir;
 		std::filesystem::path annotations_dir;
+		std::filesystem::path set_list_path;
+
+		std::unordered_set<std::string> used_sets;
 	};
 
 	struct davis2017_annotation : public impl::dataset_benchmark_item

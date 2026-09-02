@@ -39,6 +39,22 @@ namespace vt
 				auto davis_path = dataset_path / "davis2017" / "DAVIS";
 				data.images_dir = davis_path / "JPEGImages" / "480p";
 				data.annotations_dir = davis_path / "Annotations" / "480p";
+				data.set_list_path = davis_path / "ImageSets" / "2017" / "val.txt";
+				std::ifstream set_list_file(data.set_list_path);
+				if (!set_list_file.is_open())
+				{
+					throw_error(fmt::format("Failed to open the '{}' file", data.set_list_path.string()));
+					return task<void>{ completion_state };
+				}
+
+				while (set_list_file.good())
+				{
+					std::string line;
+					std::getline(set_list_file, line);
+					line = utils::string::trim_whitespace(line);
+					if (line.empty()) continue;
+					data.used_sets.insert(line);
+				}
 
 				data.downloads.push_back({ "DAVIS 480p 2017 Dataset", "https://data.vision.ee.ethz.ch/csergi/share/davis/DAVIS-2017-trainval-480p.zip", dataset_path / "davis2017.zip" });
 			}
@@ -236,8 +252,8 @@ namespace vt
 		{
 			ctx_.tasks.run([this]()
 			{
-				debug::log("Starting segmentation benchmark...");
 				auto name = dataset_name();
+				debug::log("Starting segmentation benchmark on dataset {}...", name);
 				auto dataset_path = get_dataset_path(name);
 
 				debug::log("Benchmarking {} dataset", name);
@@ -286,6 +302,13 @@ namespace vt
 					{
 						debug::log("Benchmarking DAVIS 2017 dataset");
 						auto& data = *reinterpret_cast<davis2017_benchmark_data*>(bctx_.data.get());
+
+						if (!std::filesystem::exists(data.set_list_path))
+						{
+							auto msg = fmt::format("DAVIS 2017 set list file not found at {}", data.set_list_path.u8string());
+							throw_error(msg);
+							return;
+						}
 
 						if (!std::filesystem::exists(data.images_dir))
 						{
@@ -358,21 +381,30 @@ namespace vt
 							case segmentation_dataset::davis2017:
 							{
 								auto& data = *reinterpret_cast<davis2017_benchmark_data*>(bctx_.data.get());
-								for (const auto& dir_entry : std::filesystem::recursive_directory_iterator(data.images_dir))
+								for (const auto& dir_entry : std::filesystem::directory_iterator(data.images_dir))
 								{
-									if (!dir_entry.is_regular_file()) continue;
-									auto path = dir_entry.path();
-									if (path.extension() != ".png" and path.extension() != ".jpg") continue;
+									if (!dir_entry.is_directory()) continue;
 
-									auto filename = std::filesystem::relative(path, data.images_dir);
-									filename.replace_extension("");
-									auto filename_str = filename.u8string();
-									
-									std::replace(filename_str.begin(), filename_str.end(), '\\', '/');
+									std::string set_name = dir_entry.path().filename().u8string();
+									if (data.used_sets.find(set_name) == data.used_sets.end()) continue;
 
-									auto result = davis2017_get_annotation(filename_str);
-									bctx_.add_item(std::move(result));
-									if (bctx_.item_count() >= bctx_.annotation_limit) break;
+									for (const auto& set_entry : std::filesystem::directory_iterator(dir_entry.path()))
+									{
+										if (!set_entry.is_regular_file()) continue;
+
+										auto path = set_entry.path();
+										if (path.extension() != ".png" and path.extension() != ".jpg") continue;
+
+										auto filename = std::filesystem::relative(path, data.images_dir);
+										filename.replace_extension("");
+										auto filename_str = filename.u8string();
+
+										std::replace(filename_str.begin(), filename_str.end(), '\\', '/');
+
+										auto result = davis2017_get_annotation(filename_str);
+										bctx_.add_item(std::move(result));
+										//if (bctx_.item_count() >= bctx_.annotation_limit) break;
+									}
 								}
 							}
 							break;
