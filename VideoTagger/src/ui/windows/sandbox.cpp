@@ -93,7 +93,10 @@ namespace vt::ui::windows
 		{
 			if (ui::button("Test Segmentation"))
 			{
-				segmentation_benchmark_.benchmark(segmentation_dataset::davis2017);
+				for (auto dataset : { segmentation_dataset::coco, segmentation_dataset::davis2017 })
+				{
+					segmentation_benchmark_.benchmark(dataset, true);
+				}
 			}
 			return true;
 		});

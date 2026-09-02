@@ -40,7 +40,7 @@ namespace vt
 
 	struct benchmark_context
 	{
-		static constexpr size_t annotation_limit = 100;
+		static constexpr size_t annotation_limit = 1000;
 
 		std::vector<std::string> used_methods;
 		std::vector<std::unique_ptr<impl::dataset_benchmark_item>> items;
@@ -49,14 +49,15 @@ namespace vt
 		{
 			sam2_model_variant::hiera_tiny,
 			sam2_model_variant::hiera_small,
-			//sam2_model_variant::hiera_base_plus,
-			//sam2_model_variant::hiera_large,
+			sam2_model_variant::hiera_base_plus,
+			sam2_model_variant::hiera_large,
 		};
 
 		segmentation_dataset dataset{};
 		size_t current_progress{};
 		size_t total_progress{};
 		bool is_running{};
+		bool auto_confirm{};
 		template<typename type, typename = std::enable_if_t<std::is_base_of_v<impl::dataset_benchmark_item, type>>>
 		void add_item(type&& item)
 		{
@@ -89,7 +90,7 @@ namespace vt
 		benchmark_context bctx_;
 
 	public:
-		void benchmark(segmentation_dataset dataset);
+		void benchmark(segmentation_dataset dataset, bool auto_confirm = false);
 
 		std::filesystem::path get_dataset_path(const std::string& name) const;
 		std::filesystem::path get_benchmark_path(const std::string& name) const;

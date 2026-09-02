@@ -11,9 +11,10 @@ namespace vt
 		benchmark_path_ = ctx_.storage_path() / "benchmarks";
 	}
 
-	void segmentation_benchmark::benchmark(segmentation_dataset dataset)
+	void segmentation_benchmark::benchmark(segmentation_dataset dataset, bool auto_confirm)
 	{
 		bctx_.dataset = dataset;
+		bctx_.auto_confirm = auto_confirm;
 		auto dataset_path = get_dataset_path(dataset_name());
 		
 		switch (bctx_.dataset)
@@ -106,6 +107,14 @@ namespace vt
 	void segmentation_benchmark::show_info(const std::string& message, const std::function<void()>& callback)
 	{
 		debug::log(message);
+		if (bctx_.auto_confirm)
+		{
+			if (callback != nullptr)
+			{
+				callback();
+			}
+			return;
+		}
 		messagebox::show("Info", message, messagebox_icon::info, callback);
 	}
 
@@ -223,7 +232,7 @@ namespace vt
 		}
 		set_is_running(true);
 		debug::log("All files exist, starting segmentation benchmark");
-		messagebox::show("Beginning Benchmark", "All files exist, starting segmentation benchmark", messagebox_icon::info, [this]()
+		auto begin_benchmark = [this]()
 		{
 			ctx_.tasks.run([this]()
 			{
@@ -395,8 +404,11 @@ namespace vt
 							{
 								sam->set_variant(variant);
 								if (!benchmark_sam2(sam, benchmark_path)) return;
+
+								std::this_thread::sleep_for(std::chrono::seconds(3));
 							}
 							sam->set_variant(sam2_model_variant::default_variant);
+							std::this_thread::sleep_for(std::chrono::seconds(3));
 						}
 
 						//SAM 2.1
@@ -406,8 +418,11 @@ namespace vt
 							{
 								sam->set_variant(variant);
 								if (!benchmark_sam2(sam, benchmark_path)) return;
+
+								std::this_thread::sleep_for(std::chrono::seconds(3));
 							}
 							sam->set_variant(sam2_model_variant::default_variant);
+							std::this_thread::sleep_for(std::chrono::seconds(3));
 						}
 
 						//SAM 3
@@ -424,7 +439,16 @@ namespace vt
 					});
 				});
 			});
-		});
+		};
+
+		if (bctx_.auto_confirm)
+		{
+			begin_benchmark();
+		}
+		else
+		{
+			messagebox::show("Beginning Benchmark", "All files exist, starting segmentation benchmark", messagebox_icon::info, begin_benchmark);
+		}
 	}
 
 	void segmentation_benchmark::predownlod_models()
