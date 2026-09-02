@@ -270,6 +270,12 @@ namespace vt::ui
 
 					for (size_t tracker_index = 0; tracker_index < tracker_instances.size(); tracker_index++)
 					{
+						if (cancel_token.is_cancelled())
+						{
+							//cv::destroyWindow("Frame");
+							return;
+						}
+
 						current_progress++;
 						progress_ = static_cast<double>(current_progress) / total_progress;
 
@@ -326,6 +332,7 @@ namespace vt::ui
 					current_frame++;
 				}
 
+				//cv::destroyWindow("Frame");
 				
 				for (size_t tracker_index = 0; tracker_index < tracker_instances.size(); tracker_index++)
 				{
