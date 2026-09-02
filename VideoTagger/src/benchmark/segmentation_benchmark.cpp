@@ -11,12 +11,20 @@ namespace vt
 		benchmark_path_ = ctx_.storage_path() / "benchmarks";
 	}
 
-	void segmentation_benchmark::benchmark(segmentation_dataset dataset, bool auto_confirm)
+	task<void> segmentation_benchmark::benchmark(segmentation_dataset dataset, bool auto_confirm)
 	{
+		if (is_running() and benchmark_completion_state_ != nullptr)
+		{
+			return task<void>{ benchmark_completion_state_ };
+		}
+
+		auto completion_state = std::make_shared<task_state<void>>();
+		benchmark_completion_state_ = completion_state;
+
 		bctx_.dataset = dataset;
 		bctx_.auto_confirm = auto_confirm;
 		auto dataset_path = get_dataset_path(dataset_name());
-		
+
 		switch (bctx_.dataset)
 		{
 			case segmentation_dataset::coco:
@@ -70,6 +78,8 @@ namespace vt
 			}
 			try_begin_benchmark();
 		});
+
+		return task<void>{ completion_state };
 	}
 
 	std::filesystem::path segmentation_benchmark::get_dataset_path(const std::string& name) const
@@ -85,6 +95,11 @@ namespace vt
 	void segmentation_benchmark::set_is_running(bool running)
 	{
 		bctx_.is_running = running;
+		if (!running and benchmark_completion_state_ != nullptr)
+		{
+			benchmark_completion_state_->set_value();
+			benchmark_completion_state_.reset();
+		}
 	}
 
 	bool segmentation_benchmark::is_running() const
@@ -172,7 +187,7 @@ namespace vt
 			return;
 		}
 
-		auto task = ctx_.tasks.run([this, &downloads, callback]()
+		auto task = ctx_.tasks.run([this, downloads, callback]()
 		{
 			std::vector<download_entry*> download_entries;
 			for (const auto& [name, download_url, download_path] : downloads)
@@ -243,6 +258,7 @@ namespace vt
 
 			if (!std::filesystem::exists(install_dir))
 			{
+				throw_error(fmt::format("Required dataset directory not found at {}", install_dir.u8string()));
 				return;
 			}
 		}

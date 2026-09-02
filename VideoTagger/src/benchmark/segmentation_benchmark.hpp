@@ -11,6 +11,7 @@
 #include <system/messagebox.hpp>
 #include <image/image.hpp>
 #include <tasks/cancellation_token.hpp>
+#include <tasks/task.hpp>
 
 #include <models/sam2/sam2_model.hpp>
 #include <models/sam3/sam3_model.hpp>
@@ -88,9 +89,10 @@ namespace vt
 		std::filesystem::path benchmark_path_;
 		
 		benchmark_context bctx_;
+		std::shared_ptr<task_state<void>> benchmark_completion_state_;
 
 	public:
-		void benchmark(segmentation_dataset dataset, bool auto_confirm = false);
+		task<void> benchmark(segmentation_dataset dataset, bool auto_confirm = false);
 
 		std::filesystem::path get_dataset_path(const std::string& name) const;
 		std::filesystem::path get_benchmark_path(const std::string& name) const;
