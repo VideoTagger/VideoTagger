@@ -5,6 +5,7 @@
 #include <utils/vec.hpp>
 #include <utils/timestamp.hpp>
 #include <ui/widgets/widget_list.hpp>
+#include <events/event_source.hpp>
 
 namespace vt::ui::impl
 {
