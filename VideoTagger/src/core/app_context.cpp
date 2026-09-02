@@ -128,7 +128,10 @@ namespace vt
 		auto& rectangle_tracker_registry = get_shape_tracker_registry<rectangle_shape>();
 		rectangle_tracker_registry.new_factory<rectangle_tracker_factory<mil_rectangle_tracker>>("MIL");
 		rectangle_tracker_registry.new_factory<rectangle_tracker_factory<csrt_rectangle_tracker>>("CSRT");
-		rectangle_tracker_registry.new_factory<rectangle_tracker_factory<kcf_rectangle_tracker>>("KCF");
+
+		kcf_rectangle_tracker::params kcf_params;
+		kcf_params.detection_threshold = 0.1f;
+		rectangle_tracker_registry.new_factory<rectangle_tracker_factory<kcf_rectangle_tracker>>("KCF", kcf_params);
 		
 		vit_rectangle_tracker::params vit_params;
 		vit_params.net = (ctx_.models_dir_filepath / "vitTracker.onnx").u8string();

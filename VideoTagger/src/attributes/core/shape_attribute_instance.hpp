@@ -478,17 +478,11 @@ namespace vt
 				if (!attr_instance->region_exists(region_data.region_id)) return;
 				auto& region = attr_instance->get_region(region_data.region_id);
 
+				//TODO: could check for sequences of identical shapes and only keep the first and last
 				region.insert_keyframe(tracked_shapes_[0].first, std::move(tracked_shapes_[0].second));
 				for (size_t shape_i = 1; shape_i < tracked_shapes_.size(); shape_i++)
 				{
-					auto& previous_shape = tracked_shapes_[shape_i - 1].second;
 					auto& [ts, current_shape] = tracked_shapes_[shape_i];
-					if (previous_shape == current_shape)
-					{
-						region.erase_keyframe(ts);
-						continue;
-					}
-
 					region.insert_keyframe(ts, std::move(current_shape));
 				}
 				ctx_.is_project_dirty = true;
