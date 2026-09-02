@@ -49,7 +49,6 @@ namespace vt
 	{
 		std::vector<region_info> region_data;
 		std::vector<cancellable_task<void>> tasks;
-		std::shared_ptr<float> progress;
 	};
 
 	struct gizmo_data

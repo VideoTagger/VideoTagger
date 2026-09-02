@@ -6,6 +6,12 @@ namespace vt
 {
 	sam2_model::sam2_model(sam2_model_variant variant) : impl::model{ "sam2" }, variant_{ variant }
 	{
+		set_variant(variant_);
+	}
+	
+	void sam2_model::set_variant(sam2_model_variant variant)
+	{
+		variant_ = variant;
 		switch (variant_)
 		{
 			case sam2_model_variant::hiera_tiny: set_name("sam2_hiera_tiny"); break;
@@ -16,7 +22,7 @@ namespace vt
 		}
 		setup_paths();
 	}
-	
+
 	sam2_model_variant sam2_model::variant() const
 	{
 		return variant_;
@@ -140,6 +146,12 @@ namespace vt
 	
 	sam2_1_model::sam2_1_model(sam2_model_variant variant) : sam2_model{ variant }
 	{
+		set_variant(variant);
+	}
+	
+	void sam2_1_model::set_variant(sam2_model_variant variant)
+	{
+		variant_ = variant;
 		switch (variant_)
 		{
 			case sam2_model_variant::hiera_tiny: set_name("sam2.1_hiera_tiny"); break;
@@ -150,7 +162,7 @@ namespace vt
 		}
 		setup_paths();
 	}
-	
+
 	std::string sam2_1_model::download_url() const
 	{
 		switch (variant_)
@@ -161,5 +173,32 @@ namespace vt
 			case sam2_model_variant::hiera_large: return "https://huggingface.co/vietanhdev/segment-anything-2.1-onnx-models/resolve/main/sam2.1_hiera_large_20260221.zip";
 			default: return "";
 		}
+	}
+
+    std::vector<sam2_model_variant> sam2_model_variants()
+    {
+		return {
+			sam2_model_variant::hiera_tiny,
+			sam2_model_variant::hiera_small,
+			sam2_model_variant::hiera_base_plus,
+			sam2_model_variant::hiera_large
+		};
+    }
+
+    std::string sam2_model_variant_to_displayname(sam2_model_variant variant)
+	{
+		switch (variant)
+		{
+			case sam2_model_variant::hiera_tiny: return "Tiny";
+			case sam2_model_variant::hiera_small: return "Small";
+			case sam2_model_variant::hiera_base_plus: return "Base+";
+			case sam2_model_variant::hiera_large: return "Large";
+			default: return "Unknown";
+		}
+	}
+
+	std::ostream& operator<<(std::ostream& os, sam2_model_variant variant)
+	{
+		return os << sam2_model_variant_to_displayname(variant);
 	}
 }

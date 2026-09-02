@@ -1,6 +1,8 @@
 #pragma once
 #include <string>
 #include <memory>
+#include <ostream>
+#include <vector>
 
 #include "sam2_image_encoder.hpp"
 #include "sam2_image_decoder.hpp"
@@ -14,7 +16,13 @@ namespace vt
 		hiera_small,
 		hiera_base_plus,
 		hiera_large,
+
+		default_variant = hiera_small,
 	};
+
+	std::vector<sam2_model_variant> sam2_model_variants();
+	std::string sam2_model_variant_to_displayname(sam2_model_variant variant);
+	std::ostream& operator<<(std::ostream& os, sam2_model_variant variant);
 
 	class sam2_model : public impl::model
 	{
@@ -27,6 +35,8 @@ namespace vt
 		std::unique_ptr<sam2_image_decoder> decoder_;
 
 	public:
+		virtual void set_variant(sam2_model_variant variant);
+
 		sam2_model_variant variant() const;
 		sam2_image_encoder* encoder();
 		sam2_image_decoder* decoder();
@@ -46,6 +56,8 @@ namespace vt
 	public:
 		sam2_1_model(sam2_model_variant variant);
 
+	public:
+		virtual void set_variant(sam2_model_variant variant) override;
 	protected:
 		virtual std::string download_url() const override;
 	};

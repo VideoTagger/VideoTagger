@@ -88,7 +88,6 @@ namespace vt::ui
 				{
 					on_cancel_();
 				}
-				close();
 			}
 			break;
 			default: close(); break;
