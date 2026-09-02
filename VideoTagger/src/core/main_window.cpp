@@ -2398,9 +2398,9 @@ namespace vt
 						window->set_opened(show_window);
 					}
 				}
-#endif
 
 				ImGui::Separator();
+#endif
 				if (ImGui::MenuItem("Allow Undocking", nullptr, ctx_.app_settings.allow_undocking))
 				{
 					ctx_.app_settings.allow_undocking = !ctx_.app_settings.allow_undocking;
