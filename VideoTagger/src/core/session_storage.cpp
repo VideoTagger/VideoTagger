@@ -449,7 +449,6 @@ namespace vt
 				bool stopped = false;
 			};
 
-			auto progress = std::make_shared<float>(0.f);
 			cancellation_token token;
 			
 			std::map<video_id_t, std::vector<track_data>> data_by_video;
@@ -461,12 +460,12 @@ namespace vt
 
 			tracked_regions_.emplace();
 			tracked_regions_->region_data = event.regions();
-			tracked_regions_->progress = progress;
 
+			//TODO: Each region could be managed by a separate task, but that would require synchronization
 			for (auto& [video_id, data] : data_by_video)
 			{
 				auto task = ctx_.tasks.run([data, tracker_name = event.tracker(), video_id,
-					timespan = event.track_span(), replace_keyframes = event.replace_keyframes(), progress](cancellation_token& cancel_token) mutable
+					timespan = event.track_span(), replace_keyframes = event.replace_keyframes()](cancellation_token& cancel_token) mutable
 				{
 					auto video = ctx_.current_project->videos.get(video_id);
 					if (video == nullptr) return;
