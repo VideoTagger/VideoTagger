@@ -10,6 +10,7 @@
 #include <attributes/tools/impl/rect_select_tool.hpp>
 #include <attributes/shapes/points_shape.hpp>
 #include <models/sam2/sam2_model.hpp>
+#include <ui/widgets/combo.hpp>
 
 namespace vt::ui
 {
@@ -29,6 +30,7 @@ namespace vt::ui
 		wand_sam2_mode mode_;
 		bool is_fg_point_;
 		bool is_being_downloaded_;
+		ui::combo<sam2_model_variant> variant_combo_;
 
 	public:
 		bool is_rect_mode() const;
@@ -44,6 +46,7 @@ namespace vt::ui
 		virtual void render_overlay(video_id_t video_id, ImVec2 pos, ImVec2 size, ImVec2 tex_size) override;
 		virtual void render_properties() override;
 
+		virtual void on_activate() override;
 		virtual void on_deactivate() override;
 
 		virtual void on_done() override;
@@ -54,6 +57,7 @@ namespace vt::ui
 		virtual bool is_ready() override;
 
 		virtual std::shared_ptr<sam2_model> get_model();
+		virtual std::shared_ptr<sam2_model> get_temp_model(sam2_model_variant variant);
 	};
 
 	struct wand_sam2_1_extension : public wand_sam2_extension
@@ -61,5 +65,6 @@ namespace vt::ui
 		wand_sam2_1_extension(const std::string& name);
 
 		virtual std::shared_ptr<sam2_model> get_model() override;
+		virtual std::shared_ptr<sam2_model> get_temp_model(sam2_model_variant variant);
 	};
 }

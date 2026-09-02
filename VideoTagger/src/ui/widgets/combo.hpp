@@ -43,7 +43,7 @@ namespace vt::ui
 			callback_ = callback;
 		}
 
-		constexpr void set_selected(size_t selected)
+		constexpr void set_selected(size_t selected, bool invoke_callback = true)
 		{
 			auto new_selected = std::clamp(selected, (size_t)0, items_.size() - 1);
 			if (new_selected != selected_)
@@ -54,7 +54,7 @@ namespace vt::ui
 					last_selected = 0;
 				}
 				selected_ = new_selected;
-				if (callback_ != nullptr)
+				if (invoke_callback and callback_ != nullptr)
 				{
 					callback_({ last_selected, items_.at(last_selected) }, { selected_, items_.at(selected_) });
 				}
@@ -216,6 +216,7 @@ namespace vt::ui
 				state_ = widget_state::normal;
 			}
 
+			/*
 			auto cpos_x = ImGui::GetCursorPosX();
 			ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2{});
 			ImGui::SameLine();
@@ -225,6 +226,16 @@ namespace vt::ui
 			ImGui::TextUnformatted(icon);
 
 			ImGui::SetCursorPosX(cpos_x);
+			*/
+
+			ImVec2 label_size = ImGui::CalcTextSize(icons::expand_more);
+			ImVec2 target_pos = ImGui::GetItemRectMax();
+
+			target_pos.x -= (label_size.x + style.FramePadding.x);
+			target_pos.y -= (ImGui::GetFrameHeight() + label_size.y) / 2;
+
+			ImU32 text_color = ImGui::GetColorU32(ImGuiCol_Text);
+			ImGui::GetWindowDrawList()->AddText(target_pos, text_color, icons::expand_more);
 			return result;
 		}
 

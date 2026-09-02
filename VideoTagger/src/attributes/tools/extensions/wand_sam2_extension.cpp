@@ -9,7 +9,54 @@
 
 namespace vt::ui
 {
-	wand_sam2_extension::wand_sam2_extension(const std::string& name) : impl::wand_tool_extension{ name }, points_tool{ true }, mode_{ wand_sam2_mode::rectangle }, is_fg_point_{ true }, is_being_downloaded_{} {}
+	wand_sam2_extension::wand_sam2_extension(const std::string& name) : impl::wand_tool_extension{ name }, points_tool{ true }, mode_{ wand_sam2_mode::rectangle }, is_fg_point_{ true }, is_being_downloaded_{},
+		variant_combo_
+		{
+			"##sam2_variant_combo", sam2_model_variants(), (size_t)(-1),
+			[this](const std::pair<size_t, const sam2_model_variant&>& last_item, const std::pair<size_t, const sam2_model_variant&>& item) -> void
+			{
+				auto sam = get_temp_model(item.second);
+				//TODO: This probably shouldn't be duplicated
+				if (sam != nullptr and !sam->is_downloaded() and !is_being_downloaded_)
+				{
+					variant_combo_.set_selected(last_item.first);
+
+					messagebox_data data{};
+					data.icon = messagebox_icon::info;
+					data.title = "Model download required";
+					data.buttons =
+					{
+						{ 0, ctx_.lang->get("generic.yes")},
+						{ 1, ctx_.lang->get("generic.cancel") },
+					};
+					data.message = fmt::format("This action requires downloading {} ({}) model files.\nWould you like to proceed with the download?", this->name(), sam->name()); // (~X MB/GB)
+					data.cancel_button_id = 1;
+					data.default_button_id = 0;
+					data.callback = [this, sam](int button_id)
+					{
+						switch (button_id)
+						{
+							case 0:
+							{
+								is_being_downloaded_ = true;
+								sam->download(false, [this]()
+								{
+									is_being_downloaded_ = false;
+								});
+							}
+							break;
+						}
+					};
+					messagebox::show(data);
+				}
+				else if (sam != nullptr and sam->is_downloaded())
+				{
+					auto sam = get_model();
+					sam->set_variant(item.second);
+				}
+			}
+		}
+	{}
 
 	bool wand_sam2_extension::is_rect_mode() const
 	{
@@ -215,7 +262,7 @@ namespace vt::ui
 
 	uint32_t wand_sam2_extension::property_column_count() const
 	{
-		auto col_count = 1;
+		auto col_count = 2;
 		if (is_mask_mode())
 		{
 			col_count += brush_tool::property_column_count();
@@ -281,11 +328,39 @@ namespace vt::ui
 			ui::tooltip("Mask");
 			ImGui::PopStyleVar();
 		}
+
+		ImGui::TableNextColumn();
+		{
+			const auto& items = variant_combo_.items();
+			auto sam = get_model();
+			if (sam != nullptr)
+			{
+				auto it = std::find(items.begin(), items.end(), sam->variant());
+				if (it != items.end())
+				{
+					variant_combo_.set_selected(std::distance(items.begin(), it), false);
+				}
+			}
+			variant_combo_.render();
+			ui::tooltip("Variant");
+		}
+
 		if (is_mask_mode())
 		{
 			brush_tool::render_properties();
 		}
 		wand_tool_extension::render_properties();
+	}
+
+	void wand_sam2_extension::on_activate()
+	{
+		float width{};
+		for (const auto& variant : sam2_model_variants())
+		{
+			auto str = sam2_model_variant_to_displayname(variant);
+			width = std::max(width, ImGui::CalcTextSize(str.c_str()).x);
+		}
+		variant_combo_.set_available_width(width * 2.0f);
 	}
 
 	void wand_sam2_extension::on_deactivate()
@@ -371,12 +446,23 @@ namespace vt::ui
 	{
 		return ctx_.model_registry.get_model<sam2_model>();
 	}
+
+	std::shared_ptr<sam2_model> wand_sam2_extension::get_temp_model(sam2_model_variant variant)
+	{
+		return std::make_shared<sam2_model>(variant);
+	}
 	
 	wand_sam2_1_extension::wand_sam2_1_extension(const std::string& name) : wand_sam2_extension{ name } {}
 
 	std::shared_ptr<sam2_model> wand_sam2_1_extension::get_model()
 	{
 		auto ptr = ctx_.model_registry.get_model<sam2_1_model>();
+		return std::reinterpret_pointer_cast<sam2_model>(ptr);
+	}
+
+	std::shared_ptr<sam2_model> wand_sam2_1_extension::get_temp_model(sam2_model_variant variant)
+	{
+		auto ptr = std::make_shared<sam2_model>(variant);
 		return std::reinterpret_pointer_cast<sam2_model>(ptr);
 	}
 }
