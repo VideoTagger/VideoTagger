@@ -12,6 +12,7 @@
 #include <utils/filesystem.hpp>
 #include <tasks/cancellation_token.hpp>
 #include <attributes/impl/shape_tracker.hpp>
+#include <utils/string.hpp>
 
 #include <image/image_opencv.hpp>
 #include <opencv2/highgui.hpp>
@@ -20,9 +21,9 @@ namespace vt::ui
 {
 	enum class predict_special_case_type : int
 	{
-		inactive,
-		initialized,
-		target_lost,
+		inactive = 0,
+		initialized = 1,
+		target_lost = 2,
 	};
 
 	class trackers_benchmark
@@ -107,27 +108,40 @@ namespace vt::ui
 			std::string line;
 			while (std::getline(file, line))
 			{
-				std::istringstream line_stream(line);
-				std::string value;
-				std::array<float, 4> x{};
-				std::array<float, 4> y{};
-
-				for (size_t i = 0; i < 4; i++)
+				auto components = utils::string::split(line, ',');
+				if (components.size() == 4)
 				{
-					if (!std::getline(line_stream, value, ',')) break;
-					x[i] = std::stof(value);
-					if (!std::getline(line_stream, value, ',')) break;
-					y[i] = std::stof(value);
+					float x = std::stof(components[0]);
+					float y = std::stof(components[1]);
+					float w = std::stof(components[2]);
+					float h = std::stof(components[3]);
+					result.emplace_back
+					(
+						utils::vec2<int>{ static_cast<int>(x), static_cast<int>(y) },
+						utils::vec2<int>{ static_cast<int>(x + w), static_cast<int>(y + h) }
+					);
+					continue;
 				}
+				else if (components.size() == 8)
+				{
+					std::array<float, 4> x{};
+					std::array<float, 4> y{};
 
-				auto [min_x, max_x] = std::minmax_element(x.begin(), x.end());
-				auto [min_y, max_y] = std::minmax_element(y.begin(), y.end());
+					for (size_t i = 0; i < 4; i++)
+					{
+						x[i] = std::stof(components[i * 2]);
+						y[i] = std::stof(components[i * 2 + 1]);
+					}
 
-				result.emplace_back
-				(
-					utils::vec2<int>{static_cast<int>(*min_x), static_cast<int>(*min_y) },
-					utils::vec2<int>{ static_cast<int>(*max_x), static_cast<int>(*max_y) }
-				);
+					auto [min_x, max_x] = std::minmax_element(x.begin(), x.end());
+					auto [min_y, max_y] = std::minmax_element(y.begin(), y.end());
+
+					result.emplace_back
+					(
+						utils::vec2<int>{static_cast<int>(*min_x), static_cast<int>(*min_y) },
+						utils::vec2<int>{ static_cast<int>(*max_x), static_cast<int>(*max_y) }
+					);
+				}
 			}
 
 			return result;
