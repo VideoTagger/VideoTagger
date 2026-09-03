@@ -91,12 +91,13 @@ namespace vt::ui::windows
 		});
 		widget_list_.add_raw([&]()
 		{
-			if (ui::button("Test Segmentation"))
+			if (ui::button("Benchmark Segmentation"))
 			{
 				segmentation_benchmark_
 				.benchmark(segmentation_dataset::davis2017, true)
 				.then([this]()
 				{
+					if (!segmentation_benchmark_.is_running()) return;
 					segmentation_benchmark_.benchmark(segmentation_dataset::davis2017, true);
 				});
 			}
