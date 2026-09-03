@@ -41,7 +41,7 @@ namespace vt
 
 	struct benchmark_context
 	{
-		static constexpr size_t annotation_limit = 1000;
+		static constexpr size_t annotation_limit = 2000;
 
 		std::vector<std::string> used_methods;
 		std::vector<std::unique_ptr<impl::dataset_benchmark_item>> items;
