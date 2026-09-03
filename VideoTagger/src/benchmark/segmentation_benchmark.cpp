@@ -3,6 +3,7 @@
 #include <image/image_opencv.hpp>
 #include <fmt/format.h>
 #include <set>
+#include <algorithm>
 
 namespace vt
 {
@@ -1013,12 +1014,17 @@ namespace vt
 			return result;
 		}
 
-		auto it = colors.begin();
-		//skips black (0, 0, 0)
-		if ((*it)[0] == 0 and (*it)[1] == 0 and (*it)[2] == 0 and colors.size() > 1)
+		auto it = std::find_if(colors.begin(), colors.end(), [](const cv::Vec3b& color)
 		{
-			++it;
+			bool is_background = color[0] == 0 and color[1] == 0 and color[2] == 0;
+			bool is_void = color[0] == 255 and color[1] == 255 and color[2] == 255;
+			return !is_background and !is_void;
+		});
+		if (it == colors.end())
+		{
+			return result;
 		}
+
 		const auto& color = *it;
 		cv::Mat mask;
 		cv::inRange(mat, cv::Scalar(color[0], color[1], color[2]), cv::Scalar(color[0], color[1], color[2]), mask);
