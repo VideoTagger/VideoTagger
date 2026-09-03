@@ -2,6 +2,8 @@
 #include "segmentation_benchmark.hpp"
 #include <image/image_opencv.hpp>
 #include <fmt/format.h>
+#include <set>
+#include <algorithm>
 
 namespace vt
 {
@@ -988,16 +990,45 @@ namespace vt
 		davis2017_annotation result;
 		const auto& data = *reinterpret_cast<davis2017_benchmark_data*>(bctx_.data.get());
 		auto img_path = davis2017_filename_to_annotation_path(img_filename);
+		result.filename = img_filename;
 
 		auto img = load_image(img_path);
-		auto mat = image_to_cvmat_view(img);
+		auto bgr_img = img.convert<image_pixel_format::bgr8>([](const image_pixel_format::rgb8& pixel)
+		{
+			return image_pixel_format::bgr8{ pixel.b, pixel.g, pixel.r };
+		});
+		auto mat = image_to_cvmat(bgr_img);
 
-		cv::Mat red_channel;
-		cv::extractChannel(mat, red_channel, 0);
+		std::set<cv::Vec3b, std::less<>> colors;
+		for (int y = 0; y < mat.rows; ++y)
+		{
+			const auto* row = mat.ptr<cv::Vec3b>(y);
+			for (int x = 0; x < mat.cols; ++x)
+			{
+				colors.insert(row[x]);
+			}
+		}
 
-		auto bbox = cv::boundingRect(red_channel);
+		if (colors.empty())
+		{
+			return result;
+		}
+
+		auto it = std::find_if(colors.begin(), colors.end(), [](const cv::Vec3b& color)
+		{
+			bool is_background = color[0] == 0 and color[1] == 0 and color[2] == 0;
+			bool is_void = color[0] == 255 and color[1] == 255 and color[2] == 255;
+			return !is_background and !is_void;
+		});
+
+		if (it == colors.end()) return result;
+
+		const auto& color = *it;
+		cv::Mat mask;
+		cv::inRange(mat, cv::Scalar(color[0], color[1], color[2]), cv::Scalar(color[0], color[1], color[2]), mask);
+
+		auto bbox = cv::boundingRect(mask);
 		result.bbox = { bbox.x, bbox.y, bbox.x + bbox.width, bbox.y + bbox.height };
-		result.filename = img_filename;
 		return result;
 	}
 
