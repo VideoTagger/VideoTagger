@@ -1020,10 +1020,8 @@ namespace vt
 			bool is_void = color[0] == 255 and color[1] == 255 and color[2] == 255;
 			return !is_background and !is_void;
 		});
-		if (it == colors.end())
-		{
-			return result;
-		}
+
+		if (it == colors.end()) return result;
 
 		const auto& color = *it;
 		cv::Mat mask;
