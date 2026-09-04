@@ -99,6 +99,7 @@ namespace vt
 
 		void set_is_running(bool running);
 		bool is_running() const;
+		bool was_cancelled() const;
 		std::string dataset_name() const;
 
 	private:

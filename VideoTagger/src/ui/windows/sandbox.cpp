@@ -97,7 +97,7 @@ namespace vt::ui::windows
 				.benchmark(segmentation_dataset::davis2017, true)
 				.then([this]()
 				{
-					if (!segmentation_benchmark_.is_running()) return;
+					if (segmentation_benchmark_.was_cancelled()) return;
 					segmentation_benchmark_.benchmark(segmentation_dataset::coco, true);
 				});
 			}

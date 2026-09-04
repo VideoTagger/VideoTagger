@@ -109,6 +109,11 @@ namespace vt
 		return bctx_.is_running;
 	}
 
+    bool segmentation_benchmark::was_cancelled() const
+    {
+		return cancel_token_.is_cancelled();
+    }
+
 	std::string segmentation_benchmark::dataset_name() const
 	{
 		switch (bctx_.dataset)
@@ -421,8 +426,9 @@ namespace vt
 
 										auto result = davis2017_get_annotation(filename_str);
 										bctx_.add_item(std::move(result));
-										//if (bctx_.item_count() >= bctx_.annotation_limit) break;
+										if (bctx_.item_count() >= bctx_.annotation_limit) break;
 									}
+									if (bctx_.item_count() >= bctx_.annotation_limit) break;
 								}
 							}
 							break;
@@ -999,7 +1005,14 @@ namespace vt
 		});
 		auto mat = image_to_cvmat(bgr_img);
 
-		std::set<cv::Vec3b, std::less<>> colors;
+		auto color_less = [](const cv::Vec3b& left, const cv::Vec3b& right)
+		{
+			if (left[0] != right[0]) return left[0] < right[0];
+			if (left[1] != right[1]) return left[1] < right[1];
+			return left[2] < right[2];
+		};
+
+		std::set<cv::Vec3b, decltype(color_less)> colors(color_less);
 		for (int y = 0; y < mat.rows; ++y)
 		{
 			const auto* row = mat.ptr<cv::Vec3b>(y);
