@@ -1,4 +1,5 @@
 #pragma once
+#include <ui/window.hpp>
 #include "keybind_action.hpp"
 
 namespace vt
@@ -8,11 +9,10 @@ namespace vt
 		static constexpr auto action_name = "Toggle Window";
 
 	public:
-		toggle_window_action(const char* settings_name, bool& value);
+		toggle_window_action(ui::window& window);
 
 	private:
-		const char* settings_name{};
-		bool& value;
+		ui::window& window_;
 
 	public:
 		virtual void invoke() const final override;

@@ -4,12 +4,11 @@
 
 namespace vt
 {
-	toggle_window_action::toggle_window_action(const char* settings_name, bool& value) : keybind_action(action_name), settings_name{ settings_name }, value { value } {}
+	toggle_window_action::toggle_window_action(ui::window& window) : keybind_action(action_name), window_{ window } {}
 
 	void toggle_window_action::invoke() const
 	{
-		value = !value;
-		ctx_.settings[settings_name] = value;
+		window_.set_opened(!window_.is_open());
 	}
 
 	void toggle_window_action::to_json(nlohmann::ordered_json& json) const

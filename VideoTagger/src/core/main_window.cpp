@@ -1616,15 +1616,16 @@ namespace vt
 
 		keybind_modifiers toggle_window_mod{ false, true };
 		//TODO: Reimplement these
-		//ctx_.keybinds.insert("Toggle Video Player", keybind(SDLK_F1, toggle_window_mod, flags, toggle_window_action("video-player", ctx_.win_cfg.show_video_player_window)));
-		//ctx_.keybinds.insert("Toggle Video Browser", keybind(SDLK_F2, toggle_window_mod, flags, toggle_window_action("video-browser", ctx_.win_cfg.show_video_browser_window)));
-		//ctx_.keybinds.insert("Toggle Video Group Browser", keybind(SDLK_F3, toggle_window_mod, flags, toggle_window_action("video-group-browser", ctx_.win_cfg.show_video_group_browser_window)));
-		//ctx_.keybinds.insert("Toggle Video Group Queue", keybind(SDLK_F4, toggle_window_mod, flags, toggle_window_action("video-group-queue", ctx_.win_cfg.show_video_group_queue_window)));
-		//ctx_.keybinds.insert("Toggle Inspector", keybind(SDLK_F5, toggle_window_mod, flags, toggle_window_action("inspector", ctx_.win_cfg.show_inspector_window)));
-		//ctx_.keybinds.insert("Toggle Shape Attributes", keybind(SDLK_F6, toggle_window_mod, flags, toggle_window_action("shape-attributes", ctx_.win_cfg.show_shape_attributes_window)));
-		//ctx_.keybinds.insert("Toggle Tag Manager", keybind(SDLK_F7, toggle_window_mod, flags, toggle_window_action("tag-manager", ctx_.win_cfg.show_tag_manager_window)));
-		//ctx_.keybinds.insert("Toggle Timeline", keybind(SDLK_F8, toggle_window_mod, flags, toggle_window_action("timeline", ctx_.win_cfg.show_timeline_window)));
-		//ctx_.keybinds.insert("Toggle Console", keybind(SDLK_F9, toggle_window_mod, flags, toggle_window_action("console", ctx_.win_cfg.show_console_window)));
+		ctx_.keybinds.insert("Toggle Video Player", keybind(SDLK_F1, toggle_window_mod, flags, toggle_window_action(ctx_.get_window<widgets::video_player>())));
+		ctx_.keybinds.insert("Toggle Video Browser", keybind(SDLK_F2, toggle_window_mod, flags, toggle_window_action(ctx_.get_window<widgets::video_browser>())));
+		ctx_.keybinds.insert("Toggle Video Group Browser", keybind(SDLK_F3, toggle_window_mod, flags, toggle_window_action(ctx_.get_window<widgets::video_group_browser>())));
+		ctx_.keybinds.insert("Toggle Group Queue", keybind(SDLK_F4, toggle_window_mod, flags, toggle_window_action(ctx_.get_window<widgets::video_group_queue>())));
+		ctx_.keybinds.insert("Toggle Inspector", keybind(SDLK_F5, toggle_window_mod, flags, toggle_window_action(ctx_.get_window<ui::windows::inspector>())));
+		ctx_.keybinds.insert("Toggle Region Properties", keybind(SDLK_F6, toggle_window_mod, flags, toggle_window_action(ctx_.get_window<ui::windows::region_properties>())));
+		ctx_.keybinds.insert("Toggle Tag Manager", keybind(SDLK_F7, toggle_window_mod, flags, toggle_window_action(ctx_.get_window<ui::windows::tag_manager>())));
+		ctx_.keybinds.insert("Toggle Timeline", keybind(SDLK_F8, toggle_window_mod, flags, toggle_window_action(ctx_.get_window<widgets::timeline>())));
+		ctx_.keybinds.insert("Toggle Console", keybind(SDLK_F9, toggle_window_mod, flags, toggle_window_action(ctx_.get_window<widgets::console>())));
+		ctx_.keybinds.insert("Toggle Segment Regions", keybind(SDLK_F10, toggle_window_mod, flags, toggle_window_action(ctx_.get_window<ui::windows::region_list>())));
 
 		keybind_modifiers player_mod{};
 		ctx_.keybinds.insert("Play/Pause", keybind(SDLK_SPACE, player_mod, flags, player_action(player_action_type::play_pause)));
@@ -2342,37 +2343,43 @@ namespace vt
 				{
 					const char* name{};
 					const char* keybind_name{};
-					const char* settings_name{};
-					bool* value{};
+					ui::window* window{};
 				};
 
-				//TODO: This could be done in a better way
-				for (auto& [name, keybind_name, settings_name, value] :
+				//TODO: This probably could be done in a better way
+				for (auto* window : std::initializer_list<ui::window*>
 				{
-					//win_toggles{ "Show Video Player", "Toggle Video Player", "video-player", &ctx_.win_cfg.show_video_player_window },
-					//win_toggles{ "Show Video Browser", "Toggle Video Browser", "video-browser", &ctx_.win_cfg.show_video_browser_window },
-					//win_toggles{ "Show Video Group Browser", "Toggle Video Group Browser", "video-group-browser", &ctx_.win_cfg.show_video_group_browser_window },
-					//win_toggles{ "Show Video Group Queue", "Toggle Video Group Queue", "video-group-queue", &ctx_.win_cfg.show_video_group_queue_window },
-					win_toggles{},
-					//win_toggles{ "Show Inspector", "Toggle Inspector", "inspector", &ctx_.win_cfg.show_inspector_window },
-					//win_toggles{ "Show Shape Attributes", "Toggle Shape Attributes", "shape-attributes", &ctx_.win_cfg.show_shape_attributes_window },
-					//win_toggles{ "Show Tag Manager", "Toggle Tag Manager", "tag-manager", &ctx_.win_cfg.show_tag_manager_window },
-					//win_toggles{ "Show Timeline", "Toggle Timeline", "timeline", &ctx_.win_cfg.show_timeline_window },
-					//win_toggles{ "Show Console", "Toggle Console", "console", &ctx_.win_cfg.show_console_window},
-
+					&ctx_.get_window<widgets::video_player>(),
+					&ctx_.get_window<widgets::video_browser>(),
+					&ctx_.get_window<widgets::video_group_browser>(),
+					&ctx_.get_window<widgets::video_group_queue>(),
+					nullptr,
+					&ctx_.get_window<ui::windows::inspector>(),
+					&ctx_.get_window<ui::windows::region_properties>(),
+					&ctx_.get_window<ui::windows::tag_manager>(),
+					&ctx_.get_window<widgets::timeline>(),
+					&ctx_.get_window<widgets::console>(),
+					&ctx_.get_window<ui::windows::region_list>(),
 				})
 				{
-					if (name == nullptr)
+					if (window == nullptr)
 					{
 						ImGui::Separator();
 						continue;
 					}
+					auto name = window->display_name();
+					auto display_name = fmt::format("{} {}", window->icon(), name);
+					//TODO: Create lang template for this
+					auto keybind_name = fmt::format("Toggle {}", name);
 
+
+					bool is_open = window->is_open();
 					auto& kb = ctx_.keybinds.at(keybind_name);
 					std::string shortcut = kb.name();
-					if (ImGui::MenuItem(name, shortcut.c_str(), value))
+					if (ImGui::MenuItem(display_name.c_str(), shortcut.c_str(), is_open))
 					{
-						windows[settings_name] = *value;
+						window->set_opened(!is_open);
+						//windows[settings_name] = *value;
 					}
 				}
 #ifdef VT_DEBUG
@@ -2399,6 +2406,7 @@ namespace vt
 					}
 				}
 
+#endif
 				ImGui::Separator();
 #endif
 				if (ImGui::MenuItem("Allow Undocking", nullptr, ctx_.app_settings.allow_undocking))
