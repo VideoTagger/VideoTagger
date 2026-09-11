@@ -4,6 +4,7 @@
 #include <type_traits>
 #include <utils/vec.hpp>
 #include <image/image_pixel_format.hpp>
+#include <image/image_convert.hpp>
 
 namespace vt
 {
@@ -81,6 +82,12 @@ namespace vt
 				out[i] = converter(src[i]);
 			}
 			return result;
+		}
+
+		template<typename target_pixel_type>
+		image<target_pixel_type> convert() const
+		{
+			return convert<target_pixel_type>(image_converter<pixel_type, target_pixel_type>{});
 		}
 
 		template<typename type = pixel_type>
