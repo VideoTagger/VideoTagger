@@ -32,7 +32,7 @@ namespace vt
 		container entries_;
 
 	public:
-		download_entry& submit_entry(const std::string& name, const std::string& url, const std::filesystem::path& destination, const std::function<void(download_entry& entry)>& callback);
+		download_entry& submit_entry(const std::string& name, const std::string& url, const std::filesystem::path& destination, const std::function<void(download_entry& entry)>& callback = nullptr);
 		download_entry& submit_entry(download_entry&& entry);
 		iterator erase(iterator it);
 		void clear();
