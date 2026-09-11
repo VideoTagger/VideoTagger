@@ -70,9 +70,11 @@ namespace vt::ui
 		}
 
 	private:
-		std::optional<image<image_pixel_format::rgb8>> load_image(const std::filesystem::path& image_path)
+		template<typename pixel_format>
+		std::optional<image<pixel_format>> load_image(const std::filesystem::path& image_path)
 		{
-			std::optional<image<image_pixel_format::rgb8>> result;
+			std::optional<image<pixel_format>> result;
+			static thread_local image<image_pixel_format::rgb8> conversion_buffer;
 
 			int image_width;
 			int image_height;
@@ -88,7 +90,16 @@ namespace vt::ui
 				}
 
 				result.emplace(image_width, image_height);
-				result->set_data(image_data);
+				if constexpr (std::is_same_v<pixel_format, image_pixel_format::rgb8>)
+				{
+					result->set_data(reinterpret_cast<image_pixel_format::rgb8*>(image_data));
+				}
+				else
+				{
+					conversion_buffer.allocate(image_width, image_height);
+					conversion_buffer.set_data(reinterpret_cast<image_pixel_format::rgb8*>(image_data));
+					result = conversion_buffer.convert<pixel_format>();
+				}
 				stbi_image_free(image_data);
 			}
 
@@ -268,7 +279,7 @@ namespace vt::ui
 				for (auto& frame_name : load_frame_names(frames_path))
 				{
 					auto frame_path = frames_path / frame_name;
-					auto image_opt = load_image(frame_path);
+					auto image_opt = load_image<image_pixel_format::rgb8>(frame_path);
 					if (!image_opt.has_value())
 					{
 						debug::error("Failed to load image: {} from sequence: {}. Skipping sequence.", frame_path.u8string(), sequence_name);
