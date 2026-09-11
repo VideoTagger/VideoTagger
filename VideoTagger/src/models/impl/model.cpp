@@ -1,5 +1,6 @@
 #include "model.hpp"
 #include <core/app_context.hpp>
+#include <utils/filesystem.hpp>
 
 namespace vt::impl
 {
@@ -62,6 +63,17 @@ namespace vt::impl
 
 	void model::on_register() {}
 	void model::on_unregister() {}
+
+	void model::remove()
+	{
+		auto install_dir = model_installation_path();
+		debug::log("Removing model: '{}' from path: '{}'...", name(), install_dir.u8string());
+		if (!std::filesystem::exists(install_dir)) return;
+
+		if (!utils::filesystem::is_subdirectory(ctx_.models_dir_filepath, install_dir)) return;
+
+		std::filesystem::remove_all(install_dir);
+	}
 	
 	bool model::load_if_needed()
 	{
