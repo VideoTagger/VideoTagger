@@ -154,7 +154,7 @@ extern "C"
 #include <events/attributes/attribute_instance_deleted_event.hpp>
 
 #include <ui/impl/region_data_renderer.hpp>
-
+#include <opencv2/core/version.hpp>
 
 namespace vt
 {
@@ -2816,6 +2816,7 @@ namespace vt
 					ImGui::Text("OpenSSL Version: %s", OPENSSL_FULL_VERSION_STR);
 					ImGui::Text("Python Version: %s", PY_VERSION);
 					ImGui::Text("pybind11 Version: %u.%u.%u", PYBIND11_VERSION_MAJOR, PYBIND11_VERSION_MINOR, PYBIND11_VERSION_PATCH);
+					ImGui::Text("OpenCV Version: %s", CV_VERSION);
 #endif
 
 					ImGui::EndDisabled();
