@@ -266,7 +266,7 @@ namespace vt
 		thumbnail.width = thumbnail_width;
 		thumbnail.height = thumbnail_height;
 		thumbnail.pixels.resize(thumbnail.width * thumbnail.height * 3);
-		video.get_thumbnail(thumbnail.pixels, thumbnail.width, thumbnail.height);
+		video.get_thumbnail<image_pixel_format::rgb8>(thumbnail.pixels, thumbnail.width, thumbnail.height);
 
 		return std::make_optional<video_resource_thumbnail>(std::move(thumbnail));
 	}

@@ -132,16 +132,6 @@ namespace vt
 		current_frame_.reset();
 	}
 
-	bool video_stream::update_frame(image<image_pixel_format::rgb8>& image, std::chrono::nanoseconds target_timestamp, bool force_update, bool skip_disposable)
-	{
-		if (!update_current_frame(target_timestamp, skip_disposable) and !force_update)
-		{
-			return false;
-		}
-
-		return update_from_current_frame(image);
-	}
-
 	bool video_stream::update_frame(gl_texture& texture, std::chrono::nanoseconds target_timestamp, bool force_update, bool skip_disposable)
 	{
 		if (!update_current_frame(target_timestamp, skip_disposable) and !force_update)
@@ -150,16 +140,6 @@ namespace vt
 		}
 
 		return update_from_current_frame(texture);
-	}
-
-	bool video_stream::update_frame(std::vector<uint8_t>& pixels, int width, int height, std::chrono::nanoseconds target_timestamp, bool force_update, bool skip_disposable)
-	{
-		if (!update_current_frame(target_timestamp, skip_disposable) and !force_update)
-		{
-			return false;
-		}
-
-		return update_from_current_frame(pixels, width, height);
 	}
 
 	bool video_stream::is_open() const
@@ -228,29 +208,6 @@ namespace vt
 
 		seek(*timestamp);
 		update_frame(texture, *timestamp);
-
-		if (current_ts.has_value())
-		{
-			seek(*current_ts);
-		}
-	}
-
-	void video_stream::get_thumbnail(std::vector<uint8_t>& pixels, int width, int height, std::optional<std::chrono::nanoseconds> timestamp)
-	{
-		if (!is_open())
-		{
-			return;
-		}
-
-		std::optional<std::chrono::nanoseconds> current_ts = current_frame_.has_value() ? std::make_optional(current_frame_->timestamp()) : std::nullopt;
-
-		if (!timestamp.has_value())
-		{
-			timestamp = duration() / 2;
-		}
-
-		seek(*timestamp);
-		update_frame(pixels, width, height, *timestamp);
 
 		if (current_ts.has_value())
 		{
@@ -342,7 +299,7 @@ namespace vt
 	{
 		static thread_local std::vector<uint8_t> conversion_buffer;
 
-		bool frame_updated = update_from_current_frame(conversion_buffer, texture.width(), texture.height());
+		bool frame_updated = update_from_current_frame<image_pixel_format::rgb8>(conversion_buffer, texture.width(), texture.height());
 
 		if (frame_updated)
 		{
@@ -350,29 +307,5 @@ namespace vt
 		}
 
 		return frame_updated;
-	}
-
-	bool video_stream::update_from_current_frame(image<image_pixel_format::rgb8>& image)
-	{
-		static thread_local std::vector<uint8_t> conversion_buffer;
-
-		bool frame_updated = update_from_current_frame(conversion_buffer, image.width(), image.height());
-
-		if (frame_updated)
-		{
-			image.set_data(reinterpret_cast<image_pixel_format::rgb8*>(conversion_buffer.data()));
-		}
-
-		return frame_updated;
-	}
-
-	bool video_stream::update_from_current_frame(std::vector<uint8_t>& pixels, int width, int height)
-	{
-		if (!current_frame_.has_value())
-		{
-			return false;
-		}
-
-		return frame_converter_.convert_frame(*current_frame_, pixels, width, height, AV_PIX_FMT_RGB24);
 	}
 }
