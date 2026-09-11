@@ -7,6 +7,12 @@
 #include <events/attributes/regions_track_request_event.hpp>
 
 #include <widgets/controls.hpp>
+#include <system/messagebox.hpp>
+
+#include <models/impl/model.hpp>
+#include <models/vit_model.hpp>
+#include <models/da_siam_rpn_model.hpp>
+#include <models/goturn_model.hpp>
 
 namespace vt::ui
 {
@@ -33,9 +39,24 @@ namespace vt::ui
 		return shape_type_info;
 	}
 
+	static bool is_tracker_available(const std::type_info& shape_type_info, const std::string& tracker_name)
+	{
+		auto it = ctx_.shape_tracker_registries.find(shape_type_info);
+		if (it == ctx_.shape_tracker_registries.end()) return false;
+		return it->second->is_tracker_available(tracker_name);
+	}
+
+	static std::shared_ptr<vt::impl::model> get_model(const std::string& model_name)
+	{
+		if (model_name == "Vit") return ctx_.model_registry.get_model<vit_model>();
+		if (model_name == "DaSiamRPN") return ctx_.model_registry.get_model<da_siam_rpn_model>();
+		if (model_name == "GOTURN") return ctx_.model_registry.get_model<goturn_model>();
+		return nullptr;
+	}
+
 	track_region_popup::track_region_popup(const std::vector<region_info>& initial_regions, timestamp current_ts) :
 		modal_popup{ "track-regions-popup", "Track Regions", std::nullopt, ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoResize },
-		tracked_regions_{ initial_regions }, current_ts_{ current_ts }, shape_type_info_{ &get_shape_type_info(initial_regions) }, trackers_combo_{ "##AlgCombo", get_available_trackers(*shape_type_info_) }, event_source_{ "track_region_popup" },
+		tracked_regions_{ initial_regions }, current_ts_{ current_ts }, shape_type_info_{ &get_shape_type_info(initial_regions) }, trackers_combo_{ "##AlgCombo", get_available_trackers(*shape_type_info_), (size_t)(-1) }, event_source_{ "track_region_popup" },
 		which_regions_{ track_which_regions::custom }, which_regions_combo_{ "##WhichRegionsCombo", { "All visible", "Selected" }, static_cast<uint8_t>(track_which_regions::custom) }
 	{}
 
@@ -53,11 +74,55 @@ namespace vt::ui
 		update_region_list(which_regions_);
 		update_max_timestamp();
 		target_ts_ = max_ts_;
+
+		close_popup_ = false;
+
+		trackers_combo_.set_callback([this](const std::pair<size_t, const std::string&>& last_item, const std::pair<size_t, const std::string&>& item) -> void
+		{
+			if (is_tracker_available(*shape_type_info_, item.second)) return;
+
+			auto model_ptr = get_model(item.second);
+			if (model_ptr == nullptr) return;
+
+			messagebox_data data{};
+			data.icon = messagebox_icon::info;
+			data.title = "Model download required";
+			data.buttons =
+			{
+				{ 0, ctx_.lang->get("generic.yes")},
+				{ 1, ctx_.lang->get("generic.cancel") },
+			};
+			data.message = fmt::format("This action requires downloading {} model files.\nWould you like to proceed with the download?", item.second);
+			data.cancel_button_id = 1;
+			data.default_button_id = 0;
+			data.callback = [this, model_ptr](int button_id)
+			{
+				switch (button_id)
+				{
+				case 0:
+				{
+					model_ptr->download(false, [this]()
+					{
+					});
+				}
+				break;
+				}
+			};
+			messagebox::show(data);
+			close_popup_ = true;
+		});
 	}
 
 	void track_region_popup::on_render()
 	{
 		trackers_combo_.render_with_label("Tracking algorithm");
+
+		if (close_popup_)
+		{
+			close_popup_ = false;
+			close();
+			return;
+		}
 
 		if (which_regions_combo_.render_with_label("Regions to track"))
 		{
@@ -72,12 +137,14 @@ namespace vt::ui
 
 		ui::checkbox("Replace existing keyframes", replace_keyframes_);
 
+		bool confirm_enabled = !timestamp_edited and !tracked_regions_.empty() and is_tracker_available(*shape_type_info_, trackers_combo_.selected_item());
+
 		std::vector<std::pair<int, std::string>> buttons
 		{
 			{ 0, ctx_.lang->get("generic.confirm") },
 			{ 1, ctx_.lang->get("generic.cancel") },
 		};
-		ui::button_bar<int>::render(buttons, !timestamp_edited and !tracked_regions_.empty(), [&](int id)
+		ui::button_bar<int>::render(buttons, confirm_enabled, [&](int id)
 		{
 			switch (id)
 			{
