@@ -462,7 +462,7 @@ namespace vt::ui
 
 	std::shared_ptr<sam2_model> wand_sam2_1_extension::get_temp_model(sam2_model_variant variant)
 	{
-		auto ptr = std::make_shared<sam2_model>(variant);
+		auto ptr = std::make_shared<sam2_1_model>(variant);
 		return std::reinterpret_pointer_cast<sam2_model>(ptr);
 	}
 }
