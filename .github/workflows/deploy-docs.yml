@@ -61,7 +61,7 @@ jobs:
       - name: Update version selector
         run: |
           cd gh-pages
-          uv run ./scripts/setup_docs.py --only-version-selector
+          uv run python ./scripts/setup_docs.py --only-version-selector
           mv ./build/web/public/docs/version_selector.html ./docs/version_selector.html
           rm -f ./config.json
           rm -rf build
