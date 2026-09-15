@@ -4,7 +4,6 @@
 
 extern "C"
 {
-	#include <libavutil/imgutils.h>
 	#include <libswscale/swscale.h>
 }
 #include "video_decoder.hpp"
@@ -15,6 +14,7 @@ namespace vt
 	class frame_converter
 	{
 	public:
+		frame_converter() = default;
 		frame_converter(int frame_width, int frame_height, AVPixelFormat frame_format, AVPixelFormat destination_format);
 		frame_converter(int frame_width, int frame_height, AVPixelFormat frame_format, int destination_width, int destination_height);
 		frame_converter(int frame_width, int frame_height, AVPixelFormat frame_format, int destination_width, int destination_height, AVPixelFormat destination_format);
@@ -27,7 +27,7 @@ namespace vt
 
 		//TODO: when video_frame is more generic make this return video_frame
 		// for now only works for converting to rgb24
-		void convert_frame(const video_frame& frame, std::vector<uint8_t>& data);
+		bool convert_frame(const video_frame& frame, std::vector<uint8_t>& data, int destination_width, int destination_height, AVPixelFormat destination_format);
 
 		int source_width() const;
 		int source_height() const;
@@ -37,10 +37,10 @@ namespace vt
 		AVPixelFormat destination_format() const;
 
 	private:
-		SwsContext* context_;
-		int source_width_, source_height_;
-		AVPixelFormat source_format_;
-		int destination_width_, destination_height_;
-		AVPixelFormat destination_format_;
+		SwsContext* context_{};
+		int source_width_{}, source_height_{};
+		AVPixelFormat source_format_{};
+		int destination_width_{}, destination_height_{};
+		AVPixelFormat destination_format_{};
 	};
 }

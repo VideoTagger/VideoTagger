@@ -42,6 +42,9 @@ namespace vt
 
 		iterator erase(const_iterator where);
 
+		iterator find(video_group_id_t group_id);
+		const_iterator find(video_group_id_t group_id) const;
+
 		void clear();
 		void reshuffle();
 

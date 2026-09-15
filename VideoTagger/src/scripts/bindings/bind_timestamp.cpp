@@ -46,14 +46,32 @@ void vt::bindings::bind_timestamp(pybind11::module_& module)
 	{
 		ts.set_milliseconds(value);
 	})
-	.def_property("total_milliseconds",
+	.def_property("microseconds",
 	[](const timestamp& ts) -> int64_t
 	{
-		return ts.total_milliseconds.count();
+		return ts.microseconds();
 	},
 	[](timestamp& ts, int64_t value)
 	{
-		ts.total_milliseconds = decltype(ts.total_milliseconds)(value);
+		ts.set_microseconds(value);
+	})
+	.def_property("nanoseconds",
+	[](const timestamp& ts) -> int64_t
+	{
+		return ts.nanoseconds();
+	},
+	[](timestamp& ts, int64_t value)
+	{
+		ts.set_nanoseconds(value);
+	})
+	.def_property("total_nanoseconds",
+	[](const timestamp& ts) -> int64_t
+	{
+		return ts.total_nanoseconds.count();
+	},
+	[](timestamp& ts, int64_t value)
+	{
+		ts.total_nanoseconds = decltype(ts.total_nanoseconds)(value);
 	})
 	.def(py::self < py::self)
 	.def(py::self > py::self)
@@ -61,6 +79,6 @@ void vt::bindings::bind_timestamp(pybind11::module_& module)
 	.def(py::self >= py::self)
 	.def("__repr__", [](const timestamp& ts)
 	{
-		return utils::time::time_to_string(ts.total_milliseconds.count());
+		return timestamp_to_string(ts, default_time_format);
 	});
 }

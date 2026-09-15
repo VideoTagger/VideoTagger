@@ -2,6 +2,12 @@
 #include <vector>
 #include <filesystem>
 #include <string>
+#include <functional>
+
+#define CPPHTTPLIB_OPENSSL_SUPPORT
+#include <httplib.h>
+
+#include <tasks/cancellation_token.hpp>
 
 namespace vt::utils
 {
@@ -53,7 +59,17 @@ namespace vt::utils
 		static std::string normalize(const std::filesystem::path& filepath);
 
 		static void open_in_explorer(const std::filesystem::path& path);
+		static void open_file_in_explorer(const std::filesystem::path& path);
 
 		static std::string concat_extensions(const std::vector<std::string>& extensions);
+
+		static std::filesystem::path get_storage_path(const std::string& organization, const std::string& app_name);
+
+		static bool is_subdirectory(const std::filesystem::path& parent, const std::filesystem::path& child);
+
+		static bool download_file(const std::string& url, const std::filesystem::path& destination, std::optional<httplib::Headers> headers = std::nullopt,
+			std::optional<cancellation_token> cancel_token = std::nullopt, const std::function<void(uint64_t current_size, uint64_t total_size, std::optional<cancellation_token> cancel_token)>& callback = nullptr);
+
+		static std::optional<std::vector<std::filesystem::path>> unzip(const std::filesystem::path& zip_file, const std::filesystem::path& destination, bool overwrite = false);
 	};
 }

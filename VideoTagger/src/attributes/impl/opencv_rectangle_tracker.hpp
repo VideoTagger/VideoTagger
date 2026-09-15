@@ -1,0 +1,44 @@
+#pragma once
+#include <attributes/impl/shape_tracker.hpp>
+#include <opencv2/video/tracking.hpp>
+#include <opencv2/tracking.hpp>
+#include <attributes/shapes/rectangle_shape.hpp>
+#include <image/image_opencv.hpp>
+
+#include <image/image_convert.hpp>
+
+namespace vt::impl
+{
+	class opencv_rectangle_tracker : public shape_tracker<rectangle_shape>
+	{
+	public:
+		opencv_rectangle_tracker(cv::Ptr<cv::Tracker>&& tracker, const std::string& name) : shape_tracker<rectangle_shape>{ name }, tracker_{ std::move(tracker) } {}
+		virtual ~opencv_rectangle_tracker() = default;
+
+	private:
+		cv::Ptr<cv::Tracker> tracker_;
+
+	protected:
+		virtual bool on_init(const rectangle_shape& shape, const image<image_pixel_format::rgb8>& image) override
+		{
+			auto x = std::clamp(shape.start.x(), 0, image.width() - 1);
+			auto y = std::clamp(shape.start.y(), 0, image.height() - 1);
+			auto width = std::clamp(shape.width(), 1, image.width() - x);
+			auto height = std::clamp(shape.height(), 1, image.height() - y);
+
+			tracker_->init(image_to_cvmat_view(image), cv::Rect{ x, y, width, height });
+			return true;
+		}
+
+		virtual std::optional<rectangle_shape> on_predict(const image<image_pixel_format::rgb8>& current_image) override
+		{
+			cv::Rect bb;
+			if (!tracker_->update(image_to_cvmat_view(current_image), bb)) return std::nullopt;
+
+			utils::vec2<int> start{ bb.x, bb.y };
+			auto end = start + utils::vec2<int>{ bb.width, bb.height };
+
+			return std::optional<rectangle_shape>{ std::in_place, start, end };
+		}
+	};
+}

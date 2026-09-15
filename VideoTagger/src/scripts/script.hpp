@@ -3,6 +3,8 @@
 #include <memory>
 #include "script_base.hpp"
 
+#include <tasks/task.hpp>
+
 namespace vt
 {
 	struct script : public script_base
@@ -23,17 +25,17 @@ namespace vt
 	struct script_handle
 	{
 	public:
-		script_handle(std::future<bool>&& promise);
+		script_handle(task<bool>&& task);
 
 	private:
-		std::future<bool> promise_;
+		task<bool> task_;
 	public:
 		std::weak_ptr<script> script;
 		bool has_progress;
 		uint32_t thread_id{};
 
 	public:
-		std::future<bool>& promise();
+		task<bool>& task();
 		bool has_finished() const;
 		void wait();
 	};

@@ -7,15 +7,15 @@ namespace vt::utils
 {
 	GLuint thumbnail::font_texture()
 	{
-		if (ctx_.fonts.count("thumbnail") == 0) return 0;
-		auto font = ctx_.fonts.at("thumbnail");
+		if (ctx_.fonts.count(font_type::thumbnail) == 0) return 0;
+		auto font = ctx_.get_font(font_type::thumbnail);
 		return static_cast<GLuint>((uintptr_t)font->ContainerAtlas->TexID);
 	}
 
 	const thumbnail::font_glyph thumbnail::find_glyph(ImWchar c)
 	{
-		if (ctx_.fonts.count("thumbnail") == 0) return {};
-		auto font = ctx_.fonts.at("thumbnail");
+		if (ctx_.fonts.count(font_type::thumbnail) == 0) return {};
+		auto font = ctx_.get_font(font_type::thumbnail);
 		font_glyph result;
 		auto glyph = font->FindGlyph(c);
 		if (glyph != nullptr)

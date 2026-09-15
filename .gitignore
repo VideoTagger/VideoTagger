@@ -1,6 +1,10 @@
+out/
 build/
 scripts/embeds/
 __pycache__/
+.vs/
+.venv/
+
 *.log
 
 # Premake generated files
@@ -26,8 +30,6 @@ Makefile
 .cproject
 .settings
 .buildpath
-*.vs
 
 **.buildcfg
-VideoTagger/src/embeds/about.*
 *.aps

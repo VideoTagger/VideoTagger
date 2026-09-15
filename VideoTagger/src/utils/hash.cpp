@@ -37,33 +37,33 @@ namespace vt::utils::hash
 		return hash;
 	}
 
-	std::vector<uint8_t> sha256(std::string_view string)
+	std::array<uint8_t, sha256_byte_count> sha256(std::string_view string)
 	{
-		std::vector<uint8_t> result(SHA256_DIGEST_LENGTH, 0);
+		std::array<uint8_t, sha256_byte_count> result{};
 		SHA256(reinterpret_cast<const unsigned char*>(string.data()), string.size(), result.data());
 		return result;
 	}
 
-	std::vector<uint8_t> sha256_file(const std::filesystem::path& filepath)
+	std::optional<std::array<uint8_t, sha256_byte_count>> sha256_file(const std::filesystem::path& filepath)
 	{
 		static constexpr size_t file_buffer_size = 4096;
 
 		std::ifstream in(filepath, std::ios::binary);
 		if (!in.is_open())
 		{
-			return {};
+			return std::nullopt;
 		}
 
 		EVP_MD_CTX* context = EVP_MD_CTX_new();
 		if (context == nullptr)
 		{
-			return {};
+			return std::nullopt;
 		}
 
 		if (EVP_DigestInit_ex(context, EVP_sha256(), nullptr) != 1)
 		{
 			EVP_MD_CTX_free(context);
-			return {};
+			return std::nullopt;
 		}
 
 		std::array<uint8_t, file_buffer_size> file_buffer{};
@@ -79,15 +79,15 @@ namespace vt::utils::hash
 			if (EVP_DigestUpdate(context, file_buffer.data(), read_bytes) != 1)
 			{
 				EVP_MD_CTX_free(context);
-				return {};
+				return std::nullopt;
 			}
 		}
 
-		std::vector<uint8_t> result(SHA256_DIGEST_LENGTH, 0);
+		std::array<uint8_t, sha256_byte_count> result{};
 		if (EVP_DigestFinal_ex(context, result.data(), nullptr) != 1)
 		{
 			EVP_MD_CTX_free(context);
-			return {};
+			return std::nullopt;
 		}
 
 		EVP_MD_CTX_free(context);

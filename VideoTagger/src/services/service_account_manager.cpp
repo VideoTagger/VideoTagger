@@ -1,6 +1,7 @@
 #include "pch.hpp"
 #include "service_account_manager.hpp"
 #include <utils/filesystem.hpp>
+#include <ui/widgets/text_input.hpp>
 
 namespace vt
 {
@@ -103,7 +104,12 @@ namespace vt
 
 		for (auto& field : login_popup_data_->fields)
 		{
-			ImGui::InputText(field.display_name.c_str(), &field.value);
+			ui::text_input input(fmt::format("##{}", field.property_name), field.value, field.hint);
+			input.set_is_password(field.is_password);
+			if (input.render_with_label(field.display_name))
+			{
+				field.value = input.trimmed_input();
+			}
 		}
 
 		if (ImGui::Button("Load from file"))

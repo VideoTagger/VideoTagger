@@ -55,7 +55,12 @@ namespace vt::widgets
 			memcpy(&data_backup, p_data, data_type_size);
 
 			// Input text parsing
-			p_data->total_milliseconds = std::chrono::milliseconds(utils::time::parse_time_to_ms(data_buf));
+			auto ts_opt = parse_timestamp(data_buf);
+			if (ts_opt.has_value())
+			{
+				*p_data = *ts_opt;
+			}
+
 			/*
 			// Apply new value (or operations) then clamp
 			ImGui::DataTypeApplyFromText(data_buf, data_type, p_data, format);
@@ -75,10 +80,10 @@ namespace vt::widgets
 		return value_changed;
 	}
 
-	bool time_input(const char* label, timestamp* v, float v_speed, uint64_t p_min, uint64_t p_max, const char* format, ImGuiSliderFlags flags)
+	bool time_input(const char* label, timestamp* v, float v_speed, int64_t p_min, int64_t p_max, const char* format, ImGuiSliderFlags flags)
 	{
 		ImGuiDataType data_type = ImGuiDataType_U64;
-		uint64_t* p_data = reinterpret_cast<uint64_t*>(v);
+		int64_t* p_data = reinterpret_cast<int64_t*>(v);
 
 		ImGuiWindow* window = ImGui::GetCurrentWindow();
 		if (window->SkipItems)

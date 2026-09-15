@@ -19,8 +19,7 @@ void vt::bindings::bind_project(pybind11::module_& module)
 		result.reserve(p.ref.videos.size());
 		for (const auto& [k, v] : p.ref.videos)
 		{
-			const auto& metadata = v->metadata();
-			result.push_back({ v->file_path(), k, metadata.width.value_or(0), metadata.height.value_or(0) });
+			result.push_back({ v->file_path(), k, v->width(), v->height() });
 		}
 		return result;
 	})
@@ -36,10 +35,13 @@ void vt::bindings::bind_project(pybind11::module_& module)
 
 		if (!p.ref.import_video(std::move(vid_resource), std::nullopt)) return std::nullopt;
 
-		auto& vid = p.ref.videos.get<local_video_resource>(vid_resource_id);
+		auto vid = p.ref.videos.get<local_video_resource>(vid_resource_id);
+		if (vid == nullptr)
+		{
+			return std::nullopt;
+		}
 
-		const auto& metadata = vid.metadata();
-		return vt_video{ vid.file_path(), vid.id(), metadata.width.value_or(0), metadata.height.value_or(0) };
+		return vt_video{ vid->file_path(), vid->id(), vid->width(), vid->height() };
 	})
 	.def("get_video", [](vt_project& p, video_id_t id) -> std::optional<vt_video>
 	{
@@ -49,8 +51,7 @@ void vt::bindings::bind_project(pybind11::module_& module)
 		});
 		if (it == p.ref.videos.end()) return std::nullopt;
 		auto& vid = it->second;
-		const auto& metadata = vid->metadata();
-		return vt_video{ vid->file_path(), it->first, metadata.width.value_or(0), metadata.height.value_or(0) };
+		return vt_video{ vid->file_path(), it->first, vid->width(), vid->height() };
 	})
 	.def("remove_video", [](vt_project& p, vt_video& v) -> bool
 	{
@@ -62,20 +63,20 @@ void vt::bindings::bind_project(pybind11::module_& module)
 		p.ref.remove_video(v.id);
 		return true;
 	})
-	.def("find_group", [](const vt_project& p, const std::string& name) -> std::optional<video_group>
-	{
-		auto it = p.ref.video_groups.end();
-		for (auto& [id, group] : p.ref.video_groups)
-		{
-			if (group.display_name == name) return group;
-		}
-		return std::nullopt;
-	})
-	.def("add_group", [](vt_project& p, const video_group& group) -> bool
-	{
-		auto segments = group.segments();
-		return p.ref.video_groups.insert({ utils::uuid::get(), group }).second;
-	})
+	//.def("find_group", [](const vt_project& p, const std::string& name) -> std::optional<video_group>
+	//{
+	//	auto it = p.ref.video_groups.end();
+	//	for (auto& [id, group] : p.ref.video_groups)
+	//	{
+	//		if (group.display_name == name) return group;
+	//	}
+	//	return std::nullopt;
+	//})
+	//.def("add_group", [](vt_project& p, const video_group& group) -> bool
+	//{
+	//	auto segments = group.segments();
+	//	return p.ref.video_groups.insert({ utils::random::get_uuid(), group }).second;
+	//})
 	.def_property_readonly("group_queue", [](const vt_project& p) -> video_group_playlist&
 	{
 		return p.ref.video_group_playlist;

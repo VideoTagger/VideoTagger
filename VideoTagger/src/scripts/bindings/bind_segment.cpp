@@ -12,10 +12,10 @@ void vt::bindings::bind_segment(pybind11::module_& module)
 	//{
 	//	return s.ref.attributes;
 	//}, py::return_value_policy::reference_internal)
-	.def("get_attribute", [](vt_tag_segment& s, const vt_video& vid, const std::string& name) -> tag_attribute_instance&
-	{
-		return s.ref.attributes[vid.id][name];
-	}, py::return_value_policy::reference_internal)
+	//.def("get_attribute", [](vt_tag_segment& s, const vt_video& vid, const std::string& name) -> tag_attribute_instance&
+	//{
+	//	return s.ref.attributes[vid.id][name];
+	//}, py::return_value_policy::reference_internal)
 	.def_property_readonly("tag", [](const vt_tag_segment& s) -> tag&
 	{
 		return s.tag_ref;

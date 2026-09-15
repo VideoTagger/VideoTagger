@@ -3,6 +3,8 @@
 #include <cstdint>
 #include <string_view>
 #include <vector>
+#include <optional>
+#include <array>
 
 namespace vt::utils::hash
 {
@@ -10,8 +12,8 @@ namespace vt::utils::hash
 
 	static constexpr auto sha256_byte_count = 32;
 
-	extern std::vector<uint8_t> sha256(std::string_view string);
-	extern std::vector<uint8_t> sha256_file(const std::filesystem::path& filepath);
+	extern std::array<uint8_t, sha256_byte_count> sha256(std::string_view string);
+	extern std::optional<std::array<uint8_t, sha256_byte_count>> sha256_file(const std::filesystem::path& filepath);
 
 	enum class string_case
 	{

@@ -22,6 +22,8 @@ namespace vt
 		std::string display_name;
 		std::string property_name;
 		std::string value;
+		std::string hint;
+		bool is_password = false;
 	};
 
 	struct account_login_popup_data

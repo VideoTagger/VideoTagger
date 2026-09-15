@@ -1,6 +1,6 @@
 #include "pch.hpp"
 #include "app.hpp"
-#include "app_window.hpp"
+#include <system/system_window.hpp>
 
 #include <utils/json.hpp>
 
@@ -8,13 +8,42 @@
 #include <core/debug.hpp>
 #include <core/actions.hpp>
 
+#include "audio.hpp"
 #include <utils/string.hpp>
+#include <utils/filesystem.hpp>
 #include <scripts/scripting_engine.hpp>
 #include <ImGuizmo.h>
+#include <events/system/system_color_scheme_changed_event.hpp>
+#include <updates/update_manager.hpp>
+#include <core/platform.hpp>
+#include <system/taskbar.hpp>
+
+#include <opencv2/core.hpp>
+#include <opencv2/core/utils/logger.hpp>
+
+extern "C"
+{
+	#include <libavutil/ffversion.h>
+}
+
+#include <openssl/opensslv.h>
+#include <pybind11/pybind11.h>
+
+#define NOMINMAX
+#ifndef WIN32_LEAN_AND_MEAN
+	#define WIN32_LEAN_AND_MEAN
+#endif
+#ifdef VT_OS_WINDOWS
+	#include <Windows.h>
+	#include <shobjidl.h>  // ITaskbarList3
+
+	#pragma comment(lib, "Ole32.lib")
+#endif
+
 
 namespace vt
 {
-	static void ffmpeg_callback(void* avcl, int level, const char* fmt, va_list va)
+	static void ffmpeg_log_callback(void* avcl, int level, const char* fmt, va_list va)
 	{
 		if (level == AV_LOG_QUIET) return;
 
@@ -33,24 +62,65 @@ namespace vt
 			}
 			if (level == AV_LOG_ERROR)
 			{
-				debug::log_source("FFmpeg", "Error", "{}", message);
+				debug::add_log("FFmpeg", "error", "{}", message);
 			}
 			else
 			{
-				debug::log_source("FFmpeg", "Panic!", "{}", message);
+				debug::add_log("FFmpeg", "panic!", "{}", message);
 			}
 		}
 	}
 
-	bool app::init(const app_window_config& main_config)
+	static int opencv_log_callback(int status, const char* func_name, const char* err_msg, const char* file_name, int line, void* userdata)
+	{
+		// Redirect this to your own logger. Example:
+		// my_logger::error("OpenCV Error [{}] in {}: {} ({}:{})", status, func_name, err_msg, file_name, line);
+
+		// Return 0 to suppress OpenCV's default handling
+		debug::error_src(fmt::format("OpenCV {}:{} {}", file_name, line, func_name), "{} (code: {})", err_msg, status);
+		return 0;
+	}
+
+	static void redirect_opencv_logs()
+	{
+		cv::redirectError(opencv_log_callback);
+		cv::utils::logging::setLogLevel(cv::utils::logging::LOG_LEVEL_SILENT);
+	}
+
+	static void show_debug_info()
+	{
+		SDL_version compiled{};
+		SDL_version linked{};
+		SDL_VERSION(&compiled);
+		SDL_GetVersion(&linked);
+		debug::log("VideoTagger Version: {}", VT_VERSION);
+		debug::log("SDL Version (Header):  {}.{}.{}", compiled.major, compiled.minor, compiled.patch);
+		debug::log("SDL Version (Linked):  {}.{}.{}", linked.major, linked.minor, linked.patch);
+		debug::log("OpenGL Version: {}", (const char*)glGetString(GL_VERSION));
+		debug::log("ImGui Version: {}", IMGUI_VERSION);
+		debug::log("FFmpeg Version: {}", FFMPEG_VERSION);
+		debug::log("OpenSSL Version: {}", OPENSSL_FULL_VERSION_STR);
+		debug::log("Python Version: {}", PY_VERSION);
+		debug::log("pybind11 Version: {}.{}.{}", PYBIND11_VERSION_MAJOR, PYBIND11_VERSION_MINOR, PYBIND11_VERSION_PATCH);
+	}
+
+	bool app::init(const system_window_config& main_config)
 	{
 		debug::init();
-		//Clears the log file
-		if (debug::log_filepath != "") std::ofstream{ debug::log_filepath };
+		update_manager::init();
+
+#ifdef VT_OS_WINDOWS
+		if (!SUCCEEDED(CoInitialize(NULL)))
+		{
+			debug::error("Failed to initialize Windows COM library");
+			return false;
+		}
+#endif
+		taskbar::init();
 
 		SDL_SetHint(SDL_HINT_WINDOWS_NO_CLOSE_ON_ALT_F4, "1");
 		SDL_SetHint(SDL_HINT_IME_SHOW_UI, "1");
-		if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS) < 0)
+		if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS | SDL_INIT_AUDIO) < 0)
 		{
 			debug::error("SDL failed to initialize with error: {}", SDL_GetError());
 			return false;
@@ -87,15 +157,17 @@ namespace vt
 		SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
 		SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
 		SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
-		
-		av_log_set_callback(ffmpeg_callback);
+				
+		av_log_set_callback(ffmpeg_log_callback);
+		redirect_opencv_logs();
 
 		IMGUI_CHECKVERSION();
 		ImGui::CreateContext();
 		
 		ImGuiIO& io = ImGui::GetIO();
 		ImGuiStyle& style = ImGui::GetStyle();
-		io.IniFilename = "layout.ini";
+		static auto layout_path = utils::filesystem::normalize((ctx_.storage_path() / "layout.ini"));
+		io.IniFilename = layout_path.c_str();
 		io.ConfigFlags |= ImGuiConfigFlags_DockingEnable | ImGuiConfigFlags_ViewportsEnable;
 		io.ConfigWindowsMoveFromTitleBarOnly = true;
 
@@ -103,15 +175,36 @@ namespace vt
 		ctx_.register_video_importers();
 
 		ctx_.main_window = std::make_unique<main_window>(main_config);
+		ctx_.main_window->set_current();
+
+		if (!gladLoadGL())
+		{
+			debug::panic("Failed to initialize OpenGL context");
+		}
+		//if (!gladLoadGLLoader((GLADloadproc)SDL_GL_GetProcAddress))
+		//{
+		//	debug::panic("Failed to initialize OpenGL context");
+		//}
 		ImGui_ImplSDL2_InitForOpenGL(ctx_.main_window->window, ctx_.main_window->gl_ctx);
 		ImGui_ImplOpenGL3_Init(glsl_version);
 
-		ctx_.main_window->set_current();
+		show_debug_info();
+		ctx_.load_shaders();
 		SDL_GL_SetSwapInterval(1); //VSync
 
-		ctx_.script_eng.init();
-		ctx_.register_handlers();
+		try
+		{
+			ctx_.script_eng.init();
+		}
+		catch (const std::exception& ex)
+		{
+			debug::error("Failed to initialize scripting engine with error: {}", ex.what());
+		}
 
+		auto storage_path = std::filesystem::absolute(app_context::storage_path()).u8string();
+		debug::log("Storage Path: \x1b]8;;file://{}\033\\{}\033]8;;\033\\", storage_path, storage_path);
+		audio::init();
+		ctx_.dispatch_event<system_color_scheme_changed_event>("system", theme::system_uses_dark_mode());
 		ctx_.state_ = app_state::initialized;
 		return true;
 	}
@@ -134,7 +227,9 @@ namespace vt
 			ImGuizmo::BeginFrame();
 
 			handle_events();
+			handle_tasks();
 			ctx_.main_window->render();
+			ctx_.session.reset_mask_temp_data();
 		}
 #ifndef _DEBUG
 		}
@@ -154,14 +249,25 @@ namespace vt
 	void app::shutdown()
 	{
 		if (ctx_.state_ != app_state::shutdown) return;
+		update_manager::shutdown();
 
 		ImGui_ImplOpenGL3_Shutdown();
 		ImGui_ImplSDL2_Shutdown();
 		ImGui::DestroyContext();
 
+		taskbar::shutdown();
+#ifdef VT_OS_WINDOWS
+		CoUninitialize();
+#endif
+		audio::shutdown();
 		NFD::Quit();
 		SDL_Quit();
 		ctx_.state_ = app_state::uninitialized;
+	}
+
+	void app::handle_tasks()
+	{
+		ctx_.tasks.on_main().run_some(std::chrono::milliseconds{ 32 });
 	}
 
 	void app::handle_events()

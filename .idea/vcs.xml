@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="VcsDirectoryMappings">
+    <mapping directory="" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/VideoTagger/vendor/FreeType" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/VideoTagger/vendor/FreeType/subprojects/dlg" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/VideoTagger/vendor/ImGui" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/VideoTagger/vendor/ImGuizmo" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/VideoTagger/vendor/SDL2" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/VideoTagger/vendor/cpp-httplib" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/VideoTagger/vendor/fmt" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/VideoTagger/vendor/imgui_toggle" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/VideoTagger/vendor/nativefiledialog-extended" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/VideoTagger/vendor/nlohmann" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/VideoTagger/vendor/opencv" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/VideoTagger/vendor/pybind11" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/VideoTagger/vendor/stb" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/VideoTagger/vendor/utf8" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/docs/vendor/doxygen-awesome-css" vcs="Git" />
+  </component>
+</project>

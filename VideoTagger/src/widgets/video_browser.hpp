@@ -1,18 +1,17 @@
 #pragma once
-#include <functional>
-#include <filesystem>
-#include <video/video_pool.hpp>
+#include <ui/window.hpp>
+#include <core/types.hpp>
 
 namespace vt::widgets
 {
-	struct video_browser
+	struct video_browser : public ui::window
 	{
-		video_browser() = default;
+	public:
+		video_browser();
 
-		std::function<void(video_id_t)> on_open_video;
+	public:
+		void on_open_video(video_id_t video_id);
 
-		void render(bool& is_open);
-
-		static std::string window_name();
+		virtual void on_render() override;
 	};
 }

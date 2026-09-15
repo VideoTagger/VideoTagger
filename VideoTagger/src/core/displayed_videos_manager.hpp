@@ -3,7 +3,7 @@
 #include <vector>
 
 #include <video/video_pool.hpp>
-#include <core/gl_texture.hpp>
+#include <render/gl_texture.hpp>
 
 namespace vt
 {
@@ -22,6 +22,7 @@ namespace vt
 		std::chrono::nanoseconds offset{};
 
 		gl_texture display_texture;
+		gl_texture overlay_texture;
 
 		bool is_timestamp_in_range(std::chrono::nanoseconds timestamp) const;
 	};
@@ -33,6 +34,20 @@ namespace vt
 		using iterator = container::iterator;
 		using const_iterator = container::const_iterator;
 
+		displayed_videos_manager() = default;
+
+	private:
+		using frame_clock = std::chrono::steady_clock;
+
+		container videos_;
+
+		bool is_playing_{};
+		float speed_{ 1 };
+
+		std::chrono::nanoseconds frame_clock_base_timestamp_{};
+		frame_clock::time_point frame_clock_base_timepoint_;
+
+	public:
 		void update();
 
 		void set_playing(bool value);
@@ -52,10 +67,23 @@ namespace vt
 		bool is_playing() const;
 		float speed() const;
 		std::chrono::nanoseconds duration() const;
+		timestamp duration_as_timestamp() const;
 		std::chrono::nanoseconds current_timestamp() const;
+		timestamp current_timestamp_as_timestamp() const;
 		size_t size() const;
 		bool empty() const;
 		double max_framerate() const;
+		std::chrono::nanoseconds min_frametime() const;
+
+		std::chrono::nanoseconds frame_clock_current_timestamp() const;
+
+		///@return the timestamp of the closest future frame of all the videos
+		std::chrono::nanoseconds next_frame_timestamp() const;
+
+		std::chrono::nanoseconds current_frame_timestamp() const;
+
+		///@return the timestamp of the closest past frame of all the videos
+		std::chrono::nanoseconds previous_frame_timestamp() const;
 	
 		iterator begin();
 		const_iterator begin() const;
@@ -63,14 +91,5 @@ namespace vt
 		iterator end();
 		const_iterator end() const;
 		const_iterator cend() const;
-
-	private:
-		container videos_;
-		
-		bool is_playing_{};
-		float speed_{1};
-
-		std::chrono::nanoseconds current_timestamp_{};
-		std::chrono::steady_clock::time_point last_timepoint_;
 	};
 }

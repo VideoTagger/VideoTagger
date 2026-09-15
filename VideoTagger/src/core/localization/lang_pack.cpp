@@ -1,0 +1,155 @@
+#include "pch.hpp"
+#include "lang_pack.hpp"
+
+namespace vt
+{
+	lang_pack::lang_pack(const std::string& name, const std::string& filename, const lang_pack_data& data, bool editable) : name_{ name }, filename_{ filename }, data_{ data }, editable_{ editable }, is_dirty_{} {}
+
+	void lang_pack::set_dirty(bool value)
+	{
+		is_dirty_ = value;
+	}
+
+	std::string& lang_pack::name()
+	{
+		return name_;
+	}
+
+	const std::string& lang_pack::name() const
+	{
+		return name_;
+	}
+
+    std::string& lang_pack::filename()
+    {
+		return filename_;
+    }
+
+	const std::string& lang_pack::filename() const
+	{
+		return filename_;
+	}
+
+	std::vector<std::string> lang_pack::keys() const
+	{
+		std::vector<std::string> result;
+		result.reserve(data_.size());
+		for (const auto& [key, _] : data_)
+		{
+			result.push_back(key);
+		}
+		return result;
+	}
+
+	bool lang_pack::is_dirty() const
+	{
+		return is_dirty_;
+	}
+
+	std::string lang_pack::get(const std::string& id)
+	{
+		auto it = data_.find(id);
+		if (it != data_.end() and !it->second.empty()) return it->second;
+#ifdef _DEBUG
+		data_.emplace(id, "");
+#endif
+		return fmt::format("<{}>", id);
+	}
+
+	std::string& lang_pack::at(const std::string& id)
+	{
+		return data_[id];
+	}
+
+	const std::string& lang_pack::at(const std::string& id) const
+	{
+		return data_.at(id);
+	}
+
+	std::string& lang_pack::operator[](const std::string& id)
+	{
+		return at(id);
+	}
+
+	const std::string& lang_pack::operator[](const std::string& id) const
+	{
+		return at(id);
+	}
+
+    void lang_pack::save(const std::filesystem::path& dir)
+    {
+		if (!std::filesystem::exists(dir))
+		{
+			std::filesystem::create_directories(dir);
+		}
+
+		auto path = dir / (filename_ + "." + extension);
+		nlohmann::ordered_json json;
+		auto& meta = json["@meta"];
+		meta["name"] = name_;
+		meta["editable"] = editable_;
+		for (const auto& [key, value] : data_)
+		{
+			json[key] = value;
+		}
+
+		utils::json::write_to_file(json, path);
+    }
+
+	std::optional<lang_pack> lang_pack::load_from_json(const nlohmann::ordered_json& json, const std::string& filename)
+	{
+		if (!json.contains("@meta")) return std::nullopt;
+
+		auto json_info = json.at("@meta");
+		if (!json_info.contains("name")) return std::nullopt;
+
+		lang_pack lang(json_info.at("name"), filename, {}, json_info.at("editable"));
+		for (const auto& [key, value] : json.items())
+		{
+			if (key == "@meta" or !value.is_string()) continue;
+			lang[key] = value.get<std::string>();
+		}
+		return lang;
+	}
+
+	std::optional<lang_pack> lang_pack::load_from_file(const std::filesystem::path& path)
+	{
+		auto json = utils::json::load_from_file(path);
+		return load_from_json(json, path.stem().u8string());
+	}
+
+	bool lang_pack::is_template(const std::string& id) const
+	{
+		return parse_template(id) != std::nullopt;
+	}
+
+    std::optional<lang_template> lang_pack::parse_template(const std::string& id) const
+    {
+		if (id.rfind(lang_template::prefix, 0) != 0) return std::nullopt;
+
+		auto remaining = id.substr(lang_template::prefix.size());
+		auto colon_pos = remaining.find(':');
+		if (colon_pos == std::string::npos) return std::nullopt;
+
+		auto param_count_str = remaining.substr(0, colon_pos);
+		size_t param_count{};
+		param_count = std::stoul(param_count_str);
+		if (errno == ERANGE) return std::nullopt;
+
+		colon_pos = remaining.find(':');
+		if (colon_pos == std::string::npos) return std::nullopt;
+		auto template_id = remaining.substr(colon_pos + 1);
+		return lang_template{ param_count, template_id };
+    }
+
+    bool lang_pack::try_parse_template(const std::string& id, lang_template& target) const
+    {
+		auto parsed = parse_template(id);
+		bool result = parsed.has_value();
+		if (result)
+		{
+			target = parsed.value();
+		}
+		return result;
+    }
+}

@@ -1,20 +1,27 @@
 #pragma once
 #include <string>
-#include <video/video_pool.hpp>
+#include <ui/window.hpp>
+#include <core/types.hpp>
 
 namespace vt::widgets
 {
-	class video_group_queue
+	class video_group_queue : public ui::window
 	{
 	public:
-		video_group_queue() = default;
+		video_group_queue();
+
+	private:
+		video_group_id_t current_group_id_{};
 
 	public:
-		video_group_id_t current_group_id{};
+		void set_current_group_id(video_group_id_t id);
 
-	public:
-		void render(bool& is_open);
+		video_group_id_t current_group_id() const;
 
-		static std::string window_name();
+		virtual void pre_render() override;
+		virtual void on_render() override;
+
+		virtual void pre_style() override;
+		virtual void post_style() override;
 	};
 }

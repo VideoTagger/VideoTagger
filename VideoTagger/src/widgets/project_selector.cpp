@@ -6,14 +6,21 @@
 #include <utils/json.hpp>
 #include <utils/string.hpp>
 #include <utils/time.hpp>
-#include "icons.hpp"
+#include <ui/icons.hpp>
+#include <ui/widgets/common.hpp>
+#include <system/messagebox.hpp>
 #include "controls.hpp"
 
 #include <core/app.hpp>
+#include <events/project_selector/open_project_event.hpp>
+#include <events/project_selector/project_list_changed_event.hpp>
 
 namespace vt::widgets
 {
-	project_selector::project_selector(const std::vector<project_info>& projects) : projects_{ projects } {}
+    project_selector::project_selector()
+    {
+    }
+    project_selector::project_selector(const std::vector<project_info>& projects) : projects_{ projects } {}
 
 	void project_selector::render_project_creation_menu()
 	{
@@ -29,21 +36,21 @@ namespace vt::widgets
 
 		if (ImGui::BeginPopupModal("Project Configuration", nullptr, flags))
 		{
-			ImGui::PushFont(ctx_.fonts["title"]);
-			ImGui::LabelText("##ProjectCfgTitle", "%s", ctx_.lang.get(lang_pack_id::project_configuration));
+			ImGui::PushFont(ctx_.get_font(font_type::h3_bold));
+			ImGui::LabelText("##ProjectCfgTitle", "%s", ctx_.lang->get("project.configuration").c_str());
 			ImGui::Separator();
 			ImGui::Dummy(style.ItemSpacing);
 			ImGui::PopFont();
-			ImGui::TextDisabled("%s", ctx_.lang.get(lang_pack_id::name));
+			ImGui::TextDisabled("%s", ctx_.lang->get("name").c_str());
 
 			auto avail_size = ImGui::GetContentRegionAvail();
 			auto input_width = avail_size.x * 0.9f;
 			
 			ImGui::SetNextItemWidth(input_width);
-			std::string proj_name_hint = fmt::format("{}...", ctx_.lang.get(lang_pack_id::project_name));
+			std::string proj_name_hint = fmt::format("{}...", ctx_.lang->get("project.name").c_str());
 			ImGui::InputTextWithHint("##ProjectCfgName", proj_name_hint.c_str(), &temp_project.name, ImGuiInputTextFlags_AutoSelectAll);
 
-			ImGui::TextDisabled("%s", ctx_.lang.get(lang_pack_id::location));
+			ImGui::TextDisabled("%s", ctx_.lang->get("location").c_str());
 			std::string path = std::filesystem::absolute(temp_project.path).replace_extension().u8string();
 
 			int input_flags = ImGuiInputTextFlags_AutoSelectAll;
@@ -76,9 +83,9 @@ namespace vt::widgets
 					temp_project.path.make_preferred();
 				}
 			}
-			ImGui::Checkbox(ctx_.lang.get(lang_pack_id::derive_filename_from_proj_name), &path_from_name);
+			ImGui::Checkbox(ctx_.lang->get("derive_filename_from_proj_name").c_str(), &path_from_name);
 
-			auto button_size = ImGui::CalcTextSize(ctx_.lang.get(lang_pack_id::cancel)) + style.ItemInnerSpacing * 2;
+			auto button_size = ImGui::CalcTextSize(ctx_.lang->get("generic.cancel").c_str()) + style.ItemInnerSpacing * 2;
 			button_size *= 1.15f;
 
 			ImGui::SetCursorPosY(win_size.y - style.WindowPadding.y - button_size.y);
@@ -95,11 +102,11 @@ namespace vt::widgets
 			valid &= (it == projects_.end());
 
 			if (!valid) ImGui::BeginDisabled();
-			bool pressed = ImGui::Button(ctx_.lang.get(lang_pack_id::create), button_size) || ImGui::IsKeyPressed(ImGuiKey_Enter);
+			bool pressed = ImGui::Button(ctx_.lang->get("create").c_str(), button_size) || ImGui::IsKeyPressed(ImGuiKey_Enter);
 			if (!valid) ImGui::EndDisabled();
 
 			ImGui::SameLine();
-			if (ImGui::Button(ctx_.lang.get(lang_pack_id::cancel), button_size))
+			if (ImGui::Button(ctx_.lang->get("generic.cancel").c_str(), button_size))
 			{
 				ImGui::CloseCurrentPopup();
 			}			
@@ -111,9 +118,10 @@ namespace vt::widgets
 				temp_project.save();
 				projects_.push_back(temp_project);
 
-				if (on_project_list_update == nullptr) return;
-				on_project_list_update();
+				ctx_.dispatch_event<project_list_changed_event>(event_source_);
 				ImGui::CloseCurrentPopup();
+
+				ctx_.dispatch_event<open_project_event>(event_source_, temp_project);
 			}
 
 			ImGui::EndPopup();
@@ -128,8 +136,8 @@ namespace vt::widgets
 
 		if (id == 0)
 		{
-			ImGui::TableSetupColumn(ctx_.lang.get(lang_pack_id::project_name), ImGuiTableColumnFlags_WidthStretch);
-			ImGui::TableSetupColumn(ctx_.lang.get(lang_pack_id::modification_time), ImGuiTableColumnFlags_WidthStretch | ImGuiTableColumnFlags_NoResize);
+			ImGui::TableSetupColumn(ctx_.lang->get("project.name").c_str(), ImGuiTableColumnFlags_WidthStretch);
+			ImGui::TableSetupColumn(ctx_.lang->get("modification_time").c_str(), ImGuiTableColumnFlags_WidthStretch | ImGuiTableColumnFlags_NoResize);
 			ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed | ImGuiTableColumnFlags_NoHeaderLabel);
 			ImGui::TableHeadersRow();
 		}
@@ -142,9 +150,9 @@ namespace vt::widgets
 		{
 			ImGui::BeginDisabled();
 		}
-		if (ImGui::Selectable("##ProjectListSelectable", false, ImGuiSelectableFlags_AllowItemOverlap | ImGuiSelectableFlags_SpanAllColumns, size) and on_click_project != nullptr)
+		if (ImGui::Selectable("##ProjectListSelectable", false, ImGuiSelectableFlags_AllowItemOverlap | ImGuiSelectableFlags_SpanAllColumns, size))
 		{
-			on_click_project(project);
+			ctx_.dispatch_event<open_project_event>(event_source_, project);
 		}
 		if (ImGui::IsItemHovered())
 		{
@@ -159,7 +167,7 @@ namespace vt::widgets
 		ImGui::SameLine();
 
 		ImGui::BeginGroup();
-		std::string name = !project.name.empty() ? project.name : fmt::format("- {}! -", ctx_.lang.get(lang_pack_id::invalid_project));
+		std::string name = !project.name.empty() ? project.name : fmt::format("- {}! -", ctx_.lang->get("project.invalid").c_str());
 		ImGui::TextUnformatted(name.c_str());
 		auto path = project.path;
 		std::optional<tm> mod_time = project.modification_time();
@@ -167,8 +175,10 @@ namespace vt::widgets
 		{
 			path = std::filesystem::absolute(path);
 		}
+		ImGui::PushFont(ctx_.get_font(font_type::h5));
 		ImGui::TextDisabled("%s", path.string().c_str());
-		tooltip(path.string().c_str());
+		ImGui::PopFont();
+		ui::tooltip(path.string());
 		ImGui::EndGroup();
 
 		ImGui::TableNextColumn();
@@ -196,7 +206,7 @@ namespace vt::widgets
 
 		ImGui::TableNextColumn();
 		ImGui::PushID(imgui_id);
-		if (widgets::icon_button(icons::dots_hor, size))
+		if (ui::icon_button(icons::dots_hor, size))
 		{
 			ImGui::OpenPopup("##ProjectCtxMenu");
 		}
@@ -205,13 +215,13 @@ namespace vt::widgets
 		{
 			if (is_valid)
 			{
-				std::string menu_name = fmt::format("{} {}", icons::folder, ctx_.lang.get(lang_pack_id::show_in_explorer));
+				std::string menu_name = fmt::format("{} {}", icons::folder, ctx_.lang->get("show_in_explorer").c_str());
 				if (ImGui::MenuItem(menu_name.c_str()))
 				{
-					auto path = std::filesystem::absolute(project.path.parent_path()).u8string();
+					auto path = std::filesystem::absolute(project.path).u8string();
 					if (!path.empty())
 					{
-						utils::filesystem::open_in_explorer(path);
+						utils::filesystem::open_file_in_explorer(path);
 					}
 				}
 			}
@@ -222,53 +232,51 @@ namespace vt::widgets
 				if (ImGui::MenuItem(menu_name.c_str()))
 				{
 					projects_.erase(std::find(projects_.begin(), projects_.end(), project));
-					if (on_project_list_update != nullptr) on_project_list_update();
+					ctx_.dispatch_event<project_list_changed_event>(event_source_);
 				}
 			}
 			{
 				std::string menu_name = fmt::format("{} Delete", icons::delete_);
 				if (std::filesystem::is_regular_file(project.path) and project.path.extension() == std::string(".") + project::extension and ImGui::MenuItem(menu_name.c_str()))
 				{
-					const SDL_MessageBoxButtonData buttons[] = {
-						// flags, buttonid, text
-						{ SDL_MESSAGEBOX_BUTTON_ESCAPEKEY_DEFAULT, 0, ctx_.lang.get(lang_pack_id::cancel) },
-						{ SDL_MESSAGEBOX_BUTTON_RETURNKEY_DEFAULT, 1, "Delete" }
+					messagebox_data data{};
+					data.icon = messagebox_icon::warning;
+					data.buttons = {
+						{ 0, ctx_.lang->get("generic.cancel") },
+						{ 1, ctx_.lang->get("generic.delete") }
 					};
-
-					SDL_MessageBoxData data{};
-					data.flags = SDL_MESSAGEBOX_WARNING;
-
-					//TODO: Replace title
-					data.buttons = buttons;
-					data.numbuttons = sizeof(buttons) / sizeof(buttons[0]);
+					data.cancel_button_id = 0;
+					data.default_button_id = 1;
+					//TODO: Replace this title
 					data.title = "VideoTagger";
-					auto message = "Are you sure you want to delete the project file?\n\nFilepath:\n" + std::filesystem::absolute(project.path).string();
-					data.message = message.c_str();
-					int buttonid{};
-					SDL_ShowMessageBox(&data, &buttonid);
-
-					switch (buttonid)
+					data.message = "Are you sure you want to delete the project file?\n\nFilepath:\n" + std::filesystem::absolute(project.path).u8string();
+					data.callback = [this, project](int id)
 					{
-						case 1:
+						auto proj_path = project.path.u8string();
+						switch (id)
 						{
-							debug::log("Deleting project file: {}", project.path.u8string());
-							std::error_code ec{};
-							if (std::filesystem::remove(project.path, ec))
+							case 1:
 							{
-								projects_.erase(std::find(projects_.begin(), projects_.end(), project));
-								if (on_project_list_update != nullptr) on_project_list_update();
+								debug::log("Deleting project file: {}", proj_path);
+								std::error_code ec{};
+								if (std::filesystem::remove(project.path, ec))
+								{
+									projects_.erase(std::find(projects_.begin(), projects_.end(), project));
+									ctx_.dispatch_event<project_list_changed_event>(event_source_);
+								}
+								else
+								{
+									debug::error("Project file couldn't be deleted: {}", proj_path);
+									auto message = "Project file couldn't be deleted\n\nFilepath:\n" + proj_path;
+									message += "\nReason:\n" + ec.message() + "\nCode: " + std::to_string(ec.value());
+									messagebox::show("VideoTagger", message, messagebox_icon::error);
+								}
 							}
-							else
-							{
-								debug::error("Project file couldn't be deleted: {}", project.path.u8string());
-								auto message = "Project file couldn't be deleted\n\nFilepath:\n" + project.path.u8string();
-								message += "\nReason:\n" + ec.message() + "\nCode: " + std::to_string(ec.value());
-								SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "VideoTagger", message.c_str(), nullptr);
-							}
-
+							break;
+							default: break;
 						}
-						break;
-					}
+					};
+					messagebox::show(data);					
 				}
 			}
 			ImGui::EndPopup();
@@ -289,9 +297,22 @@ namespace vt::widgets
 		});
 	}
 
+	const project_info& project_selector::replace(const project_info& project, const project_info& new_project)
+	{
+		auto it = std::find(projects_.begin(), projects_.end(), project);
+		if (it != projects_.end())
+		{
+			*it = new_project;
+			ctx_.dispatch_event<project_list_changed_event>(event_source_);
+			return *it;
+		}
+		return project;
+	}
+
 	void project_selector::remove(const project_info& project)
 	{
 		projects_.erase(std::find(projects_.begin(), projects_.end(), project));
+		ctx_.dispatch_event<project_list_changed_event>(event_source_);
 	}
 
 	void project_selector::load_projects_file(const std::filesystem::path& filepath)
@@ -311,8 +332,7 @@ namespace vt::widgets
 		{
 			projects_[i] = project_info::load_from_file(list[i]);
 		}
-		if (on_project_list_update == nullptr) return;
-		on_project_list_update();
+		ctx_.dispatch_event<project_list_changed_event>(event_source_);
 	}
 
 	void project_selector::save_projects_file(const std::filesystem::path& filepath)
@@ -322,7 +342,7 @@ namespace vt::widgets
 		std::vector<std::filesystem::path> project_paths(projects_.size());
 		for (size_t i = 0; i < projects_.size(); ++i)
 		{
-			project_paths[i] = std::filesystem::relative(projects_[i].path);
+			project_paths[i] = std::filesystem::absolute(projects_[i].path);
 		}
 		projects = project_paths;
 		utils::json::write_to_file(json, filepath);
@@ -354,12 +374,12 @@ namespace vt::widgets
 			{
 				sort();
 			}
-			ImGui::PushFont(ctx_.fonts["title"]);
-			ImGui::LabelText("##ProjectSelectorTitle", "%s", ctx_.lang.get(lang_pack_id::projects));
+			ImGui::PushFont(ctx_.get_font(font_type::h3_bold));
+			ImGui::LabelText("##ProjectSelectorTitle", "%s", ctx_.lang->get("projects").c_str());
 			ImGui::PopFont();
 			ImGui::Dummy(ImGui::GetStyle().ItemSpacing);
 
-			search_bar("##ProjectSelectorSearch", ctx_.lang.get(lang_pack_id::search_hint), filter);
+			search_bar("##ProjectSelectorSearch", ctx_.lang->get("search_hint").c_str(), filter);
 						
 			const auto& style = ImGui::GetStyle();
 			auto panels_area = ImGui::GetContentRegionAvail() - style.WindowPadding;
@@ -436,7 +456,7 @@ namespace vt::widgets
 					{
 						ImGui::Dummy(style.ItemSpacing);
 						ImGui::BeginGroup();
-						if (ImGui::Button(ctx_.lang.get(lang_pack_id::new_project), button_size))
+						if (ImGui::Button(ctx_.lang->get("project.new").c_str(), button_size))
 						{
 							open_project_config = true;
 							ImGui::CloseCurrentPopup();
@@ -445,7 +465,7 @@ namespace vt::widgets
 						if (widgets::begin_button_dropdown("##ProjectDropdown", button_size))
 						{
 							ImGui::PushStyleColor(ImGuiCol_Button, ImVec4{});
-							if (ImGui::Button(ctx_.lang.get(lang_pack_id::add_existing_project), button_size))
+							if (ImGui::Button(ctx_.lang->get("project.add_existing").c_str(), button_size))
 							{
 								utils::dialog_filter filter{ "VideoTagger Project", project_info::extension };
 								auto result = utils::filesystem::get_file({}, { filter });
@@ -460,14 +480,12 @@ namespace vt::widgets
 									if (it == projects_.end())
 									{
 										projects_.push_back(project_info::load_from_file(result.path));
-										if (on_project_list_update == nullptr) return;
-										on_project_list_update();
+										ctx_.dispatch_event<project_list_changed_event>(event_source_);
 									}
 									else
 									{
 										std::string message = "Cannot add this project since it already exits.\nFilepath: " + std::filesystem::relative(result.path).string();
-										//TODO: Change the title based on the app window
-										SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_WARNING, "VideoTagger", message.c_str(), nullptr);
+										messagebox::show("VideoTagger", message, messagebox_icon::warning);
 									}									
 								}
 								ImGui::CloseCurrentPopup();

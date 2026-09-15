@@ -1,7 +1,7 @@
 #include "pch.hpp"
 #include "tag_menu.hpp"
 
-#include "icons.hpp"
+#include <ui/icons.hpp>
 #include <core/app_context.hpp>
 
 namespace vt::widgets

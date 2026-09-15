@@ -24,6 +24,10 @@ namespace vt::utils
 		static constexpr ImWchar download_icon{ 0xF090 };
 		static constexpr ImWchar file_icon{ 0xE66D };
 		static constexpr ImWchar folder_icon{ 0xE2C7 };
+
+		static constexpr ImWchar info_icon{ 0xE88E };
+		static constexpr ImWchar warning_icon{ 0xE002 };
+		static constexpr ImWchar error_icon{ 0xE160 };
 	};
 
 }

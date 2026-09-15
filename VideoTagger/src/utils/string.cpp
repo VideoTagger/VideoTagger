@@ -3,7 +3,7 @@
 
 namespace vt::utils::string
 {
-	uint64_t levenshtein_dist(const std::string& left, const std::string& right)
+	size_t levenshtein_dist(const std::string& left, const std::string& right)
 	{
 		const auto size_a = left.size();
 		const auto size_b = right.size();
@@ -110,6 +110,13 @@ namespace vt::utils::string
 		ltrim(result);
 		rtrim(result);
 		return result;
+	}
+
+	bool has_trailing_whitespace(const std::string& input)
+	{
+		if (input.empty()) return false;
+
+		return std::isspace(static_cast<unsigned char>(input.front())) or std::isspace(static_cast<unsigned char>(input.back()));
 	}
 
 	std::vector<std::string> split(const std::string& input, char delimiter)

@@ -1,0 +1,34 @@
+#pragma once
+#include <utils/vec.hpp>
+#include "gizmo_targets_event.hpp"
+
+namespace vt
+{
+	enum class gizmo_move_type
+	{
+		offset,
+		absolute,
+	};
+
+	struct gizmo_move_targets_event : public gizmo_targets_event
+	{
+	public:
+		gizmo_move_targets_event(video_id_t video_id, const std::vector<utils::vec2<int>*>& targets, const utils::vec2<int>& value, gizmo_move_type type = gizmo_move_type::offset) :
+			gizmo_targets_event{ video_id, targets }, value_{ value }, type_{ type } {}
+
+	private:
+		utils::vec2<int> value_;
+		gizmo_move_type type_;
+
+	public:
+		[[nodiscard]] const utils::vec2<int>& value() const
+		{
+			return value_;
+		}
+
+		[[nodiscard]] gizmo_move_type move_type() const
+		{
+			return type_;
+		}
+	};
+}
