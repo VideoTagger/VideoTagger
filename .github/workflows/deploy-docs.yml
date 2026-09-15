@@ -53,7 +53,6 @@ jobs:
         run: |
           mkdir -p ./gh-pages/scripts
           cp ./config.json ./gh-pages/
-          cp ./pyproject.toml ./gh-pages/
           cp -r ./scripts/ ./gh-pages/scripts/
           mkdir -p ./gh-pages/docs/src
           cp ./docs/src/version_selector.html ./gh-pages/docs/src/
@@ -65,7 +64,6 @@ jobs:
           uv run ./scripts/setup_docs.py --only-version-selector
           mv ./build/web/public/docs/version_selector.html ./docs/version_selector.html
           rm -f ./config.json
-          rm -f ./pyproject.toml
           rm -rf build
           rm -rf docs/src
           rm -rf scripts
