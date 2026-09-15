@@ -48,9 +48,6 @@ jobs:
         with:
           ref: gh-pages
           path: gh-pages
-      
-      - name: Setup uv
-        uses: astral-sh/setup-uv@v7
 
       - name: Copy files to working directory
         run: |
