@@ -1197,6 +1197,8 @@ namespace vt
 
 		ctx_.add_event_listener<attribute_rename_request_event>([this](const attribute_rename_request_event& event)
 		{
+			if (event.new_name().empty()) return;
+
 			auto& tags = ctx_.current_project->tags;
 			auto tag_it = tags.find(event.tag_name());
 			if (tag_it == tags.end()) return;
@@ -1208,6 +1210,7 @@ namespace vt
 
 			auto node = attributes.extract(attr_it);
 			node.key() = event.new_name();
+			node.mapped()->set_name(event.new_name());
 			attributes.insert(std::move(node));
 
 			ctx_.is_project_dirty = true;
