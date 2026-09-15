@@ -53,7 +53,7 @@ jobs:
         run: |
           mkdir -p ./gh-pages/scripts
           cp ./config.json ./gh-pages/
-          cp -r ./scripts/ ./gh-pages/scripts/
+          cp -r ./scripts/. ./gh-pages/scripts/
           mkdir -p ./gh-pages/docs/src
           cp ./docs/src/version_selector.html ./gh-pages/docs/src/
           cp -r /tmp/new_docs/* ./gh-pages/
