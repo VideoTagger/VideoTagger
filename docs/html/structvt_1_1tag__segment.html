@@ -112,7 +112,6 @@ $(document).ready(function(){initNavTree('structvt_1_1tag__segment.html',''); in
 
 <div class="header">
   <div class="summary">
-<a href="#pub-types">Public Types</a> &#124;
 <a href="#pub-methods">Public Member Functions</a> &#124;
 <a href="#pub-attribs">Public Attributes</a> &#124;
 <a href="#pub-static-attribs">Static Public Attributes</a> &#124;
@@ -121,29 +120,51 @@ $(document).ready(function(){initNavTree('structvt_1_1tag__segment.html',''); in
 </div><!--header-->
 <div class="contents">
 
+<p>A struct representing a segment or timestamp appearing on the timeline.  
+ <a href="structvt_1_1tag__segment.html#details">More...</a></p>
+
 <p><code>#include &lt;tag_timeline.hpp&gt;</code></p>
+<div class="dynheader">
+Inheritance diagram for vt::tag_segment:</div>
+<div class="dyncontent">
+ <div class="center">
+  <img src="structvt_1_1tag__segment.png" usemap="#vt::tag_5Fsegment_map" alt=""/>
+  <map id="vt::tag_5Fsegment_map" name="vt::tag_5Fsegment_map">
+<area href="structvt_1_1impl_1_1serializable.html" alt="vt::impl::serializable" shape="rect" coords="0,0,120,24"/>
+  </map>
+</div></div>
 <table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-types" name="pub-types"></a>
-Public Types</h2></td></tr>
-<tr class="memitem:a1296434c25d89659de9aa9b699bad4cc" id="r_a1296434c25d89659de9aa9b699bad4cc"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structvt_1_1tag__segment.html#a1296434c25d89659de9aa9b699bad4cc">attribute_instance_container</a> = std::unordered_map&lt; <a class="el" href="namespacevt.html#ad54d71114ec302acf34f88f20ca320a1">video_id_t</a>, std::unordered_map&lt; std::string, <a class="el" href="structvt_1_1tag__attribute__instance.html">tag_attribute_instance</a> &gt; &gt;</td></tr>
-<tr class="separator:a1296434c25d89659de9aa9b699bad4cc"><td class="memSeparator" colspan="2">&#160;</td></tr>
-</table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:aa70abaab5954104b0a3f4b2a7ba423c4" id="r_aa70abaab5954104b0a3f4b2a7ba423c4"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structvt_1_1tag__segment.html#aa70abaab5954104b0a3f4b2a7ba423c4">tag_segment</a> (<a class="el" href="structvt_1_1timestamp.html">timestamp</a> time_start, <a class="el" href="structvt_1_1timestamp.html">timestamp</a> time_end, const <a class="el" href="structvt_1_1tag__segment.html#a1296434c25d89659de9aa9b699bad4cc">attribute_instance_container</a> &amp;<a class="el" href="structvt_1_1tag__segment.html#a0b5e2de0181af2997a20695cb416bd8a">attributes</a>={})</td></tr>
-<tr class="separator:aa70abaab5954104b0a3f4b2a7ba423c4"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a3545975c585bc7abe03801c2b07b93af" id="r_a3545975c585bc7abe03801c2b07b93af"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structvt_1_1tag__segment.html#a3545975c585bc7abe03801c2b07b93af">tag_segment</a> (<a class="el" href="structvt_1_1timestamp.html">timestamp</a> time_point, const <a class="el" href="structvt_1_1tag__segment.html#a1296434c25d89659de9aa9b699bad4cc">attribute_instance_container</a> &amp;<a class="el" href="structvt_1_1tag__segment.html#a0b5e2de0181af2997a20695cb416bd8a">attributes</a>={})</td></tr>
-<tr class="separator:a3545975c585bc7abe03801c2b07b93af"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a19fd6232b918a24b1f30c9ea1f6d97bf" id="r_a19fd6232b918a24b1f30c9ea1f6d97bf"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structvt_1_1tag__segment.html#a19fd6232b918a24b1f30c9ea1f6d97bf">tag_segment</a> ()=default</td></tr>
+<tr class="separator:a19fd6232b918a24b1f30c9ea1f6d97bf"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:adf3f6860e089b8e440a0a2e24918fdfa" id="r_adf3f6860e089b8e440a0a2e24918fdfa"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structvt_1_1tag__segment.html#adf3f6860e089b8e440a0a2e24918fdfa">tag_segment</a> (<a class="el" href="structvt_1_1timestamp.html">timestamp</a> time_start, <a class="el" href="structvt_1_1timestamp.html">timestamp</a> time_end)</td></tr>
+<tr class="memdesc:adf3f6860e089b8e440a0a2e24918fdfa"><td class="mdescLeft">&#160;</td><td class="mdescRight">Construct a segment (<a class="el" href="structvt_1_1tag__segment.html" title="A struct representing a segment or timestamp appearing on the timeline.">tag_segment</a> with different start and end)  <br /></td></tr>
+<tr class="separator:adf3f6860e089b8e440a0a2e24918fdfa"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a966e9db3d097bebf4e44d46442f35d2e" id="r_a966e9db3d097bebf4e44d46442f35d2e"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structvt_1_1tag__segment.html#a966e9db3d097bebf4e44d46442f35d2e">tag_segment</a> (<a class="el" href="structvt_1_1timestamp.html">timestamp</a> ts)</td></tr>
+<tr class="memdesc:a966e9db3d097bebf4e44d46442f35d2e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Construct a timestamp (<a class="el" href="structvt_1_1tag__segment.html" title="A struct representing a segment or timestamp appearing on the timeline.">tag_segment</a> with the same start and end)  <br /></td></tr>
+<tr class="separator:a966e9db3d097bebf4e44d46442f35d2e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af5f1fcea73fda6af28ccd2352f85395d" id="r_af5f1fcea73fda6af28ccd2352f85395d"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structvt_1_1tag__segment.html#af5f1fcea73fda6af28ccd2352f85395d">set</a> (<a class="el" href="structvt_1_1timestamp.html">timestamp</a> time_start, <a class="el" href="structvt_1_1timestamp.html">timestamp</a> time_end)</td></tr>
+<tr class="memdesc:af5f1fcea73fda6af28ccd2352f85395d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set the start and end time of the segment. If the <a class="el" href="structvt_1_1tag__segment.html" title="A struct representing a segment or timestamp appearing on the timeline.">tag_segment</a> is currently a timestamp, it will become a segment.  <br /></td></tr>
 <tr class="separator:af5f1fcea73fda6af28ccd2352f85395d"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aaa6739ed1268dc59005e8dd8bca9fcf5" id="r_aaa6739ed1268dc59005e8dd8bca9fcf5"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structvt_1_1tag__segment.html#aaa6739ed1268dc59005e8dd8bca9fcf5">set</a> (<a class="el" href="structvt_1_1timestamp.html">timestamp</a> time_point)</td></tr>
-<tr class="separator:aaa6739ed1268dc59005e8dd8bca9fcf5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac4a773d4c2b42046f036834e073f058c" id="r_ac4a773d4c2b42046f036834e073f058c"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structvt_1_1tag__segment.html#ac4a773d4c2b42046f036834e073f058c">set</a> (<a class="el" href="structvt_1_1timestamp.html">timestamp</a> ts)</td></tr>
+<tr class="memdesc:ac4a773d4c2b42046f036834e073f058c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set the start and end time of the segment to the same value (make it a timestamp)  <br /></td></tr>
+<tr class="separator:ac4a773d4c2b42046f036834e073f058c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a702b286e31075b17de84785673acef55" id="r_a702b286e31075b17de84785673acef55"><td class="memItemLeft" align="right" valign="top">std::chrono::nanoseconds&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structvt_1_1tag__segment.html#a702b286e31075b17de84785673acef55">duration</a> () const</td></tr>
 <tr class="separator:a702b286e31075b17de84785673acef55"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad0eac9c11ee022c1701a1d99d5feab70" id="r_ad0eac9c11ee022c1701a1d99d5feab70"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacevt.html#ae53b550efbeb8c013594f245e1a31ff0">tag_segment_type</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structvt_1_1tag__segment.html#ad0eac9c11ee022c1701a1d99d5feab70">type</a> () const</td></tr>
 <tr class="separator:ad0eac9c11ee022c1701a1d99d5feab70"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a53dfd814ce730ba1cce47be9ca1a7ee0" id="r_a53dfd814ce730ba1cce47be9ca1a7ee0"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structvt_1_1tag__segment.html#a53dfd814ce730ba1cce47be9ca1a7ee0">is_timestamp</a> () const</td></tr>
 <tr class="separator:a53dfd814ce730ba1cce47be9ca1a7ee0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae5d482fe4ecf1141508792f07d7af22a" id="r_ae5d482fe4ecf1141508792f07d7af22a"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structvt_1_1tag__segment.html#ae5d482fe4ecf1141508792f07d7af22a">contains</a> (<a class="el" href="structvt_1_1timestamp.html">timestamp</a> ts) const</td></tr>
+<tr class="separator:ae5d482fe4ecf1141508792f07d7af22a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8980b62cdc0872b6c300ea320b2bdb2c" id="r_a8980b62cdc0872b6c300ea320b2bdb2c"><td class="memItemLeft" align="right" valign="top">virtual nlohmann::ordered_json&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structvt_1_1tag__segment.html#a8980b62cdc0872b6c300ea320b2bdb2c">serialize</a> () const override</td></tr>
+<tr class="separator:a8980b62cdc0872b6c300ea320b2bdb2c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9f2e6a85e103af046cab76f10be6013c" id="r_a9f2e6a85e103af046cab76f10be6013c"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structvt_1_1tag__segment.html#a9f2e6a85e103af046cab76f10be6013c">deserialize</a> (const nlohmann::ordered_json &amp;json) override</td></tr>
+<tr class="separator:a9f2e6a85e103af046cab76f10be6013c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="inherit_header pub_methods_structvt_1_1impl_1_1serializable"><td colspan="2" onclick="javascript:toggleInherit('pub_methods_structvt_1_1impl_1_1serializable')"><img src="closed.png" alt="-"/>&#160;Public Member Functions inherited from <a class="el" href="structvt_1_1impl_1_1serializable.html">vt::impl::serializable</a></td></tr>
+<tr class="memitem:aa47d6778b047dae47aff51afc2c0db09 inherit pub_methods_structvt_1_1impl_1_1serializable" id="r_aa47d6778b047dae47aff51afc2c0db09"><td class="memItemLeft" align="right" valign="top">virtual&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structvt_1_1impl_1_1serializable.html#aa47d6778b047dae47aff51afc2c0db09">~serializable</a> ()=default</td></tr>
+<tr class="separator:aa47d6778b047dae47aff51afc2c0db09 inherit pub_methods_structvt_1_1impl_1_1serializable"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-attribs" name="pub-attribs"></a>
 Public Attributes</h2></td></tr>
@@ -151,34 +172,46 @@ Public Attributes</h2></td></tr>
 <tr class="separator:a461418c812e8434ff333d4ea9053bfd6"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac8e35bbb3edcaf5d8bff6ff9bff043d7" id="r_ac8e35bbb3edcaf5d8bff6ff9bff043d7"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structvt_1_1timestamp.html">timestamp</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structvt_1_1tag__segment.html#ac8e35bbb3edcaf5d8bff6ff9bff043d7">end</a> {}</td></tr>
 <tr class="separator:ac8e35bbb3edcaf5d8bff6ff9bff043d7"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a0b5e2de0181af2997a20695cb416bd8a" id="r_a0b5e2de0181af2997a20695cb416bd8a"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structvt_1_1tag__segment.html#a1296434c25d89659de9aa9b699bad4cc">attribute_instance_container</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structvt_1_1tag__segment.html#a0b5e2de0181af2997a20695cb416bd8a">attributes</a></td></tr>
-<tr class="separator:a0b5e2de0181af2997a20695cb416bd8a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-static-attribs" name="pub-static-attribs"></a>
 Static Public Attributes</h2></td></tr>
 <tr class="memitem:ab9a0ab968921095b2bd410b80a98f6df" id="r_ab9a0ab968921095b2bd410b80a98f6df"><td class="memItemLeft" align="right" valign="top">static constexpr auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structvt_1_1tag__segment.html#ab9a0ab968921095b2bd410b80a98f6df">min_segment_size</a> = std::chrono::milliseconds{ 1 }</td></tr>
+<tr class="memdesc:ab9a0ab968921095b2bd410b80a98f6df"><td class="mdescLeft">&#160;</td><td class="mdescRight">Minimum segment length in milliseconds.  <br /></td></tr>
 <tr class="separator:ab9a0ab968921095b2bd410b80a98f6df"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a35f22badb7b6e30a128f4304b54819b2" id="r_a35f22badb7b6e30a128f4304b54819b2"><td class="memItemLeft" align="right" valign="top">static constexpr auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structvt_1_1tag__segment.html#a35f22badb7b6e30a128f4304b54819b2">default_segment_size</a> = std::chrono::milliseconds{ 500 }</td></tr>
+<tr class="memdesc:a35f22badb7b6e30a128f4304b54819b2"><td class="mdescLeft">&#160;</td><td class="mdescRight">The default segment length in milliseconds used when creating a segment on the timeline.  <br /></td></tr>
 <tr class="separator:a35f22badb7b6e30a128f4304b54819b2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
-<h2 class="groupheader">Member Typedef Documentation</h2>
-<a id="a1296434c25d89659de9aa9b699bad4cc" name="a1296434c25d89659de9aa9b699bad4cc"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a1296434c25d89659de9aa9b699bad4cc">&#9670;&#160;</a></span>attribute_instance_container</h2>
+<a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
+<div class="textblock"><p>A struct representing a segment or timestamp appearing on the timeline. </p>
+</div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
+<a id="a19fd6232b918a24b1f30c9ea1f6d97bf" name="a19fd6232b918a24b1f30c9ea1f6d97bf"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a19fd6232b918a24b1f30c9ea1f6d97bf">&#9670;&#160;</a></span>tag_segment() <span class="overload">[1/3]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">using <a class="el" href="structvt_1_1tag__segment.html#a1296434c25d89659de9aa9b699bad4cc">vt::tag_segment::attribute_instance_container</a> =  std::unordered_map&lt;<a class="el" href="namespacevt.html#ad54d71114ec302acf34f88f20ca320a1">video_id_t</a>, std::unordered_map&lt;std::string, <a class="el" href="structvt_1_1tag__attribute__instance.html">tag_attribute_instance</a>&gt; &gt;</td>
+          <td class="memname">vt::tag_segment::tag_segment </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
         </tr>
       </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">default</span></span>  </td>
+  </tr>
+</table>
 </div><div class="memdoc">
 
 </div>
 </div>
-<h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
-<a id="aa70abaab5954104b0a3f4b2a7ba423c4" name="aa70abaab5954104b0a3f4b2a7ba423c4"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aa70abaab5954104b0a3f4b2a7ba423c4">&#9670;&#160;</a></span>tag_segment() <span class="overload">[1/2]</span></h2>
+<a id="adf3f6860e089b8e440a0a2e24918fdfa" name="adf3f6860e089b8e440a0a2e24918fdfa"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#adf3f6860e089b8e440a0a2e24918fdfa">&#9670;&#160;</a></span>tag_segment() <span class="overload">[2/3]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -193,13 +226,7 @@ Static Public Attributes</h2></td></tr>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype"><a class="el" href="structvt_1_1timestamp.html">timestamp</a>&#160;</td>
-          <td class="paramname"><em>time_end</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">const <a class="el" href="structvt_1_1tag__segment.html#a1296434c25d89659de9aa9b699bad4cc">attribute_instance_container</a> &amp;&#160;</td>
-          <td class="paramname"><em>attributes</em> = <code>{}</code>&#160;</td>
+          <td class="paramname"><em>time_end</em>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -209,10 +236,20 @@ Static Public Attributes</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
+<p>Construct a segment (<a class="el" href="structvt_1_1tag__segment.html" title="A struct representing a segment or timestamp appearing on the timeline.">tag_segment</a> with different start and end) </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">time_start</td><td>Start time of the segment. </td></tr>
+    <tr><td class="paramname">time_end</td><td>End time of the segment. </td></tr>
+    <tr><td class="paramname">attributes</td><td>Optional attributes associated with the segment. </td></tr>
+  </table>
+  </dd>
+</dl>
+
 </div>
 </div>
-<a id="a3545975c585bc7abe03801c2b07b93af" name="a3545975c585bc7abe03801c2b07b93af"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a3545975c585bc7abe03801c2b07b93af">&#9670;&#160;</a></span>tag_segment() <span class="overload">[2/2]</span></h2>
+<a id="a966e9db3d097bebf4e44d46442f35d2e" name="a966e9db3d097bebf4e44d46442f35d2e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a966e9db3d097bebf4e44d46442f35d2e">&#9670;&#160;</a></span>tag_segment() <span class="overload">[3/3]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -221,25 +258,71 @@ Static Public Attributes</h2></td></tr>
           <td class="memname">vt::tag_segment::tag_segment </td>
           <td>(</td>
           <td class="paramtype"><a class="el" href="structvt_1_1timestamp.html">timestamp</a>&#160;</td>
-          <td class="paramname"><em>time_point</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
+          <td class="paramname"><em>ts</em></td><td>)</td>
           <td></td>
-          <td class="paramtype">const <a class="el" href="structvt_1_1tag__segment.html#a1296434c25d89659de9aa9b699bad4cc">attribute_instance_container</a> &amp;&#160;</td>
-          <td class="paramname"><em>attributes</em> = <code>{}</code>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
         </tr>
       </table>
 </div><div class="memdoc">
 
+<p>Construct a timestamp (<a class="el" href="structvt_1_1tag__segment.html" title="A struct representing a segment or timestamp appearing on the timeline.">tag_segment</a> with the same start and end) </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">ts</td><td>Timestamp of the segment. </td></tr>
+    <tr><td class="paramname">attributes</td><td>Optional attributes associated with the segment. </td></tr>
+  </table>
+  </dd>
+</dl>
+
 </div>
 </div>
 <h2 class="groupheader">Member Function Documentation</h2>
+<a id="ae5d482fe4ecf1141508792f07d7af22a" name="ae5d482fe4ecf1141508792f07d7af22a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae5d482fe4ecf1141508792f07d7af22a">&#9670;&#160;</a></span>contains()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool vt::tag_segment::contains </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structvt_1_1timestamp.html">timestamp</a>&#160;</td>
+          <td class="paramname"><em>ts</em></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<dl class="section return"><dt>Returns</dt><dd>Whether the given timestamp is within the bound of the segment </dd></dl>
+
+</div>
+</div>
+<a id="a9f2e6a85e103af046cab76f10be6013c" name="a9f2e6a85e103af046cab76f10be6013c"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a9f2e6a85e103af046cab76f10be6013c">&#9670;&#160;</a></span>deserialize()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void vt::tag_segment::deserialize </td>
+          <td>(</td>
+          <td class="paramtype">const nlohmann::ordered_json &amp;&#160;</td>
+          <td class="paramname"><em>json</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">override</span><span class="mlabel">virtual</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Reimplemented from <a class="el" href="structvt_1_1impl_1_1serializable.html#af1d8d399d7e828bda0491123ccf66674">vt::impl::serializable</a>.</p>
+
+</div>
+</div>
 <a id="a702b286e31075b17de84785673acef55" name="a702b286e31075b17de84785673acef55"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a702b286e31075b17de84785673acef55">&#9670;&#160;</a></span>duration()</h2>
 
@@ -254,6 +337,7 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
+<dl class="section return"><dt>Returns</dt><dd>Duration of the segment in nanoseconds. </dd></dl>
 
 </div>
 </div>
@@ -271,29 +355,39 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
+<dl class="section return"><dt>Returns</dt><dd>True if the segment is a timestamp, false otherwise. </dd></dl>
 
 </div>
 </div>
-<a id="aaa6739ed1268dc59005e8dd8bca9fcf5" name="aaa6739ed1268dc59005e8dd8bca9fcf5"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aaa6739ed1268dc59005e8dd8bca9fcf5">&#9670;&#160;</a></span>set() <span class="overload">[1/2]</span></h2>
+<a id="a8980b62cdc0872b6c300ea320b2bdb2c" name="a8980b62cdc0872b6c300ea320b2bdb2c"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a8980b62cdc0872b6c300ea320b2bdb2c">&#9670;&#160;</a></span>serialize()</h2>
 
 <div class="memitem">
 <div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">void vt::tag_segment::set </td>
+          <td class="memname">nlohmann::ordered_json vt::tag_segment::serialize </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="structvt_1_1timestamp.html">timestamp</a>&#160;</td>
-          <td class="paramname"><em>time_point</em></td><td>)</td>
-          <td></td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
         </tr>
       </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">override</span><span class="mlabel">virtual</span></span>  </td>
+  </tr>
+</table>
 </div><div class="memdoc">
+
+<p>Reimplemented from <a class="el" href="structvt_1_1impl_1_1serializable.html#a93c7fab9085a080153fe8575ddd46c8f">vt::impl::serializable</a>.</p>
 
 </div>
 </div>
 <a id="af5f1fcea73fda6af28ccd2352f85395d" name="af5f1fcea73fda6af28ccd2352f85395d"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#af5f1fcea73fda6af28ccd2352f85395d">&#9670;&#160;</a></span>set() <span class="overload">[2/2]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#af5f1fcea73fda6af28ccd2352f85395d">&#9670;&#160;</a></span>set() <span class="overload">[1/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -318,6 +412,42 @@ Static Public Attributes</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
+<p>Set the start and end time of the segment. If the <a class="el" href="structvt_1_1tag__segment.html" title="A struct representing a segment or timestamp appearing on the timeline.">tag_segment</a> is currently a timestamp, it will become a segment. </p>
+<p>If the start time is greater than the end time, they will be swapped.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">time_start</td><td>Start time of the segment. </td></tr>
+    <tr><td class="paramname">time_end</td><td>End time of the segment. </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a id="ac4a773d4c2b42046f036834e073f058c" name="ac4a773d4c2b42046f036834e073f058c"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ac4a773d4c2b42046f036834e073f058c">&#9670;&#160;</a></span>set() <span class="overload">[2/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void vt::tag_segment::set </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structvt_1_1timestamp.html">timestamp</a>&#160;</td>
+          <td class="paramname"><em>ts</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Set the start and end time of the segment to the same value (make it a timestamp) </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">ts</td><td>Timestamp of the segment. </td></tr>
+  </table>
+  </dd>
+</dl>
+
 </div>
 </div>
 <a id="ad0eac9c11ee022c1701a1d99d5feab70" name="ad0eac9c11ee022c1701a1d99d5feab70"></a>
@@ -334,32 +464,11 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
+<dl class="section return"><dt>Returns</dt><dd>Type of the segment. </dd></dl>
 
 </div>
 </div>
 <h2 class="groupheader">Member Data Documentation</h2>
-<a id="a0b5e2de0181af2997a20695cb416bd8a" name="a0b5e2de0181af2997a20695cb416bd8a"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a0b5e2de0181af2997a20695cb416bd8a">&#9670;&#160;</a></span>attributes</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname"><a class="el" href="structvt_1_1tag__segment.html#a1296434c25d89659de9aa9b699bad4cc">attribute_instance_container</a> vt::tag_segment::attributes</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">mutable</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-</div>
-</div>
 <a id="a35f22badb7b6e30a128f4304b54819b2" name="a35f22badb7b6e30a128f4304b54819b2"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a35f22badb7b6e30a128f4304b54819b2">&#9670;&#160;</a></span>default_segment_size</h2>
 
@@ -379,6 +488,8 @@ Static Public Attributes</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
+
+<p>The default segment length in milliseconds used when creating a segment on the timeline. </p>
 
 </div>
 </div>
@@ -415,6 +526,8 @@ Static Public Attributes</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
+
+<p>Minimum segment length in milliseconds. </p>
 
 </div>
 </div>

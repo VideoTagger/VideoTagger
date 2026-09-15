@@ -134,15 +134,21 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:a03508d016d3b89a9983a11ff2ba0511a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a1a654b50cf728e68c3f2c82f4443de62" id="r_a1a654b50cf728e68c3f2c82f4443de62"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classvt_1_1video__decoder.html">video_decoder</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classvt_1_1video__decoder.html#a1a654b50cf728e68c3f2c82f4443de62">operator=</a> (<a class="el" href="classvt_1_1video__decoder.html">video_decoder</a> &amp;&amp;other) noexcept</td></tr>
 <tr class="separator:a1a654b50cf728e68c3f2c82f4443de62"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a0640df1e13240d2ed1fb786786bf9e9b" id="r_a0640df1e13240d2ed1fb786786bf9e9b"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classvt_1_1video__decoder.html#a0640df1e13240d2ed1fb786786bf9e9b">open</a> (const std::filesystem::path &amp;path)</td></tr>
-<tr class="separator:a0640df1e13240d2ed1fb786786bf9e9b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ade0f343da8ca8a1997559e6c4147d48d" id="r_ade0f343da8ca8a1997559e6c4147d48d"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classvt_1_1video__decoder.html#ade0f343da8ca8a1997559e6c4147d48d">is_hardware_acceleration_enabled</a> () const</td></tr>
+<tr class="separator:ade0f343da8ca8a1997559e6c4147d48d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9d5200304903f4d4aa2e37d7aa866164" id="r_a9d5200304903f4d4aa2e37d7aa866164"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classvt_1_1video__decoder.html#a9d5200304903f4d4aa2e37d7aa866164">open</a> (const std::filesystem::path &amp;path, bool accelerated)</td></tr>
+<tr class="memdesc:a9d5200304903f4d4aa2e37d7aa866164"><td class="mdescLeft">&#160;</td><td class="mdescRight">Open a video file and prepare it for decoding.  <br /></td></tr>
+<tr class="separator:a9d5200304903f4d4aa2e37d7aa866164"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a977e07b6b84419f727b68d6bb44cd0ae" id="r_a977e07b6b84419f727b68d6bb44cd0ae"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classvt_1_1video__decoder.html#a977e07b6b84419f727b68d6bb44cd0ae">close</a> ()</td></tr>
+<tr class="memdesc:a977e07b6b84419f727b68d6bb44cd0ae"><td class="mdescLeft">&#160;</td><td class="mdescRight">Close the currently opened video file and release all resources.  <br /></td></tr>
 <tr class="separator:a977e07b6b84419f727b68d6bb44cd0ae"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a086f94432744792bfeead4e63a14ce08" id="r_a086f94432744792bfeead4e63a14ce08"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classvt_1_1video__decoder.html#a086f94432744792bfeead4e63a14ce08">read_packet</a> ()</td></tr>
-<tr class="separator:a086f94432744792bfeead4e63a14ce08"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a6b1979166fc9c58208145d6d142d03d9" id="r_a6b1979166fc9c58208145d6d142d03d9"><td class="memTemplParams" colspan="2">template&lt;<a class="el" href="namespacevt.html#ae2f81b68263e48d1cbf1b3e825746c57">stream_type</a> type&gt; </td></tr>
-<tr class="memitem:a6b1979166fc9c58208145d6d142d03d9"><td class="memTemplItemLeft" align="right" valign="top">std::optional&lt; typename <a class="el" href="structvt_1_1stream__type__traits.html">stream_type_traits</a>&lt; type &gt;::decoded_packet_type &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classvt_1_1video__decoder.html#a6b1979166fc9c58208145d6d142d03d9">decode_next_packet</a> ()</td></tr>
-<tr class="separator:a6b1979166fc9c58208145d6d142d03d9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac3f4d294eb58c307837ace2bcc36bb07" id="r_ac3f4d294eb58c307837ace2bcc36bb07"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacevt.html#a100722b6d7909f8c042f1e902b59999c">decoder_read_result</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classvt_1_1video__decoder.html#ac3f4d294eb58c307837ace2bcc36bb07">read_packet</a> ()</td></tr>
+<tr class="memdesc:ac3f4d294eb58c307837ace2bcc36bb07"><td class="mdescLeft">&#160;</td><td class="mdescRight">Read the next packet from the video file and save it to the corresponding packet queue.  <br /></td></tr>
+<tr class="separator:ac3f4d294eb58c307837ace2bcc36bb07"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a23a8468e191f276bb591981123b4900e" id="r_a23a8468e191f276bb591981123b4900e"><td class="memTemplParams" colspan="2">template&lt;<a class="el" href="namespacevt.html#ae2f81b68263e48d1cbf1b3e825746c57">stream_type</a> type&gt; </td></tr>
+<tr class="memitem:a23a8468e191f276bb591981123b4900e"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="structvt_1_1decoder__decode__return__type.html">decoder_decode_return_type</a>&lt; type &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classvt_1_1video__decoder.html#a23a8468e191f276bb591981123b4900e">get_next_decoded_packet</a> (bool skip_disposable=false, std::optional&lt; std::chrono::nanoseconds &gt; target_timestamp=std::nullopt)</td></tr>
+<tr class="memdesc:a23a8468e191f276bb591981123b4900e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the next decoded packet of the specified stream type.  <br /></td></tr>
+<tr class="separator:a23a8468e191f276bb591981123b4900e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aaf0adac4769eadd151dfbe1af27207ec" id="r_aaf0adac4769eadd151dfbe1af27207ec"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classvt_1_1video__decoder.html#aaf0adac4769eadd151dfbe1af27207ec">discard_next_packet</a> (<a class="el" href="namespacevt.html#ae2f81b68263e48d1cbf1b3e825746c57">stream_type</a> type)</td></tr>
 <tr class="separator:aaf0adac4769eadd151dfbe1af27207ec"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af1704ad1cc0590dabd24dfe2a639fb9b" id="r_af1704ad1cc0590dabd24dfe2a639fb9b"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classvt_1_1video__decoder.html#af1704ad1cc0590dabd24dfe2a639fb9b">discard_last_read_packet</a> ()</td></tr>
@@ -152,9 +158,8 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:ade99f941aac36170ae7a4767a4a1b1a0" id="r_ade99f941aac36170ae7a4767a4a1b1a0"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classvt_1_1video__decoder.html#ade99f941aac36170ae7a4767a4a1b1a0">discard_all_packets</a> (<a class="el" href="namespacevt.html#ae2f81b68263e48d1cbf1b3e825746c57">stream_type</a> type)</td></tr>
 <tr class="separator:ade99f941aac36170ae7a4767a4a1b1a0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a50c8138dd2414c1bee23be54acfa8d56" id="r_a50c8138dd2414c1bee23be54acfa8d56"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classvt_1_1video__decoder.html#a50c8138dd2414c1bee23be54acfa8d56">seek_keyframe</a> (std::chrono::nanoseconds <a class="el" href="structvt_1_1timestamp.html">timestamp</a>)</td></tr>
+<tr class="memdesc:a50c8138dd2414c1bee23be54acfa8d56"><td class="mdescLeft">&#160;</td><td class="mdescRight">Seek to the nearest keyframe before or on the timestamp. Discards all packets currently in queues.  <br /></td></tr>
 <tr class="separator:a50c8138dd2414c1bee23be54acfa8d56"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a8f8824fe8eae885f4039742b499d93d7" id="r_a8f8824fe8eae885f4039742b499d93d7"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classvt_1_1video__decoder.html#a8f8824fe8eae885f4039742b499d93d7">seek_keyframe</a> (size_t frame_number)</td></tr>
-<tr class="separator:a8f8824fe8eae885f4039742b499d93d7"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a6af3a4a8eee2dd19e15ec5ff70775488" id="r_a6af3a4a8eee2dd19e15ec5ff70775488"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classvt_1_1video__decoder.html#a6af3a4a8eee2dd19e15ec5ff70775488">is_open</a> () const</td></tr>
 <tr class="separator:a6af3a4a8eee2dd19e15ec5ff70775488"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a7bfcf2c2ea3496e67ae6fa6d0d44eac2" id="r_a7bfcf2c2ea3496e67ae6fa6d0d44eac2"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classvt_1_1video__decoder.html#a7bfcf2c2ea3496e67ae6fa6d0d44eac2">eof</a> () const</td></tr>
@@ -195,6 +200,8 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:a5fe7055f913f88b103b29316134e5bc5"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a0d9febdb28b5c4b4ce10df84b7deb8a8" id="r_a0d9febdb28b5c4b4ce10df84b7deb8a8"><td class="memItemLeft" align="right" valign="top">AVFormatContext *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classvt_1_1video__decoder.html#a0d9febdb28b5c4b4ce10df84b7deb8a8">av_format_context</a> ()</td></tr>
 <tr class="separator:a0d9febdb28b5c4b4ce10df84b7deb8a8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0a6307260059e7dbf57fe7dc2ab0b3b3" id="r_a0a6307260059e7dbf57fe7dc2ab0b3b3"><td class="memItemLeft" align="right" valign="top">const AVFormatContext *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classvt_1_1video__decoder.html#a0a6307260059e7dbf57fe7dc2ab0b3b3">av_format_context</a> () const</td></tr>
+<tr class="separator:a0a6307260059e7dbf57fe7dc2ab0b3b3"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a id="ac0bae59444c56637e3953800a733a94e" name="ac0bae59444c56637e3953800a733a94e"></a>
@@ -285,7 +292,7 @@ Public Member Functions</h2></td></tr>
 </div>
 <h2 class="groupheader">Member Function Documentation</h2>
 <a id="a0d9febdb28b5c4b4ce10df84b7deb8a8" name="a0d9febdb28b5c4b4ce10df84b7deb8a8"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a0d9febdb28b5c4b4ce10df84b7deb8a8">&#9670;&#160;</a></span>av_format_context()</h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a0d9febdb28b5c4b4ce10df84b7deb8a8">&#9670;&#160;</a></span>av_format_context() <span class="overload">[1/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -295,6 +302,23 @@ Public Member Functions</h2></td></tr>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a0a6307260059e7dbf57fe7dc2ab0b3b3" name="a0a6307260059e7dbf57fe7dc2ab0b3b3"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a0a6307260059e7dbf57fe7dc2ab0b3b3">&#9670;&#160;</a></span>av_format_context() <span class="overload">[2/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">const AVFormatContext * vt::video_decoder::av_format_context </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -316,32 +340,7 @@ Public Member Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-</div>
-</div>
-<a id="a6b1979166fc9c58208145d6d142d03d9" name="a6b1979166fc9c58208145d6d142d03d9"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a6b1979166fc9c58208145d6d142d03d9">&#9670;&#160;</a></span>decode_next_packet()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<div class="memtemplate">
-template&lt;<a class="el" href="namespacevt.html#ae2f81b68263e48d1cbf1b3e825746c57">stream_type</a> type&gt; </div>
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">std::optional&lt; typename <a class="el" href="structvt_1_1stream__type__traits.html">stream_type_traits</a>&lt; type &gt;::decoded_packet_type &gt; vt::video_decoder::decode_next_packet </td>
-          <td>(</td>
-          <td class="paramname"></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
+<p>Close the currently opened video file and release all resources. </p>
 
 </div>
 </div>
@@ -501,6 +500,55 @@ template&lt;<a class="el" href="namespacevt.html#ae2f81b68263e48d1cbf1b3e825746c
 
 </div>
 </div>
+<a id="a23a8468e191f276bb591981123b4900e" name="a23a8468e191f276bb591981123b4900e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a23a8468e191f276bb591981123b4900e">&#9670;&#160;</a></span>get_next_decoded_packet()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;<a class="el" href="namespacevt.html#ae2f81b68263e48d1cbf1b3e825746c57">stream_type</a> type&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="structvt_1_1decoder__decode__return__type.html">decoder_decode_return_type</a>&lt; type &gt; vt::video_decoder::get_next_decoded_packet </td>
+          <td>(</td>
+          <td class="paramtype">bool&#160;</td>
+          <td class="paramname"><em>skip_disposable</em> = <code>false</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">std::optional&lt; std::chrono::nanoseconds &gt;&#160;</td>
+          <td class="paramname"><em>target_timestamp</em> = <code>std::nullopt</code>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Get the next decoded packet of the specified stream type. </p>
+<p>Consumes packets from the corresponding packet queue until a frame can be decoded or the queue is empty. Will not read new packets from the file</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">skip_disposable</td><td>Whether to skip disposable packets. I.e. packets that can be safely skipped without decoding. </td></tr>
+    <tr><td class="paramname">target_timestamp</td><td>If has value and skip_disposable is true, will only skip disposable frames with target_timestamp &gt;= next_timestamp() Has no effect if skip_disposable is false.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>The decoded packet (if one was decoded) and the decode result code. </dd></dl>
+
+</div>
+</div>
 <a id="a7439e7178a243c9ec6376a5bceb4c72c" name="a7439e7178a243c9ec6376a5bceb4c72c"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a7439e7178a243c9ec6376a5bceb4c72c">&#9670;&#160;</a></span>get_packet_queue() <span class="overload">[1/2]</span></h2>
 
@@ -572,6 +620,23 @@ template&lt;<a class="el" href="namespacevt.html#ae2f81b68263e48d1cbf1b3e825746c
 
 </div>
 </div>
+<a id="ade0f343da8ca8a1997559e6c4147d48d" name="ade0f343da8ca8a1997559e6c4147d48d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ade0f343da8ca8a1997559e6c4147d48d">&#9670;&#160;</a></span>is_hardware_acceleration_enabled()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool vt::video_decoder::is_hardware_acceleration_enabled </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <a id="a6af3a4a8eee2dd19e15ec5ff70775488" name="a6af3a4a8eee2dd19e15ec5ff70775488"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a6af3a4a8eee2dd19e15ec5ff70775488">&#9670;&#160;</a></span>is_open()</h2>
 
@@ -623,8 +688,8 @@ template&lt;<a class="el" href="namespacevt.html#ae2f81b68263e48d1cbf1b3e825746c
 
 </div>
 </div>
-<a id="a0640df1e13240d2ed1fb786786bf9e9b" name="a0640df1e13240d2ed1fb786786bf9e9b"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a0640df1e13240d2ed1fb786786bf9e9b">&#9670;&#160;</a></span>open()</h2>
+<a id="a9d5200304903f4d4aa2e37d7aa866164" name="a9d5200304903f4d4aa2e37d7aa866164"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a9d5200304903f4d4aa2e37d7aa866164">&#9670;&#160;</a></span>open()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -633,11 +698,31 @@ template&lt;<a class="el" href="namespacevt.html#ae2f81b68263e48d1cbf1b3e825746c
           <td class="memname">bool vt::video_decoder::open </td>
           <td>(</td>
           <td class="paramtype">const std::filesystem::path &amp;&#160;</td>
-          <td class="paramname"><em>path</em></td><td>)</td>
+          <td class="paramname"><em>path</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
           <td></td>
+          <td class="paramtype">bool&#160;</td>
+          <td class="paramname"><em>accelerated</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
         </tr>
       </table>
 </div><div class="memdoc">
+
+<p>Open a video file and prepare it for decoding. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">path</td><td>The path to the video file to open. </td></tr>
+    <tr><td class="paramname">accelerated</td><td>If true, hardware acceleration will be used if available.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>true if the file was successfully opened, false otherwise. </dd></dl>
 
 </div>
 </div>
@@ -781,14 +866,14 @@ template&lt;<a class="el" href="namespacevt.html#ae2f81b68263e48d1cbf1b3e825746c
 
 </div>
 </div>
-<a id="a086f94432744792bfeead4e63a14ce08" name="a086f94432744792bfeead4e63a14ce08"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a086f94432744792bfeead4e63a14ce08">&#9670;&#160;</a></span>read_packet()</h2>
+<a id="ac3f4d294eb58c307837ace2bcc36bb07" name="ac3f4d294eb58c307837ace2bcc36bb07"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ac3f4d294eb58c307837ace2bcc36bb07">&#9670;&#160;</a></span>read_packet()</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">void vt::video_decoder::read_packet </td>
+          <td class="memname"><a class="el" href="namespacevt.html#a100722b6d7909f8c042f1e902b59999c">decoder_read_result</a> vt::video_decoder::read_packet </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td></td>
@@ -796,28 +881,13 @@ template&lt;<a class="el" href="namespacevt.html#ae2f81b68263e48d1cbf1b3e825746c
       </table>
 </div><div class="memdoc">
 
-</div>
-</div>
-<a id="a8f8824fe8eae885f4039742b499d93d7" name="a8f8824fe8eae885f4039742b499d93d7"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a8f8824fe8eae885f4039742b499d93d7">&#9670;&#160;</a></span>seek_keyframe() <span class="overload">[1/2]</span></h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">void vt::video_decoder::seek_keyframe </td>
-          <td>(</td>
-          <td class="paramtype">size_t&#160;</td>
-          <td class="paramname"><em>frame_number</em></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
+<p>Read the next packet from the video file and save it to the corresponding packet queue. </p>
+<dl class="section return"><dt>Returns</dt><dd>The result of the read operation. If successful, the packet will be added to the corresponding packet queue. </dd></dl>
 
 </div>
 </div>
 <a id="a50c8138dd2414c1bee23be54acfa8d56" name="a50c8138dd2414c1bee23be54acfa8d56"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a50c8138dd2414c1bee23be54acfa8d56">&#9670;&#160;</a></span>seek_keyframe() <span class="overload">[2/2]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a50c8138dd2414c1bee23be54acfa8d56">&#9670;&#160;</a></span>seek_keyframe()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -831,6 +901,14 @@ template&lt;<a class="el" href="namespacevt.html#ae2f81b68263e48d1cbf1b3e825746c
         </tr>
       </table>
 </div><div class="memdoc">
+
+<p>Seek to the nearest keyframe before or on the timestamp. Discards all packets currently in queues. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">timestamp</td><td>The timestamp to seek to </td></tr>
+  </table>
+  </dd>
+</dl>
 
 </div>
 </div>

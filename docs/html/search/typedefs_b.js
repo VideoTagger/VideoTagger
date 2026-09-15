@@ -1,10 +1,11 @@
 var searchData=
 [
-  ['value_5fcontainer_0',['value_container',['../structvt_1_1tag__attribute__instance.html#a5ec83791ba6de7374efadd8c27b0b029',1,'vt::tag_attribute_instance']]],
-  ['value_5ftype_1',['value_type',['../classvt_1_1tag__storage__const__iterator.html#adaddf814c3c887a3c2a40db0f09f7e60',1,'vt::tag_storage_const_iterator::value_type'],['../classvt_1_1tag__storage__iterator.html#a774ce260ea9124e7c0ffde06ad6a39ef',1,'vt::tag_storage_iterator::value_type'],['../classvt_1_1video__group__playlist.html#a707ad16421917cff8030378116bd2bc8',1,'vt::video_group_playlist::value_type']]],
-  ['vec2_2',['vec2',['../namespacevt_1_1utils.html#ab0d8d3eeb3f7ac7c17e9c7f427c30383',1,'vt::utils']]],
-  ['vec4_3',['vec4',['../namespacevt_1_1utils.html#a21a468fceabc624db81d1e4c97fbcc85',1,'vt::utils']]],
-  ['video_5fgroup_5fid_5ft_4',['video_group_id_t',['../namespacevt.html#a112c2151c1aa3fb62065f1a4040a41f7',1,'vt']]],
-  ['video_5fgroup_5fmap_5',['video_group_map',['../structvt_1_1project.html#a0bee5e1b0c4175b8df9f1dad58e379f8',1,'vt::project']]],
-  ['video_5fid_5ft_6',['video_id_t',['../namespacevt.html#ad54d71114ec302acf34f88f20ca320a1',1,'vt']]]
+  ['reference_0',['reference',['../classvt_1_1tag__storage__const__iterator.html#a5b1740e65ffd94f8908d4ff979e0754c',1,'vt::tag_storage_const_iterator::reference'],['../classvt_1_1tag__storage__iterator.html#a700a41e354a6a06782da696ab943a86a',1,'vt::tag_storage_iterator::reference']]],
+  ['region_5fdata_5fcontainer_1',['region_data_container',['../namespacevt.html#a6578d0c579644c25152f5c7d37441e3d',1,'vt']]],
+  ['region_5fid_5ft_2',['region_id_t',['../namespacevt.html#a05edf4fbb99f5a86fcfb11de24929443',1,'vt']]],
+  ['reverse_5fiterator_3',['reverse_iterator',['../classvt_1_1tag__timeline.html#ab9a7bbdd07d20d7df6526236f7d306f3',1,'vt::tag_timeline']]],
+  ['rgb32f_4',['rgb32f',['../structvt_1_1image__pixel__format.html#a02687cd4fc025cfdea712eb271681e93',1,'vt::image_pixel_format']]],
+  ['rgb8_5',['rgb8',['../structvt_1_1image__pixel__format.html#a4bf8b01f14e17ae1e71c38a1ecd4c621',1,'vt::image_pixel_format']]],
+  ['rgba32f_6',['rgba32f',['../structvt_1_1image__pixel__format.html#ab9e46e5921a0aabe7abbaf7d93afcc4a',1,'vt::image_pixel_format']]],
+  ['rgba8_7',['rgba8',['../structvt_1_1image__pixel__format.html#a4908d35a0aa8d6df6ec38bd3027e2dc7',1,'vt::image_pixel_format']]]
 ];

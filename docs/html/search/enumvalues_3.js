@@ -1,6 +1,7 @@
 var searchData=
 [
-  ['end_0',['end',['../namespacevt.html#ae1fa32848b0d2678d13a30d26f6c1f30a7f021a1415b86f2d013b2618fb31ae53',1,'vt::end'],['../namespacevt_1_1widgets.html#ad43ec647ba0218e268a15d87a94ff374a7f021a1415b86f2d013b2618fb31ae53',1,'vt::widgets::end']]],
-  ['error_1',['error',['../structvt_1_1widgets_1_1console_1_1entry.html#a47afc6a771eda2c22313eb2f58f53159acb5e100e5a9a3e7f6d1fd97512215282',1,'vt::widgets::console::entry::error'],['../namespacevt_1_1utils.html#af6b7906baa0556ab8f2a62b81143289bacb5e100e5a9a3e7f6d1fd97512215282',1,'vt::utils::error']]],
-  ['expired_2',['expired',['../namespacevt.html#aa5a9f929e5c7e8065ce664d8e389ad30ac4bfb2a0bab0e91bc7dcfbe3bbec246e',1,'vt']]]
+  ['default_5fvariant_0',['default_variant',['../namespacevt.html#a3a90301433afdf7bc50c45bc05f5512cad1a0c90c5caf9dc0ab38e6f703195733',1,'vt']]],
+  ['diff_1',['diff',['../namespacevt.html#acefe942cd71d6688e4a3eca1e77554d8a2d2dee7af60385a060eae7f556845a8b',1,'vt']]],
+  ['downloadable_2',['downloadable',['../namespacevt.html#abc422323f738f99ecbb9ef6e1295f4d7a9ce5e5578889c043680a27b1812df864',1,'vt']]],
+  ['dragging_3',['dragging',['../namespacevt.html#a21aaaf64817be835718704e9c12c0aceabc4fc8574e03d742c254098bbe08f2b6',1,'vt']]]
 ];

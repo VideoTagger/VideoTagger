@@ -16,6 +16,8 @@ var classvt_1_1keybind__storage =
     [ "end", "classvt_1_1keybind__storage.html#ae6fb32b76bbaac6701cf30f30d56aa46", null ],
     [ "end", "classvt_1_1keybind__storage.html#acad24f432a75eac7d8a7fe738855df9b", null ],
     [ "erase", "classvt_1_1keybind__storage.html#af6ed5f6bd9f9276037f5055e25047ee5", null ],
+    [ "erase", "classvt_1_1keybind__storage.html#a0203acde5f1cc1a98fddc79432f09d4d", null ],
+    [ "erase", "classvt_1_1keybind__storage.html#abd09f46cc3e2941256bf434f6a09ad73", null ],
     [ "insert", "classvt_1_1keybind__storage.html#ad3902b403ee06393189d99fa988044e2", null ],
     [ "is_valid", "classvt_1_1keybind__storage.html#afb0d216de67251147f6c57b35c0cc66e", null ],
     [ "operator[]", "classvt_1_1keybind__storage.html#a0a77141e887db5c6f5a05912c1e3978e", null ],

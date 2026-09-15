@@ -6,5 +6,6 @@ var structvt_1_1widgets_1_1timeline__state =
     [ "time_length", "structvt_1_1widgets_1_1timeline__state.html#a477f928f1c40d8461d9760537732f235", null ],
     [ "current_ts", "structvt_1_1widgets_1_1timeline__state.html#a456c83465be4fedd9e13bfb666f9b976", null ],
     [ "max_ts", "structvt_1_1widgets_1_1timeline__state.html#ae61ee806693026605d8f096f4c12c087", null ],
-    [ "min_ts", "structvt_1_1widgets_1_1timeline__state.html#a78e47df28c65ce5a4bb18205af8ebaee", null ]
+    [ "min_ts", "structvt_1_1widgets_1_1timeline__state.html#a78e47df28c65ce5a4bb18205af8ebaee", null ],
+    [ "previous_ts", "structvt_1_1widgets_1_1timeline__state.html#a594e45e6e06025480f0d6af872e39f55", null ]
 ];

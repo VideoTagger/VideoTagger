@@ -134,36 +134,53 @@ Inheritance diagram for vt::ui::combo&lt; value_type &gt;:</div>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:ad755d98fe286c32cc1b708575e508963" id="r_ad755d98fe286c32cc1b708575e508963"><td class="memItemLeft" align="right" valign="top">constexpr&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structvt_1_1ui_1_1combo.html#ad755d98fe286c32cc1b708575e508963">combo</a> (const std::string &amp;<a class="el" href="structvt_1_1ui_1_1combo.html#abd113d22e8e48886d754cdae4aa232ad">id</a>, const std::vector&lt; value_type &gt; &amp;<a class="el" href="structvt_1_1ui_1_1combo.html#a13a4e5fc745b0d40f0d6cc34ab8ae911">items</a>, size_t <a class="el" href="structvt_1_1ui_1_1combo.html#afad5a5edb0c6f0df917564bc691872ae">selected</a>=(size_t)(-1), const std::function&lt; void(const std::pair&lt; size_t, const value_type &amp; &gt; &amp;item)&gt; &amp;callback=nullptr)</td></tr>
-<tr class="separator:ad755d98fe286c32cc1b708575e508963"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a57ea950b6651cfe6a87b53839b8cae10" id="r_a57ea950b6651cfe6a87b53839b8cae10"><td class="memItemLeft" align="right" valign="top">virtual bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structvt_1_1ui_1_1combo.html#a57ea950b6651cfe6a87b53839b8cae10">render</a> () override</td></tr>
-<tr class="separator:a57ea950b6651cfe6a87b53839b8cae10"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a73a7e3863b81c1fedadec59066484775" id="r_a73a7e3863b81c1fedadec59066484775"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structvt_1_1ui_1_1combo.html#a73a7e3863b81c1fedadec59066484775">reset</a> () override</td></tr>
-<tr class="separator:a73a7e3863b81c1fedadec59066484775"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:abf97d48e4bd764240921f493228436d3" id="r_abf97d48e4bd764240921f493228436d3"><td class="memItemLeft" align="right" valign="top">constexpr&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structvt_1_1ui_1_1combo.html#abf97d48e4bd764240921f493228436d3">combo</a> (const std::string &amp;<a class="el" href="structvt_1_1ui_1_1combo.html#abd113d22e8e48886d754cdae4aa232ad">id</a>, const std::vector&lt; value_type &gt; &amp;<a class="el" href="structvt_1_1ui_1_1combo.html#a13a4e5fc745b0d40f0d6cc34ab8ae911">items</a>, size_t <a class="el" href="structvt_1_1ui_1_1combo.html#afad5a5edb0c6f0df917564bc691872ae">selected</a>=(size_t)(-1), const std::function&lt; void(const std::pair&lt; size_t, const value_type &amp; &gt; &amp;last_item, const std::pair&lt; size_t, const value_type &amp; &gt; &amp;item)&gt; &amp;callback=nullptr)</td></tr>
+<tr class="separator:abf97d48e4bd764240921f493228436d3"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac056705227af375bb497e70b44b639e9" id="r_ac056705227af375bb497e70b44b639e9"><td class="memItemLeft" align="right" valign="top">constexpr void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structvt_1_1ui_1_1combo.html#ac056705227af375bb497e70b44b639e9">set_items</a> (const std::vector&lt; value_type &gt; &amp;<a class="el" href="structvt_1_1ui_1_1combo.html#a13a4e5fc745b0d40f0d6cc34ab8ae911">items</a>)</td></tr>
 <tr class="separator:ac056705227af375bb497e70b44b639e9"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ac4228e274623ba5d2ad449010f517478" id="r_ac4228e274623ba5d2ad449010f517478"><td class="memItemLeft" align="right" valign="top">constexpr void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structvt_1_1ui_1_1combo.html#ac4228e274623ba5d2ad449010f517478">set_selected</a> (size_t <a class="el" href="structvt_1_1ui_1_1combo.html#afad5a5edb0c6f0df917564bc691872ae">selected</a>)</td></tr>
-<tr class="separator:ac4228e274623ba5d2ad449010f517478"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a78512a12d9e83d9781b9faa3b83621b3" id="r_a78512a12d9e83d9781b9faa3b83621b3"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structvt_1_1ui_1_1combo.html#a78512a12d9e83d9781b9faa3b83621b3">set_callback</a> (const std::function&lt; void(const std::pair&lt; size_t, const value_type &amp; &gt; &amp;last_item, const std::pair&lt; size_t, const value_type &amp; &gt; &amp;item)&gt; &amp;callback)</td></tr>
+<tr class="separator:a78512a12d9e83d9781b9faa3b83621b3"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8096550e3cf0ecc480d0bddc4ac14346" id="r_a8096550e3cf0ecc480d0bddc4ac14346"><td class="memItemLeft" align="right" valign="top">constexpr void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structvt_1_1ui_1_1combo.html#a8096550e3cf0ecc480d0bddc4ac14346">set_selected</a> (size_t <a class="el" href="structvt_1_1ui_1_1combo.html#afad5a5edb0c6f0df917564bc691872ae">selected</a>, bool invoke_callback=true)</td></tr>
+<tr class="separator:a8096550e3cf0ecc480d0bddc4ac14346"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab678740dcc2991ca25a671395645a504" id="r_ab678740dcc2991ca25a671395645a504"><td class="memItemLeft" align="right" valign="top">constexpr void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structvt_1_1ui_1_1combo.html#ab678740dcc2991ca25a671395645a504">set_available_width</a> (float width)</td></tr>
+<tr class="memdesc:ab678740dcc2991ca25a671395645a504"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the available width for the combo box. When width &gt; 0.f, the combo box will use all of the available content region width. (default: 0.f)  <br /></td></tr>
+<tr class="separator:ab678740dcc2991ca25a671395645a504"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:afad5a5edb0c6f0df917564bc691872ae" id="r_afad5a5edb0c6f0df917564bc691872ae"><td class="memItemLeft" align="right" valign="top">constexpr size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structvt_1_1ui_1_1combo.html#afad5a5edb0c6f0df917564bc691872ae">selected</a> () const</td></tr>
 <tr class="separator:afad5a5edb0c6f0df917564bc691872ae"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a6f9cec8946b1139293b30f784242c61b" id="r_a6f9cec8946b1139293b30f784242c61b"><td class="memItemLeft" align="right" valign="top">constexpr const value_type &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structvt_1_1ui_1_1combo.html#a6f9cec8946b1139293b30f784242c61b">selected_item</a> () const</td></tr>
 <tr class="separator:a6f9cec8946b1139293b30f784242c61b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a13a4e5fc745b0d40f0d6cc34ab8ae911" id="r_a13a4e5fc745b0d40f0d6cc34ab8ae911"><td class="memItemLeft" align="right" valign="top">constexpr const std::vector&lt; value_type &gt; &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structvt_1_1ui_1_1combo.html#a13a4e5fc745b0d40f0d6cc34ab8ae911">items</a> () const</td></tr>
 <tr class="separator:a13a4e5fc745b0d40f0d6cc34ab8ae911"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae8423f142a2622e5a3068ffd18400503" id="r_ae8423f142a2622e5a3068ffd18400503"><td class="memItemLeft" align="right" valign="top">constexpr size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structvt_1_1ui_1_1combo.html#ae8423f142a2622e5a3068ffd18400503">item_count</a> () const</td></tr>
+<tr class="separator:ae8423f142a2622e5a3068ffd18400503"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a484feb6b6efcb0f381270e326a3f6a2e" id="r_a484feb6b6efcb0f381270e326a3f6a2e"><td class="memItemLeft" align="right" valign="top">constexpr bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structvt_1_1ui_1_1combo.html#a484feb6b6efcb0f381270e326a3f6a2e">empty</a> () const</td></tr>
+<tr class="separator:a484feb6b6efcb0f381270e326a3f6a2e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:abd113d22e8e48886d754cdae4aa232ad" id="r_abd113d22e8e48886d754cdae4aa232ad"><td class="memItemLeft" align="right" valign="top">constexpr const std::string &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structvt_1_1ui_1_1combo.html#abd113d22e8e48886d754cdae4aa232ad">id</a> () const</td></tr>
 <tr class="separator:abd113d22e8e48886d754cdae4aa232ad"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a73a7e3863b81c1fedadec59066484775" id="r_a73a7e3863b81c1fedadec59066484775"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structvt_1_1ui_1_1combo.html#a73a7e3863b81c1fedadec59066484775">reset</a> () override</td></tr>
+<tr class="separator:a73a7e3863b81c1fedadec59066484775"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a57ea950b6651cfe6a87b53839b8cae10" id="r_a57ea950b6651cfe6a87b53839b8cae10"><td class="memItemLeft" align="right" valign="top">virtual bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structvt_1_1ui_1_1combo.html#a57ea950b6651cfe6a87b53839b8cae10">render</a> () override</td></tr>
+<tr class="separator:a57ea950b6651cfe6a87b53839b8cae10"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pub_methods_structvt_1_1ui_1_1widget"><td colspan="2" onclick="javascript:toggleInherit('pub_methods_structvt_1_1ui_1_1widget')"><img src="closed.png" alt="-"/>&#160;Public Member Functions inherited from <a class="el" href="structvt_1_1ui_1_1widget.html">vt::ui::widget</a></td></tr>
-<tr class="memitem:a2ca067b61759472455cfcc521c31f039 inherit pub_methods_structvt_1_1ui_1_1widget" id="r_a2ca067b61759472455cfcc521c31f039"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structvt_1_1ui_1_1widget.html#a2ca067b61759472455cfcc521c31f039">render_with_label</a> (const std::string &amp;label, bool sameline=false)</td></tr>
+<tr class="memitem:a2ca067b61759472455cfcc521c31f039 inherit pub_methods_structvt_1_1ui_1_1widget" id="r_a2ca067b61759472455cfcc521c31f039"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structvt_1_1ui_1_1widget.html#a2ca067b61759472455cfcc521c31f039">render_with_label</a> (const std::string &amp;<a class="el" href="group__ui__text.html#ga2c1794b11163616d5533169314d9e5c6">label</a>, bool <a class="el" href="structvt_1_1ui_1_1widget.html#ae5da34a48e241a214de729ad330557d4">sameline</a>=false)</td></tr>
 <tr class="separator:a2ca067b61759472455cfcc521c31f039 inherit pub_methods_structvt_1_1ui_1_1widget"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a660c333f4ae4b28c81a0c58d1c0b4b88 inherit pub_methods_structvt_1_1ui_1_1widget" id="r_a660c333f4ae4b28c81a0c58d1c0b4b88"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structvt_1_1ui_1_1widget.html#a660c333f4ae4b28c81a0c58d1c0b4b88">render_disabled</a> (bool disabled=true)</td></tr>
+<tr class="separator:a660c333f4ae4b28c81a0c58d1c0b4b88 inherit pub_methods_structvt_1_1ui_1_1widget"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae5da34a48e241a214de729ad330557d4 inherit pub_methods_structvt_1_1ui_1_1widget" id="r_ae5da34a48e241a214de729ad330557d4"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structvt_1_1ui_1_1widget.html#ae5da34a48e241a214de729ad330557d4">sameline</a> () const</td></tr>
+<tr class="separator:ae5da34a48e241a214de729ad330557d4 inherit pub_methods_structvt_1_1ui_1_1widget"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a66bd32424953f657a13efa8772d9dec9 inherit pub_methods_structvt_1_1ui_1_1widget" id="r_a66bd32424953f657a13efa8772d9dec9"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structvt_1_1ui_1_1widget.html#a66bd32424953f657a13efa8772d9dec9">is_enabled</a> () const</td></tr>
+<tr class="separator:a66bd32424953f657a13efa8772d9dec9 inherit pub_methods_structvt_1_1ui_1_1widget"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8f3f42f269096d9a76954f8c82361afb inherit pub_methods_structvt_1_1ui_1_1widget" id="r_a8f3f42f269096d9a76954f8c82361afb"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structvt_1_1ui_1_1widget.html#a8f3f42f269096d9a76954f8c82361afb">is_disabled</a> () const</td></tr>
+<tr class="separator:a8f3f42f269096d9a76954f8c82361afb inherit pub_methods_structvt_1_1ui_1_1widget"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-static-methods" name="pub-static-methods"></a>
 Static Public Member Functions</h2></td></tr>
-<tr class="memitem:a4ac2f25da4e0594022b27b83d59c8b9e" id="r_a4ac2f25da4e0594022b27b83d59c8b9e"><td class="memItemLeft" align="right" valign="top">static constexpr void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structvt_1_1ui_1_1combo.html#a4ac2f25da4e0594022b27b83d59c8b9e">render</a> (const std::string &amp;<a class="el" href="structvt_1_1ui_1_1combo.html#abd113d22e8e48886d754cdae4aa232ad">id</a>, const std::vector&lt; value_type &gt; &amp;<a class="el" href="structvt_1_1ui_1_1combo.html#a13a4e5fc745b0d40f0d6cc34ab8ae911">items</a>, size_t <a class="el" href="structvt_1_1ui_1_1combo.html#afad5a5edb0c6f0df917564bc691872ae">selected</a>=(size_t)(-1), const std::function&lt; void(const std::pair&lt; size_t, const value_type &amp; &gt; &amp;item)&gt; &amp;callback=nullptr)</td></tr>
-<tr class="separator:a4ac2f25da4e0594022b27b83d59c8b9e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aee6a4a2b1b58bdf304d8066bfb7ac495" id="r_aee6a4a2b1b58bdf304d8066bfb7ac495"><td class="memItemLeft" align="right" valign="top">static constexpr void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structvt_1_1ui_1_1combo.html#aee6a4a2b1b58bdf304d8066bfb7ac495">render</a> (const std::string &amp;<a class="el" href="structvt_1_1ui_1_1combo.html#abd113d22e8e48886d754cdae4aa232ad">id</a>, const std::vector&lt; value_type &gt; &amp;<a class="el" href="structvt_1_1ui_1_1combo.html#a13a4e5fc745b0d40f0d6cc34ab8ae911">items</a>, size_t <a class="el" href="structvt_1_1ui_1_1combo.html#afad5a5edb0c6f0df917564bc691872ae">selected</a>=(size_t)(-1), const std::function&lt; void(const std::pair&lt; size_t, const value_type &amp; &gt; &amp;last_item, const std::pair&lt; size_t, const value_type &amp; &gt; &amp;item)&gt; &amp;callback=nullptr)</td></tr>
+<tr class="separator:aee6a4a2b1b58bdf304d8066bfb7ac495"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
-<a id="ad755d98fe286c32cc1b708575e508963" name="ad755d98fe286c32cc1b708575e508963"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ad755d98fe286c32cc1b708575e508963">&#9670;&#160;</a></span>combo()</h2>
+<a id="abf97d48e4bd764240921f493228436d3" name="abf97d48e4bd764240921f493228436d3"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#abf97d48e4bd764240921f493228436d3">&#9670;&#160;</a></span>combo()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -194,7 +211,7 @@ template&lt;typename value_type &gt; </div>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">const std::function&lt; void(const std::pair&lt; size_t, const value_type &amp; &gt; &amp;item)&gt; &amp;&#160;</td>
+          <td class="paramtype">const std::function&lt; void(const std::pair&lt; size_t, const value_type &amp; &gt; &amp;last_item, const std::pair&lt; size_t, const value_type &amp; &gt; &amp;item)&gt; &amp;&#160;</td>
           <td class="paramname"><em>callback</em> = <code>nullptr</code>&#160;</td>
         </tr>
         <tr>
@@ -213,6 +230,33 @@ template&lt;typename value_type &gt; </div>
 </div>
 </div>
 <h2 class="groupheader">Member Function Documentation</h2>
+<a id="a484feb6b6efcb0f381270e326a3f6a2e" name="a484feb6b6efcb0f381270e326a3f6a2e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a484feb6b6efcb0f381270e326a3f6a2e">&#9670;&#160;</a></span>empty()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename value_type &gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">constexpr bool <a class="el" href="structvt_1_1ui_1_1combo.html">vt::ui::combo</a>&lt; value_type &gt;::empty </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">constexpr</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <a id="abd113d22e8e48886d754cdae4aa232ad" name="abd113d22e8e48886d754cdae4aa232ad"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#abd113d22e8e48886d754cdae4aa232ad">&#9670;&#160;</a></span>id()</h2>
 
@@ -226,6 +270,33 @@ template&lt;typename value_type &gt; </div>
       <table class="memname">
         <tr>
           <td class="memname">constexpr const std::string &amp; <a class="el" href="structvt_1_1ui_1_1combo.html">vt::ui::combo</a>&lt; value_type &gt;::id </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">constexpr</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="ae8423f142a2622e5a3068ffd18400503" name="ae8423f142a2622e5a3068ffd18400503"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae8423f142a2622e5a3068ffd18400503">&#9670;&#160;</a></span>item_count()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename value_type &gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">constexpr size_t <a class="el" href="structvt_1_1ui_1_1combo.html">vt::ui::combo</a>&lt; value_type &gt;::item_count </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td> const</td>
@@ -296,8 +367,8 @@ template&lt;typename value_type &gt; </div>
 
 </div>
 </div>
-<a id="a4ac2f25da4e0594022b27b83d59c8b9e" name="a4ac2f25da4e0594022b27b83d59c8b9e"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a4ac2f25da4e0594022b27b83d59c8b9e">&#9670;&#160;</a></span>render() <span class="overload">[2/2]</span></h2>
+<a id="aee6a4a2b1b58bdf304d8066bfb7ac495" name="aee6a4a2b1b58bdf304d8066bfb7ac495"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aee6a4a2b1b58bdf304d8066bfb7ac495">&#9670;&#160;</a></span>render() <span class="overload">[2/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -328,7 +399,7 @@ template&lt;typename value_type &gt; </div>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">const std::function&lt; void(const std::pair&lt; size_t, const value_type &amp; &gt; &amp;item)&gt; &amp;&#160;</td>
+          <td class="paramtype">const std::function&lt; void(const std::pair&lt; size_t, const value_type &amp; &gt; &amp;last_item, const std::pair&lt; size_t, const value_type &amp; &gt; &amp;item)&gt; &amp;&#160;</td>
           <td class="paramname"><em>callback</em> = <code>nullptr</code>&#160;</td>
         </tr>
         <tr>
@@ -429,6 +500,64 @@ template&lt;typename value_type &gt; </div>
 
 </div>
 </div>
+<a id="ab678740dcc2991ca25a671395645a504" name="ab678740dcc2991ca25a671395645a504"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab678740dcc2991ca25a671395645a504">&#9670;&#160;</a></span>set_available_width()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename value_type &gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">constexpr void <a class="el" href="structvt_1_1ui_1_1combo.html">vt::ui::combo</a>&lt; value_type &gt;::set_available_width </td>
+          <td>(</td>
+          <td class="paramtype">float&#160;</td>
+          <td class="paramname"><em>width</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">constexpr</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Sets the available width for the combo box. When width &gt; 0.f, the combo box will use all of the available content region width. (default: 0.f) </p>
+
+</div>
+</div>
+<a id="a78512a12d9e83d9781b9faa3b83621b3" name="a78512a12d9e83d9781b9faa3b83621b3"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a78512a12d9e83d9781b9faa3b83621b3">&#9670;&#160;</a></span>set_callback()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename value_type &gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void <a class="el" href="structvt_1_1ui_1_1combo.html">vt::ui::combo</a>&lt; value_type &gt;::set_callback </td>
+          <td>(</td>
+          <td class="paramtype">const std::function&lt; void(const std::pair&lt; size_t, const value_type &amp; &gt; &amp;last_item, const std::pair&lt; size_t, const value_type &amp; &gt; &amp;item)&gt; &amp;&#160;</td>
+          <td class="paramname"><em>callback</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <a id="ac056705227af375bb497e70b44b639e9" name="ac056705227af375bb497e70b44b639e9"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#ac056705227af375bb497e70b44b639e9">&#9670;&#160;</a></span>set_items()</h2>
 
@@ -457,8 +586,8 @@ template&lt;typename value_type &gt; </div>
 
 </div>
 </div>
-<a id="ac4228e274623ba5d2ad449010f517478" name="ac4228e274623ba5d2ad449010f517478"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ac4228e274623ba5d2ad449010f517478">&#9670;&#160;</a></span>set_selected()</h2>
+<a id="a8096550e3cf0ecc480d0bddc4ac14346" name="a8096550e3cf0ecc480d0bddc4ac14346"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a8096550e3cf0ecc480d0bddc4ac14346">&#9670;&#160;</a></span>set_selected()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -472,8 +601,18 @@ template&lt;typename value_type &gt; </div>
           <td class="memname">constexpr void <a class="el" href="structvt_1_1ui_1_1combo.html">vt::ui::combo</a>&lt; value_type &gt;::set_selected </td>
           <td>(</td>
           <td class="paramtype">size_t&#160;</td>
-          <td class="paramname"><em>selected</em></td><td>)</td>
+          <td class="paramname"><em>selected</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
           <td></td>
+          <td class="paramtype">bool&#160;</td>
+          <td class="paramname"><em>invoke_callback</em> = <code>true</code>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
         </tr>
       </table>
   </td>

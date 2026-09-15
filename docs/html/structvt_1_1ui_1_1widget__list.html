@@ -125,8 +125,9 @@ Inheritance diagram for vt::ui::widget_list:</div>
  <div class="center">
   <img src="structvt_1_1ui_1_1widget__list.png" usemap="#vt::ui::widget_5Flist_map" alt=""/>
   <map id="vt::ui::widget_5Flist_map" name="vt::ui::widget_5Flist_map">
+<area href="structvt_1_1ui_1_1widget.html" alt="vt::ui::widget" shape="rect" coords="0,56,134,80"/>
 <area href="structvt_1_1ui_1_1impl_1_1renderable.html" alt="vt::ui::impl::renderable" shape="rect" coords="0,0,134,24"/>
-<area href="structvt_1_1ui_1_1settings__panel.html" alt="vt::ui::settings_panel" shape="rect" coords="0,112,134,136"/>
+<area href="structvt_1_1ui_1_1settings__panel.html" alt="vt::ui::settings_panel" shape="rect" coords="0,168,134,192"/>
   </map>
 </div></div>
 <table class="memberdecls">
@@ -136,13 +137,34 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:a60afaf9b23deeb6c3e35dac6b30bebcf"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab4aa7c159c8909b4c957a041034d7269" id="r_ab4aa7c159c8909b4c957a041034d7269"><td class="memItemLeft" align="right" valign="top">virtual bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structvt_1_1ui_1_1widget__list.html#ab4aa7c159c8909b4c957a041034d7269">render</a> () override</td></tr>
 <tr class="separator:ab4aa7c159c8909b4c957a041034d7269"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a251a440ae1e131bbc3aec3d82433555a" id="r_a251a440ae1e131bbc3aec3d82433555a"><td class="memTemplParams" colspan="2">template&lt;typename widget_type , typename... arguments&gt; </td></tr>
-<tr class="memitem:a251a440ae1e131bbc3aec3d82433555a"><td class="memTemplItemLeft" align="right" valign="top">constexpr <a class="el" href="structvt_1_1ui_1_1widget__list.html">widget_list</a> &amp;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="structvt_1_1ui_1_1widget__list.html#a251a440ae1e131bbc3aec3d82433555a">add</a> (arguments &amp;&amp;... args)</td></tr>
-<tr class="separator:a251a440ae1e131bbc3aec3d82433555a"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:abdb72ae0a4c9d14f2180aeb8df3f02ca" id="r_abdb72ae0a4c9d14f2180aeb8df3f02ca"><td class="memItemLeft" align="right" valign="top">constexpr <a class="el" href="structvt_1_1ui_1_1widget__list.html">widget_list</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structvt_1_1ui_1_1widget__list.html#abdb72ae0a4c9d14f2180aeb8df3f02ca">add_raw</a> (const std::function&lt; bool()&gt; &amp;render_callback)</td></tr>
-<tr class="separator:abdb72ae0a4c9d14f2180aeb8df3f02ca"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab6c09f9580dce141e4babb15de8b8284" id="r_ab6c09f9580dce141e4babb15de8b8284"><td class="memTemplParams" colspan="2">template&lt;typename widget_type , typename... arguments&gt; </td></tr>
+<tr class="memitem:ab6c09f9580dce141e4babb15de8b8284"><td class="memTemplItemLeft" align="right" valign="top">constexpr widget_type &amp;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="structvt_1_1ui_1_1widget__list.html#ab6c09f9580dce141e4babb15de8b8284">add</a> (arguments &amp;&amp;... args)</td></tr>
+<tr class="separator:ab6c09f9580dce141e4babb15de8b8284"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5b6b3eb08ef1df11407dd2f6f2257adb" id="r_a5b6b3eb08ef1df11407dd2f6f2257adb"><td class="memItemLeft" align="right" valign="top">constexpr <a class="el" href="structvt_1_1ui_1_1raw__widget.html">raw_widget</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structvt_1_1ui_1_1widget__list.html#a5b6b3eb08ef1df11407dd2f6f2257adb">add_raw</a> (const std::function&lt; bool()&gt; &amp;render_callback)</td></tr>
+<tr class="separator:a5b6b3eb08ef1df11407dd2f6f2257adb"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a2a7a3fe792969b3f3d943d4f0357f542" id="r_a2a7a3fe792969b3f3d943d4f0357f542"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structvt_1_1ui_1_1widget__list.html#a2a7a3fe792969b3f3d943d4f0357f542">clear</a> ()</td></tr>
 <tr class="separator:a2a7a3fe792969b3f3d943d4f0357f542"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aae9a42aae9d8142b07e00141a3b673a9" id="r_aae9a42aae9d8142b07e00141a3b673a9"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structvt_1_1ui_1_1widget__list.html#aae9a42aae9d8142b07e00141a3b673a9">empty</a> () const</td></tr>
+<tr class="separator:aae9a42aae9d8142b07e00141a3b673a9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a41e28b58dc3f10accfd48d7cbad093a5" id="r_a41e28b58dc3f10accfd48d7cbad093a5"><td class="memItemLeft" align="right" valign="top">size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structvt_1_1ui_1_1widget__list.html#a41e28b58dc3f10accfd48d7cbad093a5">size</a> () const</td></tr>
+<tr class="separator:a41e28b58dc3f10accfd48d7cbad093a5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4d2ffd76c047f4f1e2992c71e2149aaa" id="r_a4d2ffd76c047f4f1e2992c71e2149aaa"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structvt_1_1ui_1_1widget.html">widget</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structvt_1_1ui_1_1widget__list.html#a4d2ffd76c047f4f1e2992c71e2149aaa">at</a> (size_t index)</td></tr>
+<tr class="separator:a4d2ffd76c047f4f1e2992c71e2149aaa"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac7a405ceea25f17f201674c90f40b560" id="r_ac7a405ceea25f17f201674c90f40b560"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structvt_1_1ui_1_1widget.html">widget</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structvt_1_1ui_1_1widget__list.html#ac7a405ceea25f17f201674c90f40b560">front</a> ()</td></tr>
+<tr class="separator:ac7a405ceea25f17f201674c90f40b560"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:adc956e5b2e19222525a9232907d586f9" id="r_adc956e5b2e19222525a9232907d586f9"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structvt_1_1ui_1_1widget.html">widget</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structvt_1_1ui_1_1widget__list.html#adc956e5b2e19222525a9232907d586f9">back</a> ()</td></tr>
+<tr class="separator:adc956e5b2e19222525a9232907d586f9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="inherit_header pub_methods_structvt_1_1ui_1_1widget"><td colspan="2" onclick="javascript:toggleInherit('pub_methods_structvt_1_1ui_1_1widget')"><img src="closed.png" alt="-"/>&#160;Public Member Functions inherited from <a class="el" href="structvt_1_1ui_1_1widget.html">vt::ui::widget</a></td></tr>
+<tr class="memitem:a2ca067b61759472455cfcc521c31f039 inherit pub_methods_structvt_1_1ui_1_1widget" id="r_a2ca067b61759472455cfcc521c31f039"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structvt_1_1ui_1_1widget.html#a2ca067b61759472455cfcc521c31f039">render_with_label</a> (const std::string &amp;<a class="el" href="group__ui__text.html#ga2c1794b11163616d5533169314d9e5c6">label</a>, bool <a class="el" href="structvt_1_1ui_1_1widget.html#ae5da34a48e241a214de729ad330557d4">sameline</a>=false)</td></tr>
+<tr class="separator:a2ca067b61759472455cfcc521c31f039 inherit pub_methods_structvt_1_1ui_1_1widget"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a660c333f4ae4b28c81a0c58d1c0b4b88 inherit pub_methods_structvt_1_1ui_1_1widget" id="r_a660c333f4ae4b28c81a0c58d1c0b4b88"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structvt_1_1ui_1_1widget.html#a660c333f4ae4b28c81a0c58d1c0b4b88">render_disabled</a> (bool disabled=true)</td></tr>
+<tr class="separator:a660c333f4ae4b28c81a0c58d1c0b4b88 inherit pub_methods_structvt_1_1ui_1_1widget"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae5da34a48e241a214de729ad330557d4 inherit pub_methods_structvt_1_1ui_1_1widget" id="r_ae5da34a48e241a214de729ad330557d4"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structvt_1_1ui_1_1widget.html#ae5da34a48e241a214de729ad330557d4">sameline</a> () const</td></tr>
+<tr class="separator:ae5da34a48e241a214de729ad330557d4 inherit pub_methods_structvt_1_1ui_1_1widget"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a66bd32424953f657a13efa8772d9dec9 inherit pub_methods_structvt_1_1ui_1_1widget" id="r_a66bd32424953f657a13efa8772d9dec9"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structvt_1_1ui_1_1widget.html#a66bd32424953f657a13efa8772d9dec9">is_enabled</a> () const</td></tr>
+<tr class="separator:a66bd32424953f657a13efa8772d9dec9 inherit pub_methods_structvt_1_1ui_1_1widget"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8f3f42f269096d9a76954f8c82361afb inherit pub_methods_structvt_1_1ui_1_1widget" id="r_a8f3f42f269096d9a76954f8c82361afb"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structvt_1_1ui_1_1widget.html#a8f3f42f269096d9a76954f8c82361afb">is_disabled</a> () const</td></tr>
+<tr class="separator:a8f3f42f269096d9a76954f8c82361afb inherit pub_methods_structvt_1_1ui_1_1widget"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a id="a60afaf9b23deeb6c3e35dac6b30bebcf" name="a60afaf9b23deeb6c3e35dac6b30bebcf"></a>
@@ -171,8 +193,8 @@ Public Member Functions</h2></td></tr>
 </div>
 </div>
 <h2 class="groupheader">Member Function Documentation</h2>
-<a id="a251a440ae1e131bbc3aec3d82433555a" name="a251a440ae1e131bbc3aec3d82433555a"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a251a440ae1e131bbc3aec3d82433555a">&#9670;&#160;</a></span>add()</h2>
+<a id="ab6c09f9580dce141e4babb15de8b8284" name="ab6c09f9580dce141e4babb15de8b8284"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab6c09f9580dce141e4babb15de8b8284">&#9670;&#160;</a></span>add()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -183,7 +205,7 @@ template&lt;typename widget_type , typename... arguments&gt; </div>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">constexpr <a class="el" href="structvt_1_1ui_1_1widget__list.html">widget_list</a> &amp; vt::ui::widget_list::add </td>
+          <td class="memname">constexpr widget_type &amp; vt::ui::widget_list::add </td>
           <td>(</td>
           <td class="paramtype">arguments &amp;&amp;...&#160;</td>
           <td class="paramname"><em>args</em></td><td>)</td>
@@ -199,8 +221,8 @@ template&lt;typename widget_type , typename... arguments&gt; </div>
 
 </div>
 </div>
-<a id="abdb72ae0a4c9d14f2180aeb8df3f02ca" name="abdb72ae0a4c9d14f2180aeb8df3f02ca"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#abdb72ae0a4c9d14f2180aeb8df3f02ca">&#9670;&#160;</a></span>add_raw()</h2>
+<a id="a5b6b3eb08ef1df11407dd2f6f2257adb" name="a5b6b3eb08ef1df11407dd2f6f2257adb"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a5b6b3eb08ef1df11407dd2f6f2257adb">&#9670;&#160;</a></span>add_raw()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -209,7 +231,7 @@ template&lt;typename widget_type , typename... arguments&gt; </div>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">constexpr <a class="el" href="structvt_1_1ui_1_1widget__list.html">widget_list</a> &amp; vt::ui::widget_list::add_raw </td>
+          <td class="memname">constexpr <a class="el" href="structvt_1_1ui_1_1raw__widget.html">raw_widget</a> &amp; vt::ui::widget_list::add_raw </td>
           <td>(</td>
           <td class="paramtype">const std::function&lt; bool()&gt; &amp;&#160;</td>
           <td class="paramname"><em>render_callback</em></td><td>)</td>
@@ -219,6 +241,57 @@ template&lt;typename widget_type , typename... arguments&gt; </div>
   </td>
   <td class="mlabels-right">
 <span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">constexpr</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a4d2ffd76c047f4f1e2992c71e2149aaa" name="a4d2ffd76c047f4f1e2992c71e2149aaa"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a4d2ffd76c047f4f1e2992c71e2149aaa">&#9670;&#160;</a></span>at()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="structvt_1_1ui_1_1widget.html">widget</a> &amp; vt::ui::widget_list::at </td>
+          <td>(</td>
+          <td class="paramtype">size_t&#160;</td>
+          <td class="paramname"><em>index</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="adc956e5b2e19222525a9232907d586f9" name="adc956e5b2e19222525a9232907d586f9"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#adc956e5b2e19222525a9232907d586f9">&#9670;&#160;</a></span>back()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="structvt_1_1ui_1_1widget.html">widget</a> &amp; vt::ui::widget_list::back </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
@@ -236,6 +309,56 @@ template&lt;typename widget_type , typename... arguments&gt; </div>
       <table class="memname">
         <tr>
           <td class="memname">void vt::ui::widget_list::clear </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="aae9a42aae9d8142b07e00141a3b673a9" name="aae9a42aae9d8142b07e00141a3b673a9"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aae9a42aae9d8142b07e00141a3b673a9">&#9670;&#160;</a></span>empty()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool vt::ui::widget_list::empty </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="ac7a405ceea25f17f201674c90f40b560" name="ac7a405ceea25f17f201674c90f40b560"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ac7a405ceea25f17f201674c90f40b560">&#9670;&#160;</a></span>front()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="structvt_1_1ui_1_1widget.html">widget</a> &amp; vt::ui::widget_list::front </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td></td>
@@ -274,6 +397,31 @@ template&lt;typename widget_type , typename... arguments&gt; </div>
 </div><div class="memdoc">
 
 <p>Implements <a class="el" href="structvt_1_1ui_1_1impl_1_1renderable.html#ab3853fb6e58113b0920830dfec0ae3e3">vt::ui::impl::renderable</a>.</p>
+
+</div>
+</div>
+<a id="a41e28b58dc3f10accfd48d7cbad093a5" name="a41e28b58dc3f10accfd48d7cbad093a5"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a41e28b58dc3f10accfd48d7cbad093a5">&#9670;&#160;</a></span>size()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">size_t vt::ui::widget_list::size </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
 
 </div>
 </div>

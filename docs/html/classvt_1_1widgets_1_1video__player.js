@@ -1,15 +1,25 @@
 var classvt_1_1widgets_1_1video__player =
 [
     [ "video_player", "classvt_1_1widgets_1_1video__player.html#a0f9c1f941ee1280873a545d94228a776", null ],
+    [ "video_player", "classvt_1_1widgets_1_1video__player.html#a5d03e9334bd358418c77dd66e8f573e4", null ],
+    [ "can_seek_and_play", "classvt_1_1widgets_1_1video__player.html#a76262ad22b46ffb682229ba55963871a", null ],
     [ "data", "classvt_1_1widgets_1_1video__player.html#a261f89600198b9d48b2501ff3cff4165", null ],
+    [ "deserialize", "classvt_1_1widgets_1_1video__player.html#a610e3d77cbf11a3c4a6a40ef4ec72759", null ],
     [ "dock_windows", "classvt_1_1widgets_1_1video__player.html#acbacacf66f18903fc0dcd5c3c6b33126", null ],
     [ "is_playing", "classvt_1_1widgets_1_1video__player.html#a5c5d3981547c2f727001190882df077b", null ],
-    [ "is_visible", "classvt_1_1widgets_1_1video__player.html#a0ec9a417323e5ee24d1331f53923fc51", null ],
     [ "loop_mode", "classvt_1_1widgets_1_1video__player.html#a8a851b20390ccfa30cefdc36de97f222", null ],
-    [ "render", "classvt_1_1widgets_1_1video__player.html#a6fa39e99db23fee1524404a9e8d391a9", null ],
+    [ "on_render", "classvt_1_1widgets_1_1video__player.html#a4a1e3a47e063a89e6763a2d6b49d4b7d", null ],
+    [ "post_style", "classvt_1_1widgets_1_1video__player.html#a5af23e39cc66d5cc27c8736e44988696", null ],
+    [ "pre_style", "classvt_1_1widgets_1_1video__player.html#add4632665daf1300704f93261c41f5ee", null ],
+    [ "prepare_video_windows", "classvt_1_1widgets_1_1video__player.html#af58a5b400e21f481c0f03338dcde0532", null ],
     [ "reset_data", "classvt_1_1widgets_1_1video__player.html#a156479c9e036c8b8f82b6c45c45e7663", null ],
+    [ "serialize", "classvt_1_1widgets_1_1video__player.html#aba1391bee5f2aafee5ca8f097ff4d53f", null ],
     [ "set_loop_mode", "classvt_1_1widgets_1_1video__player.html#ac9715aad3c000b65b34db83cf8df24a3", null ],
     [ "set_playing", "classvt_1_1widgets_1_1video__player.html#a96e9e038e6439c3225bf739711265074", null ],
+    [ "set_show_video_ids", "classvt_1_1widgets_1_1video__player.html#a5be5cba492dca15994b48e5e0f4797cc", null ],
+    [ "should_autoplay", "classvt_1_1widgets_1_1video__player.html#aafdde05f573b5df96cf56a6e61e05416", null ],
+    [ "show_video_ids", "classvt_1_1widgets_1_1video__player.html#abc356c8e0c08e9a5cc2471170ab3e067", null ],
     [ "update_data", "classvt_1_1widgets_1_1video__player.html#a0cc9a510975949cd126ff5d0e6589776", null ],
+    [ "video_windows", "classvt_1_1widgets_1_1video__player.html#a001f99986858cf25386afbf086eefd54", null ],
     [ "callbacks", "classvt_1_1widgets_1_1video__player.html#a215e6f3c08dde1b09072c0e17475932f", null ]
 ];

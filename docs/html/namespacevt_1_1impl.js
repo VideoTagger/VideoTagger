@@ -1,6 +1,29 @@
 var namespacevt_1_1impl =
 [
-    [ "command_handler_interface", "structvt_1_1impl_1_1command__handler__interface.html", null ],
-    [ "import_item_data", "structvt_1_1impl_1_1import__item__data.html", "structvt_1_1impl_1_1import__item__data" ],
-    [ "query_handler_interface", "structvt_1_1impl_1_1query__handler__interface.html", null ]
+    [ "attribute", "structvt_1_1impl_1_1attribute.html", "structvt_1_1impl_1_1attribute" ],
+    [ "attribute_factory", "classvt_1_1impl_1_1attribute__factory.html", "classvt_1_1impl_1_1attribute__factory" ],
+    [ "attribute_instance", "structvt_1_1impl_1_1attribute__instance.html", "structvt_1_1impl_1_1attribute__instance" ],
+    [ "attribute_property_renderer", "structvt_1_1impl_1_1attribute__property__renderer.html", "structvt_1_1impl_1_1attribute__property__renderer" ],
+    [ "attribute_ref", "structvt_1_1impl_1_1attribute__ref.html", "structvt_1_1impl_1_1attribute__ref" ],
+    [ "brush_tool", "structvt_1_1impl_1_1brush__tool.html", "structvt_1_1impl_1_1brush__tool" ],
+    [ "event_dispatcher", "structvt_1_1impl_1_1event__dispatcher.html", "structvt_1_1impl_1_1event__dispatcher" ],
+    [ "event_interceptor", "structvt_1_1impl_1_1event__interceptor.html", "structvt_1_1impl_1_1event__interceptor" ],
+    [ "model", "classvt_1_1impl_1_1model.html", "classvt_1_1impl_1_1model" ],
+    [ "opencv_rectangle_tracker", "classvt_1_1impl_1_1opencv__rectangle__tracker.html", "classvt_1_1impl_1_1opencv__rectangle__tracker" ],
+    [ "opencv_sparse_points_tracker", "classvt_1_1impl_1_1opencv__sparse__points__tracker.html", "classvt_1_1impl_1_1opencv__sparse__points__tracker" ],
+    [ "points_tool", "structvt_1_1impl_1_1points__tool.html", "structvt_1_1impl_1_1points__tool" ],
+    [ "rect_select_tool", "structvt_1_1impl_1_1rect__select__tool.html", "structvt_1_1impl_1_1rect__select__tool" ],
+    [ "region_tracker", "classvt_1_1impl_1_1region__tracker.html", "classvt_1_1impl_1_1region__tracker" ],
+    [ "resettable", "structvt_1_1impl_1_1resettable.html", "structvt_1_1impl_1_1resettable" ],
+    [ "serializable", "structvt_1_1impl_1_1serializable.html", "structvt_1_1impl_1_1serializable" ],
+    [ "shape", "classvt_1_1impl_1_1shape.html", "classvt_1_1impl_1_1shape" ],
+    [ "shape_attribute_instance", "classvt_1_1impl_1_1shape__attribute__instance.html", "classvt_1_1impl_1_1shape__attribute__instance" ],
+    [ "shape_interpolator", "classvt_1_1impl_1_1shape__interpolator.html", "classvt_1_1impl_1_1shape__interpolator" ],
+    [ "shape_interpolator_registry", "classvt_1_1impl_1_1shape__interpolator__registry.html", "classvt_1_1impl_1_1shape__interpolator__registry" ],
+    [ "shape_tracker", "classvt_1_1impl_1_1shape__tracker.html", "classvt_1_1impl_1_1shape__tracker" ],
+    [ "shape_tracker_registry", "classvt_1_1impl_1_1shape__tracker__registry.html", "classvt_1_1impl_1_1shape__tracker__registry" ],
+    [ "task_executor", "structvt_1_1impl_1_1task__executor.html", "structvt_1_1impl_1_1task__executor" ],
+    [ "with_shape_data", "structvt_1_1impl_1_1with__shape__data.html", "structvt_1_1impl_1_1with__shape__data" ],
+    [ "from_json", "namespacevt_1_1impl.html#aa8152fe128540d4e51d3c307ce91532b", null ],
+    [ "to_json", "namespacevt_1_1impl.html#ab17c7761cdb8c9bcac5ee829413a44a6", null ]
 ];

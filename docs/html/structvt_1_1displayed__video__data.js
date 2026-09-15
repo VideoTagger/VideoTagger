@@ -10,5 +10,6 @@ var structvt_1_1displayed__video__data =
     [ "display_texture", "structvt_1_1displayed__video__data.html#a853bfdee6cf2ea90630c8c4d473220be", null ],
     [ "id", "structvt_1_1displayed__video__data.html#aaf51f1cf29dcdee85321be2f0ace534e", null ],
     [ "offset", "structvt_1_1displayed__video__data.html#a398e7c3f8277e31a8e248d0cbfb3aaad", null ],
+    [ "overlay_texture", "structvt_1_1displayed__video__data.html#a86b319a3a140a160b7424c4764e40e90", null ],
     [ "video", "structvt_1_1displayed__video__data.html#aeee53e382f7484fb720dc963123639cf", null ]
 ];

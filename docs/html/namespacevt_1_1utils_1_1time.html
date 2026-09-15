@@ -112,8 +112,7 @@ $(document).ready(function(){initNavTree('namespacevt_1_1utils_1_1time.html','')
 
 <div class="header">
   <div class="summary">
-<a href="#func-members">Functions</a> &#124;
-<a href="#var-members">Variables</a>  </div>
+<a href="#func-members">Functions</a>  </div>
   <div class="headertitle"><div class="title">vt::utils::time Namespace Reference</div></div>
 </div><!--header-->
 <div class="contents">
@@ -124,17 +123,8 @@ Functions</h2></td></tr>
 <tr class="separator:a11951611176096f1853e7d5f9eceb9b6"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a9a4e531cc62edb230a6a482fdb3faab5" id="r_a9a4e531cc62edb230a6a482fdb3faab5"><td class="memItemLeft" align="right" valign="top">std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacevt_1_1utils_1_1time.html#a9a4e531cc62edb230a6a482fdb3faab5">interval_str</a> (int64_t interval)</td></tr>
 <tr class="separator:a9a4e531cc62edb230a6a482fdb3faab5"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:acfc672d5063fa69cf8d2284f0cd8a83a" id="r_acfc672d5063fa69cf8d2284f0cd8a83a"><td class="memItemLeft" align="right" valign="top">std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacevt_1_1utils_1_1time.html#acfc672d5063fa69cf8d2284f0cd8a83a">time_to_string</a> (int64_t milliseconds, const char *format)</td></tr>
-<tr class="separator:acfc672d5063fa69cf8d2284f0cd8a83a"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ad448b20092a8ebc43ed7e3b70446b83e" id="r_ad448b20092a8ebc43ed7e3b70446b83e"><td class="memItemLeft" align="right" valign="top">int64_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacevt_1_1utils_1_1time.html#ad448b20092a8ebc43ed7e3b70446b83e">parse_time_to_ms</a> (const std::string &amp;<a class="el" href="structvt_1_1input.html">input</a>, char separator)</td></tr>
-<tr class="separator:ad448b20092a8ebc43ed7e3b70446b83e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a800aca9101e1e772352d06120436701b" id="r_a800aca9101e1e772352d06120436701b"><td class="memItemLeft" align="right" valign="top">std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacevt_1_1utils_1_1time.html#a800aca9101e1e772352d06120436701b">utc_timestamp</a> ()</td></tr>
 <tr class="separator:a800aca9101e1e772352d06120436701b"><td class="memSeparator" colspan="2">&#160;</td></tr>
-</table><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="var-members" name="var-members"></a>
-Variables</h2></td></tr>
-<tr class="memitem:a2f45b57359cbfdf3eda208853f6aaa79" id="r_a2f45b57359cbfdf3eda208853f6aaa79"><td class="memItemLeft" align="right" valign="top">constexpr auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacevt_1_1utils_1_1time.html#a2f45b57359cbfdf3eda208853f6aaa79">default_time_format</a> = &quot;%02u:%02u:%02u:%03u&quot;</td></tr>
-<tr class="separator:a2f45b57359cbfdf3eda208853f6aaa79"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Function Documentation</h2>
 <a id="a11951611176096f1853e7d5f9eceb9b6" name="a11951611176096f1853e7d5f9eceb9b6"></a>
@@ -183,62 +173,6 @@ Variables</h2></td></tr>
 
 </div>
 </div>
-<a id="ad448b20092a8ebc43ed7e3b70446b83e" name="ad448b20092a8ebc43ed7e3b70446b83e"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ad448b20092a8ebc43ed7e3b70446b83e">&#9670;&#160;</a></span>parse_time_to_ms()</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">int64_t vt::utils::time::parse_time_to_ms </td>
-          <td>(</td>
-          <td class="paramtype">const std::string &amp;&#160;</td>
-          <td class="paramname"><em>input</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">char&#160;</td>
-          <td class="paramname"><em>separator</em>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-</div>
-</div>
-<a id="acfc672d5063fa69cf8d2284f0cd8a83a" name="acfc672d5063fa69cf8d2284f0cd8a83a"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#acfc672d5063fa69cf8d2284f0cd8a83a">&#9670;&#160;</a></span>time_to_string()</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">std::string vt::utils::time::time_to_string </td>
-          <td>(</td>
-          <td class="paramtype">int64_t&#160;</td>
-          <td class="paramname"><em>milliseconds</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">const char *&#160;</td>
-          <td class="paramname"><em>format</em>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-</div>
-</div>
 <a id="a800aca9101e1e772352d06120436701b" name="a800aca9101e1e772352d06120436701b"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a800aca9101e1e772352d06120436701b">&#9670;&#160;</a></span>utc_timestamp()</h2>
 
@@ -252,29 +186,6 @@ Variables</h2></td></tr>
           <td></td>
         </tr>
       </table>
-</div><div class="memdoc">
-
-</div>
-</div>
-<h2 class="groupheader">Variable Documentation</h2>
-<a id="a2f45b57359cbfdf3eda208853f6aaa79" name="a2f45b57359cbfdf3eda208853f6aaa79"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a2f45b57359cbfdf3eda208853f6aaa79">&#9670;&#160;</a></span>default_time_format</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">constexpr auto vt::utils::time::default_time_format = &quot;%02u:%02u:%02u:%03u&quot;</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">constexpr</span></span>  </td>
-  </tr>
-</table>
 </div><div class="memdoc">
 
 </div>

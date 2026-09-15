@@ -1,8 +1,7 @@
 var searchData=
 [
-  ['command_5ft_0',['command_t',['../structvt_1_1command__handler.html#a07a5632626a345dd674630b9da3731bf',1,'vt::command_handler']]],
-  ['const_5fiterator_1',['const_iterator',['../classvt_1_1displayed__videos__manager.html#a2b7dfa413f47b10a654f114a211e5bab',1,'vt::displayed_videos_manager::const_iterator'],['../classvt_1_1keybind__storage.html#a27d30fa4ecb693aae340d8185618dd3e',1,'vt::keybind_storage::const_iterator'],['../classvt_1_1tag__storage.html#ab3ba1734efc2867ec4a2a7cf7f79567f',1,'vt::tag_storage::const_iterator'],['../classvt_1_1packet__queue.html#af64299c44283038ab0f86d9676d1189f',1,'vt::packet_queue::const_iterator'],['../classvt_1_1video__group__playlist.html#a436c4128f4b472a3c48221c279aa65bc',1,'vt::video_group_playlist::const_iterator'],['../classvt_1_1video__group.html#a5794fa60c848b273c0ec9e0a76229703',1,'vt::video_group::const_iterator'],['../classvt_1_1video__pool.html#a88bcb833f93977ec2a07d69b3e604b4b',1,'vt::video_pool::const_iterator']]],
-  ['const_5fpointer_2',['const_pointer',['../classvt_1_1tag__storage__iterator.html#a41f7db1988d9b553097f90f0781cfc44',1,'vt::tag_storage_iterator']]],
-  ['const_5freference_3',['const_reference',['../classvt_1_1tag__storage__iterator.html#a064a6a8a99665630f3870ff7d6842031',1,'vt::tag_storage_iterator']]],
-  ['container_4',['container',['../classvt_1_1displayed__videos__manager.html#aa61e7e53e624f628d6e5a9c0b8ac1841',1,'vt::displayed_videos_manager::container'],['../classvt_1_1keybind__storage.html#aed5e87c9b67a5a85c08507185886558b',1,'vt::keybind_storage::container'],['../classvt_1_1tag__storage.html#a9fe545b530b65147db65c5c6fbb18a8b',1,'vt::tag_storage::container'],['../classvt_1_1packet__queue.html#a1f9f3a79a76a125a42f5c701ad63e91e',1,'vt::packet_queue::container'],['../classvt_1_1video__group.html#ad20912211ecbcf80f65f03b470dfd5c5',1,'vt::video_group::container'],['../classvt_1_1video__pool.html#a6057a3d57eedb023fd5a874cf8a09067',1,'vt::video_pool::container']]]
+  ['bgr32f_0',['bgr32f',['../structvt_1_1image__pixel__format.html#a4e979879fe2d79963622a4549e7b7702',1,'vt::image_pixel_format']]],
+  ['bgr8_1',['bgr8',['../structvt_1_1image__pixel__format.html#a5a5301d37a775c41e02b26d6226e19f2',1,'vt::image_pixel_format']]],
+  ['bgra32f_2',['bgra32f',['../structvt_1_1image__pixel__format.html#a54d6fdc01abd100244ee3473e1a68d5c',1,'vt::image_pixel_format']]],
+  ['bgra8_3',['bgra8',['../structvt_1_1image__pixel__format.html#aa1ef6e05ab6fb83aa501ff1ef542c01e',1,'vt::image_pixel_format']]]
 ];

@@ -112,96 +112,179 @@ $(document).ready(function(){initNavTree('structvt_1_1app__settings.html',''); i
 
 <div class="header">
   <div class="summary">
+<a href="#pub-methods">Public Member Functions</a> &#124;
 <a href="#pub-attribs">Public Attributes</a> &#124;
 <a href="structvt_1_1app__settings-members.html">List of all members</a>  </div>
   <div class="headertitle"><div class="title">vt::app_settings Struct Reference</div></div>
 </div><!--header-->
 <div class="contents">
 
-<p><code>#include &lt;app_context.hpp&gt;</code></p>
+<p><code>#include &lt;app_settings.hpp&gt;</code></p>
+<div class="dynheader">
+Inheritance diagram for vt::app_settings:</div>
+<div class="dyncontent">
+ <div class="center">
+  <img src="structvt_1_1app__settings.png" usemap="#vt::app_5Fsettings_map" alt=""/>
+  <map id="vt::app_5Fsettings_map" name="vt::app_5Fsettings_map">
+<area href="structvt_1_1impl_1_1serializable.html" alt="vt::impl::serializable" shape="rect" coords="0,0,120,24"/>
+  </map>
+</div></div>
 <table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
+Public Member Functions</h2></td></tr>
+<tr class="memitem:a04e879ced055996fde500dd1711d7059" id="r_a04e879ced055996fde500dd1711d7059"><td class="memItemLeft" align="right" valign="top">virtual nlohmann::ordered_json&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structvt_1_1app__settings.html#a04e879ced055996fde500dd1711d7059">serialize</a> () const override</td></tr>
+<tr class="separator:a04e879ced055996fde500dd1711d7059"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a24b2410d38b948cf0293edf274ceff95" id="r_a24b2410d38b948cf0293edf274ceff95"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structvt_1_1app__settings.html#a24b2410d38b948cf0293edf274ceff95">deserialize</a> (const nlohmann::ordered_json &amp;json) override</td></tr>
+<tr class="separator:a24b2410d38b948cf0293edf274ceff95"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="inherit_header pub_methods_structvt_1_1impl_1_1serializable"><td colspan="2" onclick="javascript:toggleInherit('pub_methods_structvt_1_1impl_1_1serializable')"><img src="closed.png" alt="-"/>&#160;Public Member Functions inherited from <a class="el" href="structvt_1_1impl_1_1serializable.html">vt::impl::serializable</a></td></tr>
+<tr class="memitem:aa47d6778b047dae47aff51afc2c0db09 inherit pub_methods_structvt_1_1impl_1_1serializable" id="r_aa47d6778b047dae47aff51afc2c0db09"><td class="memItemLeft" align="right" valign="top">virtual&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structvt_1_1impl_1_1serializable.html#aa47d6778b047dae47aff51afc2c0db09">~serializable</a> ()=default</td></tr>
+<tr class="separator:aa47d6778b047dae47aff51afc2c0db09 inherit pub_methods_structvt_1_1impl_1_1serializable"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-attribs" name="pub-attribs"></a>
 Public Attributes</h2></td></tr>
+<tr class="memitem:acfc99e4a827550a10e742bfb0f574416" id="r_acfc99e4a827550a10e742bfb0f574416"><td class="memItemLeft" align="right" valign="top">std::optional&lt; std::string &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structvt_1_1app__settings.html#acfc99e4a827550a10e742bfb0f574416">theme_name</a></td></tr>
+<tr class="memdesc:acfc99e4a827550a10e742bfb0f574416"><td class="mdescLeft">&#160;</td><td class="mdescRight">The name of the theme to use, if not set the default theme will be used.  <br /></td></tr>
+<tr class="separator:acfc99e4a827550a10e742bfb0f574416"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af61ee2800be0ce1391ea08b6edce81c1" id="r_af61ee2800be0ce1391ea08b6edce81c1"><td class="memItemLeft" align="right" valign="top">std::optional&lt; std::string &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structvt_1_1app__settings.html#af61ee2800be0ce1391ea08b6edce81c1">language</a></td></tr>
+<tr class="separator:af61ee2800be0ce1391ea08b6edce81c1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab594f819900edde50b3eadbad146e0ad" id="r_ab594f819900edde50b3eadbad146e0ad"><td class="memItemLeft" align="right" valign="top">float&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structvt_1_1app__settings.html#ab594f819900edde50b3eadbad146e0ad">font_size</a> = 16.0f</td></tr>
+<tr class="separator:ab594f819900edde50b3eadbad146e0ad"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af0b811675ab58ef502c08d9cc9442165" id="r_af0b811675ab58ef502c08d9cc9442165"><td class="memItemLeft" align="right" valign="top">float&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structvt_1_1app__settings.html#af0b811675ab58ef502c08d9cc9442165">thumbnail_size</a> = 45.0f</td></tr>
 <tr class="separator:af0b811675ab58ef502c08d9cc9442165"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aba3551ca3f12df7c12a1aec5eefa39f1" id="r_aba3551ca3f12df7c12a1aec5eefa39f1"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structvt_1_1app__settings.html#aba3551ca3f12df7c12a1aec5eefa39f1">link_start_end_segment</a> = true</td></tr>
-<tr class="separator:aba3551ca3f12df7c12a1aec5eefa39f1"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a1fe98c0f8e50c6103065143a431eed85" id="r_a1fe98c0f8e50c6103065143a431eed85"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structvt_1_1app__settings.html#a1fe98c0f8e50c6103065143a431eed85">autoplay</a> = true</td></tr>
-<tr class="separator:a1fe98c0f8e50c6103065143a431eed85"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a3c88bd7227699366c4643241baf04861" id="r_a3c88bd7227699366c4643241baf04861"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structvt_1_1app__settings.html#a3c88bd7227699366c4643241baf04861">load_thumbnails</a> = true</td></tr>
 <tr class="separator:a3c88bd7227699366c4643241baf04861"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae3ebe7146862c445b9ad35af6e6c4ce3" id="r_ae3ebe7146862c445b9ad35af6e6c4ce3"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structvt_1_1app__settings.html#ae3ebe7146862c445b9ad35af6e6c4ce3">clear_console_on_run</a> = true</td></tr>
-<tr class="separator:ae3ebe7146862c445b9ad35af6e6c4ce3"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a232e60240f3d402f27bc00ee48bfee01" id="r_a232e60240f3d402f27bc00ee48bfee01"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structvt_1_1app__settings.html#a232e60240f3d402f27bc00ee48bfee01">enable_undocking</a> = true</td></tr>
-<tr class="separator:a232e60240f3d402f27bc00ee48bfee01"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a2f05384433c6279a8290d5ea40d80386" id="r_a2f05384433c6279a8290d5ea40d80386"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structvt_1_1app__settings.html#a2f05384433c6279a8290d5ea40d80386">enable_gizmo_scaling</a> = false</td></tr>
-<tr class="separator:a2f05384433c6279a8290d5ea40d80386"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a38feed9f90d49bf14f381eb57a3fde0e" id="r_a38feed9f90d49bf14f381eb57a3fde0e"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structvt_1_1app__settings.html#a38feed9f90d49bf14f381eb57a3fde0e">allow_undocking</a> = true</td></tr>
+<tr class="separator:a38feed9f90d49bf14f381eb57a3fde0e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9f3f57ada23483b2373c8813489a27bf" id="r_a9f3f57ada23483b2373c8813489a27bf"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structvt_1_1app__settings.html#a9f3f57ada23483b2373c8813489a27bf">scale_gizmos</a> = false</td></tr>
+<tr class="separator:a9f3f57ada23483b2373c8813489a27bf"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0f23fcd48558bc4490da018655f681f3" id="r_a0f23fcd48558bc4490da018655f681f3"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structvt_1_1app__settings.html#a0f23fcd48558bc4490da018655f681f3">hardware_acceleration</a> = true</td></tr>
+<tr class="separator:a0f23fcd48558bc4490da018655f681f3"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6d1be17091c75434459923a577dd4b52" id="r_a6d1be17091c75434459923a577dd4b52"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structvt_1_1app__settings.html#a6d1be17091c75434459923a577dd4b52">snap_to_frame</a> = true</td></tr>
+<tr class="separator:a6d1be17091c75434459923a577dd4b52"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aefb4c7f1129a2562707f0b9dabb3f3b9" id="r_aefb4c7f1129a2562707f0b9dabb3f3b9"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structvt_1_1app__settings.html#aefb4c7f1129a2562707f0b9dabb3f3b9">auto_download</a> = true</td></tr>
+<tr class="separator:aefb4c7f1129a2562707f0b9dabb3f3b9"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
+<h2 class="groupheader">Member Function Documentation</h2>
+<a id="a24b2410d38b948cf0293edf274ceff95" name="a24b2410d38b948cf0293edf274ceff95"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a24b2410d38b948cf0293edf274ceff95">&#9670;&#160;</a></span>deserialize()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void vt::app_settings::deserialize </td>
+          <td>(</td>
+          <td class="paramtype">const nlohmann::ordered_json &amp;&#160;</td>
+          <td class="paramname"><em>json</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">override</span><span class="mlabel">virtual</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Reimplemented from <a class="el" href="structvt_1_1impl_1_1serializable.html#af1d8d399d7e828bda0491123ccf66674">vt::impl::serializable</a>.</p>
+
+</div>
+</div>
+<a id="a04e879ced055996fde500dd1711d7059" name="a04e879ced055996fde500dd1711d7059"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a04e879ced055996fde500dd1711d7059">&#9670;&#160;</a></span>serialize()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">nlohmann::ordered_json vt::app_settings::serialize </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">override</span><span class="mlabel">virtual</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Reimplemented from <a class="el" href="structvt_1_1impl_1_1serializable.html#a93c7fab9085a080153fe8575ddd46c8f">vt::impl::serializable</a>.</p>
+
+</div>
+</div>
 <h2 class="groupheader">Member Data Documentation</h2>
-<a id="a1fe98c0f8e50c6103065143a431eed85" name="a1fe98c0f8e50c6103065143a431eed85"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a1fe98c0f8e50c6103065143a431eed85">&#9670;&#160;</a></span>autoplay</h2>
+<a id="a38feed9f90d49bf14f381eb57a3fde0e" name="a38feed9f90d49bf14f381eb57a3fde0e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a38feed9f90d49bf14f381eb57a3fde0e">&#9670;&#160;</a></span>allow_undocking</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">bool vt::app_settings::autoplay = true</td>
+          <td class="memname">bool vt::app_settings::allow_undocking = true</td>
         </tr>
       </table>
 </div><div class="memdoc">
 
 </div>
 </div>
-<a id="ae3ebe7146862c445b9ad35af6e6c4ce3" name="ae3ebe7146862c445b9ad35af6e6c4ce3"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ae3ebe7146862c445b9ad35af6e6c4ce3">&#9670;&#160;</a></span>clear_console_on_run</h2>
+<a id="aefb4c7f1129a2562707f0b9dabb3f3b9" name="aefb4c7f1129a2562707f0b9dabb3f3b9"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aefb4c7f1129a2562707f0b9dabb3f3b9">&#9670;&#160;</a></span>auto_download</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">bool vt::app_settings::clear_console_on_run = true</td>
+          <td class="memname">bool vt::app_settings::auto_download = true</td>
         </tr>
       </table>
 </div><div class="memdoc">
 
 </div>
 </div>
-<a id="a2f05384433c6279a8290d5ea40d80386" name="a2f05384433c6279a8290d5ea40d80386"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a2f05384433c6279a8290d5ea40d80386">&#9670;&#160;</a></span>enable_gizmo_scaling</h2>
+<a id="ab594f819900edde50b3eadbad146e0ad" name="ab594f819900edde50b3eadbad146e0ad"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab594f819900edde50b3eadbad146e0ad">&#9670;&#160;</a></span>font_size</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">bool vt::app_settings::enable_gizmo_scaling = false</td>
+          <td class="memname">float vt::app_settings::font_size = 16.0f</td>
         </tr>
       </table>
 </div><div class="memdoc">
 
 </div>
 </div>
-<a id="a232e60240f3d402f27bc00ee48bfee01" name="a232e60240f3d402f27bc00ee48bfee01"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a232e60240f3d402f27bc00ee48bfee01">&#9670;&#160;</a></span>enable_undocking</h2>
+<a id="a0f23fcd48558bc4490da018655f681f3" name="a0f23fcd48558bc4490da018655f681f3"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a0f23fcd48558bc4490da018655f681f3">&#9670;&#160;</a></span>hardware_acceleration</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">bool vt::app_settings::enable_undocking = true</td>
+          <td class="memname">bool vt::app_settings::hardware_acceleration = true</td>
         </tr>
       </table>
 </div><div class="memdoc">
 
 </div>
 </div>
-<a id="aba3551ca3f12df7c12a1aec5eefa39f1" name="aba3551ca3f12df7c12a1aec5eefa39f1"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aba3551ca3f12df7c12a1aec5eefa39f1">&#9670;&#160;</a></span>link_start_end_segment</h2>
+<a id="af61ee2800be0ce1391ea08b6edce81c1" name="af61ee2800be0ce1391ea08b6edce81c1"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af61ee2800be0ce1391ea08b6edce81c1">&#9670;&#160;</a></span>language</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">bool vt::app_settings::link_start_end_segment = true</td>
+          <td class="memname">std::optional&lt;std::string&gt; vt::app_settings::language</td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -222,6 +305,50 @@ Public Attributes</h2></td></tr>
 
 </div>
 </div>
+<a id="a9f3f57ada23483b2373c8813489a27bf" name="a9f3f57ada23483b2373c8813489a27bf"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a9f3f57ada23483b2373c8813489a27bf">&#9670;&#160;</a></span>scale_gizmos</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool vt::app_settings::scale_gizmos = false</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a6d1be17091c75434459923a577dd4b52" name="a6d1be17091c75434459923a577dd4b52"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a6d1be17091c75434459923a577dd4b52">&#9670;&#160;</a></span>snap_to_frame</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool vt::app_settings::snap_to_frame = true</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="acfc99e4a827550a10e742bfb0f574416" name="acfc99e4a827550a10e742bfb0f574416"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#acfc99e4a827550a10e742bfb0f574416">&#9670;&#160;</a></span>theme_name</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::optional&lt;std::string&gt; vt::app_settings::theme_name</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>The name of the theme to use, if not set the default theme will be used. </p>
+
+</div>
+</div>
 <a id="af0b811675ab58ef502c08d9cc9442165" name="af0b811675ab58ef502c08d9cc9442165"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#af0b811675ab58ef502c08d9cc9442165">&#9670;&#160;</a></span>thumbnail_size</h2>
 
@@ -236,8 +363,9 @@ Public Attributes</h2></td></tr>
 
 </div>
 </div>
-<hr/>The documentation for this struct was generated from the following file:<ul>
-<li><b>app_context.hpp</b></li>
+<hr/>The documentation for this struct was generated from the following files:<ul>
+<li><b>app_settings.hpp</b></li>
+<li><b>app_settings.cpp</b></li>
 </ul>
 </div><!-- contents -->
 </div><!-- doc-content -->

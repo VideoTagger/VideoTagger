@@ -144,12 +144,16 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:ac4deb182dd540772a272d16167d1b4b0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa6c5dd0aa8d6d008f836d1095bb915b4" id="r_aa6c5dd0aa8d6d008f836d1095bb915b4"><td class="memItemLeft" align="right" valign="top">std::chrono::nanoseconds&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classvt_1_1video__frame.html#aa6c5dd0aa8d6d008f836d1095bb915b4">duration</a> () const</td></tr>
 <tr class="separator:aa6c5dd0aa8d6d008f836d1095bb915b4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a877863b515f0413280bee896a3c7e842" id="r_a877863b515f0413280bee896a3c7e842"><td class="memItemLeft" align="right" valign="top">std::chrono::nanoseconds&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classvt_1_1video__frame.html#a877863b515f0413280bee896a3c7e842">next_timestamp</a> () const</td></tr>
+<tr class="separator:a877863b515f0413280bee896a3c7e842"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa41b448aa7af89eff85c595dbc5bb077" id="r_aa41b448aa7af89eff85c595dbc5bb077"><td class="memItemLeft" align="right" valign="top">size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classvt_1_1video__frame.html#aa41b448aa7af89eff85c595dbc5bb077">planes_count</a> () const</td></tr>
 <tr class="separator:aa41b448aa7af89eff85c595dbc5bb077"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a93326c5717caedfbbbd0bd74e9888527" id="r_a93326c5717caedfbbbd0bd74e9888527"><td class="memItemLeft" align="right" valign="top">AVPixelFormat&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classvt_1_1video__frame.html#a93326c5717caedfbbbd0bd74e9888527">pixel_format</a> () const</td></tr>
 <tr class="separator:a93326c5717caedfbbbd0bd74e9888527"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a9624c3bfe3e1bca35e59d26a3536b59f" id="r_a9624c3bfe3e1bca35e59d26a3536b59f"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classvt_1_1video__frame.html#a9624c3bfe3e1bca35e59d26a3536b59f">is_keyframe</a> () const</td></tr>
 <tr class="separator:a9624c3bfe3e1bca35e59d26a3536b59f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a45ad5a0437bae2589cfa2168968df87f" id="r_a45ad5a0437bae2589cfa2168968df87f"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classvt_1_1video__frame.html#a45ad5a0437bae2589cfa2168968df87f">is_hardware</a> () const</td></tr>
+<tr class="separator:a45ad5a0437bae2589cfa2168968df87f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a132bcdf9c2f8a0795aa661093eaad1c4" id="r_a132bcdf9c2f8a0795aa661093eaad1c4"><td class="memItemLeft" align="right" valign="top">AVFrame *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classvt_1_1video__frame.html#a132bcdf9c2f8a0795aa661093eaad1c4">unwrapped</a> ()</td></tr>
 <tr class="separator:a132bcdf9c2f8a0795aa661093eaad1c4"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af280a77ee6685b42ac3a61716f3fa673" id="r_af280a77ee6685b42ac3a61716f3fa673"><td class="memItemLeft" align="right" valign="top">const AVFrame *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classvt_1_1video__frame.html#af280a77ee6685b42ac3a61716f3fa673">unwrapped</a> () const</td></tr>
@@ -257,6 +261,7 @@ Public Member Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
+<dl class="section return"><dt>Returns</dt><dd>The duration of the frame. I.e. the time until the next frame should be displayed. </dd></dl>
 
 </div>
 </div>
@@ -295,6 +300,23 @@ Public Member Functions</h2></td></tr>
 
 </div>
 </div>
+<a id="a45ad5a0437bae2589cfa2168968df87f" name="a45ad5a0437bae2589cfa2168968df87f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a45ad5a0437bae2589cfa2168968df87f">&#9670;&#160;</a></span>is_hardware()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool vt::video_frame::is_hardware </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <a id="a9624c3bfe3e1bca35e59d26a3536b59f" name="a9624c3bfe3e1bca35e59d26a3536b59f"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a9624c3bfe3e1bca35e59d26a3536b59f">&#9670;&#160;</a></span>is_keyframe()</h2>
 
@@ -309,6 +331,24 @@ Public Member Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
+
+</div>
+</div>
+<a id="a877863b515f0413280bee896a3c7e842" name="a877863b515f0413280bee896a3c7e842"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a877863b515f0413280bee896a3c7e842">&#9670;&#160;</a></span>next_timestamp()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::chrono::nanoseconds vt::video_frame::next_timestamp </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<dl class="section return"><dt>Returns</dt><dd>The timestamp at which the next frame should be displayed. I.e. timestamp + duration. </dd></dl>
 
 </div>
 </div>
@@ -412,6 +452,7 @@ Public Member Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
+<dl class="section return"><dt>Returns</dt><dd>The presentation timestamp of the frame. I.e. the timestamp at which the frame should be displayed. </dd></dl>
 
 </div>
 </div>

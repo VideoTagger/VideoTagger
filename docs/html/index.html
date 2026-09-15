@@ -114,18 +114,6 @@ $(document).ready(function(){initNavTree('index.html',''); initResizable(); });
   <div class="headertitle"><div class="title">VideoTagger </div></div>
 </div><!--header-->
 <div class="contents">
-<div class="toc"><h3>Table of Contents</h3>
-<ul><li class="level1"><a href="#getting-started">Getting started</a></li>
-<li class="level1"><a href="#build-requirements">Build Requirements</a></li>
-<li class="level1"><a href="#initial-setup">Initial setup</a></li>
-<li class="level1"><a href="#visual-studio-windows">Visual Studio (Windows)</a></li>
-<li class="level1"><a href="#makefile-linux">Makefile (Linux)</a></li>
-<li class="level1"><a href="#xcode-macos">Xcode (macOS)</a></li>
-<li class="level1"><a href="#cmake-cross-platform">CMake (Cross Platform)</a></li>
-<li class="level1"><a href="#third-party-libraries">Third party libraries</a></li>
-<li class="level1"><a href="#license">License</a></li>
-</ul>
-</div>
 <div class="textblock"><p><a class="anchor" id="md_src_2README_8autogen"></a> </p><div class="image">
 <img src="preview.png" alt=""/>
 <div class="caption">
@@ -134,53 +122,31 @@ VideoTagger</div></div>
 Getting started</h1>
 <p>Download the repository with: </p><div class="fragment"><div class="line">git clone --recursive https://github.com/VideoTagger/VideoTagger</div>
 </div><!-- fragment --><p>If the repository was cloned non-recursively run: </p><div class="fragment"><div class="line">git submodule update --init</div>
-</div><!-- fragment --><h1><a class="anchor" id="build-requirements"></a>
-Build Requirements</h1>
+</div><!-- fragment --><h2><a class="anchor" id="build-requirements"></a>
+Build Requirements</h2>
 <ul>
 <li>Python 3.12+ (tested with 3.12.6 and 3.13.0)</li>
-<li>Visual Studio 2022 (on Windows)</li>
+<li>CMake 3.24+</li>
 </ul>
-<blockquote class="doxtable">
-<p>&zwj;[!Important] Both Linux and macOS require SDL2 version 2.0.17 or later to build properly. </p>
-</blockquote>
-<p>Windows comes with prebuilt binaries.</p>
 <h1><a class="anchor" id="initial-setup"></a>
 Initial setup</h1>
-<p>In the root directory run: </p><div class="fragment"><div class="line">cd scripts</div>
-<div class="line">pip install -r requirements.txt</div>
-<div class="line"># on linux use python3</div>
-<div class="line">python setup.py</div>
-<div class="line">python gen_about.py</div>
-</div><!-- fragment --><h1><a class="anchor" id="visual-studio-windows"></a>
-Visual Studio (Windows)</h1>
-<p>Generate project files with: </p><div class="fragment"><div class="line">scripts/win-gen-projects.cmd</div>
-</div><!-- fragment --><p>Build the projects by opening the <code>Visual Studio</code> solution file and building with desired configuration.</p>
-<h1><a class="anchor" id="makefile-linux"></a>
-Makefile (Linux)</h1>
-<p>Install Required packages </p><div class="fragment"><div class="line">build-essential pkg-config libsdl2-dev libavcodec-dev libavformat-dev libswscale-dev python3-dev libgtk-3-dev libglib2.0-dev libgtk2.0-dev libssl-dev</div>
-</div><!-- fragment --><p>Generate project files with: </p><div class="fragment"><div class="line">chmod +x ./scripts/linux-gen-projects.sh &amp;&amp; ./scripts/linux-gen-projects.sh</div>
-</div><!-- fragment --><p>Build the projects by running: </p><div class="fragment"><div class="line">make config=&lt;BUILD_CONFIG&gt;</div>
-</div><!-- fragment --><p> Replace <code>&lt;BUILD_CONFIG&gt;</code> with one of:</p><ul>
-<li><code>debug_x86_64</code></li>
-<li><code>release_x86_64</code></li>
-<li><code>shipping_x86_64</code></li>
-</ul>
-<h1><a class="anchor" id="xcode-macos"></a>
-Xcode (macOS)</h1>
-<blockquote class="doxtable">
+<p>Install <code>uv</code> package manager: </p><div class="fragment"><div class="line"># On Windows</div>
+<div class="line">powershell -ExecutionPolicy ByPass -c &quot;irm https://astral.sh/uv/install.ps1 | iex&quot;</div>
+<div class="line"> </div>
+<div class="line"># On macOS and Linux</div>
+<div class="line">curl -LsSf https://astral.sh/uv/install.sh | sh</div>
+</div><!-- fragment --><p>On Linux install the following packages: </p><div class="fragment"><div class="line">build-essential pkg-config cmake ninja-build python3 python3-pip libsdl2-dev libavutil-dev libavcodec-dev libavformat-dev libswscale-dev python3-dev libgtk-3-dev libglib2.0-dev libgtk2.0-dev libgl1-mesa-dev libssl-dev libopencv-dev</div>
+</div><!-- fragment --><p>In the root directory run: </p><div class="fragment"><div class="line">uv run ./scripts/setup.py</div>
+</div><!-- fragment --><blockquote class="doxtable">
 <p>&zwj;[!Warning] Building on macOS is untested </p>
 </blockquote>
-<p>Generate project files with: </p><div class="fragment"><div class="line">scripts/macos-gen-projects.sh</div>
-</div><!-- fragment --><p>Build the projects by opening the <code>Xcode</code> project file and building with desired configuration.</p>
-<h1><a class="anchor" id="cmake-cross-platform"></a>
-CMake (Cross Platform)</h1>
+<h1><a class="anchor" id="build-using-cmake"></a>
+Build using CMake</h1>
 <div class="fragment"><div class="line"># On Windows it might be necessary to activate the developer command prompt first, you can do it by running:</div>
 <div class="line">/path/to/vcvars64.bat</div>
 <div class="line"> </div>
-<div class="line">cmake --build --preset=&lt;BUILD_PRESET&gt;</div>
-<div class="line"># To package</div>
-<div class="line">cpack --preset=&lt;BUILD_PRESET&gt;</div>
-</div><!-- fragment --><p> Replace <code>&lt;BUILD_PRESET&gt;</code> with one of the presets:</p><ul>
+<div class="line">cmake --preset=&lt;BUILD_PRESET&gt; &amp;&amp; cmake --build --target install --preset=&lt;BUILD_PRESET&gt;</div>
+</div><!-- fragment --><p>Replace <code>&lt;BUILD_PRESET&gt;</code> with one of the presets:</p><ul>
 <li><code>&lt;SYSTEM&gt;-x64-debug</code></li>
 <li><code>&lt;SYSTEM&gt;-x64-release</code></li>
 <li><code>&lt;SYSTEM&gt;-x64-shipping</code></li>
@@ -188,6 +154,18 @@ CMake (Cross Platform)</h1>
 <p>where <code>&lt;SYSTEM&gt;</code> is <code>windows</code>/<code>linux</code>/<code>macos</code></p>
 <p>You can also show all available presets with </p><div class="fragment"><div class="line">cmake --list-presets</div>
 <div class="line">cpack --list-presets</div>
+</div><!-- fragment --><h1><a class="anchor" id="build-on-ubuntu-using-docker"></a>
+Build on Ubuntu using Docker</h1>
+<p>In the root directory run: </p><div class="fragment"><div class="line">docker compose up --build</div>
+<div class="line">docker cp videotagger:/app/build/. ./build/</div>
+<div class="line">docker compose down</div>
+</div><!-- fragment --><h1><a class="anchor" id="build-docs"></a>
+Build docs</h1>
+<p>To build the documentation run: </p><div class="fragment"><div class="line">uv run ./scripts/build_docs.py</div>
+</div><!-- fragment --><h1><a class="anchor" id="packaging-with-velopack"></a>
+Packaging with Velopack</h1>
+<p>Before packaging make sure to build the project with the <code>-shipping</code> preset. Then go to the root directory and run: </p><div class="fragment"><div class="line"># For help add `--help` flag</div>
+<div class="line">uv run ./scripts/vpk_package.py</div>
 </div><!-- fragment --><h1><a class="anchor" id="third-party-libraries"></a>
 Third party libraries</h1>
 <ul>
@@ -203,13 +181,19 @@ Third party libraries</h1>
 <li><a href="https://ffmpeg.org/">FFmpeg</a></li>
 <li><a href="https://github.com/yhirose/cpp-httplib">cpp-httplib</a></li>
 <li><a href="https://github.com/openssl/openssl">OpenSSL</a></li>
+<li><a href="https://gitlab.freedesktop.org/freetype/freetype">FreeType</a></li>
+<li><a href="https://github.com/opencv/opencv">OpenCV</a></li>
+<li><a href="https://github.com/opencv/opencv_contrib">OpenCV Extra</a></li>
+<li><a href="https://github.com/Dav1dde/glad">glad</a></li>
+<li><a href="https://github.com/microsoft/onnxruntime">onnxruntime</a></li>
 </ul>
 <h1><a class="anchor" id="license"></a>
 License</h1>
 <p>This software is licensed under the <a href="/LICENSE">MIT License</a>.</p>
 <p>This software uses LGPL-licensed libraries from the FFmpeg project.</p>
 <p>FFmpeg is an open-source framework licensed under the <a href="http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html">GNU Lesser General Public License (LGPL) version 2.1</a> or later. However, FFmpeg incorporates several optional parts and optimizations that are covered by the <a href="http://www.gnu.org/licenses/old-licenses/gpl-2.0.html">GNU General Public License (GPL) version 2</a> or later. If those parts get used the GPL applies to all of FFmpeg.</p>
-<p>For more information regarding FFmpeg license and legal considerations see <a href="https://www.ffmpeg.org/legal.html">https://www.ffmpeg.org/legal.html</a>. </p>
+<p>For more information regarding FFmpeg license and legal considerations see <a href="https://www.ffmpeg.org/legal.html">https://www.ffmpeg.org/legal.html</a>.</p>
+<p>[TOC] </p>
 </div></div><!-- PageDoc -->
 </div><!-- contents -->
 </div><!-- doc-content -->

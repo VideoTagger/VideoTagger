@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['base64_5ftable_0',['base64_table',['../namespacevt_1_1utils_1_1base64.html#a95f1096b725895c5858ec35d6c9adede',1,'vt::utils::base64']]]
+  ['brush_5ftype_0',['brush_type',['../namespacevt.html#a8aff142e3893aa130ff3cfca260a17fb',1,'vt']]]
 ];

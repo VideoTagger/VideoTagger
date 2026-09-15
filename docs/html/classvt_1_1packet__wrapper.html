@@ -144,8 +144,16 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:ad30663211e380b700897f085216a934a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a2c1cce2dd908c5e2eaae39f04862996e" id="r_a2c1cce2dd908c5e2eaae39f04862996e"><td class="memItemLeft" align="right" valign="top">std::chrono::nanoseconds&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classvt_1_1packet__wrapper.html#a2c1cce2dd908c5e2eaae39f04862996e">duration</a> () const</td></tr>
 <tr class="separator:a2c1cce2dd908c5e2eaae39f04862996e"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a49a3a99d77f9108e0f70959570bdd250" id="r_a49a3a99d77f9108e0f70959570bdd250"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classvt_1_1packet__wrapper.html#a49a3a99d77f9108e0f70959570bdd250">is_key</a> () const</td></tr>
-<tr class="separator:a49a3a99d77f9108e0f70959570bdd250"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6d591dc17bcd723efe8784f3f3dbae5f" id="r_a6d591dc17bcd723efe8784f3f3dbae5f"><td class="memItemLeft" align="right" valign="top">std::chrono::nanoseconds&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classvt_1_1packet__wrapper.html#a6d591dc17bcd723efe8784f3f3dbae5f">next_timestamp</a> () const</td></tr>
+<tr class="separator:a6d591dc17bcd723efe8784f3f3dbae5f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af9ef461e4c42068402c09286e7c2e6b4" id="r_af9ef461e4c42068402c09286e7c2e6b4"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classvt_1_1packet__wrapper.html#af9ef461e4c42068402c09286e7c2e6b4">is_keyframe</a> () const</td></tr>
+<tr class="separator:af9ef461e4c42068402c09286e7c2e6b4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8281ca79591fe6a67cc16a94bb1c4f3f" id="r_a8281ca79591fe6a67cc16a94bb1c4f3f"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classvt_1_1packet__wrapper.html#a8281ca79591fe6a67cc16a94bb1c4f3f">should_discard</a> () const</td></tr>
+<tr class="separator:a8281ca79591fe6a67cc16a94bb1c4f3f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6ede88d82e50019a5ed88a8487e7dbb0" id="r_a6ede88d82e50019a5ed88a8487e7dbb0"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classvt_1_1packet__wrapper.html#a6ede88d82e50019a5ed88a8487e7dbb0">is_corrupted</a> () const</td></tr>
+<tr class="separator:a6ede88d82e50019a5ed88a8487e7dbb0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab6b0b2a8a66135dd7afcbafedbc41715" id="r_ab6b0b2a8a66135dd7afcbafedbc41715"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classvt_1_1packet__wrapper.html#ab6b0b2a8a66135dd7afcbafedbc41715">is_disposable</a> () const</td></tr>
+<tr class="separator:ab6b0b2a8a66135dd7afcbafedbc41715"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a58fb903e484570710cabf07948a13af0" id="r_a58fb903e484570710cabf07948a13af0"><td class="memItemLeft" align="right" valign="top">AVPacket *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classvt_1_1packet__wrapper.html#a58fb903e484570710cabf07948a13af0">unwrapped</a> ()</td></tr>
 <tr class="separator:a58fb903e484570710cabf07948a13af0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:adf9fc620c665d2bf55da4ee09cf097aa" id="r_adf9fc620c665d2bf55da4ee09cf097aa"><td class="memItemLeft" align="right" valign="top">const AVPacket *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classvt_1_1packet__wrapper.html#adf9fc620c665d2bf55da4ee09cf097aa">unwrapped</a> () const</td></tr>
@@ -253,23 +261,79 @@ Public Member Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
+<dl class="section return"><dt>Returns</dt><dd>The duration of the packet. I.e. the time until the next packet should be presented. </dd></dl>
 
 </div>
 </div>
-<a id="a49a3a99d77f9108e0f70959570bdd250" name="a49a3a99d77f9108e0f70959570bdd250"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a49a3a99d77f9108e0f70959570bdd250">&#9670;&#160;</a></span>is_key()</h2>
+<a id="a6ede88d82e50019a5ed88a8487e7dbb0" name="a6ede88d82e50019a5ed88a8487e7dbb0"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a6ede88d82e50019a5ed88a8487e7dbb0">&#9670;&#160;</a></span>is_corrupted()</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">bool vt::packet_wrapper::is_key </td>
+          <td class="memname">bool vt::packet_wrapper::is_corrupted </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td> const</td>
         </tr>
       </table>
 </div><div class="memdoc">
+<dl class="section return"><dt>Returns</dt><dd>Whether the packet content is corrupted. </dd></dl>
+
+</div>
+</div>
+<a id="ab6b0b2a8a66135dd7afcbafedbc41715" name="ab6b0b2a8a66135dd7afcbafedbc41715"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab6b0b2a8a66135dd7afcbafedbc41715">&#9670;&#160;</a></span>is_disposable()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool vt::packet_wrapper::is_disposable </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<dl class="section return"><dt>Returns</dt><dd>Whether the packet can be safely skipped without decoding. I.e. Non-reference frames. </dd></dl>
+
+</div>
+</div>
+<a id="af9ef461e4c42068402c09286e7c2e6b4" name="af9ef461e4c42068402c09286e7c2e6b4"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af9ef461e4c42068402c09286e7c2e6b4">&#9670;&#160;</a></span>is_keyframe()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool vt::packet_wrapper::is_keyframe </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<dl class="section return"><dt>Returns</dt><dd>Whether the packet contains a keyframe. I.e. the packet contains a frame that can be decoded without any other frames. </dd></dl>
+
+</div>
+</div>
+<a id="a6d591dc17bcd723efe8784f3f3dbae5f" name="a6d591dc17bcd723efe8784f3f3dbae5f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a6d591dc17bcd723efe8784f3f3dbae5f">&#9670;&#160;</a></span>next_timestamp()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::chrono::nanoseconds vt::packet_wrapper::next_timestamp </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<dl class="section return"><dt>Returns</dt><dd>The timestamp at which the next packet should be presented. I.e. timestamp + duration. </dd></dl>
 
 </div>
 </div>
@@ -343,6 +407,24 @@ Public Member Functions</h2></td></tr>
 
 </div>
 </div>
+<a id="a8281ca79591fe6a67cc16a94bb1c4f3f" name="a8281ca79591fe6a67cc16a94bb1c4f3f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a8281ca79591fe6a67cc16a94bb1c4f3f">&#9670;&#160;</a></span>should_discard()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool vt::packet_wrapper::should_discard </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<dl class="section return"><dt>Returns</dt><dd>Whether the packet should be discarded after decoding. The packet still needs to be decoded to maintain valid decoder state, but the decoded frame doesn't need not be output. </dd></dl>
+
+</div>
+</div>
 <a id="a7edbc3e1ab2ccbb13e6f102057042018" name="a7edbc3e1ab2ccbb13e6f102057042018"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a7edbc3e1ab2ccbb13e6f102057042018">&#9670;&#160;</a></span>stream_index()</h2>
 
@@ -374,6 +456,7 @@ Public Member Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
+<dl class="section return"><dt>Returns</dt><dd>The presentation timestamp of the packet. I.e. the timestamp at which the packet should be output. </dd></dl>
 
 </div>
 </div>

@@ -1,4 +1,7 @@
 var searchData=
 [
-  ['warn_0',['warn',['../structvt_1_1widgets_1_1console_1_1entry.html#a47afc6a771eda2c22313eb2f58f53159a1ea4c3ab05ee0c6d4de30740443769cb',1,'vt::widgets::console::entry']]]
+  ['uninitialized_0',['uninitialized',['../namespacevt.html#a068c562aea2a9df56d70267df10d7e7fa42dd1a73d072bb6bf3f494f22b15db8e',1,'vt']]],
+  ['unknown_1',['unknown',['../namespacevt.html#ae2f81b68263e48d1cbf1b3e825746c57aad921d60486366258809553a3db49a4a',1,'vt']]],
+  ['upper_2',['upper',['../namespacevt_1_1utils_1_1hash.html#aa481d4bc9e4b5790b9c607d572cd0ec2a0122b4c2c01ee1c698ecc309d2b8eb5a',1,'vt::utils::hash']]],
+  ['url_3',['url',['../namespacevt_1_1codec_1_1base64.html#ab60a78db3ed394c9f951077a60ef749aa572d4e421e5e6b9bc11d815e8a027112',1,'vt::codec::base64']]]
 ];

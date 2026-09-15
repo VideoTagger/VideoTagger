@@ -1,13 +1,5 @@
 var namespacevt_1_1utils =
 [
-    [ "base64", "namespacevt_1_1utils_1_1base64.html", [
-      [ "base64_table", "namespacevt_1_1utils_1_1base64.html#a95f1096b725895c5858ec35d6c9adede", [
-        [ "normal", "namespacevt_1_1utils_1_1base64.html#a95f1096b725895c5858ec35d6c9adedeafea087517c26fadd409bd4b9dc642555", null ],
-        [ "url", "namespacevt_1_1utils_1_1base64.html#a95f1096b725895c5858ec35d6c9adedea572d4e421e5e6b9bc11d815e8a027112", null ]
-      ] ],
-      [ "decode", "namespacevt_1_1utils_1_1base64.html#af12bfffd07655d8d120b92490c6d5320", null ],
-      [ "encode", "namespacevt_1_1utils_1_1base64.html#a4f51e36f66e23a8e5c499bc42c6c90fc", null ]
-    ] ],
     [ "color", "namespacevt_1_1utils_1_1color.html", [
       [ "parse_string", "namespacevt_1_1utils_1_1color.html#a592ddcc735c657de0e7458b1f9ca0cda", null ],
       [ "to_abgr", "namespacevt_1_1utils_1_1color.html#ae5d7fd97f919095b20c46a6be68a5cf5", null ],
@@ -21,8 +13,8 @@ var namespacevt_1_1utils =
       [ "bytes_to_hex", "namespacevt_1_1utils_1_1hash.html#a6d700fbe19fcffdf935ab52b6df9a1dc", null ],
       [ "fnv_hash", "namespacevt_1_1utils_1_1hash.html#a69750e46117557373bb0665a95ca9798", null ],
       [ "hex_to_bytes", "namespacevt_1_1utils_1_1hash.html#ab4c61d8f1cf0787c154248303e3e5100", null ],
-      [ "sha256", "namespacevt_1_1utils_1_1hash.html#a9cde4b39e89c58026625cc453ec19df3", null ],
-      [ "sha256_file", "namespacevt_1_1utils_1_1hash.html#aea33945d827eebc13b8170cd65441abf", null ]
+      [ "sha256", "namespacevt_1_1utils_1_1hash.html#ad3fa3cefafb1ad2cbf99c8c7026eba89", null ],
+      [ "sha256_file", "namespacevt_1_1utils_1_1hash.html#a071dac89b5168f21b217d8aeb6d81848", null ]
     ] ],
     [ "intersection", "namespacevt_1_1utils_1_1intersection.html", [
       [ "cross_product", "namespacevt_1_1utils_1_1intersection.html#a9c936281b965094b5fbc62f8459a871d", null ],
@@ -38,6 +30,8 @@ var namespacevt_1_1utils =
       [ "length", "namespacevt_1_1utils_1_1intersection.html#ad072bfb6d2e3e9bde5f3c6d6d3668d3b", null ]
     ] ],
     [ "json", "namespacevt_1_1utils_1_1json.html", [
+      [ "from_string", "namespacevt_1_1utils_1_1json.html#ac691cb9236db99c16471ef73d587d5b6", null ],
+      [ "from_string", "namespacevt_1_1utils_1_1json.html#a5afa83a7e72beb65b762ab46aceb1255", null ],
       [ "load_from_file", "namespacevt_1_1utils_1_1json.html#a094ec852578dffeaab57f101b494f4fa", null ],
       [ "write_to_file", "namespacevt_1_1utils_1_1json.html#a6b124da4e1516b9ba32bf29aad3effc1", null ]
     ] ],
@@ -46,7 +40,8 @@ var namespacevt_1_1utils =
       [ "generate_code_verifier", "namespacevt_1_1utils_1_1oauth2.html#a0f541fcee5c9c11577b8a91f4003a35e", null ]
     ] ],
     [ "string", "namespacevt_1_1utils_1_1string.html", [
-      [ "levenshtein_dist", "namespacevt_1_1utils_1_1string.html#a385665681270be7ca8be68e57ed4c9a5", null ],
+      [ "has_trailing_whitespace", "namespacevt_1_1utils_1_1string.html#a73fecdfe1ff24b96a6fd5c0b74299ab7", null ],
+      [ "levenshtein_dist", "namespacevt_1_1utils_1_1string.html#a3d1dbb18ab6732c276e81a80624ef059", null ],
       [ "replace_all", "namespacevt_1_1utils_1_1string.html#a9ac94960bfabb2b0b31ff07aea66ec31", null ],
       [ "split", "namespacevt_1_1utils_1_1string.html#a19cb38a73c841ba7d360b35f7acbb197", null ],
       [ "to_hex", "namespacevt_1_1utils_1_1string.html#ac6487c4946b169b8db537305d196cd90", null ],
@@ -58,10 +53,7 @@ var namespacevt_1_1utils =
     [ "time", "namespacevt_1_1utils_1_1time.html", [
       [ "diff", "namespacevt_1_1utils_1_1time.html#a11951611176096f1853e7d5f9eceb9b6", null ],
       [ "interval_str", "namespacevt_1_1utils_1_1time.html#a9a4e531cc62edb230a6a482fdb3faab5", null ],
-      [ "parse_time_to_ms", "namespacevt_1_1utils_1_1time.html#ad448b20092a8ebc43ed7e3b70446b83e", null ],
-      [ "time_to_string", "namespacevt_1_1utils_1_1time.html#acfc672d5063fa69cf8d2284f0cd8a83a", null ],
-      [ "utc_timestamp", "namespacevt_1_1utils_1_1time.html#a800aca9101e1e772352d06120436701b", null ],
-      [ "default_time_format", "namespacevt_1_1utils_1_1time.html#a2f45b57359cbfdf3eda208853f6aaa79", null ]
+      [ "utc_timestamp", "namespacevt_1_1utils_1_1time.html#a800aca9101e1e772352d06120436701b", null ]
     ] ],
     [ "dialog_filter", "structvt_1_1utils_1_1dialog__filter.html", "structvt_1_1utils_1_1dialog__filter" ],
     [ "dialog_result", "structvt_1_1utils_1_1dialog__result.html", "structvt_1_1utils_1_1dialog__result" ],
@@ -73,18 +65,37 @@ var namespacevt_1_1utils =
     [ "random", "classvt_1_1utils_1_1random.html", null ],
     [ "thumbnail", "structvt_1_1utils_1_1thumbnail.html", "structvt_1_1utils_1_1thumbnail" ],
     [ "timestamp_span", "structvt_1_1utils_1_1timestamp__span.html", "structvt_1_1utils_1_1timestamp__span" ],
-    [ "uuid", "structvt_1_1utils_1_1uuid.html", "structvt_1_1utils_1_1uuid" ],
+    [ "url", "structvt_1_1utils_1_1url.html", "structvt_1_1utils_1_1url" ],
     [ "vec", "structvt_1_1utils_1_1vec.html", "structvt_1_1utils_1_1vec" ],
     [ "dialog_filters", "namespacevt_1_1utils.html#a5cd2da4e72f2d367ae05dffacf34f5e2", null ],
+    [ "uuid", "namespacevt_1_1utils.html#a71b1553bccd7f2063383e02a7d1f0769", null ],
     [ "vec2", "namespacevt_1_1utils.html#ab0d8d3eeb3f7ac7c17e9c7f427c30383", null ],
+    [ "vec3", "namespacevt_1_1utils.html#ac17d8dd61630ef8489eb09aec9a0d06f", null ],
     [ "vec4", "namespacevt_1_1utils.html#a21a468fceabc624db81d1e4c97fbcc85", null ],
     [ "dialog_option", "namespacevt_1_1utils.html#af6b7906baa0556ab8f2a62b81143289b", [
       [ "error", "namespacevt_1_1utils.html#af6b7906baa0556ab8f2a62b81143289bacb5e100e5a9a3e7f6d1fd97512215282", null ],
       [ "ok", "namespacevt_1_1utils.html#af6b7906baa0556ab8f2a62b81143289ba444bcb3a3fcf8389296c49467f27e1d6", null ],
       [ "cancel", "namespacevt_1_1utils.html#af6b7906baa0556ab8f2a62b81143289ba10aec35353f9c4096a71c38654c3d402", null ]
     ] ],
+    [ "name_validation_result", "namespacevt_1_1utils.html#a8563654eb50349c866775d8f6de9d0e2", [
+      [ "ok", "namespacevt_1_1utils.html#a8563654eb50349c866775d8f6de9d0e2a444bcb3a3fcf8389296c49467f27e1d6", null ],
+      [ "empty", "namespacevt_1_1utils.html#a8563654eb50349c866775d8f6de9d0e2aa2e4822a98337283e39f7b60acf85ec9", null ],
+      [ "already_exists", "namespacevt_1_1utils.html#a8563654eb50349c866775d8f6de9d0e2a7a6f43ded24333b44b8a5d5dc159c4ea", null ],
+      [ "invalid", "namespacevt_1_1utils.html#a8563654eb50349c866775d8f6de9d0e2afedb2d84cafe20862cb4399751a8a7e3", null ]
+    ] ],
+    [ "basic_map_name_validate", "namespacevt_1_1utils.html#a0c2416d958e4d028c72c8d63ec0cb400", null ],
+    [ "basic_name_validate", "namespacevt_1_1utils.html#a7d36f2879ea9e2b84cb012d9b2bec07d", null ],
     [ "from_json", "namespacevt_1_1utils.html#a547e025f25e43db0cfb3be71165a8700", null ],
-    [ "lerp", "namespacevt_1_1utils.html#aa8adc88ec98c46bd670642f828516c2d", null ],
-    [ "lerp", "namespacevt_1_1utils.html#a2fe9827ba2a6009e69b9ddd122d617e7", null ],
+    [ "name_validation_result_to_string", "namespacevt_1_1utils.html#a1116f0fb11b335bd4dd23afcbc64ca79", null ],
+    [ "onnx_create_env", "namespacevt_1_1utils.html#a2e996781f1ec949e8362a9c01b754da7", null ],
+    [ "operator*", "namespacevt_1_1utils.html#a2436fe65b425aea434a6729a955fa06a", null ],
+    [ "operator*", "namespacevt_1_1utils.html#a0e7bbe9d62000966cfebc66a60c8f087", null ],
+    [ "operator+", "namespacevt_1_1utils.html#a93d97a209b2e08490c187efcaa080af7", null ],
+    [ "operator+", "namespacevt_1_1utils.html#aef049f96195fc0eebc1d9c201208c06b", null ],
+    [ "operator-", "namespacevt_1_1utils.html#af8861246d68dadff83a78c2459bd0514", null ],
+    [ "operator-", "namespacevt_1_1utils.html#a50046a08571fbe0d2f11feb6905fc9b2", null ],
+    [ "operator/", "namespacevt_1_1utils.html#a3dd7246acceb79c94de919df802a63a9", null ],
+    [ "operator/", "namespacevt_1_1utils.html#ac613f2af2bcda567bb1107fd2e77fbee", null ],
+    [ "render_text_wrapped_ellipsis", "namespacevt_1_1utils.html#ab0cf38393411d0634640dcceedcc97b5", null ],
     [ "to_json", "namespacevt_1_1utils.html#acf74be43612abeeb796ba1754303c00a", null ]
 ];

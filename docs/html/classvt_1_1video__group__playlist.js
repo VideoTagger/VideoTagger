@@ -19,6 +19,8 @@ var classvt_1_1video__group__playlist =
     [ "end", "classvt_1_1video__group__playlist.html#a6ab0a2b399f463e87c21afbd010a61f2", null ],
     [ "end", "classvt_1_1video__group__playlist.html#a6fc0159f3b85407e751e656742b89f5e", null ],
     [ "erase", "classvt_1_1video__group__playlist.html#a378a18f789526191ef1bfa634fcf0244", null ],
+    [ "find", "classvt_1_1video__group__playlist.html#a3ea97e1d96bc951fa56a72cea8a25807", null ],
+    [ "find", "classvt_1_1video__group__playlist.html#a6683c1e6140c88648e6dc38fe6da7205", null ],
     [ "front", "classvt_1_1video__group__playlist.html#a672a0a54223315225504daa7d4fe4507", null ],
     [ "front", "classvt_1_1video__group__playlist.html#aba01fcdc804c6b92cd42f02769d40db4", null ],
     [ "groups", "classvt_1_1video__group__playlist.html#afc0ae54cf531d69f8c4056c82b3591ce", null ],

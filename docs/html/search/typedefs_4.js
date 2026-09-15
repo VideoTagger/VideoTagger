@@ -1,6 +1,7 @@
 var searchData=
 [
-  ['insert_5fsegment_5fdata_5fcontainer_0',['insert_segment_data_container',['../namespacevt_1_1widgets.html#a2aa6401a390a24d8600cfe10706fafb2',1,'vt::widgets']]],
-  ['iterator_1',['iterator',['../classvt_1_1displayed__videos__manager.html#ae84471857766a52249776629914c5696',1,'vt::displayed_videos_manager::iterator'],['../classvt_1_1keybind__storage.html#a647b22e5943cb84d5fc7580794df703d',1,'vt::keybind_storage::iterator'],['../classvt_1_1tag__storage.html#aea56798f839d81a2c2f4007904a60032',1,'vt::tag_storage::iterator'],['../classvt_1_1tag__timeline.html#ad933d4c4f6b7940efbc8a6fdfd59c606',1,'vt::tag_timeline::iterator'],['../classvt_1_1packet__queue.html#a4fa4fdf20b494cd53d7a2a559d7a20d0',1,'vt::packet_queue::iterator'],['../classvt_1_1video__group__playlist.html#a577c4ae6b10b2ff576db90bdd10762da',1,'vt::video_group_playlist::iterator'],['../classvt_1_1video__group.html#aefa7df0cf7e8a4dfdea3d71c7bf6e9ee',1,'vt::video_group::iterator'],['../classvt_1_1video__pool.html#ab605aa60e878d28e2f917a1d4796913c',1,'vt::video_pool::iterator']]],
-  ['iterator_5fcategory_2',['iterator_category',['../classvt_1_1tag__storage__const__iterator.html#afb276e1cba71ae7b95b06d6996d4dab3',1,'vt::tag_storage_const_iterator::iterator_category'],['../classvt_1_1tag__storage__iterator.html#a5b9bf6adcf8f3b6a1df57c084bd09b40',1,'vt::tag_storage_iterator::iterator_category']]]
+  ['event_5fcallback_0',['event_callback',['../structvt_1_1event__dispatcher.html#ababd7bf9ca7cfb7a87afd7768f74d4fb',1,'vt::event_dispatcher']]],
+  ['event_5finterceptor_5fhandle_1',['event_interceptor_handle',['../namespacevt.html#ab09c48289e91b74e10f3b3082b0eb6dd',1,'vt']]],
+  ['event_5flistener_5fhandle_2',['event_listener_handle',['../group__events.html#ga6e916d88e711be0ee99189e9fd651c50',1,'vt']]],
+  ['event_5ftype_3',['event_type',['../structvt_1_1event__listener__callback.html#a4959442882d65de08b6cba07a4560e97',1,'vt::event_listener_callback::event_type'],['../structvt_1_1event__dispatcher.html#afd3c3b3a40246a7dce2df666904f879d',1,'vt::event_dispatcher::event_type']]]
 ];

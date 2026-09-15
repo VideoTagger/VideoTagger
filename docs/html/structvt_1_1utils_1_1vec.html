@@ -116,6 +116,7 @@ $(document).ready(function(){initNavTree('structvt_1_1utils_1_1vec.html',''); in
 <a href="#pub-methods">Public Member Functions</a> &#124;
 <a href="#pub-static-methods">Static Public Member Functions</a> &#124;
 <a href="#pub-attribs">Public Attributes</a> &#124;
+<a href="#pub-static-attribs">Static Public Attributes</a> &#124;
 <a href="structvt_1_1utils_1_1vec-members.html">List of all members</a>  </div>
   <div class="headertitle"><div class="title">vt::utils::vec&lt; type, dims &gt; Struct Template Reference</div></div>
 </div><!--header-->
@@ -125,15 +126,63 @@ $(document).ready(function(){initNavTree('structvt_1_1utils_1_1vec.html',''); in
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-types" name="pub-types"></a>
 Public Types</h2></td></tr>
-<tr class="memitem:a1ac0518a2b4aab167d8007952d455247" id="r_a1ac0518a2b4aab167d8007952d455247"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structvt_1_1utils_1_1vec.html#a1ac0518a2b4aab167d8007952d455247">data_container</a> = std::array&lt; type, dims &gt;</td></tr>
-<tr class="separator:a1ac0518a2b4aab167d8007952d455247"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8544cf294cc55b81a4818c7ae85fd3f2" id="r_a8544cf294cc55b81a4818c7ae85fd3f2"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structvt_1_1utils_1_1vec.html#a8544cf294cc55b81a4818c7ae85fd3f2">data_container</a> = std::array&lt; type, <a class="el" href="structvt_1_1utils_1_1vec.html#a8f6063f2e21a84ddf8e880de3586c75c">dimensions</a> &gt;</td></tr>
+<tr class="separator:a8544cf294cc55b81a4818c7ae85fd3f2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
+<tr class="memitem:a6815f806d58c524220a80194cee04a83" id="r_a6815f806d58c524220a80194cee04a83"><td class="memItemLeft" align="right" valign="top">constexpr&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structvt_1_1utils_1_1vec.html#a6815f806d58c524220a80194cee04a83">vec</a> ()=default</td></tr>
+<tr class="separator:a6815f806d58c524220a80194cee04a83"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa5badc19463322e9f870c09f651e3e59" id="r_aa5badc19463322e9f870c09f651e3e59"><td class="memItemLeft" align="right" valign="top">constexpr&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structvt_1_1utils_1_1vec.html#aa5badc19463322e9f870c09f651e3e59">vec</a> (const <a class="el" href="structvt_1_1utils_1_1vec.html">vec</a> &amp;other)=default</td></tr>
+<tr class="separator:aa5badc19463322e9f870c09f651e3e59"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6004bf52f23a0ec7f2661c94184bc0de" id="r_a6004bf52f23a0ec7f2661c94184bc0de"><td class="memItemLeft" align="right" valign="top">constexpr&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structvt_1_1utils_1_1vec.html#a6004bf52f23a0ec7f2661c94184bc0de">vec</a> (<a class="el" href="structvt_1_1utils_1_1vec.html">vec</a> &amp;&amp;other)=default</td></tr>
+<tr class="separator:a6004bf52f23a0ec7f2661c94184bc0de"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a61e74012ef0ab6d38a26fb2075637dac" id="r_a61e74012ef0ab6d38a26fb2075637dac"><td class="memTemplParams" colspan="2">template&lt;std::size_t... indices&gt; </td></tr>
+<tr class="memitem:a61e74012ef0ab6d38a26fb2075637dac"><td class="memTemplItemLeft" align="right" valign="top">constexpr&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="structvt_1_1utils_1_1vec.html#a61e74012ef0ab6d38a26fb2075637dac">vec</a> (std::initializer_list&lt; type &gt; list, std::index_sequence&lt; indices... &gt;)</td></tr>
+<tr class="separator:a61e74012ef0ab6d38a26fb2075637dac"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aca09128cfed818923d400b26cfad91ad" id="r_aca09128cfed818923d400b26cfad91ad"><td class="memItemLeft" align="right" valign="top">constexpr&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structvt_1_1utils_1_1vec.html#aca09128cfed818923d400b26cfad91ad">vec</a> (std::initializer_list&lt; type &gt; list)</td></tr>
+<tr class="separator:aca09128cfed818923d400b26cfad91ad"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa6db18d18369b4b6b1a4429aad065ca0" id="r_aa6db18d18369b4b6b1a4429aad065ca0"><td class="memItemLeft" align="right" valign="top">constexpr&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structvt_1_1utils_1_1vec.html#aa6db18d18369b4b6b1a4429aad065ca0">vec</a> (const <a class="el" href="structvt_1_1utils_1_1vec.html#a8544cf294cc55b81a4818c7ae85fd3f2">data_container</a> &amp;<a class="el" href="structvt_1_1utils_1_1vec.html#a445445601cb54aeb0ee37bf06b7ef39f">data</a>)</td></tr>
+<tr class="separator:aa6db18d18369b4b6b1a4429aad065ca0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:adbb2d871ea1f49386b7c5680021c90d7" id="r_adbb2d871ea1f49386b7c5680021c90d7"><td class="memItemLeft" align="right" valign="top">constexpr&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structvt_1_1utils_1_1vec.html#adbb2d871ea1f49386b7c5680021c90d7">vec</a> (<a class="el" href="structvt_1_1utils_1_1vec.html#a8544cf294cc55b81a4818c7ae85fd3f2">data_container</a> &amp;&amp;<a class="el" href="structvt_1_1utils_1_1vec.html#a445445601cb54aeb0ee37bf06b7ef39f">data</a>)</td></tr>
+<tr class="separator:adbb2d871ea1f49386b7c5680021c90d7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a66acbe2de9acc66aaf92ea404c563d83" id="r_a66acbe2de9acc66aaf92ea404c563d83"><td class="memTemplParams" colspan="2">template&lt;bool condition = (dims &gt;= 4 and dims % 2 == 0), typename  = std::enable_if_t&lt;condition&gt;&gt; </td></tr>
+<tr class="memitem:a66acbe2de9acc66aaf92ea404c563d83"><td class="memTemplItemLeft" align="right" valign="top">constexpr&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="structvt_1_1utils_1_1vec.html#a66acbe2de9acc66aaf92ea404c563d83">vec</a> (const <a class="el" href="structvt_1_1utils_1_1vec.html">vec</a>&lt; type, dims/2 &gt; &amp;<a class="el" href="structvt_1_1utils_1_1vec.html#a10f82eb630eccc00d1cf6324c9be014b">pos_min</a>, const <a class="el" href="structvt_1_1utils_1_1vec.html">vec</a>&lt; type, dims/2 &gt; &amp;<a class="el" href="structvt_1_1utils_1_1vec.html#ad39572e79f25399558123ad74c38effe">pos_max</a>)</td></tr>
+<tr class="separator:a66acbe2de9acc66aaf92ea404c563d83"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa29548016616b2610d7ec57df2f2a716" id="r_aa29548016616b2610d7ec57df2f2a716"><td class="memItemLeft" align="right" valign="top">constexpr type &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structvt_1_1utils_1_1vec.html#aa29548016616b2610d7ec57df2f2a716">at</a> (size_t index)</td></tr>
 <tr class="separator:aa29548016616b2610d7ec57df2f2a716"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a7983a56f34d559d3d1d54a0c125b4357" id="r_a7983a56f34d559d3d1d54a0c125b4357"><td class="memItemLeft" align="right" valign="top">constexpr const type &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structvt_1_1utils_1_1vec.html#a7983a56f34d559d3d1d54a0c125b4357">at</a> (size_t index) const</td></tr>
 <tr class="separator:a7983a56f34d559d3d1d54a0c125b4357"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a35147a6fb05ae1dad0022ab81124e376" id="r_a35147a6fb05ae1dad0022ab81124e376"><td class="memTemplParams" colspan="2">template&lt;bool condition = (dims &gt;= 1), typename  = std::enable_if_t&lt;condition&gt;&gt; </td></tr>
+<tr class="memitem:a35147a6fb05ae1dad0022ab81124e376"><td class="memTemplItemLeft" align="right" valign="top">constexpr type &amp;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="structvt_1_1utils_1_1vec.html#a35147a6fb05ae1dad0022ab81124e376">x</a> ()</td></tr>
+<tr class="separator:a35147a6fb05ae1dad0022ab81124e376"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2a8750761926f6fa60c84f09181c6f60" id="r_a2a8750761926f6fa60c84f09181c6f60"><td class="memTemplParams" colspan="2">template&lt;bool condition = (dims &gt;= 1), typename  = std::enable_if_t&lt;condition&gt;&gt; </td></tr>
+<tr class="memitem:a2a8750761926f6fa60c84f09181c6f60"><td class="memTemplItemLeft" align="right" valign="top">constexpr const type &amp;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="structvt_1_1utils_1_1vec.html#a2a8750761926f6fa60c84f09181c6f60">x</a> () const</td></tr>
+<tr class="separator:a2a8750761926f6fa60c84f09181c6f60"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aede432ba9eae9b18ad7a131e9cf43d15" id="r_aede432ba9eae9b18ad7a131e9cf43d15"><td class="memTemplParams" colspan="2">template&lt;bool condition = (dims &gt;= 1), typename  = std::enable_if_t&lt;condition&gt;&gt; </td></tr>
+<tr class="memitem:aede432ba9eae9b18ad7a131e9cf43d15"><td class="memTemplItemLeft" align="right" valign="top">constexpr type &amp;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="structvt_1_1utils_1_1vec.html#aede432ba9eae9b18ad7a131e9cf43d15">y</a> ()</td></tr>
+<tr class="separator:aede432ba9eae9b18ad7a131e9cf43d15"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aab8a19bd4626471ff4bf80fb6b511068" id="r_aab8a19bd4626471ff4bf80fb6b511068"><td class="memTemplParams" colspan="2">template&lt;bool condition = (dims &gt;= 1), typename  = std::enable_if_t&lt;condition&gt;&gt; </td></tr>
+<tr class="memitem:aab8a19bd4626471ff4bf80fb6b511068"><td class="memTemplItemLeft" align="right" valign="top">constexpr const type &amp;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="structvt_1_1utils_1_1vec.html#aab8a19bd4626471ff4bf80fb6b511068">y</a> () const</td></tr>
+<tr class="separator:aab8a19bd4626471ff4bf80fb6b511068"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a497aa8741f10b1d950c857d73a9d622d" id="r_a497aa8741f10b1d950c857d73a9d622d"><td class="memTemplParams" colspan="2">template&lt;bool condition = (dims == 3), typename  = std::enable_if_t&lt;condition&gt;&gt; </td></tr>
+<tr class="memitem:a497aa8741f10b1d950c857d73a9d622d"><td class="memTemplItemLeft" align="right" valign="top">constexpr type &amp;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="structvt_1_1utils_1_1vec.html#a497aa8741f10b1d950c857d73a9d622d">z</a> ()</td></tr>
+<tr class="separator:a497aa8741f10b1d950c857d73a9d622d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a26f67a2750a77cd5fa54e6fdb8e43bef" id="r_a26f67a2750a77cd5fa54e6fdb8e43bef"><td class="memTemplParams" colspan="2">template&lt;bool condition = (dims == 3), typename  = std::enable_if_t&lt;condition&gt;&gt; </td></tr>
+<tr class="memitem:a26f67a2750a77cd5fa54e6fdb8e43bef"><td class="memTemplItemLeft" align="right" valign="top">constexpr const type &amp;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="structvt_1_1utils_1_1vec.html#a26f67a2750a77cd5fa54e6fdb8e43bef">z</a> () const</td></tr>
+<tr class="separator:a26f67a2750a77cd5fa54e6fdb8e43bef"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae896ca14e4edcb4a22a5443c3974b725" id="r_ae896ca14e4edcb4a22a5443c3974b725"><td class="memTemplParams" colspan="2">template&lt;bool condition = (dims &gt; 3), typename  = std::enable_if_t&lt;condition&gt;&gt; </td></tr>
+<tr class="memitem:ae896ca14e4edcb4a22a5443c3974b725"><td class="memTemplItemLeft" align="right" valign="top">constexpr type &amp;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="structvt_1_1utils_1_1vec.html#ae896ca14e4edcb4a22a5443c3974b725">w</a> ()</td></tr>
+<tr class="separator:ae896ca14e4edcb4a22a5443c3974b725"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0717d922b6b27c002498932f699c47c6" id="r_a0717d922b6b27c002498932f699c47c6"><td class="memTemplParams" colspan="2">template&lt;bool condition = (dims &gt; 3), typename  = std::enable_if_t&lt;condition&gt;&gt; </td></tr>
+<tr class="memitem:a0717d922b6b27c002498932f699c47c6"><td class="memTemplItemLeft" align="right" valign="top">constexpr const type &amp;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="structvt_1_1utils_1_1vec.html#a0717d922b6b27c002498932f699c47c6">w</a> () const</td></tr>
+<tr class="separator:a0717d922b6b27c002498932f699c47c6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a75a9b3598f8bdf1d97f6450cfa0de296" id="r_a75a9b3598f8bdf1d97f6450cfa0de296"><td class="memTemplParams" colspan="2">template&lt;bool condition = (dims &gt; 3), typename  = std::enable_if_t&lt;condition&gt;&gt; </td></tr>
+<tr class="memitem:a75a9b3598f8bdf1d97f6450cfa0de296"><td class="memTemplItemLeft" align="right" valign="top">constexpr type &amp;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="structvt_1_1utils_1_1vec.html#a75a9b3598f8bdf1d97f6450cfa0de296">h</a> ()</td></tr>
+<tr class="separator:a75a9b3598f8bdf1d97f6450cfa0de296"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:afb0779fc88a665170a4b7741b35bd9d1" id="r_afb0779fc88a665170a4b7741b35bd9d1"><td class="memTemplParams" colspan="2">template&lt;bool condition = (dims &gt; 3), typename  = std::enable_if_t&lt;condition&gt;&gt; </td></tr>
+<tr class="memitem:afb0779fc88a665170a4b7741b35bd9d1"><td class="memTemplItemLeft" align="right" valign="top">constexpr const type &amp;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="structvt_1_1utils_1_1vec.html#afb0779fc88a665170a4b7741b35bd9d1">h</a> () const</td></tr>
+<tr class="separator:afb0779fc88a665170a4b7741b35bd9d1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a93d09e8dd9b7fb613332517693681bab" id="r_a93d09e8dd9b7fb613332517693681bab"><td class="memItemLeft" align="right" valign="top">data_container::iterator&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structvt_1_1utils_1_1vec.html#a93d09e8dd9b7fb613332517693681bab">begin</a> ()</td></tr>
 <tr class="separator:a93d09e8dd9b7fb613332517693681bab"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aea4b558819ae09d086224c0206e8c3ef" id="r_aea4b558819ae09d086224c0206e8c3ef"><td class="memItemLeft" align="right" valign="top">data_container::iterator&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structvt_1_1utils_1_1vec.html#aea4b558819ae09d086224c0206e8c3ef">end</a> ()</td></tr>
@@ -146,23 +195,72 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:a9545ac2fd2d290f1853840c31ed4f251"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a7e9e672ee68c13990fd3d1a64c9da750" id="r_a7e9e672ee68c13990fd3d1a64c9da750"><td class="memItemLeft" align="right" valign="top">constexpr const type &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structvt_1_1utils_1_1vec.html#a7e9e672ee68c13990fd3d1a64c9da750">operator[]</a> (size_t index) const</td></tr>
 <tr class="separator:a7e9e672ee68c13990fd3d1a64c9da750"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:acc3f8f382a272075a062cc48be913bb5" id="r_acc3f8f382a272075a062cc48be913bb5"><td class="memItemLeft" align="right" valign="top">constexpr bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structvt_1_1utils_1_1vec.html#acc3f8f382a272075a062cc48be913bb5">operator&lt;</a> (const <a class="el" href="structvt_1_1utils_1_1vec.html">vec</a> &amp;other) const</td></tr>
+<tr class="separator:acc3f8f382a272075a062cc48be913bb5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a33716abc861d5a6f664348163d52d7f6" id="r_a33716abc861d5a6f664348163d52d7f6"><td class="memItemLeft" align="right" valign="top">constexpr bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structvt_1_1utils_1_1vec.html#a33716abc861d5a6f664348163d52d7f6">operator&lt;=</a> (const <a class="el" href="structvt_1_1utils_1_1vec.html">vec</a> &amp;other) const</td></tr>
+<tr class="separator:a33716abc861d5a6f664348163d52d7f6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7c9790bd2259c5f09fdc7a0617ed8163" id="r_a7c9790bd2259c5f09fdc7a0617ed8163"><td class="memItemLeft" align="right" valign="top">constexpr bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structvt_1_1utils_1_1vec.html#a7c9790bd2259c5f09fdc7a0617ed8163">operator&gt;</a> (const <a class="el" href="structvt_1_1utils_1_1vec.html">vec</a> &amp;other) const</td></tr>
+<tr class="separator:a7c9790bd2259c5f09fdc7a0617ed8163"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6e27934a0cf6d050f8f6470f38857e94" id="r_a6e27934a0cf6d050f8f6470f38857e94"><td class="memItemLeft" align="right" valign="top">constexpr bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structvt_1_1utils_1_1vec.html#a6e27934a0cf6d050f8f6470f38857e94">operator&gt;=</a> (const <a class="el" href="structvt_1_1utils_1_1vec.html">vec</a> &amp;other) const</td></tr>
+<tr class="separator:a6e27934a0cf6d050f8f6470f38857e94"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a10f82eb630eccc00d1cf6324c9be014b" id="r_a10f82eb630eccc00d1cf6324c9be014b"><td class="memTemplParams" colspan="2">template&lt;bool condition = (dims == 4), typename  = std::enable_if_t&lt;condition&gt;&gt; </td></tr>
+<tr class="memitem:a10f82eb630eccc00d1cf6324c9be014b"><td class="memTemplItemLeft" align="right" valign="top">constexpr <a class="el" href="structvt_1_1utils_1_1vec.html">vec</a>&lt; type, 2 &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="structvt_1_1utils_1_1vec.html#a10f82eb630eccc00d1cf6324c9be014b">pos_min</a> () const</td></tr>
+<tr class="separator:a10f82eb630eccc00d1cf6324c9be014b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad39572e79f25399558123ad74c38effe" id="r_ad39572e79f25399558123ad74c38effe"><td class="memTemplParams" colspan="2">template&lt;bool condition = (dims == 4), typename  = std::enable_if_t&lt;condition&gt;&gt; </td></tr>
+<tr class="memitem:ad39572e79f25399558123ad74c38effe"><td class="memTemplItemLeft" align="right" valign="top">constexpr <a class="el" href="structvt_1_1utils_1_1vec.html">vec</a>&lt; type, 2 &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="structvt_1_1utils_1_1vec.html#ad39572e79f25399558123ad74c38effe">pos_max</a> () const</td></tr>
+<tr class="separator:ad39572e79f25399558123ad74c38effe"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae978d0ce3696ff256910b00444b1f758" id="r_ae978d0ce3696ff256910b00444b1f758"><td class="memTemplParams" colspan="2">template&lt;bool condition = (dims == 4), typename  = std::enable_if_t&lt;condition&gt;&gt; </td></tr>
+<tr class="memitem:ae978d0ce3696ff256910b00444b1f758"><td class="memTemplItemLeft" align="right" valign="top">constexpr <a class="el" href="structvt_1_1utils_1_1vec.html">vec</a>&lt; type, 2 &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="structvt_1_1utils_1_1vec.html#ae978d0ce3696ff256910b00444b1f758">size</a> () const</td></tr>
+<tr class="separator:ae978d0ce3696ff256910b00444b1f758"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:adf0519607247ee918b6609a48b304cb2" id="r_adf0519607247ee918b6609a48b304cb2"><td class="memItemLeft" align="right" valign="top">constexpr <a class="el" href="structvt_1_1utils_1_1vec.html">vec</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structvt_1_1utils_1_1vec.html#adf0519607247ee918b6609a48b304cb2">min</a> (const <a class="el" href="structvt_1_1utils_1_1vec.html">vec</a> &amp;other) const</td></tr>
+<tr class="separator:adf0519607247ee918b6609a48b304cb2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0b317c2f0d8d3b91645ea76cd44a23ab" id="r_a0b317c2f0d8d3b91645ea76cd44a23ab"><td class="memItemLeft" align="right" valign="top">constexpr <a class="el" href="structvt_1_1utils_1_1vec.html">vec</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structvt_1_1utils_1_1vec.html#a0b317c2f0d8d3b91645ea76cd44a23ab">max</a> (const <a class="el" href="structvt_1_1utils_1_1vec.html">vec</a> &amp;other) const</td></tr>
+<tr class="separator:a0b317c2f0d8d3b91645ea76cd44a23ab"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac7cc34eb818bc8b22bb9226df5d1bbd2" id="r_ac7cc34eb818bc8b22bb9226df5d1bbd2"><td class="memItemLeft" align="right" valign="top">constexpr bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structvt_1_1utils_1_1vec.html#ac7cc34eb818bc8b22bb9226df5d1bbd2">operator==</a> (const <a class="el" href="structvt_1_1utils_1_1vec.html">vec</a> &amp;other) const</td></tr>
 <tr class="separator:ac7cc34eb818bc8b22bb9226df5d1bbd2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2c5391422f50013c452bfeb3996b3fa9" id="r_a2c5391422f50013c452bfeb3996b3fa9"><td class="memItemLeft" align="right" valign="top">constexpr bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structvt_1_1utils_1_1vec.html#a2c5391422f50013c452bfeb3996b3fa9">operator!=</a> (const <a class="el" href="structvt_1_1utils_1_1vec.html">vec</a> &amp;other) const</td></tr>
+<tr class="separator:a2c5391422f50013c452bfeb3996b3fa9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a895ef58bcd030f721b9e5a06f0a0d302" id="r_a895ef58bcd030f721b9e5a06f0a0d302"><td class="memItemLeft" align="right" valign="top">constexpr <a class="el" href="structvt_1_1utils_1_1vec.html">vec</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structvt_1_1utils_1_1vec.html#a895ef58bcd030f721b9e5a06f0a0d302">operator=</a> (const <a class="el" href="structvt_1_1utils_1_1vec.html">vec</a> &amp;other)=default</td></tr>
+<tr class="separator:a895ef58bcd030f721b9e5a06f0a0d302"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:abc949a3588f0dae21f11f18cd71824f1" id="r_abc949a3588f0dae21f11f18cd71824f1"><td class="memItemLeft" align="right" valign="top">constexpr <a class="el" href="structvt_1_1utils_1_1vec.html">vec</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structvt_1_1utils_1_1vec.html#abc949a3588f0dae21f11f18cd71824f1">operator=</a> (<a class="el" href="structvt_1_1utils_1_1vec.html">vec</a> &amp;&amp;other)=default</td></tr>
+<tr class="separator:abc949a3588f0dae21f11f18cd71824f1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-static-methods" name="pub-static-methods"></a>
 Static Public Member Functions</h2></td></tr>
-<tr class="memitem:a55d742321e419621c66bc9b7ea88f41a" id="r_a55d742321e419621c66bc9b7ea88f41a"><td class="memTemplParams" colspan="2">template&lt;typename  = std::enable_if_t&lt;dims &gt;= 2&gt; </td></tr>
-<tr class="memitem:a55d742321e419621c66bc9b7ea88f41a"><td class="memTemplItemLeft" align="right" valign="top">static constexpr float&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="structvt_1_1utils_1_1vec.html#a55d742321e419621c66bc9b7ea88f41a">distance</a> (const <a class="el" href="structvt_1_1utils_1_1vec.html">vec</a> &amp;left, const <a class="el" href="structvt_1_1utils_1_1vec.html">vec</a> &amp;right)</td></tr>
-<tr class="separator:a55d742321e419621c66bc9b7ea88f41a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6b9a99541898f538c1cc937e649ea2ef" id="r_a6b9a99541898f538c1cc937e649ea2ef"><td class="memTemplParams" colspan="2">template&lt;bool condition = (dims &gt;= 2), typename  = std::enable_if_t&lt;condition&gt;&gt; </td></tr>
+<tr class="memitem:a6b9a99541898f538c1cc937e649ea2ef"><td class="memTemplItemLeft" align="right" valign="top">static constexpr float&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="structvt_1_1utils_1_1vec.html#a6b9a99541898f538c1cc937e649ea2ef">distance</a> (const <a class="el" href="structvt_1_1utils_1_1vec.html">vec</a> &amp;<a class="el" href="namespacevt.html#a9e50a04fc0a32ec3f1ceb447c39f7084a811882fecd5c7618d7099ebbd39ea254">left</a>, const <a class="el" href="structvt_1_1utils_1_1vec.html">vec</a> &amp;<a class="el" href="namespacevt.html#a9e50a04fc0a32ec3f1ceb447c39f7084a7c4f29407893c334a6cb7a87bf045c0d">right</a>)</td></tr>
+<tr class="separator:a6b9a99541898f538c1cc937e649ea2ef"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a52234a2cfa72af16a761b8034e42041c" id="r_a52234a2cfa72af16a761b8034e42041c"><td class="memTemplParams" colspan="2">template&lt;bool condition = (dims &gt;= 2), typename  = std::enable_if_t&lt;condition&gt;&gt; </td></tr>
+<tr class="memitem:a52234a2cfa72af16a761b8034e42041c"><td class="memTemplItemLeft" align="right" valign="top">static constexpr float&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="structvt_1_1utils_1_1vec.html#a52234a2cfa72af16a761b8034e42041c">distance</a> (const <a class="el" href="structvt_1_1utils_1_1vec.html">vec</a> &amp;<a class="el" href="namespacevt.html#a9e50a04fc0a32ec3f1ceb447c39f7084a811882fecd5c7618d7099ebbd39ea254">left</a>, const std::vector&lt; <a class="el" href="structvt_1_1utils_1_1vec.html">vec</a> &gt; &amp;<a class="el" href="namespacevt.html#a9e50a04fc0a32ec3f1ceb447c39f7084a7c4f29407893c334a6cb7a87bf045c0d">right</a>)</td></tr>
+<tr class="separator:a52234a2cfa72af16a761b8034e42041c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad13e05c32e2947fce0ec577e2bcc7cd7" id="r_ad13e05c32e2947fce0ec577e2bcc7cd7"><td class="memItemLeft" align="right" valign="top">static constexpr <a class="el" href="structvt_1_1utils_1_1vec.html">vec</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structvt_1_1utils_1_1vec.html#ad13e05c32e2947fce0ec577e2bcc7cd7">min</a> (const <a class="el" href="structvt_1_1utils_1_1vec.html">vec</a> &amp;<a class="el" href="namespacevt.html#a9e50a04fc0a32ec3f1ceb447c39f7084a811882fecd5c7618d7099ebbd39ea254">left</a>, const <a class="el" href="structvt_1_1utils_1_1vec.html">vec</a> &amp;<a class="el" href="namespacevt.html#a9e50a04fc0a32ec3f1ceb447c39f7084a7c4f29407893c334a6cb7a87bf045c0d">right</a>)</td></tr>
+<tr class="separator:ad13e05c32e2947fce0ec577e2bcc7cd7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae9aeda6a8a0489ab2d2378f3ab45d87a" id="r_ae9aeda6a8a0489ab2d2378f3ab45d87a"><td class="memItemLeft" align="right" valign="top">static constexpr <a class="el" href="structvt_1_1utils_1_1vec.html">vec</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structvt_1_1utils_1_1vec.html#ae9aeda6a8a0489ab2d2378f3ab45d87a">max</a> (const <a class="el" href="structvt_1_1utils_1_1vec.html">vec</a> &amp;<a class="el" href="namespacevt.html#a9e50a04fc0a32ec3f1ceb447c39f7084a811882fecd5c7618d7099ebbd39ea254">left</a>, const <a class="el" href="structvt_1_1utils_1_1vec.html">vec</a> &amp;<a class="el" href="namespacevt.html#a9e50a04fc0a32ec3f1ceb447c39f7084a7c4f29407893c334a6cb7a87bf045c0d">right</a>)</td></tr>
+<tr class="separator:ae9aeda6a8a0489ab2d2378f3ab45d87a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a730060560698b779ec76e0e32bf69f4f" id="r_a730060560698b779ec76e0e32bf69f4f"><td class="memTemplParams" colspan="2">template&lt;bool condition = (dims == 4), typename  = std::enable_if_t&lt;condition&gt;&gt; </td></tr>
+<tr class="memitem:a730060560698b779ec76e0e32bf69f4f"><td class="memTemplItemLeft" align="right" valign="top">static constexpr bool&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="structvt_1_1utils_1_1vec.html#a730060560698b779ec76e0e32bf69f4f">is_inside</a> (const <a class="el" href="structvt_1_1utils_1_1vec.html">vec</a> &amp;<a class="el" href="namespacevt.html#a9e50a04fc0a32ec3f1ceb447c39f7084a811882fecd5c7618d7099ebbd39ea254">left</a>, const <a class="el" href="structvt_1_1utils_1_1vec.html">vec</a> &amp;<a class="el" href="namespacevt.html#a9e50a04fc0a32ec3f1ceb447c39f7084a7c4f29407893c334a6cb7a87bf045c0d">right</a>)</td></tr>
+<tr class="separator:a730060560698b779ec76e0e32bf69f4f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7f85facdfaedb8771b142e162dc6b6e6" id="r_a7f85facdfaedb8771b142e162dc6b6e6"><td class="memTemplParams" colspan="2">template&lt;bool condition = (dims == 4), typename  = std::enable_if_t&lt;condition&gt;&gt; </td></tr>
+<tr class="memitem:a7f85facdfaedb8771b142e162dc6b6e6"><td class="memTemplItemLeft" align="right" valign="top">static constexpr bool&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="structvt_1_1utils_1_1vec.html#a7f85facdfaedb8771b142e162dc6b6e6">is_overlapping</a> (const <a class="el" href="structvt_1_1utils_1_1vec.html">vec</a> &amp;<a class="el" href="namespacevt.html#a9e50a04fc0a32ec3f1ceb447c39f7084a811882fecd5c7618d7099ebbd39ea254">left</a>, const <a class="el" href="structvt_1_1utils_1_1vec.html">vec</a> &amp;<a class="el" href="namespacevt.html#a9e50a04fc0a32ec3f1ceb447c39f7084a7c4f29407893c334a6cb7a87bf045c0d">right</a>)</td></tr>
+<tr class="separator:a7f85facdfaedb8771b142e162dc6b6e6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a694afdf4d71b2717b3e660e9a7d4a166" id="r_a694afdf4d71b2717b3e660e9a7d4a166"><td class="memItemLeft" align="right" valign="top">static constexpr <a class="el" href="structvt_1_1utils_1_1vec.html">vec</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structvt_1_1utils_1_1vec.html#a694afdf4d71b2717b3e660e9a7d4a166">max</a> ()</td></tr>
+<tr class="separator:a694afdf4d71b2717b3e660e9a7d4a166"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5fd1be776acf48dc9691e9db572bf032" id="r_a5fd1be776acf48dc9691e9db572bf032"><td class="memItemLeft" align="right" valign="top">static constexpr <a class="el" href="structvt_1_1utils_1_1vec.html">vec</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structvt_1_1utils_1_1vec.html#a5fd1be776acf48dc9691e9db572bf032">min</a> ()</td></tr>
+<tr class="separator:a5fd1be776acf48dc9691e9db572bf032"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-attribs" name="pub-attribs"></a>
 Public Attributes</h2></td></tr>
-<tr class="memitem:a445445601cb54aeb0ee37bf06b7ef39f" id="r_a445445601cb54aeb0ee37bf06b7ef39f"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structvt_1_1utils_1_1vec.html#a1ac0518a2b4aab167d8007952d455247">data_container</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structvt_1_1utils_1_1vec.html#a445445601cb54aeb0ee37bf06b7ef39f">data</a> {}</td></tr>
+<tr class="memitem:a445445601cb54aeb0ee37bf06b7ef39f" id="r_a445445601cb54aeb0ee37bf06b7ef39f"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structvt_1_1utils_1_1vec.html#a8544cf294cc55b81a4818c7ae85fd3f2">data_container</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structvt_1_1utils_1_1vec.html#a445445601cb54aeb0ee37bf06b7ef39f">data</a> {}</td></tr>
 <tr class="separator:a445445601cb54aeb0ee37bf06b7ef39f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-static-attribs" name="pub-static-attribs"></a>
+Static Public Attributes</h2></td></tr>
+<tr class="memitem:a8f6063f2e21a84ddf8e880de3586c75c" id="r_a8f6063f2e21a84ddf8e880de3586c75c"><td class="memItemLeft" align="right" valign="top">static constexpr size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structvt_1_1utils_1_1vec.html#a8f6063f2e21a84ddf8e880de3586c75c">dimensions</a> = dims</td></tr>
+<tr class="separator:a8f6063f2e21a84ddf8e880de3586c75c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Member Typedef Documentation</h2>
-<a id="a1ac0518a2b4aab167d8007952d455247" name="a1ac0518a2b4aab167d8007952d455247"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a1ac0518a2b4aab167d8007952d455247">&#9670;&#160;</a></span>data_container</h2>
+<a id="a8544cf294cc55b81a4818c7ae85fd3f2" name="a8544cf294cc55b81a4818c7ae85fd3f2"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a8544cf294cc55b81a4818c7ae85fd3f2">&#9670;&#160;</a></span>data_container</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -170,9 +268,257 @@ Public Attributes</h2></td></tr>
 template&lt;typename type , size_t dims&gt; </div>
       <table class="memname">
         <tr>
-          <td class="memname">using <a class="el" href="structvt_1_1utils_1_1vec.html">vt::utils::vec</a>&lt; type, dims &gt;::data_container =  std::array&lt;type, dims&gt;</td>
+          <td class="memname">using <a class="el" href="structvt_1_1utils_1_1vec.html">vt::utils::vec</a>&lt; type, dims &gt;::data_container =  std::array&lt;type, <a class="el" href="structvt_1_1utils_1_1vec.html#a8f6063f2e21a84ddf8e880de3586c75c">dimensions</a>&gt;</td>
         </tr>
       </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
+<a id="a6815f806d58c524220a80194cee04a83" name="a6815f806d58c524220a80194cee04a83"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a6815f806d58c524220a80194cee04a83">&#9670;&#160;</a></span>vec() <span class="overload">[1/8]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename type , size_t dims&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">constexpr <a class="el" href="structvt_1_1utils_1_1vec.html">vt::utils::vec</a>&lt; type, dims &gt;::vec </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">constexpr</span><span class="mlabel">default</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="aa5badc19463322e9f870c09f651e3e59" name="aa5badc19463322e9f870c09f651e3e59"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aa5badc19463322e9f870c09f651e3e59">&#9670;&#160;</a></span>vec() <span class="overload">[2/8]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename type , size_t dims&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">constexpr <a class="el" href="structvt_1_1utils_1_1vec.html">vt::utils::vec</a>&lt; type, dims &gt;::vec </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="structvt_1_1utils_1_1vec.html">vec</a>&lt; type, dims &gt; &amp;&#160;</td>
+          <td class="paramname"><em>other</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">constexpr</span><span class="mlabel">default</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a6004bf52f23a0ec7f2661c94184bc0de" name="a6004bf52f23a0ec7f2661c94184bc0de"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a6004bf52f23a0ec7f2661c94184bc0de">&#9670;&#160;</a></span>vec() <span class="overload">[3/8]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename type , size_t dims&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">constexpr <a class="el" href="structvt_1_1utils_1_1vec.html">vt::utils::vec</a>&lt; type, dims &gt;::vec </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structvt_1_1utils_1_1vec.html">vec</a>&lt; type, dims &gt; &amp;&amp;&#160;</td>
+          <td class="paramname"><em>other</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">constexpr</span><span class="mlabel">default</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a61e74012ef0ab6d38a26fb2075637dac" name="a61e74012ef0ab6d38a26fb2075637dac"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a61e74012ef0ab6d38a26fb2075637dac">&#9670;&#160;</a></span>vec() <span class="overload">[4/8]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename type , size_t dims&gt; </div>
+<div class="memtemplate">
+template&lt;std::size_t... indices&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">constexpr <a class="el" href="structvt_1_1utils_1_1vec.html">vt::utils::vec</a>&lt; type, dims &gt;::vec </td>
+          <td>(</td>
+          <td class="paramtype">std::initializer_list&lt; type &gt;&#160;</td>
+          <td class="paramname"><em>list</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">std::index_sequence&lt; indices... &gt;&#160;</td>
+          <td class="paramname">&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">constexpr</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="aca09128cfed818923d400b26cfad91ad" name="aca09128cfed818923d400b26cfad91ad"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aca09128cfed818923d400b26cfad91ad">&#9670;&#160;</a></span>vec() <span class="overload">[5/8]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename type , size_t dims&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">constexpr <a class="el" href="structvt_1_1utils_1_1vec.html">vt::utils::vec</a>&lt; type, dims &gt;::vec </td>
+          <td>(</td>
+          <td class="paramtype">std::initializer_list&lt; type &gt;&#160;</td>
+          <td class="paramname"><em>list</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">constexpr</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="aa6db18d18369b4b6b1a4429aad065ca0" name="aa6db18d18369b4b6b1a4429aad065ca0"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aa6db18d18369b4b6b1a4429aad065ca0">&#9670;&#160;</a></span>vec() <span class="overload">[6/8]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename type , size_t dims&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">constexpr <a class="el" href="structvt_1_1utils_1_1vec.html">vt::utils::vec</a>&lt; type, dims &gt;::vec </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="structvt_1_1utils_1_1vec.html#a8544cf294cc55b81a4818c7ae85fd3f2">data_container</a> &amp;&#160;</td>
+          <td class="paramname"><em>data</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">constexpr</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="adbb2d871ea1f49386b7c5680021c90d7" name="adbb2d871ea1f49386b7c5680021c90d7"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#adbb2d871ea1f49386b7c5680021c90d7">&#9670;&#160;</a></span>vec() <span class="overload">[7/8]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename type , size_t dims&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">constexpr <a class="el" href="structvt_1_1utils_1_1vec.html">vt::utils::vec</a>&lt; type, dims &gt;::vec </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structvt_1_1utils_1_1vec.html#a8544cf294cc55b81a4818c7ae85fd3f2">data_container</a> &amp;&amp;&#160;</td>
+          <td class="paramname"><em>data</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">constexpr</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a66acbe2de9acc66aaf92ea404c563d83" name="a66acbe2de9acc66aaf92ea404c563d83"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a66acbe2de9acc66aaf92ea404c563d83">&#9670;&#160;</a></span>vec() <span class="overload">[8/8]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename type , size_t dims&gt; </div>
+<div class="memtemplate">
+template&lt;bool condition = (dims &gt;= 4 and dims % 2 == 0), typename  = std::enable_if_t&lt;condition&gt;&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">constexpr <a class="el" href="structvt_1_1utils_1_1vec.html">vt::utils::vec</a>&lt; type, dims &gt;::vec </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="structvt_1_1utils_1_1vec.html">vec</a>&lt; type, dims/2 &gt; &amp;&#160;</td>
+          <td class="paramname"><em>pos_min</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="structvt_1_1utils_1_1vec.html">vec</a>&lt; type, dims/2 &gt; &amp;&#160;</td>
+          <td class="paramname"><em>pos_max</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">constexpr</span></span>  </td>
+  </tr>
+</table>
 </div><div class="memdoc">
 
 </div>
@@ -288,15 +634,55 @@ template&lt;typename type , size_t dims&gt; </div>
 
 </div>
 </div>
-<a id="a55d742321e419621c66bc9b7ea88f41a" name="a55d742321e419621c66bc9b7ea88f41a"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a55d742321e419621c66bc9b7ea88f41a">&#9670;&#160;</a></span>distance()</h2>
+<a id="a52234a2cfa72af16a761b8034e42041c" name="a52234a2cfa72af16a761b8034e42041c"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a52234a2cfa72af16a761b8034e42041c">&#9670;&#160;</a></span>distance() <span class="overload">[1/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
 template&lt;typename type , size_t dims&gt; </div>
 <div class="memtemplate">
-template&lt;typename  = std::enable_if_t&lt;dims &gt;= 2&gt; </div>
+template&lt;bool condition = (dims &gt;= 2), typename  = std::enable_if_t&lt;condition&gt;&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">static constexpr float <a class="el" href="structvt_1_1utils_1_1vec.html">vt::utils::vec</a>&lt; type, dims &gt;::distance </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="structvt_1_1utils_1_1vec.html">vec</a>&lt; type, dims &gt; &amp;&#160;</td>
+          <td class="paramname"><em>left</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const std::vector&lt; <a class="el" href="structvt_1_1utils_1_1vec.html">vec</a>&lt; type, dims &gt; &gt; &amp;&#160;</td>
+          <td class="paramname"><em>right</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">static</span><span class="mlabel">constexpr</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a6b9a99541898f538c1cc937e649ea2ef" name="a6b9a99541898f538c1cc937e649ea2ef"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a6b9a99541898f538c1cc937e649ea2ef">&#9670;&#160;</a></span>distance() <span class="overload">[2/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename type , size_t dims&gt; </div>
+<div class="memtemplate">
+template&lt;bool condition = (dims &gt;= 2), typename  = std::enable_if_t&lt;condition&gt;&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -382,6 +768,470 @@ template&lt;typename type , size_t dims&gt; </div>
 
 </div>
 </div>
+<a id="a75a9b3598f8bdf1d97f6450cfa0de296" name="a75a9b3598f8bdf1d97f6450cfa0de296"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a75a9b3598f8bdf1d97f6450cfa0de296">&#9670;&#160;</a></span>h() <span class="overload">[1/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename type , size_t dims&gt; </div>
+<div class="memtemplate">
+template&lt;bool condition = (dims &gt; 3), typename  = std::enable_if_t&lt;condition&gt;&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">constexpr type &amp; <a class="el" href="structvt_1_1utils_1_1vec.html">vt::utils::vec</a>&lt; type, dims &gt;::h </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">constexpr</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="afb0779fc88a665170a4b7741b35bd9d1" name="afb0779fc88a665170a4b7741b35bd9d1"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#afb0779fc88a665170a4b7741b35bd9d1">&#9670;&#160;</a></span>h() <span class="overload">[2/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename type , size_t dims&gt; </div>
+<div class="memtemplate">
+template&lt;bool condition = (dims &gt; 3), typename  = std::enable_if_t&lt;condition&gt;&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">constexpr const type &amp; <a class="el" href="structvt_1_1utils_1_1vec.html">vt::utils::vec</a>&lt; type, dims &gt;::h </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">constexpr</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a730060560698b779ec76e0e32bf69f4f" name="a730060560698b779ec76e0e32bf69f4f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a730060560698b779ec76e0e32bf69f4f">&#9670;&#160;</a></span>is_inside()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename type , size_t dims&gt; </div>
+<div class="memtemplate">
+template&lt;bool condition = (dims == 4), typename  = std::enable_if_t&lt;condition&gt;&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">static constexpr bool <a class="el" href="structvt_1_1utils_1_1vec.html">vt::utils::vec</a>&lt; type, dims &gt;::is_inside </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="structvt_1_1utils_1_1vec.html">vec</a>&lt; type, dims &gt; &amp;&#160;</td>
+          <td class="paramname"><em>left</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="structvt_1_1utils_1_1vec.html">vec</a>&lt; type, dims &gt; &amp;&#160;</td>
+          <td class="paramname"><em>right</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">static</span><span class="mlabel">constexpr</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a7f85facdfaedb8771b142e162dc6b6e6" name="a7f85facdfaedb8771b142e162dc6b6e6"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a7f85facdfaedb8771b142e162dc6b6e6">&#9670;&#160;</a></span>is_overlapping()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename type , size_t dims&gt; </div>
+<div class="memtemplate">
+template&lt;bool condition = (dims == 4), typename  = std::enable_if_t&lt;condition&gt;&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">static constexpr bool <a class="el" href="structvt_1_1utils_1_1vec.html">vt::utils::vec</a>&lt; type, dims &gt;::is_overlapping </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="structvt_1_1utils_1_1vec.html">vec</a>&lt; type, dims &gt; &amp;&#160;</td>
+          <td class="paramname"><em>left</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="structvt_1_1utils_1_1vec.html">vec</a>&lt; type, dims &gt; &amp;&#160;</td>
+          <td class="paramname"><em>right</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">static</span><span class="mlabel">constexpr</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a694afdf4d71b2717b3e660e9a7d4a166" name="a694afdf4d71b2717b3e660e9a7d4a166"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a694afdf4d71b2717b3e660e9a7d4a166">&#9670;&#160;</a></span>max() <span class="overload">[1/3]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename type , size_t dims&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">constexpr <a class="el" href="structvt_1_1utils_1_1vec.html">vec</a>&lt; type, dims &gt; <a class="el" href="structvt_1_1utils_1_1vec.html">vt::utils::vec</a>&lt; type, dims &gt;::max </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">static</span><span class="mlabel">constexpr</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="ae9aeda6a8a0489ab2d2378f3ab45d87a" name="ae9aeda6a8a0489ab2d2378f3ab45d87a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae9aeda6a8a0489ab2d2378f3ab45d87a">&#9670;&#160;</a></span>max() <span class="overload">[2/3]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename type , size_t dims&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">static constexpr <a class="el" href="structvt_1_1utils_1_1vec.html">vec</a> <a class="el" href="structvt_1_1utils_1_1vec.html">vt::utils::vec</a>&lt; type, dims &gt;::max </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="structvt_1_1utils_1_1vec.html">vec</a>&lt; type, dims &gt; &amp;&#160;</td>
+          <td class="paramname"><em>left</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="structvt_1_1utils_1_1vec.html">vec</a>&lt; type, dims &gt; &amp;&#160;</td>
+          <td class="paramname"><em>right</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">static</span><span class="mlabel">constexpr</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a0b317c2f0d8d3b91645ea76cd44a23ab" name="a0b317c2f0d8d3b91645ea76cd44a23ab"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a0b317c2f0d8d3b91645ea76cd44a23ab">&#9670;&#160;</a></span>max() <span class="overload">[3/3]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename type , size_t dims&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">constexpr <a class="el" href="structvt_1_1utils_1_1vec.html">vec</a> <a class="el" href="structvt_1_1utils_1_1vec.html">vt::utils::vec</a>&lt; type, dims &gt;::max </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="structvt_1_1utils_1_1vec.html">vec</a>&lt; type, dims &gt; &amp;&#160;</td>
+          <td class="paramname"><em>other</em></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">constexpr</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a5fd1be776acf48dc9691e9db572bf032" name="a5fd1be776acf48dc9691e9db572bf032"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a5fd1be776acf48dc9691e9db572bf032">&#9670;&#160;</a></span>min() <span class="overload">[1/3]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename type , size_t dims&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">constexpr <a class="el" href="structvt_1_1utils_1_1vec.html">vec</a>&lt; type, dims &gt; <a class="el" href="structvt_1_1utils_1_1vec.html">vt::utils::vec</a>&lt; type, dims &gt;::min </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">static</span><span class="mlabel">constexpr</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="ad13e05c32e2947fce0ec577e2bcc7cd7" name="ad13e05c32e2947fce0ec577e2bcc7cd7"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad13e05c32e2947fce0ec577e2bcc7cd7">&#9670;&#160;</a></span>min() <span class="overload">[2/3]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename type , size_t dims&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">static constexpr <a class="el" href="structvt_1_1utils_1_1vec.html">vec</a> <a class="el" href="structvt_1_1utils_1_1vec.html">vt::utils::vec</a>&lt; type, dims &gt;::min </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="structvt_1_1utils_1_1vec.html">vec</a>&lt; type, dims &gt; &amp;&#160;</td>
+          <td class="paramname"><em>left</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="structvt_1_1utils_1_1vec.html">vec</a>&lt; type, dims &gt; &amp;&#160;</td>
+          <td class="paramname"><em>right</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">static</span><span class="mlabel">constexpr</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="adf0519607247ee918b6609a48b304cb2" name="adf0519607247ee918b6609a48b304cb2"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#adf0519607247ee918b6609a48b304cb2">&#9670;&#160;</a></span>min() <span class="overload">[3/3]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename type , size_t dims&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">constexpr <a class="el" href="structvt_1_1utils_1_1vec.html">vec</a> <a class="el" href="structvt_1_1utils_1_1vec.html">vt::utils::vec</a>&lt; type, dims &gt;::min </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="structvt_1_1utils_1_1vec.html">vec</a>&lt; type, dims &gt; &amp;&#160;</td>
+          <td class="paramname"><em>other</em></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">constexpr</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a2c5391422f50013c452bfeb3996b3fa9" name="a2c5391422f50013c452bfeb3996b3fa9"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a2c5391422f50013c452bfeb3996b3fa9">&#9670;&#160;</a></span>operator!=()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename type , size_t dims&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">constexpr bool <a class="el" href="structvt_1_1utils_1_1vec.html">vt::utils::vec</a>&lt; type, dims &gt;::operator!= </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="structvt_1_1utils_1_1vec.html">vec</a>&lt; type, dims &gt; &amp;&#160;</td>
+          <td class="paramname"><em>other</em></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">constexpr</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="acc3f8f382a272075a062cc48be913bb5" name="acc3f8f382a272075a062cc48be913bb5"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#acc3f8f382a272075a062cc48be913bb5">&#9670;&#160;</a></span>operator&lt;()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename type , size_t dims&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">constexpr bool <a class="el" href="structvt_1_1utils_1_1vec.html">vt::utils::vec</a>&lt; type, dims &gt;::operator&lt; </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="structvt_1_1utils_1_1vec.html">vec</a>&lt; type, dims &gt; &amp;&#160;</td>
+          <td class="paramname"><em>other</em></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">constexpr</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a33716abc861d5a6f664348163d52d7f6" name="a33716abc861d5a6f664348163d52d7f6"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a33716abc861d5a6f664348163d52d7f6">&#9670;&#160;</a></span>operator&lt;=()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename type , size_t dims&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">constexpr bool <a class="el" href="structvt_1_1utils_1_1vec.html">vt::utils::vec</a>&lt; type, dims &gt;::operator&lt;= </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="structvt_1_1utils_1_1vec.html">vec</a>&lt; type, dims &gt; &amp;&#160;</td>
+          <td class="paramname"><em>other</em></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">constexpr</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a895ef58bcd030f721b9e5a06f0a0d302" name="a895ef58bcd030f721b9e5a06f0a0d302"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a895ef58bcd030f721b9e5a06f0a0d302">&#9670;&#160;</a></span>operator=() <span class="overload">[1/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename type , size_t dims&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">constexpr <a class="el" href="structvt_1_1utils_1_1vec.html">vec</a> &amp; <a class="el" href="structvt_1_1utils_1_1vec.html">vt::utils::vec</a>&lt; type, dims &gt;::operator= </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="structvt_1_1utils_1_1vec.html">vec</a>&lt; type, dims &gt; &amp;&#160;</td>
+          <td class="paramname"><em>other</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">constexpr</span><span class="mlabel">default</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="abc949a3588f0dae21f11f18cd71824f1" name="abc949a3588f0dae21f11f18cd71824f1"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#abc949a3588f0dae21f11f18cd71824f1">&#9670;&#160;</a></span>operator=() <span class="overload">[2/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename type , size_t dims&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">constexpr <a class="el" href="structvt_1_1utils_1_1vec.html">vec</a> &amp; <a class="el" href="structvt_1_1utils_1_1vec.html">vt::utils::vec</a>&lt; type, dims &gt;::operator= </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structvt_1_1utils_1_1vec.html">vec</a>&lt; type, dims &gt; &amp;&amp;&#160;</td>
+          <td class="paramname"><em>other</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">constexpr</span><span class="mlabel">default</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <a id="ac7cc34eb818bc8b22bb9226df5d1bbd2" name="ac7cc34eb818bc8b22bb9226df5d1bbd2"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#ac7cc34eb818bc8b22bb9226df5d1bbd2">&#9670;&#160;</a></span>operator==()</h2>
 
@@ -395,6 +1245,62 @@ template&lt;typename type , size_t dims&gt; </div>
       <table class="memname">
         <tr>
           <td class="memname">constexpr bool <a class="el" href="structvt_1_1utils_1_1vec.html">vt::utils::vec</a>&lt; type, dims &gt;::operator== </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="structvt_1_1utils_1_1vec.html">vec</a>&lt; type, dims &gt; &amp;&#160;</td>
+          <td class="paramname"><em>other</em></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">constexpr</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a7c9790bd2259c5f09fdc7a0617ed8163" name="a7c9790bd2259c5f09fdc7a0617ed8163"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a7c9790bd2259c5f09fdc7a0617ed8163">&#9670;&#160;</a></span>operator&gt;()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename type , size_t dims&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">constexpr bool <a class="el" href="structvt_1_1utils_1_1vec.html">vt::utils::vec</a>&lt; type, dims &gt;::operator&gt; </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="structvt_1_1utils_1_1vec.html">vec</a>&lt; type, dims &gt; &amp;&#160;</td>
+          <td class="paramname"><em>other</em></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">constexpr</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a6e27934a0cf6d050f8f6470f38857e94" name="a6e27934a0cf6d050f8f6470f38857e94"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a6e27934a0cf6d050f8f6470f38857e94">&#9670;&#160;</a></span>operator&gt;=()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename type , size_t dims&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">constexpr bool <a class="el" href="structvt_1_1utils_1_1vec.html">vt::utils::vec</a>&lt; type, dims &gt;::operator&gt;= </td>
           <td>(</td>
           <td class="paramtype">const <a class="el" href="structvt_1_1utils_1_1vec.html">vec</a>&lt; type, dims &gt; &amp;&#160;</td>
           <td class="paramname"><em>other</em></td><td>)</td>
@@ -466,6 +1372,325 @@ template&lt;typename type , size_t dims&gt; </div>
 
 </div>
 </div>
+<a id="ad39572e79f25399558123ad74c38effe" name="ad39572e79f25399558123ad74c38effe"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad39572e79f25399558123ad74c38effe">&#9670;&#160;</a></span>pos_max()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename type , size_t dims&gt; </div>
+<div class="memtemplate">
+template&lt;bool condition = (dims == 4), typename  = std::enable_if_t&lt;condition&gt;&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">constexpr <a class="el" href="structvt_1_1utils_1_1vec.html">vec</a>&lt; type, 2 &gt; <a class="el" href="structvt_1_1utils_1_1vec.html">vt::utils::vec</a>&lt; type, dims &gt;::pos_max </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">constexpr</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a10f82eb630eccc00d1cf6324c9be014b" name="a10f82eb630eccc00d1cf6324c9be014b"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a10f82eb630eccc00d1cf6324c9be014b">&#9670;&#160;</a></span>pos_min()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename type , size_t dims&gt; </div>
+<div class="memtemplate">
+template&lt;bool condition = (dims == 4), typename  = std::enable_if_t&lt;condition&gt;&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">constexpr <a class="el" href="structvt_1_1utils_1_1vec.html">vec</a>&lt; type, 2 &gt; <a class="el" href="structvt_1_1utils_1_1vec.html">vt::utils::vec</a>&lt; type, dims &gt;::pos_min </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">constexpr</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="ae978d0ce3696ff256910b00444b1f758" name="ae978d0ce3696ff256910b00444b1f758"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae978d0ce3696ff256910b00444b1f758">&#9670;&#160;</a></span>size()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename type , size_t dims&gt; </div>
+<div class="memtemplate">
+template&lt;bool condition = (dims == 4), typename  = std::enable_if_t&lt;condition&gt;&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">constexpr <a class="el" href="structvt_1_1utils_1_1vec.html">vec</a>&lt; type, 2 &gt; <a class="el" href="structvt_1_1utils_1_1vec.html">vt::utils::vec</a>&lt; type, dims &gt;::size </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">constexpr</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="ae896ca14e4edcb4a22a5443c3974b725" name="ae896ca14e4edcb4a22a5443c3974b725"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae896ca14e4edcb4a22a5443c3974b725">&#9670;&#160;</a></span>w() <span class="overload">[1/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename type , size_t dims&gt; </div>
+<div class="memtemplate">
+template&lt;bool condition = (dims &gt; 3), typename  = std::enable_if_t&lt;condition&gt;&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">constexpr type &amp; <a class="el" href="structvt_1_1utils_1_1vec.html">vt::utils::vec</a>&lt; type, dims &gt;::w </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">constexpr</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a0717d922b6b27c002498932f699c47c6" name="a0717d922b6b27c002498932f699c47c6"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a0717d922b6b27c002498932f699c47c6">&#9670;&#160;</a></span>w() <span class="overload">[2/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename type , size_t dims&gt; </div>
+<div class="memtemplate">
+template&lt;bool condition = (dims &gt; 3), typename  = std::enable_if_t&lt;condition&gt;&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">constexpr const type &amp; <a class="el" href="structvt_1_1utils_1_1vec.html">vt::utils::vec</a>&lt; type, dims &gt;::w </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">constexpr</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a35147a6fb05ae1dad0022ab81124e376" name="a35147a6fb05ae1dad0022ab81124e376"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a35147a6fb05ae1dad0022ab81124e376">&#9670;&#160;</a></span>x() <span class="overload">[1/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename type , size_t dims&gt; </div>
+<div class="memtemplate">
+template&lt;bool condition = (dims &gt;= 1), typename  = std::enable_if_t&lt;condition&gt;&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">constexpr type &amp; <a class="el" href="structvt_1_1utils_1_1vec.html">vt::utils::vec</a>&lt; type, dims &gt;::x </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">constexpr</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a2a8750761926f6fa60c84f09181c6f60" name="a2a8750761926f6fa60c84f09181c6f60"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a2a8750761926f6fa60c84f09181c6f60">&#9670;&#160;</a></span>x() <span class="overload">[2/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename type , size_t dims&gt; </div>
+<div class="memtemplate">
+template&lt;bool condition = (dims &gt;= 1), typename  = std::enable_if_t&lt;condition&gt;&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">constexpr const type &amp; <a class="el" href="structvt_1_1utils_1_1vec.html">vt::utils::vec</a>&lt; type, dims &gt;::x </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">constexpr</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="aede432ba9eae9b18ad7a131e9cf43d15" name="aede432ba9eae9b18ad7a131e9cf43d15"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aede432ba9eae9b18ad7a131e9cf43d15">&#9670;&#160;</a></span>y() <span class="overload">[1/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename type , size_t dims&gt; </div>
+<div class="memtemplate">
+template&lt;bool condition = (dims &gt;= 1), typename  = std::enable_if_t&lt;condition&gt;&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">constexpr type &amp; <a class="el" href="structvt_1_1utils_1_1vec.html">vt::utils::vec</a>&lt; type, dims &gt;::y </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">constexpr</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="aab8a19bd4626471ff4bf80fb6b511068" name="aab8a19bd4626471ff4bf80fb6b511068"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aab8a19bd4626471ff4bf80fb6b511068">&#9670;&#160;</a></span>y() <span class="overload">[2/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename type , size_t dims&gt; </div>
+<div class="memtemplate">
+template&lt;bool condition = (dims &gt;= 1), typename  = std::enable_if_t&lt;condition&gt;&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">constexpr const type &amp; <a class="el" href="structvt_1_1utils_1_1vec.html">vt::utils::vec</a>&lt; type, dims &gt;::y </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">constexpr</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a497aa8741f10b1d950c857d73a9d622d" name="a497aa8741f10b1d950c857d73a9d622d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a497aa8741f10b1d950c857d73a9d622d">&#9670;&#160;</a></span>z() <span class="overload">[1/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename type , size_t dims&gt; </div>
+<div class="memtemplate">
+template&lt;bool condition = (dims == 3), typename  = std::enable_if_t&lt;condition&gt;&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">constexpr type &amp; <a class="el" href="structvt_1_1utils_1_1vec.html">vt::utils::vec</a>&lt; type, dims &gt;::z </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">constexpr</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a26f67a2750a77cd5fa54e6fdb8e43bef" name="a26f67a2750a77cd5fa54e6fdb8e43bef"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a26f67a2750a77cd5fa54e6fdb8e43bef">&#9670;&#160;</a></span>z() <span class="overload">[2/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename type , size_t dims&gt; </div>
+<div class="memtemplate">
+template&lt;bool condition = (dims == 3), typename  = std::enable_if_t&lt;condition&gt;&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">constexpr const type &amp; <a class="el" href="structvt_1_1utils_1_1vec.html">vt::utils::vec</a>&lt; type, dims &gt;::z </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">constexpr</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <h2 class="groupheader">Member Data Documentation</h2>
 <a id="a445445601cb54aeb0ee37bf06b7ef39f" name="a445445601cb54aeb0ee37bf06b7ef39f"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a445445601cb54aeb0ee37bf06b7ef39f">&#9670;&#160;</a></span>data</h2>
@@ -476,9 +1701,33 @@ template&lt;typename type , size_t dims&gt; </div>
 template&lt;typename type , size_t dims&gt; </div>
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="structvt_1_1utils_1_1vec.html#a1ac0518a2b4aab167d8007952d455247">data_container</a> <a class="el" href="structvt_1_1utils_1_1vec.html">vt::utils::vec</a>&lt; type, dims &gt;::data {}</td>
+          <td class="memname"><a class="el" href="structvt_1_1utils_1_1vec.html#a8544cf294cc55b81a4818c7ae85fd3f2">data_container</a> <a class="el" href="structvt_1_1utils_1_1vec.html">vt::utils::vec</a>&lt; type, dims &gt;::data {}</td>
         </tr>
       </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a8f6063f2e21a84ddf8e880de3586c75c" name="a8f6063f2e21a84ddf8e880de3586c75c"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a8f6063f2e21a84ddf8e880de3586c75c">&#9670;&#160;</a></span>dimensions</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename type , size_t dims&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">constexpr size_t <a class="el" href="structvt_1_1utils_1_1vec.html">vt::utils::vec</a>&lt; type, dims &gt;::dimensions = dims</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span><span class="mlabel">constexpr</span></span>  </td>
+  </tr>
+</table>
 </div><div class="memdoc">
 
 </div>

@@ -143,12 +143,8 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:a73e163e90b4b763b34705059ce6d5f90"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a99df19f4e8d89c3f7ff1bbd3fd940fc2" id="r_a99df19f4e8d89c3f7ff1bbd3fd940fc2"><td class="memItemLeft" align="right" valign="top">virtual std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classvt_1_1video__importer.html#a99df19f4e8d89c3f7ff1bbd3fd940fc2">importer_display_icon</a> () const =0</td></tr>
 <tr class="separator:a99df19f4e8d89c3f7ff1bbd3fd940fc2"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a605914f67d6957bab837db4049fef765" id="r_a605914f67d6957bab837db4049fef765"><td class="memItemLeft" align="right" valign="top">virtual std::unique_ptr&lt; <a class="el" href="classvt_1_1video__resource.html">video_resource</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classvt_1_1video__importer.html#a605914f67d6957bab837db4049fef765">import_video</a> (<a class="el" href="namespacevt.html#ad54d71114ec302acf34f88f20ca320a1">video_id_t</a> id, std::any data)=0</td></tr>
-<tr class="separator:a605914f67d6957bab837db4049fef765"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a52b93d94a05019c53dc267853f5437c5" id="r_a52b93d94a05019c53dc267853f5437c5"><td class="memItemLeft" align="right" valign="top">virtual std::unique_ptr&lt; <a class="el" href="classvt_1_1video__resource.html">video_resource</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classvt_1_1video__importer.html#a52b93d94a05019c53dc267853f5437c5">import_video</a> (const nlohmann::ordered_json &amp;json)=0</td></tr>
-<tr class="separator:a52b93d94a05019c53dc267853f5437c5"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:afec61d202d94d2804a4fcd68f12a1562" id="r_afec61d202d94d2804a4fcd68f12a1562"><td class="memItemLeft" align="right" valign="top">virtual std::function&lt; bool(std::vector&lt; std::any &gt; &amp;)&gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classvt_1_1video__importer.html#afec61d202d94d2804a4fcd68f12a1562">prepare_video_import_task</a> ()=0</td></tr>
-<tr class="separator:afec61d202d94d2804a4fcd68f12a1562"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7eb5d760d8939d9bbf2a3648f987d2a2" id="r_a7eb5d760d8939d9bbf2a3648f987d2a2"><td class="memItemLeft" align="right" valign="top">virtual std::shared_ptr&lt; <a class="el" href="classvt_1_1video__resource.html">video_resource</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classvt_1_1video__importer.html#a7eb5d760d8939d9bbf2a3648f987d2a2">import_video</a> (const nlohmann::ordered_json &amp;json)=0</td></tr>
+<tr class="separator:a7eb5d760d8939d9bbf2a3648f987d2a2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a1bd7760566ff2dae0c28b9004e2d5cd4" id="r_a1bd7760566ff2dae0c28b9004e2d5cd4"><td class="memItemLeft" align="right" valign="top">virtual bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classvt_1_1video__importer.html#a1bd7760566ff2dae0c28b9004e2d5cd4">available</a> ()=0</td></tr>
 <tr class="separator:a1bd7760566ff2dae0c28b9004e2d5cd4"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
@@ -263,8 +259,8 @@ Static Public Member Functions</h2></td></tr>
 
 </div>
 </div>
-<a id="a52b93d94a05019c53dc267853f5437c5" name="a52b93d94a05019c53dc267853f5437c5"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a52b93d94a05019c53dc267853f5437c5">&#9670;&#160;</a></span>import_video() <span class="overload">[1/2]</span></h2>
+<a id="a7eb5d760d8939d9bbf2a3648f987d2a2" name="a7eb5d760d8939d9bbf2a3648f987d2a2"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a7eb5d760d8939d9bbf2a3648f987d2a2">&#9670;&#160;</a></span>import_video()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -273,7 +269,7 @@ Static Public Member Functions</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">virtual std::unique_ptr&lt; <a class="el" href="classvt_1_1video__resource.html">video_resource</a> &gt; vt::video_importer::import_video </td>
+          <td class="memname">virtual std::shared_ptr&lt; <a class="el" href="classvt_1_1video__resource.html">video_resource</a> &gt; vt::video_importer::import_video </td>
           <td>(</td>
           <td class="paramtype">const nlohmann::ordered_json &amp;&#160;</td>
           <td class="paramname"><em>json</em></td><td>)</td>
@@ -287,45 +283,7 @@ Static Public Member Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Implemented in <a class="el" href="classvt_1_1google__drive__video__importer.html#a1bcc5cbfef205e888bc38074e8eb8fb2">vt::google_drive_video_importer</a>, and <a class="el" href="classvt_1_1local__video__importer.html#a51a14c804f19a821af34ba1b487caf59">vt::local_video_importer</a>.</p>
-
-</div>
-</div>
-<a id="a605914f67d6957bab837db4049fef765" name="a605914f67d6957bab837db4049fef765"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a605914f67d6957bab837db4049fef765">&#9670;&#160;</a></span>import_video() <span class="overload">[2/2]</span></h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">virtual std::unique_ptr&lt; <a class="el" href="classvt_1_1video__resource.html">video_resource</a> &gt; vt::video_importer::import_video </td>
-          <td>(</td>
-          <td class="paramtype"><a class="el" href="namespacevt.html#ad54d71114ec302acf34f88f20ca320a1">video_id_t</a>&#160;</td>
-          <td class="paramname"><em>id</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">std::any&#160;</td>
-          <td class="paramname"><em>data</em>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">pure virtual</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Implemented in <a class="el" href="classvt_1_1google__drive__video__importer.html#a26cd47654efe2fb0afe0a18edbeb94c3">vt::google_drive_video_importer</a>, and <a class="el" href="classvt_1_1local__video__importer.html#a87c9f0b41dd03a390d0931370692331b">vt::local_video_importer</a>.</p>
+<p>Implemented in <a class="el" href="classvt_1_1google__drive__video__importer.html#a54fb9f16f116f09f7b1dc9c2a3946fad">vt::google_drive_video_importer</a>, and <a class="el" href="classvt_1_1local__video__importer.html#aff24f1ee9fa179e9cf2793ea2c3b670c">vt::local_video_importer</a>.</p>
 
 </div>
 </div>
@@ -407,33 +365,6 @@ Static Public Member Functions</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Implemented in <a class="el" href="classvt_1_1google__drive__video__importer.html#a9018e2b7645951a5c3f591b0fffe749e">vt::google_drive_video_importer</a>, and <a class="el" href="classvt_1_1local__video__importer.html#aa5f3644b10f28598ca3fc76f752241d0">vt::local_video_importer</a>.</p>
-
-</div>
-</div>
-<a id="afec61d202d94d2804a4fcd68f12a1562" name="afec61d202d94d2804a4fcd68f12a1562"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#afec61d202d94d2804a4fcd68f12a1562">&#9670;&#160;</a></span>prepare_video_import_task()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">virtual std::function&lt; bool(std::vector&lt; std::any &gt; &amp;)&gt; vt::video_importer::prepare_video_import_task </td>
-          <td>(</td>
-          <td class="paramname"></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">pure virtual</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Implemented in <a class="el" href="classvt_1_1google__drive__video__importer.html#ae66fa257f7e281d27ce33a3fc7623c47">vt::google_drive_video_importer</a>, and <a class="el" href="classvt_1_1local__video__importer.html#a370abc77b2af7920bfa6ff57abaf00cf">vt::local_video_importer</a>.</p>
 
 </div>
 </div>

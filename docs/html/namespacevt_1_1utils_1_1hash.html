@@ -129,10 +129,10 @@ Enumerations</h2></td></tr>
 Functions</h2></td></tr>
 <tr class="memitem:a69750e46117557373bb0665a95ca9798" id="r_a69750e46117557373bb0665a95ca9798"><td class="memItemLeft" align="right" valign="top">uint64_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacevt_1_1utils_1_1hash.html#a69750e46117557373bb0665a95ca9798">fnv_hash</a> (const std::filesystem::path &amp;filepath)</td></tr>
 <tr class="separator:a69750e46117557373bb0665a95ca9798"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a9cde4b39e89c58026625cc453ec19df3" id="r_a9cde4b39e89c58026625cc453ec19df3"><td class="memItemLeft" align="right" valign="top">std::vector&lt; uint8_t &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacevt_1_1utils_1_1hash.html#a9cde4b39e89c58026625cc453ec19df3">sha256</a> (std::string_view string)</td></tr>
-<tr class="separator:a9cde4b39e89c58026625cc453ec19df3"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aea33945d827eebc13b8170cd65441abf" id="r_aea33945d827eebc13b8170cd65441abf"><td class="memItemLeft" align="right" valign="top">std::vector&lt; uint8_t &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacevt_1_1utils_1_1hash.html#aea33945d827eebc13b8170cd65441abf">sha256_file</a> (const std::filesystem::path &amp;filepath)</td></tr>
-<tr class="separator:aea33945d827eebc13b8170cd65441abf"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad3fa3cefafb1ad2cbf99c8c7026eba89" id="r_ad3fa3cefafb1ad2cbf99c8c7026eba89"><td class="memItemLeft" align="right" valign="top">std::array&lt; uint8_t, sha256_byte_count &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacevt_1_1utils_1_1hash.html#ad3fa3cefafb1ad2cbf99c8c7026eba89">sha256</a> (std::string_view string)</td></tr>
+<tr class="separator:ad3fa3cefafb1ad2cbf99c8c7026eba89"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a071dac89b5168f21b217d8aeb6d81848" id="r_a071dac89b5168f21b217d8aeb6d81848"><td class="memItemLeft" align="right" valign="top">std::optional&lt; std::array&lt; uint8_t, sha256_byte_count &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacevt_1_1utils_1_1hash.html#a071dac89b5168f21b217d8aeb6d81848">sha256_file</a> (const std::filesystem::path &amp;filepath)</td></tr>
+<tr class="separator:a071dac89b5168f21b217d8aeb6d81848"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab4c61d8f1cf0787c154248303e3e5100" id="r_ab4c61d8f1cf0787c154248303e3e5100"><td class="memItemLeft" align="right" valign="top">std::vector&lt; uint8_t &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacevt_1_1utils_1_1hash.html#ab4c61d8f1cf0787c154248303e3e5100">hex_to_bytes</a> (std::string_view hex_string)</td></tr>
 <tr class="separator:ab4c61d8f1cf0787c154248303e3e5100"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a6d700fbe19fcffdf935ab52b6df9a1dc" id="r_a6d700fbe19fcffdf935ab52b6df9a1dc"><td class="memTemplParams" colspan="2">template&lt;typename container &gt; </td></tr>
@@ -241,14 +241,14 @@ template&lt;typename container &gt; </div>
 
 </div>
 </div>
-<a id="a9cde4b39e89c58026625cc453ec19df3" name="a9cde4b39e89c58026625cc453ec19df3"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a9cde4b39e89c58026625cc453ec19df3">&#9670;&#160;</a></span>sha256()</h2>
+<a id="ad3fa3cefafb1ad2cbf99c8c7026eba89" name="ad3fa3cefafb1ad2cbf99c8c7026eba89"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad3fa3cefafb1ad2cbf99c8c7026eba89">&#9670;&#160;</a></span>sha256()</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">std::vector&lt; uint8_t &gt; vt::utils::hash::sha256 </td>
+          <td class="memname">std::array&lt; uint8_t, sha256_byte_count &gt; vt::utils::hash::sha256 </td>
           <td>(</td>
           <td class="paramtype">std::string_view&#160;</td>
           <td class="paramname"><em>string</em></td><td>)</td>
@@ -259,14 +259,14 @@ template&lt;typename container &gt; </div>
 
 </div>
 </div>
-<a id="aea33945d827eebc13b8170cd65441abf" name="aea33945d827eebc13b8170cd65441abf"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aea33945d827eebc13b8170cd65441abf">&#9670;&#160;</a></span>sha256_file()</h2>
+<a id="a071dac89b5168f21b217d8aeb6d81848" name="a071dac89b5168f21b217d8aeb6d81848"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a071dac89b5168f21b217d8aeb6d81848">&#9670;&#160;</a></span>sha256_file()</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">std::vector&lt; uint8_t &gt; vt::utils::hash::sha256_file </td>
+          <td class="memname">std::optional&lt; std::array&lt; uint8_t, sha256_byte_count &gt; &gt; vt::utils::hash::sha256_file </td>
           <td>(</td>
           <td class="paramtype">const std::filesystem::path &amp;&#160;</td>
           <td class="paramname"><em>filepath</em></td><td>)</td>

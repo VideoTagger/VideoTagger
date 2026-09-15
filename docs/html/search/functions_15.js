@@ -1,4 +1,29 @@
 var searchData=
 [
-  ['zero_0',['zero',['../structvt_1_1timestamp.html#a5a6ae4b482d70be28e3c514f7953693e',1,'vt::timestamp']]]
+  ['w_0',['w',['../structvt_1_1utils_1_1vec.html#a0717d922b6b27c002498932f699c47c6',1,'vt::utils::vec::w() const'],['../structvt_1_1utils_1_1vec.html#ae896ca14e4edcb4a22a5443c3974b725',1,'vt::utils::vec::w()']]],
+  ['wait_1',['wait',['../structvt_1_1script__handle.html#a7c66224ce6f0a00bf0620268549bfd80',1,'vt::script_handle']]],
+  ['wait_5ffor_5fall_2',['wait_for_all',['../structvt_1_1main__thread__executor.html#abf7de5352d438b0bcb8591b8c60c523c',1,'vt::main_thread_executor::wait_for_all()'],['../structvt_1_1thread__pool__executor.html#a8782a55c0fdba7166393edd4b6e9715f',1,'vt::thread_pool_executor::wait_for_all()'],['../structvt_1_1impl_1_1task__executor.html#a73c71d74db75f628c3ca86b8a6115483',1,'vt::impl::task_executor::wait_for_all()'],['../structvt_1_1task__manager.html#a7824484073f8a17bd1cd1e3b09136326',1,'vt::task_manager::wait_for_all()']]],
+  ['wait_5ffor_5fcancellation_3',['wait_for_cancellation',['../structvt_1_1cancellation__token__data.html#a1dc822cff9cf73dfb53eda9c21b32223',1,'vt::cancellation_token_data::wait_for_cancellation()'],['../structvt_1_1cancellation__token.html#a50d2e8eb10029f290ceb42a9940d2ff4',1,'vt::cancellation_token::wait_for_cancellation()']]],
+  ['wait_5ffor_5fcompletion_4',['wait_for_completion',['../classvt_1_1download__entry.html#a9c0681eab8c456061ea7eb48c1bccd72',1,'vt::download_entry']]],
+  ['wand_5fgrabcut_5fextension_5',['wand_grabcut_extension',['../structvt_1_1ui_1_1wand__grabcut__extension.html#a4667521aad216b67125cc66aec1101ba',1,'vt::ui::wand_grabcut_extension']]],
+  ['wand_5fsam2_5f1_5fextension_6',['wand_sam2_1_extension',['../structvt_1_1ui_1_1wand__sam2__1__extension.html#af3dc2d15b3911f69167b8f4afc244a68',1,'vt::ui::wand_sam2_1_extension']]],
+  ['wand_5fsam2_5fextension_7',['wand_sam2_extension',['../structvt_1_1ui_1_1wand__sam2__extension.html#ab242f1ba33af18beb8297cce58192d27',1,'vt::ui::wand_sam2_extension']]],
+  ['wand_5fsam3_5fextension_8',['wand_sam3_extension',['../structvt_1_1ui_1_1wand__sam3__extension.html#a332db3b7133ad3b877e5fa2596a3aeee',1,'vt::ui::wand_sam3_extension']]],
+  ['wand_5ftool_9',['wand_tool',['../classvt_1_1wand__tool.html#adaa9d92f06671ee43aa8e3c53ee860e3',1,'vt::wand_tool']]],
+  ['wand_5ftool_5fextension_10',['wand_tool_extension',['../structvt_1_1ui_1_1impl_1_1wand__tool__extension.html#a3ce154e3459b388c4528293fb2ef869b',1,'vt::ui::impl::wand_tool_extension']]],
+  ['wand_5fwatershed_5fextension_11',['wand_watershed_extension',['../structvt_1_1ui_1_1wand__watershed__extension.html#af4519fb97d89758a83bbd640d60adeaa',1,'vt::ui::wand_watershed_extension']]],
+  ['warn_12',['warn',['../structvt_1_1debug.html#acd9dbc57d39afdb68e96ffa2bf3cce01',1,'vt::debug']]],
+  ['warn_5fsrc_13',['warn_src',['../structvt_1_1debug.html#ad5f054e0bad77a93d3619d0f6d92837d',1,'vt::debug']]],
+  ['widget_5flist_14',['widget_list',['../structvt_1_1ui_1_1widget__list.html#a60afaf9b23deeb6c3e35dac6b30bebcf',1,'vt::ui::widget_list']]],
+  ['width_15',['width',['../classvt_1_1rectangle__shape.html#a17119de36ff90197b23b5175ea78ff8d',1,'vt::rectangle_shape::width()'],['../classvt_1_1video__stream.html#a7683f5c4d7a59cbc49569a13a2ef9d9b',1,'vt::video_stream::width()'],['../classvt_1_1video__resource.html#a0609c457e0e858fa89e78ada02ff62cf',1,'vt::video_resource::width()'],['../classvt_1_1video__decoder.html#a2f9322aa9a368a9005f4292240867988',1,'vt::video_decoder::width()'],['../classvt_1_1gl__texture.html#a02c6291bc66d6485873be8de1239d9af',1,'vt::gl_texture::width()'],['../classvt_1_1image.html#a863d79939d754a2cf565421d5b12a2c6',1,'vt::image::width()'],['../structvt_1_1system__window__resize__event.html#a43de1852607161f394c9d765417f64b4',1,'vt::system_window_resize_event::width()'],['../classvt_1_1video__frame.html#a36d42f0300a4d3133e28b5a2fe9ca68a',1,'vt::video_frame::width()']]],
+  ['window_16',['window',['../structvt_1_1system__window__event.html#ad536d472e3ba0cbad06cd705db727438',1,'vt::system_window_event::window()'],['../structvt_1_1ui__window__event.html#a14b1f70db250ce465ad30acea7c85a1c',1,'vt::ui_window_event::window()'],['../structvt_1_1ui_1_1window.html#aec76a7eba50d5cc086da25c010a8d12e',1,'vt::ui::window::window()']]],
+  ['window_5fname_17',['window_name',['../structvt_1_1ui_1_1popup.html#ad7e25403ca68b85cde7feccd11fb643c',1,'vt::ui::popup']]],
+  ['with_5foverlay_18',['with_overlay',['../structvt_1_1ui_1_1windows_1_1video__window.html#a993ad724b04eb1ccba3538fa3347b36c',1,'vt::ui::windows::video_window']]],
+  ['with_5fshape_5fdata_19',['with_shape_data',['../structvt_1_1impl_1_1with__shape__data.html#ab9bbbde41801cd3d8a32fea1b2074c89',1,'vt::impl::with_shape_data']]],
+  ['with_5ftooltip_20',['with_tooltip',['../classvt_1_1ui_1_1impl_1_1with__tooltip.html#a133ce03bf39405d41ce5c356091d9c90',1,'vt::ui::impl::with_tooltip::with_tooltip()=default'],['../classvt_1_1ui_1_1impl_1_1with__tooltip.html#a20848910d32860d197b3a1ff8eef2e0d',1,'vt::ui::impl::with_tooltip::with_tooltip(const std::string &amp;tooltip)']]],
+  ['work_5fstealing_5fqueue_21',['work_stealing_queue',['../structvt_1_1work__stealing__queue.html#a340a85e99e8bc962af631ae3950d29be',1,'vt::work_stealing_queue']]],
+  ['worker_5fthread_22',['worker_thread',['../structvt_1_1thread__pool__executor.html#a92da6fdc4887c71e9f6a4b964b1d1ba1',1,'vt::thread_pool_executor']]],
+  ['wrapped_5ftask_23',['wrapped_task',['../structvt_1_1wrapped__task.html#aaf85516332ee1949d180beb7607a7f18',1,'vt::wrapped_task']]],
+  ['write_5fmetadata_5ffields_24',['write_metadata_fields',['../namespacevt.html#a8a4cd2c12e77befe8c001cc8f5d179ac',1,'vt']]],
+  ['write_5fto_5ffile_25',['write_to_file',['../namespacevt_1_1utils_1_1json.html#a6b124da4e1516b9ba32bf29aad3effc1',1,'vt::utils::json']]]
 ];

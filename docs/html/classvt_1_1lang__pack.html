@@ -152,9 +152,20 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:a726fc3ffc79ba00784df18cc30f2a4be"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:afb8738c24a67132769b58189c47d94fa" id="r_afb8738c24a67132769b58189c47d94fa"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classvt_1_1lang__pack.html#afb8738c24a67132769b58189c47d94fa">save</a> (const std::filesystem::path &amp;dir)</td></tr>
 <tr class="separator:afb8738c24a67132769b58189c47d94fa"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac61a69617f698c5cc80430d6378413e2" id="r_ac61a69617f698c5cc80430d6378413e2"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classvt_1_1lang__pack.html#ac61a69617f698c5cc80430d6378413e2">is_template</a> (const std::string &amp;id) const</td></tr>
+<tr class="separator:ac61a69617f698c5cc80430d6378413e2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a346e9fefc250353e82b7a013e5d93534" id="r_a346e9fefc250353e82b7a013e5d93534"><td class="memItemLeft" align="right" valign="top">std::optional&lt; <a class="el" href="structvt_1_1lang__template.html">lang_template</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classvt_1_1lang__pack.html#a346e9fefc250353e82b7a013e5d93534">parse_template</a> (const std::string &amp;id) const</td></tr>
+<tr class="separator:a346e9fefc250353e82b7a013e5d93534"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a52eddf7e5f4178be962b4a550d347af8" id="r_a52eddf7e5f4178be962b4a550d347af8"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classvt_1_1lang__pack.html#a52eddf7e5f4178be962b4a550d347af8">try_parse_template</a> (const std::string &amp;id, <a class="el" href="structvt_1_1lang__template.html">lang_template</a> &amp;target) const</td></tr>
+<tr class="separator:a52eddf7e5f4178be962b4a550d347af8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7b2bf52bd071b3f65dae5593e9d5dd33" id="r_a7b2bf52bd071b3f65dae5593e9d5dd33"><td class="memTemplParams" colspan="2">template&lt;typename... arguments&gt; </td></tr>
+<tr class="memitem:a7b2bf52bd071b3f65dae5593e9d5dd33"><td class="memTemplItemLeft" align="right" valign="top">std::string&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classvt_1_1lang__pack.html#a7b2bf52bd071b3f65dae5593e9d5dd33">get_template</a> (const std::string &amp;id, arguments &amp;&amp;... args)</td></tr>
+<tr class="separator:a7b2bf52bd071b3f65dae5593e9d5dd33"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-static-methods" name="pub-static-methods"></a>
 Static Public Member Functions</h2></td></tr>
+<tr class="memitem:ab98387c88a6c7d59119deefed2abb665" id="r_ab98387c88a6c7d59119deefed2abb665"><td class="memItemLeft" align="right" valign="top">static std::optional&lt; <a class="el" href="classvt_1_1lang__pack.html">lang_pack</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classvt_1_1lang__pack.html#ab98387c88a6c7d59119deefed2abb665">load_from_json</a> (const nlohmann::ordered_json &amp;json, const std::string &amp;<a class="el" href="classvt_1_1lang__pack.html#a8657988083bf5d854383ea445b4c398d">filename</a>)</td></tr>
+<tr class="separator:ab98387c88a6c7d59119deefed2abb665"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a1b384a585d8e8aac7a38668337c73cf7" id="r_a1b384a585d8e8aac7a38668337c73cf7"><td class="memItemLeft" align="right" valign="top">static std::optional&lt; <a class="el" href="classvt_1_1lang__pack.html">lang_pack</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classvt_1_1lang__pack.html#a1b384a585d8e8aac7a38668337c73cf7">load_from_file</a> (const std::filesystem::path &amp;path)</td></tr>
 <tr class="separator:a1b384a585d8e8aac7a38668337c73cf7"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
@@ -293,6 +304,44 @@ Static Public Attributes</h2></td></tr>
 
 </div>
 </div>
+<a id="a7b2bf52bd071b3f65dae5593e9d5dd33" name="a7b2bf52bd071b3f65dae5593e9d5dd33"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a7b2bf52bd071b3f65dae5593e9d5dd33">&#9670;&#160;</a></span>get_template()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename... arguments&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::string vt::lang_pack::get_template </td>
+          <td>(</td>
+          <td class="paramtype">const std::string &amp;&#160;</td>
+          <td class="paramname"><em>id</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">arguments &amp;&amp;...&#160;</td>
+          <td class="paramname"><em>args</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <a id="a250710f6b26524560718fb1a1d8df9d5" name="a250710f6b26524560718fb1a1d8df9d5"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a250710f6b26524560718fb1a1d8df9d5">&#9670;&#160;</a></span>is_dirty()</h2>
 
@@ -303,6 +352,24 @@ Static Public Attributes</h2></td></tr>
           <td class="memname">bool vt::lang_pack::is_dirty </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="ac61a69617f698c5cc80430d6378413e2" name="ac61a69617f698c5cc80430d6378413e2"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ac61a69617f698c5cc80430d6378413e2">&#9670;&#160;</a></span>is_template()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool vt::lang_pack::is_template </td>
+          <td>(</td>
+          <td class="paramtype">const std::string &amp;&#160;</td>
+          <td class="paramname"><em>id</em></td><td>)</td>
           <td> const</td>
         </tr>
       </table>
@@ -342,6 +409,42 @@ Static Public Attributes</h2></td></tr>
           <td class="paramtype">const std::filesystem::path &amp;&#160;</td>
           <td class="paramname"><em>path</em></td><td>)</td>
           <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="ab98387c88a6c7d59119deefed2abb665" name="ab98387c88a6c7d59119deefed2abb665"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab98387c88a6c7d59119deefed2abb665">&#9670;&#160;</a></span>load_from_json()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::optional&lt; <a class="el" href="classvt_1_1lang__pack.html">lang_pack</a> &gt; vt::lang_pack::load_from_json </td>
+          <td>(</td>
+          <td class="paramtype">const nlohmann::ordered_json &amp;&#160;</td>
+          <td class="paramname"><em>json</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const std::string &amp;&#160;</td>
+          <td class="paramname"><em>filename</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
         </tr>
       </table>
   </td>
@@ -423,6 +526,25 @@ Static Public Attributes</h2></td></tr>
 
 </div>
 </div>
+<a id="a346e9fefc250353e82b7a013e5d93534" name="a346e9fefc250353e82b7a013e5d93534"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a346e9fefc250353e82b7a013e5d93534">&#9670;&#160;</a></span>parse_template()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::optional&lt; <a class="el" href="structvt_1_1lang__template.html">lang_template</a> &gt; vt::lang_pack::parse_template </td>
+          <td>(</td>
+          <td class="paramtype">const std::string &amp;&#160;</td>
+          <td class="paramname"><em>id</em></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<dl class="section return"><dt>Returns</dt><dd>Parsed template if the template with the given id exists and is valid, std::nullopt otherwise </dd></dl>
+
+</div>
+</div>
 <a id="afb8738c24a67132769b58189c47d94fa" name="afb8738c24a67132769b58189c47d94fa"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#afb8738c24a67132769b58189c47d94fa">&#9670;&#160;</a></span>save()</h2>
 
@@ -456,6 +578,35 @@ Static Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
+
+</div>
+</div>
+<a id="a52eddf7e5f4178be962b4a550d347af8" name="a52eddf7e5f4178be962b4a550d347af8"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a52eddf7e5f4178be962b4a550d347af8">&#9670;&#160;</a></span>try_parse_template()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool vt::lang_pack::try_parse_template </td>
+          <td>(</td>
+          <td class="paramtype">const std::string &amp;&#160;</td>
+          <td class="paramname"><em>id</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="structvt_1_1lang__template.html">lang_template</a> &amp;&#160;</td>
+          <td class="paramname"><em>target</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<dl class="section return"><dt>Returns</dt><dd>True if the template is valid, false otherwise. If the template is valid, the parsed template is stored in target </dd></dl>
 
 </div>
 </div>
