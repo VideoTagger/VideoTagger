@@ -56,6 +56,9 @@
 #include <attributes/tools/extensions/wand_sam3_extension.hpp>
 #include <models/sam2/sam2_model.hpp>
 #include <models/sam3/sam3_model.hpp>
+#include <models/vit_model.hpp>
+#include <models/da_siam_rpn_model.hpp>
+#include <models/goturn_model.hpp>
 
 namespace vt
 {
@@ -65,9 +68,9 @@ namespace vt
 		create_popups();
 		init_tool_extension_registry();
 		init_attribute_registry();
-		init_shape_predictor_registries();
 		init_onnx_runtime();
 		init_model_registry();
+		init_shape_tracker_registries();
 	}
 
 	void app_context::init_attribute_registry()
@@ -96,7 +99,7 @@ namespace vt
 		wand_extensions.register_extension<ui::wand_sam3_extension>("sam3", "SAM 3");
 	}
 
-	void app_context::init_shape_predictor_registries()
+	void app_context::init_shape_tracker_registries()
 	{
 		std::tuple<
 			rectangle_shape,
@@ -133,21 +136,39 @@ namespace vt
 		kcf_params.detection_threshold = 0.1f;
 		rectangle_tracker_registry.new_factory<rectangle_tracker_factory<kcf_rectangle_tracker>>("KCF", kcf_params);
 		
-		vit_rectangle_tracker::params vit_params;
-		vit_params.net = (ctx_.models_dir_filepath / "vitTracker.onnx").u8string();
-		rectangle_tracker_registry.new_factory<rectangle_tracker_factory<vit_rectangle_tracker>>("Vit", vit_params);
+		{
+			auto model_ptr = ctx_.model_registry.get_model<vit_model>();
+			if (model_ptr != nullptr)
+			{
+				vit_rectangle_tracker::params vit_params;
+				vit_params.net = model_ptr->path_of("model")->u8string();
+				rectangle_tracker_registry.new_factory<rectangle_tracker_factory<vit_rectangle_tracker>>("Vit", vit_params);
+			}
+		}
+
+		{
+			auto model_ptr = ctx_.model_registry.get_model<da_siam_rpn_model>();
+			if (model_ptr != nullptr)
+			{
+				da_siam_rpn_rectangle_tracker::params da_siam_rpn_params;
+				da_siam_rpn_params.model = model_ptr->path_of("model")->u8string();
+				da_siam_rpn_params.kernel_r1 = model_ptr->path_of("kernel_r1")->u8string();
+				da_siam_rpn_params.kernel_cls1 = model_ptr->path_of("kernel_cls1")->u8string();
+				rectangle_tracker_registry.new_factory<rectangle_tracker_factory<da_siam_rpn_rectangle_tracker>>("DaSiamRPN", da_siam_rpn_params);
+			}
+		}
+
+		{
+			auto model_ptr = ctx_.model_registry.get_model<goturn_model>();
+			if (model_ptr != nullptr)
+			{
+				goturn_rectangle_tracker::params goturn_params;
+				goturn_params.model_bin = model_ptr->path_of("model")->u8string();
+				goturn_params.model_txt = model_ptr->path_of("prototxt")->u8string();
+				rectangle_tracker_registry.new_factory<rectangle_tracker_factory<goturn_rectangle_tracker>>("GOTURN", goturn_params);
+			}
+		}
 		
-		goturn_rectangle_tracker::params goturn_params;
-		goturn_params.model_txt = (ctx_.models_dir_filepath / "goturn.prototxt").u8string();
-		goturn_params.model_bin = (ctx_.models_dir_filepath / "goturn.caffemodel").u8string();
-		rectangle_tracker_registry.new_factory<rectangle_tracker_factory<goturn_rectangle_tracker>>("GOTURN", goturn_params);
-
-		da_siam_rpn_rectangle_tracker::params da_siam_rpn_params;
-		da_siam_rpn_params.model = (ctx_.models_dir_filepath / "object_tracking_dasiamrpn_model_2021nov.onnx").u8string();
-		da_siam_rpn_params.kernel_cls1 = (ctx_.models_dir_filepath / "object_tracking_dasiamrpn_kernel_cls1_2021nov.onnx").u8string();
-		da_siam_rpn_params.kernel_r1 = (ctx_.models_dir_filepath / "object_tracking_dasiamrpn_kernel_r1_2021nov.onnx").u8string();
-		rectangle_tracker_registry.new_factory<rectangle_tracker_factory<da_siam_rpn_rectangle_tracker>>("DaSiamRPN", da_siam_rpn_params);
-
 		//TODO: register only if required dependencies are available
 		//rectangle_registry.new_factory<rectangle_tracker_factory<da_siam_rpn_rectangle_tracker>>("DaSiamRPN");
 
@@ -161,6 +182,10 @@ namespace vt
 		model_registry.register_model<sam2_model>(sam2_model_variant::default_variant);
 		model_registry.register_model<sam2_1_model>(sam2_model_variant::default_variant);
 		model_registry.register_model<sam3_model>(sam3_model_variant::vit_h);
+
+		model_registry.register_model<vit_model>();
+		model_registry.register_model<da_siam_rpn_model>();
+		model_registry.register_model<goturn_model>();
 		debug::log("Finished initializing model registry");
 	}
 

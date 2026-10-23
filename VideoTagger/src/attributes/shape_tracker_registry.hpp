@@ -19,6 +19,12 @@ namespace vt
 		std::unordered_map<std::string, std::unique_ptr<shape_tracker_factory<shape_t>>> registry_;
 
 	public:
+		virtual bool is_tracker_available(const std::string& name) const override
+		{
+			auto* factory = get_factory(name);
+			return factory != nullptr and factory->is_available();
+		}
+
 		template<typename tracker_factory_type, typename... arguments>
 		tracker_factory_type& new_factory(const std::string& name, arguments&&... args)
 		{
@@ -46,6 +52,12 @@ namespace vt
 			if (factory == nullptr)
 			{
 				debug::error("No tracker factory registered with name '{}'", name);
+				return nullptr;
+			}
+
+			if (!factory->is_available())
+			{
+				debug::error("Tracker factory with name '{}' is not available", name);
 				return nullptr;
 			}
 

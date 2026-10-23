@@ -167,7 +167,7 @@ namespace vt
 
 		void init_attribute_registry();
 		void init_tool_extension_registry();
-		void init_shape_predictor_registries();
+		void init_shape_tracker_registries();
 		void init_model_registry();
 		void init_onnx_runtime();
 

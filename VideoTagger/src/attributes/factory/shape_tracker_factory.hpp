@@ -18,6 +18,11 @@ namespace vt
 			return name_;
 		}
 
+		virtual bool is_available() const
+		{
+			return true;
+		}
+
 		virtual std::unique_ptr<impl::shape_tracker<shape_type>> new_shape_tracker() = 0;
 	};
 }

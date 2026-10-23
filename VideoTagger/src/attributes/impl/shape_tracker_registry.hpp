@@ -33,6 +33,8 @@ namespace vt::impl
 			return std::find(tracker_names_.begin(), tracker_names_.end(), name) != tracker_names_.end();
 		}
 
+		virtual bool is_tracker_available(const std::string& name) const = 0;
+
 		const std::optional<std::string>& default_name() const
 		{
 			return default_name_;

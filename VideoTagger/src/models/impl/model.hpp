@@ -38,7 +38,7 @@ namespace vt::impl
 		virtual void on_unregister();
 
 		virtual void download(bool wait_for_download, const std::function<void()>& callback = nullptr) = 0;
-		virtual void remove() = 0;
+		virtual void remove();
 
 		///@returns true if the model is loaded successfully, false otherwise.
 		bool load_if_needed();

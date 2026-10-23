@@ -10,9 +10,32 @@
 #include "video_decoder.hpp"
 #include "frame_converter.hpp"
 
-
 namespace vt
 {
+	namespace impl
+	{
+		template<typename pixel_format>
+		static constexpr AVPixelFormat pixel_format_to_av_pixel_format()
+		{
+			if constexpr (std::is_same_v<pixel_format, image_pixel_format::gray8>)
+			{
+				return AVPixelFormat::AV_PIX_FMT_GRAY8;
+			}
+			else if constexpr (std::is_same_v<pixel_format, image_pixel_format::rgb8>)
+			{
+				return AVPixelFormat::AV_PIX_FMT_RGB24;
+			}
+			else if constexpr (std::is_same_v<pixel_format, image_pixel_format::bgr8>)
+			{
+				return AVPixelFormat::AV_PIX_FMT_BGR24;
+			}
+			else
+			{
+				static_assert(false, "Unsupported pixel format");
+			}
+		}
+	}
+
 	class video_stream
 	{
 	public:
@@ -74,6 +97,7 @@ namespace vt
 		 *
 		 * The image will only be updated if the current frame changes.
 		 *
+		 * @tparam pixel_format The pixel format of the image.
 		 * @param image The image to update with the current frame.
 		 * @param target_timestamp The timestamp of the frame to update to.
 		 * @param force_update If true, the image will be updated even if the current frame does not change.
@@ -81,7 +105,16 @@ namespace vt
 		 *
 		 * @return true if the current frame was updated, false otherwise.
 		 */
-		bool update_frame(image<image_pixel_format::rgb8>& image, std::chrono::nanoseconds target_timestamp, bool force_update = false, bool skip_disposable = false);
+		template<typename pixel_format>
+		bool update_frame(image<pixel_format>& image, std::chrono::nanoseconds target_timestamp, bool force_update = false, bool skip_disposable = false)
+		{
+			if (!update_current_frame(target_timestamp, skip_disposable) and !force_update)
+			{
+				return false;
+			}
+
+			return update_from_current_frame(image);
+		}
 
 		/**
 		 * @brief Update the current frame to the frame with the specified timestamp and update the texture with it if it's necessary.
@@ -102,6 +135,7 @@ namespace vt
 		 *
 		 * The pixels will only be updated if the current frame changes.
 		 *
+		 * @tparam pixel_format The pixel format of the image.
 		 * @param pixels The pixel array to update with the current frame. If the array doesn't match the required size it will be resized.
 		 * @param width The width of the image.
 		 * @param height The height of the image.
@@ -111,7 +145,16 @@ namespace vt
 		 *
 		 * @return true if the current frame was updated, false otherwise.
 		 */
-		bool update_frame(std::vector<uint8_t>& pixels, int width, int height, std::chrono::nanoseconds target_timestamp, bool force_update = false, bool skip_disposable = false);
+		template<typename pixel_format>
+		bool update_frame(std::vector<uint8_t>& pixels, int width, int height, std::chrono::nanoseconds target_timestamp, bool force_update = false, bool skip_disposable = false)
+		{
+			if (!update_current_frame(target_timestamp, skip_disposable) and !force_update)
+			{
+				return false;
+			}
+
+			return update_from_current_frame<pixel_format>(pixels, width, height);
+		}
 		
 		/**
 		 * @brief Update the current frame to the frame with the specified timestamp if it is necessary.
@@ -135,22 +178,46 @@ namespace vt
 		/**
 		 * @brief Update the given image with the current frame
 		 * 
+		 * @tparam pixel_format The pixel format of the image.
 		 * @param image The image to update with the current frame.
 		 * 
 		 * @return true if the image was updated, false if there was no current frame or an error occurred.
 		 */
-		bool update_from_current_frame(image<image_pixel_format::rgb8>& image);
+		template<typename pixel_format>
+		bool update_from_current_frame(image<pixel_format>& image)
+		{
+			static thread_local std::vector<uint8_t> conversion_buffer;
+
+			bool frame_updated = update_from_current_frame<pixel_format>(conversion_buffer, image.width(), image.height());
+
+			if (frame_updated)
+			{
+				image.set_data(reinterpret_cast<pixel_format*>(conversion_buffer.data()));
+			}
+
+			return frame_updated;
+		}
 
 		/**
 		 * @brief Update the given pixel array with the current frame
 		 *
+		 * @tparam pixel_format The pixel format of the image.
 		 * @param pixels The pixel array to update with the current frame. If the array doesn't match the required size it will be resized.
 		 * @param width The width of the image.
 		 * @param height The height of the image.
 		 *
 		 * @return true if the pixels were updated, false if there was no current frame or an error occurred.
 		 */
-		bool update_from_current_frame(std::vector<uint8_t>& pixels, int width, int height);
+		template<typename pixel_format>
+		bool update_from_current_frame(std::vector<uint8_t>& pixels, int width, int height)
+		{
+			if (!current_frame_.has_value())
+			{
+				return false;
+			}
+
+			return frame_converter_.convert_frame(*current_frame_, pixels, width, height, impl::pixel_format_to_av_pixel_format<pixel_format>());
+		}
 
 		[[nodiscard]] bool is_open() const;
 		[[nodiscard]] bool eof() const;
@@ -180,13 +247,36 @@ namespace vt
 		/**
 		 * @brief Generate a thumbnail of the open video and save it in the given pixel array. Does nothing if no video is open.
 		 *
+		 * @tparam pixel_format The pixel format of the thumbnail.
 		 * @param pixels The pixel array to store the thumbnail in. If the array doesn't match the required size it will be resized.
 		 * @param width The width of the thumbnail.
 		 * @param height The height of the thumbnail.
 		 * @param timestamp If has value, the thumbnail will be generated from the frame at the specified timestamp.
 		 *  Otherwise, it will be generated from the middle frame of the video.
 		 */
-		void get_thumbnail(std::vector<uint8_t>& pixels, int width, int height, std::optional<std::chrono::nanoseconds> timestamp = std::nullopt);
+		template<typename pixel_format>
+		void get_thumbnail(std::vector<uint8_t>& pixels, int width, int height, std::optional<std::chrono::nanoseconds> timestamp = std::nullopt)
+		{
+			if (!is_open())
+			{
+				return;
+			}
+
+			std::optional<std::chrono::nanoseconds> current_ts = current_frame_.has_value() ? std::make_optional(current_frame_->timestamp()) : std::nullopt;
+
+			if (!timestamp.has_value())
+			{
+				timestamp = duration() / 2;
+			}
+
+			seek(*timestamp);
+			update_frame<pixel_format>(pixels, width, height, *timestamp);
+
+			if (current_ts.has_value())
+			{
+				seek(*current_ts);
+			}
+		}
 
 		//static void clear_yuv_texture(GLuint texture, uint8_t r, uint8_t g, uint8_t b);
 

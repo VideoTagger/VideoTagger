@@ -2,14 +2,18 @@
 #include <type_traits>
 
 #include <image/image_pixel_format.hpp>
-#include <image/image.hpp>
 
 namespace vt
 {
-	template<typename target_type>
-	struct rgb_to_hsv_converter
+	template<typename source_format, typename target_format>
+	struct image_converter;
+
+	template<template<typename> typename source_format, typename source_type, template<typename> typename target_format, typename target_type>
+	struct image_converter<source_format<source_type>, target_format<target_type>>;
+
+	template<typename source_type, typename target_type>
+	struct image_converter<image_pixel_format::rgb<source_type>, image_pixel_format::hsv<target_type>>
 	{
-		template<typename source_type>
 		image_pixel_format::hsv<target_type> operator()(const image_pixel_format::rgb<source_type>& src) const
 		{
 			// Formula: https://docs.opencv.org/3.4.20/de/d25/imgproc_color_conversions.html#color_convert_rgb_hsv
@@ -79,6 +83,15 @@ namespace vt
 			{
 				return { h, s, v };
 			}
+		}
+	};
+
+	template<typename source_type, typename target_type>
+	struct image_converter<image_pixel_format::rgb<source_type>, image_pixel_format::bgr<target_type>>
+	{
+		image_pixel_format::bgr<target_type> operator()(const image_pixel_format::rgb<source_type>& src) const
+		{
+			return { static_cast<target_type>(src.b), static_cast<target_type>(src.g), static_cast<target_type>(src.r) };
 		}
 	};
 }

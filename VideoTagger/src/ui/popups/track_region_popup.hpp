@@ -37,6 +37,7 @@ namespace vt::ui
 		bool replace_keyframes_{ false };
 		event_source event_source_;
 		track_which_regions which_regions_{};
+		bool close_popup_{ false };
 
 	public:
 		virtual void on_display() override;
