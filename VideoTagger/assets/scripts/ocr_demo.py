@@ -4,7 +4,7 @@ import sys
 from typing import Any
 from PIL import Image
 import numpy as np
-from vt import *
+from videotagger import *
 
 import cv2
 import tesserocr

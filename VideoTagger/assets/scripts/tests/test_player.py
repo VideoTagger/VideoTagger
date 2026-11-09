@@ -1,4 +1,4 @@
-from vt import *
+from videotagger import *
 
 
 class test_player(Script):

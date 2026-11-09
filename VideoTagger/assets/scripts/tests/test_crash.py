@@ -1,4 +1,4 @@
-from vt import *
+from videotagger import *
 
 This test may crash the whole application, if the exception is not handled properly.
 

@@ -1,4 +1,4 @@
-import vt
+import videotagger as vt
 import time
 
 

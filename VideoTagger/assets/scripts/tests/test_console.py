@@ -1,6 +1,5 @@
 import sys
-from vt import *
-
+from videotagger import *
 
 class test_console(Script):
 	def has_progress(self: Script) -> bool:
