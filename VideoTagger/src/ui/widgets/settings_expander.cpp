@@ -30,7 +30,10 @@ namespace vt::ui
 			ImGui::TableSetupColumn(nullptr, ImGuiTableColumnFlags_WidthFixed);
 
 			ImGui::TableNextColumn();
+			ImGui::PushFont(ctx_.get_font(font_type::h4_bold));
 			ImGui::TextUnformatted(header_.c_str());
+			ImGui::PopFont();
+
 			if (!description_.empty())
 			{
 				ImGui::PushFont(ctx_.get_font(font_type::h5));

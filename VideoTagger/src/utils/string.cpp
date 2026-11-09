@@ -41,6 +41,32 @@ namespace vt::utils::string
 		return result;
 	}
 
+	std::string unescape(const std::string& input)
+	{
+		std::string result;
+		result.reserve(input.size());
+		for (size_t i = 0; i < input.size(); ++i)
+		{
+			if (input[i] == '\\' and i + 1 < input.size())
+			{
+				switch (input[i + 1])
+				{
+					case 'n': result += '\n'; break;
+					case 't': result += '\t'; break;
+					case 'r': result += '\r'; break;
+					case '\\': result += '\\'; break;
+					default: result += input[i + 1]; break;
+				}
+				++i;
+			}
+			else
+			{
+				result += input[i];
+			}
+		}
+		return result;
+	}
+
 	std::string to_lowercase(const std::string& input)
 	{
 		std::string result = input;

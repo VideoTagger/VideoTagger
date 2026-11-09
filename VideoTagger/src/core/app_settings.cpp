@@ -20,6 +20,7 @@ namespace vt
 		json["hardware-acceleration"] = hardware_acceleration;
 		json["snap-to-frame"] = snap_to_frame;
 		json["auto-download"] = auto_download;
+		json["enable-scripts"] = enable_scripts;
 		return json;
 	}
 
@@ -60,6 +61,10 @@ namespace vt
 		if (json.contains("auto-download") and json["auto-download"].is_boolean())
 		{
 			auto_download = json["auto-download"].get<bool>();
+		}
+		if (json.contains("enable-scripts") and json["enable-scripts"].is_boolean())
+		{
+			enable_scripts = json["enable-scripts"].get<bool>();
 		}
 	}
 }

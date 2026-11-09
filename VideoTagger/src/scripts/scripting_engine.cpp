@@ -20,6 +20,7 @@
 #include <core/platform.hpp>
 #include <events/scripts/script_start_event.hpp>
 #include <events/scripts/script_end_event.hpp>
+#include <system/messagebox.hpp>
 
 namespace vt
 {
@@ -275,128 +276,148 @@ namespace vt
 
 	void scripting_engine::run(const std::filesystem::path& script_path)
 	{
-		auto task = ctx_.tasks.run([this, script_path = script_path]() mutable
+		auto run_script = [this, script_path]()
 		{
-			ctx_.dispatch_event<script_start_event>("scripting-engine", script_path);
-			py::gil_scoped_acquire lock{};
-			try
+			auto task = ctx_.tasks.run([this, script_path = script_path]() mutable
 			{
-				py::object stdout_;
-				py::object stderr_;
-
-				redirect_script_io(stdout_, stderr_);
-				set_script_dir(ctx_.script_dir_filepath);
-
-				auto vt = py::module_::import("videotagger");
-				py::object base_script_class = vt.attr("Script");
-
-				auto script_path_str = script_path.make_preferred().replace_extension().string();
-				auto script_py_path = script_path_str;
-				script_py_path = utils::string::replace_all(script_py_path, "/", ".");
-				script_py_path = utils::string::replace_all(script_py_path, "\\", ".");
-				auto script = py::module_::import(script_py_path.c_str());
-				auto script_class_name = script_path.stem().string();
-				if (!py::hasattr(script, script_class_name.c_str()))
-				{
-					debug::error("Couldn't find '{}' class. Script files should contain a class with the same name as the filename (class filename(vt.Script): ...)", script_class_name);
-					return false;
-				}
-				auto script_class = script.attr(script_class_name.c_str());
-
-				//check if script is a subclass of vt.Script
-				if (!py::isinstance<py::type>(script_class) and py::hasattr(script_class, "__bases__") and script_class.attr("__bases__").attr("__contains__")(base_script_class).cast<bool>())
-				{
-					debug::error("Script class '{}' should be a subclass of vt.Script", script_class_name);
-					return false;
-				}
-
-				auto script_class_obj = script_class();
-				if (!py::isinstance<vt::script>(script_class_obj))
-				{
-					debug::error("Failed to convert script object of class '{}' into native object", script_class_name);
-					return false;
-				}
-
-				auto native_script = script_class_obj.cast<std::shared_ptr<vt::script>>();
-				ctx_.script_handle->thread_id = native_script->thread_id();
-				ctx_.script_handle->script = native_script;
-
-				ctx_.script_handle->has_progress = native_script->has_progress();
-				native_script->on_run();
-				ctx_.script_handle->script = {};
-				//script.attr(entrypoint.c_str())();
-			}
-			catch (py::error_already_set& ex)
-			{
-				auto& console = ctx_.get_window<widgets::console>();
-
+				ctx_.dispatch_event<script_start_event>("scripting-engine", script_path);
+				py::gil_scoped_acquire lock{};
 				try
 				{
-					py::gil_scoped_acquire lock{};
-					py::object traceback = py::module::import("traceback");
-					py::object sys = py::module::import("sys");
+					py::object stdout_;
+					py::object stderr_;
 
-					py::tuple exc_info = sys.attr("exc_info")();
-					py::object exc_type = exc_info[0];
-					py::object exc_value = exc_info[1];
-					py::object exc_traceback = exc_info[2];
+					redirect_script_io(stdout_, stderr_);
+					set_script_dir(ctx_.script_dir_filepath);
 
-					std::string exception_message = py::str(exc_value);
-					std::string message = utils::string::trim_whitespace(ex.what());
-					if (!exc_traceback.is_none())
+					auto vt = py::module_::import("videotagger");
+					py::object base_script_class = vt.attr("Script");
+
+					auto script_path_str = script_path.make_preferred().replace_extension().string();
+					auto script_py_path = script_path_str;
+					script_py_path = utils::string::replace_all(script_py_path, "/", ".");
+					script_py_path = utils::string::replace_all(script_py_path, "\\", ".");
+					auto script = py::module_::import(script_py_path.c_str());
+					auto script_class_name = script_path.stem().string();
+					if (!py::hasattr(script, script_class_name.c_str()))
 					{
-						py::object tb_frame = exc_traceback.attr("tb_frame");
-						std::string file_name = py::str(tb_frame.attr("f_code").attr("co_filename"));
-						int64_t lineno = py::int_(exc_traceback.attr("tb_lineno"));
-						std::string exception_type = py::str(exc_type.attr("__name__"));
-
-
-						if (ex.matches(PyExc_InterruptedError))
-						{
-							auto sys = py::module_::import("sys");
-							try
-							{
-								sys.attr("exit")(py::int_(-1));
-							}
-							catch (...) {}
-							debug::add_log(fmt::format("{}:{}", std::filesystem::relative(file_name, ctx_.script_dir_filepath).string(), lineno), "info", "{}", "Script interrupted");
-							console.add_entry(widgets::console::entry::flag_type::info, "Script interrupted", widgets::console::entry::source_info{ file_name, lineno });
-							return false;
-						}
-						else if (!message.empty())
-						{
-							debug::add_log(fmt::format("{}:{}", std::filesystem::relative(file_name, ctx_.script_dir_filepath).string(), lineno), "error", "{}", message);
-							console.add_entry(widgets::console::entry::flag_type::error, message, widgets::console::entry::source_info{ file_name, lineno });
-						}
+						debug::error("Couldn't find '{}' class. Script files should contain a class with the same name as the filename (class filename(vt.Script): ...)", script_class_name);
+						return false;
 					}
-					else
+					auto script_class = script.attr(script_class_name.c_str());
+
+					//check if script is a subclass of vt.Script
+					if (!py::isinstance<py::type>(script_class) and py::hasattr(script_class, "__bases__") and script_class.attr("__bases__").attr("__contains__")(base_script_class).cast<bool>())
 					{
-						debug::error("{}", message);
-						console.add_entry(widgets::console::entry::flag_type::error, message, widgets::console::entry::source_info{ "VideoTagger", -1 });
+						debug::error("Script class '{}' should be a subclass of vt.Script", script_class_name);
+						return false;
 					}
+
+					auto script_class_obj = script_class();
+					if (!py::isinstance<vt::script>(script_class_obj))
+					{
+						debug::error("Failed to convert script object of class '{}' into native object", script_class_name);
+						return false;
+					}
+
+					auto native_script = script_class_obj.cast<std::shared_ptr<vt::script>>();
+					ctx_.script_handle->thread_id = native_script->thread_id();
+					ctx_.script_handle->script = native_script;
+
+					ctx_.script_handle->has_progress = native_script->has_progress();
+					native_script->on_run();
+					ctx_.script_handle->script = {};
+					//script.attr(entrypoint.c_str())();
 				}
-				catch (const std::exception& iex)
+				catch (py::error_already_set& ex)
 				{
-					debug::error("{}", iex.what());
-				}
-			}
-			return true;
-		}, task_priority::highest);
+					auto& console = ctx_.get_window<widgets::console>();
 
-		task.then(ctx_.tasks.on_main(), [script_path](bool success)
+					try
+					{
+						py::gil_scoped_acquire lock{};
+						py::object traceback = py::module::import("traceback");
+						py::object sys = py::module::import("sys");
+
+						py::tuple exc_info = sys.attr("exc_info")();
+						py::object exc_type = exc_info[0];
+						py::object exc_value = exc_info[1];
+						py::object exc_traceback = exc_info[2];
+
+						std::string exception_message = py::str(exc_value);
+						std::string message = utils::string::trim_whitespace(ex.what());
+						if (!exc_traceback.is_none())
+						{
+							py::object tb_frame = exc_traceback.attr("tb_frame");
+							std::string file_name = py::str(tb_frame.attr("f_code").attr("co_filename"));
+							int64_t lineno = py::int_(exc_traceback.attr("tb_lineno"));
+							std::string exception_type = py::str(exc_type.attr("__name__"));
+
+
+							if (ex.matches(PyExc_InterruptedError))
+							{
+								auto sys = py::module_::import("sys");
+								try
+								{
+									sys.attr("exit")(py::int_(-1));
+								}
+								catch (...) {}
+								debug::add_log(fmt::format("{}:{}", std::filesystem::relative(file_name, ctx_.script_dir_filepath).string(), lineno), "info", "{}", "Script interrupted");
+								console.add_entry(widgets::console::entry::flag_type::info, "Script interrupted", widgets::console::entry::source_info{ file_name, lineno });
+								return false;
+							}
+							else if (!message.empty())
+							{
+								debug::add_log(fmt::format("{}:{}", std::filesystem::relative(file_name, ctx_.script_dir_filepath).string(), lineno), "error", "{}", message);
+								console.add_entry(widgets::console::entry::flag_type::error, message, widgets::console::entry::source_info{ file_name, lineno });
+							}
+						}
+						else
+						{
+							debug::error("{}", message);
+							console.add_entry(widgets::console::entry::flag_type::error, message, widgets::console::entry::source_info{ "VideoTagger", -1 });
+						}
+					}
+					catch (const std::exception& iex)
+					{
+						debug::error("{}", iex.what());
+					}
+				}
+				return true;
+			}, task_priority::highest);
+
+			task.then(ctx_.tasks.on_main(), [script_path](bool success)
+			{
+				if (success)
+				{
+					debug::log("Finished running script '{}'", script_path.u8string());
+				}
+				else
+				{
+					debug::error("Failed to run script '{}'", script_path.u8string());
+				}
+				ctx_.dispatch_event<script_end_event>("scripting-engine", script_path);
+				ctx_.script_progress_popup.reset();
+			});
+			ctx_.script_handle = script_handle(std::move(task));
+			ctx_.script_progress_popup = ui::new_popup<ui::script_progress_popup>(nullptr);
+		};
+
+		if (!ctx_.app_settings.enable_scripts)
 		{
-			if (success)
+			auto data = messagebox_data::ok_cancel(ctx_.lang->get("popup.enable_scripts.title"), ctx_.lang->get("popup.enable_scripts.prompt"), messagebox_icon::warning, [this, script_path, run_script](int result)
 			{
-				debug::log("Finished running script '{}'", script_path.u8string());
-			}
-			else
-			{
-				debug::error("Failed to run script '{}'", script_path.u8string());
-			}
-			ctx_.dispatch_event<script_end_event>("scripting-engine", script_path);
-			ctx_.script_progress_popup.reset();
-		});
-		ctx_.script_handle = script_handle(std::move(task));
+				if (result != 0) return;
+
+				ctx_.app_settings.enable_scripts = true;
+				run_script();
+			});
+			messagebox::show(data);
+		}
+		else
+		{
+			run_script();
+		}
 	}
 
 	void scripting_engine::interrupt()

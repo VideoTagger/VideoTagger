@@ -198,8 +198,8 @@ namespace vt
 		register_video_resource_listeners();
 		register_attribute_listeners();
 
-		init_options();
 		load_settings();
+		init_options();
 		if (ctx_.first_launch)
 		{
 			on_first_launch();
@@ -2010,6 +2010,9 @@ namespace vt
 		})
 #endif
 		;
+
+		options("Application Settings", "Scripts")
+		.add_toggle(ctx_.lang->get("popup.enable_scripts.title"), "Specifies whether scripts are enabled", ctx_.app_settings.enable_scripts);
 
 		options("Application Settings", "Keybinds").add_raw([]()
 		{

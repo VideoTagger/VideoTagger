@@ -12,6 +12,7 @@ namespace vt
 		h3,
 		h3_bold,
 		h4,
+		h4_bold,
 		h5,
 		h6,
 		thumbnail,

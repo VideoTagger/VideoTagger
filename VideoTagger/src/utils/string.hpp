@@ -23,6 +23,14 @@ namespace vt::utils::string
 	 * @return New string with all occurrences of `from` replaced with `to`
 	 */
 	std::string replace_all(const std::string& input, const std::string& from, const std::string& to);
+
+	/**
+	* @brief Replaces escape characters in a string with their literal representation
+	* @param[in] input Source string
+	* 
+	* @return New string with escape characters removed
+	*/
+	std::string unescape(const std::string& input);
 	
 	/**
 	 * @brief Turns all characters in a string to lowercase

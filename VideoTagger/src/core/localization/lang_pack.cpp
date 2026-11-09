@@ -1,5 +1,6 @@
 #include "pch.hpp"
 #include "lang_pack.hpp"
+#include <utils/string.hpp>
 
 namespace vt
 {
@@ -49,7 +50,7 @@ namespace vt
 	std::string lang_pack::get(const std::string& id)
 	{
 		auto it = data_.find(id);
-		if (it != data_.end() and !it->second.empty()) return it->second;
+		if (it != data_.end() and !it->second.empty()) return utils::string::unescape(it->second);
 #ifdef _DEBUG
 		data_.emplace(id, "");
 #endif

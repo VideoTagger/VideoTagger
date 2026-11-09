@@ -477,7 +477,6 @@ namespace vt
 	void app_context::run_script(const std::filesystem::path& script_path)
 	{
 		ctx_.script_eng.run(script_path);
-		ctx_.script_progress_popup = ui::new_popup<ui::script_progress_popup>(nullptr);
 	}
 
     ImFont* app_context::get_font(font_type type) const

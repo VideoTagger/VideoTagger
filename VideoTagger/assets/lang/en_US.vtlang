@@ -98,6 +98,7 @@
 	"template:2:popup.tag_rename_failed.message": "Failed to rename tag \"{}\" to \"{}\"",
 	"template:1:field_cannot_be_empty": "{} cannot be empty",
 	"template:2:item_already_exists": "{} '{}' already exists",
+	"generic.done": "Done",
 	"popup.timeline_context_menu.add_here": "Add here",
 	"popup.timeline_context_menu.add_at_playhead": "Add at playhead",
 	"popup.timeline_context_menu.add_at_playhead.timestamp": "Timestamp",
@@ -127,6 +128,7 @@
 	"generic.confirm": "Confirm",
 	"generic.cancel": "Cancel",
 	"generic.remove": "Remove",
-	"generic.done": "Done",
-	"generic.locate": "Locate"
+	"generic.locate": "Locate",
+	"popup.enable_scripts.prompt": "Scripts are currently disabled.\\nDo you want to enable scripts and run this script?\\n\\nBy enabling scripts, you acknowledge that you are responsible for the code you are running, which may harm your device.",
+	"popup.enable_scripts.title": "Enable Scripts"
 }
