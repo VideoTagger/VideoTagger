@@ -14,6 +14,7 @@
 #include "bindings/bind_group.hpp"
 #include "bindings/bind_video.hpp"
 #include "bindings/bind_segment.hpp"
+#include "bindings/bind_filesystem.hpp"
 #include "bindings/proxies.hpp"
 #include "script.hpp"
 #include <core/platform.hpp>
@@ -82,7 +83,7 @@ namespace vt
 		.def("has_progress", &script_base::has_progress)
 		.def_property("progress", &script_base::progress, &script_base::set_progress)
 		.def_property("progress_info", &script_base::progress_info, &script_base::set_progress_info)
-		.def("on_run", &script_base::on_run);
+		.def("on_run", &script_base::on_run, py::doc("This method doesn't need to be implemented since it isn't purely virtual"));
 
 		bindings::bind_timestamp(mod);
 
@@ -151,6 +152,7 @@ namespace vt
 		bindings::bind_video(mod);
 		bindings::bind_group(mod);
 		bindings::bind_project(mod);
+		bindings::bind_filesystem(mod);
 
 		mod.def("random_color", []()
 		{
