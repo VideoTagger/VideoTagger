@@ -5,11 +5,11 @@
 #include <events/tags/tag_add_request_event.hpp>
 #include <events/attributes/attribute_delete_request_event.hpp>
 
-void vt::bindings::bind_tags(pybind11::module_& module)
+void vt::bindings::bind_tags(pybind11::module_& mod)
 {
 	namespace py = pybind11;
 
-	py::class_<tag>(module, "Tag")
+	py::class_<tag>(mod, "Tag")
 	.def(py::init<const std::string&, uint32_t>())
 	.def_readwrite("name", &tag::name)
 	.def_readwrite("color", &tag::color)
@@ -20,13 +20,13 @@ void vt::bindings::bind_tags(pybind11::module_& module)
 	.def("remove_attribute", [](tag& t, const std::string& name)
 	{
 		ctx_.dispatch_event<attribute_delete_request_event>("script", t.name, name);
-	})
+	}, py::arg("name"))
 	.def("has_attribute", [](tag& t, const std::string& name) -> bool
 	{
 		return t.attributes.find(name) != t.attributes.end();
-	});
+	}, py::arg("name"));
 	
-	py::class_<tag_storage>(module, "TagStorage")
+	py::class_<tag_storage>(mod, "TagStorage")
 	.def("add_tag", [](tag_storage& tags, const tag& t) -> bool
 	{
 		if (&tags == &ctx_.current_project->tags)
@@ -36,11 +36,11 @@ void vt::bindings::bind_tags(pybind11::module_& module)
 
 		ctx_.dispatch_event<tag_add_request_event>("script", ctx_.current_project->tags, t.name, t.color);
 		return ctx_.current_project->tags.contains(t.name);
-	})
+	}, py::arg("tag"))
 	.def("has_tag", [](tag_storage& tags, const std::string& name) -> bool
 	{
 		return tags.contains(name);
-	})
+	}, py::arg("name"))
 	.def("clear", [](tag_storage& tags)
 	{
 		//TODO: should use events

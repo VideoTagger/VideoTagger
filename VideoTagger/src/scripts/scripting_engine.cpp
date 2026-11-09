@@ -37,12 +37,12 @@ namespace vt
 		return { filename.cast<std::string>(), lineno.cast<int64_t>() };
 	}
 
-	PYBIND11_EMBEDDED_MODULE(vt, this_module)
+	PYBIND11_EMBEDDED_MODULE(videotagger, mod)
 	{
 		struct stdout_hook {};
 		auto& console = ctx_.get_window<widgets::console>();
 
-		py::class_<stdout_hook>(this_module, "stdout_hook")
+		py::class_<stdout_hook>(mod, "stdout_hook")
 		.def_static("write", [&console](std::string message)
 		{
 			auto caller_info = get_caller_info();
@@ -61,7 +61,7 @@ namespace vt
 		auto inspect = py::module::import("inspect");
 
 		struct stderr_hook {};
-		py::class_<stderr_hook>(this_module, "stderr_hook")
+		py::class_<stderr_hook>(mod, "stderr_hook")
 		.def_static("write", [&console](std::string message)
 		{
 			auto caller_info = get_caller_info();
@@ -77,16 +77,16 @@ namespace vt
 			std::cerr << std::flush;
 		});
 
-		py::class_<script_base, script, std::shared_ptr<script_base>>(this_module, "Script")
+		py::class_<script_base, script, std::shared_ptr<script_base>>(mod, "Script")
 		.def(py::init<>())
 		.def("has_progress", &script_base::has_progress)
 		.def_property("progress", &script_base::progress, &script_base::set_progress)
 		.def_property("progress_info", &script_base::progress_info, &script_base::set_progress_info)
 		.def("on_run", &script_base::on_run);
 
-		bindings::bind_timestamp(this_module);
+		bindings::bind_timestamp(mod);
 
-		py::class_<widgets::video_player>(this_module, "Player")
+		py::class_<widgets::video_player>(mod, "Player")
 		.def_property_readonly("current_timestamp", [](const widgets::video_player& player) -> timestamp
 		{
 			return timestamp{ player.data().current_ts };
@@ -116,12 +116,12 @@ namespace vt
 		});
 
 		auto& player = ctx_.get_window<widgets::video_player>();
-		this_module.attr("player") = &player;
+		mod.attr("player") = &player;
 
-		bindings::bind_tags(this_module);
-		bindings::bind_tag_attributes(this_module);
+		bindings::bind_tags(mod);
+		bindings::bind_tag_attributes(mod);
 
-		py::class_<utils::vec2<int>>(this_module, "Vec2")
+		py::class_<utils::vec2<int>>(mod, "Vec2")
 		.def(py::init([](int x, int y)
 		{
 			return utils::vec2<int>{ x, y };
@@ -146,13 +146,13 @@ namespace vt
 		})
 		.def(py::self == py::self);
 
-		bindings::bind_shapes(this_module);
-		bindings::bind_segment(this_module);
-		bindings::bind_group(this_module);
-		bindings::bind_project(this_module);
-		bindings::bind_video(this_module);
+		bindings::bind_shapes(mod);
+		bindings::bind_segment(mod);
+		bindings::bind_video(mod);
+		bindings::bind_group(mod);
+		bindings::bind_project(mod);
 
-		this_module.def("random_color", []()
+		mod.def("random_color", []()
 		{
 			ImVec4 color{ 0, 0, 0, 1 };
 
@@ -162,12 +162,12 @@ namespace vt
 			return ImGui::ColorConvertFloat4ToU32(color);
 		});
 
-		this_module.def("to_abgr", [](uint32_t value)
+		mod.def("to_abgr", [](uint32_t value)
 		{
 			return utils::color::to_abgr(value);
 		});
 
-		this_module.def("log", [&console](std::string message)
+		mod.def("log", [&console](std::string message)
 		{
 			auto caller_info = get_caller_info();
 			message = utils::string::trim_whitespace(message);
@@ -178,7 +178,7 @@ namespace vt
 			}
 		});
 
-		this_module.def("warn", [&console](std::string message)
+		mod.def("warn", [&console](std::string message)
 		{
 			auto caller_info = get_caller_info();
 			message = utils::string::trim_whitespace(message);
@@ -189,7 +189,7 @@ namespace vt
 			}
 		});
 
-		this_module.def("error", [&console](std::string message)
+		mod.def("error", [&console](std::string message)
 		{
 			auto caller_info = get_caller_info();
 			message = utils::string::trim_whitespace(message);
@@ -262,7 +262,7 @@ namespace vt
 	void scripting_engine::redirect_script_io(py::object stdout_, py::object stderr_)
 	{
 		auto sys = py::module::import("sys");
-		auto vt = py::module::import("vt");
+		auto vt = py::module::import("videotagger");
 
 		stdout_ = sys.attr("stdout");
 		sys.attr("stdout") = vt.attr("stdout_hook");
@@ -271,9 +271,9 @@ namespace vt
 		sys.attr("stderr") = vt.attr("stderr_hook");
 	}
 
-	void scripting_engine::run(std::filesystem::path script_path)
+	void scripting_engine::run(const std::filesystem::path& script_path)
 	{
-		auto task = ctx_.tasks.run([this, script_path]() mutable
+		auto task = ctx_.tasks.run([this, script_path = script_path]() mutable
 		{
 			ctx_.dispatch_event<script_start_event>("scripting-engine", script_path);
 			py::gil_scoped_acquire lock{};
@@ -285,7 +285,7 @@ namespace vt
 				redirect_script_io(stdout_, stderr_);
 				set_script_dir(ctx_.script_dir_filepath);
 
-				auto vt = py::module_::import("vt");
+				auto vt = py::module_::import("videotagger");
 				py::object base_script_class = vt.attr("Script");
 
 				auto script_path_str = script_path.make_preferred().replace_extension().string();

@@ -3,27 +3,27 @@
 #include <tags/tag.hpp>
 #include <scripts/helpers.hpp>
 
-void vt::bindings::bind_tag_attributes(pybind11::module_& module)
+void vt::bindings::bind_tag_attributes(pybind11::module_& mod)
 {
 	namespace py = pybind11;
 
-	//py::class_<tag_attribute_instance>(module, "TagAttributeInstance")
+	//py::class_<tag_attribute_instance>(mod, "TagAttributeInstance")
 	//.def("set_bool", [](tag_attribute_instance& attr, bool value)
 	//{
 	//	attr = value;
-	//})
+	//}, py::arg("value"))
 	//.def("set_integer", [](tag_attribute_instance& attr, int64_t value)
 	//{
 	//	attr = value;
-	//})
+	//}, py::arg("value"))
 	//.def("set_float", [](tag_attribute_instance& attr, double value)
 	//{
 	//	attr = value;
-	//})
+	//}, py::arg("value"))
 	//.def("set_string", [](tag_attribute_instance& attr, const std::string& value)
 	//{
 	//	attr = value;
-	//})
+	//}, py::arg("value"))
 	//.def("set_circle", [](tag_attribute_instance& attr, timestamp keyframe, const circle& c)
 	//{
 	//	auto s = shape{ shape::type::circle };
@@ -61,13 +61,13 @@ void vt::bindings::bind_tag_attributes(pybind11::module_& module)
 	//	attr = s;
 	//});
 
-	//py::enum_<tag_attribute::type>(module, "TagAttributeType")
+	//py::enum_<tag_attribute::type>(mod, "TagAttributeType")
 	//.value("bool", tag_attribute::type::bool_)
 	//.value("float", tag_attribute::type::float_)
 	//.value("integer", tag_attribute::type::integer)
 	//.value("string", tag_attribute::type::string)
 	//.value("shape", tag_attribute::type::shape);
 
-	//py::class_<tag_attribute>(module, "TagAttribute")
+	//py::class_<tag_attribute>(mod, "TagAttribute")
 	//.def(py::init<tag_attribute::type>());
 }

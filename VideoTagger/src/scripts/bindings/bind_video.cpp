@@ -3,11 +3,11 @@
 #include <core/app_context.hpp>
 #include "proxies.hpp"
 
-void vt::bindings::bind_video(pybind11::module_& module)
+void vt::bindings::bind_video(pybind11::module_& mod)
 {
 	namespace py = pybind11;
 
-	py::class_<vt_video>(module, "Video")
+	py::class_<vt_video>(mod, "Video")
 	.def_property_readonly("id", [](const vt_video& vid) -> video_id_t
 	{
 		return vid.id;

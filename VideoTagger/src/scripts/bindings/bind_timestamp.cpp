@@ -4,11 +4,11 @@
 #include <utils/time.hpp>
 #include <pybind11/operators.h>
 
-void vt::bindings::bind_timestamp(pybind11::module_& module)
+void vt::bindings::bind_timestamp(pybind11::module_& mod)
 {
 	namespace py = pybind11;
 
-	py::class_<timestamp>(module, "Timestamp")
+	py::class_<timestamp>(mod, "Timestamp")
 	.def(py::init<int64_t>())
 	.def_property("hours",
 	[](const timestamp& ts) -> int64_t

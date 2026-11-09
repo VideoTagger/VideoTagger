@@ -3,5 +3,5 @@
 
 namespace vt::bindings
 {
-	extern void bind_shapes(pybind11::module_& module);
+	extern void bind_shapes(pybind11::module_& mod);
 }

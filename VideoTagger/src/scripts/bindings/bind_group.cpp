@@ -3,18 +3,18 @@
 #include <core/app_context.hpp>
 #include "proxies.hpp"
 
-void vt::bindings::bind_group(pybind11::module_& module)
+void vt::bindings::bind_group(pybind11::module_& mod)
 {
 	namespace py = pybind11;
 	
-	py::class_<video_group::video_info>(module, "VideoInfo")
+	py::class_<video_group::video_info>(mod, "VideoInfo")
 	.def_readonly("id", &video_group::video_info::id)
 	.def_property_readonly("offset", [](const video_group::video_info& vi) -> timestamp
 	{
 		return timestamp{ vi.offset };
 	});
 
-	py::class_<video_group>(module, "VideoGroup")
+	py::class_<video_group>(mod, "VideoGroup")
 	.def(py::init([](const std::string& name) -> video_group
 	{
 		return video_group{ name, {} };
@@ -27,7 +27,7 @@ void vt::bindings::bind_group(pybind11::module_& module)
 	.def("add_video", [](video_group& group, const vt_video& vid, timestamp offset)
 	{
 		group.insert(video_group::video_info{ vid.id, offset.total_nanoseconds });
-	})
+	}, py::arg("video"), py::arg("offset"))
 	.def("add_timestamp", [](video_group& group, tag& t, timestamp start) -> std::optional<vt_tag_segment>
 	{
 		auto& segments = group.segments()[t.name];
@@ -37,7 +37,7 @@ void vt::bindings::bind_group(pybind11::module_& module)
 			return vt_tag_segment{ (tag_segment&)(segments.at(insert_result.inserted_segment())), t };
 		}
 		return std::nullopt;
-	})
+	}, py::arg("tag"), py::arg("start"))
 	.def("add_segment", [](video_group& group, tag& t, timestamp start, timestamp end) -> std::optional<vt_tag_segment>
 	{
 		auto& segments = group.segments()[t.name];
@@ -47,7 +47,7 @@ void vt::bindings::bind_group(pybind11::module_& module)
 			return vt_tag_segment{ (tag_segment&)(segments.at(insert_result.inserted_segment())), t };
 		}
 		return std::nullopt;
-	})
+	}, py::arg("tag"), py::arg("start"), py::arg("end"))
 	.def("get_segments", [](video_group& group, tag& t) -> std::vector<vt_tag_segment>
 	{
 		std::vector<vt_tag_segment> result;
@@ -61,9 +61,9 @@ void vt::bindings::bind_group(pybind11::module_& module)
 			}
 		}
 		return result;
-	});
+	}, py::arg("tag"));
 
-	py::class_<video_group_playlist>(module, "GroupQueue")
+	py::class_<video_group_playlist>(mod, "GroupQueue")
 	.def("add_group", [](video_group_playlist& p, const video_group& g) -> bool
 	{
 		auto& groups = ctx_.current_project->video_groups;
@@ -74,7 +74,7 @@ void vt::bindings::bind_group(pybind11::module_& module)
 		//if (it == groups.end()) return false;
 		//p.insert(p.end(), it->first);
 		return true;
-	})
+	}, py::arg("group"))
 	.def("current_group", [](video_group_playlist& p) -> std::optional<video_group*>
 	{
 		auto it = p.current();

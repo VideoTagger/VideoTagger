@@ -5,10 +5,10 @@
 #include <video/local_video_resource.hpp>
 #include <video/local_video_importer.hpp>
 
-void vt::bindings::bind_project(pybind11::module_& module)
+void vt::bindings::bind_project(pybind11::module_& mod)
 {
 	namespace py = pybind11;
-	py::class_<vt_project>(module, "Project")
+	py::class_<vt_project>(mod, "Project")
 	.def_property_readonly("name", [](const vt_project& p) -> std::string
 	{
 		return p.ref.name;
@@ -42,7 +42,7 @@ void vt::bindings::bind_project(pybind11::module_& module)
 		}
 
 		return vt_video{ vid->file_path(), vid->id(), vid->width(), vid->height() };
-	})
+	}, py::arg("path"))
 	.def("get_video", [](vt_project& p, video_id_t id) -> std::optional<vt_video>
 	{
 		auto it = std::find_if(p.ref.videos.begin(), p.ref.videos.end(), [id](const decltype(p.ref.videos)::iterator::value_type& vit)
@@ -52,7 +52,7 @@ void vt::bindings::bind_project(pybind11::module_& module)
 		if (it == p.ref.videos.end()) return std::nullopt;
 		auto& vid = it->second;
 		return vt_video{ vid->file_path(), it->first, vid->width(), vid->height() };
-	})
+	}, py::arg("id"))
 	.def("remove_video", [](vt_project& p, vt_video& v) -> bool
 	{
 		auto it = std::find_if(p.ref.videos.begin(), p.ref.videos.end(), [&v](const decltype(p.ref.videos)::iterator::value_type& vit)
@@ -62,7 +62,7 @@ void vt::bindings::bind_project(pybind11::module_& module)
 		if (it == p.ref.videos.end()) return false;
 		p.ref.remove_video(v.id);
 		return true;
-	})
+	}, py::arg("video"))
 	//.def("find_group", [](const vt_project& p, const std::string& name) -> std::optional<video_group>
 	//{
 	//	auto it = p.ref.video_groups.end();
@@ -82,7 +82,7 @@ void vt::bindings::bind_project(pybind11::module_& module)
 		return p.ref.video_group_playlist;
 	}, py::return_value_policy::reference_internal);
 
-	module.def("current_project", []() -> std::optional<vt_project>
+	mod.def("current_project", []() -> std::optional<vt_project>
 	{
 		return ctx_.current_project.has_value() ? std::optional<vt_project>{ vt_project{ ctx_.current_project.value() } } : std::nullopt;
 	});

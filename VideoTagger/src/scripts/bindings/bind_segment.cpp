@@ -3,11 +3,11 @@
 #include <pybind11/operators.h>
 #include "proxies.hpp"
 
-void vt::bindings::bind_segment(pybind11::module_& module)
+void vt::bindings::bind_segment(pybind11::module_& mod)
 {
 	namespace py = pybind11;
 
-	py::class_<vt_tag_segment>(module, "Segment")
+	py::class_<vt_tag_segment>(mod, "Segment")
 	//.def_property_readonly("attributes", [](vt_tag_segment& s) -> tag_segment::attribute_instance_container&
 	//{
 	//	return s.ref.attributes;
@@ -15,7 +15,7 @@ void vt::bindings::bind_segment(pybind11::module_& module)
 	//.def("get_attribute", [](vt_tag_segment& s, const vt_video& vid, const std::string& name) -> tag_attribute_instance&
 	//{
 	//	return s.ref.attributes[vid.id][name];
-	//}, py::return_value_policy::reference_internal)
+	//}, py::arg("video"), py::arg("name"), py::return_value_policy::reference_internal)
 	.def_property_readonly("tag", [](const vt_tag_segment& s) -> tag&
 	{
 		return s.tag_ref;

@@ -26,7 +26,7 @@ namespace vt
 
 	public:
 		void init();
-		void run(std::filesystem::path script_path);
+		void run(const std::filesystem::path& script_path);
 		void interrupt();
 
 		bool has_embeddable_package() const;
