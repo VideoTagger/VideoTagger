@@ -77,6 +77,8 @@
 
 #include <events/scripts/script_end_event.hpp>
 
+#include <benchmark/segmentation_benchmark.hpp>
+
 #ifndef VT_VERSION
 	#error VT_VERSION is not defined
 #endif
@@ -2188,6 +2190,8 @@ namespace vt
 
 	void main_window::draw_menubar()
 	{
+		bool benchmark_segmentation = false;
+
 		if (ImGui::BeginMainMenuBar())
 		{
 			if (ui::begin_main_menu(ctx_.lang->get("menu_bar.file").c_str()))
@@ -2492,6 +2496,16 @@ namespace vt
 				{
 					utils::filesystem::open_in_explorer(std::filesystem::absolute(ctx_.script_dir_filepath));
 				}
+
+				ImGui::Separator();
+				if (ui::begin_menu("Benchmark"))
+				{
+					if (ImGui::MenuItem("Segmentation"))
+					{
+						benchmark_segmentation = true;
+					}
+					ui::end_menu();
+				}
 				ui::end_menu();
 			}
 
@@ -2761,6 +2775,20 @@ namespace vt
 				ImGui::PopStyleColor();
 			}
 			ImGui::EndMainMenuBar();
+		}
+
+		if (benchmark_segmentation)
+		{
+			static segmentation_benchmark segmentation_benchmark_;
+			benchmark_segmentation = false;
+
+			segmentation_benchmark_
+			.benchmark(segmentation_dataset::davis2017, false)
+			.then([this]()
+			{
+				if (segmentation_benchmark_.was_cancelled()) return;
+				segmentation_benchmark_.benchmark(segmentation_dataset::coco, false);
+			});
 		}
 
 		if (ctx_.win_cfg.show_about_window)

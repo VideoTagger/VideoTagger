@@ -89,20 +89,6 @@ namespace vt::ui::windows
 			}
 			return true;
 		});
-		widget_list_.add_raw([&]()
-		{
-			if (ui::button("Benchmark Segmentation"))
-			{
-				segmentation_benchmark_
-				.benchmark(segmentation_dataset::davis2017, false)
-				.then([this]()
-				{
-					if (segmentation_benchmark_.was_cancelled()) return;
-					segmentation_benchmark_.benchmark(segmentation_dataset::coco, false);
-				});
-			}
-			return true;
-		});
 
 		widget_list_.add_raw([&]()
 		{
