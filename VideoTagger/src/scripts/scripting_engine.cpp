@@ -132,7 +132,11 @@ namespace vt
 		{
 			v[1] = static_cast<int>(std::min(static_cast<int64_t>(0), value));
 		})
-		.def(py::self == py::self);
+		.def(py::self == py::self)
+		.def("__repr__", [](const utils::vec2<int>& v)
+		{
+			return fmt::format("(x: {}, y: {})", v.x(), v.y());
+		});
 
 		add_bindings(mod);
 

@@ -3,3 +3,4 @@ pillow
 matplotlib
 pandas
 pybind11-stubgen
+typing-extensions

@@ -12,10 +12,9 @@ namespace vt
 
 	mask_shape::mask_shape(const utils::vec2<int>& size) : mask{ size }, bounding_box_{ 0, 0, size[0], size[1] } {}
 
-	mask_shape::mask_shape(const image<image_pixel_format::gray8>& mask) : mask{ mask }, bounding_box_{ 0, 0, mask.width(), mask.height() }
-	{
+	mask_shape::mask_shape(const image<image_pixel_format::gray8>& mask) : mask{ mask }, bounding_box_{ 0, 0, mask.width(), mask.height() } {}
 
-	}
+	mask_shape::mask_shape(image<image_pixel_format::gray8>&& mask) : mask{ std::move(mask) }, bounding_box_{ 0, 0, this->mask.width(), this->mask.height() } {}
 
 	mask_shape::mask_shape(const mask_shape& other) : mask{ other.mask }, bounding_box_{ other.bounding_box_ } {}
 

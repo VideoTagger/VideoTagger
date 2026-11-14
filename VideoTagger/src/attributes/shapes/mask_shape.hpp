@@ -14,6 +14,7 @@ namespace vt
 		mask_shape(int width, int height);
 		mask_shape(const utils::vec2<int>& size);
 		mask_shape(const image<image_pixel_format::gray8>& mask);
+		mask_shape(image<image_pixel_format::gray8>&& mask);
 		mask_shape(const mask_shape& other);
 
 	public:
