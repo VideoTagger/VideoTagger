@@ -1,5 +1,6 @@
 out/
 build/
+!build/web/public/
 scripts/embeds/
 __pycache__/
 .vs/
