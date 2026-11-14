@@ -52,3 +52,6 @@
 [submodule "VideoTagger/vendor/zipper"]
 	path = VideoTagger/vendor/zipper
 	url = https://github.com/VideoTagger/zipper
+[submodule "VideoTagger-API"]
+	path = VideoTagger-API
+	url = https://github.com/VideoTagger/VideoTagger-API.git
