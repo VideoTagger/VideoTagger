@@ -6,15 +6,18 @@
 #include <widgets/video_player.hpp>
 #include <video/local_video_importer.hpp>
 #include <utils/random.hpp>
+#include "bindings/bind_task.hpp"
 #include "bindings/bind_tags.hpp"
 #include "bindings/bind_tag_attributes.hpp"
 #include "bindings/bind_timestamp.hpp"
+#include "bindings/bind_color.hpp"
 #include "bindings/bind_shapes.hpp"
 #include "bindings/bind_project.hpp"
 #include "bindings/bind_group.hpp"
 #include "bindings/bind_video.hpp"
 #include "bindings/bind_segment.hpp"
 #include "bindings/bind_filesystem.hpp"
+#include "bindings/bind_system.hpp"
 #include "bindings/proxies.hpp"
 #include "script.hpp"
 #include <core/platform.hpp>
@@ -39,6 +42,21 @@ namespace vt
 		return { filename.cast<std::string>(), lineno.cast<int64_t>() };
 	}
 
+	static void add_bindings(pybind11::module_& mod)
+	{
+		bindings::bind_timestamp(mod);
+		bindings::bind_tags(mod);
+		bindings::bind_tag_attributes(mod);
+		bindings::bind_color(mod);
+		bindings::bind_shapes(mod);
+		bindings::bind_segment(mod);
+		bindings::bind_video(mod);
+		bindings::bind_group(mod);
+		bindings::bind_project(mod);
+		bindings::bind_filesystem(mod);
+		bindings::bind_system(mod);
+	}
+
 	PYBIND11_EMBEDDED_MODULE(videotagger, mod)
 	{
 		struct stdout_hook {};
@@ -51,7 +69,9 @@ namespace vt
 			message = utils::string::trim_whitespace(message);
 			if (!message.empty())
 			{
-				debug::add_log(fmt::format("{}:{}", std::filesystem::relative(caller_info.path, ctx_.script_dir_filepath).string(), caller_info.line), "info", "{}", message);
+				std::stringstream ss;
+				ss << std::this_thread::get_id();
+				debug::add_log(fmt::format("{}:{}:{}", ss.str(), std::filesystem::relative(caller_info.path, ctx_.script_dir_filepath).string(), caller_info.line), "info", "{}", message);
 				console.add_entry(widgets::console::entry::flag_type::info, message, caller_info);
 			}
 		})
@@ -70,7 +90,9 @@ namespace vt
 			message = utils::string::trim_whitespace(message);
 			if (!message.empty())
 			{
-				debug::add_log(fmt::format("{}:{}", std::filesystem::relative(caller_info.path, ctx_.script_dir_filepath).string(), caller_info.line), "error", "{}", message);
+				std::stringstream ss;
+				ss << std::this_thread::get_id();
+				debug::add_log(fmt::format("{}:{}:{}", ss.str(), std::filesystem::relative(caller_info.path, ctx_.script_dir_filepath).string(), caller_info.line), "error", "{}", message);
 				console.add_entry(widgets::console::entry::flag_type::error, message, caller_info);
 			}
 		})
@@ -86,7 +108,33 @@ namespace vt
 		.def_property("progress_info", &script_base::progress_info, &script_base::set_progress_info)
 		.def("on_run", &script_base::on_run, py::doc("This method doesn't need to be implemented since it isn't purely virtual"));
 
-		bindings::bind_timestamp(mod);
+
+		py::class_<utils::vec2<int>>(mod, "Vec2")
+		.def(py::init([](int x, int y)
+		{
+			return utils::vec2<int>{ x, y };
+		}))
+		.def_property("x",
+		[](const utils::vec2<int>& v)
+		{
+			return v[0];
+		},
+		[](utils::vec2<int>& v, int64_t value)
+		{
+			v[0] = static_cast<int>(std::min(static_cast<int64_t>(0), value));
+		})
+		.def_property("y",
+		[](const utils::vec2<int>& v)
+		{
+			return v[1];
+		},
+		[](utils::vec2<int>& v, int64_t value)
+		{
+			v[1] = static_cast<int>(std::min(static_cast<int64_t>(0), value));
+		})
+		.def(py::self == py::self);
+
+		add_bindings(mod);
 
 		py::class_<widgets::video_player>(mod, "Player")
 		.def_property_readonly("current_timestamp", [](const widgets::video_player& player) -> timestamp
@@ -120,41 +168,6 @@ namespace vt
 		auto& player = ctx_.get_window<widgets::video_player>();
 		mod.attr("player") = &player;
 
-		bindings::bind_tags(mod);
-		bindings::bind_tag_attributes(mod);
-
-		py::class_<utils::vec2<int>>(mod, "Vec2")
-		.def(py::init([](int x, int y)
-		{
-			return utils::vec2<int>{ x, y };
-		}))
-		.def_property("x",
-		[](const utils::vec2<int>& v)
-		{
-			return v[0];
-		},
-		[](utils::vec2<int>& v, int64_t value)
-		{
-			v[0] = static_cast<int>(std::min(static_cast<int64_t>(0), value));
-		})
-		.def_property("y",
-		[](const utils::vec2<int>& v)
-		{
-			return v[1];
-		},
-		[](utils::vec2<int>& v, int64_t value)
-		{
-			v[1] = static_cast<int>(std::min(static_cast<int64_t>(0), value));
-		})
-		.def(py::self == py::self);
-
-		bindings::bind_shapes(mod);
-		bindings::bind_segment(mod);
-		bindings::bind_video(mod);
-		bindings::bind_group(mod);
-		bindings::bind_project(mod);
-		bindings::bind_filesystem(mod);
-
 		mod.def("random_color", []()
 		{
 			ImVec4 color{ 0, 0, 0, 1 };
@@ -163,11 +176,6 @@ namespace vt
 			auto value = utils::random::get<float>(0.5f, 1.0f);
 			ImGui::ColorConvertHSVtoRGB(hue, 0.75f, value, color.x, color.y, color.z);
 			return ImGui::ColorConvertFloat4ToU32(color);
-		});
-
-		mod.def("to_abgr", [](uint32_t value)
-		{
-			return utils::color::to_abgr(value);
 		});
 
 		mod.def("log", [&console](std::string message)
@@ -231,7 +239,8 @@ namespace vt
 			cfg.user_site_directory = false;
 			cfg.module_search_paths_set = true;
 			PyConfig_SetString(&cfg, &cfg.home, pypath_wstr.c_str());
-			Py_SetPythonHome(pypath_wstr.c_str());
+
+			PyWideStringList_Append(&cfg.module_search_paths, pypath_wstr.c_str());
 			
 			auto zip_path = (pypath / (std::string(package_name_opt.value()) + ".zip")).wstring();
 			PyWideStringList_Append(&cfg.module_search_paths, zip_path.c_str());
@@ -241,8 +250,7 @@ namespace vt
 		}
 
 		cfg.use_frozen_modules = false;
-		lock_ = std::make_unique<py::scoped_interpreter>(&cfg);
-		unlock_ = std::make_unique<py::gil_scoped_release>();
+		interpreter_ = std::make_unique<py::scoped_interpreter>(&cfg);
 	}
 
 	void scripting_engine::set_script_dir(const std::filesystem::path& dir)
@@ -262,7 +270,7 @@ namespace vt
 		}
 	}
 
-	void scripting_engine::redirect_script_io(py::object stdout_, py::object stderr_)
+	void scripting_engine::redirect_script_io(py::object& stdout_, py::object& stderr_)
 	{
 		auto sys = py::module::import("sys");
 		auto vt = py::module::import("videotagger");
@@ -278,6 +286,7 @@ namespace vt
 	{
 		auto run_script = [this, script_path]()
 		{
+			gil_release_ = std::make_unique<py::gil_scoped_release>();
 			auto task = ctx_.tasks.run([this, script_path = script_path]() mutable
 			{
 				ctx_.dispatch_event<script_start_event>("scripting-engine", script_path);
@@ -301,7 +310,7 @@ namespace vt
 					auto script_class_name = script_path.stem().string();
 					if (!py::hasattr(script, script_class_name.c_str()))
 					{
-						debug::error("Couldn't find '{}' class. Script files should contain a class with the same name as the filename (class filename(vt.Script): ...)", script_class_name);
+						debug::error("Couldn't find '{}' class. Script files should contain a class with the same name as the filename (class filename(videotagger.Script): ...)", script_class_name);
 						return false;
 					}
 					auto script_class = script.attr(script_class_name.c_str());
@@ -309,7 +318,7 @@ namespace vt
 					//check if script is a subclass of vt.Script
 					if (!py::isinstance<py::type>(script_class) and py::hasattr(script_class, "__bases__") and script_class.attr("__bases__").attr("__contains__")(base_script_class).cast<bool>())
 					{
-						debug::error("Script class '{}' should be a subclass of vt.Script", script_class_name);
+						debug::error("Script class '{}' should be a subclass of videotagger.Script", script_class_name);
 						return false;
 					}
 
@@ -325,7 +334,23 @@ namespace vt
 					ctx_.script_handle->script = native_script;
 
 					ctx_.script_handle->has_progress = native_script->has_progress();
-					native_script->on_run();
+					//native_script->on_run();
+					{
+						py::object on_run_fn = script_class_obj.attr("on_run");						
+						if (!on_run_fn.is_none())
+						{
+							py::object inspect = py::module_::import("inspect");
+							bool is_async = inspect.attr("iscoroutinefunction")(on_run_fn).cast<bool>();
+							if (is_async)
+							{
+								py::module_::import("asyncio").attr("run")(on_run_fn());
+							}
+							else
+							{
+								native_script->on_run();
+							}
+						}
+					}
 					ctx_.script_handle->script = {};
 					//script.attr(entrypoint.c_str())();
 				}
@@ -335,7 +360,6 @@ namespace vt
 
 					try
 					{
-						py::gil_scoped_acquire lock{};
 						py::object traceback = py::module::import("traceback");
 						py::object sys = py::module::import("sys");
 
@@ -352,7 +376,6 @@ namespace vt
 							std::string file_name = py::str(tb_frame.attr("f_code").attr("co_filename"));
 							int64_t lineno = py::int_(exc_traceback.attr("tb_lineno"));
 							std::string exception_type = py::str(exc_type.attr("__name__"));
-
 
 							if (ex.matches(PyExc_InterruptedError))
 							{
@@ -386,7 +409,7 @@ namespace vt
 				return true;
 			}, task_priority::highest);
 
-			task.then(ctx_.tasks.on_main(), [script_path](bool success)
+			task.then(ctx_.tasks.on_main(), [this, script_path](bool success)
 			{
 				if (success)
 				{
@@ -398,6 +421,7 @@ namespace vt
 				}
 				ctx_.dispatch_event<script_end_event>("scripting-engine", script_path);
 				ctx_.script_progress_popup.reset();
+				gil_release_ = nullptr;
 			});
 			ctx_.script_handle = script_handle(std::move(task));
 			ctx_.script_progress_popup = ui::new_popup<ui::script_progress_popup>(nullptr);

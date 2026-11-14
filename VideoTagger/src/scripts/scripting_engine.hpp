@@ -17,12 +17,12 @@ namespace vt
 
 	private:
 		PyConfig cfg{};
-		std::unique_ptr<py::scoped_interpreter> lock_;
-		std::unique_ptr<py::gil_scoped_release> unlock_;
+		std::unique_ptr<py::scoped_interpreter> interpreter_;
+		std::unique_ptr<py::gil_scoped_release> gil_release_;
 
 	private:
 		void set_script_dir(const std::filesystem::path& dir);
-		void redirect_script_io(py::object stdout_, py::object stderr_);
+		void redirect_script_io(py::object& stdout_, py::object& stderr_);
 
 	public:
 		void init();
