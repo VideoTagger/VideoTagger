@@ -6,6 +6,7 @@
 #include <widgets/video_player.hpp>
 #include <video/local_video_importer.hpp>
 #include <utils/random.hpp>
+#include "bindings/bind_core.hpp"
 #include "bindings/bind_task.hpp"
 #include "bindings/bind_tags.hpp"
 #include "bindings/bind_tag_attributes.hpp"
@@ -18,6 +19,7 @@
 #include "bindings/bind_segment.hpp"
 #include "bindings/bind_filesystem.hpp"
 #include "bindings/bind_system.hpp"
+#include "bindings/bind_windows.hpp"
 #include "bindings/proxies.hpp"
 #include "script.hpp"
 #include <core/platform.hpp>
@@ -27,23 +29,9 @@
 
 namespace vt
 {
-	static widgets::console::entry::source_info get_caller_info()
-	{
-		py::gil_scoped_acquire lock{};
-		py::object inspect = py::module_::import("inspect");
-
-		py::object stack = inspect.attr("stack")();
-		py::object caller_frame = stack[py::cast(0)];
-		py::object frame_info = inspect.attr("getframeinfo")(caller_frame[py::cast(0)]);
-
-		py::str filename = frame_info.attr("filename");
-		py::int_ lineno = frame_info.attr("lineno");
-
-		return { filename.cast<std::string>(), lineno.cast<int64_t>() };
-	}
-
 	static void add_bindings(pybind11::module_& mod)
 	{
+		bindings::bind_core(mod);
 		bindings::bind_timestamp(mod);
 		bindings::bind_tags(mod);
 		bindings::bind_tag_attributes(mod);
@@ -55,165 +43,12 @@ namespace vt
 		bindings::bind_project(mod);
 		bindings::bind_filesystem(mod);
 		bindings::bind_system(mod);
+		bindings::bind_windows(mod);
 	}
 
 	PYBIND11_EMBEDDED_MODULE(videotagger, mod)
 	{
-		struct stdout_hook {};
-		auto& console = ctx_.get_window<widgets::console>();
-
-		py::class_<stdout_hook>(mod, "stdout_hook")
-		.def_static("write", [&console](std::string message)
-		{
-			auto caller_info = get_caller_info();
-			message = utils::string::trim_whitespace(message);
-			if (!message.empty())
-			{
-				std::stringstream ss;
-				ss << std::this_thread::get_id();
-				debug::add_log(fmt::format("{}:{}:{}", ss.str(), std::filesystem::relative(caller_info.path, ctx_.script_dir_filepath).string(), caller_info.line), "info", "{}", message);
-				console.add_entry(widgets::console::entry::flag_type::info, message, caller_info);
-			}
-		})
-		.def_static("flush", []()
-		{
-			std::cout << std::flush;
-		});
-
-		auto inspect = py::module::import("inspect");
-
-		struct stderr_hook {};
-		py::class_<stderr_hook>(mod, "stderr_hook")
-		.def_static("write", [&console](std::string message)
-		{
-			auto caller_info = get_caller_info();
-			message = utils::string::trim_whitespace(message);
-			if (!message.empty())
-			{
-				std::stringstream ss;
-				ss << std::this_thread::get_id();
-				debug::add_log(fmt::format("{}:{}:{}", ss.str(), std::filesystem::relative(caller_info.path, ctx_.script_dir_filepath).string(), caller_info.line), "error", "{}", message);
-				console.add_entry(widgets::console::entry::flag_type::error, message, caller_info);
-			}
-		})
-		.def_static("flush", []()
-		{
-			std::cerr << std::flush;
-		});
-
-		py::class_<script_base, script, std::shared_ptr<script_base>>(mod, "Script")
-		.def(py::init<>())
-		.def("has_progress", &script_base::has_progress)
-		.def_property("progress", &script_base::progress, &script_base::set_progress)
-		.def_property("progress_info", &script_base::progress_info, &script_base::set_progress_info)
-		.def("on_run", &script_base::on_run, py::doc("This method doesn't need to be implemented since it isn't purely virtual"));
-
-
-		py::class_<utils::vec2<int>>(mod, "Vec2")
-		.def(py::init([](int x, int y)
-		{
-			return utils::vec2<int>{ x, y };
-		}))
-		.def_property("x",
-		[](const utils::vec2<int>& v)
-		{
-			return v[0];
-		},
-		[](utils::vec2<int>& v, int64_t value)
-		{
-			v[0] = static_cast<int>(std::min(static_cast<int64_t>(0), value));
-		})
-		.def_property("y",
-		[](const utils::vec2<int>& v)
-		{
-			return v[1];
-		},
-		[](utils::vec2<int>& v, int64_t value)
-		{
-			v[1] = static_cast<int>(std::min(static_cast<int64_t>(0), value));
-		})
-		.def(py::self == py::self)
-		.def("__repr__", [](const utils::vec2<int>& v)
-		{
-			return fmt::format("(x: {}, y: {})", v.x(), v.y());
-		});
-
 		add_bindings(mod);
-
-		py::class_<widgets::video_player>(mod, "Player")
-		.def_property_readonly("current_timestamp", [](const widgets::video_player& player) -> timestamp
-		{
-			return timestamp{ player.data().current_ts };
-		})
-		.def("play", [](widgets::video_player& player)
-		{
-			if (player.is_playing()) return;
-			player.set_playing(true);
-		})
-		.def("pause", [](widgets::video_player& player)
-		{
-			if (!player.is_playing()) return;
-			player.set_playing(false);
-		})
-		.def("seek", [](widgets::video_player& player, timestamp ts)
-		{
-			player.callbacks.on_seek({ ts.total_nanoseconds });
-		})
-		.def("set_playing", [](widgets::video_player& player, bool value)
-		{
-			if (value == player.is_playing()) return;
-			player.set_playing(value);
-		})
-		.def_property_readonly("is_playing", [](const widgets::video_player& player) -> bool
-		{
-			return player.is_playing();
-		});
-
-		auto& player = ctx_.get_window<widgets::video_player>();
-		mod.attr("player") = &player;
-
-		mod.def("random_color", []()
-		{
-			ImVec4 color{ 0, 0, 0, 1 };
-
-			auto hue = utils::random::get_from_zero<float>();
-			auto value = utils::random::get<float>(0.5f, 1.0f);
-			ImGui::ColorConvertHSVtoRGB(hue, 0.75f, value, color.x, color.y, color.z);
-			return ImGui::ColorConvertFloat4ToU32(color);
-		});
-
-		mod.def("log", [&console](std::string message)
-		{
-			auto caller_info = get_caller_info();
-			message = utils::string::trim_whitespace(message);
-			if (!message.empty())
-			{
-				debug::log_src(fmt::format("{}:{}", std::filesystem::relative(caller_info.path, ctx_.script_dir_filepath).string(), caller_info.line), "{}", message);
-				console.add_entry(widgets::console::entry::flag_type::info, message, caller_info);
-			}
-		});
-
-		mod.def("warn", [&console](std::string message)
-		{
-			auto caller_info = get_caller_info();
-			message = utils::string::trim_whitespace(message);
-			if (!message.empty())
-			{
-				debug::warn_src(fmt::format("{}:{}", std::filesystem::relative(caller_info.path, ctx_.script_dir_filepath).string(), caller_info.line), "{}", message);
-				console.add_entry(widgets::console::entry::flag_type::warn, message, caller_info);
-			}
-		});
-
-		mod.def("error", [&console](std::string message)
-		{
-			auto caller_info = get_caller_info();
-			message = utils::string::trim_whitespace(message);
-			if (!message.empty())
-			{
-				debug::error_src(fmt::format("{}:{}", std::filesystem::relative(caller_info.path, ctx_.script_dir_filepath).string(), caller_info.line), "{}", message);
-				console.add_entry(widgets::console::entry::flag_type::error, message, caller_info);
-			}
-		});
 	}
 
 	scripting_engine::scripting_engine() {}

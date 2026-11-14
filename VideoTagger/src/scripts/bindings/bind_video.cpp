@@ -14,7 +14,7 @@ void vt::bindings::bind_video(pybind11::module_& mod)
 	})
 	.def_property_readonly("path", [](const vt_video& vid) -> std::string
 	{
-		return vid.path.string();
+		return vid.path.u8string();
 	})
 	.def_property_readonly("size", [](const vt_video& vid) -> std::pair<int, int>
 	{

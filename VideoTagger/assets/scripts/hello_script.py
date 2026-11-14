@@ -27,7 +27,7 @@ class hello_script(vt.Script):
         self.progress_info = "Adding tags"
         for i in range(200):
             self.progress = i / 200.0
-            time.sleep(0.00125)
+            # time.sleep(0.00125)
             tag = vt.Tag(f"Python Tag {i + 1}", 0xFF00FF + i * 100)
             project.tags.add_tag(tag)
         self.progress_info = ""
