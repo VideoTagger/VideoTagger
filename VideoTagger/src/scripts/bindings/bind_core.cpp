@@ -107,11 +107,10 @@ extern void vt::bindings::bind_core(pybind11::module_& mod)
 	.def("on_run", &script_base::on_run, py::doc("This method doesn't need to be implemented since it isn't purely virtual"));
 
 	py::class_<utils::vec2<int>>(mod, "Vec2")
-	.def(py::init<>())
 	.def(py::init([](int x, int y)
 	{
 		return utils::vec2<int>{ x, y };
-	}), py::arg("x"), py::arg("y"))
+	}), py::arg("x") = 0, py::arg("y") = 0)
 	.def_property("x",
 	[](const utils::vec2<int>& v)
 	{
