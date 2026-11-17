@@ -49,6 +49,7 @@
 #include <httplib.h>
 
 #include <pybind11/embed.h>
+#include <pybind11/native_enum.h>
 #include <pybind11/stl.h>
 #include <pybind11/chrono.h>
 #include <pybind11/operators.h>

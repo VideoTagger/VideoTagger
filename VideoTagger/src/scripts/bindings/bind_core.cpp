@@ -42,7 +42,7 @@ extern void vt::bindings::bind_core(pybind11::module_& mod)
 			debug::add_log(fmt::format("{}:{}:{}", ss.str(), std::filesystem::relative(caller_info.path, ctx_.script_dir_filepath).string(), caller_info.line), "info", "{}", message);
 			console.add_entry(widgets::console::entry::flag_type::info, message, caller_info);
 		}
-	})
+	}, py::arg("message"))
 	.def_static("flush", []()
 	{
 		std::cout << std::flush;
@@ -60,7 +60,7 @@ extern void vt::bindings::bind_core(pybind11::module_& mod)
 			debug::add_log(fmt::format("{}:{}:{}", ss.str(), std::filesystem::relative(caller_info.path, ctx_.script_dir_filepath).string(), caller_info.line), "error", "{}", message);
 			console.add_entry(widgets::console::entry::flag_type::error, message, caller_info);
 		}
-	})
+	}, py::arg("message"))
 	.def_static("flush", []()
 	{
 		std::cerr << std::flush;
@@ -75,7 +75,7 @@ extern void vt::bindings::bind_core(pybind11::module_& mod)
 			debug::log_src(fmt::format("{}:{}", std::filesystem::relative(caller_info.path, ctx_.script_dir_filepath).string(), caller_info.line), "{}", message);
 			console.add_entry(widgets::console::entry::flag_type::info, message, caller_info);
 		}
-	});
+	}, py::arg("message"));
 
 	mod.def("warn", [&console](std::string message)
 	{
@@ -86,7 +86,7 @@ extern void vt::bindings::bind_core(pybind11::module_& mod)
 			debug::warn_src(fmt::format("{}:{}", std::filesystem::relative(caller_info.path, ctx_.script_dir_filepath).string(), caller_info.line), "{}", message);
 			console.add_entry(widgets::console::entry::flag_type::warn, message, caller_info);
 		}
-	});
+	}, py::arg("message"));
 
 	mod.def("error", [&console](std::string message)
 	{
@@ -97,7 +97,7 @@ extern void vt::bindings::bind_core(pybind11::module_& mod)
 			debug::error_src(fmt::format("{}:{}", std::filesystem::relative(caller_info.path, ctx_.script_dir_filepath).string(), caller_info.line), "{}", message);
 			console.add_entry(widgets::console::entry::flag_type::error, message, caller_info);
 		}
-	});
+	}, py::arg("message"));
 
 	py::class_<script_base, script, std::shared_ptr<script_base>>(mod, "Script")
 	.def(py::init<>())
@@ -107,10 +107,11 @@ extern void vt::bindings::bind_core(pybind11::module_& mod)
 	.def("on_run", &script_base::on_run, py::doc("This method doesn't need to be implemented since it isn't purely virtual"));
 
 	py::class_<utils::vec2<int>>(mod, "Vec2")
+	.def(py::init<>())
 	.def(py::init([](int x, int y)
 	{
 		return utils::vec2<int>{ x, y };
-	}))
+	}), py::arg("x"), py::arg("y"))
 	.def_property("x",
 	[](const utils::vec2<int>& v)
 	{
@@ -129,7 +130,8 @@ extern void vt::bindings::bind_core(pybind11::module_& mod)
 	{
 		v[1] = static_cast<int>(std::min(static_cast<int64_t>(0), value));
 	})
-	.def(py::self == py::self)
+	.def(py::self == py::self, py::arg("other"))
+	.def(py::self != py::self, py::arg("other"))
 	.def("__repr__", [](const utils::vec2<int>& v)
 	{
 		return fmt::format("(x: {}, y: {})", v.x(), v.y());

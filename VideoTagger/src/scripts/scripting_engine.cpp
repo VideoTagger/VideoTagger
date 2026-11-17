@@ -33,12 +33,12 @@ namespace vt
 	{
 		bindings::bind_core(mod);
 		bindings::bind_timestamp(mod);
-		bindings::bind_tags(mod);
+		bindings::bind_video(mod);
 		bindings::bind_tag_attributes(mod);
+		bindings::bind_tags(mod);
 		bindings::bind_color(mod);
 		bindings::bind_shapes(mod);
 		bindings::bind_segment(mod);
-		bindings::bind_video(mod);
 		bindings::bind_group(mod);
 		bindings::bind_project(mod);
 		bindings::bind_filesystem(mod);

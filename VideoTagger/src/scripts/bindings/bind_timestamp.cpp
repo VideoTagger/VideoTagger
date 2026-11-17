@@ -9,7 +9,7 @@ void vt::bindings::bind_timestamp(pybind11::module_& mod)
 	namespace py = pybind11;
 
 	py::class_<timestamp>(mod, "Timestamp")
-	.def(py::init<int64_t>())
+	.def(py::init<int64_t>(), py::arg("total_nanoseconds"))
 	.def_property("hours",
 	[](const timestamp& ts) -> int64_t
 	{
@@ -73,10 +73,10 @@ void vt::bindings::bind_timestamp(pybind11::module_& mod)
 	{
 		ts.total_nanoseconds = decltype(ts.total_nanoseconds)(value);
 	})
-	.def(py::self < py::self)
-	.def(py::self > py::self)
-	.def(py::self <= py::self)
-	.def(py::self >= py::self)
+	.def(py::self < py::self, py::arg("other"))
+	.def(py::self > py::self, py::arg("other"))
+	.def(py::self <= py::self, py::arg("other"))
+	.def(py::self >= py::self, py::arg("other"))
 	.def("__repr__", [](const timestamp& ts)
 	{
 		return timestamp_to_string(ts, default_time_format);

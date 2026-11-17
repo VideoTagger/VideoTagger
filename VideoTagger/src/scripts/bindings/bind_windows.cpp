@@ -28,12 +28,12 @@ void vt::bindings::bind_windows(pybind11::module_& mod)
 	.def("seek", [](widgets::video_player& player, timestamp ts)
 	{
 		player.callbacks.on_seek({ ts.total_nanoseconds });
-	})
+	}, py::arg("timestamp"))
 	.def("set_playing", [](widgets::video_player& player, bool value)
 	{
 		if (value == player.is_playing()) return;
 		player.set_playing(value);
-	})
+	}, py::arg("value"))
 	.def_property_readonly("is_playing", [](const widgets::video_player& player) -> bool
 	{
 		return player.is_playing();

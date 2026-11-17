@@ -20,7 +20,7 @@ void vt::bindings::bind_tag_attributes(pybind11::module_& mod)
 	{
 		ctx_.dispatch_event<attribute_rename_request_event>("script", attr.tag.ptr->name, attr.ptr->name(), name);
 		return attr.ptr->name() == name;
-	})
+	}, py::arg("name"))
 	.def_property_readonly("type", [](const vt_attribute& attr)
 	{
 		return attr.ptr->type_name();

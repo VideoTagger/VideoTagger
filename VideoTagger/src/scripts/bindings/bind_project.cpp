@@ -67,7 +67,7 @@ void vt::bindings::bind_project(pybind11::module_& mod)
 			if (group.display_name == name) return vt_video_group{ id, &group };
 		}
 		return std::nullopt;
-	}, py::return_value_policy::reference_internal)
+	}, py::arg("name"))
 	.def("add_group", [](vt_project& p, const std::string& name) -> std::optional<vt_video_group>
 	{
 		//TODO: Add event for adding groups and use it here
@@ -81,7 +81,7 @@ void vt::bindings::bind_project(pybind11::module_& mod)
 		group.display_name = name;
 
 		return vt_video_group{ id, &group };
-	})
+	}, py::arg("name"))
 	.def_property_readonly("group_queue", [](const vt_project& p) -> video_group_playlist&
 	{
 		return p.ptr->video_group_playlist;
