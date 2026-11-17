@@ -14,85 +14,91 @@ void vt::bindings::bind_group(pybind11::module_& mod)
 		return timestamp{ vi.offset };
 	});
 
-	py::class_<video_group>(mod, "VideoGroup")
-	.def(py::init([](const std::string& name) -> video_group
+	py::class_<vt_video_group>(mod, "VideoGroup")
+	.def_property_readonly("name", [](const vt_video_group& group)
 	{
-		return video_group{ name, {} };
-	}))
-	.def_readwrite("name", &video_group::display_name)
-	.def_property_readonly("video_infos", [](const video_group& group) -> std::vector<video_group::video_info>
-	{
-		return group.videos();
+		return group.ptr->display_name;
 	})
-	.def("add_video", [](video_group& group, const vt_video& vid, timestamp offset)
+	.def_property_readonly("video_infos", [](const vt_video_group& group) -> std::vector<video_group::video_info>
 	{
-		group.insert(video_group::video_info{ vid.id, offset.total_nanoseconds });
+		return group.ptr->videos();
+	})
+	.def("add_video", [](vt_video_group& group, const vt_video& vid, timestamp offset)
+	{
+		//TODO: use event
+
+		group.ptr->insert(video_group::video_info{ vid.id, offset.total_nanoseconds });
 	}, py::arg("video"), py::arg("offset"))
-	.def("add_timestamp", [](video_group& group, tag& t, timestamp start) -> std::optional<vt_tag_segment>
+	.def("add_timestamp", [](vt_video_group& group, vt_tag t, timestamp start) -> std::optional<vt_segment>
 	{
-		auto& segments = group.segments()[t.name];
+		auto& segments = group.ptr->segments()[t.ptr->name];
 		auto insert_result = segments.insert(start);
 		if (insert_result.inserted())
 		{
-			return vt_tag_segment{ (tag_segment&)(segments.at(insert_result.inserted_segment())), t };
+			auto inserted_id = insert_result.inserted_segment();
+			auto& segment = segments.at(inserted_id);
+			return vt_segment{ t, &segments, inserted_id, &segment };
 		}
 		return std::nullopt;
 	}, py::arg("tag"), py::arg("start"))
-	.def("add_segment", [](video_group& group, tag& t, timestamp start, timestamp end) -> std::optional<vt_tag_segment>
+	.def("add_segment", [](vt_video_group& group, vt_tag& t, timestamp start, timestamp end) -> std::optional<vt_segment>
 	{
-		auto& segments = group.segments()[t.name];
+		auto& segments = group.ptr->segments()[t.ptr->name];
 		auto insert_result = segments.insert(start, end);
 		if (insert_result.inserted())
 		{
-			return vt_tag_segment{ (tag_segment&)(segments.at(insert_result.inserted_segment())), t };
+			auto inserted_id = insert_result.inserted_segment();
+			auto& segment = segments.at(inserted_id);
+			return vt_segment{ t, &segments, inserted_id, &segment };
 		}
 		return std::nullopt;
 	}, py::arg("tag"), py::arg("start"), py::arg("end"))
-	.def("get_segments", [](video_group& group, tag& t) -> std::vector<vt_tag_segment>
+	.def("get_segments", [](vt_video_group& group, vt_tag& t) -> std::vector<vt_segment>
 	{
-		std::vector<vt_tag_segment> result;
-		auto& segm = group.segments();
-		auto segments_it = segm.find(t.name);
-		if (segments_it != segm.end())
+		std::vector<vt_segment> result;
+		auto& storage = group.ptr->segments();
+		auto segments_it = storage.find(t.ptr->name);
+		if (segments_it != storage.end())
 		{
-			for (const auto& segment : segments_it->second)
+			auto& segments = segments_it->second;
+			for (const auto& [id, segment] : segments)
 			{
-				result.push_back(vt_tag_segment{ (tag_segment&)(segment), t });
+				result.push_back(vt_segment{ t, &segments, id, &segment });
 			}
 		}
 		return result;
 	}, py::arg("tag"));
 
 	py::class_<video_group_playlist>(mod, "GroupQueue")
-	.def("add_group", [](video_group_playlist& p, const video_group& g) -> bool
+	.def("add_group", [](video_group_playlist& p, const vt_video_group& g) -> bool
 	{
 		auto& groups = ctx_.current_project->video_groups;
-		//auto it = std::find_if(groups.begin(), groups.end(), [&g](const std::pair<video_group_id_t, video_group>& group)
-		//{
-		//	return group.second.display_name == g.display_name;
-		//});
-		//if (it == groups.end()) return false;
-		//p.insert(p.end(), it->first);
+		if (groups.count(g.id) == 0) return false;
+
+		p.insert(p.end(), g.id);
 		return true;
 	}, py::arg("group"))
-	.def("current_group", [](video_group_playlist& p) -> std::optional<video_group*>
+	.def("current_group", [](video_group_playlist& p) -> std::optional<vt_video_group>
 	{
 		auto it = p.current();
 		auto& groups = ctx_.current_project->video_groups;
 		if (it == p.end()) return std::nullopt;
 		auto git = groups.find(*it);
-		return git != groups.end()  ? std::optional{ &git->second } : std::nullopt;
-	}, py::return_value_policy::reference_internal)
-	.def_property_readonly("groups", [](const video_group_playlist& p) -> std::vector<video_group*>
+		if (git == groups.end()) return std::nullopt;
+
+		return vt_video_group{ git->first, &git->second };
+	})
+	.def_property_readonly("groups", [](const video_group_playlist& p) -> std::vector<vt_video_group>
 	{
-		std::vector<video_group*> result;
+		std::vector<vt_video_group> result;
 		auto& groups = ctx_.current_project->video_groups;
 		for (auto group_id : p)
 		{
-			const auto& group_it = groups.find(group_id);
-			if (group_it == groups.end()) continue;
-			result.push_back(&group_it->second);
+			const auto& git = groups.find(group_id);
+			if (git == groups.end()) continue;
+
+			result.emplace_back(vt_video_group{ git->first, &git->second });
 		}
 		return result;
-	}, py::return_value_policy::reference_internal);
+	});
 }

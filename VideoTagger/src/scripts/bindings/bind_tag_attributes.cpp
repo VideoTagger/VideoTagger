@@ -1,11 +1,32 @@
 #include "pch.hpp"
 #include "bind_tag_attributes.hpp"
 #include <tags/tag.hpp>
+#include <scripts/bindings/proxies.hpp>
 #include <scripts/helpers.hpp>
+#include <core/app_context.hpp>
+
+#include <events/attributes/attribute_rename_request_event.hpp>
 
 void vt::bindings::bind_tag_attributes(pybind11::module_& mod)
 {
 	namespace py = pybind11;
+
+	py::class_<vt_attribute>(mod, "Attribute")
+	.def_property_readonly("name", [](const vt_attribute& attr)
+	{
+		return attr.ptr->name();
+	})
+	.def("set_name", [](const vt_attribute& attr, const std::string& name)
+	{
+		ctx_.dispatch_event<attribute_rename_request_event>("script", attr.tag.ptr->name, attr.ptr->name(), name);
+		return attr.ptr->name() == name;
+	})
+	.def_property_readonly("type", [](const vt_attribute& attr)
+	{
+		return attr.ptr->type_name();
+	});
+
+	py::class_<vt_attribute_instance>(mod, "AttributeInstance");
 
 	//py::class_<tag_attribute_instance>(mod, "TagAttributeInstance")
 	//.def("set_bool", [](tag_attribute_instance& attr, bool value)
@@ -60,14 +81,4 @@ void vt::bindings::bind_tag_attributes(pybind11::module_& mod)
 	//	s.get_map<polygon>() = helpers::to_map<timestamp, std::vector<polygon>>(keyframes);
 	//	attr = s;
 	//});
-
-	//py::enum_<tag_attribute::type>(mod, "TagAttributeType")
-	//.value("bool", tag_attribute::type::bool_)
-	//.value("float", tag_attribute::type::float_)
-	//.value("integer", tag_attribute::type::integer)
-	//.value("string", tag_attribute::type::string)
-	//.value("shape", tag_attribute::type::shape);
-
-	//py::class_<tag_attribute>(mod, "TagAttribute")
-	//.def(py::init<tag_attribute::type>());
 }
