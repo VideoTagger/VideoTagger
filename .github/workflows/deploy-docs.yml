@@ -29,7 +29,7 @@ jobs:
           ./scripts/linux-runner-setup-docs.sh
 
       - name: Run Doxygen
-        uses: mattnotmitt/doxygen-action@1.9.8
+        uses: mattnotmitt/doxygen-action@1.12.0
         with:
           working-directory: 'docs/'
 

@@ -75,6 +75,11 @@ To build the documentation run:
 ```shell
 uv run ./scripts/build_docs.py
 ```
+To serve the documentation locally go to the root directory and run:
+```shell
+docker build -t videotagger-docs:latest -f ./docker/docs/Dockerfile . && docker run -it --rm --init -p 3000:3000 videotagger-docs:latest
+```
+The documentation will be available at http://localhost:3000/docs
 
 ## Packaging with Velopack
 Before packaging make sure to build the project with the `-shipping` preset. Then go to the root directory and run:
