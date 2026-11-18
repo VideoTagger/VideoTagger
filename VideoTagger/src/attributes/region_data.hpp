@@ -36,6 +36,18 @@ namespace vt
 		mutable std::vector<const_iterator> interpolation_keyframe_its;
 
 	public:
+		/// @return Map of keyframes, where the key is the timestamp and the value is the shape at that timestamp
+		const std::map<timestamp, shape_type>& keyframes() const
+		{
+			return keyframes_;
+		}
+
+		/// @return Map of keyframes, where the key is the timestamp and the value is the shape at that timestamp
+		std::map<timestamp, shape_type>& keyframes()
+		{
+			return keyframes_;
+		}
+
 		/**
 		 * @brief Insert a new keyframe or replace an existing one
 		 * @param ts Timestamp of the keyframe
