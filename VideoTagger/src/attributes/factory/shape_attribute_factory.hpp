@@ -60,12 +60,23 @@ namespace vt
 			{
 				auto attribute_submod = mod.attr("attributes");
 				py::class_<bindings::vt_region<shape_type>>(attribute_submod, class_region_name.c_str())
-				/*.def_property_readonly("keyframes", [](const bindings::vt_region<shape_type>& region) -> std::vector<timestamp>
+				.def_property_readonly("keyframes", [](const bindings::vt_region<shape_type>& region) -> std::vector<std::tuple<timestamp, shape_type>>
 				{
-					
+					std::vector<std::tuple<timestamp, shape_type>> result;
+					for (const auto& [ts, shape] : region.instance.ptr->get_region(region.id))
+					{
+						result.push_back(std::make_tuple(ts, shape));
+					}
+					return result;
 				})
-				...
-				*/;
+				.def("get_keyframe", [](const bindings::vt_region<shape_type>& region, timestamp ts) -> std::optional<std::tuple<timestamp, shape_type>>
+				{
+					auto& reg = region.instance.ptr->get_region(region.id);
+					auto it = reg.find_keyframe(ts);
+					if (it == reg.end()) return std::nullopt;
+
+					return std::make_tuple(it->first, it->second);
+				}, py::arg("ts"));
 
 				py::class_<bindings::vt_shape_attribute_instance<shape_type>>(attribute_submod, class_name.c_str())
 				.def(py::init([class_name](bindings::vt_attribute_instance& instance) -> bindings::vt_shape_attribute_instance<shape_type>
