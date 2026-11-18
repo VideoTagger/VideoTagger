@@ -1,6 +1,8 @@
 #pragma once
 #include <optional>
 #include <filesystem>
+#include <functional>
+#include <vector>
 #include <pybind11/stl.h>
 #include <pybind11/embed.h>
 
@@ -19,6 +21,7 @@ namespace vt
 		PyConfig cfg{};
 		std::unique_ptr<py::scoped_interpreter> interpreter_;
 		std::unique_ptr<py::gil_scoped_release> gil_release_;
+		std::vector<std::function<void(py::module_& mod)>> bindings_;
 
 	private:
 		void set_script_dir(const std::filesystem::path& dir);
@@ -28,6 +31,9 @@ namespace vt
 		void init();
 		void run(const std::filesystem::path& script_path);
 		void interrupt();
+
+		void bind(const std::function<void(py::module_& mod)>& binding);
+		std::vector<std::function<void(py::module_& mod)>>& bindings();
 
 		bool has_embeddable_package() const;
 	private:

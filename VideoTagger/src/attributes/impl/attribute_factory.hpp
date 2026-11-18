@@ -22,5 +22,7 @@ namespace vt::impl
 		virtual ~attribute_factory() = default;
 
 		virtual std::unique_ptr<attribute> new_attribute(const std::string& name) = 0;
+
+		virtual void register_bindings() {};
 	};
 }

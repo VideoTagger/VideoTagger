@@ -85,7 +85,9 @@ namespace vt
 			auto factory = std::make_unique<factory_type>(name, std::forward<arguments>(args)...);
 			auto factory_ptr = factory.get();
 			attribute_specification spec{ color };
-			registry_[name] = { std::move(factory), spec };
+			auto& entry = registry_[name];
+			entry = { std::move(factory), spec };
+			entry.factory->register_bindings();
 			return factory_ptr;
 		}
 

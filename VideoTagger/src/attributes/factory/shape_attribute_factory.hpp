@@ -2,10 +2,13 @@
 #include <memory>
 #include <string>
 #include <array>
+#include <stdexcept>
+
 #include <attributes/impl/shape.hpp>
 #include <attributes/core/shape_attribute.hpp>
 #include <attributes/impl/attribute_factory.hpp>
-#include <stdexcept>
+#include <core/app_context.hpp>
+#include <scripts/bindings/proxies.hpp>
 
 namespace vt
 {
@@ -46,6 +49,25 @@ namespace vt
 		{
 			return std::make_unique<tool_type>(tag, attribute_name);
 		}
+
+		virtual void register_bindings() override
+		{
+			auto class_name = fmt::format("{}AttributeInstance", utils::string::to_titlecase(name()));
+			ctx_.script_eng.bind([class_name](pybind11::module_& mod)
+			{
+				pybind11::class_<bindings::vt_shape_attribute_instance<shape_type>>(mod, class_name.c_str())
+				.def(pybind11::init([class_name](bindings::vt_attribute_instance& instance) -> bindings::vt_shape_attribute_instance<shape_type>
+				{
+					auto* ptr = instance.ptr->as<shape_attribute_instance<shape_type>>();
+					if (ptr == nullptr)
+					{
+						throw std::runtime_error(fmt::format("Failed to cast AttributeInstance to {}, types are incompatible", class_name));
+					}
+
+					return bindings::vt_shape_attribute_instance<shape_type>{ instance.segment, ptr };
+				}), pybind11::arg("instance"));
+			});
+		};
 	};
 
 	/**

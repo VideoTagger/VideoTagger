@@ -43,7 +43,7 @@ void vt::bindings::bind_segment(pybind11::module_& mod)
 		if (instance_it == attr_instances.end()) return std::nullopt;
 
 		return vt_attribute_instance{ s, instance_it->get() };
-	}, py::arg("video"), py::arg("name"), py::return_value_policy::reference_internal)
+	}, py::arg("video"), py::arg("name"))
 	.def_property_readonly("tag", [](const vt_segment& s) -> vt_tag
 	{
 		return s.tag;

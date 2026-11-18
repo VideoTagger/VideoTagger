@@ -44,6 +44,11 @@ namespace vt
 		bindings::bind_filesystem(mod);
 		bindings::bind_system(mod);
 		bindings::bind_windows(mod);
+
+		for (const auto& binding : ctx_.script_eng.bindings())
+		{
+			binding(mod);
+		}
 	}
 
 	PYBIND11_EMBEDDED_MODULE(videotagger, mod)
@@ -290,6 +295,18 @@ namespace vt
 			py::gil_scoped_acquire lock{};
 			PyThreadState_SetAsyncExc(ctx_.script_handle->thread_id, PyExc_InterruptedError);
 		}
+	}
+
+	void scripting_engine::bind(const std::function<void(py::module_& mod)>& binding)
+	{
+		if (binding == nullptr) return;
+
+		bindings_.push_back(binding);
+	}
+
+	std::vector<std::function<void(py::module_& mod)>>& scripting_engine::bindings()
+	{
+		return bindings_;
 	}
 
 	bool scripting_engine::has_embeddable_package() const

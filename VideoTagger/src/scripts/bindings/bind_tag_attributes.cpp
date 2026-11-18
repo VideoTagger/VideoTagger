@@ -26,7 +26,15 @@ void vt::bindings::bind_tag_attributes(pybind11::module_& mod)
 		return attr.ptr->type_name();
 	});
 
-	py::class_<vt_attribute_instance>(mod, "AttributeInstance");
+	py::class_<vt_attribute_instance>(mod, "AttributeInstance")
+	.def_property_readonly("attribute", [](vt_attribute_instance& instance)
+	{
+		return vt_attribute{ instance.segment.tag, instance.ptr->attribute_impl() };
+	})
+	.def_property_readonly("segment", [](vt_attribute_instance& instance)
+	{
+		return instance.segment;
+	});
 
 	//py::class_<tag_attribute_instance>(mod, "TagAttributeInstance")
 	//.def("set_bool", [](tag_attribute_instance& attr, bool value)
