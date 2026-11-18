@@ -9,14 +9,12 @@
 #include "bindings/bind_core.hpp"
 #include "bindings/bind_task.hpp"
 #include "bindings/bind_tags.hpp"
-#include "bindings/bind_tag_attributes.hpp"
 #include "bindings/bind_timestamp.hpp"
 #include "bindings/bind_color.hpp"
 #include "bindings/bind_shapes.hpp"
 #include "bindings/bind_project.hpp"
 #include "bindings/bind_group.hpp"
 #include "bindings/bind_video.hpp"
-#include "bindings/bind_segment.hpp"
 #include "bindings/bind_filesystem.hpp"
 #include "bindings/bind_system.hpp"
 #include "bindings/bind_windows.hpp"
@@ -34,11 +32,9 @@ namespace vt
 		bindings::bind_core(mod);
 		bindings::bind_timestamp(mod);
 		bindings::bind_video(mod);
-		bindings::bind_tag_attributes(mod);
 		bindings::bind_tags(mod);
 		bindings::bind_color(mod);
 		bindings::bind_shapes(mod);
-		bindings::bind_segment(mod);
 		bindings::bind_group(mod);
 		bindings::bind_project(mod);
 		bindings::bind_filesystem(mod);

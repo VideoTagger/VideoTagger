@@ -4,6 +4,7 @@
 #include <video/video_pool.hpp>
 #include <tags/tag.hpp>
 #include <attributes/core/shape_attribute_instance.hpp>
+#include <attributes/core/simple_attribute_instance.hpp>
 
 namespace vt::bindings
 {
@@ -62,6 +63,13 @@ namespace vt::bindings
 	{
 		vt_segment segment;
 		shape_attribute_instance<shape_type>* ptr{};
+	};
+
+	template<typename attribute_type>
+	struct vt_simple_attribute_instance
+	{
+		vt_segment segment;
+		simple_attribute_instance<attribute_type>* ptr{};
 	};
 
 	inline std::optional<vt_video> make_vt_video(project& project, video_id_t id)
