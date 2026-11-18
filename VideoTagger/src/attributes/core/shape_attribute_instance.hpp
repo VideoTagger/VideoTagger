@@ -211,7 +211,7 @@ namespace vt
 			return id;
 		}
 
-		bool erase_region(region_id_t id)
+		bool remove_region(region_id_t id)
 		{
 			return regions_.erase(id) != 0;
 		}
@@ -250,7 +250,6 @@ namespace vt
 			{
 				result.push_back(ts);
 			}
-
 			return result;
 		}
 

@@ -52,13 +52,23 @@ namespace vt
 
 		virtual void register_bindings() override
 		{
+			namespace py = pybind11;
+
 			auto class_name = fmt::format("{}AttributeInstance", utils::string::to_titlecase(name()));
-			ctx_.script_eng.bind([class_name](pybind11::module_& mod)
+			auto class_region_name = fmt::format("{}Region", utils::string::to_titlecase(name()));
+			ctx_.script_eng.bind([class_name, class_region_name](py::module_& mod)
 			{
 				auto attribute_submod = mod.attr("attributes");
+				py::class_<bindings::vt_region<shape_type>>(attribute_submod, class_region_name.c_str())
+				/*.def_property_readonly("keyframes", [](const bindings::vt_region<shape_type>& region) -> std::vector<timestamp>
+				{
+					
+				})
+				...
+				*/;
 
-				pybind11::class_<bindings::vt_shape_attribute_instance<shape_type>>(attribute_submod, class_name.c_str())
-				.def(pybind11::init([class_name](bindings::vt_attribute_instance& instance) -> bindings::vt_shape_attribute_instance<shape_type>
+				py::class_<bindings::vt_shape_attribute_instance<shape_type>>(attribute_submod, class_name.c_str())
+				.def(py::init([class_name](bindings::vt_attribute_instance& instance) -> bindings::vt_shape_attribute_instance<shape_type>
 				{
 					auto* ptr = instance.ptr->as<shape_attribute_instance<shape_type>>();
 					if (ptr == nullptr)
@@ -66,7 +76,25 @@ namespace vt
 						throw std::runtime_error(fmt::format("Failed to cast AttributeInstance to {}, types are incompatible", class_name));
 					}
 					return bindings::vt_shape_attribute_instance<shape_type>{ instance.segment, ptr };
-				}), pybind11::arg("instance"));
+				}), py::arg("instance"))
+				.def_property_readonly("regions", [](const bindings::vt_shape_attribute_instance<shape_type>& instance) -> std::vector<bindings::vt_region<shape_type>>
+				{
+					std::vector<bindings::vt_region<shape_type>> result;
+					for (const auto& [id, _] : instance.ptr->regions())
+					{
+						result.push_back(bindings::vt_region<shape_type>{ id, instance });
+					}
+					return result;
+				})
+				.def("insert_region", [](bindings::vt_shape_attribute_instance<shape_type>& instance, const shape_type& shape, timestamp ts, const std::optional<std::string>& region_name = std::nullopt) -> bindings::vt_region<shape_type>
+				{
+					auto id = instance.ptr->insert_region(region_name, ts, shape);
+					return bindings::vt_region<shape_type>{ id, instance };
+				}, py::arg("shape"), py::arg("ts"), py::arg("name") = std::nullopt)
+				.def("remove_region", [](bindings::vt_shape_attribute_instance<shape_type>& instance, const bindings::vt_region<shape_type>& region) -> bool
+				{
+					return instance.ptr->remove_region(region.id);
+				}, py::arg("region"));
 			});
 		};
 	};

@@ -72,6 +72,13 @@ namespace vt::bindings
 		simple_attribute_instance<attribute_type>* ptr{};
 	};
 
+	template<typename shape_type>
+	struct vt_region
+	{
+		region_id_t id{};
+		vt_shape_attribute_instance<shape_type> instance{};
+	};
+
 	inline std::optional<vt_video> make_vt_video(project& project, video_id_t id)
 	{
 		auto video_ptr = project.videos.get(id);
