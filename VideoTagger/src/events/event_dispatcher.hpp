@@ -9,6 +9,7 @@
 #include <limits>
 #include <shared_mutex>
 #include <utils/random.hpp>
+#include <tasks/task.hpp>
 #include <events/impl/event_dispatcher.hpp>
 #include <events/event_interceptor.hpp>
 
@@ -131,6 +132,13 @@ namespace vt
 	inline const event_listener_priority event_listener_priority::high{ std::numeric_limits<int64_t>::max() / 2 };
 	inline const event_listener_priority event_listener_priority::highest{ std::numeric_limits<int64_t>::max() };
 
+	template<typename return_type, typename event_type>
+	struct disposable_event_listener_state
+	{
+		event_listener_handle listener_handle;
+		std::function<return_type(const event_type&)> callback;
+	};
+
 	/**
 	 * @brief Callback representing a listener for a specific event type
 	 * @tparam type The type of event for which this callback is used
@@ -202,6 +210,7 @@ namespace vt
 		 * @return A handle to the added listener
 		 * 
 		 * @sa operator+=(const std::function<void(const event_type&)>& callback, event_listener_priority priority)
+		 * @sa add_disposable_event_listener(const std::function<void(const event_type&)>& callback, event_listener_priority priority)
 		 */
 		constexpr event_listener_handle add_event_listener(const std::function<void(const event_type&)>& callback, event_listener_priority priority = event_listener_priority::normal)
 		{
@@ -210,6 +219,31 @@ namespace vt
 			listeners_.push_back(std::make_unique<event_callback>(handle, priority, callback));
 			sort_listeners();
 			return handle;
+		}
+
+		/**
+		 * @brief Adds a new listener for the event type, disposed after the first callback invocation
+		 * @param[in] callback The function to be called when the event is dispatched
+		 * @return A task representing the result of the callback
+		 *
+		 * @sa add_event_listener(const std::function<void(const event_type&)>& callback, event_listener_priority priority)
+		 */
+		template<typename return_type>
+		constexpr task<return_type> add_disposable_event_listener(const std::function<return_type(const event_type&)>& callback, event_listener_priority priority = event_listener_priority::normal)
+		{
+			auto state = std::make_shared<task_state<return_type>>();
+			task<return_type> task{ state };
+			auto dl = std::make_shared<disposable_event_listener_state<return_type, event_type>>
+			({
+				add_event_listener([state, dl, this](const event_type& event)
+				{
+					return_type result = dl->callback(event);
+					remove_event_listener(dl->listener_handle);
+					state->set_value(result);
+				}, priority),
+				callback
+			});
+			return task;
 		}
 
 		/**

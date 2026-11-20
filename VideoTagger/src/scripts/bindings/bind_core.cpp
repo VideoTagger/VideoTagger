@@ -2,6 +2,7 @@
 #include "bind_core.hpp"
 #include <core/app_context.hpp>
 #include <widgets/console.hpp>
+#include <scripts/interrupt_exception.hpp>
 
 namespace vt
 {
@@ -24,11 +25,25 @@ namespace vt
 extern void vt::bindings::bind_core(pybind11::module_& mod)
 {
 	namespace py = pybind11;
+	py::register_exception_translator([](std::exception_ptr p)
+	{
+		try
+		{
+			if (p)
+			{
+				std::rethrow_exception(p);
+			}
+		}
+		catch (const interrupt_exception& ex)
+		{
+			py::set_error(PyExc_InterruptedError, ex.what());
+		}
+	});
 
 	auto& console = ctx_.get_window<widgets::console>();
 
-	struct stdout_hook {};
-	struct stderr_hook {};
+	struct stdout_hook{};
+	struct stderr_hook{};
 
 	py::class_<stdout_hook>(mod, "stdout_hook")
 	.def_static("write", [&console](std::string message)
