@@ -84,7 +84,7 @@ namespace vt
 		constexpr task<return_type> add_disposable_event_listener(fn_type&& callback, event_listener_priority priority = event_listener_priority::normal)
 		{
 			auto& dispatcher = get_event_dispatcher<event_type>();
-			return dispatcher.add_disposable_event_listener<return_type>(std::forward<fn_type>(callback), priority);
+			return dispatcher.template add_disposable_event_listener<fn_type, return_type>(std::forward<fn_type>(callback), priority);
 		}
 
 		/**

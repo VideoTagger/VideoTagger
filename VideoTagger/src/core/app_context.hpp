@@ -260,12 +260,11 @@ namespace vt
 		template<typename event_type, typename event_source_id_type, typename = std::enable_if_t<std::is_constructible_v<event_source, event_source_id_type> and std::is_base_of_v<event, event_type>>>
 		constexpr task<void> dispatch_event_on_main(const event_source_id_type& source, event_type&& event_instance)
 		{
-			auto fn = [this, source, event_instance = std::move(event_instance)]()
+			auto fn = [this, source, event_ptr = std::make_shared<event_type>(std::move(event_instance))]()
 			{
 				auto& dispatcher = get_event_dispatcher<event_type>();
-				auto event = std::move(event_instance);
-				event.set_source({ source });
-				dispatcher.dispatch_event(std::move(event));
+				event_ptr->set_source({ source });
+				dispatcher.dispatch_event(std::move(*event_ptr));
 			};
 
 			if (std::this_thread::get_id() == debug::main_thread_id)
@@ -278,7 +277,7 @@ namespace vt
 			}
 			else
 			{
-				return tasks.run_on_main(fn);
+				return tasks.run_on_main(std::move(fn));
 			}
 		}
 	};
