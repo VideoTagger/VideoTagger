@@ -80,11 +80,11 @@ namespace vt
 		 *
 		 * @sa add_event_listener(const std::function<void(const event_type&)>& callback, event_listener_priority priority)
 		 */
-		template<typename event_type, typename return_type, typename = std::enable_if_t<std::is_base_of_v<event, event_type>>>
-		constexpr task<return_type> add_disposable_event_listener(const std::function<return_type(const event_type&)>& callback, event_listener_priority priority = event_listener_priority::normal)
+		template<typename event_type, typename fn_type, typename return_type = std::invoke_result_t<std::decay_t<fn_type>, const event_type&>, typename = std::enable_if_t<std::is_base_of_v<event, event_type>>>
+		constexpr task<return_type> add_disposable_event_listener(fn_type&& callback, event_listener_priority priority = event_listener_priority::normal)
 		{
 			auto& dispatcher = get_event_dispatcher<event_type>();
-			return dispatcher.add_disposable_event_listener<return_type>(callback, priority);
+			return dispatcher.add_disposable_event_listener<return_type>(std::forward<fn_type>(callback), priority);
 		}
 
 		/**

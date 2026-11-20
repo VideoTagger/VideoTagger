@@ -17,7 +17,35 @@ namespace vt
 {
 	///@addtogroup events Events
 	///@{
-	using event_listener_handle = uint64_t;
+	using event_listener_id = uint64_t;
+
+	struct event_listener_handle
+	{
+	public:
+		event_listener_handle() : id_{ 0 }, on_remove_{} {}
+		event_listener_handle(event_listener_id id, const std::function<void(const event_listener_handle& handle)>& on_remove) : id_{ id }, on_remove_{ on_remove } {}
+
+	private:
+		event_listener_id id_;
+		std::function<void(const event_listener_handle& handle)> on_remove_;
+
+	public:
+		void remove()
+		{
+			if (on_remove_ == nullptr) return;
+			on_remove_(*this);
+		}
+
+		event_listener_id id() const
+		{
+			return id_;
+		}
+
+		bool operator==(const event_listener_handle& other) const
+		{
+			return id_ == other.id_ and on_remove_.target_type() == other.on_remove_.target_type() and on_remove_.target<void(const event_listener_handle& handle)>() == other.on_remove_.target<void(const event_listener_handle& handle)>();
+		}
+	};
 
 	struct event_listener_priority
 	{
@@ -148,7 +176,7 @@ namespace vt
 	{
 	public:
 		using event_type = type;
-		constexpr event_listener_callback(event_listener_handle handle, event_listener_priority priority, const std::function<void(const event_type&)>& callback) : priority_{ priority }, handle_ { handle }, callback_{ callback } {}
+		constexpr event_listener_callback(const event_listener_handle& handle, event_listener_priority priority, const std::function<void(const event_type&)>& callback) : priority_{ priority }, handle_ { handle }, callback_{ callback } {}
 
 	private:
 		event_listener_handle handle_;
@@ -157,7 +185,13 @@ namespace vt
 
 	public:
 		///@return The handle of the listener
-		constexpr event_listener_handle handle() const
+		constexpr event_listener_handle& handle()
+		{
+			return handle_;
+		}
+
+		///@return The handle of the listener
+		constexpr const event_listener_handle& handle() const
 		{
 			return handle_;
 		}
@@ -214,7 +248,11 @@ namespace vt
 		 */
 		constexpr event_listener_handle add_event_listener(const std::function<void(const event_type&)>& callback, event_listener_priority priority = event_listener_priority::normal)
 		{
-			auto handle = (event_listener_handle)utils::random::get_mono();
+			auto handle = event_listener_handle{ utils::random::get_mono(),
+			[this](const event_listener_handle& handle)
+			{
+				remove_event_listener(handle);
+			}};
 			std::scoped_lock lock{ mutex_ };
 			listeners_.push_back(std::make_unique<event_callback>(handle, priority, callback));
 			sort_listeners();
@@ -230,21 +268,19 @@ namespace vt
 		 *
 		 * @sa add_event_listener(const std::function<void(const event_type&)>& callback, event_listener_priority priority)
 		 */
-		template<typename return_type>
-		constexpr task<return_type> add_disposable_event_listener(const std::function<return_type(const event_type&)>& callback, event_listener_priority priority = event_listener_priority::normal)
+		template<typename fn_type, typename return_type = std::invoke_result_t<std::decay_t<fn_type>, const event_type&>>
+		constexpr task<return_type> add_disposable_event_listener(fn_type&& callback, event_listener_priority priority = event_listener_priority::normal)
 		{
 			auto state = std::make_shared<task_state<return_type>>();
 			task<return_type> task{ state };
-			auto dl = std::make_shared<disposable_event_listener_state<return_type, event_type>>
-			({
-				add_event_listener([state, dl, this](const event_type& event)
-				{
-					return_type result = dl->callback(event);
-					remove_event_listener(dl->listener_handle);
-					state->set_value(result);
-				}, priority),
-				callback
-			});
+			auto dl = std::make_shared<disposable_event_listener_state<return_type, event_type>>();
+			dl->listener_handle = add_event_listener([state, dl, this](const event_type& event)
+			{
+				return_type result = dl->callback(event);
+				remove_event_listener(dl->listener_handle);
+				state->set_value(result);
+			}, priority);
+			dl->callback = std::forward<fn_type>(callback);
 			return task;
 		}
 
@@ -253,12 +289,12 @@ namespace vt
 		 * @param[in] handle The handle of the listener to remove
 		 * @return True if the listener was successfully removed, false otherwise
 		 * 
-		 * @sa operator-=(event_listener_handle handle)
+		 * @sa operator-=(const event_listener_handle& handle)
 		 */
-		constexpr bool remove_event_listener(event_listener_handle handle)
+		constexpr bool remove_event_listener(const event_listener_handle& handle)
 		{
 			std::scoped_lock lock{ mutex_ };
-			auto it = std::find_if(listeners_.begin(), listeners_.end(), [handle](const std::unique_ptr<event_callback>& callback)
+			auto it = std::find_if(listeners_.begin(), listeners_.end(), [&handle](const std::unique_ptr<event_callback>& callback)
 			{
 				return callback->handle() == handle;
 			});
@@ -352,9 +388,9 @@ namespace vt
 		 * 
 		 * @return True if the listener was successfully removed, false otherwise
 		 * 
-		 * @sa remove_event_listener(event_listener_handle handle)
+		 * @sa remove_event_listener(const event_listener_handle& handle)
 		 */
-		constexpr bool operator-=(event_listener_handle handle)
+		constexpr bool operator-=(const event_listener_handle& handle)
 		{
 			return remove_event_listener(handle);
 		}
