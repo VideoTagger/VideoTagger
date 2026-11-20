@@ -225,6 +225,62 @@ namespace vt
 		shape_tracker_registry<shape_type>& get_shape_tracker_registry();
 		template<typename shape_type>
 		shape_interpolator_registry<shape_type>& get_shape_interpolator_registry();
+
+		/**
+		 * @brief Dispatches an event of a specific type constructed from the provided arguments
+		 * @tparam event_type The type of the event to dispatch
+		 * @tparam event_source_id_type The type of the event source identifier, `event_source` must be constructible from this type
+		 * @tparam arguments The types of arguments used to construct the event instance
+		 * @param[in] source The identifier of the source that generated the event
+		 * @param[in] args The arguments used to construct the event instance
+		 *
+		 * @note All event listeners and interceptors will be executed on the main thread.
+		 * 
+		 * @sa dispatch_event_on_main(const event_source_id_type& source, event_type&& event_instance)
+		 */
+		template<typename event_type, typename event_source_id_type, typename... arguments, typename = std::enable_if_t<std::is_constructible_v<event_source, event_source_id_type> and std::is_constructible_v<event_type, arguments...> and std::is_base_of_v<event, event_type>>>
+		constexpr task<void> dispatch_event_on_main(const event_source_id_type& source, arguments&&... args)
+		{
+			event_type event{ std::forward<arguments>(args)... };
+			return dispatch_event_on_main(source, std::move(event));
+		}
+
+		/**
+		 * @brief Dispatches an event of a specific type
+		 * @tparam event_type The type of the event to dispatch
+		 * @tparam event_source_id_type The type of the event source identifier, `event_source` must be constructible from this type
+		 * @tparam arguments The types of arguments used to construct the event instance
+		 * @param[in] source The identifier of the source that generated the event
+		 * @param[in] event_instance The pre-constructed event instance to dispatch
+		 *
+		 * @note All event listeners and interceptors will be executed on the main thread.
+		 * 
+		 * @sa dispatch_event_on_main(const event_source_id_type& source, arguments&&... args)
+		 */
+		template<typename event_type, typename event_source_id_type, typename = std::enable_if_t<std::is_constructible_v<event_source, event_source_id_type> and std::is_base_of_v<event, event_type>>>
+		constexpr task<void> dispatch_event_on_main(const event_source_id_type& source, event_type&& event_instance)
+		{
+			auto fn = [this, source, event_instance = std::move(event_instance)]()
+			{
+				auto& dispatcher = get_event_dispatcher<event_type>();
+				auto event = std::move(event_instance);
+				event.set_source({ source });
+				dispatcher.dispatch_event(std::move(event));
+			};
+
+			if (std::this_thread::get_id() == debug::main_thread_id)
+			{
+				auto state = std::make_shared<task_state<void>>();
+				task<void> task{ state };
+				fn();
+				state.set_value();
+				return task;
+			}
+			else
+			{
+				return ctx_.tasks.run_on_main(fn);
+			}
+		}
 	};
 
 	///@brief Global application context instance
