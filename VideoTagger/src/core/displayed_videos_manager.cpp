@@ -94,25 +94,37 @@ namespace vt
 
 	void displayed_videos_manager::seek(std::chrono::nanoseconds timestamp)
 	{
-		auto current_ts = frame_clock_current_timestamp();
-		std::for_each(std::execution::seq, videos_.begin(), videos_.end(), [timestamp, current_ts, this](displayed_video_data& video_data)
+		auto fn = [this, timestamp]()
 		{
-			auto video_current_ts = current_ts - video_data.offset;
-			auto video_ts = timestamp - video_data.offset;
-			auto clamped_video_ts = std::clamp(video_ts, std::chrono::nanoseconds{ 0 }, video_data.video.duration());
+			auto current_ts = frame_clock_current_timestamp();
+			std::for_each(std::execution::seq, videos_.begin(), videos_.end(), [timestamp, current_ts, this](displayed_video_data& video_data)
+			{
+				auto video_current_ts = current_ts - video_data.offset;
+				auto video_ts = timestamp - video_data.offset;
+				auto clamped_video_ts = std::clamp(video_ts, std::chrono::nanoseconds{ 0 }, video_data.video.duration());
 
-			video_data.video.seek(clamped_video_ts);
-			video_data.video.update_frame(video_data.display_texture, clamped_video_ts, false, true);
-			video_data.overlay_texture.clear();
-		});
+				video_data.video.seek(clamped_video_ts);
+				video_data.video.update_frame(video_data.display_texture, clamped_video_ts, false, true);
+				video_data.overlay_texture.clear();
+			});
 
-		auto group_duration = duration();
-		frame_clock_base_timepoint_ = frame_clock::now();
-		frame_clock_base_timestamp_ = std::clamp(timestamp, std::chrono::nanoseconds{ 0 }, group_duration);
+			auto group_duration = duration();
+			frame_clock_base_timepoint_ = frame_clock::now();
+			frame_clock_base_timestamp_ = std::clamp(timestamp, std::chrono::nanoseconds{ 0 }, group_duration);
 
-		if (frame_clock_base_timestamp_ == group_duration)
+			if (frame_clock_base_timestamp_ == group_duration)
+			{
+				is_playing_ = false;
+			}
+		};
+
+		if (std::this_thread::get_id() == debug::main_thread_id)
 		{
-			is_playing_ = false;
+			fn();
+		}
+		else
+		{
+			ctx_.tasks.run_on_main(fn);
 		}
 	}
 
