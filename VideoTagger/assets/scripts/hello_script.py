@@ -6,16 +6,17 @@ class hello_script(vt.Script):
     def has_progress(self: vt.Script) -> bool:
         return True
 
-    def on_run(self: vt.Script) -> None:
+    async def on_run(self: vt.Script) -> None:
         project = vt.current_project()
         if project is None:
             return
-        project.tags.clear()
 
         self.progress_info = "Printing info"
         print("Tags:")
         for tag in project.tags.list:
             print(f"name: {tag.name} color: {hex(tag.color).upper()}")
+        
+        await project.tags.clear()
 
         print("Videos:")
         for vid in project.videos:

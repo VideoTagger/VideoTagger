@@ -16,22 +16,32 @@ namespace vt::bindings
 		py::object loop = asyncio.attr("get_running_loop")();
 		py::object fut = loop.attr("create_future")();
 
-		t.then([st = t.state(), loop = py::object(loop), fut = py::object(fut)]() mutable
+		if constexpr (std::is_void_v<type>)
 		{
-			py::gil_scoped_acquire gil;
-			loop.attr("call_soon_threadsafe")(py::cpp_function([st, fut]() mutable
+			t.then([loop = py::object(loop), fut = py::object(fut)]() mutable
 			{
-				if constexpr (std::is_void_v<type>)
+				py::gil_scoped_acquire gil;
+				loop.attr("call_soon_threadsafe")(py::cpp_function([fut]() mutable
 				{
-					st->get();
 					fut.attr("set_result")(py::none());
-				}
-				else
+				}));
+				loop = py::object{};
+				fut = py::object{};
+			});
+		}
+		else
+		{
+			t.then([st = t.state(), loop = py::object(loop), fut = py::object(fut)](const type& value) mutable
+			{
+				py::gil_scoped_acquire gil;
+				loop.attr("call_soon_threadsafe")(py::cpp_function([value = st->get(), fut]() mutable
 				{
-					fut.attr("set_result")(py::cast(st->get()));
-				}
-			}));
-		});
+					fut.attr("set_result")(py::cast(value));
+				}));
+				loop = py::object{};
+				fut = py::object{};
+			});
+		}
 		return fut;
 	}
 }
@@ -41,7 +51,11 @@ namespace pybind11::detail
 	template<typename type>
 	struct type_caster<vt::task<type>>
 	{
-		PYBIND11_TYPE_CASTER(vt::task<type>, _("Task"));
+		using value_conv = std::conditional_t<
+			std::is_void_v<type>,
+			make_caster<none>,
+			make_caster<type>
+		>;
 
 	public:
 		// Python -> C++ (not implemented yet)
@@ -57,5 +71,10 @@ namespace pybind11::detail
 			pybind11::object awaitable = vt::bindings::task_to_awaitable<type>(obj);
 			return awaitable.release();
 		}
+
+		PYBIND11_TYPE_CASTER(
+			vt::task<type>,
+			const_name("collections.abc.Awaitable") + const_name("[") + value_conv::name + const_name("]")
+		);
 	};
 }
