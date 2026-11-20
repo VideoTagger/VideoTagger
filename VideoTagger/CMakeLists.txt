@@ -117,7 +117,7 @@ include(${CMAKE_SOURCE_DIR}/cmake/SetupOpenCV.cmake)
 vt_setup_opencv(${PROJECT_NAME})
 
 set(ZIPPER_BUILD_ZLIB OFF)
-add_subdirectory("${PROJECT_SOURCE_DIR}/vendor/zipper")
+add_subdirectory("${PROJECT_SOURCE_DIR}/vendor/zipper" EXCLUDE_FROM_ALL)
 target_link_libraries(${PROJECT_NAME} PRIVATE zipper)
 
 set(PYBIND11_FINDPYTHON ON)
