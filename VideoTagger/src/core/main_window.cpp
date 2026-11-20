@@ -3101,7 +3101,11 @@ namespace vt
 						auto& segment_storage = ctx_.get_current_segment_storage();
 						for (const auto& tag_name : ctx_.current_project->displayed_tags)
 						{
-							auto& tag = ctx_.current_project->tags.at(tag_name);
+							auto& tags = ctx_.current_project->tags;
+							auto tag_it = tags.find(tag_name);
+							if (tag_it == tags.end()) continue;
+
+							auto& tag = *tag_it;
 							auto& segments = segment_storage[tag_name];
 
 							auto segment_it = segments.find(current_ts);
