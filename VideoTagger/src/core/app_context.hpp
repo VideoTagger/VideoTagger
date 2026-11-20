@@ -273,12 +273,12 @@ namespace vt
 				auto state = std::make_shared<task_state<void>>();
 				task<void> task{ state };
 				fn();
-				state.set_value();
+				state->set_value();
 				return task;
 			}
 			else
 			{
-				return ctx_.tasks.run_on_main(fn);
+				return tasks.run_on_main(fn);
 			}
 		}
 	};
