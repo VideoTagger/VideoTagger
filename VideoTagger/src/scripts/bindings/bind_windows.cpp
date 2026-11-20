@@ -4,6 +4,9 @@
 #include <widgets/video_player.hpp>
 #include "proxies.hpp"
 
+#include <events/player/playback_change_request_event.hpp>
+#include <events/player/seek_request_event.hpp>
+
 void vt::bindings::bind_windows(pybind11::module_& mod)
 {
 	namespace py = pybind11;
@@ -17,22 +20,19 @@ void vt::bindings::bind_windows(pybind11::module_& mod)
 	})
 	.def("play", [](widgets::video_player& player)
 	{
-		if (player.is_playing()) return;
-		player.set_playing(true);
+		ctx_.dispatch_event<playback_change_request_event>("script", player, true);
 	})
 	.def("pause", [](widgets::video_player& player)
 	{
-		if (!player.is_playing()) return;
-		player.set_playing(false);
+		ctx_.dispatch_event<playback_change_request_event>("script", player, false);
 	})
 	.def("seek", [](widgets::video_player& player, timestamp ts)
 	{
-		player.callbacks.on_seek({ ts.total_nanoseconds });
+		ctx_.dispatch_event<seek_request_event>("script", player, ts.total_nanoseconds);
 	}, py::arg("timestamp"))
 	.def("set_playing", [](widgets::video_player& player, bool value)
 	{
-		if (value == player.is_playing()) return;
-		player.set_playing(value);
+		ctx_.dispatch_event<playback_change_request_event>("script", player, value);
 	}, py::arg("value"))
 	.def_property_readonly("is_playing", [](const widgets::video_player& player) -> bool
 	{
