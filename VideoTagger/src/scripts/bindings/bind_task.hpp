@@ -45,15 +45,16 @@ namespace pybind11::detail
 
 	public:
 		// Python -> C++ (not implemented yet)
-		bool load(handle, bool)
+		bool load(handle src, bool convert)
 		{
 			return false;
 		}
 
 		// C++ -> Python
-		static handle cast(const vt::task<type>& src, return_value_policy, handle)
+		static handle cast(vt::task<type>&& src, return_value_policy policy, handle parent)
 		{
-			pybind11::object awaitable = vt::bindings::task_to_awaitable<type>(src);
+			auto obj = std::move(src);
+			pybind11::object awaitable = vt::bindings::task_to_awaitable<type>(obj);
 			return awaitable.release();
 		}
 	};

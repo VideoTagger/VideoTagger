@@ -32,6 +32,6 @@ extern void vt::bindings::bind_system(pybind11::module_& mod)
 			}
 			state->set_value();
 		});
-		return task_to_awaitable(task);
+		return task;
 	}, py::arg("title"), py::arg("message"), py::arg_v("icon", messagebox_icon::none, "MessageBoxIcon.Hidden"), py::arg("callback") = std::function<void()>{});
 }
