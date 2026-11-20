@@ -170,10 +170,14 @@ namespace vt
 					}
 
 					auto native_script = script_class_obj.cast<std::shared_ptr<vt::script>>();
-					ctx_.script_handle->thread_id = native_script->thread_id();
-					ctx_.script_handle->script = native_script;
+					
+					{
+						std::scoped_lock lock{ ctx_.script_mutex };
+						ctx_.script_handle->thread_id = native_script->thread_id();
+						ctx_.script_handle->script = native_script;
+						ctx_.script_handle->has_progress = native_script->has_progress();
+					}
 
-					ctx_.script_handle->has_progress = native_script->has_progress();
 					//native_script->on_run();
 					{
 						py::object on_run_fn = script_class_obj.attr("on_run");						
@@ -191,7 +195,11 @@ namespace vt
 							}
 						}
 					}
-					ctx_.script_handle->script = {};
+
+					{
+						std::scoped_lock lock{ ctx_.script_mutex };
+						ctx_.script_handle->script = {};
+					}
 					//script.attr(entrypoint.c_str())();
 				}
 				catch (py::error_already_set& ex)
@@ -263,8 +271,12 @@ namespace vt
 				ctx_.script_progress_popup.reset();
 				gil_release_ = nullptr;
 			});
-			ctx_.script_handle = script_handle(std::move(task));
-			ctx_.script_progress_popup = ui::new_popup<ui::script_progress_popup>(nullptr);
+
+			{
+				std::scoped_lock lock{ ctx_.script_mutex };
+				ctx_.script_handle = script_handle(std::move(task));
+				ctx_.script_progress_popup = ui::new_popup<ui::script_progress_popup>(nullptr);
+			}
 		};
 
 		if (!ctx_.app_settings.enable_scripts)

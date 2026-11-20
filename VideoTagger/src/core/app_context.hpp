@@ -136,6 +136,7 @@ namespace vt
 		keybind_storage keybinds;
 		scripting_engine script_eng;
 		std::optional<script_handle> script_handle;
+		std::mutex script_mutex;
 		std::unordered_map<std::string, std::unique_ptr<service_account_manager>> account_managers;
 		std::unordered_map<std::string, std::unique_ptr<video_importer>> video_importers;
 		std::optional<video_id_t> last_focused_video;

@@ -28,10 +28,13 @@ namespace vt::ui
 
 	void script_progress_popup::on_render()
 	{
-		std::shared_ptr<script> script = ctx_.script_handle->script.lock();
-		if (!script)
+		std::shared_ptr<script> script;
 		{
-			return;
+			std::scoped_lock lock{ ctx_.script_mutex };
+			if (!ctx_.script_handle.has_value()) return;
+
+			script = ctx_.script_handle->script.lock();
+			if (!script) return;
 		}
 
 		auto width = ImGui::GetContentRegionAvail().x;
