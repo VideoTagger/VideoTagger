@@ -24,6 +24,7 @@
 #include <events/scripts/script_start_event.hpp>
 #include <events/scripts/script_end_event.hpp>
 #include <system/messagebox.hpp>
+#include "interrupt_exception.hpp"
 
 namespace vt
 {
@@ -91,6 +92,26 @@ namespace vt
 
 		cfg.use_frozen_modules = false;
 		interpreter_ = std::make_unique<py::scoped_interpreter>(&cfg);
+	}
+
+	void scripting_engine::shutdown()
+	{
+		if (interpreter_ == nullptr) return;
+		std::scoped_lock lock{ ctx_.script_mutex };
+		if (ctx_.script_handle.has_value())
+		{
+			auto script = ctx_.script_handle->script.lock();
+			if (!ctx_.script_handle->has_finished())
+			{
+				interrupt();
+			}
+			ctx_.script_handle->wait();
+		}
+		ctx_.tasks.run_on_main([this]()
+		{
+			gil_release_.reset();
+			interpreter_.reset();
+		});
 	}
 
 	void scripting_engine::set_script_dir(const std::filesystem::path& dir)
@@ -218,6 +239,11 @@ namespace vt
 
 						std::string exception_message = py::str(exc_value);
 						std::string message = utils::string::trim_whitespace(ex.what());
+						if (ex.matches(PyExc_InterruptedError))
+						{
+							message = "Script interrupted";
+						}
+						
 						if (!exc_traceback.is_none())
 						{
 							py::object tb_frame = exc_traceback.attr("tb_frame");
@@ -233,8 +259,8 @@ namespace vt
 									sys.attr("exit")(py::int_(-1));
 								}
 								catch (...) {}
-								debug::add_log(fmt::format("{}:{}", std::filesystem::relative(file_name, ctx_.script_dir_filepath).string(), lineno), "info", "{}", "Script interrupted");
-								console.add_entry(widgets::console::entry::flag_type::info, "Script interrupted", widgets::console::entry::source_info{ file_name, lineno });
+								debug::add_log(fmt::format("{}:{}", std::filesystem::relative(file_name, ctx_.script_dir_filepath).string(), lineno), "info", "{}", message);
+								console.add_entry(widgets::console::entry::flag_type::info, message, widgets::console::entry::source_info{ file_name, lineno });
 								return false;
 							}
 							else if (!message.empty())
@@ -296,12 +322,16 @@ namespace vt
 		}
 	}
 
-	void scripting_engine::interrupt()
+	void scripting_engine::interrupt(const std::string& message)
 	{
 		if (ctx_.script_handle.has_value())
 		{
 			py::gil_scoped_acquire lock{};
-			PyThreadState_SetAsyncExc(ctx_.script_handle->thread_id, PyExc_InterruptedError);
+
+			if (PyThreadState_SetAsyncExc(ctx_.script_handle->thread_id, PyExc_InterruptedError) > 1)
+			{
+				PyThreadState_SetAsyncExc(ctx_.script_handle->thread_id, nullptr);
+			}
 		}
 	}
 

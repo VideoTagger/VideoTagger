@@ -29,8 +29,9 @@ namespace vt
 
 	public:
 		void init();
+		void shutdown();
 		void run(const std::filesystem::path& script_path);
-		void interrupt();
+		void interrupt(const std::string& message = "Script interrupted");
 
 		void bind(const std::function<void(py::module_& mod)>& binding);
 		std::vector<std::function<void(py::module_& mod)>>& bindings();

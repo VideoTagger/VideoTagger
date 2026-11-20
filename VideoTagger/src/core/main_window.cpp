@@ -1234,12 +1234,7 @@ namespace vt
 
 	void main_window::on_close_project(bool should_shutdown)
 	{
-		if (ctx_.script_handle.has_value() and !ctx_.script_handle->has_finished())
-		{
-			ctx_.script_eng.interrupt();
-			return;
-		}
-
+		ctx_.script_eng.shutdown();
 		ctx_.session.tasks.cancel_all();
 		ctx_.tasks.wait_for_all();
 
