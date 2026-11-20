@@ -60,6 +60,7 @@ namespace vt
 		/**
 		 * @brief Adds a listener for a specific event type
 		 * @tparam event_type The type of the event for which the listener is added
+		 * @param[in] callback The function to be called when the event is dispatched
 		 * 
 		 * @return A handle to the added listener
 		 */
@@ -68,6 +69,22 @@ namespace vt
 		{
 			auto& dispatcher = get_event_dispatcher<event_type>();
 			return dispatcher.add_event_listener(callback, priority);
+		}
+
+		/**
+		 * @brief Adds a new listener for the event type, disposed after the first callback invocation
+		 * @tparam event_type The type of the event for which the listener is added
+		 * @tparam return_type The type of the return value of the callback
+		 * @param[in] callback The function to be called when the event is dispatched
+		 * @return A task representing the result of the callback
+		 *
+		 * @sa add_event_listener(const std::function<void(const event_type&)>& callback, event_listener_priority priority)
+		 */
+		template<typename event_type, typename return_type, typename = std::enable_if_t<std::is_base_of_v<event, event_type>>>
+		constexpr task<return_type> add_disposable_event_listener(const std::function<return_type(const event_type&)>& callback, event_listener_priority priority = event_listener_priority::normal)
+		{
+			auto& dispatcher = get_event_dispatcher<event_type>();
+			return dispatcher.add_disposable_event_listener(callback, priority);
 		}
 
 		/**

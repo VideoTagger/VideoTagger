@@ -210,7 +210,7 @@ namespace vt
 		 * @return A handle to the added listener
 		 * 
 		 * @sa operator+=(const std::function<void(const event_type&)>& callback, event_listener_priority priority)
-		 * @sa add_disposable_event_listener(const std::function<void(const event_type&)>& callback, event_listener_priority priority)
+		 * @sa add_disposable_event_listener
 		 */
 		constexpr event_listener_handle add_event_listener(const std::function<void(const event_type&)>& callback, event_listener_priority priority = event_listener_priority::normal)
 		{
@@ -224,6 +224,8 @@ namespace vt
 		/**
 		 * @brief Adds a new listener for the event type, disposed after the first callback invocation
 		 * @param[in] callback The function to be called when the event is dispatched
+		 * @tparam return_type The type of the return value of the callback
+		 * 
 		 * @return A task representing the result of the callback
 		 *
 		 * @sa add_event_listener(const std::function<void(const event_type&)>& callback, event_listener_priority priority)
