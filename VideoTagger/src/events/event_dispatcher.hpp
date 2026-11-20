@@ -276,9 +276,18 @@ namespace vt
 			auto dl = std::make_shared<disposable_event_listener_state<return_type, event_type>>();
 			dl->listener_handle = add_event_listener([state, dl, this](const event_type& event)
 			{
-				return_type result = dl->callback(event);
-				remove_event_listener(dl->listener_handle);
-				state->set_value(result);
+				if constexpr (std::is_void_v<return_type>)
+				{
+					dl->callback(event);
+					remove_event_listener(dl->listener_handle);
+					state->set_value();
+				}
+				else
+				{
+					return_type result = dl->callback(event);
+					remove_event_listener(dl->listener_handle);
+					state->set_value(std::move(result));
+				}
 			}, priority);
 			dl->callback = std::forward<fn_type>(callback);
 			return task;
