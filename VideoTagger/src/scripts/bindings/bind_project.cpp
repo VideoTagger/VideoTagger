@@ -27,6 +27,16 @@ void vt::bindings::bind_project(pybind11::module_& mod)
 	{
 		return p.ptr->tags;
 	})
+	.def_property_readonly("groups", [](const vt_project& p) -> std::vector<vt_video_group>
+	{
+		std::vector<vt_video_group> result;
+		result.reserve(p.ptr->video_groups.size());
+		for (auto& [id, group] : p.ptr->video_groups)
+		{
+			result.push_back(vt_video_group{ id, &group });
+		}
+		return result;
+	})
 	.def("import_video", [](vt_project& p, const std::string& path) -> std::optional<vt_video>
 	{
 		auto vid_resource_id = video_importer::generate_video_id();
@@ -61,6 +71,8 @@ void vt::bindings::bind_project(pybind11::module_& mod)
 	}, py::arg("video"))
 	.def("find_group", [](const vt_project& p, const std::string& name) -> std::optional<vt_video_group>
 	{
+		// Group names are not unique so it can find only the first one with this name
+
 		auto it = p.ptr->video_groups.end();
 		for (auto& [id, group] : p.ptr->video_groups)
 		{
@@ -77,7 +89,7 @@ void vt::bindings::bind_project(pybind11::module_& mod)
 
 		auto id = it->first;
 		auto& group = it->second;
-		// No idea if group names are unique or not
+		// Group names are not unique
 		group.display_name = name;
 
 		return vt_video_group{ id, &group };

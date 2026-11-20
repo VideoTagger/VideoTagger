@@ -81,12 +81,12 @@ namespace vt
 				{
 					auto& reg = region.instance.ptr->get_region(region.id);
 					reg.insert_keyframe(ts, shape);
-				})
+				}, py::arg("ts"), py::arg("shape"))
 				.def("remove_keyframe", [](const bindings::vt_region<shape_type>& region, timestamp ts) -> bool
 				{
 					auto& reg = region.instance.ptr->get_region(region.id);
 					return reg.erase_keyframe(ts);
-				})
+				}, py::arg("ts"))
 				.def_property_readonly("interpolation_type", [](const bindings::vt_region<shape_type>& region) -> std::string
 				{
 					auto& reg = region.instance.ptr->get_region(region.id);
@@ -104,7 +104,7 @@ namespace vt
 
 					reg.set_interpolator(std::move(interpolator));
 					return true;
-				});
+				}, py::arg("name"));
 
 				py::class_<bindings::vt_shape_attribute_instance<shape_type>>(attribute_submod, class_name.c_str())
 				.def(py::init([class_name](bindings::vt_attribute_instance& instance) -> bindings::vt_shape_attribute_instance<shape_type>
