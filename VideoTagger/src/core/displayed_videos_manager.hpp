@@ -48,16 +48,66 @@ namespace vt
 		frame_clock::time_point frame_clock_base_timepoint_;
 
 	public:
+		/**
+		 * @brief Updates the displayed videos
+		 * 
+		 * @note Must be called on the main thread on each frame.
+		 */
 		void update();
 
 		void set_playing(bool value);
 		void set_speed(float value);
+
+		/**
+		 * @brief Seeks all videos to the specified timestamp
+		 * 
+		 * @note Must be called on the main thread.
+		 */
 		void seek(std::chrono::nanoseconds timestamp);
 
-		//if update is true and a video with id is already present the video data will be updated
+		/**
+		 * @brief Inserts a new video into the manager.
+		 * 
+		 * @param id The ID of the video to insert.
+		 * @param video The video stream to insert.
+		 * @param offset The offset of the video.
+		 * @param video_width The width of the video.
+		 * @param video_height The height of the video.
+		 * @param update Whether to update an existing video with the same ID.
+		 * 
+		 * @note Must be called on the main thread.
+		 * 
+		 * @return A pair containing an iterator to the inserted element and a boolean indicating whether the element was inserted.
+		 */
 		std::pair<iterator, bool> insert(video_id_t id, video_stream&& video, std::chrono::nanoseconds offset, int video_width, int video_height, bool update = true);
+
+		/**
+		 * @brief Removes a video from the manager.
+		 * 
+		 * @param video_id The ID of the video to remove.
+		 * 
+		 * @note Must be called on the main thread.
+		 * 
+		 * @return True if the video was removed, false otherwise.
+		 */
 		bool erase(video_id_t video_id);
+
+		/**
+		 * @brief Removes a video from the manager.
+		 * 
+		 * @param it An iterator to the video to remove.
+		 * 
+		 * @note Must be called on the main thread.
+		 * 
+		 * @return An iterator to the element after the removed element.
+		 */
 		iterator erase(const_iterator it);
+
+		/**
+		 * @brief Clears the manager.
+		 * 
+		 * @note Must be called on the main thread.
+		 */
 		void clear();
 
 		iterator find(video_id_t video_id);
