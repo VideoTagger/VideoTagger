@@ -320,7 +320,7 @@ namespace vt
 		}
 	}
 
-	void scripting_engine::interrupt(const std::string& message)
+	void scripting_engine::interrupt()
 	{
 		if (ctx_.script_handle.has_value())
 		{
