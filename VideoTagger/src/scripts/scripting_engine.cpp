@@ -2,7 +2,6 @@
 #include <pybind11/operators.h>
 #include "scripting_engine.hpp"
 #include <core/app_context.hpp>
-#include <widgets/console.hpp>
 #include <widgets/video_player.hpp>
 #include <video/local_video_importer.hpp>
 #include <utils/random.hpp>
@@ -23,6 +22,7 @@
 #include <core/platform.hpp>
 #include <events/scripts/script_start_event.hpp>
 #include <events/scripts/script_end_event.hpp>
+#include <events/console/console_add_entry_event.hpp>
 #include <system/messagebox.hpp>
 #include "interrupt_exception.hpp"
 
@@ -53,7 +53,7 @@ namespace vt
 		add_bindings(mod);
 	}
 
-	scripting_engine::scripting_engine() {}
+	scripting_engine::scripting_engine() : event_source_{ "scripting-engine" } {}
 
 	void scripting_engine::init()
 	{
@@ -225,8 +225,6 @@ namespace vt
 				}
 				catch (py::error_already_set& ex)
 				{
-					auto& console = ctx_.get_window<widgets::console>();
-
 					try
 					{
 						py::object traceback = py::module::import("traceback");
@@ -260,19 +258,19 @@ namespace vt
 								}
 								catch (...) {}
 								debug::add_log(fmt::format("{}:{}", std::filesystem::relative(file_name, ctx_.script_dir_filepath).string(), lineno), "info", "{}", message);
-								console.add_entry(widgets::console::entry::flag_type::info, message, widgets::console::entry::source_info{ file_name, lineno });
+								ctx_.dispatch_event<console_add_entry_event>(event_source_, ui::windows::console::entry::flag_type::info, message, ui::windows::console::entry::source_info{ file_name, lineno });
 								return false;
 							}
 							else if (!message.empty())
 							{
 								debug::add_log(fmt::format("{}:{}", std::filesystem::relative(file_name, ctx_.script_dir_filepath).string(), lineno), "error", "{}", message);
-								console.add_entry(widgets::console::entry::flag_type::error, message, widgets::console::entry::source_info{ file_name, lineno });
+								ctx_.dispatch_event<console_add_entry_event>(event_source_, ui::windows::console::entry::flag_type::error, message, ui::windows::console::entry::source_info{ file_name, lineno });
 							}
 						}
 						else
 						{
 							debug::error("{}", message);
-							console.add_entry(widgets::console::entry::flag_type::error, message, widgets::console::entry::source_info{ "VideoTagger", -1 });
+							ctx_.dispatch_event<console_add_entry_event>(event_source_, ui::windows::console::entry::flag_type::error, message, ui::windows::console::entry::source_info{ "VideoTagger", -1 });
 						}
 					}
 					catch (const std::exception& iex)

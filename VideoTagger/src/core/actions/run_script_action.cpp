@@ -2,7 +2,7 @@
 #include "run_script_action.hpp"
 #include <core/app_context.hpp>
 #include <utils/filesystem.hpp>
-#include <widgets/console.hpp>
+#include <events/console/console_add_entry_event.hpp>
 
 namespace vt
 {
@@ -16,8 +16,7 @@ namespace vt
 		auto it = std::find(all_scripts.begin(), all_scripts.end(), script_path_);
 		if (it == all_scripts.end())
 		{
-			auto& console = ctx_.get_window<widgets::console>();
-			console.add_entry(widgets::console::entry::flag_type::warn, fmt::format("Failed to run script '{}', since it doesn't exist", script_path_.string()), widgets::console::entry::source_info{ "VideoTagger", 0 });
+			ctx_.dispatch_event<console_add_entry_event>("keybind.run_script_action", ui::windows::console::entry::flag_type::warn, fmt::format("Failed to run script '{}', since it doesn't exist", script_path_.string()), ui::windows::console::entry::source_info{"VideoTagger", 0});
 			return;
 		}
 		ctx_.run_script(script_path_);

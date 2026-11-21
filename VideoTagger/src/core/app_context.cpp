@@ -6,7 +6,7 @@
 #include <video/local_video_importer.hpp>
 #include <video/google_drive/google_drive_video_importer.hpp>
 #include <widgets/theme_customizer.hpp>
-#include <widgets/console.hpp>
+#include <ui/windows/console.hpp>
 #include <widgets/video_group_queue.hpp>
 #include <widgets/localization_editor.hpp>
 #include <ui/windows/region_properties.hpp>
@@ -206,7 +206,7 @@ namespace vt
 	void app_context::create_windows()
 	{
 		create_window<widgets::theme_customizer>();
-		auto& console = create_window<widgets::console>();
+		auto& console = create_window<ui::windows::console>();
 		console.set_opened(true);
 		console.set_scripts_path(ctx_.script_dir_filepath);
 

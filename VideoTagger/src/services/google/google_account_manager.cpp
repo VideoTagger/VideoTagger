@@ -5,7 +5,7 @@
 #include <core/debug.hpp>
 #include <utils/random.hpp>
 #include <core/app_context.hpp>
-#include <widgets/console.hpp>
+#include <events/console/console_add_entry_event.hpp>
 
 namespace vt
 {
@@ -104,9 +104,8 @@ namespace vt
 		auto result = refresh_access_token(properties.at("client_id"), properties.at("client_secret"), properties.at("refresh_token"));
 		if (!result.has_value())
 		{
-			auto& console = ctx_.get_window<widgets::console>();
 			debug::error("Failed to refresh access token for service {}", service_id());
-			console.add_entry(widgets::console::entry::flag_type::error, "Google account: failed to log in", widgets::console::entry::source_info{ "VideoTagger", -1 });
+			ctx_.dispatch_event<console_add_entry_event>("google-account-manager", ui::windows::console::entry::flag_type::error, "Google account: failed to log in", ui::windows::console::entry::source_info{"VideoTagger", -1});
 
 			if (result.error() == obtain_token_error::invalid_response)
 			{

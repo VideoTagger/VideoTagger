@@ -1,12 +1,13 @@
 #include "pch.hpp"
 #include "bind_core.hpp"
 #include <core/app_context.hpp>
-#include <widgets/console.hpp>
+#include <ui/windows/console.hpp>
 #include <scripts/interrupt_exception.hpp>
+#include <events/console/console_add_entry_event.hpp>
 
 namespace vt
 {
-	static widgets::console::entry::source_info get_caller_info()
+	static ui::windows::console::entry::source_info get_caller_info()
 	{
 		py::gil_scoped_acquire lock{};
 		py::object inspect = py::module_::import("inspect");
@@ -40,13 +41,11 @@ extern void vt::bindings::bind_core(pybind11::module_& mod)
 		}
 	});
 
-	auto& console = ctx_.get_window<widgets::console>();
-
 	struct stdout_hook{};
 	struct stderr_hook{};
 
 	py::class_<stdout_hook>(mod, "stdout_hook")
-	.def_static("write", [&console](std::string message)
+	.def_static("write", [](std::string message)
 	{
 		auto caller_info = get_caller_info();
 		message = utils::string::trim_whitespace(message);
@@ -55,7 +54,7 @@ extern void vt::bindings::bind_core(pybind11::module_& mod)
 			std::stringstream ss;
 			ss << std::this_thread::get_id();
 			debug::add_log(fmt::format("{}:{}:{}", ss.str(), std::filesystem::relative(caller_info.path, ctx_.script_dir_filepath).string(), caller_info.line), "info", "{}", message);
-			console.add_entry(widgets::console::entry::flag_type::info, message, caller_info);
+			ctx_.dispatch_event<console_add_entry_event>("script", ui::windows::console::entry::flag_type::info, message, caller_info);
 		}
 	}, py::arg("message"))
 	.def_static("flush", []()
@@ -64,7 +63,7 @@ extern void vt::bindings::bind_core(pybind11::module_& mod)
 	});
 
 	py::class_<stderr_hook>(mod, "stderr_hook")
-	.def_static("write", [&console](std::string message)
+	.def_static("write", [](std::string message)
 	{
 		auto caller_info = get_caller_info();
 		message = utils::string::trim_whitespace(message);
@@ -73,7 +72,7 @@ extern void vt::bindings::bind_core(pybind11::module_& mod)
 			std::stringstream ss;
 			ss << std::this_thread::get_id();
 			debug::add_log(fmt::format("{}:{}:{}", ss.str(), std::filesystem::relative(caller_info.path, ctx_.script_dir_filepath).string(), caller_info.line), "error", "{}", message);
-			console.add_entry(widgets::console::entry::flag_type::error, message, caller_info);
+			ctx_.dispatch_event<console_add_entry_event>("script", ui::windows::console::entry::flag_type::error, message, caller_info);
 		}
 	}, py::arg("message"))
 	.def_static("flush", []()
@@ -81,36 +80,36 @@ extern void vt::bindings::bind_core(pybind11::module_& mod)
 		std::cerr << std::flush;
 	});
 
-	mod.def("log", [&console](std::string message)
+	mod.def("log", [](std::string message)
 	{
 		auto caller_info = get_caller_info();
 		message = utils::string::trim_whitespace(message);
 		if (!message.empty())
 		{
 			debug::log_src(fmt::format("{}:{}", std::filesystem::relative(caller_info.path, ctx_.script_dir_filepath).string(), caller_info.line), "{}", message);
-			console.add_entry(widgets::console::entry::flag_type::info, message, caller_info);
+			ctx_.dispatch_event<console_add_entry_event>("script", ui::windows::console::entry::flag_type::info, message, caller_info);
 		}
 	}, py::arg("message"));
 
-	mod.def("warn", [&console](std::string message)
+	mod.def("warn", [](std::string message)
 	{
 		auto caller_info = get_caller_info();
 		message = utils::string::trim_whitespace(message);
 		if (!message.empty())
 		{
 			debug::warn_src(fmt::format("{}:{}", std::filesystem::relative(caller_info.path, ctx_.script_dir_filepath).string(), caller_info.line), "{}", message);
-			console.add_entry(widgets::console::entry::flag_type::warn, message, caller_info);
+			ctx_.dispatch_event<console_add_entry_event>("script", ui::windows::console::entry::flag_type::warn, message, caller_info);
 		}
 	}, py::arg("message"));
 
-	mod.def("error", [&console](std::string message)
+	mod.def("error", [](std::string message)
 	{
 		auto caller_info = get_caller_info();
 		message = utils::string::trim_whitespace(message);
 		if (!message.empty())
 		{
 			debug::error_src(fmt::format("{}:{}", std::filesystem::relative(caller_info.path, ctx_.script_dir_filepath).string(), caller_info.line), "{}", message);
-			console.add_entry(widgets::console::entry::flag_type::error, message, caller_info);
+			ctx_.dispatch_event<console_add_entry_event>("script", ui::windows::console::entry::flag_type::error, message, caller_info);
 		}
 	}, py::arg("message"));
 

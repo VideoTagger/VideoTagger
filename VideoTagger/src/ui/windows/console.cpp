@@ -2,13 +2,15 @@
 #include "console.hpp"
 #include <ui/icons.hpp>
 #include <ui/widgets/common.hpp>
-#include "controls.hpp"
+#include <widgets/controls.hpp>
 #include <core/debug.hpp>
 #include <utils/string.hpp>
 #include <core/app_context.hpp>
 #include <events/scripts/script_start_event.hpp>
+#include <events/console/console_add_entry_event.hpp>
+#include <events/console/console_clear_event.hpp>
 
-namespace vt::widgets
+namespace vt::ui::windows
 {
 	console::console() : ui::window{ "Console", "console", "Console" }
 	{
@@ -17,6 +19,18 @@ namespace vt::widgets
 		{
 			on_run_script();
 		});
+		ctx_.add_event_listener<console_add_entry_event>([this](const console_add_entry_event& event)
+		{
+			add_entry(event.flag(), event.message(), event.info());
+		});
+		ctx_.add_event_listener<console_clear_event>([this](const console_clear_event& event)
+		{
+			entries_.clear();
+		});
+		for (auto flag : { console::entry::flag_type::error, console::entry::flag_type::warn, console::entry::flag_type::info })
+		{
+			show_flags_[flag] = true;
+		}
 	}
 
 	static uint32_t flag_color(console::entry::flag_type flag)
@@ -51,6 +65,11 @@ namespace vt::widgets
 		}
 	}
 
+	void console::on_display()
+	{
+		filter.clear();
+	}
+
 	void console::on_render()
 	{
 		const auto& style = ImGui::GetStyle();
@@ -58,76 +77,35 @@ namespace vt::widgets
 		//ImGui::PushStyleVar(ImGuiStyleVar_CellPadding, ImVec2{});
 		auto avail_width = ImGui::GetContentRegionAvail().x;
 
-		size_t infos{};
-		size_t warns{};
-		size_t errors{};
+		std::unordered_map<console::entry::flag_type, size_t> flag_counts;
 
-		if (ImGui::IsWindowAppearing())
-		{
-			filter.clear();
-		}
-
-		decltype(entries_) filtered_entries;
+		std::vector<const entry*> filtered_entries;
 		filtered_entries.reserve(entries_.size());
 		for (const auto& entry : entries_)
 		{
 			if (!filter.empty() and (utils::string::to_lowercase(entry.message).find(filter) == std::string::npos and std::filesystem::relative(entry.info->path, scripts_path_).string().find(filter) == std::string::npos)) continue;
 
-			switch (entry.flag)
+			if (show_flags_[entry.flag])
 			{
-				case console::entry::flag_type::info:
-				{
-					if (show_infos_)
-					{
-						filtered_entries.push_back(entry);
-						++infos;
-					}
-				}
-				break;
-				case console::entry::flag_type::warn:
-				{
-					if (show_warns_)
-					{
-						filtered_entries.push_back(entry);
-						++warns;
-					}
-				}
-				break;
-				case console::entry::flag_type::error:
-				{
-					if (show_errors_)
-					{
-						filtered_entries.push_back(entry);
-						++errors;
-					}
-				}
-				break;
+				filtered_entries.push_back(&entry);
+				++flag_counts[entry.flag];
 			}
 		}
 
 		bool has_entries = !filtered_entries.empty();
 		ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2{});
-		if (ui::icon_toggle_button(fmt::format("{}{}", icons::error, errors), show_errors_, {}, ImGui::ColorConvertU32ToFloat4(flag_color(console::entry::flag_type::error))))
+		for (auto flag : { console::entry::flag_type::error, console::entry::flag_type::warn, console::entry::flag_type::info })
 		{
-			show_errors_ = !show_errors_;
-		}
-		ui::tooltip(show_errors_ ? "Error: On" : "Error: Off");
+			if (ui::icon_toggle_button(fmt::format("{}{}", flag_icon(flag), flag_counts[flag]), show_flags_[flag], {}, ImGui::ColorConvertU32ToFloat4(flag_color(flag))))
+			{
+				show_flags_[flag] = !show_flags_[flag];
+			}
+			auto flag_str = utils::string::to_titlecase(flag_text(flag));
+			ui::tooltip(fmt::format("{}: {}", flag_str, show_flags_[flag] ? "On" : "Off"));
 
-		ImGui::SameLine();
-		if (ui::icon_toggle_button(fmt::format("{}{}", icons::warning, warns), show_warns_, {}, ImGui::ColorConvertU32ToFloat4(flag_color(console::entry::flag_type::warn))))
-		{
-			show_warns_ = !show_warns_;
+			ImGui::SameLine();
 		}
-		ui::tooltip(show_warns_ ? "Warn: On" : "Warn: Off");
 
-		ImGui::SameLine();
-		if (ui::icon_toggle_button(fmt::format("{}{}", icons::info, infos), show_infos_, {}, ImGui::ColorConvertU32ToFloat4(flag_color(console::entry::flag_type::info))))
-		{
-			show_infos_ = !show_infos_;
-		}
-		ui::tooltip(show_infos_ ? "Info: On" : "Info: Off");
-
-		ImGui::SameLine();
 		if (ui::icon_button(icons::delete_))
 		{
 			clear();
@@ -145,7 +123,7 @@ namespace vt::widgets
 		ImGui::SeparatorEx(ImGuiSeparatorFlags_Vertical);
 		ImGui::SameLine();
 
-		if (search_bar("##ConsoleMessageFilter", "Filter...", filter))
+		if (widgets::search_bar("##ConsoleMessageFilter", "Filter...", filter))
 		{
 			filter = utils::string::to_lowercase(utils::string::trim_whitespace(filter));
 		}
@@ -171,36 +149,36 @@ namespace vt::widgets
 			{
 				ImGui::PushID(i++);
 				ImGui::TableNextRow();
-				bool is_hovered = table_hovered_row_style();
+				bool is_hovered = widgets::table_hovered_row_style();
 				if (!is_hovered)
 				{
 					ImGui::TableSetBgColor(ImGuiTableBgTarget_RowBg0, ImGui::ColorConvertFloat4ToU32(style.Colors[ImGuiCol_MenuBarBg]));
 				}
 
 				ImGui::TableNextColumn();
-				//color_indicator(3.f, flag_color(entry.flag));
+				//color_indicator(3.f, flag_color(entry->flag));
 				//ImGui::SameLine(2 * style.ItemSpacing.x + 3.f);
 				ImGui::AlignTextToFramePadding();
-				ImGui::TextColored(ImGui::ColorConvertU32ToFloat4(flag_color(entry.flag)), "%s", flag_icon(entry.flag));
+				ImGui::TextColored(ImGui::ColorConvertU32ToFloat4(flag_color(entry->flag)), "%s", flag_icon(entry->flag));
 
 				/*ImGui::SameLine();
 				ImGui::AlignTextToFramePadding();
 				ImGui::TextUnformatted(flag_text(entry.flag));*/
 
 				ImGui::TableNextColumn();
-				if (entry.info.has_value())
+				if (entry->info.has_value())
 				{
 					std::string path;
-					bool exists = std::filesystem::exists(entry.info->path);
-					if (entry.info->line > 0)
+					bool exists = std::filesystem::exists(entry->info->path);
+					if (entry->info->line > 0)
 					{
-						path = fmt::format("{}:{}", std::filesystem::relative(entry.info->path, scripts_path_).string(), entry.info->line);
+						path = fmt::format("{}:{}", std::filesystem::relative(entry->info->path, scripts_path_).string(), entry->info->line);
 					}
 					else
 					{
-						path = fmt::format("{}", exists ? std::filesystem::relative(entry.info->path, scripts_path_).string() : entry.info->path.string());
+						path = fmt::format("{}", exists ? std::filesystem::relative(entry->info->path, scripts_path_).string() : entry->info->path.string());
 					}
-					auto abs_path = entry.info->path.string();
+					auto abs_path = entry->info->path.string();
 					ImGui::TextUnformatted(path.c_str());
 					if (exists)
 					{
@@ -219,7 +197,7 @@ namespace vt::widgets
 				ImGui::TableNextColumn();
 				ImGui::PushStyleColor(ImGuiCol_FrameBg, 0);
 				ImGui::PushStyleColor(ImGuiCol_Text, style.Colors[ImGuiCol_TextDisabled]);
-				ImGui::InputTextMultiline("##ConsoleEntryMessage", const_cast<std::string*>(&entry.message), ImVec2{ ImGui::GetContentRegionAvail().x, ImGui::CalcTextSize(entry.message.c_str()).y + 2 * style.FramePadding.y }, ImGuiInputTextFlags_ReadOnly);
+				ImGui::InputTextMultiline("##ConsoleEntryMessage", const_cast<std::string*>(&entry->message), ImVec2{ ImGui::GetContentRegionAvail().x, ImGui::CalcTextSize(entry->message.c_str()).y + 2 * style.FramePadding.y }, ImGuiInputTextFlags_ReadOnly);
 				ImGui::PopStyleColor(2);
 				if (ImGui::IsItemHovered())
 				{
@@ -229,7 +207,7 @@ namespace vt::widgets
 				{
 					if (ImGui::MenuItem("Copy"))
 					{
-						SDL_SetClipboardText(entry.message.c_str());
+						SDL_SetClipboardText(entry->message.c_str());
 					}
 					ImGui::EndPopup();
 				}
@@ -256,10 +234,9 @@ namespace vt::widgets
 
 	void console::on_run_script()
 	{
-		if (clear_on_run_)
-		{
-			clear();
-		}
+		if (!clear_on_run_) return;
+
+		clear();
 	}
 
 	void console::set_scripts_path(const std::filesystem::path& path)
@@ -274,6 +251,6 @@ namespace vt::widgets
 
 	void console::clear()
 	{
-		entries_.clear();
+		ctx_.dispatch_event<console_clear_event>(get_event_source());
 	}
 }

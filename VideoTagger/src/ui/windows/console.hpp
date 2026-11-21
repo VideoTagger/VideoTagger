@@ -2,9 +2,10 @@
 #include <string>
 #include <vector>
 #include <filesystem>
+#include <unordered_map>
 #include <ui/window.hpp>
 
-namespace vt::widgets
+namespace vt::ui::windows
 {
 	struct console : public ui::window
 	{
@@ -32,12 +33,11 @@ namespace vt::widgets
 		std::vector<entry> entries_;
 		std::string filter;
 		std::filesystem::path scripts_path_;
+		std::unordered_map<entry::flag_type, bool> show_flags_;
 		bool clear_on_run_ = true;
-		bool show_infos_ = true;
-		bool show_warns_ = true;
-		bool show_errors_ = true;
 
 	public:
+		virtual void on_display() override;
 		virtual void on_render() override;
 		virtual nlohmann::ordered_json serialize() const override;
 		virtual void deserialize(const nlohmann::ordered_json& json) override;

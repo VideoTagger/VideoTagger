@@ -8,7 +8,7 @@
 
 #include <ui/windows/tag_manager.hpp>
 #include <widgets/video_player.hpp>
-#include <widgets/console.hpp>
+#include <ui/windows/console.hpp>
 #include <widgets/project_selector.hpp>
 #include <widgets/theme_customizer.hpp>
 #include <ui/widgets/menu_item.hpp>
@@ -1221,7 +1221,7 @@ namespace vt
 	void main_window::on_open_project()
 	{
 		ctx_.main_window->set_subtitle(ctx_.current_project->name);
-		ctx_.get_window<widgets::console>().clear();
+		ctx_.get_window<ui::windows::console>().clear();
 
 		for (auto& [video_id, _] : ctx_.current_project->videos)
 		{
@@ -1622,7 +1622,7 @@ namespace vt
 		ctx_.keybinds.insert("Toggle Region Properties", keybind(SDLK_F6, toggle_window_mod, flags, toggle_window_action(ctx_.get_window<ui::windows::region_properties>())));
 		ctx_.keybinds.insert("Toggle Tag Manager", keybind(SDLK_F7, toggle_window_mod, flags, toggle_window_action(ctx_.get_window<ui::windows::tag_manager>())));
 		ctx_.keybinds.insert("Toggle Timeline", keybind(SDLK_F8, toggle_window_mod, flags, toggle_window_action(ctx_.get_window<widgets::timeline>())));
-		ctx_.keybinds.insert("Toggle Console", keybind(SDLK_F9, toggle_window_mod, flags, toggle_window_action(ctx_.get_window<widgets::console>())));
+		ctx_.keybinds.insert("Toggle Console", keybind(SDLK_F9, toggle_window_mod, flags, toggle_window_action(ctx_.get_window<ui::windows::console>())));
 		ctx_.keybinds.insert("Toggle Segment Regions", keybind(SDLK_F10, toggle_window_mod, flags, toggle_window_action(ctx_.get_window<ui::windows::region_list>())));
 
 		keybind_modifiers player_mod{};
@@ -2359,7 +2359,7 @@ namespace vt
 					&ctx_.get_window<ui::windows::region_properties>(),
 					&ctx_.get_window<ui::windows::tag_manager>(),
 					&ctx_.get_window<widgets::timeline>(),
-					&ctx_.get_window<widgets::console>(),
+					&ctx_.get_window<ui::windows::console>(),
 					&ctx_.get_window<ui::windows::region_list>(),
 				})
 				{
@@ -3862,7 +3862,7 @@ namespace vt
 #endif
 			ImGui::DockBuilderDockWindow(ctx_.get_window<widgets::video_browser>().name().c_str(), main_dock_up_left);
 			ImGui::DockBuilderDockWindow(ctx_.get_window<widgets::theme_customizer>().name().c_str(), main_dock_up);
-			ImGui::DockBuilderDockWindow(ctx_.get_window<widgets::console>().name().c_str(), dockspace_id_copy);
+			ImGui::DockBuilderDockWindow(ctx_.get_window<ui::windows::console>().name().c_str(), dockspace_id_copy);
 			ImGui::DockBuilderDockWindow(ctx_.get_window<widgets::timeline>().name().c_str(), dockspace_id_copy);
 			ImGui::DockBuilderDockWindow(ctx_.get_window<widgets::video_group_browser>().name().c_str(), dockspace_id_copy);
 

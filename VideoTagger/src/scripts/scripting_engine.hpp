@@ -5,6 +5,7 @@
 #include <vector>
 #include <pybind11/stl.h>
 #include <pybind11/embed.h>
+#include <events/event_source.hpp>
 
 #include "script.hpp"
 
@@ -22,6 +23,7 @@ namespace vt
 		std::unique_ptr<py::scoped_interpreter> interpreter_;
 		std::unique_ptr<py::gil_scoped_release> gil_release_;
 		std::vector<std::function<void(py::module_& mod)>> bindings_;
+		event_source event_source_;
 
 	private:
 		void set_script_dir(const std::filesystem::path& dir);
